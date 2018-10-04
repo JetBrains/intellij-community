@@ -233,4 +233,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     setTtyConnector(connector);
     start();
   }
+
+  public JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return mySettingsProvider;
+  }
 }

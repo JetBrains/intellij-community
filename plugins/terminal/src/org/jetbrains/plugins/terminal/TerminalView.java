@@ -126,7 +126,8 @@ public class TerminalView {
     final Content content = createTerminalContent(myTerminalRunner, myToolWindow, terminalWidget);
     final ContentManager contentManager = myToolWindow.getContentManager();
     contentManager.addContent(content);
-    contentManager.setSelectedContent(content);;
+    contentManager.setSelectedContent(content);
+    ;
     return content;
   }
 
@@ -135,12 +136,16 @@ public class TerminalView {
                                         @Nullable JBTerminalWidget terminalWidget) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
-    String name = "Tab " + (myNextTabNumber++);
+    String name = (terminalWidget != null
+                   ? terminalWidget.getSettingsProvider().tabName(terminalWidget.getTtyConnector(), terminalWidget.getSessionName())
+                   : TerminalOptionsProvider.Companion.getInstance().getTabName()) + " " + (myNextTabNumber++);
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, name, false);
-    if (terminalWidget == null)
+    if (terminalWidget == null) {
       terminalWidget = terminalRunner.createTerminalWidget(content);
-    else
+    }
+    else {
       Disposer.register(content, terminalWidget);
+    }
 
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, terminalWidget);
@@ -183,10 +188,12 @@ public class TerminalView {
 
   private JComponent getComponentToFocus() {
     Content selectedContent = myToolWindow.getContentManager().getSelectedContent();
-    if (selectedContent != null)
+    if (selectedContent != null) {
       return selectedContent.getPreferredFocusableComponent();
-    else
+    }
+    else {
       return myToolWindow.getComponent();
+    }
   }
 
   @Nullable
