@@ -93,6 +93,9 @@ public class InvokeIntention extends ActionOnFile {
     List<HighlightInfo> errors = highlightErrors(project, editor);
     boolean hasErrors = !errors.isEmpty() || containsErrorElements;
 
+    String treesBefore = getFile().getViewProvider().getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
+      Collectors.joining("\n\n"));
+
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;
     List<IntentionAction> intentions = getAvailableIntentions(editor, file);
@@ -147,7 +150,7 @@ public class InvokeIntention extends ActionOnFile {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
                      "it should return false from 'startInWriteAction'";
         }
-        message += "\n  Debug info: " +
+        message += "\n  Debug info: " + treesBefore + "\n\nafter:" +
                    file.getViewProvider().getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
                      Collectors.joining("\n\n"));
         throw new AssertionError(message);
