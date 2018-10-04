@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName {
   public ProjectExtensionPointName(@NotNull String name) {
@@ -20,6 +21,11 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName {
   @NotNull
   public List<T> getExtensions(@NotNull AreaInstance areaInstance) {
     return getPoint(areaInstance).getExtensionList();
+  }
+
+  @NotNull
+  public Stream<T> extensions(@NotNull AreaInstance areaInstance) {
+    return getPoint(areaInstance).extensions();
   }
 
   @Nullable
