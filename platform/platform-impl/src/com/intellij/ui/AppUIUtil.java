@@ -86,7 +86,7 @@ public class AppUIUtil {
       }
     }
 
-    images.add(ImageLoader.loadFromResource(appInfo.getIconUrl()));
+    images.add(loadApplicationIcon(window, 32, appInfo.getIconUrl()));
     images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
 
     for (int i = 0; i < images.size(); i++) {
