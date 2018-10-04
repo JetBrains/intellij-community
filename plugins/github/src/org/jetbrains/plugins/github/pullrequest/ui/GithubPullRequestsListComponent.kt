@@ -31,11 +31,11 @@ import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
 
-class GithubPullRequestsListComponent internal constructor(project: Project,
-                                                           actionManager: ActionManager,
-                                                           autoPopupController: AutoPopupController,
-                                                           private val loader: GithubPullRequestsLoader,
-                                                           avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GithubPullRequestsListComponent(project: Project,
+                                               actionManager: ActionManager,
+                                               autoPopupController: AutoPopupController,
+                                               private val loader: GithubPullRequestsLoader,
+                                               avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : BorderLayoutPanel(), Disposable, DataProvider {
 
   val selectionModel = GithubPullRequestsListSelectionModel()

@@ -30,12 +30,12 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionException
 
-class GithubPullRequestsDataLoader(private val project: Project,
-                                   private val progressManager: ProgressManager,
-                                   private val git: Git,
-                                   private val requestExecutor: GithubApiRequestExecutor,
-                                   private val repository: GitRepository,
-                                   private val remote: GitRemote) : Disposable {
+internal class GithubPullRequestsDataLoader(private val project: Project,
+                                            private val progressManager: ProgressManager,
+                                            private val git: Git,
+                                            private val requestExecutor: GithubApiRequestExecutor,
+                                            private val repository: GitRepository,
+                                            private val remote: GitRemote) : Disposable {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
