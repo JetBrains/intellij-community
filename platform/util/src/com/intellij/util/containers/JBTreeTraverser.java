@@ -23,7 +23,7 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
 
   @NotNull
   public static <T> JBTreeTraverser<T> from(@NotNull Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
-    return new JBTreeTraverser<T>((Function<T, ? extends Iterable<? extends T>>)treeStructure);
+    return new JBTreeTraverser<T>(treeStructure);
   }
 
   @NotNull

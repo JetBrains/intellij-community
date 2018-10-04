@@ -8,7 +8,6 @@ package com.intellij.ui.speedSearch;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.LightColors;
@@ -76,7 +75,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     myList.addKeyListener(mySpeedSearch);
     int selectedIndex = myList.getSelectedIndex();
     int modelSize = myList.getModel().getSize();
-    myModel = new NameFilteringListModel<T>(myList, (Function<T, String>)namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
+    myModel = new NameFilteringListModel<T>(myList, namer, mySpeedSearch::shouldBeShowing, mySpeedSearch);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }
