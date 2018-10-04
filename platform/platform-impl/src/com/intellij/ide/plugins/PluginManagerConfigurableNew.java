@@ -771,6 +771,9 @@ public class PluginManagerConfigurableNew
     registerCopyProvider(myUpdatesPanel);
 
     Runnable runnable = () -> {
+      PluginManagerMain.LOG.info("=== Before update info BuildNumber.currentVersion(): " + BuildNumber.currentVersion() + " ===");
+      PluginManagerMain.LOG.info("=== Before update info ApplicationInfoImpl.getShadowInstance().getApiVersion(): " +
+                                 ApplicationInfoImpl.getShadowInstance().getApiVersion() + " ===");
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
 
       ApplicationManager.getApplication().invokeLater(() -> {
