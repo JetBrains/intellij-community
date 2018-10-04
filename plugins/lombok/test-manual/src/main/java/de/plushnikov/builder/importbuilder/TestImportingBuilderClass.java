@@ -3,7 +3,7 @@ package de.plushnikov.builder.importbuilder;
 import de.plushnikov.builder.BuilderExample;
 import de.plushnikov.builder.BuilderExample.BuilderExampleBuilder;
 import de.plushnikov.builder.importbuilder.otherpackage.Builder2Import;
-import de.plushnikov.builder.importbuilder.otherpackage.Builder2Import.Builder2ImportBuilder;
+import static de.plushnikov.builder.importbuilder.otherpackage.Builder2Import.Builder2ImportBuilder;
 import de.plushnikov.builder.simple.BuilderSimple;
 import de.plushnikov.builder.simple.BuilderSimple.BuilderSimpleBuilder;
 
