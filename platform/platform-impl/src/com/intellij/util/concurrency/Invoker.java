@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
@@ -139,8 +140,9 @@ public abstract class Invoker implements Disposable {
           task.run();
         }
         else {
+          ObsolescentProgressIndicator indicator = new ObsolescentProgressIndicator(() -> !canInvoke(task, promise), true);
           // try to execute a task until it stops throwing ProcessCanceledException
-          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator)) {
             if (!canInvoke(task, promise)) return; // stop execution of obsolete task
             ProgressIndicatorUtils.yieldToPendingWriteActions();
             if (!canRestart(task, promise, attempt)) return;
@@ -309,6 +311,27 @@ public abstract class Invoker implements Disposable {
     }
     else {
       executor.execute(runnable);
+    }
+  }
+
+  private static final class ObsolescentProgressIndicator extends AbstractProgressIndicatorBase {
+    private final Obsolescent obsolescent;
+    private final boolean reusable;
+
+    private ObsolescentProgressIndicator(@NotNull Obsolescent obsolescent, boolean reusable) {
+      this.obsolescent = obsolescent;
+      this.reusable = reusable;
+    }
+
+    @Override
+    protected boolean isReuseable() {
+      return reusable;
+    }
+
+    @Override
+    public void checkCanceled() {
+      if (!isCanceled() && obsolescent.isObsolete()) cancel();
+      super.checkCanceled();
     }
   }
 }
