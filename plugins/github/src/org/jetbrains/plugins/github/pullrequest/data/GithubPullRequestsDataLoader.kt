@@ -29,7 +29,6 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
-//TODO: cancel loading in removed providers
 class GithubPullRequestsDataLoader(private val project: Project,
                                    private val progressManager: ProgressManager,
                                    private val git: Git,
@@ -37,11 +36,14 @@ class GithubPullRequestsDataLoader(private val project: Project,
                                    private val repository: GitRepository,
                                    private val remote: GitRemote) : Disposable {
 
-  private val progressIndicator = NonReusableEmptyProgressIndicator()
+  private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
-    .removalListener<Long, DataProvider> { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
+    .removalListener<Long, DataTask> {
+      it.value.cancel()
+      invalidationEventDispatcher.multicaster.providerChanged(it.key)
+    }
     .maximumSize(5)
-    .build<Long, DataProvider>()
+    .build<Long, DataTask>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(ProviderChangedListener::class.java)
 
@@ -61,9 +63,12 @@ class GithubPullRequestsDataLoader(private val project: Project,
 
   @CalledInAwt
   fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): DataProvider {
+    if (isDisposed) throw IllegalStateException("Already disposed")
+
     return cache.get(githubSearchedIssue.number) {
-      val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url)
-      progressManager.runProcessWithProgressAsynchronously(task, progressIndicator)
+      val indicator = NonReusableEmptyProgressIndicator()
+      val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url, indicator)
+      progressManager.runProcessWithProgressAsynchronously(task, indicator)
       task
     }
   }
@@ -71,7 +76,7 @@ class GithubPullRequestsDataLoader(private val project: Project,
   fun addProviderChangesListener(listener: ProviderChangedListener, disposable: Disposable) =
     invalidationEventDispatcher.addListener(listener, disposable)
 
-  private inner class DataTask(private val url: String)
+  private inner class DataTask(private val url: String, private val progressIndicator: ProgressIndicator)
     : Task.Backgroundable(project, "Load Pull Request Data", true), DataProvider {
 
     override val detailsRequest = CompletableFuture<GithubPullRequestDetailedWithHtml>()
@@ -138,10 +143,15 @@ class GithubPullRequestsDataLoader(private val project: Project,
       val result = git.getObjectType(repository, commitHash)
       return result.success() && result.outputAsJoinedString == "commit"
     }
+
+    internal fun cancel() {
+      progressIndicator.cancel()
+    }
   }
 
   override fun dispose() {
-    progressIndicator.cancel()
+    invalidateAllData()
+    isDisposed = true
   }
 
   interface DataProvider {
