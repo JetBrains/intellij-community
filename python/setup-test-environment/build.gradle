@@ -51,6 +51,7 @@ envs {
       pythonDirectory = new File(bootstrapDirectory, pythonName)
     }
 
+    print("Python dir: $pythonDirectory\n")
     project.tasks.create("Misc for $pythonName") {
       shouldRunAfter 'build_envs'
 
