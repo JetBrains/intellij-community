@@ -318,7 +318,7 @@ public class PluginManagerConfigurableNew
           return;
         }
         if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
-          myCurrentSearchPanel.controller.showAttributesPopup(null);
+          myCurrentSearchPanel.controller.showAttributesPopup(null, 0);
         }
         else {
           myCurrentSearchPanel.controller.handleShowPopup();
@@ -878,7 +878,7 @@ public class PluginManagerConfigurableNew
 
       @Override
       protected void showPopupForQuery() {
-        String query = mySearchTextField.getText();
+        String query = mySearchTextField.getText().trim();
         if (mySearchTextField.getTextEditor().getCaretPosition() < query.length()) {
           hidePopup();
           return;
@@ -896,8 +896,7 @@ public class PluginManagerConfigurableNew
           myPopup.model.replaceAll(result);
         }
         else {
-          hidePopup();
-          createPopup(new CollectionListModel<>(result), SearchPopup.Type.SearchQuery);
+          createPopup(SearchPopup.Type.SearchQuery, new CollectionListModel<>(result), 0);
         }
 
         myPopup.data = query;
