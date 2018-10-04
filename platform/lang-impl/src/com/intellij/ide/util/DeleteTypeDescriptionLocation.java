@@ -69,7 +69,7 @@ public class DeleteTypeDescriptionLocation extends ElementDescriptionLocation {
         PsiMetaData metaData = element instanceof PsiMetaOwner ? ((PsiMetaOwner)element).getMetaData() : null;
         String typeName = metaData instanceof PsiPresentableMetaData ? ((PsiPresentableMetaData)metaData).getTypeName() : null;
         if (typeName == null) {
-          typeName = LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getType(element);
+          typeName = LanguageFindUsages.getType(element);
         }
         return !plural ? typeName : StringUtil.pluralize(typeName);
       }

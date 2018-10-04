@@ -7,7 +7,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.cacheBuilder.CacheBuilderRegistry;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lang.cacheBuilder.WordsScanner;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -118,8 +117,7 @@ public class ConfigurationFileCrcFactory {
 
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
-      final FindUsagesProvider findUsagesProvider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-      return findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
+      return LanguageFindUsages.getWordsScanner(lang);
     }
     return null;
   }

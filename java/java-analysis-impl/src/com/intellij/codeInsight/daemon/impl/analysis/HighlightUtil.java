@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -1603,7 +1602,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   static String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = LanguageFindUsages.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getType(refElement);
+    String type = LanguageFindUsages.getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }

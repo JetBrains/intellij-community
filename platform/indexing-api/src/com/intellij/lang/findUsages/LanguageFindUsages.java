@@ -16,15 +16,96 @@
 
 package com.intellij.lang.findUsages;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.cacheBuilder.WordsScanner;
+import com.intellij.psi.PsiElement;
+import com.intellij.util.Function;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
  */
 public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
-  public static final LanguageFindUsages INSTANCE = new LanguageFindUsages();
+  public static final LanguageFindUsages INSTANCE = new LanguageFindUsages() {
+    @NotNull
+    @Override
+    public List<FindUsagesProvider> allForLanguage(@NotNull Language language) {
+      List<FindUsagesProvider> result = super.allForLanguage(language);
+      if (result.isEmpty() ) {
+        return Collections.singletonList(getDefaultImplementation());
+      }
+      return result;
+    }
+  };
 
   private LanguageFindUsages() {
     super("com.intellij.lang.findUsagesProvider", new EmptyFindUsagesProvider());
+  }
+
+
+  /**
+   * @return true iff could be found usages by some provider for this element
+   */
+  public static boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
+    for (FindUsagesProvider provider : INSTANCE.allForLanguage(psiElement.getLanguage())) {
+      if (provider.canFindUsagesFor(psiElement)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  public static WordsScanner getWordsScanner(@NotNull Language language) {
+    for (FindUsagesProvider provider : INSTANCE.allForLanguage(language)) {
+      WordsScanner scanner = provider.getWordsScanner();
+      if (scanner != null) {
+        return scanner;
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static String getDescriptiveName(@NotNull PsiElement psiElement) {
+    return getStringProperty(psiElement, provider -> provider.getDescriptiveName(psiElement), "");
+  }
+
+  /**
+   * @return specified by some provider non-empty user-visible type name or empty string
+   */
+  @NotNull
+  public static String getType(@NotNull PsiElement psiElement) {
+    return getStringProperty(psiElement, provider -> provider.getType(psiElement), "");
+  }
+
+  @NotNull
+  public static String getNodeText(@NotNull PsiElement psiElement, boolean useFullName) {
+    return getStringProperty(psiElement, provider -> provider.getNodeText(psiElement, useFullName), "");
+  }
+
+  @Nullable
+  public static String getHelpId(@NotNull PsiElement psiElement) {
+    return getStringProperty(psiElement, provider -> provider.getHelpId(psiElement), null);
+  }
+
+  private static String getStringProperty(@NotNull PsiElement psiElement,
+                                          @NotNull Function<FindUsagesProvider, String> property,
+                                          String def) {
+    Language language = psiElement.getLanguage();
+    List<FindUsagesProvider> providers = INSTANCE.allForLanguage(language);
+    assert !providers.isEmpty() : "Element: " + psiElement + ", language: " + language;
+
+    for (FindUsagesProvider provider : providers) {
+      if (provider.canFindUsagesFor(psiElement)) {
+        return property.fun(provider);
+      }
+    }
+    return def;
   }
 }
