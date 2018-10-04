@@ -103,7 +103,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
+      buildWinZip(jreDirectoryPaths.findAll {it != null}, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
     if (arch != null && customizer.buildZipWithBundledOracleJre &&
@@ -235,7 +235,7 @@ IDS_VM_OPTIONS=$vmOptions
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
+      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
