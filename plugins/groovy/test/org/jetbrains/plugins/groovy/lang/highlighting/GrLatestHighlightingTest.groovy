@@ -527,6 +527,39 @@ new A(foo: {
 '''
   }
 
+  void 'test IDEA-198057-1'() {
+    testHighlighting '''
+Optional<BigDecimal> foo(Optional<String> string) {
+    string.flatMap {
+        try {
+            return Optional.of(new BigDecimal(it))
+        } catch (Exception ignored) {
+            return Optional.<BigDecimal> empty()
+        }
+    }
+}
+'''
+  }
+
+  void 'test IDEA-198057-2'() {
+    testHighlighting '''
+Optional<BigDecimal> foo(Optional<String> string) {
+  string.flatMap {
+     return Optional.<BigDecimal> empty()    
+  }
+}
+'''
+  }
+
+  void 'test IDEA-198057-3'() {
+    testHighlighting '''
+void foo() {
+    def o = Optional.<BigDecimal> empty()
+    Optional<BigDecimal>  d = o  
+}
+'''
+  }
+
 //TODO: IDEA-194192
   void '_test call without reference with generics'() {
     testHighlighting '''

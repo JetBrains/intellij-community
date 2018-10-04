@@ -35,16 +35,25 @@ class MethodResolveResult(
   }
 
   private val applicabilitySubstitutor by lazy {
-    GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
+    if (ref.typeArguments.isNotEmpty()) {
+      methodCandidate.siteSubstitutor
+    }
+    else {
+      GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
+    }
   }
 
   private val fullSubstitutor by lazy {
-    GroovyInferenceSessionBuilder(ref, methodCandidate)
-      .addReturnConstraint()
-      .resolveMode(false)
-      .startFromTop(true)
-      .build()
-      .inferSubst(ref)
+    if (ref.typeArguments.isNotEmpty()) {
+      methodCandidate.siteSubstitutor
+    }
+    else {
+      GroovyInferenceSessionBuilder(ref, methodCandidate)
+        .addReturnConstraint()
+        .resolveMode(false)
+        .startFromTop(true)
+        .build().inferSubst(ref)
+    }
   }
 
   override fun getCandidate(): MethodCandidate? = methodCandidate
