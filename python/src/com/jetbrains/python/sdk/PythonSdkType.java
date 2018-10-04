@@ -363,11 +363,11 @@ public final class PythonSdkType extends SdkType {
       Map<String, String> env = commandLine.getEnvironment();
       String pathValue;
       if (env.containsKey(PATH)) {
-        pathValue = PythonEnvUtil.appendToPathEnvVar(env.get(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(env.get(PATH), virtualenvBin, true);
       }
       else if (passParentEnvironment) {
         // append to PATH
-        pathValue = PythonEnvUtil.appendToPathEnvVar(System.getenv(PATH), virtualenvBin);
+        pathValue = PythonEnvUtil.addToPathEnvVar(System.getenv(PATH), virtualenvBin, true);
       }
       else {
         pathValue = virtualenvBin;
