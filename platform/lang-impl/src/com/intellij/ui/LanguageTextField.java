@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -83,9 +84,12 @@ public class LanguageTextField extends EditorTextField {
     }
   }
 
-  public static Document createDocument(String value, @Nullable Language language, Project project,
+  public static Document createDocument(String value, @Nullable Language language, @Nullable Project project,
                                         @NotNull SimpleDocumentCreator documentCreator) {
     if (language != null) {
+      if (project == null) {
+        project = ProjectManager.getInstance().getDefaultProject();
+      }
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final FileType fileType = language.getAssociatedFileType();
       assert fileType != null;
