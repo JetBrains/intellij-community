@@ -291,10 +291,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (!myDebugProcess.getVirtualMachineProxy().canBeModified()) {
-      setInvalid(requestor, "Not available in read only mode");
-      return;
-    }
+    if (checkReadOnly(requestor)) return;
 
     List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
     if(prepareRequests.isEmpty()) {
@@ -313,6 +310,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   @Override
   public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
+
+    if (checkReadOnly(requestor)) return;
+
     ClassPrepareRequest classPrepareRequest = createClassPrepareRequest(requestor, classOrPatternToBeLoaded);
 
     if (classPrepareRequest != null) {
@@ -414,5 +414,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void clearWarnings() {
     myRequestWarnings.clear();
+  }
+
+  public boolean checkReadOnly(Requestor requestor) {
+    if (!myDebugProcess.getVirtualMachineProxy().canBeModified()) {
+      setInvalid(requestor, "Not available in read only mode");
+      return true;
+    }
+    return false;
   }
 }
