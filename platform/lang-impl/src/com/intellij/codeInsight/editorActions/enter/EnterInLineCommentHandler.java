@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
@@ -31,6 +32,8 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,35 +57,55 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
     int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter);
     if (lineCommentStartOffset >= 0) {
         Document document = editor.getDocument();
-        CharSequence text = document.getText();
+        CharSequence text = document.getImmutableCharSequence();
         final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
           String prefix = commenter.getLineCommentPrefix();
           assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
-          if (!StringUtil.startsWith(text, offset, prefix)) {
-            if (text.charAt(caretOffset) != ' ' && !prefix.endsWith(" ")) {
-              prefix += " ";
-            }
-            document.insertString(caretOffset, prefix);
-          }
-          else {
-            int afterPrefix = offset + prefix.length();
+          String prefixTrimmed = prefix.trim();
+
+          int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
+          boolean onlyCommentInCaretLine = beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n';
+
+          CharSequence spacing = " ";
+          if (StringUtil.startsWith(text, offset, prefix)) {
+            int afterPrefix = offset + prefixTrimmed.length();
             if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
-              document.insertString(afterPrefix, " ");
+              document.insertString(afterPrefix, spacing);
             }
             caretOffsetRef.set(offset);
           }
+          else {
+            if (onlyCommentInCaretLine) {
+              int indentStart = lineCommentStartOffset + prefix.trim().length();
+              int indentEnd = CharArrayUtil.shiftForward(text, indentStart, WHITESPACE);
+              CharSequence currentLineSpacing = text.subSequence(indentStart, indentEnd);
+              if (TodoConfiguration.getInstance().isMultiLine() &&
+                  isTodoText(text, lineCommentStartOffset, caretOffset) &&
+                  isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
+                spacing = currentLineSpacing + " ";
+              }
+              else if (currentLineSpacing.length() > 0) {
+                spacing = currentLineSpacing;
+              }
+              int textStart = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
+              document.deleteString(caretOffset, textStart);
+            }
+            else {
+              if (text.charAt(caretOffset) == ' ') spacing = "";
+            }
+            document.insertString(caretOffset, prefixTrimmed + spacing);
+          }
 
-          int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
-          if (beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n') {
-            caretAdvance.set(prefix.trim().length() + 1);
+          if (onlyCommentInCaretLine) {
+            caretAdvance.set(prefixTrimmed.length() + spacing.length());
           }
           return Result.DefaultForceIndent;
         }
     }
     return Result.Continue;
   }
-  
+
   private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
     if (offset < 1) return -1;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
@@ -90,5 +113,10 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
     String prefix = commenter.getLineCommentPrefix();
     return iterator.getTokenType() == commenter.getLineCommentTokenType() &&
            (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset ? iterator.getStart() : -1;
+  }
+
+  private static boolean isTodoText(@NotNull CharSequence text, int startOffset, int endOffset) {
+    CharSequence input = text.subSequence(startOffset, endOffset);
+    return ContainerUtil.exists(TodoConfiguration.getInstance().getTodoPatterns(), pattern -> pattern.getPattern().matcher(input).find());
   }
 }
