@@ -1802,6 +1802,16 @@ public class JBUI {
       }
     }
 
+    public static class Advertiser {
+      public static Color foreground() {
+        return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
+      }
+
+      public static Color background() {
+        return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
+      }
+    }
+
     public static class Validator {
       public static Color errorBorderColor() {
         return JBColor.namedColor("ValidationTooltip.errorBorderColor", 0xE0A8A9);
