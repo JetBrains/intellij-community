@@ -48,7 +48,6 @@ class MPSProperties extends ProductProperties {
                 withProjectLibrary("JUnit4")
                 withProjectLibrary("http-client-3.1")
                 withProjectLibrary("pty4j") // for terminal plugin
-                withProjectLibrary("purejavacomm") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
                 excludeFromModule("intellij.java.resources", "META-INF/IdeaPlugin.xml")
