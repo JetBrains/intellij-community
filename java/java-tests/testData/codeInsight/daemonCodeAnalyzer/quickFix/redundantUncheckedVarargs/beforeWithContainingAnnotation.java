@@ -7,10 +7,11 @@ public class Test {
     return null;
   }
 
+   @SuppressWarnings("unchecked")
   void foo() {
-      List<ArrayList<String>> list = foo(new ArrayList<String>());
+    //noinspection unche<caret>cked
+    List<ArrayList<String>> list = foo(new ArrayList<String>());
 
-    //noinspection unchecked
     ArrayList<String> list = new ArrayList();
   }
 }
