@@ -9,13 +9,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +25,8 @@ import java.util.List;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
+import static com.intellij.psi.util.PsiTreeUtil.*;
+import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
 
 /**
  * It's called "Java" inspection because the name without "Java" already exists.
@@ -106,8 +107,8 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       String variableName = variable.getName();
       PsiExpression rExpression = assignment.getRExpression();
       if (variableName != null && rExpression != null) {
-        for (PsiLocalVariable aVar = variable; aVar != null; aVar = PsiTreeUtil.getNextSiblingOfType(aVar, PsiLocalVariable.class)) {
-          if (VariableAccessUtils.variableIsUsed(aVar, rExpression)) {
+        for (PsiLocalVariable aVar = variable; aVar != null; aVar = getNextSiblingOfType(aVar, PsiLocalVariable.class)) {
+          if (variableIsUsed(aVar, rExpression)) {
             return null;
           }
         }
@@ -123,12 +124,25 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     if (lExpression instanceof PsiReferenceExpression) {
       PsiReferenceExpression reference = (PsiReferenceExpression)lExpression;
       if (!reference.isQualified()) { // optimization: locals aren't qualified
-        PsiExpressionStatement statement = ObjectUtils.tryCast(assignmentExpression.getParent(), PsiExpressionStatement.class);
-        PsiElement candidate = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
-        if (candidate instanceof PsiDeclarationStatement) {
-          PsiElement resolved = reference.resolve();
-          if (resolved instanceof PsiLocalVariable && resolved.getParent() == candidate) {
-            return (PsiLocalVariable)resolved;
+        PsiElement resolved = reference.resolve();
+        if (resolved instanceof PsiLocalVariable) {
+          PsiLocalVariable variable = (PsiLocalVariable)resolved;
+          PsiDeclarationStatement declarationStatement = ObjectUtils.tryCast(variable.getParent(), PsiDeclarationStatement.class);
+          PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(assignmentExpression.getParent(), PsiExpressionStatement.class);
+          if (declarationStatement != null && declarationStatement.getParent() instanceof PsiCodeBlock &&
+              expressionStatement != null && expressionStatement.getParent() == declarationStatement.getParent()) {
+            PsiElement candidate = skipWhitespacesAndCommentsBackward(expressionStatement);
+            if (candidate == declarationStatement) {
+              return variable;
+            }
+            if (canRemoveDeclaration(variable)) {
+              for (; candidate != null && !variableIsUsed(variable, candidate);
+                   candidate = skipWhitespacesAndCommentsBackward(candidate)) {
+                if (candidate == declarationStatement) {
+                  return variable;
+                }
+              }
+            }
           }
         }
       }
@@ -138,12 +152,28 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
   @Nullable
   private static PsiAssignmentExpression findAssignment(@NotNull PsiVariable variable) {
-    return findNextAssignment(variable.getParent(), variable);
+    PsiElement declaration = variable.getParent();
+
+    PsiElement candidate = skipWhitespacesAndCommentsForward(declaration);
+    PsiAssignmentExpression assignment = findAssignment(candidate, variable);
+    if (assignment != null) {
+      return assignment;
+    }
+    if (canRemoveDeclaration(variable)) {
+      for (; candidate != null && !variableIsUsed(variable, candidate);
+           candidate = skipWhitespacesAndCommentsForward(candidate)) {
+        assignment = findAssignment(candidate, variable);
+        if (assignment != null) {
+          return assignment;
+        }
+      }
+    }
+    return null;
   }
 
+  @Contract("null,_ -> null")
   @Nullable
-  private static PsiAssignmentExpression findNextAssignment(@Nullable PsiElement element, @NotNull PsiVariable variable) {
-    PsiElement candidate = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
+  private static PsiAssignmentExpression findAssignment(@Nullable PsiElement candidate, @NotNull PsiVariable variable) {
     if (candidate instanceof PsiExpressionStatement) {
       PsiExpression expression = ((PsiExpressionStatement)candidate).getExpression();
       if (expression instanceof PsiAssignmentExpression) {
@@ -154,6 +184,17 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiAssignmentExpression findNextAssignment(@Nullable PsiElement element, @NotNull PsiVariable variable) {
+    PsiElement candidate = skipWhitespacesAndCommentsForward(element);
+    return findAssignment(candidate, variable);
+  }
+
+  private static boolean canRemoveDeclaration(@NotNull PsiVariable variable) {
+    PsiExpression initializer = variable.getInitializer();
+    return initializer == null || !SideEffectChecker.checkSideEffects(initializer, null);
   }
 
 
@@ -196,7 +237,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         PsiElement declaration = replaceWithDeclaration(context, elementToReplace, initializerExpression);
         restoreComments(commentTexts, reverseTrailingCommentTexts, declaration);
 
-        new CommentTracker().deleteAndRestoreComments(context.myVariable);
+        deleteAndRestoreComments(context.myVariable, declaration);
       }
     }
 
@@ -216,7 +257,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
 
     @NotNull
     public List<String> collectCommentTexts(@NotNull PsiElement element) {
-      return ContainerUtil.map(PsiTreeUtil.collectElementsOfType(element, PsiComment.class), PsiElement::getText);
+      return ContainerUtil.map(collectElementsOfType(element, PsiComment.class), PsiElement::getText);
     }
 
     @NotNull
@@ -257,6 +298,18 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           parent.addAfter(comment, target); // adding immediately after the target restores the original order
         }
       }
+    }
+
+    public static void deleteAndRestoreComments(@NotNull PsiElement elementToDelete, @NotNull PsiElement anchor) {
+      assert elementToDelete != anchor : "can't delete anchor";
+      CommentTracker tracker = new CommentTracker();
+      tracker.delete(elementToDelete);
+      for (PsiElement element = skipWhitespacesBackward(anchor);
+           element instanceof PsiComment;
+           element = skipWhitespacesBackward(element)) {
+        anchor = element;
+      }
+      tracker.insertCommentsBefore(anchor);
     }
   }
 
