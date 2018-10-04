@@ -1,29 +1,12 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.vcs.log.Hash;
-import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
 import gnu.trove.THashMap;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,8 +125,8 @@ public class GitRepoInfo {
     if (myCurrentBranch != null ? !myCurrentBranch.equals(info.myCurrentBranch) : info.myCurrentBranch != null) return false;
     if (!myRemotes.equals(info.myRemotes)) return false;
     if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
-    if (!areEqual(myLocalBranches, info.myLocalBranches)) return false;
-    if (!areEqual(myRemoteBranches, info.myRemoteBranches)) return false;
+    if (!myLocalBranches.equals(info.myLocalBranches)) return false;
+    if (!myRemoteBranches.equals(info.myRemoteBranches)) return false;
     if (!mySubmodules.equals(info.mySubmodules)) return false;
     if (!myHooksInfo.equals(info.myHooksInfo)) return false;
     if (myIsShallow != info.myIsShallow) return false;
@@ -170,34 +153,5 @@ public class GitRepoInfo {
   public String toString() {
     return String.format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s, submodules=%s, hooks=%s}",
                          myCurrentBranch, myRemotes, myLocalBranches, myRemoteBranches, myBranchTrackInfos, mySubmodules, myHooksInfo);
-  }
-
-  private static <T extends GitBranch> boolean areEqual(Map<T, Hash> c1, Map<T, Hash> c2) {
-    // GitBranch has perverted equals contract (see the comment there)
-    // until GitBranch is created only from a single place with correctly defined Hash, we can't change its equals
-    THashSet<Map.Entry<? extends GitBranch, Hash>> set1 =
-      new THashSet<>(c1.entrySet(), new BranchesComparingStrategy());
-    THashSet<Map.Entry<? extends GitBranch, Hash>> set2 =
-      new THashSet<>(c2.entrySet(), new BranchesComparingStrategy());
-    return set1.equals(set2);
-  }
-
-  private static class BranchesComparingStrategy implements TObjectHashingStrategy<Map.Entry<? extends GitBranch, Hash>> {
-
-    @Override
-    public int computeHashCode(@NotNull Map.Entry<? extends GitBranch, Hash> branchEntry) {
-      return 31 * branchEntry.getKey().getName().hashCode() + branchEntry.getValue().hashCode();
-    }
-
-    @Override
-    public boolean equals(@NotNull Map.Entry<? extends GitBranch, Hash> b1, @NotNull Map.Entry<? extends GitBranch, Hash> b2) {
-      if (b1 == b2) {
-        return true;
-      }
-      if (b1.getClass() != b2.getClass()) {
-        return false;
-      }
-      return b1.getKey().getName().equals(b2.getKey().getName()) && b1.getValue().equals(b2.getValue());
-    }
   }
 }
