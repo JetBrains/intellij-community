@@ -33,7 +33,7 @@ public class ConvertStringLiteralToRawAction implements IntentionAction, LowPrio
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (PsiUtil.isJavaToken(element, JavaTokenType.STRING_LITERAL) && 
-        PsiUtil.getLanguageLevel(file) == LanguageLevel.JDK_X) {
+        PsiUtil.getLanguageLevel(file) == LanguageLevel.JDK_12_PREVIEW) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiLiteralExpressionImpl) {
         String text = ((PsiLiteralExpressionImpl)parent).getInnerText();
