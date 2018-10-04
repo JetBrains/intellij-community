@@ -1,157 +1,92 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.repo;
+package git4idea.repo
 
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.vcs.log.Hash;
-import git4idea.GitLocalBranch;
-import git4idea.GitReference;
-import git4idea.GitRemoteBranch;
-import gnu.trove.THashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.dvcs.repo.Repository
+import com.intellij.vcs.log.Hash
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import gnu.trove.THashMap
 
-import java.util.*;
+import java.util.*
 
-public class GitRepoInfo {
+class GitRepoInfo(val currentBranch: GitLocalBranch?,
+                  val currentRevision: String?,
+                  val state: Repository.State,
+                  remotes: Collection<GitRemote>,
+                  localBranches: Map<GitLocalBranch, Hash>,
+                  remoteBranches: Map<GitRemoteBranch, Hash>,
+                  branchTrackInfos: Collection<GitBranchTrackInfo>,
+                  val submodules: Collection<GitSubmoduleInfo>,
+                  val hooksInfo: GitHooksInfo,
+                  val isShallow: Boolean) {
+  private val myRemotes: Set<GitRemote>
+  val localBranchesWithHashes: Map<GitLocalBranch, Hash>
+  val remoteBranchesWithHashes: Map<GitRemoteBranch, Hash>
+  private val myBranchTrackInfos: Set<GitBranchTrackInfo>
+  private val myBranchTrackInfosMap: MutableMap<String, GitBranchTrackInfo>
 
-  @Nullable private final GitLocalBranch myCurrentBranch;
-  @Nullable private final String myCurrentRevision;
-  @NotNull private final Repository.State myState;
-  @NotNull private final Set<GitRemote> myRemotes;
-  @NotNull private final Map<GitLocalBranch, Hash> myLocalBranches;
-  @NotNull private final Map<GitRemoteBranch, Hash> myRemoteBranches;
-  @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
-  @NotNull private final Map<String, GitBranchTrackInfo> myBranchTrackInfosMap;
-  @NotNull private final Collection<GitSubmoduleInfo> mySubmodules;
-  @NotNull private final GitHooksInfo myHooksInfo;
-  private final boolean myIsShallow;
+  val remotes: Collection<GitRemote>
+    get() = myRemotes
 
-  public GitRepoInfo(@Nullable GitLocalBranch currentBranch,
-                     @Nullable String currentRevision,
-                     @NotNull Repository.State state,
-                     @NotNull Collection<GitRemote> remotes,
-                     @NotNull Map<GitLocalBranch, Hash> localBranches,
-                     @NotNull Map<GitRemoteBranch, Hash> remoteBranches,
-                     @NotNull Collection<GitBranchTrackInfo> branchTrackInfos,
-                     @NotNull Collection<GitSubmoduleInfo> submodules,
-                     @NotNull GitHooksInfo hooksInfo,
-                     boolean isShallow) {
-    myCurrentBranch = currentBranch;
-    myCurrentRevision = currentRevision;
-    myState = state;
-    myRemotes = new LinkedHashSet<>(remotes);
-    myLocalBranches = new HashMap<>(localBranches);
-    myRemoteBranches = new HashMap<>(remoteBranches);
-    myBranchTrackInfos = new LinkedHashSet<>(branchTrackInfos);
-    mySubmodules = submodules;
-    myHooksInfo = hooksInfo;
-    myIsShallow = isShallow;
+  val remoteBranches: Collection<GitRemoteBranch>
+    @Deprecated("")
+    get() = remoteBranchesWithHashes.keys
 
-    myBranchTrackInfosMap = new THashMap<>(GitReference.BRANCH_NAME_HASHING_STRATEGY);
-    for (GitBranchTrackInfo info : branchTrackInfos) {
-      myBranchTrackInfosMap.put(info.getLocalBranch().getName(), info);
+  val branchTrackInfos: Collection<GitBranchTrackInfo>
+    get() = myBranchTrackInfos
+
+  val branchTrackInfosMap: Map<String, GitBranchTrackInfo>
+    get() = myBranchTrackInfosMap
+
+  init {
+    myRemotes = LinkedHashSet(remotes)
+    localBranchesWithHashes = HashMap(localBranches)
+    remoteBranchesWithHashes = HashMap(remoteBranches)
+    myBranchTrackInfos = LinkedHashSet(branchTrackInfos)
+
+    myBranchTrackInfosMap = THashMap(GitReference.BRANCH_NAME_HASHING_STRATEGY)
+    for (info in branchTrackInfos) {
+      myBranchTrackInfosMap[info.localBranch.name] = info
     }
   }
 
-  @Nullable
-  public GitLocalBranch getCurrentBranch() {
-    return myCurrentBranch;
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    val info = o as GitRepoInfo?
+
+    if (state !== info!!.state) return false
+    if (if (currentRevision != null) currentRevision != info!!.currentRevision else info!!.currentRevision != null) return false
+    if (if (currentBranch != null) currentBranch != info.currentBranch else info.currentBranch != null) return false
+    if (myRemotes != info.myRemotes) return false
+    if (myBranchTrackInfos != info.myBranchTrackInfos) return false
+    if (localBranchesWithHashes != info.localBranchesWithHashes) return false
+    if (remoteBranchesWithHashes != info.remoteBranchesWithHashes) return false
+    if (submodules != info.submodules) return false
+    if (hooksInfo != info.hooksInfo) return false
+    return if (isShallow != info.isShallow) false else true
+
   }
 
-  @NotNull
-  public Collection<GitRemote> getRemotes() {
-    return myRemotes;
+  override fun hashCode(): Int {
+    var result = currentBranch?.hashCode() ?: 0
+    result = 31 * result + (currentRevision?.hashCode() ?: 0)
+    result = 31 * result + state.hashCode()
+    result = 31 * result + myRemotes.hashCode()
+    result = 31 * result + localBranchesWithHashes.hashCode()
+    result = 31 * result + remoteBranchesWithHashes.hashCode()
+    result = 31 * result + myBranchTrackInfos.hashCode()
+    result = 31 * result + submodules.hashCode()
+    result = 31 * result + hooksInfo.hashCode()
+    result = 31 * result + if (isShallow) 1 else 0
+    return result
   }
 
-  @NotNull
-  public Map<GitLocalBranch, Hash> getLocalBranchesWithHashes() {
-    return myLocalBranches;
-  }
-
-  @NotNull
-  public Map<GitRemoteBranch, Hash> getRemoteBranchesWithHashes() {
-    return myRemoteBranches;
-  }
-
-  @NotNull
-  @Deprecated
-  public Collection<GitRemoteBranch> getRemoteBranches() {
-    return myRemoteBranches.keySet();
-  }
-
-  @NotNull
-  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
-    return myBranchTrackInfos;
-  }
-
-  @NotNull
-  public Map<String, GitBranchTrackInfo> getBranchTrackInfosMap() {
-    return myBranchTrackInfosMap;
-  }
-
-  @Nullable
-  public String getCurrentRevision() {
-    return myCurrentRevision;
-  }
-
-  @NotNull
-  public Repository.State getState() {
-    return myState;
-  }
-
-  @NotNull
-  public Collection<GitSubmoduleInfo> getSubmodules() {
-    return mySubmodules;
-  }
-
-  @NotNull
-  public GitHooksInfo getHooksInfo() {
-    return myHooksInfo;
-  }
-
-  public boolean isShallow() {
-    return myIsShallow;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    GitRepoInfo info = (GitRepoInfo)o;
-
-    if (myState != info.myState) return false;
-    if (myCurrentRevision != null ? !myCurrentRevision.equals(info.myCurrentRevision) : info.myCurrentRevision != null) return false;
-    if (myCurrentBranch != null ? !myCurrentBranch.equals(info.myCurrentBranch) : info.myCurrentBranch != null) return false;
-    if (!myRemotes.equals(info.myRemotes)) return false;
-    if (!myBranchTrackInfos.equals(info.myBranchTrackInfos)) return false;
-    if (!myLocalBranches.equals(info.myLocalBranches)) return false;
-    if (!myRemoteBranches.equals(info.myRemoteBranches)) return false;
-    if (!mySubmodules.equals(info.mySubmodules)) return false;
-    if (!myHooksInfo.equals(info.myHooksInfo)) return false;
-    if (myIsShallow != info.myIsShallow) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myCurrentBranch != null ? myCurrentBranch.hashCode() : 0;
-    result = 31 * result + (myCurrentRevision != null ? myCurrentRevision.hashCode() : 0);
-    result = 31 * result + myState.hashCode();
-    result = 31 * result + myRemotes.hashCode();
-    result = 31 * result + myLocalBranches.hashCode();
-    result = 31 * result + myRemoteBranches.hashCode();
-    result = 31 * result + myBranchTrackInfos.hashCode();
-    result = 31 * result + mySubmodules.hashCode();
-    result = 31 * result + myHooksInfo.hashCode();
-    result = 31 * result + (myIsShallow ? 1 : 0);
-    return result;
-  }
-
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return String.format("GitRepoInfo{current=%s, remotes=%s, localBranches=%s, remoteBranches=%s, trackInfos=%s, submodules=%s, hooks=%s}",
-                         myCurrentBranch, myRemotes, myLocalBranches, myRemoteBranches, myBranchTrackInfos, mySubmodules, myHooksInfo);
+                         currentBranch, myRemotes, localBranchesWithHashes, remoteBranchesWithHashes, myBranchTrackInfos, submodules,
+                         hooksInfo)
   }
 }
