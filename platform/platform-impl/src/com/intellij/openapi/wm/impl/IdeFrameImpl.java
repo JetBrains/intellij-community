@@ -541,7 +541,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    //noinspection Since15
     super.paint(g);
     if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
       final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());

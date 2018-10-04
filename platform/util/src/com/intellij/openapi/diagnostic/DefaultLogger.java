@@ -69,7 +69,6 @@ public class DefaultLogger extends Logger {
   public void setLevel(Level level) { }
 
   public static String attachmentsToString(@Nullable Throwable t) {
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
     if (rootCause instanceof ExceptionWithAttachments) {
       return "\n\nAttachments:\n" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(), ATTACHMENT_TO_STRING, "\n----\n");

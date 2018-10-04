@@ -40,7 +40,6 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
 public final class IconLoader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.IconLoader");
   private static final String LAF_PREFIX = "/com/intellij/ide/ui/laf/icons/";
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final ConcurrentMap<URL, CachedImageIcon> ourIconsCache = ContainerUtil.newConcurrentMap(100, 0.9f, 2);
   /**
    * This cache contains mapping between icons and disabled icons.

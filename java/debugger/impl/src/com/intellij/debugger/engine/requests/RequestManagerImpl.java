@@ -276,7 +276,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         // request is already deleted
       }
       catch (InternalException e) {
-        //noinspection StatementWithEmptyBody
         if (e.errorCode() == JvmtiError.NOT_FOUND) {
           //event request not found
           //there could be no requests after hotswap

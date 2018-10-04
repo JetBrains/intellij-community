@@ -390,43 +390,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     }, tooltip.getDismissDelay());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
     return JBColor.link();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
     Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
     return new JBColor(Gray._160, new Color(91, 93, 95));
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
   }

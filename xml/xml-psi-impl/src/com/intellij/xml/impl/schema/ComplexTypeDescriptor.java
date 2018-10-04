@@ -85,7 +85,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
     ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
       THashSet<Object> dependencies = new THashSet<>();

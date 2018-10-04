@@ -435,7 +435,6 @@ public class TreeState implements JDOMExternalizable {
    * Not that the specified consumer must resolve async promise at the end.
    */
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void expand(@NotNull JTree tree, @NotNull Consumer<? super AsyncPromise<Void>> consumer) {
     Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
     LOG.debug("EXPANDING: ", expanding);

@@ -138,7 +138,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  @SuppressWarnings("MethodMayBeStatic") //for Kotlin
+  //for Kotlin
   protected boolean showAllTemplates() {
     return shouldShowAllTemplates();
   }

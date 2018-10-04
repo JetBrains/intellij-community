@@ -162,7 +162,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (value instanceof PsiClassObjectAccessExpression) {
           PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiClassObjectAccessExpression)value).getOperand().getType());
           if (psiClass != null && !hasStringConstructor(psiClass)) {
-            //noinspection DialogTitleCapitalization
             holder.registerProblem(value,
                                    "Custom exception class should have a constructor with a single message parameter of String type",
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

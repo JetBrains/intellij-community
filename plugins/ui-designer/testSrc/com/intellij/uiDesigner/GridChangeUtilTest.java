@@ -193,7 +193,6 @@ public final class GridChangeUtilTest extends TestCase {
     assertComponentCellAndSpan(grid, 5, 0, 1);
   }
 
-  @SuppressWarnings({"PointlessArithmeticExpression"})
   public void test_insert_first() {
     final RadContainer grid = SampleGrid.create();
     GridChangeUtil.insertRowOrColumn(grid, 0, false, true);

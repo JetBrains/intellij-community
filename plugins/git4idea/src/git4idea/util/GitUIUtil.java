@@ -208,7 +208,6 @@ public class GitUIUtil {
                                          final Collection<? extends VcsException> exs,
                                          @NonNls @NotNull final String operation) {
     if (exs.size() == 1) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
     else if (exs.size() > 1) {

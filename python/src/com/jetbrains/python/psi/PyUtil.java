@@ -711,7 +711,6 @@ public class PyUtil {
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
   @Nullable
-  @SuppressWarnings("unchecked")
   public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
     return ObjectUtils.tryCast(expression, clazz);
   }

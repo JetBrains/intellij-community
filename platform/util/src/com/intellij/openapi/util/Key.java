@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();

@@ -34,7 +34,6 @@ public class TemplateVariable {
   /**
    * Serialization constructor
    */
-  @SuppressWarnings("unusedDesclaration")
   public TemplateVariable() {
     // empty
   }

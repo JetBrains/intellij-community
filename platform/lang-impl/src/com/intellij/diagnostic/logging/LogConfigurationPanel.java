@@ -57,7 +57,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myFilesTable.getEmptyText().setText(DiagnosticBundle.message("log.monitor.no.files"));
 
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
-    @SuppressWarnings("ConstantConditions")
     final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
 
     int preferredWidth = fontMetrics.stringWidth(IS_SHOW.getName()) + 20;
@@ -305,7 +304,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
                                                        int column) {
           final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           setText(((LogFileOptions)value).getName());
-          //noinspection ConstantConditions
           setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
           setBorder(null);
           return renderer;

@@ -19,7 +19,10 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +93,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
 
@@ -104,7 +106,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
 

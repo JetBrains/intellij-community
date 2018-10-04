@@ -193,7 +193,6 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private static boolean clearReadOnly(final Project project, final File dstFile) {
-    //noinspection EmptyCatchBlock
     final URL url;
     try {
       url = dstFile.toURL();

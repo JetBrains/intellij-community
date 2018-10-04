@@ -47,7 +47,6 @@ public class DictionarySuggestionProvider extends PreferrableNameSuggestionProvi
     }
     String text = nameSuggestionContext.getText();
     if (nameSuggestionContext instanceof PsiNamedElement) {
-      //noinspection ConstantConditions
       text = ((PsiNamedElement)element).getName();
     }
     if (text == null) {

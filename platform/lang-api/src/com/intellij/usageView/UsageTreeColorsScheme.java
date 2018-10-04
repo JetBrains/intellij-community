@@ -24,7 +24,6 @@ import com.intellij.util.ui.UIUtil;
 public class UsageTreeColorsScheme {
 
   /**
-   * @noinspection UnusedParameters
    */
   public UsageTreeColorsScheme(EditorColorsManager editorColorsManager) {
   }

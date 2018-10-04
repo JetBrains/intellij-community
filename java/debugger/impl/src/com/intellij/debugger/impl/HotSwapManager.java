@@ -84,7 +84,6 @@ public class HotSwapManager {
       if (SystemInfo.isFileSystemCaseSensitive? StringUtil.endsWith(filePath, CLASS_EXTENSION) : StringUtil.endsWithIgnoreCase(filePath, CLASS_EXTENSION)) {
         if (file.lastModified() > timeStamp) {
           progress.setText(DebuggerBundle.message("progress.hotswap.scanning.path", filePath));
-          //noinspection HardCodedStringLiteral
           final String qualifiedName = filePath.substring(rootPath.length(), filePath.length() - CLASS_EXTENSION.length()).replace('/', '.');
           container.put(qualifiedName, new HotSwapFile(file));
         }

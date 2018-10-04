@@ -69,7 +69,6 @@ public class DefaultArrangementEntryMatcherSerializer {
     myMixin = mixin;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public <T extends ArrangementEntryMatcher> Element serialize(@NotNull T matcher) {
     if (matcher instanceof StdArrangementEntryMatcher) {
@@ -89,7 +88,6 @@ public class DefaultArrangementEntryMatcherSerializer {
     return visitor.result;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public StdArrangementEntryMatcher deserialize(@NotNull Element matcherElement) {
     ArrangementMatchCondition condition = deserializeCondition(matcherElement);

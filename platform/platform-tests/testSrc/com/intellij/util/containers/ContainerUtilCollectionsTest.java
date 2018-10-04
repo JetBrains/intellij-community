@@ -415,7 +415,6 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkValueTossedEventually(map);
   }
 
-  @SuppressWarnings("FieldCanBeLocal")
   private volatile Object strong;
 
   @Test

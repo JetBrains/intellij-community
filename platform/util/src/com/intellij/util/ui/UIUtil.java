@@ -1578,7 +1578,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
     return false;
   }
@@ -1589,7 +1588,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1618,7 +1616,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
@@ -1629,12 +1626,10 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
@@ -3443,7 +3438,6 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();

@@ -292,7 +292,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param wizardContext             current wizard context
    * @throws ConfigurationException   if external project is not defined and can't be constructed
    */
-  @SuppressWarnings("unchecked")
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
     final String externalSystemName = myExternalSystemId.getReadableName();
     File projectFile = getProjectFile();

@@ -102,7 +102,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JBRadioButton myUseWrapperWithVerificationButton;
-  @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
+  // Used implicitly by reflection at disposeUIResources() and showUi()
   @Nullable
   private JBLabel myUseWrapperVerificationLabel;
   private boolean dropCustomizableWrapperButton;

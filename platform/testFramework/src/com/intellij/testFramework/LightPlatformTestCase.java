@@ -363,7 +363,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return LocalInspectionTool.EMPTY_ARRAY;
   }
 
-  @SuppressWarnings("TearDownDoesntCallSuperTearDown")
   @Override
   protected void tearDown() throws Exception {
     Project project = getProject();
@@ -557,7 +556,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       tearDown();
       //}
       //catch(Throwable th){
-      //  noinspection CallToPrintStackTrace
       //th.printStackTrace();
       //}
     }

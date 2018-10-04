@@ -115,7 +115,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     else if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
     else {
@@ -284,7 +283,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
-    //noinspection HardCodedStringLiteral
     final Field field = classType.fieldByName("name");
     if (field == null) {
       return null;

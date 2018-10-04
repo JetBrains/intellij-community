@@ -32,7 +32,6 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     super(text, description, icon);
   }
 
-  @SuppressWarnings("NullableProblems")
   public AnActionButton(String text, Icon icon) {
     this(text, null, icon);
   }

@@ -437,7 +437,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
     //LOG.assertTrue(thread.isSuspended());
     preprocessEvent(suspendContext, thread);
 
-    //noinspection HardCodedStringLiteral
     RequestHint hint = getRequestHint(event);
 
     deleteStepRequests(event.thread());

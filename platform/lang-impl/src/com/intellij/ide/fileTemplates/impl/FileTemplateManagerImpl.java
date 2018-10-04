@@ -253,7 +253,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @Override
   @NotNull
   public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
-    //noinspection HardCodedStringLiteral
     for(InternalTemplateBean bean: InternalTemplateBean.EP_NAME.getExtensionList()) {
       if (bean.name.equals(templateName) && bean.subject != null) {
         return bean.subject;

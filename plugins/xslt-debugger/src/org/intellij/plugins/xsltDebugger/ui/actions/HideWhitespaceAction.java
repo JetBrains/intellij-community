@@ -23,7 +23,6 @@ import icons.XsltDebuggerIcons;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class HideWhitespaceAction extends ToggleAction {
   private final Tree myStructureTree;
   private final GeneratedStructureModel myEventModel;

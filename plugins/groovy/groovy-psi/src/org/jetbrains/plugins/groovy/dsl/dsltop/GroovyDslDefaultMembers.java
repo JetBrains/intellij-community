@@ -39,7 +39,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 /**
  * @author ilyas
  */
-@SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+@SuppressWarnings({"UnusedDeclaration"})
 public class GroovyDslDefaultMembers implements GdslMembersProvider {
 
   /**

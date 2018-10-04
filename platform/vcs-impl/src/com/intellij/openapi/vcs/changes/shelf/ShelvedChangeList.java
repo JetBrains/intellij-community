@@ -99,7 +99,6 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
     myRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_RECYCLED_CHANGELIST));
     myToDelete = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_TOBE_DELETED_CHANGELIST));
-    //noinspection unchecked
     final List<Element> children = element.getChildren(ELEMENT_BINARY);
     myBinaryFiles = new ArrayList<>(children.size());
     for (Element child : children) {

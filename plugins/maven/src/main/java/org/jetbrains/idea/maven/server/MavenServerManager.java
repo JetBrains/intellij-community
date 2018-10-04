@@ -152,7 +152,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     shutdown(false);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   @NotNull
   protected synchronized MavenServer create() throws RemoteException {

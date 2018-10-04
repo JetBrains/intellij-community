@@ -178,7 +178,7 @@ public class ImplicitTypeConversion extends XPathInspection {
     }
 
     public class Options extends JPanel {
-        @SuppressWarnings({ "UNUSED_SYMBOL", "FieldCanBeLocal" })
+        @SuppressWarnings({ "UNUSED_SYMBOL"})
         private JPanel root;
         private JCheckBox NS_S;
         private JCheckBox NS_N;

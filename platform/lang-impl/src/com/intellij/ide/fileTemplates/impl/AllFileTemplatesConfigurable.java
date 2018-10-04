@@ -644,7 +644,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     initLists();
   }
 
-  @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
   private void updateCache() {
     if (isSchemeModified()) {
       if (!myChangesCache.containsKey(myScheme)) {

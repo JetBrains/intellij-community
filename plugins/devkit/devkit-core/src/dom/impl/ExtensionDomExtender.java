@@ -72,7 +72,6 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     Set<IdeaPlugin> result = ContainerUtil.newHashSet();
     MultiMap<String, IdeaPlugin> byId = getPluginMap(ideaPlugin.getManager().getProject());
     collectDependencies(ideaPlugin, result, byId);
-    //noinspection NullableProblems
     result.addAll(byId.get(null));
     return result;
   }

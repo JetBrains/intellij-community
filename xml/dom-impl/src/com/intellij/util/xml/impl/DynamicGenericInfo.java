@@ -63,7 +63,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return ourGuard.doPreventingRecursion(myInvocationHandler, false, () -> {
       DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
-      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (myInvocationHandler) {
         if (!myInitialized) {
           if (registrar != null) {

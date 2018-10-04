@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
 
@@ -1261,7 +1261,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
     return new Iterable<String>() {
@@ -1290,7 +1289,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static Iterable<String> tokenize(@NotNull final StringTokenizer tokenizer) {
     return new Iterable<String>() {
       @NotNull
@@ -2536,7 +2534,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int getOccurrenceCount(@NotNull String text, final char c) {
     int res = 0;
     int i = 0;
@@ -2554,7 +2551,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int getOccurrenceCount(@NotNull String text, @NotNull String s) {
     int res = 0;
     int i = 0;

@@ -181,7 +181,6 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @Override
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
 
@@ -189,7 +188,6 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     init(startOffset, endOffset, reader, initialState);
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void init(int startOffset, int endOffset, Reader reader, int initialState) {
     myEndOffset = endOffset;
     myLengthMap = new TIntIntHashMap();

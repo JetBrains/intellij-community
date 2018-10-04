@@ -303,7 +303,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           doSaveDocument(document, isExplicit);
         }
         catch (IOException e) {
-          //noinspection ThrowableResultOfMethodCallIgnored
           failedToSave.put(document, e);
         }
         catch (SaveVetoException e) {

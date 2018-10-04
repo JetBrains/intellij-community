@@ -129,7 +129,6 @@ public class JsonSchemaObject {
                                                  @NotNull JsonSchemaType otherType) {
     if (otherType == JsonSchemaType._any) return selfType;
     if (selfType == JsonSchemaType._any) return otherType;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (selfType) {
       case _string:
         return otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;

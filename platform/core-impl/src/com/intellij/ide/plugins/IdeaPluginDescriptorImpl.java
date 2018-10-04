@@ -173,7 +173,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
-        //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {

@@ -166,7 +166,6 @@ public class DfaConstValue extends DfaValue {
     myConstant = constant;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     if (myValue == null) return "null";
     return myValue.toString();

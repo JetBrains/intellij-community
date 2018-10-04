@@ -28,7 +28,6 @@ public abstract class AbstractExternalEntityData implements ExternalEntityData {
     return myOwner.hashCode();
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
     if (obj == this) {

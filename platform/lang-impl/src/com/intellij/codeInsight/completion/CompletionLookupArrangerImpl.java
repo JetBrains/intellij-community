@@ -47,7 +47,6 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
 
   @Nullable private CompletionLocation myLocation;
   private final CompletionProcessEx myProcess;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<>();
   private final Key<CompletionSorterImpl> mySorterKey = Key.create("SORTER_KEY");
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();

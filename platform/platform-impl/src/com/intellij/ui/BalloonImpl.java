@@ -1041,7 +1041,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     myShowPointer = show;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public Icon getCloseButton() {
     return AllIcons.General.BalloonClose;
   }
@@ -1702,7 +1701,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
 
     private void paintChildrenImpl(Graphics g) {
       // Paint to an image without alpha to preserve fonts subpixel antialiasing
-      @SuppressWarnings("UndesirableClassUsage")
       BufferedImage image = UIUtil.createImage(g, getWidth(), getHeight(),
                                                BufferedImage.TYPE_INT_RGB);//new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
       useSafely(image.createGraphics(), imageGraphics -> {

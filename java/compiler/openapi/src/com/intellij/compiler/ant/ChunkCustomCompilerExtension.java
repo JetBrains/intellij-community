@@ -86,7 +86,7 @@ public abstract class ChunkCustomCompilerExtension {
    * @param chunk a chunk to check
    * @return true if the facet requires custom comiplation.
    */
-  @SuppressWarnings({"UnusedDeclaration", "MethodMayBeStatic"})
+  @SuppressWarnings({"UnusedDeclaration"})
   public abstract boolean hasCustomCompile(final ModuleChunk chunk);
 
   /**

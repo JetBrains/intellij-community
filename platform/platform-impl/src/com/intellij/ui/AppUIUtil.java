@@ -292,7 +292,6 @@ public class AppUIUtil {
         runnable.run();
       } else {
         try {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {

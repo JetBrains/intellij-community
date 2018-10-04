@@ -12,7 +12,10 @@ import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjec
 import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
@@ -90,7 +93,6 @@ public class JavaProjectDataService extends AbstractProjectDataService<JavaProje
     });
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
     if (languageLevelExtension.getLanguageLevel().isAtLeast(languageLevel)) {

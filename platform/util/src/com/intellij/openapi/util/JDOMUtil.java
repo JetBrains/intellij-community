@@ -78,7 +78,6 @@ public class JDOMUtil {
     return Collections.emptyList();
   }
 
-  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LoggerHolder {
     private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
   }
@@ -173,7 +172,6 @@ public class JDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  @SuppressWarnings("DuplicateDetector")
   private static boolean isAttributesEqual(@NotNull List<? extends Attribute> l1, @NotNull List<? extends Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);

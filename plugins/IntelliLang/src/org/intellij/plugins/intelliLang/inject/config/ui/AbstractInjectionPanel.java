@@ -88,7 +88,6 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public final void apply() {
     for (Field panel : myOtherPanels) {
       getField(panel).apply();
@@ -105,7 +104,6 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
   protected abstract void apply(T other);
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public final void reset() {
     if (!myOtherPanels.isEmpty()) {
       myEditCopy.copyFrom(myOrigInjection);

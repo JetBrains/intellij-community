@@ -36,7 +36,6 @@ public class LiveTemplateEditorActionsTest extends LightCodeInsightFixtureTestCa
       }
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       super.tearDown();
     }
   }

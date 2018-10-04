@@ -1358,10 +1358,8 @@ public class AbstractPopup implements JBPopup {
       Runnable finalRunnable = myFinalRunnable;
 
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        //noinspection SSBasedInspection
 
         if (ModalityState.current().equals(modalityState)) {
-          //noinspection SSBasedInspection
           typeAheadDone.setDone();
           ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
         } else {

@@ -16,7 +16,6 @@ import java.awt.*;
 /**
  * @author Vladimir Kondratyev
  */
-@SuppressWarnings({"PointlessBitwiseExpression"})
 public final class SimpleTextAttributes {
 
   @MagicConstant(flags = {

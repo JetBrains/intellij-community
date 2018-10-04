@@ -63,19 +63,16 @@ public class Centerizer extends JPanel {
   }
 
   @Override
-  @SuppressWarnings({"ConstantConditions"})
   public Dimension getPreferredSize() {
     return getComponent() != null ? getComponent().getPreferredSize() : super.getPreferredSize();
   }
 
   @Override
-  @SuppressWarnings({"ConstantConditions"})
   public Dimension getMinimumSize() {
     return getComponent() != null ? getComponent().getMinimumSize() : super.getPreferredSize();
   }
 
   @Override
-  @SuppressWarnings({"ConstantConditions"})
   public Dimension getMaximumSize() {
     return getComponent() != null ? getComponent().getMaximumSize() : super.getPreferredSize();
   }

@@ -77,7 +77,6 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return "Replace StringTokenizer delimiters parameter with unique symbols";
     }
 

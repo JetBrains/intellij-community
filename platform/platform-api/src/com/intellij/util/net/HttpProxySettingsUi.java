@@ -148,7 +148,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
       reset(settings);  // since password might have been set
 
-      //noinspection ThrowableResultOfMethodCallIgnored
       final IOException exception = exceptionReference.get();
       if (exception == null) {
         Messages.showMessageDialog(myMainPanel, "Connection successful", title, Messages.getInformationIcon());

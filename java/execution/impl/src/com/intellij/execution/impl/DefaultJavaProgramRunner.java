@@ -240,7 +240,6 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();

@@ -199,7 +199,6 @@ public final class JsonReaders {
 
     List<String> list = new ArrayList<>();
     do {
-      //noinspection unchecked
       list.add(reader.nextString(true));
     }
     while (reader.hasNext());

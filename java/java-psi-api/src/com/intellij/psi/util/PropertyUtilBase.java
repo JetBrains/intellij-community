@@ -275,7 +275,6 @@ public class PropertyUtilBase {
   }
 
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean hasGetterName(final PsiMethod method) {
     if (method == null) return false;
 
@@ -340,7 +339,6 @@ public class PropertyUtilBase {
   }
 
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isSimplePropertySetter(@Nullable PsiMethod method) {
     if (method == null) return false;
 

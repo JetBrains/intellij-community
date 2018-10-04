@@ -57,7 +57,6 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * Override this method to fine-tune {@link BaseOutputReader} behavior.
    */
   @NotNull
-  @SuppressWarnings("deprecation")
   protected Options readerOptions() {
     if (Registry.is("output.reader.blocking.mode", false)) {
       return Options.BLOCKING;
@@ -117,14 +116,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createErrorDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy policy) {
     return createErrorDataReader();
   }
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createOutputDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy policy) {
     return createOutputDataReader();
   }
 

@@ -605,7 +605,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       if (myVersionHigher_15) {
         //return myVirtualMachine.canGetMethodReturnValues();
         try {
-          //noinspection HardCodedStringLiteral
           final Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
           final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
           return rv.booleanValue();

@@ -582,7 +582,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
-        @SuppressWarnings("unchecked")
         State state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setState(state);
 
@@ -639,7 +638,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
       DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
-      //noinspection SuspiciousMethodCalls
       if (changesSet.contains(mutableNode.getUserObject())) {
         treeSelection.add(new TreePath(mutableNode.getPath()));
       }

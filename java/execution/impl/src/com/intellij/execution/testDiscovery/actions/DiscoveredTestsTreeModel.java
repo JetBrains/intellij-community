@@ -27,7 +27,6 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
   public synchronized List<?> getChildren(Object parent) {
     if (parent == myRoot) return getTestClasses();
     if (parent instanceof Node.Clazz) {
-      //noinspection unchecked
       return ContainerUtil.newArrayList(myTests.get((Node.Clazz)parent));
     }
     return Collections.emptyList();
@@ -88,7 +87,6 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
 
   @NotNull
   synchronized TestMethodUsage[] getTestMethods() {
-    //noinspection unchecked
     return myTests
       .entrySet()
       .stream()

@@ -267,7 +267,6 @@ class JsonSchemaAnnotatorChecker {
     final JsonObjectValueAdapter object = value.getAsObject();
     if (object == null) return;
 
-    //noinspection ConstantConditions
     final List<JsonPropertyAdapter> propertyList = object.getPropertyList();
     final Set<String> set = new HashSet<>();
     for (JsonPropertyAdapter property : propertyList) {
@@ -1075,7 +1074,6 @@ class JsonSchemaAnnotatorChecker {
       current = ContainerUtil.getLastItem(candidateErroneousSchemas);
     }
 
-    //noinspection ConstantConditions
     return current;
   }
 

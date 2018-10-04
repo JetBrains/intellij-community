@@ -35,7 +35,7 @@ public class AsyncResult<T> extends ActionCallback {
    */
   @NotNull
   @Deprecated
-  public AsyncResult<T> doWhenDone(@SuppressWarnings("deprecation") @NotNull final Handler<T> handler) {
+  public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(() -> handler.run(myResult));
     return this;
   }

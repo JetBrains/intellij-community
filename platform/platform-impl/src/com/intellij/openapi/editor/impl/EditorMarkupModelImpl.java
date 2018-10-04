@@ -51,9 +51,9 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
 import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
@@ -778,7 +778,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       int paintWidth;
       int x;
       if (thinErrorStripeMark) {
-        //noinspection SuspiciousNameCombination
         paintWidth = getMinMarkHeight();
         x = isMirrored() ? getThickness() - paintWidth : 0;
         if (yEnd - yStart < 6) {

@@ -66,7 +66,6 @@ public abstract class EdtInvocationManager {
 
     @Override
     public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeAndWait(task);
     }
   }

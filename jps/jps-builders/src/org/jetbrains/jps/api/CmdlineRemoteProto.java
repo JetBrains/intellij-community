@@ -422,7 +422,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.UUID)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -915,7 +915,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -1483,7 +1483,7 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Failure)
       }
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -2312,7 +2312,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -2694,7 +2694,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -3563,7 +3563,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
           }
           private byte memoizedIsInitialized = -1;
-          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          @java.lang.SuppressWarnings({"unchecked"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -4716,7 +4716,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -5541,7 +5541,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -6190,7 +6190,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -7107,7 +7107,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile)
           }
           private byte memoizedIsInitialized = -1;
-          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          @java.lang.SuppressWarnings({"unchecked"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -7721,7 +7721,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
           }
           private byte memoizedIsInitialized = -1;
-          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+          @java.lang.SuppressWarnings({"unchecked"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -8549,7 +8549,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -9730,7 +9730,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -10502,7 +10502,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -11156,7 +11156,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -11939,7 +11939,7 @@ public final class CmdlineRemoteProto {
       // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message)
     }
     private byte memoizedIsInitialized = -1;
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    @java.lang.SuppressWarnings({"unchecked"})
     protected final Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
         Object arg0, Object arg1) {

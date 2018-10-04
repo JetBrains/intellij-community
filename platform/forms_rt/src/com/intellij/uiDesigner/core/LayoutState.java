@@ -19,7 +19,6 @@ import java.awt.*;
 import java.util.ArrayList;
 
 /**
- * @noinspection unchecked
  */
 public final class LayoutState {
   private final Component[] myComponents;

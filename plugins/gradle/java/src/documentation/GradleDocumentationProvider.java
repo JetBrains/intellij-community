@@ -98,7 +98,6 @@ public class GradleDocumentationProvider implements DocumentationProvider {
         GrCall grCall = (GrCall)stmt;
         PsiMethod psiMethod = grCall.resolveMethod();
         if (psiMethod != null && psiMethod.getContainingClass() != null) {
-          //noinspection ConstantConditions
           String qualifiedName = psiMethod.getContainingClass().getQualifiedName();
           if (grLiteral.getParent() instanceof GrNamedArgument) {
             GrNamedArgument namedArgument = (GrNamedArgument)grLiteral.getParent();

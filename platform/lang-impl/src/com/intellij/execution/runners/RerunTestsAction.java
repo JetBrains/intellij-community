@@ -44,7 +44,6 @@ public class RerunTestsAction extends DumbAwareAction implements AnAction.Transp
    * @deprecated use {@link #register(RunContentDescriptor)} instead
    */
   @Deprecated
-  @SuppressWarnings("UnusedParameters")
   public static void register(@NotNull ExecutionEnvironment environment) {
   }
 

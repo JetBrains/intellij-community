@@ -201,7 +201,6 @@ public class PyMoveFileHandler extends MoveFileHandler {
       if (destination.findFile(PyNames.INIT_DOT_PY) != null) {
         return false;
       }
-      //noinspection ConstantConditions
       destination = destination.getParent();
     }
     return true;

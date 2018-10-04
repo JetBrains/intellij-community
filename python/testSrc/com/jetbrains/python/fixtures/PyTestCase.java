@@ -165,7 +165,6 @@ public abstract class PyTestCase extends UsefulTestCase {
       runnable.run();
     }
     finally {
-      //noinspection ThrowFromFinallyBlock
       WriteAction.run(() -> {
         final SdkModificator modificator = sdk.getSdkModificator();
         assertNotNull(modificator);

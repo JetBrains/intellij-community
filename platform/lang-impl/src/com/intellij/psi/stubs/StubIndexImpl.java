@@ -164,7 +164,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
         if (cause == null) throw e;
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);

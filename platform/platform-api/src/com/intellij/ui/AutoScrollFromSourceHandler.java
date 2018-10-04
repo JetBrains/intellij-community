@@ -38,7 +38,6 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("MethodMayBeStatic")
 public abstract class AutoScrollFromSourceHandler implements Disposable {
   protected final Project myProject;
   protected final Alarm myAlarm;

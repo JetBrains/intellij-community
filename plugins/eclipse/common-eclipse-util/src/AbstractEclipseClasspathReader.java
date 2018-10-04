@@ -86,13 +86,11 @@ public abstract class AbstractEclipseClasspathReader<T> {
                                     final Set<String> libs) throws ConversionException {
     String kind = element.getAttributeValue(EclipseXml.KIND_ATTR);
     if (kind == null) {
-      //noinspection SpellCheckingInspection
       throw new ConversionException("Missing classpathentry/@kind");
     }
 
     String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
     if (path == null) {
-      //noinspection SpellCheckingInspection
       throw new ConversionException("Missing classpathentry/@path");
     }
 
@@ -184,7 +182,6 @@ public abstract class AbstractEclipseClasspathReader<T> {
     else if (kind.equals(EclipseXml.VAR_KIND)) {
       int slash = path.indexOf("/");
       if (slash == 0) {
-        //noinspection SpellCheckingInspection
         throw new ConversionException("Incorrect 'classpathentry/var@path' format");
       }
 
@@ -242,7 +239,6 @@ public abstract class AbstractEclipseClasspathReader<T> {
       }
     }
     else {
-      //noinspection SpellCheckingInspection
       throw new ConversionException("Unknown classpathentry/@kind: " + kind);
     }
   }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link KillableColoredProcessHandler#KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 16) */
 @Deprecated
-@SuppressWarnings({"unused", "deprecation"})
+@SuppressWarnings({"unused"})
 public class RunnerWinProcess extends ProcessWrapper {
 
   private RunnerWinProcess(@NotNull Process originalProcess) {

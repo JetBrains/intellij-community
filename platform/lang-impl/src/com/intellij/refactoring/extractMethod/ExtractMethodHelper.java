@@ -121,7 +121,6 @@ public class ExtractMethodHelper {
             highlightInEditor(project, match, editor, highlighterMap);
 
             int promptResult = FindManager.PromptResult.ALL;
-            //noinspection ConstantConditions
             if (!isUnittest) {
               ReplacePromptDialog promptDialog =
                 new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), project);

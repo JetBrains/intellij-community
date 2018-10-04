@@ -815,7 +815,6 @@ public class PyBlock implements ASTBlock {
       }
       node2 = psi2.getNode();
       final IElementType childType2 = psi2.getNode().getElementType();
-      //noinspection ConstantConditions
       child2 = getSubBlockByNode(node2);
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {

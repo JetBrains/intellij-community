@@ -98,7 +98,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
-    //noinspection ConstantConditions
     myPyHighlighter = new PyHighlighter(
       sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
     myScheme = getConsoleEditor().getColorsScheme();

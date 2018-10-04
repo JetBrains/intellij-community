@@ -18,8 +18,8 @@ import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.CharTableImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
 import com.intellij.util.CharTable;
@@ -871,7 +871,6 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     return true;
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   private void doValidityChecks(@NotNull StartMarker marker, @Nullable StartMarker before) {
     if (marker.isDone()) {
       LOG.error("Marker already done.");

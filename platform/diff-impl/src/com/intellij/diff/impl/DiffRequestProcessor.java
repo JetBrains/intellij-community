@@ -79,7 +79,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("InnerClassMayBeStatic")
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 

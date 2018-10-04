@@ -26,7 +26,6 @@ import javax.swing.*;
  * @author yole
  */
 public abstract class ToggleActionButton extends AnActionButton implements Toggleable {
-  @SuppressWarnings("NullableProblems")
   public ToggleActionButton(String text, Icon icon) {
     super(text, null, icon);
   }

@@ -31,7 +31,6 @@ public class GrayFilterConfig extends AnAction implements DumbAware {
   private static final String CONTRAST = "contrast";
   private static final String ALPHA = "alpha";
 
-  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   private final Object[][] data = new Object[3][2];
 
   private void setData() {

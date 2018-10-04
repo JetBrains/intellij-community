@@ -188,7 +188,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static Set<String> myCharOrIntegers;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isCharOrIntegerArray(Value value) {
     if (value == null) return false;
     if (myCharOrIntegers == null) {
@@ -331,7 +330,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return true;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean externalizableEqual(JDOMExternalizable e1, JDOMExternalizable e2) {
     Element root1 = new Element("root");
     Element root2 = new Element("root");

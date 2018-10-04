@@ -74,7 +74,6 @@ import java.util.function.Supplier;
 /**
  * Please don't use this class directly from plugins
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionProgressIndicator");
@@ -299,7 +298,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
-      @SuppressWarnings("deprecation") String s = contributor.advertise(parameters);
+      String s = contributor.advertise(parameters);
       if (s != null) {
         addAdvertisement(s, null);
       }

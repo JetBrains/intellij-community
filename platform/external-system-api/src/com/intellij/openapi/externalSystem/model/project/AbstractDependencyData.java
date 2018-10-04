@@ -121,7 +121,6 @@ public abstract class AbstractDependencyData<T extends AbstractExternalEntityDat
     myOrder = order;
   }
 
-  @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
   }

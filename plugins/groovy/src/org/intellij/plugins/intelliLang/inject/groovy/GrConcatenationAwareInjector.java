@@ -49,7 +49,6 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
   private final Configuration myConfiguration;
   private final Project myProject;
 
-  @SuppressWarnings("UnusedParameters")
   public GrConcatenationAwareInjector(Configuration configuration, Project project, TemporaryPlacesRegistry temporaryPlacesRegistry) {
     myConfiguration = configuration;
     myProject = project;

@@ -188,7 +188,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           myEditor.replaceInputMethodText(e);
           // No breaks over here.
 
-          //noinspection fallthrough
         case InputMethodEvent.CARET_POSITION_CHANGED:
           myEditor.inputMethodCaretPositionChanged(e);
           e.consume();

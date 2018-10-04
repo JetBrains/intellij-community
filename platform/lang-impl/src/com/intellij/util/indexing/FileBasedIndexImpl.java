@@ -1826,7 +1826,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
           final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
 
-          //noinspection ForLoopReplaceableByForEach
           boolean scheduleForUpdate = false;
 
           //noinspection ForLoopReplaceableByForEach

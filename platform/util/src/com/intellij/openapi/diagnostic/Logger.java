@@ -174,7 +174,6 @@ public abstract class Logger {
       error(resultMessage, new Throwable(resultMessage));
     }
 
-    //noinspection Contract
     return value;
   }
 

@@ -38,7 +38,6 @@ public class ShowDelayedMessageInternalAction extends AnAction implements DumbAw
       public void run() {
         super.run();
 
-        //noinspection EmptyCatchBlock
         TimeoutUtil.sleep(3000);
 
         //noinspection SSBasedInspection

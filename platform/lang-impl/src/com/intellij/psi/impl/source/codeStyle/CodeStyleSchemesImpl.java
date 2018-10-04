@@ -48,7 +48,6 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.setCurrent(scheme);
   }
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public CodeStyleScheme createNewScheme(String preferredName, CodeStyleScheme parentScheme) {
     return new CodeStyleSchemeImpl(

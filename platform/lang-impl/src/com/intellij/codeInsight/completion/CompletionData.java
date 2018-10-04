@@ -48,7 +48,6 @@ import static com.intellij.patterns.StandardPatterns.not;
  * @deprecated see {@link CompletionContributor}
  */
 @Deprecated
-@SuppressWarnings("deprecation")
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());

@@ -59,7 +59,6 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
 
   @Override
   public void setValue(TreeNodeOnVcsRevision o, T aValue) {
-    //noinspection unchecked
     myBaseColumn.setValue(o.getRevision(), aValue);
   }
 

@@ -441,7 +441,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
   private boolean validateRegExp(EditorTextField field) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(field.getText());
     } catch (PatternSyntaxException e) {
       return showError(field, e.getDescription());

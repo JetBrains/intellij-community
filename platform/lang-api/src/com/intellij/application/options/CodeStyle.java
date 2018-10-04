@@ -199,7 +199,6 @@ public class CodeStyle {
    */
   @TestOnly
   public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
   }
 
@@ -259,7 +258,6 @@ public class CodeStyle {
    *         are used.
    */
   public static boolean usesOwnSettings(@NotNull Project project) {
-    //noinspection deprecation
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
   }
 
@@ -290,7 +288,6 @@ public class CodeStyle {
    * @param settings  The settings to use with the project.
    */
   public static void setMainProjectSettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
-    @SuppressWarnings("deprecation")
     CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(project);
     codeStyleSettingsManager.setMainProjectCodeStyle(settings);
     codeStyleSettingsManager.USE_PER_PROJECT_SETTINGS = true;

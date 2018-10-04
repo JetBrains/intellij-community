@@ -124,7 +124,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), runConfigurationEditor);
 
     // tabs provided by extensions:
-    //noinspection unchecked
     PythonRunConfigurationExtensionsManager.Companion.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
 

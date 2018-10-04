@@ -66,7 +66,6 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     if (myUpdatesSettingsPanel == null) {
       return false;
     }
-    //noinspection EqualsBetweenInconvertibleTypes
     return !UpdateSettings.getInstance().getStoredPluginHosts().equals(myUpdatesSettingsPanel.getPluginsHosts());
   }
 

@@ -1031,7 +1031,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   public void select() {
     // can be null during ctr execution
-    //noinspection ConstantConditions
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }

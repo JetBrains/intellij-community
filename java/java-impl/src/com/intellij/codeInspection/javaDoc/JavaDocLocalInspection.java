@@ -692,7 +692,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
@@ -763,7 +762,6 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     @Override
     @NotNull
     public String getName() {
-      //noinspection DialogTitleCapitalization
       return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag", myName);
     }
   }

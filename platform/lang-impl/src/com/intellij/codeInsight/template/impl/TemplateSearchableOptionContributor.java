@@ -26,7 +26,6 @@ import java.util.Set;
  * @author peter
  */
 public class TemplateSearchableOptionContributor extends SearchableOptionContributor {
-  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     Set<String> processedGroups = ContainerUtil.newHashSet();

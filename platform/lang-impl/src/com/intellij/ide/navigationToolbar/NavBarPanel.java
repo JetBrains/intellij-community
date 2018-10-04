@@ -892,7 +892,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public NavBarUI getNavBarUI() {
     return NavBarUIManager.getUI();

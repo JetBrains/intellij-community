@@ -218,7 +218,6 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
     }
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   private ExternalSystemNode findNodeFor(String projectPath) {
     return myNodeMapping.get(projectPath);
   }

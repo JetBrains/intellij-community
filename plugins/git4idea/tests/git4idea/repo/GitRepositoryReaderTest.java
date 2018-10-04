@@ -61,7 +61,7 @@ public class GitRepositoryReaderTest extends GitPlatformTest {
     return ContainerUtil.map(testCases, file -> new Object[] { file.getName(), file });
   }
 
-  @SuppressWarnings({"UnusedParameters", "JUnitTestCaseWithNonTrivialConstructors"})
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   public GitRepositoryReaderTest(@NotNull String name, @NotNull File testDir) {
     myTestCaseDir = testDir;
   }

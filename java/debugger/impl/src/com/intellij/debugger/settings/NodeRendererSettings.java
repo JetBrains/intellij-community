@@ -145,7 +145,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {

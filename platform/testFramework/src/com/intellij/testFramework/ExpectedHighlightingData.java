@@ -81,7 +81,7 @@ public class ExpectedHighlightingData {
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
   private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
-  @SuppressWarnings("StatefulEp") private final PsiFile myFile;
+  private final PsiFile myFile;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
 

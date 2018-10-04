@@ -40,7 +40,6 @@ public class Main {
 
   private Main() { }
 
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(String[] args) {
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
@@ -145,7 +144,7 @@ public class Main {
     return null;
   }
 
-  @SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
   public static void showMessage(String title, String message, boolean error) {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);

@@ -100,7 +100,6 @@ public abstract class AbstractExternalSystemSettings<
   
   protected abstract void copyExtraSettingsFrom(@NotNull SS settings);
   
-  @SuppressWarnings("unchecked")
   @NotNull
   public Collection<PS> getLinkedProjectsSettings() {
     return myLinkedProjectsSettingsView.values();

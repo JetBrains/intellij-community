@@ -20,7 +20,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({"ResultOfMethodCallIgnored"})
 public class EqualsOnSuspiciousObjectInspectionTest extends LightInspectionTestCase {
   public void testEqualsOnSuspiciousObject() { doTest(); }
 

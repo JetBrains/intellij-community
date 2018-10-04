@@ -131,7 +131,6 @@ public class PyFunctionTypeImpl implements PyFunctionType {
         qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {
-        //noinspection ConstantConditions
         final PyType qualifierType = PyTypeChecker.toNonWeakType(context.getType(qualifier), context);
         if (isInstanceType(qualifierType)) {
           return true;
