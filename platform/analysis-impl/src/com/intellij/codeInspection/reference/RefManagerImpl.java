@@ -245,8 +245,9 @@ public class RefManagerImpl extends RefManager {
     return ref;
   }
 
+  @Nullable
   @Override
-  public Element export(@NotNull RefEntity refEntity, @NotNull final Element element, final int actualLine) {
+  public Element export(@NotNull RefEntity refEntity, final int actualLine) {
     refEntity = getRefinedElement(refEntity);
 
     Element problem = new Element("problem");
@@ -298,7 +299,6 @@ public class RefManagerImpl extends RefManager {
     }
 
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
-    element.addContent(problem);
     return problem;
   }
 

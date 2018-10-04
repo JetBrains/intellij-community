@@ -25,6 +25,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
@@ -80,7 +81,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   IntentionAction findQuickFixes(@NotNull CommonProblemDescriptor descriptor, final String hint);
   @NotNull
   HTMLComposerImpl getComposer();
-  void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
+
   @NotNull
   QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
@@ -92,7 +93,11 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   GlobalInspectionContextImpl getContext();
 
-  void exportResults(@NotNull Element parentNode,
+  void exportResults(@NotNull Consumer<Element> problemSink,
+                     @NotNull RefEntity refEntity,
+                     @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded);
+
+  void exportResults(@NotNull Consumer<Element> problemSink,
                      @NotNull Predicate<? super RefEntity> isEntityExcluded,
                      @NotNull Predicate<? super CommonProblemDescriptor> isProblemExcluded);
 

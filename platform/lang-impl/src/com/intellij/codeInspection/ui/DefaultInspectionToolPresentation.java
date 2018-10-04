@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -206,14 +207,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull final Consumer<Element> problemSink,
                             @NotNull final Predicate<? super RefEntity> excludedEntities,
                             @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
         if (!excludedEntities.test(elem)) {
-          exportResults(parentNode, elem, excludedDescriptors);
+          exportResults(problemSink, elem, excludedDescriptors);
         }
       }
     });
@@ -260,7 +261,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
-    exportResults(descriptions, refElement, parentNode, d -> false);
+    exportResults(descriptions, refElement, p -> parentNode.addContent(p), d -> false);
     final List<Element> list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
@@ -327,25 +328,26 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull Consumer<Element> problemSink,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
     if (descriptions != null) {
-      exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
+      exportResults(descriptions, refEntity, problemSink, isDescriptorExcluded);
     }
   }
 
   private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors,
                              @NotNull RefEntity refEntity,
-                             @NotNull Element parentNode,
+                             @NotNull Consumer<Element> problemSink,
                              @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
+      Element element = refEntity.getRefManager().export(refEntity, line);
       if (element == null) return;
       exportResult(refEntity, descriptor, element);
+      problemSink.accept(element);
     }
   }
 

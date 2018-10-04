@@ -150,7 +150,7 @@ public class InspectionTestUtil {
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
       presentation.updateContent();  //e.g. dead code need check for reachables
-      presentation.exportResults(root, x -> false, x -> false);
+      presentation.exportResults(p -> root.addContent(p), x -> false, x -> false);
     }
 
     try {

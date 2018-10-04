@@ -95,7 +95,18 @@ public abstract class RefManager {
   @NotNull
   public abstract RefEntity getRefinedElement(@NotNull RefEntity ref);
 
-  public abstract Element export(@NotNull RefEntity entity, @NotNull Element element, final int actualLine);
+  @Nullable
+  public Element export(@NotNull RefEntity entity, @NotNull Element parent, final int actualLine) {
+    Element element = export(entity, actualLine);
+    if (element == null) return null;
+    parent.addContent(element);
+    return element;
+  }
+
+  @Nullable
+  public Element export(@NotNull RefEntity entity, final int actualLine) {
+    throw new UnsupportedOperationException();
+  }
 
   @Nullable
   public abstract String getGroupName(@NotNull RefElement entity);

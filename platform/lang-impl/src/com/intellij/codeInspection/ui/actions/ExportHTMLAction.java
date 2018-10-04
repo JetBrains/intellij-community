@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PathMacroManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
@@ -33,19 +34,26 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.StAXStreamOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.io.IOException;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ExportHTMLAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ExportHTMLAction.class);
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String ROOT = "root";
@@ -119,32 +127,75 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         throw new IOException("Cannot create \'" + outputDir + "\'");
       }
       final InspectionTreeNode root = myView.getTree().getRoot();
-      final IOException[] ex = new IOException[1];
+      final Exception[] ex = new Exception[1];
 
       final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
       final Element aggregateRoot = new Element(ROOT);
+
+      Format format = JDOMUtil.createFormat("\n");
+      String initialSeparator = format.getLineSeparator();
+      format.setLineSeparator(initialSeparator + format.getIndent());
+      StAXStreamOutputter streamOutputter = new StAXStreamOutputter(format);
+      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+
       TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
-          Element problems = new Element(PROBLEMS);
+
           InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
           if (!visitedWrappers.add(toolWrapper)) return true;
 
-          final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
-          for (InspectionToolWrapper wrapper : toolWrappers) {
-            InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-            if (!toolNode.isExcluded()) {
-              presentation.exportResults(problems, presentation::isExcluded, presentation::isExcluded);
-              presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
-            }
-          }
-          PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
+          String name = toolWrapper.getShortName();
+          XMLStreamWriter xmlWriter = null;
+          BufferedWriter fileWriter = null;
           try {
-            writeDocument(problems, outputDirectoryName, toolWrapper.getShortName());
-            writeDocument(aggregateRoot, outputDirectoryName, toolWrapper.getShortName() + AGGREGATE);
+            fileWriter = getWriter(outputDirectoryName, name);
+            xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+            xmlWriter.writeStartElement(PROBLEMS);
+
+
+            final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
+            for (InspectionToolWrapper wrapper : toolWrappers) {
+              InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
+              if (!toolNode.isExcluded()) {
+                XMLStreamWriter finalReportWriter = xmlWriter;
+                presentation.exportResults(p -> {
+
+                  PathMacroManager.getInstance(myView.getProject()).collapsePaths(p);
+                  try {
+                    finalReportWriter.writeCharacters(format.getLineSeparator());
+                    streamOutputter.output(p, finalReportWriter);
+                  }
+                  catch (XMLStreamException e) {
+                    throw new RuntimeException(e);
+                  }
+                }, presentation::isExcluded, presentation::isExcluded);
+                presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
+              }
+            }
+            writeDocument(aggregateRoot, outputDirectoryName, name + AGGREGATE);
+            xmlWriter.writeCharacters(initialSeparator);
+            xmlWriter.writeEndElement();
           }
-          catch (IOException e) {
+          catch (Exception e) {
             ex[0] = e;
+          } finally {
+            try {
+              if (xmlWriter != null) {
+                xmlWriter.flush();
+              }
+            }
+            catch (XMLStreamException e) {
+              LOG.error(e);
+            }
+            if (fileWriter != null) {
+              try {
+                fileWriter.close();
+              }
+              catch (IOException e) {
+                if (ex[0] != null) ex[0] = e;
+              }
+            }
           }
         }
         return true;
@@ -161,9 +212,16 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
                      new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
                      CodeStyle.getDefaultSettings().getLineSeparator());
     }
-    catch (IOException e) {
+    catch (Exception e) {
+      LOG.error(e);
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));
     }
+  }
+
+  private static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException, XMLStreamException {
+    File file = new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
+    FileUtil.createParentDirs(file);
+    return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));
   }
 
   private static void writeDocument(@NotNull Element problems, String outputDirectoryName, String name) throws IOException {
