@@ -49,61 +49,62 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
                                 final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;
+
     final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
                                                       ? (CodeDocumentationAwareCommenter)languageCommenter : null;
     if (commenter == null) return Result.Continue;
+
     int caretOffset = caretOffsetRef.get().intValue();
     int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter);
-    if (lineCommentStartOffset >= 0) {
-        Document document = editor.getDocument();
-        CharSequence text = document.getImmutableCharSequence();
-        final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
-        if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
-          String prefix = commenter.getLineCommentPrefix();
-          assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
-          String prefixTrimmed = prefix.trim();
+    if (lineCommentStartOffset < 0) return Result.Continue;
 
-          int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
-          boolean onlyCommentInCaretLine = beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n';
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
+    if (offset >= document.getTextLength() || text.charAt(offset) == '\n') return Result.Continue;
 
-          CharSequence spacing = " ";
-          if (StringUtil.startsWith(text, offset, prefix)) {
-            int afterPrefix = offset + prefixTrimmed.length();
-            if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
-              document.insertString(afterPrefix, spacing);
-            }
-            caretOffsetRef.set(offset);
-          }
-          else {
-            if (onlyCommentInCaretLine) {
-              int indentStart = lineCommentStartOffset + prefix.trim().length();
-              int indentEnd = CharArrayUtil.shiftForward(text, indentStart, WHITESPACE);
-              CharSequence currentLineSpacing = text.subSequence(indentStart, indentEnd);
-              if (TodoConfiguration.getInstance().isMultiLine() &&
-                  isTodoText(text, lineCommentStartOffset, caretOffset) &&
-                  isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
-                spacing = currentLineSpacing + " ";
-              }
-              else if (currentLineSpacing.length() > 0) {
-                spacing = currentLineSpacing;
-              }
-              int textStart = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
-              document.deleteString(caretOffset, textStart);
-            }
-            else {
-              if (text.charAt(caretOffset) == ' ') spacing = "";
-            }
-            document.insertString(caretOffset, prefixTrimmed + spacing);
-          }
+    String prefix = commenter.getLineCommentPrefix();
+    assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
+    String prefixTrimmed = prefix.trim();
 
-          if (onlyCommentInCaretLine) {
-            caretAdvance.set(prefixTrimmed.length() + spacing.length());
-          }
-          return Result.DefaultForceIndent;
-        }
+    int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
+    boolean onlyCommentInCaretLine = beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n';
+
+    CharSequence spacing = " ";
+    if (StringUtil.startsWith(text, offset, prefix)) {
+      int afterPrefix = offset + prefixTrimmed.length();
+      if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
+        document.insertString(afterPrefix, spacing);
+      }
+      caretOffsetRef.set(offset);
     }
-    return Result.Continue;
+    else {
+      if (onlyCommentInCaretLine) {
+        int indentStart = lineCommentStartOffset + prefix.trim().length();
+        int indentEnd = CharArrayUtil.shiftForward(text, indentStart, WHITESPACE);
+        CharSequence currentLineSpacing = text.subSequence(indentStart, indentEnd);
+        if (TodoConfiguration.getInstance().isMultiLine() &&
+            isTodoText(text, lineCommentStartOffset, caretOffset) &&
+            isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
+          spacing = currentLineSpacing + " ";
+        }
+        else if (currentLineSpacing.length() > 0) {
+          spacing = currentLineSpacing;
+        }
+        int textStart = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
+        document.deleteString(caretOffset, textStart);
+      }
+      else {
+        if (text.charAt(caretOffset) == ' ') spacing = "";
+      }
+      document.insertString(caretOffset, prefixTrimmed + spacing);
+    }
+
+    if (onlyCommentInCaretLine) {
+      caretAdvance.set(prefixTrimmed.length() + spacing.length());
+    }
+    return Result.DefaultForceIndent;
   }
 
   private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
