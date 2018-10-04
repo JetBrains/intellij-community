@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.ui.OnePixelSplitter
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
 class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
                                         private val details: GithubPullRequestDetailsComponent)
@@ -20,7 +20,7 @@ class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestCh
     firstComponent = changes
   }
 
-  fun setPreviewDataProvider(provider: GithubPullRequestsDataLoader.DataProvider?) {
+  fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {
     changes.loadAndShow(provider?.changesRequest)
     details.loadAndShow(provider?.detailsRequest)
   }

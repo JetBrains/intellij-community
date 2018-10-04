@@ -63,7 +63,7 @@ class GithubPullRequestsDataLoader(private val project: Project,
   }
 
   @CalledInAwt
-  fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): DataProvider {
+  fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): GithubPullRequestDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
     return cache.get(githubSearchedIssue.number) {
@@ -78,7 +78,7 @@ class GithubPullRequestsDataLoader(private val project: Project,
     invalidationEventDispatcher.addListener(listener, disposable)
 
   private inner class DataTask(private val url: String, private val progressIndicator: ProgressIndicator)
-    : Task.Backgroundable(project, "Load Pull Request Data", true), DataProvider {
+    : Task.Backgroundable(project, "Load Pull Request Data", true), GithubPullRequestDataProvider {
 
     override val detailsRequest = CompletableFuture<GithubPullRequestDetailedWithHtml>()
     override val branchFetchRequest = CompletableFuture<Couple<String>>()
@@ -151,13 +151,6 @@ class GithubPullRequestsDataLoader(private val project: Project,
   override fun dispose() {
     invalidateAllData()
     isDisposed = true
-  }
-
-  interface DataProvider {
-    val detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
-    val branchFetchRequest: CompletableFuture<Couple<String>>
-    val logCommitsRequest: CompletableFuture<List<GitCommit>>
-    val changesRequest: CompletableFuture<List<Change>>
   }
 
   interface ProviderChangedListener : EventListener {
