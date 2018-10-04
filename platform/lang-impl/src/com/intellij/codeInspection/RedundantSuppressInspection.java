@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -232,7 +233,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     if (idsString != null && !idsString.isEmpty()) {
       List<String> ids = new ArrayList<>();
       StringUtil.tokenize(idsString, "[, ]").forEach(ids::add);
-      boolean isSuppressAll = ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase());
+      boolean isSuppressAll = ids.stream().anyMatch(id -> id.equalsIgnoreCase(SuppressionUtil.ALL));
       if (ignoreAll && isSuppressAll) {
         return false;
       }
@@ -354,9 +355,11 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
                 return;
               }
             }
-            holder.registerProblem(element, mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL),
+            TextRange range = mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL);
+            String allSuppression = element.getText().substring(range.getStartOffset(), range.getEndOffset());
+            holder.registerProblem(element, range,
                                    InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                   mySuppressor.createRemoveRedundantSuppressionFix(SuppressionUtil.ALL));
+                                   mySuppressor.createRemoveRedundantSuppressionFix(allSuppression));
             return;
           }
           Collection<String> suppressIds = scopes.get(element);
