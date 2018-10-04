@@ -57,9 +57,6 @@ object GithubAsyncUtil {
   }
 }
 
-/**
- * Handle on EDT if [disposable] is not disposed and [condition] is satisfied
- */
 fun <T> CompletableFuture<T>.handleOnEdt(handler: (T?, Throwable?) -> Unit): CompletableFuture<Unit> =
   handleAsync(BiFunction<T?, Throwable?, Unit> { result: T?, error: Throwable? ->
     handler(result, error)

@@ -23,11 +23,12 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.CompletionException
 
 class GithubPullRequestsDataLoader(private val project: Project,
                                    private val progressManager: ProgressManager,
@@ -126,15 +127,13 @@ class GithubPullRequestsDataLoader(private val project: Project,
     @Throws(ProcessCanceledException::class)
     private fun <T> getOrHandle(future: CompletableFuture<T>): T {
       try {
-        return future.get()
+        return future.join()
       }
       catch (e: CancellationException) {
         throw ProcessCanceledException(e)
       }
-      catch (e: InterruptedException) {
-        throw ProcessCanceledException(e)
-      }
-      catch (e: ExecutionException) {
+      catch (e: CompletionException) {
+        if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
         throw e.cause ?: e
       }
     }
