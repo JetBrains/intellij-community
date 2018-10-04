@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -150,15 +151,24 @@ public class ComponentValidator {
         }
 
         if (StringUtil.isNotEmpty(validationInfo.message)) {
-          JLabel tipComponent = new JLabel();
+          //JBLabel tipComponent = new JBLabel();
+          JEditorPane tipComponent = new JEditorPane();
+          tipComponent.setContentType("text/html");
+          //tipComponent.setEditable(false);
+          //tipComponent.setBackground(UIUtil.TRANSPARENT_COLOR);
+          tipComponent.setOpaque(true);
+          tipComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+          tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+
+
           View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", validationInfo.message));
           String labelText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
                              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), validationInfo.message) :
                              String.format("<html><div>%s</div></html>", validationInfo.message);
 
+          //tipComponent.setCopyable(true).setAllowAutoWrapping(true).andOpaque().setVerticalTextPosition(SwingConstants.TOP);
           tipComponent.setText(labelText);
           tipComponent.setBackground(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor());
-          tipComponent.setOpaque(true);
           tipComponent.setBorder(getBorder());
           popupSize = tipComponent.getPreferredSize();
 

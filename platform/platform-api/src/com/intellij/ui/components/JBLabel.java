@@ -140,6 +140,9 @@ public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<
   protected void paintComponent(Graphics g) {
     if (myEditorPane == null) {
       super.paintComponent(g);
+    } else if (isOpaque()) {
+      g.setColor(getBackground());
+      g.fillRect(0, 0, getWidth(), getHeight());
     }
   }
 
