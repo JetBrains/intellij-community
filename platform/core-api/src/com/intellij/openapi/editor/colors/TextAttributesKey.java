@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
+  private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
   private static final String TEMP_PREFIX = "TEMP::";
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
 
@@ -209,14 +211,14 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
     // but don't allow to rewrite not-null fallback key
     if (oldKey.myFallbackAttributeKey != null && !oldKey.myFallbackAttributeKey.equals(fallbackAttributeKey)) {
-      throw new IllegalStateException("TextAttributeKey(name:'" + externalName + "', fallbackAttributeKey:'" + fallbackAttributeKey + "') " +
-                                      " was already registered with the other fallback attribute key: " + oldKey.myFallbackAttributeKey);
+      LOG.error(new IllegalStateException("TextAttributeKey(name:'" + externalName + "', fallbackAttributeKey:'" + fallbackAttributeKey + "') " +
+                                      " was already registered with the other fallback attribute key: " + oldKey.myFallbackAttributeKey));
     }
 
     // but don't allow to rewrite not-null default attributes
     if (oldKey.myDefaultAttributes != null && !oldKey.myDefaultAttributes.equals(defaultAttributes)) {
-      throw new IllegalStateException("TextAttributeKey(name:'" + externalName +"', defaultAttributes:'"+defaultAttributes+"') "+
-                                      " was already registered with the other defaultAttributes: "+oldKey.myDefaultAttributes);
+      LOG.error(new IllegalStateException("TextAttributeKey(name:'" + externalName + "', defaultAttributes:'" + defaultAttributes + "') " +
+                                          " was already registered with the other defaultAttributes: " + oldKey.myDefaultAttributes));
     }
 
     TextAttributes newDefaults = ObjectUtils.chooseNotNull(defaultAttributes, oldKey.myDefaultAttributes); // care with not calling unwanted providers
