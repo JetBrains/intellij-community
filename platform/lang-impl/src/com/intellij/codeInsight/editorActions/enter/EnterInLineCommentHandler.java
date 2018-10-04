@@ -31,14 +31,19 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
+  private static final String WHITESPACE = " \t";
+
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(@NotNull final PsiFile file,
+                                @NotNull final Editor editor,
+                                @NotNull final Ref<Integer> caretOffsetRef,
+                                @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext,
+                                final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;
     final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
@@ -46,10 +51,11 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
                                                       ? (CodeDocumentationAwareCommenter)languageCommenter : null;
     if (commenter == null) return Result.Continue;
     int caretOffset = caretOffsetRef.get().intValue();
-    if (isInLineComment(editor, caretOffset, commenter)) {
+    int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter);
+    if (lineCommentStartOffset >= 0) {
         Document document = editor.getDocument();
         CharSequence text = document.getText();
-        final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
+        final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
         if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
           String prefix = commenter.getLineCommentPrefix();
           assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
@@ -58,28 +64,31 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
               prefix += " ";
             }
             document.insertString(caretOffset, prefix);
-            return Result.Default;
           }
           else {
             int afterPrefix = offset + prefix.length();
             if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
               document.insertString(afterPrefix, " ");
-              //caretAdvance.set(0);
             }
             caretOffsetRef.set(offset);
           }
-          return Result.Default;
+
+          int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
+          if (beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n') {
+            caretAdvance.set(prefix.trim().length() + 1);
+          }
+          return Result.DefaultForceIndent;
         }
     }
     return Result.Continue;
   }
   
-  private static boolean isInLineComment(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
-    if (offset < 1) return false;
+  private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
+    if (offset < 1) return -1;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     String prefix = commenter.getLineCommentPrefix();
-    return iterator.getTokenType() == commenter.getLineCommentTokenType() 
-           && (iterator.getStart() + (prefix == null ?  0 : prefix.length())) <= offset;
+    return iterator.getTokenType() == commenter.getLineCommentTokenType() &&
+           (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset ? iterator.getStart() : -1;
   }
 }
