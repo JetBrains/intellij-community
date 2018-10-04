@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -127,7 +128,6 @@ public class TerminalView {
     final ContentManager contentManager = myToolWindow.getContentManager();
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
-    ;
     return content;
   }
 
@@ -144,7 +144,8 @@ public class TerminalView {
       terminalWidget = terminalRunner.createTerminalWidget(content);
     }
     else {
-      Disposer.register(content, terminalWidget);
+      terminalWidget.setVirtualFile(null);
+      terminalWidget.moveDisposable(content);
     }
 
     content.setCloseable(true);

@@ -37,13 +37,14 @@ public class TerminalSessionVirtualFileImpl extends LightVirtualFile {
   private final TabInfo myTabInfo;
 
   public TerminalSessionVirtualFileImpl(@NotNull TabInfo tabInfo,
-                                        @NotNull JBTerminalWidget terminal,
+                                        @NotNull JBTerminalWidget terminalWidget,
                                         @NotNull TabbedSettingsProvider settingsProvider) {
     myTabInfo = tabInfo;
-    myTerminal = terminal;
+    myTerminal = terminalWidget;
     mySettingsProvider = settingsProvider;
     setFileType(TerminalSessionFileType.INSTANCE);
     setWritable(true);
+    terminalWidget.setVirtualFile(this);
   }
 
   public JBTerminalWidget getTerminalWidget() {
