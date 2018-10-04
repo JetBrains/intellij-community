@@ -169,6 +169,27 @@ static void _releaseWindow(WndInfo *wi) {
   free(wi);
 }
 
+void createMenuRootForWnd(WndInfo *wi) {
+    if (wi->menuroot != NULL) {
+        _releaseMenuItem(wi->menuroot);
+        wi->menuroot = NULL;
+    }
+
+    wi->menuroot = dbusmenu_menuitem_new();
+    if (wi->menuroot == NULL) {
+        _error("can't create menuitem for new root");
+        return;
+    }
+
+    g_object_set_data(G_OBJECT(wi->menuroot), MENUITEM_JHANDLER_PROPERTY, wi->jhandler);
+    dbusmenu_menuitem_property_set(wi->menuroot, DBUSMENU_MENUITEM_PROP_LABEL, "DBusMenuRoot");
+
+    if (wi->server == NULL)
+        _error("can't set new root because wi->server is null");
+    else
+        dbusmenu_server_set_root(wi->server, wi->menuroot);
+}
+
 WndInfo *registerWindow(long windowXid, jeventcallback handler) {
   // _info("register new window");
 
@@ -301,7 +322,7 @@ static void _handleItemSignal(DbusmenuMenuitem *item, int type) {
 }
 
 
-static void _onItemEvent(DbusmenuMenuitem *item, const char *event) {
+static void _onItemEvent(DbusmenuMenuitem *item, const char *event, GVariant * info, guint32 time) {
 //    _logmsg(LOG_LEVEL_INFO, "_onItemEvent %s", event);
 
   int eventType = -1;
@@ -314,6 +335,7 @@ static void _onItemEvent(DbusmenuMenuitem *item, const char *event) {
   else
     _error("unknown event type");
 
+  //_logmsg(LOG_LEVEL_INFO, "time %d", time);
   _handleItemSignal(item, eventType);
 }
 
@@ -325,7 +347,7 @@ static void _onItemAboutToShow(DbusmenuMenuitem *item) {
   _handleItemSignal(item, SIGNAL_ABOUT_TO_SHOW);
 }
 
-static void _onItemShowToUser(DbusmenuMenuitem *item) {
+static void _onItemShowToUser(DbusmenuMenuitem *item, guint32 time) {
   _handleItemSignal(item, SIGNAL_SHOWN);
 }
 
@@ -383,6 +405,8 @@ DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid) {
 
   return item;
 }
+
+void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item) { dbusmenu_menuitem_child_delete(parent, item); }
 
 void setItemLabel(DbusmenuMenuitem *item, const char *label) {
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_LABEL, label);
