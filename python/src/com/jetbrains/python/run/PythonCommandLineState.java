@@ -383,7 +383,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
         if (environment.containsKey(e.getKey())) {
           if ("PATH".equals(e.getKey())) {
-            env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
+            env.put(e.getKey(), PythonEnvUtil.addToPathEnvVar(env.get("PATH"), e.getValue(), true));
           }
           else {
             env.put(e.getKey(), e.getValue());
