@@ -17,7 +17,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @State(
-  name = "ToolWindowCollector",
+  name = "ToolWindowsCollector",
   storages = {
     @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
   }
@@ -41,7 +41,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     State state = getState();
     if (state == null) return;
 
-    final String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId + "_by_" + source);
+    final String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId + " by " + source);
     FeatureUsageLogger.INSTANCE.log("toolwindow", key);
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
