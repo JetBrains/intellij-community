@@ -1363,6 +1363,10 @@ public class UIUtil {
     return new JBColor(UNFOCUSED_SELECTION_COLOR, new Color(13, 41, 62));
   }
 
+  public static Color getListSelectionBackground(boolean focused) {
+    return focused ? getListSelectionBackground() : getListUnfocusedSelectionBackground();
+  }
+
   public static Color getTreeSelectionBackground(boolean focused) {
     return focused ? getTreeSelectionBackground() : getTreeUnfocusedSelectionBackground();
   }
