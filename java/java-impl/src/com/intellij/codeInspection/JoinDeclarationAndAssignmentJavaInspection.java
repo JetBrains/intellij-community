@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
@@ -131,18 +134,9 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
           PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(assignmentExpression.getParent(), PsiExpressionStatement.class);
           if (declarationStatement != null && declarationStatement.getParent() instanceof PsiCodeBlock &&
               expressionStatement != null && expressionStatement.getParent() == declarationStatement.getParent()) {
-            PsiElement candidate = skipWhitespacesAndCommentsBackward(expressionStatement);
-            if (candidate == declarationStatement) {
-              return variable;
-            }
-            if (canRemoveDeclaration(variable)) {
-              for (; candidate != null && !variableIsUsed(variable, candidate);
-                   candidate = skipWhitespacesAndCommentsBackward(candidate)) {
-                if (candidate == declarationStatement) {
-                  return variable;
-                }
-              }
-            }
+            return findOccurrence(expressionStatement, variable,
+                                  PsiTreeUtil::skipWhitespacesAndCommentsBackward,
+                                  (candidate, unused) -> candidate == declarationStatement ? variable : null);
           }
         }
       }
@@ -151,20 +145,30 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
   }
 
   @Nullable
-  private static PsiAssignmentExpression findAssignment(@NotNull PsiVariable variable) {
-    PsiElement declaration = variable.getParent();
+  private static PsiAssignmentExpression findAssignment(@NotNull PsiLocalVariable variable) {
+    return findOccurrence(variable.getParent(), variable,
+                          PsiTreeUtil::skipWhitespacesAndCommentsForward,
+                          JoinDeclarationAndAssignmentJavaInspection::findAssignment);
+  }
 
-    PsiElement candidate = skipWhitespacesAndCommentsForward(declaration);
-    PsiAssignmentExpression assignment = findAssignment(candidate, variable);
-    if (assignment != null) {
-      return assignment;
+  @Nullable
+  private static <T> T findOccurrence(@Nullable PsiElement start,
+                                      @NotNull PsiLocalVariable variable,
+                                      @NotNull Function<PsiElement, PsiElement> advance,
+                                      @NotNull BiFunction<PsiElement, PsiLocalVariable, T> search) {
+    PsiElement candidate = advance.apply(start);
+    T result = search.apply(candidate, variable);
+    if (result != null) {
+      return result;
     }
     if (canRemoveDeclaration(variable)) {
-      for (; candidate != null && !variableIsUsed(variable, candidate);
-           candidate = skipWhitespacesAndCommentsForward(candidate)) {
-        assignment = findAssignment(candidate, variable);
-        if (assignment != null) {
-          return assignment;
+      for (; candidate != null; candidate = advance.apply(candidate)) {
+        result = search.apply(candidate, variable);
+        if (result != null) {
+          return result;
+        }
+        if (variableIsUsed(variable, candidate)) {
+          break;
         }
       }
     }
@@ -263,14 +267,12 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     @NotNull
     private static List<String> collectReverseTrailingCommentTexts(@NotNull PsiElement element) {
       List<String> result = new ArrayList<>();
-      PsiElement child = element.getLastChild();
-      while (child instanceof PsiComment ||
-             child instanceof PsiWhiteSpace ||
-             child instanceof PsiJavaToken && JavaTokenType.SEMICOLON.equals(((PsiJavaToken)child).getTokenType())) {
+      for (PsiElement child = element.getLastChild();
+           child instanceof PsiComment || child instanceof PsiWhiteSpace;
+           child = child.getPrevSibling()) {
         if (child instanceof PsiComment) {
           result.add(child.getText());
         }
-        child = child.getPrevSibling();
       }
       return result;
     }
