@@ -9,8 +9,6 @@ internal class GithubPullRequestPreviewComponent(private val changes: GithubPull
                                                  private val details: GithubPullRequestDetailsComponent)
   : OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f), Disposable {
 
-  val toolbarComponent = changes.toolbarComponent
-
   init {
     firstComponent = details
     secondComponent = changes

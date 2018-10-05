@@ -67,7 +67,6 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                                        listLoader,
                                                        avatarIconsProviderFactory).apply {
       requestExecutor.addListener(this) { this.refresh() }
-      setToolbarHeightReferent(preview.toolbarComponent)
     }
 
 

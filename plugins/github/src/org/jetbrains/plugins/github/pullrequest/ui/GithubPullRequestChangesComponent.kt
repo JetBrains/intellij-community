@@ -13,7 +13,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.ComponentWithEmptyText
 import java.awt.BorderLayout
-import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
@@ -22,7 +21,6 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
   private val changesBrowser = PullRequestChangesBrowserWithError(project)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
-  val toolbarComponent: JComponent = changesBrowser.toolbar.component
   val diffAction = changesBrowser.diffAction
 
   init {
