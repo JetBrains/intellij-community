@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Processes events of test runner in general text-based form.
@@ -48,7 +49,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
-  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new CopyOnWriteArrayList<>();
 
   protected boolean myTreeBuildBeforeStart = false;
 
