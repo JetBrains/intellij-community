@@ -28,6 +28,11 @@ public class ConvertOldAnnotationInspectionTest extends BaseTestNGInspectionsTes
   }
 
   @Override
+  protected String getActionName() {
+    return ConvertOldAnnotationInspection.FIX_NAME;
+  }
+
+  @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/configuration";
   }

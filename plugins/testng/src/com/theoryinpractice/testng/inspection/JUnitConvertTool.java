@@ -29,7 +29,7 @@ import java.util.Map;
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
+  private static final String DISPLAY_NAME = "JUnit Test can be converted to TestNG";
   private static final Map<String, String> ANNOTATIONS_MAP;
 
   public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
@@ -299,19 +299,9 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
         newComment = factory.createCommentFromText(commentString, null);
         comment.replace(newComment);
-
       }
       else {
-        String commentString;
-
-        StringBuilder commentBuffer = new StringBuilder();
-        commentBuffer.append("/**\n");
-        commentBuffer.append(javaDocLine);
-        commentBuffer.append('\n');
-        commentBuffer.append(" */");
-
-        commentString = commentBuffer.toString();
-        newComment = factory.createCommentFromText(commentString, null);
+        newComment = factory.createCommentFromText("/**\n" + javaDocLine + "\n */", null);
 
         method.addBefore(newComment, comment);
       }
