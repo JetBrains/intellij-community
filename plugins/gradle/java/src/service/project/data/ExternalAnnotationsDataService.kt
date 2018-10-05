@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
@@ -27,6 +28,18 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                modelsProvider: IdeModelsProvider) {
     if (!Registry.`is`("external.system.import.resolve.annotations")) {
       return
+    }
+
+    projectData?.apply {
+      GradleSettings
+        .getInstance(project)
+        .linkedProjectsSettings
+        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+        ?.let {
+          if (!it.isResolveExternalAnnotations) {
+            return@onSuccessImport
+          }
+        }
     }
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return

@@ -11,16 +11,15 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.model.MavenArtifact
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.*
 
 class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
 
-  override fun isApplicable(mavenProject: MavenProject?): Boolean = super.isApplicable(mavenProject) && Registry.`is`("external.system.import.resolve.annotations")
+  override fun isApplicable(mavenProject: MavenProject?): Boolean  {
+    return super.isApplicable(mavenProject) && Registry.`is`("external.system.import.resolve.annotations")
+  }
   override fun processChangedModulesOnly(): Boolean = false
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider?,
@@ -38,9 +37,12 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
                           mavenProject: MavenProject?,
                           changes: MavenProjectChanges?,
                           modifiableModelsProvider: IdeModifiableModelsProvider?) {
-    if (module == null || mavenProject == null) {
+    if (module == null
+        || mavenProject == null
+        || !MavenProjectsManager.getInstance(module.project).importingSettings.isDownloadAnnotationsAutomatically) {
       return
     }
+
     val repoConfig = RemoteRepositoriesConfiguration.getInstance(module.project)
     val repositories: MutableCollection<RemoteRepositoryDescription> =
       hashSetOf<RemoteRepositoryDescription>().apply { addAll(repoConfig.repositories) }
@@ -58,6 +60,10 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
     val project = module.project
     val librariesMap = mutableMapOf<MavenArtifact, Library>()
+
+    if (!MavenProjectsManager.getInstance(project).importingSettings.isDownloadAnnotationsAutomatically) {
+      return
+    }
 
     mavenProject.dependencies.forEach {
       val library = modifiableModelsProvider.getLibraryByName(it.libraryName)
