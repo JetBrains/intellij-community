@@ -2,11 +2,12 @@
 package org.editorconfig.language
 
 import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
 class EditorConfigCommenterTest : LightPlatformCodeInsightFixtureTestCase() {
-  override fun getBasePath() =
-    "/plugins/editorconfig/testSrc/org/editorconfig/language/commenter/"
+  override fun getTestDataPath() =
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/commenter/"
 
   fun testComment() = doTest()
   fun testUncomment() = doTest()
