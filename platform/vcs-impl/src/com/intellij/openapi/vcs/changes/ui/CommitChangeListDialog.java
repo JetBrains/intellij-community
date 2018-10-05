@@ -108,7 +108,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   @NotNull private final String myCommitActionName;
   private final boolean myEnablePartialCommit;
 
-  @NotNull private final Map<String, String> myListComments;
+  @NotNull private final Map<String, String> myListComments = newHashMap();
   @NotNull private final List<CommitExecutorAction> myExecutorActions;
 
   @NotNull private final CommitOptionsPanel myCommitOptions;
@@ -285,7 +285,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     myForceCommitInVcs = forceCommitInVcs;
     myIsAlien = isAlien;
     myResultHandler = customResultHandler;
-    myListComments = newHashMap();
 
     if (!myShowVcsCommit && isEmpty(executors)) {
       throw new IllegalArgumentException("nothing found to execute commit with");
@@ -720,11 +719,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private void saveCommentIntoChangeList() {
     if (myLastSelectedListName != null) {
-      String commitMessage = myCommitMessageArea.getComment();
-      String savedComment = myListComments.get(myLastSelectedListName);
-      if (!Comparing.equal(savedComment, commitMessage)) {
-        myListComments.put(myLastSelectedListName, commitMessage);
-      }
+      myListComments.put(myLastSelectedListName, myCommitMessageArea.getComment());
     }
   }
 
