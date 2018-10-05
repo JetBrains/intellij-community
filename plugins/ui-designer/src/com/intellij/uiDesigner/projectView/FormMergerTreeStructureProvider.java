@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -67,13 +66,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       if (psiClass == null) continue;
       String qName = psiClass.getQualifiedName();
       if (qName == null) continue;
-      List<PsiFile> forms;
-      try {
-        forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
-      }
-      catch (ProcessCanceledException e) {
-        continue;
-      }
+      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
       Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
       if (!formNodes.isEmpty()) {
         Collection<PsiFile> formFiles = convertToFiles(formNodes);
