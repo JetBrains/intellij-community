@@ -1,4 +1,4 @@
-// "Fix all 'Simplify stream API call chains' problems in file" "false"
+// "Fix all 'Stream API call chain can be simplified' problems in file" "false"
 
 import java.util.*;
 

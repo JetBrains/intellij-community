@@ -1,4 +1,4 @@
-// "Fix all 'Simplify Optional call chains' problems in file" "true"
+// "Fix all 'Optional call chain can be simplified' problems in file" "true"
 import java.util.Optional;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
