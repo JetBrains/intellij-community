@@ -270,7 +270,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     FileUtil.createParentDirs(file);
     try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
 
-      XMLStreamWriter xmlWriter = XMLOutputFactory.newFactory().createXMLStreamWriter(writer);
+      XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
       if (!exists) {
         xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
         xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
