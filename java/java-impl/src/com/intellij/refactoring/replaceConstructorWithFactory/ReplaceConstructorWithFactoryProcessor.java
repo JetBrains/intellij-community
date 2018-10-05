@@ -67,7 +67,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     myTargetClass = targetClass;
     myFactoryName = factoryName;
     myManager = PsiManager.getInstance(project);
-    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
 
     myIsInner = isInner(myOriginalClass);
   }

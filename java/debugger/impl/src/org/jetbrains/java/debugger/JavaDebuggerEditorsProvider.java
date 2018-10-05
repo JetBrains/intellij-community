@@ -83,7 +83,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
         if (contextType == null) {
           PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
           if (contextClass != null) {
-            contextType = JavaPsiFacade.getInstance(codeFragment.getProject()).getElementFactory().createType(contextClass);
+            contextType = JavaPsiFacade.getElementFactory(codeFragment.getProject()).createType(contextClass);
           }
         }
         codeFragment.setThisType(contextType);

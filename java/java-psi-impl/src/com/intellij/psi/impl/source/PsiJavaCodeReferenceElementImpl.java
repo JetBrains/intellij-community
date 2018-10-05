@@ -558,7 +558,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    final PsiElement identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    final PsiElement identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }

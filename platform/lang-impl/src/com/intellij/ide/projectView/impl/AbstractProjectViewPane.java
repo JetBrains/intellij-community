@@ -518,7 +518,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   protected void installComparator(AbstractTreeBuilder builder, @NotNull Comparator<? super NodeDescriptor> comparator) {
-    if (builder != null) builder.setNodeDescriptorComparator((Comparator)comparator);
+    if (builder != null) builder.setNodeDescriptorComparator(comparator);
   }
 
   public JTree getTree() {

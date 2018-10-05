@@ -17,7 +17,7 @@ public class DefaultJavaCoverageRunner extends DefaultJavaProgramRunner {
              //profile instanceof ModuleBasedConfiguration &&
              !(profile instanceof RunConfigurationWithSuppressedDefaultRunAction) &&
              profile instanceof RunConfigurationBase &&
-             CoverageEngine.EP_NAME.getExtension(JavaCoverageEngine.class).isApplicableTo((RunConfigurationBase)profile);
+             CoverageEngine.EP_NAME.findExtensionOrFail(JavaCoverageEngine.class).isApplicableTo((RunConfigurationBase)profile);
     }
     catch (Exception e) {
       return false;

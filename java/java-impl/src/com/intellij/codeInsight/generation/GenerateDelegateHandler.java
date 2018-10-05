@@ -160,7 +160,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     call.append(");");
 
     final PsiManager psiManager = method.getManager();
-    PsiStatement stmt = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createStatementFromText(call.toString(), method);
+    PsiStatement stmt = JavaPsiFacade.getElementFactory(psiManager.getProject()).createStatementFromText(call.toString(), method);
     stmt = (PsiStatement)CodeStyleManager.getInstance(psiManager.getProject()).reformat(stmt);
     method.getBody().add(stmt);
 
@@ -185,7 +185,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
   private void clearMethod(PsiMethod method) throws IncorrectOperationException {
     LOG.assertTrue(!method.isPhysical());
-    PsiCodeBlock codeBlock = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlock();
+    PsiCodeBlock codeBlock = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlock();
     if (method.getBody() != null) {
       method.getBody().replace(codeBlock);
     }

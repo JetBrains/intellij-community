@@ -78,7 +78,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter) {
     return containsInMap(typeParameter)
                      ? getFromMap(typeParameter)
-                     : JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+                     : JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);
   }
 
   private boolean containsInMap(@NotNull PsiTypeParameter typeParameter) {
@@ -289,7 +289,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
         if (aClass instanceof PsiTypeParameter) {
           return rawTypeForTypeParameter((PsiTypeParameter)aClass);
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
       }
 
       @Override

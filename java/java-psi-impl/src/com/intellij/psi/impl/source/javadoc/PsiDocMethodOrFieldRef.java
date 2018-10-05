@@ -99,7 +99,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     final MethodSignature methodSignature;
     if (signature != null) {
       final List<PsiType> types = ContainerUtil.newArrayListWithCapacity(signature.length);
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
       for (String s : signature) {
         try {
           types.add(elementFactory.createTypeFromText(s, element));
@@ -321,7 +321,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       }
       else {
         if (containingClass != null && !PsiTreeUtil.isAncestor(containingClass, PsiDocMethodOrFieldRef.this, true)) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
           final PsiReferenceExpression ref = elementFactory.createReferenceExpression(containingClass);
           addAfter(ref, null);
         }
@@ -357,7 +357,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     }
 
     public PsiElement bindToText(PsiClass containingClass, StringBuffer newText) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(containingClass.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       PsiComment comment = elementFactory.createCommentFromText(newText.toString(), null);
       PsiElement tag = PsiTreeUtil.getChildOfType(comment, PsiDocTag.class);
       PsiElement ref = PsiTreeUtil.getChildOfType(tag, PsiDocMethodOrFieldRef.class);

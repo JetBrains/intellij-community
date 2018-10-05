@@ -60,7 +60,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
       return;
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     CommentTracker tracker = new CommentTracker();

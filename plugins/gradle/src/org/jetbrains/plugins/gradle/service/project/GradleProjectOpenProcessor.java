@@ -108,7 +108,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessor {
                                           @Nullable Project projectToClose,
                                           @NotNull Path path) {
     GradleProjectOpenProcessor gradleProjectOpenProcessor =
-      ProjectOpenProcessor.EXTENSION_POINT_NAME.getExtension(GradleProjectOpenProcessor.class);
+      ProjectOpenProcessor.EXTENSION_POINT_NAME.findExtensionOrFail(GradleProjectOpenProcessor.class);
     VirtualFile virtualFile = VfsUtil.findFile(path, false);
     if (virtualFile != null && virtualFile.isDirectory()) {
       for (VirtualFile file : virtualFile.getChildren()) {

@@ -34,7 +34,7 @@ class ArrayInitializerAwareConversionDescriptor extends TypeConversionDescriptor
   @Override
   protected PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
     if (expression instanceof PsiArrayInitializerExpression) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText("new " +
                                                                                        TypeConversionUtil
                                                                                          .erasure(expression.getType()).getCanonicalText() +

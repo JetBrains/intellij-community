@@ -104,7 +104,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     if (existingClass != null) {
       if (TypeConversionUtil.isPrimitiveWrapper(myQualifiedName)) {
         final PsiPrimitiveType unboxedType =
-          PsiPrimitiveType.getUnboxedType(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(existingClass));
+          PsiPrimitiveType.getUnboxedType(JavaPsiFacade.getElementFactory(myProject).createType(existingClass));
         assert unboxedType != null;
         return unboxedType.getCanonicalText() + "Value()";
       }

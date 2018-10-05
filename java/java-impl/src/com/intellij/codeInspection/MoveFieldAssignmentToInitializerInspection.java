@@ -221,7 +221,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
       field.setInitializer(ct.markUnchanged(initializer));
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comments != null) {
         PsiCodeBlock block = factory.createCodeBlockFromText("{" + comments + "}", initializer);
         for(PsiElement child : block.getChildren()) {

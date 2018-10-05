@@ -229,7 +229,7 @@ public class RedundantCastUtil {
 
       try {
         Project project = methodExpr.getProject();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
         final PsiExpression expressionFromText = factory.createExpressionFromText(methodCall.getText(), methodCall);
         if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
@@ -744,7 +744,7 @@ public class RedundantCastUtil {
     if (refExpression.getParent() instanceof PsiMethodCallExpression) return false;
     final PsiElement resolved = refExpression.resolve();
     try {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refExpression.getProject());
       final PsiExpression copyExpression = elementFactory.createExpressionFromText(refExpression.getText(), refExpression);
       if (copyExpression instanceof PsiReferenceExpression) {
         final PsiReferenceExpression copy = (PsiReferenceExpression)copyExpression;

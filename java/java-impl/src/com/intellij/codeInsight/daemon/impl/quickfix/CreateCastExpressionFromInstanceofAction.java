@@ -57,7 +57,7 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
 
   @Nullable
   private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
     PsiParenthesizedExpression paren = (PsiParenthesizedExpression)statement.getExpression();

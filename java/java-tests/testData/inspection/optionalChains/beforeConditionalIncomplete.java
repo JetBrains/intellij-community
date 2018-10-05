@@ -1,4 +1,4 @@
-// "Fix all 'Simplify Optional call chains' problems in file" "false"
+// "Fix all 'Optional call chain can be simplified' problems in file" "false"
 import java.util.Optional;
 
 public class Test {

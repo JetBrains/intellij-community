@@ -184,7 +184,7 @@ public class ClassInnerStuffCache {
   }
 
   private PsiMethod getSyntheticMethod(String text) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myClass.getProject());
     PsiMethod method = factory.createMethodFromText(text, myClass);
     return new LightMethod(myClass.getManager(), method, myClass) {
       @Override

@@ -54,7 +54,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
   private static final String HELP_ID = "python.reference.inline";
 
   public static PyInlineLocalHandler getInstance() {
-    return EP_NAME.getExtension(PyInlineLocalHandler.class);
+    return EP_NAME.findExtensionOrFail(PyInlineLocalHandler.class);
   }
 
   @Override

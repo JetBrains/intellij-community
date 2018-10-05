@@ -407,7 +407,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   private void buildDelegate() {
     final PsiManager manager = sourceClass.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
     @NonNls final StringBuilder fieldBuffer = new StringBuilder();
     final String delegateVisibility = calculateDelegateVisibility();

@@ -84,7 +84,7 @@ public class ClsEnumConstantImpl extends ClsFieldImpl implements PsiEnumConstant
   @Override
   @NotNull
   public PsiType getType() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory().createType(getContainingClass());
+    return JavaPsiFacade.getElementFactory(getProject()).createType(getContainingClass());
   }
 
   @Override

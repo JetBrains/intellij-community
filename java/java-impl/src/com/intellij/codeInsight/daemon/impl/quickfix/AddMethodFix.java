@@ -38,7 +38,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   @NotNull
   private static PsiMethod createMethod(final String methodText, final PsiClass implClass) {
-    return JavaPsiFacade.getInstance(implClass.getProject()).getElementFactory().createMethodFromText(methodText, implClass);
+    return JavaPsiFacade.getElementFactory(implClass.getProject()).createMethodFromText(methodText, implClass);
   }
 
   private static PsiMethod reformat(Project project, PsiMethod result) throws IncorrectOperationException {

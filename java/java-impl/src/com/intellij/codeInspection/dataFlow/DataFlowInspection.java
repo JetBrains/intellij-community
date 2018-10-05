@@ -133,7 +133,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
           final Project project = qualifier.getProject();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
           binary.getLOperand().replace(qualifier);
           if (RefactoringUtil.getParentStatement(expression, false) != null) {

@@ -105,7 +105,7 @@ public class PsiImplUtil {
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
       try {
-        refs[i] = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createPackageReferenceElement(name);
+        refs[i] = JavaPsiFacade.getElementFactory(manager.getProject()).createPackageReferenceElement(name);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -258,14 +258,14 @@ public class PsiImplUtil {
     }
     if (!PsiUtil.isLanguageLevel5OrHigher(classAccessExpression)) {
       //Raw java.lang.Class
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(classClass);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createType(classClass);
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiType operandType = classAccessExpression.getOperand().getType();
     if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
       if (PsiType.VOID.equals(operandType)) {
-        operandType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+        operandType = JavaPsiFacade.getElementFactory(manager.getProject())
             .createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
       }
       else {
@@ -438,7 +438,7 @@ public class PsiImplUtil {
 
   public static PsiElement setName(@NotNull PsiElement element, @NotNull String name) throws IncorrectOperationException {
     PsiManager manager = element.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
   }
@@ -645,7 +645,7 @@ public class PsiImplUtil {
 
     if (typeName.indexOf('<') != -1 || typeName.indexOf('[') != -1 || typeName.indexOf('.') == -1) {
       try {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(typeName, context);
+        return JavaPsiFacade.getElementFactory(psiManager.getProject()).createTypeFromText(typeName, context);
       }
       catch(Exception ignored) { } // invalid syntax will produce unresolved class type
     }
@@ -663,7 +663,7 @@ public class PsiImplUtil {
       );
       resultType = new PsiClassReferenceType(ref, null);
     } else {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       PsiSubstitutor substitutor = factory.createRawSubstitutor(aClass);
       resultType = factory.createType(aClass, substitutor);
     }

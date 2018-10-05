@@ -237,7 +237,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
   @Nullable
   public static PsiCallExpression addDelegatingCallTemplate(PsiMethod delegate, String newName) throws IncorrectOperationException {
     Project project = delegate.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiCodeBlock body = delegate.getBody();
     assert body != null;
     final PsiCallExpression callExpression;

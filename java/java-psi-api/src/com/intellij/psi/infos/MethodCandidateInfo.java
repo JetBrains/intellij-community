@@ -410,7 +410,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
       if (isRawSubstitution()) {
-        return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
+        return JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(mySubstitutor, typeParameters);
       }
 
       final PsiElement parent = getParent();

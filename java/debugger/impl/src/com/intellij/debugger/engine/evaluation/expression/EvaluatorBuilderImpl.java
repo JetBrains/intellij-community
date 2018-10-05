@@ -578,7 +578,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
             final PsiType lType = localVariable.getType();
 
-            PsiElementFactory elementFactory = JavaPsiFacade.getInstance(localVariable.getProject()).getElementFactory();
+            PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(localVariable.getProject());
             try {
               PsiExpression initialValue = elementFactory.createExpressionFromText(PsiTypesUtil.getDefaultValueOfType(lType), null);
               Object value = JavaConstantExpressionEvaluator.computeConstantExpression(initialValue, true);

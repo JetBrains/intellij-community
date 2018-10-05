@@ -35,6 +35,11 @@ public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest {
   }
 
   @Override
+  protected String getActionName() {
+    return ConvertJavadocInspection.FIX_NAME;
+  }
+
+  @Override
   protected String getBasePath() {
     return PluginPathManager.getPluginHomePathRelative("testng") + "/testData/javadoc2Annotation";
   }

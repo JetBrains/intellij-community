@@ -186,7 +186,7 @@ public class CanonicalTypes {
     @NotNull
     @Override
     public PsiType getType(PsiElement context, PsiManager manager) throws IncorrectOperationException {
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeFromText(myCanonicalText, context);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeFromText(myCanonicalText, context);
     }
 
     @Override

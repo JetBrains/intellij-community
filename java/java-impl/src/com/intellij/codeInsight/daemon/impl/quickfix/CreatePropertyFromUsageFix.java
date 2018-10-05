@@ -182,7 +182,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     boolean isStatic = false;
     PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
@@ -283,7 +283,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
             CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
             return;
           }
-          PsiElementFactory factory1 = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiElementFactory factory1 = JavaPsiFacade.getElementFactory(aClass.getProject());
           try {
             PsiType type1 = factory1.createTypeFromText(fieldType, aClass);
             try {

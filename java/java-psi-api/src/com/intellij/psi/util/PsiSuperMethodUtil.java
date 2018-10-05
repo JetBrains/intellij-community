@@ -61,7 +61,7 @@ public class PsiSuperMethodUtil {
       map.put(typeParameter, t);
     }
 
-    return map == null ? PsiSubstitutor.EMPTY : JavaPsiFacade.getInstance(superClass.getProject()).getElementFactory().createSubstitutor(map);
+    return map == null ? PsiSubstitutor.EMPTY : JavaPsiFacade.getElementFactory(superClass.getProject()).createSubstitutor(map);
   }
 
   @NotNull

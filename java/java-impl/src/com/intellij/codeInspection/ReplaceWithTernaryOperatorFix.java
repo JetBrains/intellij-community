@@ -89,7 +89,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
                                                                            @NotNull String condition,
                                                                            @NotNull PsiExpression expression,
                                                                            @NotNull String defaultValue) {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiElement parent = expression.getParent();
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)factory.createExpressionFromText(

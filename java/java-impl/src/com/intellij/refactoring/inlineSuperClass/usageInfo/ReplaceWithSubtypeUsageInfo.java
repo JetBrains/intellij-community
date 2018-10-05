@@ -49,7 +49,7 @@ public class ReplaceWithSubtypeUsageInfo extends FixableUsageInfo {
   public void fixUsage() throws IncorrectOperationException {
     if (myTypeElement.isValid()) {
       Project project = myTypeElement.getProject();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       PsiElement replaced = myTypeElement.replace(elementFactory.createTypeElement(myTargetClassType));
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(replaced);
     }

@@ -165,7 +165,7 @@ public class JavaEditorTextProviderImpl implements EditorTextProvider {
           }
         }
         TextRange textRange = expression.getTextRange();
-        PsiElement psiExpression = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory().createExpressionFromText(expression.getText(), context);
+        PsiElement psiExpression = JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(expression.getText(), context);
         return Pair.create(psiExpression, textRange);
       }
       catch (IncorrectOperationException e) {

@@ -762,7 +762,7 @@ public class JavaDocInfoGenerator {
     htmlText = StringUtil.replace(htmlText, "*/", "&#42;&#47;");
 
     final String fileText = "/** " + htmlText + " */";
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(packageHtmlFile.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(packageHtmlFile.getProject());
     final PsiDocComment docComment;
     try {
       docComment = elementFactory.createDocCommentFromText(fileText);
@@ -1150,7 +1150,7 @@ public class JavaDocInfoGenerator {
         text = new String(bytes, CharsetToolkit.UTF8_CHARSET);
       }
       text = StringUtil.replace(text, "<ClassName>", containingClassName);
-      return JavaPsiFacade.getInstance(myProject).getElementFactory().createDocCommentFromText(text);
+      return JavaPsiFacade.getElementFactory(myProject).createDocCommentFromText(text);
     }
     catch (IOException | IncorrectOperationException e) {
       LOG.info(e);

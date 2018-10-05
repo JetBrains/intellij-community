@@ -131,7 +131,7 @@ public class DfaPsiType {
       for (PsiClassType type : types) {
         PsiClass resolved = type.resolve();
         if (resolved != null && processed.add(resolved)) {
-          PsiClassType classType = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(resolved);
+          PsiClassType classType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(resolved);
           result.add(normalizeClassType(classType, processed));
         }
       }

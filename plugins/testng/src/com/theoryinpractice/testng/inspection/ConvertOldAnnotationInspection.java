@@ -24,7 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Hani Suleiman
  */
 public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final String DISPLAY_NAME = "Convert old @Configuration TestNG annotations";
+  private static final String DISPLAY_NAME = "Old TestNG annotation @Configuration is used";
+  static final String FIX_NAME = "Convert old @Configuration TestNG annotations";
 
   @Override
   @Nls
@@ -66,7 +67,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
     @Override
     @NotNull
     public String getFamilyName() {
-      return DISPLAY_NAME;
+      return FIX_NAME;
     }
 
     @Override
@@ -111,13 +112,12 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
                                                                 @NonNls String newAnnotation) throws IncorrectOperationException {
 
     PsiAnnotationParameterList list = annotation.getParameterList();
+    Project project = annotation.getProject();
     for (PsiNameValuePair pair : list.getAttributes()) {
       if (attribute.equals(pair.getName())) {
-        final StringBuilder newAnnotationBuffer = new StringBuilder();
-        newAnnotationBuffer.append(newAnnotation).append('(').append(')');
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory();
-        final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);
-        JavaCodeStyleManager.getInstance(annotation.getProject()).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotation + "()", modifierList);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(newPsiAnnotation, null));
       }
     }
   }

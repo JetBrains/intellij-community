@@ -184,7 +184,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       setLanguageLevel(null);
       myFixture.tearDown();
       myFixture = null;
-      FilePropertyPusher.EP_NAME.getExtension(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
     }
     finally {
       super.tearDown();

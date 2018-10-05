@@ -138,7 +138,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 
   protected PsiFile createLightFile(FileType fileType, String text) {

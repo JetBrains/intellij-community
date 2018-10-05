@@ -393,7 +393,7 @@ public class CreateFromUsageUtils {
                                                  String name,
                                                  PsiJavaCodeReferenceElement referenceElement) {
     PsiManager manager = psiClass.getManager();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiClass result = classKind == CreateClassKind.INTERFACE ? elementFactory.createInterface(name) :
                       classKind == CreateClassKind.CLASS ? elementFactory.createClass(name) :
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :

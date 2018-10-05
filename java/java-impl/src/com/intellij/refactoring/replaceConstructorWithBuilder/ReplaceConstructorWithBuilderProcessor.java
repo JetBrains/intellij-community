@@ -73,7 +73,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
                                                 MoveDestination moveDestination, boolean createNewBuilderClass) {
     super(project);
     myMoveDestination = moveDestination;
-    myElementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(myProject);
     myConstructors = constructors;
     myParametersMap = parametersMap;
 

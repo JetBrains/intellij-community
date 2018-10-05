@@ -69,7 +69,7 @@ public class AddReturnFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     String value = suggestReturnValue();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
     PsiCodeBlock body = myMethod.getBody();
     returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());

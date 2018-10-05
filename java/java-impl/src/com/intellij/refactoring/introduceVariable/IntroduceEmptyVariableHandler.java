@@ -66,7 +66,7 @@ public class IntroduceEmptyVariableHandler {
       PsiDocumentManager.getInstance(project).commitDocument(document);
 
       PsiElement context = anchorStatement.getParent();
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       String value = PsiTypesUtil.getDefaultValueOfType(type);
       PsiExpression initializer = elementFactory.createExpressionFromText(value, anchorStatement);
       PsiDeclarationStatement declaration = elementFactory

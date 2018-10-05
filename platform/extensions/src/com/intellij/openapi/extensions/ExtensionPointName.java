@@ -76,7 +76,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   }
 
   @NotNull
-  public <V extends T> V getExtension(@NotNull Class<V> instanceOf) {
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
     V result = findExtension(instanceOf);
     if (result == null) {
       throw new IllegalArgumentException("could not find extension implementation " + instanceOf);

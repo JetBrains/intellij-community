@@ -77,7 +77,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     myList.addKeyListener(mySpeedSearch);
     int selectedIndex = myList.getSelectedIndex();
     int modelSize = myList.getModel().getSize();
-    myModel = new NameFilteringListModel<T>(myList, (Function<T, String>)namer, s -> mySpeedSearch.shouldBeShowing(s), mySpeedSearch);
+    myModel = new NameFilteringListModel<T>(myList, namer, mySpeedSearch::shouldBeShowing, mySpeedSearch);
     if (myModel.getSize() == modelSize) {
       myList.setSelectedIndex(selectedIndex);
     }

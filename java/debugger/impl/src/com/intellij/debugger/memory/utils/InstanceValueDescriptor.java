@@ -56,7 +56,7 @@ public class InstanceValueDescriptor extends ValueDescriptorImpl {
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext debuggerContext) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     ObjectReference ref = ((ObjectReference) getValue());
     String name = NamesUtils.getUniqueName(ref).replace("@", "");
     String presentation = String.format("%s_DebugLabel", name);
