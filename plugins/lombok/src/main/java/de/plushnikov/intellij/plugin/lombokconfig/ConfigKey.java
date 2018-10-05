@@ -39,6 +39,7 @@ public enum ConfigKey {
   ALLARGSCONSTRUCTOR_FLAG_USAGE("lombok.allArgsConstructor.flagUsage", ""),
   ANYCONSTRUCTOR_FLAG_USAGE("lombok.anyConstructor.flagUsage", ""),
   BUILDER_FLAG_USAGE("lombok.builder.flagUsage", ""),
+  SUPER_BUILDER_FLAG_USAGE("lombok.superBuilder.flagUsage", ""),
   CLEANUP_FLAG_USAGE("lombok.cleanup.flagUsage", ""),
   DATA_FLAG_USAGE("lombok.data.flagUsage", ""),
   DELEGATE_FLAG_USAGE("lombok.delegate.flagUsage", ""),
