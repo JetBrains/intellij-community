@@ -648,7 +648,7 @@ FunctionEnd
 
 Function IncorrectSilentInstallParameters
   !define msg1 "How to run installation in Silent Mode:$\r$\n"
-  !define msg2 "<installation> /S /CONFIG=<path to silent cofig> /D=<install dir>$\r$\n$\r$\n"
+  !define msg2 "<installation> /S /CONFIG=<path to silent config> /D=<install dir>$\r$\n$\r$\n"
   !define msg3 "Example:$\r$\n"
   !define msg4 "d:\download\Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
   MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}"
