@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class FieldSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
-  public FieldSmartPointerNode(Project project, @NotNull PsiField value, ViewSettings viewSettings) {
+  public FieldSmartPointerNode(@NotNull Project project, @NotNull PsiField value, @NotNull ViewSettings viewSettings) {
     super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 

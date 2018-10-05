@@ -160,6 +160,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     rootsChanged();
   }
 
+  @NotNull
   public FavoritesViewSettings getViewSettings() {
     return myViewSettings;
   }

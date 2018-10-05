@@ -31,7 +31,7 @@ import java.util.*;
 public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
   @Nullable
-  public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, @NotNull final ViewSettings viewSettings) {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     Form[] forms = Form.DATA_KEY.getData(context);
