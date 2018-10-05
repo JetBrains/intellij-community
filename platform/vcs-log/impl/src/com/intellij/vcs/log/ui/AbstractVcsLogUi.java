@@ -30,6 +30,7 @@ import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -128,6 +129,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull
   public abstract VcsLogUiProperties getProperties();
+
+  @Nullable
+  public abstract History getNavigationHistory();
 
   @Nullable
   public abstract String getHelpId();
