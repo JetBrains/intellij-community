@@ -1,0 +1,29 @@
+EditorConfig file
+  EditorConfigSectionImpl(SECTION)
+    EditorConfigHeaderImpl(HEADER)
+      PsiElement(EditorConfigTokenType.L_BRACKET)('[')
+      EditorConfigPatternImpl(PATTERN)
+        EditorConfigFlatPatternImpl(FLAT_PATTERN)
+          PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('foo')
+      PsiElement(EditorConfigTokenType.R_BRACKET)(']')
+    PsiWhiteSpace('\n')
+    key=
+another_key=
+      key
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('key')
+      PsiElement(EditorConfigTokenType.SEPARATOR)('=')
+      PsiWhiteSpace('\n')
+      another_key
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('another_key')
+      PsiErrorElement:EditorConfigTokenType.COLON or EditorConfigTokenType.COMMA expected, got '='
+        PsiElement(EditorConfigTokenType.SEPARATOR)('=')
+    value
+      value
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('value')
+    PsiWhiteSpace('\n')
+    and_another_key=value
+      and_another_key
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('and_another_key')
+      PsiElement(EditorConfigTokenType.SEPARATOR)('=')
+      value
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('value')

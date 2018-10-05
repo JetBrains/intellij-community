@@ -1,0 +1,4 @@
+[foo]
+dotnet_naming_rule.informative_rule_name.severity = warning
+dotnet_naming_rule.informative_rule_name.symbols = value
+dotnet_naming_rule.informative_rule_name.style = value
