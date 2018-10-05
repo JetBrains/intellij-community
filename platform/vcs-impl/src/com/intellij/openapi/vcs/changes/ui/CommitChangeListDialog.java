@@ -381,7 +381,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     mySplitter.setProportion(PropertiesComponent.getInstance().getFloat(SPLITTER_PROPORTION_OPTION, SPLITTER_PROPORTION_OPTION_DEFAULT));
 
     if (!myVcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      setComment(initialSelection, comment);
+      initComment(initialSelection, comment);
     }
 
     //noinspection unchecked
@@ -502,7 +502,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return StreamEx.of(executors).select(HelpIdProvider.class).map(HelpIdProvider::getHelpId).nonNull().findFirst().orElse(null);
   }
 
-  private void setComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
+  private void initComment(@Nullable LocalChangeList initialSelection, @Nullable String comment) {
     if (comment != null) {
       setCommitMessage(comment);
       myLastKnownComment = comment;
