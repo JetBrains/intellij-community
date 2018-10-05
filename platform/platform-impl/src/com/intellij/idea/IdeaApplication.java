@@ -47,11 +47,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
+import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
+
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
   public static final String IDEA_IS_UNIT_TEST = "idea.is.unit.test";
 
-  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {"idea.required.plugins.id"};
+  private static final String[] SAFE_JAVA_ENV_PARAMETERS = {REQUIRED_PLUGINS_KEY};
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.IdeaApplication");
 

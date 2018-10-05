@@ -50,6 +50,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.openapi.application.JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
 
@@ -133,7 +134,7 @@ public class PluginManagerCore {
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
     File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
     if (file.isFile()) {
-      List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
+      List<String> requiredPlugins = StringUtil.split(System.getProperty(REQUIRED_PLUGINS_KEY, ""), ",");
       try {
         boolean updateDisablePluginsList = false;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
