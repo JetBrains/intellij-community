@@ -397,23 +397,36 @@ open class GuiTestCase {
     return fixture.rowCount()
   }
 
+  /**
+   * Wait for panel with specified title disappearing
+   * @param panelTitle title of investigated panel
+   * @param timeoutToAppear timeout to wait when the panel appears
+   * @param timeoutToDisappear timeout to wait when the panel disappears (after it has appeared)
+   * @throws ComponentLookupException if the panel hasn't appeared after [timeoutToAppear] finishing
+   * @throws WaitTimedOutError if the panel appears, but cannot disappear after [timeoutToDisappear] finishing
+   * */
   fun waitForPanelToDisappear(
     panelTitle: String,
     timeoutToAppear: Timeout = Timeouts.minutes05,
     timeoutToDisappear: Timeout = Timeouts.minutes05) {
-    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
-      override fun test(): Boolean {
-        try {
-          robot().finder().find(guiTestRule.findIdeFrame().target()) {
-            it is JLabel && it.text == panelTitle
+    try {
+      Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+        override fun test(): Boolean {
+          try {
+            robot().finder().find(guiTestRule.findIdeFrame().target()) {
+              it is JLabel && it.text == panelTitle
+            }
           }
+          catch (cle: ComponentLookupException) {
+            return false
+          }
+          return true
         }
-        catch (cle: ComponentLookupException) {
-          return false
-        }
-        return true
-      }
-    }, timeoutToAppear)
+      }, timeoutToAppear)
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Panel `$panelTitle` hasn't appear")
+    }
 
     Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
       override fun test(): Boolean {
