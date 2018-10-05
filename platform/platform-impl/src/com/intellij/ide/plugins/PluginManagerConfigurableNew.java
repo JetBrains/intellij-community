@@ -919,7 +919,7 @@ public class PluginManagerConfigurableNew
           protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
             IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
 
-            String splitter = (String)myPopup.data;
+            String splitter = myPopup == null ? null : (String)myPopup.data;
             for (String partName : SearchQueryParser.split(descriptor.getName(), splitter)) {
               append(partName, partName.equalsIgnoreCase(splitter)
                                ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
