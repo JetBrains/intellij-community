@@ -92,7 +92,7 @@ public class LightClassReference extends LightClassReferenceBase implements PsiJ
     PsiSubstitutor substitutor = mySubstitutor;
     if (substitutor == null) {
       if (resolved instanceof PsiClass) {
-        substitutor = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createRawSubstitutor((PsiClass) resolved);
+        substitutor = JavaPsiFacade.getElementFactory(myManager.getProject()).createRawSubstitutor((PsiClass) resolved);
       } else {
         substitutor = PsiSubstitutor.EMPTY;
       }

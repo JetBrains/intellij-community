@@ -49,7 +49,7 @@ public class VariableReturnValue implements ReturnValue {
     final PsiDeclarationStatement statement;
 
     Project project = methodCallExpression.getProject();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
     JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
     PsiType type = returnType != null && returnType.isValid() ? returnType : myVariable.getType();

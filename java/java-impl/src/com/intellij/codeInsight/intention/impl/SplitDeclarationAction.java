@@ -140,7 +140,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       }
       final String name = var.getName();
       assert name != null;
-      PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
+      PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(psiManager.getProject())
                                                                               .createStatementFromText(name + "=xxx;", decl);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
@@ -155,7 +155,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {
         final PsiDeclarationStatement varDeclStatement =
-          JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createVariableDeclarationStatement(name, var.getType(), null);
+          JavaPsiFacade.getElementFactory(psiManager.getProject()).createVariableDeclarationStatement(name, var.getType(), null);
 
         // For index can't be final, right?
         for (PsiElement varDecl : varDeclStatement.getDeclaredElements()) {

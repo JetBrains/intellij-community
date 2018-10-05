@@ -130,7 +130,7 @@ public class RemoveUnusedVariableUtil {
   static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     while (element != null) {
       if (element instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression expression = (PsiAssignmentExpression)element;

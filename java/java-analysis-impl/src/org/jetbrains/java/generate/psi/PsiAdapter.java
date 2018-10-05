@@ -271,7 +271,7 @@ public class PsiAdapter {
      *          is thrown if there is an error creating the import statement.
      */
     public static void addImportStatement(PsiJavaFile javaFile, String importStatementOnDemand) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(javaFile.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(javaFile.getProject());
         PsiImportStatement is = factory.createImportStatementOnDemand(fixImportStatement(importStatementOnDemand));
 
         // add the import to the file, and optimize the imports
@@ -410,7 +410,7 @@ public class PsiAdapter {
     @Nullable
     public static PsiComment addOrReplaceJavadoc(PsiMethod method, String javadoc, boolean replace) {
         final Project project = method.getProject();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         PsiComment comment = factory.createCommentFromText(javadoc, null);
 
         // does a method already exists?

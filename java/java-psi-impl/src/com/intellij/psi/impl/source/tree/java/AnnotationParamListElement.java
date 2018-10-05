@@ -99,7 +99,7 @@ public class AnnotationParamListElement extends CompositeElement {
             PsiAnnotationMemberValue value = pair.getValue();
             if (value != null) {
               try {
-                PsiElementFactory factory = JavaPsiFacade.getInstance(getPsi().getProject()).getElementFactory();
+                PsiElementFactory factory = JavaPsiFacade.getElementFactory(getPsi().getProject());
                 PsiAnnotation annotation = factory.createAnnotationFromText("@AAA(value = " + value.getText() + ")", null);
                 replaceChild(node, annotation.getParameterList().getAttributes()[0].getNode());
               }

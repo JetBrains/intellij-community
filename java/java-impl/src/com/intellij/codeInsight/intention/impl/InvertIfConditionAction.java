@@ -105,7 +105,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   private static void formatIf(PsiIfStatement ifStatement) throws IncorrectOperationException {
     final Project project = ifStatement.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     PsiElement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch()).copy();
     PsiElement elseBranch = ifStatement.getElseBranch() != null ? ifStatement.getElseBranch().copy() : null;
@@ -181,7 +181,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
   }
 
   private static PsiIfStatement setupBranches(PsiIfStatement ifStatement, ControlFlow flow) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(ifStatement.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     Project project = ifStatement.getProject();
 
     CommentTracker ct = new CommentTracker();
@@ -340,7 +340,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
   private static PsiStatement wrapWithCodeBlock(@NotNull PsiStatement statement) {
     final Project project = statement.getProject();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if (true) {}", statement);
     ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);

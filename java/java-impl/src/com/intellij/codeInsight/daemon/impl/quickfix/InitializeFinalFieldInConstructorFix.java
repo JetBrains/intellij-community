@@ -114,7 +114,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
     }
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     final PsiExpressionStatement addedStatement = (PsiExpressionStatement)methodBody.add(codeStyleManager

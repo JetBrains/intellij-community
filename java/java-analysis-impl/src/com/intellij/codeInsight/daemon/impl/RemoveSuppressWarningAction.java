@@ -119,7 +119,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
         comment.delete();
       }
       else {
-        PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
+        PsiComment newComment = JavaPsiFacade.getElementFactory(comment.getProject())
           .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText, comment);
         comment.replace(newComment);
       }
@@ -135,7 +135,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
     else if (newText != null) {
       newText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
-      PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText);
+      PsiDocTag newTag = JavaPsiFacade.getElementFactory(tag.getProject()).createDocTagFromText(newText);
       tag.replace(newTag);
     }
   }

@@ -244,7 +244,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     if (variableName == null) {
       return false;
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     PsiExpression refExpr;
     try {
       refExpr = factory.createExpressionFromText(variableName, occurrence);

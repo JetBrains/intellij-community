@@ -268,7 +268,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (context == PatternTreeContext.Block) {
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
       PsiElement element = codeBlock.getFirstBodyElement();

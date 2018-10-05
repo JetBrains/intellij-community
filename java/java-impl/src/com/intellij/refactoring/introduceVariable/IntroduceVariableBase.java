@@ -386,7 +386,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(elementAtStart, PsiLiteralExpression.class);
     final PsiLiteralExpression endLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class);
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     String text = null;
     PsiExpression tempExpr;
     try {
@@ -908,7 +908,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
           PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, project);
-          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           PsiElement declaration;
           if (container instanceof PsiClass) {
             declaration = elementFactory.createField(settings.getEnteredName(), type);
@@ -1126,7 +1126,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       refIdx[0] = start.length();
       text = start + refText + (suffix != null ? suffix : "") + end;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return parent instanceof PsiStatement ? factory.createStatementFromText(text, parent) :
                                             parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent)
                                                                            : factory.createExpressionFromText(text, parent);

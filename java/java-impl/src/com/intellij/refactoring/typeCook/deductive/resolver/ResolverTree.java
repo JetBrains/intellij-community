@@ -371,7 +371,7 @@ public class ResolverTree {
       if (lowerClass != null && upperClass != null && !lowerClass.equals(upperClass)) {
         final PsiSubstitutor upperSubst = resultUpper.getSubstitutor();
         final PsiClass[] parents = upperClass.getSupers();
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
         for (final PsiClass parent : parents) {
           final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(parent, upperClass, upperSubst);

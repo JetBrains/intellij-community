@@ -41,7 +41,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
   public PsiType fromString(final String s, final ConvertContext context) {
     if (s == null) return null;
     try {
-      return JavaPsiFacade.getInstance(context.getFile().getProject()).getElementFactory().createTypeFromText(s.replace('$', '.'), null);
+      return JavaPsiFacade.getElementFactory(context.getFile().getProject()).createTypeFromText(s.replace('$', '.'), null);
     }
     catch (IncorrectOperationException e) {
       return null;

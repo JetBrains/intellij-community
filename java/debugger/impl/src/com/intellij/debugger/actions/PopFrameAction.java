@@ -211,7 +211,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     while (tryStatement != null) {
       PsiResourceList resourceList = tryStatement.getResourceList();
       if (resourceList != null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (PsiResourceListElement listElement : resourceList) {
           String varName = getResourceName(listElement);
           if (varName != null) {

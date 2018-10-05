@@ -54,7 +54,7 @@ public class TypeMigrationReplacementUtil {
       String replacement = (String)conversion;
       try {
         return expression.replace(
-            JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(replacement, expression));
+            JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, expression));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -71,7 +71,7 @@ public class TypeMigrationReplacementUtil {
         if (resolved instanceof PsiMethod) {
           try {
             return expression.replace(
-                JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
+                JavaPsiFacade.getElementFactory(project).createExpressionFromText(newref, expression));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -79,7 +79,7 @@ public class TypeMigrationReplacementUtil {
         }
         else {
           try {
-            return expression.replace(JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(
+            return expression.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(
                 newref + "()", expression));
           }
           catch (IncorrectOperationException e) {
@@ -91,7 +91,7 @@ public class TypeMigrationReplacementUtil {
         if (resolved instanceof PsiField) {
           try {
             return expression.replace(
-                JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
+                JavaPsiFacade.getElementFactory(project).createExpressionFromText(newref, expression));
           }
           catch (IncorrectOperationException e) {
             LOG.error(e);
@@ -103,7 +103,7 @@ public class TypeMigrationReplacementUtil {
           if (parent instanceof PsiMethodCallExpression) {
             try {
               return parent.replace(
-                  JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newref, expression));
+                  JavaPsiFacade.getElementFactory(project).createExpressionFromText(newref, expression));
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
@@ -125,7 +125,7 @@ public class TypeMigrationReplacementUtil {
   static void migrateMemberOrVariableType(final PsiElement element, final Project project, PsiType migratedType) {
     try {
       migratedType = revalidateType(migratedType, project);
-      final PsiTypeElement typeElement = JavaPsiFacade.getInstance(project).getElementFactory().createTypeElement(migratedType);
+      final PsiTypeElement typeElement = JavaPsiFacade.getElementFactory(project).createTypeElement(migratedType);
       if (element instanceof PsiMethod) {
         final PsiTypeElement returnTypeElement = ((PsiMethod)element).getReturnTypeElement();
         if (returnTypeElement != null) {
@@ -190,7 +190,7 @@ public class TypeMigrationReplacementUtil {
   }
 
   private static PsiElement replaceTypeWithClassReferenceOrKeyword(Project project, PsiType componentType, PsiElement typePlace) {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     if (componentType instanceof PsiClassType) {
       return typePlace.replace(factory.createReferenceElementByType((PsiClassType)componentType));
     } else {

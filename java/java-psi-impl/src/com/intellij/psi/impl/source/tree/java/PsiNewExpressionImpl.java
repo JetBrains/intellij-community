@@ -74,7 +74,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       }
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
         type = factory.createPrimitiveTypeFromText(child.getText()).annotate(TypeAnnotationProvider.Static.create(copy));
         if (stop) return type;
@@ -86,7 +86,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
         PsiAnnotation[] copy = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);

@@ -26,7 +26,7 @@ public class ThisGetter {
   public static List<PsiExpression> getThisExpressionVariants(PsiElement context) {
     boolean first = true;
     final List<PsiExpression> expressions = new ArrayList<>();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
 
     PsiElement prev = context;
     context = context.getContext();

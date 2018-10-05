@@ -48,7 +48,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     final PsiElement parent = getElement().getParent();
     LOG.assertTrue(parent instanceof PsiReferenceList);
     final PsiClass refClass = getReferencedElement();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refClass.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
     boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
     copyExtendsList(refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);

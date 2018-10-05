@@ -69,7 +69,7 @@ public class SplitConditionUtil {
       offsetInParent = next.getStartOffsetInParent();
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(offsetInParent);
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }
@@ -83,7 +83,7 @@ public class SplitConditionUtil {
     if (prev.getPrevSibling() instanceof PsiWhiteSpace) prev = prev.getPrevSibling();
     ct.markRangeUnchanged(expression.getFirstChild(), prev.getPrevSibling());
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     String rOperands = expression.getText().substring(0, prev.getStartOffsetInParent());
     return factory.createExpressionFromText(rOperands, expression.getParent());
   }

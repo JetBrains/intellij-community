@@ -30,7 +30,7 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.EmptySubstitutorImpl");
   @Override
   public PsiType substitute(@NotNull PsiTypeParameter typeParameter){
-    return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+    return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);
   }
 
   @Override
@@ -40,7 +40,7 @@ public final class EmptySubstitutorImpl extends EmptySubstitutor {
 
   @Override
   public PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter) {
-    return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter);
+    return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter);
   }
 
   @NotNull

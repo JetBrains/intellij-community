@@ -153,7 +153,7 @@ public class DebuggerTreeNodeExpression {
         }
         else if(type instanceof PsiArrayType) {
           LanguageLevel languageLevel = PsiUtil.getLanguageLevel(expressionWithThis);
-          if(thisClass == JavaPsiFacade.getInstance(expressionWithThis.getProject()).getElementFactory().getArrayClass(languageLevel)) {
+          if(thisClass == JavaPsiFacade.getElementFactory(expressionWithThis.getProject()).getArrayClass(languageLevel)) {
             castNeeded = false;
           }
         }
@@ -175,7 +175,7 @@ public class DebuggerTreeNodeExpression {
     }
 
     try {
-      PsiExpression res = JavaPsiFacade.getInstance(howToEvaluateThis.getProject()).getElementFactory()
+      PsiExpression res = JavaPsiFacade.getElementFactory(howToEvaluateThis.getProject())
         .createExpressionFromText(psiExpression.getText(), howToEvaluateThis.getContext());
       res.putUserData(ADDITIONAL_IMPORTS_KEY, howToEvaluateThis.getUserData(ADDITIONAL_IMPORTS_KEY));
       return res;

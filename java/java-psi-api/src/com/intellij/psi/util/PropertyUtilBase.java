@@ -447,7 +447,7 @@ public class PropertyUtilBase {
    */
   @NotNull
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(field);
@@ -494,7 +494,7 @@ public class PropertyUtilBase {
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
     String name = field.getName();
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);

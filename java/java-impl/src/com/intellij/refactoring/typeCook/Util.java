@@ -88,10 +88,10 @@ public class Util {
       }
 
       if (anyBottom || newbst == PsiSubstitutor.EMPTY) {
-        newbst = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createRawSubstitutor(aclass);
+        newbst = JavaPsiFacade.getElementFactory(manager.getProject()).createRawSubstitutor(aclass);
       }
 
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aclass, newbst);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aclass, newbst);
     }
     else {
       return t;
@@ -186,7 +186,7 @@ public class Util {
         }
       }
 
-      return JavaPsiFacade.getInstance(theManager.getProject()).getElementFactory().createType(theClass, subst);
+      return JavaPsiFacade.getElementFactory(theManager.getProject()).createType(theClass, subst);
     }
     else if (t instanceof PsiArrayType) {
       return banalize(((PsiArrayType)t).getComponentType()).createArrayType();
@@ -296,7 +296,7 @@ public class Util {
         factory.registerCluster(cluster);
       }
 
-      return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+      return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
     }
     else if (t instanceof PsiArrayType) {
       return createParameterizedType(((PsiArrayType)t).getComponentType(), factory, upper, context).createArrayType();
@@ -350,18 +350,18 @@ public class Util {
       if (element instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression cast = ((PsiTypeCastExpression)element);
 
-        cast.getCastType().replace(JavaPsiFacade.getInstance(cast.getProject()).getElementFactory().createTypeElement(type));
+        cast.getCastType().replace(JavaPsiFacade.getElementFactory(cast.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiVariable) {
         final PsiVariable field = ((PsiVariable)element);
 
         field.normalizeDeclaration();
-        field.getTypeElement().replace(JavaPsiFacade.getInstance(field.getProject()).getElementFactory().createTypeElement(type));
+        field.getTypeElement().replace(JavaPsiFacade.getElementFactory(field.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiMethod) {
         final PsiMethod method = ((PsiMethod)element);
 
-        method.getReturnTypeElement().replace(JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createTypeElement(type));
+        method.getReturnTypeElement().replace(JavaPsiFacade.getElementFactory(method.getProject()).createTypeElement(type));
       }
       else if (element instanceof PsiNewExpression) {
         final PsiNewExpression newx = (PsiNewExpression)element;
@@ -382,7 +382,7 @@ public class Util {
             return;
           }
 
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(newx.getProject()).getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(newx.getProject());
 
           PsiTypeElement[] elements = list.getTypeParameterElements();
           for (PsiTypeElement element1 : elements) {

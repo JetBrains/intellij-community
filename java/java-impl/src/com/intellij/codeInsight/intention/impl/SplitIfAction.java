@@ -76,7 +76,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiExpression lOperand = getLOperands(expression, token, ct);
     PsiExpression rOperand = getROperands(expression, token, ct);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
 
     PsiIfStatement replacement =
       SplitConditionUtil.create(factory, ifStatement, lOperand, rOperand, token.getTokenType(), ct);

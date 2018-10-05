@@ -151,7 +151,7 @@ public class CompoundTypeRenderer extends CompoundNodeRenderer {
 
   protected final PsiElement getChildValueExpression(String text, DebuggerTreeNode node, DebuggerContext context) {
     Project project = node.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     return elementFactory.createExpressionFromText(text, getContext(project, context));
   }
 

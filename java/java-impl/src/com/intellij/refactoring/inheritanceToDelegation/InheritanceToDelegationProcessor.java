@@ -101,7 +101,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     myInnerClassName = innerClassName;
     myIsDelegateOtherMembers = delegateOtherMembers;
     myManager = myClass.getManager();
-    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
 
     myBaseClass = targetBaseClass;
     LOG.assertTrue(

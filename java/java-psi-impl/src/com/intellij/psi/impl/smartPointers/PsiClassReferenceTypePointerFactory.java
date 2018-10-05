@@ -54,7 +54,7 @@ public class PsiClassReferenceTypePointerFactory implements ClassTypePointerFact
     protected PsiClassReferenceType calcType() {
       PsiClassReferenceType myType = null;
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       if (referenceElement != null) {
         myType = (PsiClassReferenceType)factory.createType(referenceElement);
       }

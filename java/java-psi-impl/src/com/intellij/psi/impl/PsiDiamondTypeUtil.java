@@ -213,7 +213,7 @@ public class PsiDiamondTypeUtil {
       }
       final PsiCallExpression exprCopy = PsiTreeUtil.getParentOfType(copy, PsiCallExpression.class, false);
       if (exprCopy != null) {
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(exprCopy.getProject()).getElementFactory();
+        final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(exprCopy.getProject());
         if (constructorRef) {
           if (!(exprCopy instanceof PsiNewExpression) || !isInferenceEquivalent(typeArguments, elementFactory, (PsiNewExpression)exprCopy)) {
             return false;
@@ -238,7 +238,7 @@ public class PsiDiamondTypeUtil {
                                                PsiTypeParameter[] typeParameters,
                                                PsiMethod method,
                                                PsiMethodReferenceExpression methodRefCopy) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodRefCopy.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodRefCopy.getProject());
     PsiTypeElement qualifierType = methodRefCopy.getQualifierType();
     if (qualifierType != null) {
       qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
@@ -353,7 +353,7 @@ public class PsiDiamondTypeUtil {
         replaceExplicitWithDiamond(classReference.getParameterList());
       }
     }
-    PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
       PsiType[] arguments = call.getTypeArguments();
       if (arguments.length == 0) continue;

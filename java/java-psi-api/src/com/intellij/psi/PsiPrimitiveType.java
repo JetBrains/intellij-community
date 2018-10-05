@@ -229,7 +229,7 @@ public class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitiveType {
     PsiClass aClass = JavaPsiFacade.getInstance(manager.getProject()).findClass(boxedQName, resolveScope);
     if (aClass == null) return null;
 
-    return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(manager.getProject()).createType(aClass);
   }
 
   /**

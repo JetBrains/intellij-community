@@ -565,7 +565,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
             return ellipsisType.getComponentType().accept(this);
           }
         }).booleanValue()) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
           PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
           return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
                                                          JavaHighlightUtil.formatMethod(method),

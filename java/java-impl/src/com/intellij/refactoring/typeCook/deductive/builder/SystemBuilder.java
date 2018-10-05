@@ -342,13 +342,13 @@ public class SystemBuilder {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
             if (PsiKeyword.THIS.equals(methodExpression.getText())) {
-              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass);
+              aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass);
             }
             else {
               LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
-              aType = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(aClass, qualifierSubstitutor);
+              aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass, qualifierSubstitutor);
             }
           }
         }
@@ -452,7 +452,7 @@ public class SystemBuilder {
                               theSubst = theSubst.put(parm, type);
                             }
 
-                            return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory()
+                            return JavaPsiFacade.getElementFactory(aClass.getProject())
                               .createType(aClass, theSubst);
                           }
 
@@ -530,7 +530,7 @@ public class SystemBuilder {
                     }
                   }
 
-                  return Util.createArrayType(JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst), level);
+                  return Util.createArrayType(JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst), level);
                 }
 
                 return Util.createArrayType(type, level);
@@ -839,7 +839,7 @@ public class SystemBuilder {
           theSubst = theSubst.put(p, replaceWildCards(aSubst.substitute(p), system, definedSubst));
         }
 
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
       }
     }
 
