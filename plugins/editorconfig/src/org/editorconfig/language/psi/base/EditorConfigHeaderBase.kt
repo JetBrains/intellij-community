@@ -11,6 +11,7 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil.containsErrors
 
 abstract class EditorConfigHeaderBase(node: ASTNode) : EditorConfigHeaderElementBase(node), EditorConfigHeader {
   final override fun isValidGlob(): Boolean {
+    if (header.textMatches("[")) return false
     if (containsErrors(header)) return false
     if (EditorConfigEmptyHeaderInspection.containsIssue(header)) return false
     if (EditorConfigNumerousWildcardsInspection.containsIssue(header)) return false
