@@ -81,6 +81,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
                      .distinct()
                      .map(vf -> psiManager.findFile(vf))
+                     .filter(file -> file != null)
                      .collect(Collectors.toList())
         );
       }, progressIndicator);
