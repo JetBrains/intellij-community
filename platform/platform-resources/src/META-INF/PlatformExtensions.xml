@@ -300,6 +300,7 @@
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
 
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
+    <themeProvider id="JetBrainsHighContrastTheme" path="/themes/HighContrast.theme.json"/>
 
     <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
 
