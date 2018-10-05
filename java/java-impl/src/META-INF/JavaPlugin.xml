@@ -734,6 +734,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection"
                      displayName="Immutable collection creation can be replaced with collection factory call"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ReadWriteStringCanBeUsed"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
+                     displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
