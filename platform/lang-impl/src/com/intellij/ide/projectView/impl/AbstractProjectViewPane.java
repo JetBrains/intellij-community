@@ -829,27 +829,31 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);
-    if (object != null) LOG.warn("unsupported object: " + object);
+    LOG.warn("unsupported object: " + object);
     return null;
   }
 
-  @Nullable
-  public static TreeVisitor createVisitor(VirtualFile file) {
+  @NotNull
+  public static TreeVisitor createVisitor(@NotNull VirtualFile file) {
     return createVisitor(null, file);
   }
 
   @Nullable
-  public static TreeVisitor createVisitor(PsiElement element) {
+  public static TreeVisitor createVisitor(@NotNull PsiElement element) {
     return createVisitor(element, null);
   }
 
   @Nullable
-  public static TreeVisitor createVisitor(PsiElement element, VirtualFile file) {
+  public static TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file) {
     return createVisitor(element, file, null);
   }
 
   @Nullable
-  static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<? super TreePath> predicate) {
+  static TreeVisitor createVisitor(@Nullable PsiElement element, @Nullable VirtualFile file, @Nullable List<? super TreePath> collector) {
+    Predicate<? super TreePath> predicate = collector == null ? null : path -> {
+      collector.add(path);
+      return false;
+    };
     if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
     LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
