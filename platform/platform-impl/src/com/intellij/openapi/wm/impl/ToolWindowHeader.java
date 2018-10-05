@@ -22,6 +22,9 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import net.miginfocom.layout.AC;
+import net.miginfocom.layout.LC;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +47,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private ToolWindowType myImageType;
 
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myActionGroupWest = new DefaultActionGroup();
+
   private ActionToolbar myToolbar;
+  private ActionToolbar myToolbarWest;
 
   ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
@@ -53,28 +59,53 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     myToolWindow = toolWindow;
 
-    JPanel westPanel = new NonOpaquePanel() {
+    JPanel westEndPanel = new JPanel();
+    westEndPanel.setLayout(new MigLayout(new LC().insets("0").gridGap("0", "0"),
+                                         new AC().align("left").gap("0").align("left"),
+                                         new AC()));
+
+    JPanel opaquePanel = new NonOpaquePanel() {
       @Override
       public void doLayout() {
         if (getComponentCount() > 0) {
           Rectangle r = getBounds();
+
           Insets insets = getInsets();
 
           Component c = getComponent(0);
-          Dimension size = c.getPreferredSize();
-          if (size.width < r.width - insets.left - insets.right) {
-            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
-          } else {
-            c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
-          }
+          c.setBounds(r.x, r.y, r.width, r.height);
+          //Dimension size = c.getPreferredSize();
+          //if (size.width < r.width - insets.left - insets.right) {
+          //  c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+          //} else {
+          //  c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+          //}
         }
       }
     };
 
-    add(westPanel, BorderLayout.CENTER);
+    westEndPanel.add(opaquePanel);
 
-    westPanel.add(toolWindow.getContentUI().getTabComponent());
-    ToolWindowContentUi.initMouseListeners(westPanel, toolWindow.getContentUI(), true);
+    add(westEndPanel, BorderLayout.CENTER);
+
+    opaquePanel.add(toolWindow.getContentUI().getTabComponent());
+    ToolWindowContentUi.initMouseListeners(opaquePanel, toolWindow.getContentUI(), true);
+
+    myToolbarWest =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(myActionGroupWest),
+                                                      true);
+
+    myToolbarWest.setTargetComponent(this);
+    myToolbarWest.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myToolbarWest.setReservePlaceAutoPopupIcon(false);
+
+    JComponent component = myToolbarWest.getComponent();
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
+    component.setOpaque(false);
+
+    westEndPanel.add(component);
+
 
     myToolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
@@ -83,20 +114,20 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolbar.setTargetComponent(this);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myToolbar.setReservePlaceAutoPopupIcon(false);
-    
-    JComponent component = myToolbar.getComponent();
-    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+
+    component = myToolbar.getComponent();
+    padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
     component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
     component.setOpaque(false);
     add(component, BorderLayout.EAST);
 
-    westPanel.addMouseListener(new PopupHandler() {
+    opaquePanel.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
-    westPanel.addMouseListener(new MouseAdapter() {
+    opaquePanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         toolWindow.fireActivated();
@@ -132,8 +163,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
         return true;
       }
-    }.installOn(westPanel);
-    westPanel.addMouseListener(new MouseAdapter() {
+    }.installOn(opaquePanel);
+    opaquePanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
         Runnable runnable =
@@ -155,16 +186,26 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolWindow = null;
   }
 
-  void setAdditionalTitleActions(AnAction[] actions) {
-    myActionGroup.removeAll();
-    myActionGroup.addAll(actions);
-    if (actions.length > 0) {
-      myActionGroup.addSeparator();
-    }
-    if (myToolbar != null) {
-      myToolbar.updateActionsImmediately();
+  void setWestActions(AnAction[] actions) {
+    myActionGroupWest.removeAll();
+    myActionGroupWest.addSeparator();
+    myActionGroupWest.addAll(actions);
+
+    if (myToolbarWest != null) {
+      myToolbarWest.updateActionsImmediately();
     }
   }
+
+   void setAdditionalTitleActions(AnAction[] actions) {
+     myActionGroup.removeAll();
+     myActionGroup.addAll(actions);
+     if (actions.length > 0) {
+       myActionGroup.addSeparator();
+     }
+     if (myToolbar != null) {
+       myToolbar.updateActionsImmediately();
+     }
+   }
 
   @Override
   protected Graphics getComponentGraphics(Graphics g) {
@@ -271,7 +312,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
     }
   }
-  
+
   private class HideAction extends DumbAwareAction {
     HideAction() {
       copyFrom(ActionManager.getInstance().getAction(InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID));

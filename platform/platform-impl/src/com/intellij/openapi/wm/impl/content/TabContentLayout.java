@@ -160,7 +160,7 @@ class TabContentLayout extends ContentLayout {
         }
         else {
           if (!reachedBounds) {
-            final int width = bounds.width - data.eachX - data.moreRectWidth;
+            final int width = bounds.width - data.eachX;
             each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
             data.eachX += width;
           }

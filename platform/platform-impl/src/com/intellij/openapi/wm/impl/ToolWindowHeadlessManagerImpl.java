@@ -445,6 +445,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setWestActions(AnAction... actions) {
+    }
+
+    @Override
     public void setUseLastFocusedOnActivation(boolean focus) {
     }
 

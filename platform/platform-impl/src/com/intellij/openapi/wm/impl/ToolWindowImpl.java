@@ -310,6 +310,11 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
+  public void setWestActions(AnAction... actions) {
+    getDecorator().setWestActions(actions);
+  }
+
+  @Override
   public final void setAvailable(final boolean available, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Boolean oldAvailable = myAvailable ? Boolean.TRUE : Boolean.FALSE;

@@ -77,7 +77,7 @@ public class TerminalView {
     }
 
     myToolWindow = toolWindow;
-    ((ToolWindowImpl)myToolWindow).setTitleActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
+    ((ToolWindowImpl)myToolWindow).setWestActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         newTab(null);
