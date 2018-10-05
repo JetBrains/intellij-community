@@ -50,7 +50,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
   private static final Logger LOG = Logger.getInstance(SingleTaskController.class);
 
   @NotNull private final String myName;
-  @NotNull private final Consumer<Result> myResultHandler;
+  @NotNull private final Consumer<? super Result> myResultHandler;
   @NotNull private final Object LOCK = new Object();
   private final boolean myCancelRunning;
 
@@ -61,7 +61,7 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
 
   public SingleTaskController(@NotNull Project project,
                               @NotNull String name,
-                              @NotNull Consumer<Result> handler,
+                              @NotNull Consumer<? super Result> handler,
                               boolean cancelRunning,
                               @NotNull Disposable parent) {
     myName = name;

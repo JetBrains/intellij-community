@@ -430,12 +430,12 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
+  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
     return createStableValue(provider, t -> t.isValid());
   }
 
   @Override
-  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
+  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);

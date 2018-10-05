@@ -188,7 +188,7 @@ public class GitConfig {
   @Nullable
   public static GitRemoteBranch findRemoteBranch(@NotNull String remoteBranchName,
                                                  @NotNull String remoteName,
-                                                 @NotNull Collection<GitRemoteBranch> remoteBranches) {
+                                                 @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     final String branchName = GitBranchUtil.stripRefsPrefix(remoteBranchName);
     return ContainerUtil.find(remoteBranches, branch -> branch.getNameForRemoteOperations().equals(branchName) &&
                                                         branch.getRemote().getName().equals(remoteName));

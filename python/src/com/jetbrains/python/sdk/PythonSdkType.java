@@ -662,7 +662,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findSdkByPath(List<Sdk> sdkList, @Nullable String path) {
+  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
       for (Sdk sdk : sdkList) {
         if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
@@ -763,7 +763,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;

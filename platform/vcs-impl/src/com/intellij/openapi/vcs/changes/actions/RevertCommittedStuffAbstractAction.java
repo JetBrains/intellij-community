@@ -34,12 +34,12 @@ import java.util.Collections;
 import java.util.List;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
-  private final Convertor<AnActionEvent, Change[]> myForUpdateConvertor;
-  private final Convertor<AnActionEvent, Change[]> myForPerformConvertor;
+  private final Convertor<? super AnActionEvent, Change[]> myForUpdateConvertor;
+  private final Convertor<? super AnActionEvent, Change[]> myForPerformConvertor;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RevertCommittedStuffAbstractAction");
 
-  RevertCommittedStuffAbstractAction(final Convertor<AnActionEvent, Change[]> forUpdateConvertor,
-                                            final Convertor<AnActionEvent, Change[]> forPerformConvertor) {
+  RevertCommittedStuffAbstractAction(final Convertor<? super AnActionEvent, Change[]> forUpdateConvertor,
+                                            final Convertor<? super AnActionEvent, Change[]> forPerformConvertor) {
     myForUpdateConvertor = forUpdateConvertor;
     myForPerformConvertor = forPerformConvertor;
   }

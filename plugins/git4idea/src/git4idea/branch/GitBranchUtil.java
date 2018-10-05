@@ -210,7 +210,7 @@ public class GitBranchUtil {
    * Convert {@link git4idea.GitRemoteBranch GitRemoteBranches} to their names, and remove remote HEAD pointers: origin/HEAD.
    */
   @NotNull
-  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitRemoteBranch> remoteBranches) {
+  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
   }
 
@@ -322,7 +322,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static Collection<String> getCommonBranches(Collection<GitRepository> repositories,
+  public static Collection<String> getCommonBranches(Collection<? extends GitRepository> repositories,
                                                      boolean local) {
     Collection<String> names;
     if (local) {
@@ -335,12 +335,12 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static List<GitLocalBranch> getCommonLocalBranches(@NotNull Collection<GitRepository> repositories) {
+  public static List<GitLocalBranch> getCommonLocalBranches(@NotNull Collection<? extends GitRepository> repositories) {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getLocalBranches()));
   }
 
   @NotNull
-  public static List<GitRemoteBranch> getCommonRemoteBranches(@NotNull Collection<GitRepository> repositories) {
+  public static List<GitRemoteBranch> getCommonRemoteBranches(@NotNull Collection<? extends GitRepository> repositories) {
     return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
   }
 
@@ -369,7 +369,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<T> branches) {
+  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<? extends T> branches) {
     return branches.stream()
                    .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
                    .collect(Collectors.toList());

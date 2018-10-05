@@ -28,7 +28,7 @@ public class GroupByPackages {
   private final Map<File, Collection<File>> myParentToChildrenMap = new HashMap<>();
   private final Collection<File> myRoots = new HashSet<>();
 
-  public GroupByPackages(@NotNull Collection<File> files) {
+  public GroupByPackages(@NotNull Collection<? extends File> files) {
     for (File file : files) {
       process(file);
     }

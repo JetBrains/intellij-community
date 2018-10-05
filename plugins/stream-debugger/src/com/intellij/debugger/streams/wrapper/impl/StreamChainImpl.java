@@ -15,12 +15,12 @@ import java.util.List;
  */
 public class StreamChainImpl implements StreamChain {
   private final QualifierExpression myQualifierExpression;
-  private final List<IntermediateStreamCall> myIntermediateCalls;
+  private final List<? extends IntermediateStreamCall> myIntermediateCalls;
   private final TerminatorStreamCall myTerminator;
   private final PsiElement myContext;
 
   public StreamChainImpl(@NotNull QualifierExpression qualifierExpression,
-                         @NotNull List<IntermediateStreamCall> intermediateCalls,
+                         @NotNull List<? extends IntermediateStreamCall> intermediateCalls,
                          @NotNull TerminatorStreamCall terminator,
                          @NotNull PsiElement context) {
     myQualifierExpression = qualifierExpression;

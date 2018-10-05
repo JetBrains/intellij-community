@@ -41,7 +41,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
   private boolean myHasGroupWithMultipleRefs;
 
   TooltipReferencesPanel(@NotNull VcsLogData logData,
-                                @NotNull Collection<VcsRef> refs) {
+                                @NotNull Collection<? extends VcsRef> refs) {
     super(new VerticalFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), REFS_LIMIT);
     VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
     setReferences(ContainerUtil.sorted(refs, logData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));

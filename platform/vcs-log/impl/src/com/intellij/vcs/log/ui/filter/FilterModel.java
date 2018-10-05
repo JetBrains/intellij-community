@@ -29,12 +29,12 @@ import java.util.List;
 abstract class FilterModel<Filter extends VcsLogFilter> {
   @NotNull private final String myName;
   @NotNull protected final MainVcsLogUiProperties myUiProperties;
-  @NotNull private final Computable<VcsLogDataPack> myDataPackProvider;
+  @NotNull private final Computable<? extends VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
 
   @Nullable private Filter myFilter;
 
-  FilterModel(@NotNull String name, @NotNull Computable<VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties uiProperties) {
+  FilterModel(@NotNull String name, @NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties uiProperties) {
     myName = name;
     myUiProperties = uiProperties;
     myDataPackProvider = provider;

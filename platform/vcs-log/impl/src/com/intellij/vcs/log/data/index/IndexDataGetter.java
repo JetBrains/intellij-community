@@ -51,13 +51,13 @@ import java.util.Set;
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   @NotNull private final Project myProject;
-  @NotNull private final Set<VirtualFile> myRoots;
+  @NotNull private final Set<? extends VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
-                         @NotNull Set<VirtualFile> roots,
+                         @NotNull Set<? extends VirtualFile> roots,
                          @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
                          @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {

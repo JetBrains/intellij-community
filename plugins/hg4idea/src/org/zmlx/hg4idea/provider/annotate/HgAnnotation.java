@@ -47,13 +47,13 @@ public class HgAnnotation extends FileAnnotation {
   private final HgLineAnnotationAspect revisionAnnotationAspect = new HgLineAnnotationAspect(FIELD.REVISION);
 
   @NotNull private final Project myProject;
-  @NotNull private final List<HgAnnotationLine> myLines;
-  @NotNull private final List<HgFileRevision> myFileRevisions;
+  @NotNull private final List<? extends HgAnnotationLine> myLines;
+  @NotNull private final List<? extends HgFileRevision> myFileRevisions;
   @NotNull private final HgFile myFile;
   private final VcsRevisionNumber myCurrentRevision;
 
-  public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<HgAnnotationLine> lines,
-                      @NotNull List<HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
+  public HgAnnotation(@NotNull Project project, @NotNull HgFile hgFile, @NotNull List<? extends HgAnnotationLine> lines,
+                      @NotNull List<? extends HgFileRevision> vcsFileRevisions, VcsRevisionNumber revision) {
     super(project);
     myProject = project;
     myLines = lines;

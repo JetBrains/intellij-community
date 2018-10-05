@@ -33,14 +33,14 @@ public class MavenProjectsProcessorArtifactsDownloadingTask implements MavenProj
   private final MavenProjectsTree myTree;
   private final boolean myDownloadSources;
   private final boolean myDownloadDocs;
-  private final AsyncResult<MavenArtifactDownloader.DownloadResult> myCallbackResult;
+  private final AsyncResult<? super MavenArtifactDownloader.DownloadResult> myCallbackResult;
 
   public MavenProjectsProcessorArtifactsDownloadingTask(Collection<MavenProject> projects,
                                                         Collection<MavenArtifact> artifacts,
                                                         MavenProjectsTree tree,
                                                         boolean downloadSources,
                                                         boolean downloadDocs,
-                                                        AsyncResult<MavenArtifactDownloader.DownloadResult> callbackResult) {
+                                                        AsyncResult<? super MavenArtifactDownloader.DownloadResult> callbackResult) {
     myProjects = projects;
     myArtifacts = artifacts;
     myTree = tree;

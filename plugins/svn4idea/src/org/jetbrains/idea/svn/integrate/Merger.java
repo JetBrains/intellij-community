@@ -38,7 +38,7 @@ public class Merger implements IMerger {
   private MergeChunk myMergeChunk;
 
   public Merger(final SvnVcs vcs,
-                final List<CommittedChangeList> changeLists,
+                final List<? extends CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
                 final Url currentBranchUrl,
@@ -47,7 +47,7 @@ public class Merger implements IMerger {
   }
 
   public Merger(@NotNull SvnVcs vcs,
-                final List<CommittedChangeList> changeLists,
+                final List<? extends CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
                 final Url currentBranchUrl,
@@ -127,7 +127,7 @@ public class Merger implements IMerger {
 
   public static void appendComment(@NotNull StringBuilder builder,
                                    @NotNull String branch,
-                                   @NotNull Iterable<CommittedChangeList> changeLists) {
+                                   @NotNull Iterable<? extends CommittedChangeList> changeLists) {
     if (builder.length() == 0) {
       builder.append("Merged from ").append(branch);
     }
@@ -171,7 +171,7 @@ public class Merger implements IMerger {
   }
 
   @Nullable
-  public static String getSkippedMessage(@NotNull List<CommittedChangeList> changeLists) {
+  public static String getSkippedMessage(@NotNull List<? extends CommittedChangeList> changeLists) {
     String result = null;
 
     if (!changeLists.isEmpty()) {

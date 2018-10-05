@@ -79,12 +79,12 @@ public class PermanentCommitsInfoImpl<CommitId> implements PermanentCommitsInfo<
 
   @NotNull private final TimestampGetter myTimestampGetter;
 
-  @NotNull private final List<CommitId> myCommitIdIndexes;
+  @NotNull private final List<? extends CommitId> myCommitIdIndexes;
 
   @NotNull private final Map<Integer, CommitId> myNotLoadCommits;
 
   public PermanentCommitsInfoImpl(@NotNull TimestampGetter timestampGetter,
-                                  @NotNull List<CommitId> commitIdIndex,
+                                  @NotNull List<? extends CommitId> commitIdIndex,
                                   @NotNull Map<Integer, CommitId> notLoadCommits) {
     myTimestampGetter = timestampGetter;
     myCommitIdIndexes = commitIdIndex;

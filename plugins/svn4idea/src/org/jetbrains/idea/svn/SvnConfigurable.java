@@ -98,7 +98,7 @@ public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<Sv
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
-                                                  @NotNull final Consumer<String> dirConsumer,
+                                                  @NotNull final Consumer<? super String> dirConsumer,
                                                   final Project project,
                                                   @Nullable final Component component) {
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()

@@ -47,7 +47,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   @Nullable private final String myTitle;
   @NotNull private final List<String> myTitles;
 
-  @Nullable private final Consumer<MergeResult> myApplyCallback;
+  @Nullable private final Consumer<? super MergeResult> myApplyCallback;
 
   public BinaryMergeRequestImpl(@Nullable Project project,
                                 @NotNull FileContent file,
@@ -56,7 +56,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
                                 @NotNull List<byte[]> byteContents,
                                 @Nullable String title,
                                 @NotNull List<String> contentTitles,
-                                @Nullable Consumer<MergeResult> applyCallback) {
+                                @Nullable Consumer<? super MergeResult> applyCallback) {
     assert byteContents.size() == 3;
     assert contents.size() == 3;
     assert contentTitles.size() == 3;

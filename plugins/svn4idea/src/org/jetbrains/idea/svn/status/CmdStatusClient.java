@@ -144,7 +144,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   public static SvnStatusHandler.ExternalDataCallback createStatusCallback(@NotNull StatusConsumer handler,
                                                                            @NotNull File base,
                                                                            @Nullable Info infoBase,
-                                                                           @NotNull Supplier<PortableStatus> statusSupplier) {
+                                                                           @NotNull Supplier<? extends PortableStatus> statusSupplier) {
     Map<File, Info> externalsMap = newHashMap();
     Ref<String> changelistName = Ref.create();
 

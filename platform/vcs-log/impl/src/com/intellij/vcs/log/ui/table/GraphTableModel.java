@@ -38,13 +38,13 @@ public class GraphTableModel extends AbstractTableModel {
   public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final Consumer<Runnable> myRequestMore;
+  @NotNull private final Consumer<? super Runnable> myRequestMore;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<Runnable> requestMore) {
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<? super Runnable> requestMore) {
     myLogData = logData;
     myDataPack = dataPack;
     myRequestMore = requestMore;

@@ -28,7 +28,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable private final Project myProject;
   @Nullable private final Module myModule;
   private final Sdk[] myExistingSdks;
-  private final NullableConsumer<Sdk> mySdkAddedCallback;
+  private final NullableConsumer<? super Sdk> mySdkAddedCallback;
 
   private static final String ADD = PyBundle.message("sdk.details.step.add");
   private static final String ALL = PyBundle.message("sdk.details.step.show.all");
@@ -41,7 +41,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           @NotNull JComponent ownerComponent,
                           @NotNull final Point popupPoint,
                           @Nullable String newProjectPath,
-                          @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
+                          @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
     final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
     if (showAllDialog == null) {
       sdkHomesStep.createLocalSdk();
@@ -57,7 +57,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                               @Nullable final Module module,
                               @Nullable final DialogWrapper showAllDialog,
                               @NotNull final Sdk[] existingSdks,
-                              @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
+                              @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
     myModule = module;

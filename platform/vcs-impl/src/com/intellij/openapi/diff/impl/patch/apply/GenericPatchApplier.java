@@ -43,7 +43,7 @@ public class GenericPatchApplier {
   
   private final TreeMap<TextRange, MyAppliedData> myTransformations;
   private final List<String> myLines;
-  private final List<PatchHunk> myHunks;
+  private final List<? extends PatchHunk> myHunks;
   private final boolean myBaseFileEndsWithNewLine;
   private boolean myHadAlreadyAppliedMet;
 
@@ -59,7 +59,7 @@ public class GenericPatchApplier {
     }
   }
 
-  public GenericPatchApplier(final CharSequence text, List<PatchHunk> hunks) {
+  public GenericPatchApplier(final CharSequence text, List<? extends PatchHunk> hunks) {
     debug("GenericPatchApplier created, hunks: " + hunks.size());
     myLines = new ArrayList<>();
     Collections.addAll(myLines, LineTokenizer.tokenize(text, false));

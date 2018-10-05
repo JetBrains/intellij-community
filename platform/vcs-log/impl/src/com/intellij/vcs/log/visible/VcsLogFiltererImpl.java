@@ -46,14 +46,14 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
   @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final DataGetter<VcsFullCommitDetails> myCommitDetailsGetter;
+  @NotNull private final DataGetter<? extends VcsFullCommitDetails> myCommitDetailsGetter;
   @NotNull protected final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull protected final VcsLogIndex myIndex;
 
   public VcsLogFiltererImpl(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                             @NotNull VcsLogStorage storage,
                             @NotNull TopCommitsCache topCommitsDetailsCache,
-                            @NotNull DataGetter<VcsFullCommitDetails> detailsGetter,
+                            @NotNull DataGetter<? extends VcsFullCommitDetails> detailsGetter,
                             @NotNull VcsLogIndex index) {
     myStorage = storage;
     myTopCommitsDetailsCache = topCommitsDetailsCache;

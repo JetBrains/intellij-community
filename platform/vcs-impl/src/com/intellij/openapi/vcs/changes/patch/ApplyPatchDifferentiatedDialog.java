@@ -77,7 +77,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final TextFieldWithBrowseButton myPatchFile;
 
   private final List<AbstractFilePatchInProgress> myPatches;
-  private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
+  private final List<? extends ShelvedBinaryFilePatch> myBinaryShelvedPatches;
   @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
@@ -93,7 +93,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final ChangesLegendCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final ApplyPatchExecutor myCallback;
-  private final List<ApplyPatchExecutor> myExecutors;
+  private final List<? extends ApplyPatchExecutor> myExecutors;
 
   private boolean myContainBasedChanges;
   private JLabel myPatchFileLabel;
@@ -103,28 +103,28 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private String myHelpId = "reference.dialogs.vcs.patch.apply";
   private final boolean myShouldUpdateChangeListName;
 
-  public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<ApplyPatchExecutor> executors,
+  public ApplyPatchDifferentiatedDialog(final Project project, final ApplyPatchExecutor callback, final List<? extends ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode, @NotNull final VirtualFile patchFile) {
     this(project, callback, executors, applyPatchMode, patchFile, null, null, null, null, null, false);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
                                         final ApplyPatchExecutor callback,
-                                        final List<ApplyPatchExecutor> executors,
+                                        final List<? extends ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode,
-                                        @NotNull final List<TextFilePatch> patches,
+                                        @NotNull final List<? extends TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList) {
     this(project, callback, executors, applyPatchMode, null, patches, defaultList, null, null, null, false);
   }
 
   public ApplyPatchDifferentiatedDialog(final Project project,
                                         final ApplyPatchExecutor callback,
-                                        final List<ApplyPatchExecutor> executors,
+                                        final List<? extends ApplyPatchExecutor> executors,
                                         @NotNull final ApplyPatchMode applyPatchMode,
                                         @Nullable final VirtualFile patchFile,
-                                        @Nullable final List<TextFilePatch> patches,
+                                        @Nullable final List<? extends TextFilePatch> patches,
                                         @Nullable final LocalChangeList defaultList,
-                                        @Nullable List<ShelvedBinaryFilePatch> binaryShelvedPatches,
+                                        @Nullable List<? extends ShelvedBinaryFilePatch> binaryShelvedPatches,
                                         @Nullable Collection<Change> preselectedChanges,
                                         @Nullable String externalCommitMessage,
                                         boolean useProjectRootAsPredefinedBase) {

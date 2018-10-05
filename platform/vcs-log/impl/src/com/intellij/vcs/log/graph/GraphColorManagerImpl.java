@@ -67,7 +67,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
   public static class HeadsComparator implements Comparator<Integer> {
     @NotNull private final RefsModel myRefsModel;
     @NotNull private final Map<VirtualFile, VcsLogRefManager> myRefManagers;
-    @NotNull private final Function<Integer, Hash> myHashGetter;
+    @NotNull private final Function<? super Integer, ? extends Hash> myHashGetter;
 
     @NotNull private final LinkedHashMap<Integer, Integer> myErrorWasReported = new LinkedHashMap<Integer, Integer>(10) {
       @Override
@@ -78,7 +78,7 @@ public class GraphColorManagerImpl implements GraphColorManager<Integer> {
 
     public HeadsComparator(@NotNull RefsModel refsModel,
                            @NotNull Map<VirtualFile, VcsLogRefManager> refManagers,
-                           @NotNull Function<Integer, Hash> hashGetter) {
+                           @NotNull Function<? super Integer, ? extends Hash> hashGetter) {
       myRefsModel = refsModel;
       myRefManagers = refManagers;
       myHashGetter = hashGetter;

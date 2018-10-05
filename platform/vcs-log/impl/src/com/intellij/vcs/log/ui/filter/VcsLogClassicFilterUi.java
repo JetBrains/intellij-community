@@ -216,7 +216,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Nullable
     private Collection<VirtualFile> myVisibleRoots;
 
-    BranchFilterModel(@NotNull Computable<VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties) {
+    BranchFilterModel(@NotNull Computable<? extends VcsLogDataPack> provider, @NotNull MainVcsLogUiProperties properties) {
       super("branch", provider, properties);
     }
 

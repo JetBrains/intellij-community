@@ -45,11 +45,11 @@ public class CleanupWorker extends Task.Backgroundable {
   @NotNull private final SvnVcs myVcs;
   @NotNull private final List<Pair<VcsException, VirtualFile>> myExceptions = newArrayList();
 
-  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<VirtualFile> roots) {
+  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots) {
     this(vcs, roots, null);
   }
 
-  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<VirtualFile> roots, @Nullable String title) {
+  public CleanupWorker(@NotNull SvnVcs vcs, @NotNull List<? extends VirtualFile> roots, @Nullable String title) {
     super(vcs.getProject(), notNull(title, message("action.Subversion.cleanup.progress.title")));
     myVcs = vcs;
     myRoots = newArrayList(roots);

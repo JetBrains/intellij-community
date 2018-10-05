@@ -36,14 +36,14 @@ import org.jetbrains.annotations.Nullable;
 class GitLogOutputSplitter implements GitLineHandlerListener {
   @NotNull private final GitLineHandler myHandler;
   @NotNull private final GitLogParser myParser;
-  @NotNull private final Consumer<GitLogRecord> myRecordConsumer;
+  @NotNull private final Consumer<? super GitLogRecord> myRecordConsumer;
 
   @NotNull private final StringBuilder myErrors = new StringBuilder();
   @Nullable private VcsException myException = null;
 
   GitLogOutputSplitter(@NotNull GitLineHandler handler,
                               @NotNull GitLogParser parser,
-                              @NotNull Consumer<GitLogRecord> recordConsumer) {
+                              @NotNull Consumer<? super GitLogRecord> recordConsumer) {
     myHandler = handler;
     myParser = parser;
     myRecordConsumer = recordConsumer;

@@ -9,9 +9,9 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 public class SvnMergeSourceTracker implements ThrowableConsumer<LogEntry, SvnBindException> {
   private int myMergeLevel;
   // -1 - not merge source; 0 - direct merge source
-  private final ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> myConsumer;
+  private final ThrowableConsumer<? super Pair<LogEntry, Integer>, ? extends SvnBindException> myConsumer;
 
-  public SvnMergeSourceTracker(@NotNull ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> consumer) {
+  public SvnMergeSourceTracker(@NotNull ThrowableConsumer<? super Pair<LogEntry, Integer>, ? extends SvnBindException> consumer) {
     myConsumer = consumer;
     myMergeLevel = -1;
   }

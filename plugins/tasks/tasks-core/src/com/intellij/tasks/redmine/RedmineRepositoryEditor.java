@@ -32,7 +32,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   private JBLabel myProjectLabel;
   private JBLabel myAPIKeyLabel;
 
-  public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<RedmineRepository> changeListener) {
+  public RedmineRepositoryEditor(final Project project, final RedmineRepository repository, Consumer<? super RedmineRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setEnabled(myRepository.isConfigured());

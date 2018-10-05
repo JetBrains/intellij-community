@@ -38,7 +38,7 @@ public class SvnMergeInfoRootPanelManual {
   private JTextArea myMixedRevisions;
 
   @NotNull private final Project myProject;
-  @NotNull private final NotNullFunction<WCInfoWithBranches, WCInfoWithBranches> myRefresher;
+  @NotNull private final NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> myRefresher;
   @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
   @NotNull private WCInfoWithBranches myInfo;
@@ -46,7 +46,7 @@ public class SvnMergeInfoRootPanelManual {
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
-                                     @NotNull NotNullFunction<WCInfoWithBranches, WCInfoWithBranches> refresher,
+                                     @NotNull NotNullFunction<? super WCInfoWithBranches, ? extends WCInfoWithBranches> refresher,
                                      @NotNull Runnable listener,
                                      boolean onlyOneRoot,
                                      @NotNull WCInfoWithBranches info) {

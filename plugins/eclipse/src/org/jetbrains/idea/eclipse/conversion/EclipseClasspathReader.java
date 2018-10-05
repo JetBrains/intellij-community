@@ -49,7 +49,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     myContentEntry = model.addContentEntry(pathToUrl(myRootPath));
   }
 
-  public static void collectVariables(Set<String> usedVariables, Element classpathElement, final String rootPath) {
+  public static void collectVariables(Set<? super String> usedVariables, Element classpathElement, final String rootPath) {
     for (Element element : classpathElement.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
       String path = element.getAttributeValue(EclipseXml.PATH_ATTR);
       if (path == null) {

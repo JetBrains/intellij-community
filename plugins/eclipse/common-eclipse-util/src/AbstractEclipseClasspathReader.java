@@ -265,7 +265,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   @NotNull
-  protected static String getPresentableName(@NotNull String path, Set<String> names) {
+  protected static String getPresentableName(@NotNull String path, Set<? super String> names) {
     String pathComponent = getLastPathComponent(path);
     if (pathComponent != null && names != null && !names.add(pathComponent)) {
       return path;

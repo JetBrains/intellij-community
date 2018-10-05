@@ -22,11 +22,11 @@ import java.util.*;
  */
 class JavacFileManager2 extends JpsJavacFileManager {
 
-  private final Collection<JavaSourceTransformer> mySourceTransformers;
+  private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   @Nullable
   private String myEncodingName;
 
-  JavacFileManager2(Context context, Collection<JavaSourceTransformer> transformers) {
+  JavacFileManager2(Context context, Collection<? extends JavaSourceTransformer> transformers) {
     super(context);
     mySourceTransformers = transformers;
   }

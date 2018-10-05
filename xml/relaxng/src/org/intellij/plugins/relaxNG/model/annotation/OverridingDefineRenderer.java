@@ -38,10 +38,10 @@ import java.util.Set;
 
 class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
 
-  private final Set<Define> mySet;
+  private final Set<? extends Define> mySet;
   private final String myMessage;
 
-  OverridingDefineRenderer(String message, Set<Define> set) {
+  OverridingDefineRenderer(String message, Set<? extends Define> set) {
     mySet = set;
     myMessage = message;
   }
