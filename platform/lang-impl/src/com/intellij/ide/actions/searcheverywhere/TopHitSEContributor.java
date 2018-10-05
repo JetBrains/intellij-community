@@ -165,7 +165,7 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
       AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(action)) {
+      if (action == null || !isEnabled(action)) {
         continue;
       }
 
