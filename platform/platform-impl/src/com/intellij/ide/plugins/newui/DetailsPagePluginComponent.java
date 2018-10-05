@@ -42,7 +42,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   private final TagBuilder myTagBuilder;
   private final LinkListener<String> mySearchListener;
   public final IdeaPluginDescriptor myPlugin;
-  private LinkLabel myNameComponent;
+  private JLabel myNameComponent;
   private JLabel myIconLabel;
   private JButton myUpdateButton;
   private JButton myInstallButton;
@@ -132,13 +132,22 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       }
     });
 
-    myNameComponent = new LinkComponent();
+    boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
+
+    if (bundled) {
+      myNameComponent = new JLabel();
+    }
+    else {
+      LinkComponent linkComponent = new LinkComponent();
+      linkComponent.setPaintUnderline(false);
+      //noinspection unchecked
+      linkComponent.setListener((_0, _1) -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
+                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())), null);
+      myNameComponent = linkComponent;
+    }
+
     myNameComponent.setOpaque(false);
     myNameComponent.setText(myPlugin.getName());
-    myNameComponent.setPaintUnderline(false);
-    //noinspection unchecked
-    myNameComponent.setListener((_0, _1) -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())), null);
     Font font = myNameComponent.getFont();
     if (font != null) {
       myNameComponent.setFont(font.deriveFont(Font.BOLD, 30));
@@ -151,7 +160,6 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     nameButtons.add(myButtonsPanel = createButtons(update), BorderLayout.EAST);
     centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
-    boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
     String version = bundled ? "bundled" : myPlugin.getVersion();
 
     if (!StringUtil.isEmptyOrSpaces(version)) {
