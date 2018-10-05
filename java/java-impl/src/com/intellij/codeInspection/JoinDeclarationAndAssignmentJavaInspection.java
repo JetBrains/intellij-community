@@ -5,7 +5,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -251,9 +251,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
                                                      @NotNull PsiExpression initializerExpression) {
       Project project = elementToReplace.getProject();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiAnnotation[] annotations = context.myVariable.getAnnotations();
-      String text = (annotations.length != 0 ? StringUtil.join(annotations, PsiElement::getText, " ") + " " : "") +
-                    context.myVariable.getTypeElement().getText() + " " + context.myName + "=" + initializerExpression.getText() + ";";
+      String text = context.getDeclarationText(initializerExpression);
       PsiStatement statement = factory.createStatementFromText(text, context.myAssignment);
       PsiElement replaced = elementToReplace.replace(statement);
       return CodeStyleManager.getInstance(project).reformat(replaced);
@@ -327,6 +325,19 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       myName = name;
       myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType()) ||
                    findNextAssignment(myAssignment.getParent(), myVariable) != null;
+    }
+
+    @NotNull
+    private String getDeclarationText(@NotNull PsiExpression initializer) {
+      StringJoiner joiner = new StringJoiner(" ");
+      if (myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+        joiner.add(PsiKeyword.FINAL + ' ');
+      }
+      for (PsiAnnotation annotation : myVariable.getAnnotations()) {
+        joiner.add(annotation.getText() + ' ');
+      }
+      joiner.add(myVariable.getTypeElement().getText() + ' ' + myName + '=' + initializer.getText() + ';');
+      return joiner.toString();
     }
   }
 }
