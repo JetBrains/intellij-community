@@ -177,7 +177,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
 
     int argCount = args.length;
     int paramCount = parameters.length;
-    if (argCount > paramCount) {
+    if (argCount > paramCount || argCount == paramCount - 1) {
       return true;
     }
 
