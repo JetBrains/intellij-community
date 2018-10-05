@@ -3,7 +3,6 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
-import com.intellij.testGuiFramework.impl.asyncProcessIcon
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.impl.waitForGradleReimport

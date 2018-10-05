@@ -97,7 +97,7 @@ fun KotlinGuiTestCase.createKotlinProject(
  * */
 fun KotlinGuiTestCase.configureKotlinJvm(libInPlugin: Boolean) {
   ideFrame {
-    waitAMoment(3000)
+    waitAMoment()
     logTestStep("Open 'Configure Kotlin in Project' dialog")
     invokeMainMenu("ConfigureKotlinInProject")
     dialog("Create Kotlin Java Runtime Library") {
@@ -635,11 +635,10 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   expectedFacet: FacetStructure,
   gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   if (!isIdeFrameRun()) return
-  val extraTimeOut = 4000L
   createGradleProject(
     projectPath = projectFolder,
     gradleOptions = gradleOptions)
-  waitAMoment(extraTimeOut)
+  waitAMoment()
   when {
     project.modules.contains(TargetPlatform.JVM16) || project.modules.contains(TargetPlatform.JVM18) -> configureKotlinJvmFromGradle(kotlinVersion)
     project.modules.contains(TargetPlatform.JavaScript) -> configureKotlinJsFromGradle(kotlinVersion)

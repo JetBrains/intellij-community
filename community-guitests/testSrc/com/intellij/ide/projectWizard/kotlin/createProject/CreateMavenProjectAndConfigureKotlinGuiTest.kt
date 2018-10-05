@@ -17,21 +17,20 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenAndConfigureKotlinJvm() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     configureKotlinJvmFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     saveAndCloseCurrentEditor()
     editPomXml(
       kotlinVersion = kotlinVersion
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(
@@ -51,21 +50,20 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenAndConfigureKotlinJs() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     configureKotlinJsFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     saveAndCloseCurrentEditor()
     editPomXml(
       kotlinVersion = kotlinVersion
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(

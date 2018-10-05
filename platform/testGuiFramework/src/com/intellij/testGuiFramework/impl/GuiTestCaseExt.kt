@@ -9,6 +9,7 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
@@ -77,32 +78,39 @@ fun GuiTestCase.closeProject() {
 }
 
 /**
- * Wrapper for [waitForBackgroundTasksToFinish]
- * adds an extra pause
+ * Provide waiting for background tasks to finish
  * This function should be used instead of  [waitForBackgroundTasksToFinish]
- * because sometimes it doesn't wait enough time
- * After [waitForBackgroundTasksToFinish] fixing this function should be removed
- * @param extraTimeOut time of additional waiting
+ * because sometimes the latter doesn't wait enough time
  * */
-fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
+fun GuiTestCase.waitAMoment() {
   ideFrame {
     this.waitForBackgroundTasksToFinish()
     val asyncIcon = try {
-      asyncProcessIcon(Timeouts.seconds02)
+      indexingProcessIcon(Timeouts.seconds01)
     }
     catch (ignored: WaitTimedOutError) {
       // asyncIcon not found and it's OK, so no background process is going
       null
     }
-    try {
-      asyncIcon?.waitUntilStop(Timeouts.minutes10)
-    }
-    catch (e: WaitTimedOutError) {
-      throw WaitTimedOutError("Background process hadn't finished after ${Timeouts.minutes10.toPrintable()}")
+    if(asyncIcon != null){
+      val timeoutForBackgroundTasks = Timeouts.minutes10
+      try {
+        asyncIcon.click()
+        waitForPanelToDisappear(
+          panelTitle = "Background Tasks",
+          timeoutToAppear = Timeouts.seconds01,
+          timeoutToDisappear = timeoutForBackgroundTasks
+        )
+      }
+      catch (e: ComponentLookupException){
+        // do nothing - panel hasn't appeared and it seems ok
+      }
+      catch (e: WaitTimedOutError) {
+        throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+      }
     }
   }
   robot().waitForIdle()
-  Pause.pause(extraTimeOut)
 }
 
 /**

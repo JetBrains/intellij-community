@@ -16,19 +16,18 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenWithKotlinJvm() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName,
       archetype = kotlinProjects.getValue(Projects.MavenProjectJvm).frameworkName,
       kotlinVersion = kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(
@@ -54,19 +53,18 @@ class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenWithKotlinJs() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName,
       archetype = kotlinProjects.getValue(Projects.MavenProjectJs).frameworkName,
       kotlinVersion = kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     val expectedOutput = "$projectFolder/target/classes/${testMethod.methodName}.js".replace("\\", "/")
     val expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!.copy(
