@@ -102,6 +102,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     this(document, project, fileType, false, true);
   }
 
+  public EditorTextField(Project project, FileType fileType) {
+    this(null, project, fileType, false, true);
+  }
+
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
     this(document, project, fileType, isViewer, true);
   }

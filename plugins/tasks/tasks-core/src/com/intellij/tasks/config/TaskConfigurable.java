@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks.config;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -195,7 +194,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
       fileType = PlainTextFileType.INSTANCE;
     }
     Project project = ProjectManager.getInstance().getDefaultProject();
-    myBranchNameFormat = new EditorTextField((Document)null, project, fileType);
-    myChangelistNameFormat = new EditorTextField((Document)null, project, fileType);
+    myBranchNameFormat = new EditorTextField(project, fileType);
+    myChangelistNameFormat = new EditorTextField(project, fileType);
   }
 }
