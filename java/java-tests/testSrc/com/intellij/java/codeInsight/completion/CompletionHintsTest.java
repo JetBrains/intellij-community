@@ -22,6 +22,8 @@ import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 
+import java.util.concurrent.TimeoutException;
+
 public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
 
@@ -1635,6 +1637,32 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("[<html><b>int a</b>, int b</html>]\n" +
                       "-\n" +
                       "<html><b>int c</b>, int d, int e</html>");
+  }
+
+  public void testUndoRedoAfterOverloadSwitch() {
+    configureJava("class C { void some(int a) {} void some(int a, int b) {} void m() { s<caret> } }");
+    complete("some(int a)");
+    type('1');
+    showParameterInfo();
+    methodOverloadDown();
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
+    EditorTestUtil.testUndoInEditor(getEditor(), () -> {
+      myFixture.performEditorAction(IdeActions.ACTION_UNDO);
+      try {
+        waitForAllAsyncStuff();
+      }
+      catch (TimeoutException e) {
+        fail();
+      }
+      myFixture.performEditorAction(IdeActions.ACTION_REDO);
+      try {
+        waitForAllAsyncStuff();
+      }
+      catch (TimeoutException e) {
+        fail();
+      }
+    });
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
   }
 
   private void checkResultWithInlays(String text) {
