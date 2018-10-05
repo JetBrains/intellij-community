@@ -89,6 +89,10 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
+          if (Registry.is("ide.completion.show.live.templates.on.top")) {
+            ensureTemplatesShown(templatesShown, templates, finalResult);
+          }
+
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
