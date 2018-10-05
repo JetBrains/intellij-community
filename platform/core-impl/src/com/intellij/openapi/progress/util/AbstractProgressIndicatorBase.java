@@ -40,7 +40,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myFinished;
 
   private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
-  private volatile Object myMacActivity;
+  private volatile MacUtil.Activity myMacActivity;
   private volatile boolean myShouldStartActivity = true;
 
   private Stack<String> myTextStack; // guarded by this
@@ -89,10 +89,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(this) : null;
   }
 
-  synchronized void stopSystemActivity() {
-    Object macActivity = myMacActivity;
+  void stopSystemActivity() {
+    MacUtil.Activity macActivity = myMacActivity;
     if (macActivity != null) {
-      MacUtil.matrixHasYou(macActivity);
+      macActivity.matrixHasYou();
       myMacActivity = null;
     }
   }
@@ -285,6 +285,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       myFractionStack = stacked.myFractionStack == null ? null : new TDoubleArrayList(stacked.getFractionStack().toNativeArray());
     }
+    dontStartActivity();
+  }
+
+  protected void dontStartActivity() {
     myShouldStartActivity = false;
   }
 

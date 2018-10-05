@@ -5,9 +5,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
@@ -20,6 +20,7 @@ import java.awt.event.KeyEvent;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
@@ -191,37 +192,47 @@ public class MacUtil {
     private static final long latencyCritical = 0xFF00000000L;
   }
 
-  public static Object wakeUpNeo(@NotNull final Object reason) {
-    // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
-    // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
-    if (SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap")) {
-      final Ref<ID> result = Ref.create();
-      executeOnMainThread(false, true, new Runnable() {
-        @Override
-        public void run() {
-          ID processInfo = invoke("NSProcessInfo", "processInfo");
-          ID activity = invoke(invoke(processInfo, "beginActivityWithOptions:reason:",
-                                      NSActivityOptions.userInitiatedAllowingIdleSystemSleep,
-                                      // TODO: Do we need NSActivityOptions.latencyCritical? This is not an audio app.
-                                      nsString(reason.toString())), "retain");
-          result.set(activity);
-        }
-      });
-      return result.get();
-    }
-    return null;
+  public interface Activity {
+    /**
+     * Ends activity, allowing macOS to trigger AppNap (idempotent).
+     */
+    void matrixHasYou();
   }
 
-  public static void matrixHasYou(@NotNull Object activityToken) {
-    final ID activity = (ID)activityToken;
-    executeOnMainThread(false, false, new Runnable() {
-      @Override
-      public void run() {
-        ID processInfo = invoke("NSProcessInfo", "processInfo");
-        invoke(processInfo, "endActivity:", activity);
-        invoke(activity, "release");
-      }
-    });
+  private static final class ActivityImpl extends AtomicReference<ID> implements Activity {
+    private static final ID processInfoCls = getObjcClass("NSProcessInfo");
+    private static final Pointer processInfoSel = createSelector("processInfo");
+    private static final Pointer beginActivityWithOptionsReasonSel = createSelector("beginActivityWithOptions:reason:");
+    private static final Pointer endActivitySel = createSelector("endActivity:");
+    private static final Pointer retainSel = createSelector("retain");
+    private static final Pointer releaseSel = createSelector("release");
+
+    private ActivityImpl(@NotNull Object reason) {
+      super(begin(reason));
+    }
+
+    @Override
+    public void matrixHasYou() { end(getAndSet(null)); }
+
+    private static ID getProcessInfo() { return invoke(processInfoCls, processInfoSel); }
+
+    private static ID begin(@NotNull Object reason) {
+      // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
+      // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
+      return invoke(invoke(getProcessInfo(), beginActivityWithOptionsReasonSel,
+                           NSActivityOptions.userInitiatedAllowingIdleSystemSleep, nsString(reason.toString())),
+                    retainSel);
+    }
+
+    private static void end(@Nullable ID activityToken) {
+      if (activityToken == null) return;
+      invoke(getProcessInfo(), endActivitySel, activityToken);
+      invoke(activityToken, releaseSel);
+    }
+  }
+
+  public static Activity wakeUpNeo(@NotNull Object reason) {
+    return SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
   }
 
   @NotNull
