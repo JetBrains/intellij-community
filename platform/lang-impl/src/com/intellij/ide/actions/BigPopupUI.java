@@ -234,6 +234,10 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     return calcPrefSize(myViewType);
   }
 
+  public Dimension getExpandedSize() {
+    return calcPrefSize(ViewType.FULL);
+  }
+
   private Dimension calcPrefSize(ViewType viewType) {
     Dimension size = super.getPreferredSize();
     if (viewType == ViewType.SHORT) {
