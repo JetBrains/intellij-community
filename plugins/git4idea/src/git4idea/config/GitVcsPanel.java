@@ -4,7 +4,6 @@ package git4idea.config;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
@@ -252,8 +251,8 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     }
 
     applicationSettings.setIdeaSsh(IDEA_SSH_NAME.equals(mySSHExecutableComboBox.getSelectedItem()) ?
-                                   GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
-                                   GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
+                                   GitVcsApplicationSettings.SshExecutable.BUILT_IN :
+                                   GitVcsApplicationSettings.SshExecutable.NATIVE);
 
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
