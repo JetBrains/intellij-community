@@ -101,4 +101,13 @@ public interface FoundationLibrary extends Library {
   int kCGWindowImageOnlyShadows         = 4;
   int kCGWindowImageBestResolution      = 8;
   int kCGWindowImageNominalResolution   = 16;
+
+
+  // see enum NSBitmapImageFileType
+  int NSBitmapImageFileTypeTIFF = 0;
+  int NSBitmapImageFileTypeBMP = 1;
+  int NSBitmapImageFileTypeGIF = 2;
+  int NSBitmapImageFileTypeJPEG = 3;
+  int NSBitmapImageFileTypePNG = 4;
+  int NSBitmapImageFileTypeJPEG2000 = 5;
 }

@@ -18,17 +18,24 @@ package com.intellij.ui.mac.foundation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.ui.mac.foundation.Foundation.*;
+
 public class NSWorkspace {
   @Nullable
   public static String absolutePathForAppBundleWithIdentifier(@NotNull String bundleID) {
-    Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    NSAutoreleasePool pool = new NSAutoreleasePool();
     try {
-      ID workspace = Foundation.invoke(Foundation.getObjcClass("NSWorkspace"), "sharedWorkspace");
-      return Foundation.toStringViaUTF8(Foundation.invoke(workspace, "absolutePathForAppBundleWithIdentifier:", 
-                                                          Foundation.nsString(bundleID)));
+      ID workspace = getInstance();
+      return toStringViaUTF8(invoke(workspace, "absolutePathForAppBundleWithIdentifier:",
+                                                          nsString(bundleID)));
     }
     finally {
       pool.drain();
     }
+  }
+
+  @NotNull
+  public static ID getInstance() {
+    return invoke(getObjcClass("NSWorkspace"), "sharedWorkspace");
   }
 }
