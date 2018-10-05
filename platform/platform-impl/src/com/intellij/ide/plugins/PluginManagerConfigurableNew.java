@@ -404,9 +404,10 @@ public class PluginManagerConfigurableNew
           if (index == UPDATES_SEARCH_TAB) {
             return myUpdatesSearchPanel.createScrollPane();
           }
+          throw new RuntimeException("Create card unknown KEY index: " + key);
         }
 
-        //noinspection ConstantConditions,unchecked
+        //noinspection unchecked
         return createDetailsPanel((Pair<IdeaPluginDescriptor, Boolean>)key);
       }
     };
@@ -520,11 +521,14 @@ public class PluginManagerConfigurableNew
   }
 
   private static int getStoredSelectionTab() {
-    return PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    int value = PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    return value >= TRENDING_TAB && value <= UPDATES_TAB ? value : TRENDING_TAB;
   }
 
   private static void storeSelectionTab(int value) {
-    PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    if (value >= TRENDING_TAB && value <= UPDATES_TAB) {
+      PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    }
   }
 
   @Override
