@@ -130,7 +130,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final Element aggregateRoot = new Element(ROOT);
 
       Format format = JDOMUtil.createFormat("\n");
-      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
+      XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
 
       TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
         if (node instanceof InspectionNode) {
