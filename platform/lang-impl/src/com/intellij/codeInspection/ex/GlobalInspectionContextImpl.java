@@ -209,7 +209,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             InspectionToolPresentation presentation = getPresentation(toolWrapper);
             presentation.updateContent();
             if (presentation.hasReportedProblems()) {
-              final Element root = new Element(InspectionsBundle.message("inspection.problems"));
+              final Element root = new Element(PROBLEMS_TAG_NAME);
               globalTools.put(root, sameTools);
               LOG.assertTrue(!hasProblems, toolName);
               break;
@@ -222,8 +222,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           new File(outputPath).mkdirs();
           final File file = new File(outputPath, toolName + ext);
           inspectionsResults.add(file);
-          FileUtil
-            .writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
+          FileUtil.writeToFile(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -241,6 +240,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             try {
               InspectionToolWrapper toolWrapper = state.getTool();
               InspectionToolPresentation presentation = getPresentation(toolWrapper);
+              //TODO do not keep big root element in memory
               presentation.exportResults(e -> element.addContent(e), refEntity, d -> false);
             }
             catch (Throwable e) {

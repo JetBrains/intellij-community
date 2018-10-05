@@ -63,6 +63,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
   final Map<String, Tools> myTools = new THashMap<>();
 
+  @NonNls public static final String PROBLEMS_TAG_NAME = "problems";
   @NonNls public static final String LOCAL_TOOL_ATTRIBUTE = "is_local_tool";
 
   public GlobalInspectionContextBase(@NotNull Project project) {

@@ -6,16 +6,14 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ex.ScopeToolState;
-import com.intellij.codeInspection.ex.Tools;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
 import com.intellij.codeInspection.ui.InspectionNode;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -55,7 +53,6 @@ import java.util.Set;
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportHTMLAction.class);
   private final InspectionResultsView myView;
-  @NonNls private static final String PROBLEMS = "problems";
   @NonNls private static final String ROOT = "root";
   @NonNls private static final String AGGREGATE = "_aggregate";
   @NonNls private static final String HTML = "HTML";
@@ -133,69 +130,44 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final Element aggregateRoot = new Element(ROOT);
 
       Format format = JDOMUtil.createFormat("\n");
-      String initialSeparator = format.getLineSeparator();
-      format.setLineSeparator(initialSeparator + format.getIndent());
-      StAXStreamOutputter streamOutputter = new StAXStreamOutputter(format);
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newFactory();
 
       TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
+          if (toolNode.isExcluded()) return true;
 
           InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
           if (!visitedWrappers.add(toolWrapper)) return true;
 
           String name = toolWrapper.getShortName();
-          XMLStreamWriter xmlWriter = null;
-          BufferedWriter fileWriter = null;
-          try {
-            fileWriter = getWriter(outputDirectoryName, name);
-            xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
-            xmlWriter.writeStartElement(PROBLEMS);
-
+          try (BufferedWriter fileWriter = getWriter(outputDirectoryName, name)) {
+            XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
+            xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
             final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
             for (InspectionToolWrapper wrapper : toolWrappers) {
               InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              if (!toolNode.isExcluded()) {
-                XMLStreamWriter finalReportWriter = xmlWriter;
-                presentation.exportResults(p -> {
-
-                  PathMacroManager.getInstance(myView.getProject()).collapsePaths(p);
-                  try {
-                    finalReportWriter.writeCharacters(format.getLineSeparator());
-                    streamOutputter.output(p, finalReportWriter);
-                  }
-                  catch (XMLStreamException e) {
-                    throw new RuntimeException(e);
-                  }
-                }, presentation::isExcluded, presentation::isExcluded);
-                presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
-              }
+              presentation.exportResults(p -> {
+                try {
+                  xmlWriter.writeCharacters(format.getLineSeparator() + format.getIndent());
+                  xmlWriter.flush();
+                  JbXmlOutputter.collapseMacrosAndWrite(p, myView.getProject(), fileWriter);
+                  fileWriter.flush();
+                }
+                catch (IOException | XMLStreamException e) {
+                  throw new RuntimeException(e);
+                }
+              }, presentation::isExcluded, presentation::isExcluded);
+              presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
             }
             writeDocument(aggregateRoot, outputDirectoryName, name + AGGREGATE);
-            xmlWriter.writeCharacters(initialSeparator);
+            xmlWriter.writeCharacters(format.getLineSeparator());
             xmlWriter.writeEndElement();
+            xmlWriter.flush();
           }
-          catch (Exception e) {
+          catch (IOException | XMLStreamException e) {
             ex[0] = e;
-          } finally {
-            try {
-              if (xmlWriter != null) {
-                xmlWriter.flush();
-              }
-            }
-            catch (XMLStreamException e) {
-              LOG.error(e);
-            }
-            if (fileWriter != null) {
-              try {
-                fileWriter.close();
-              }
-              catch (IOException e) {
-                if (ex[0] != null) ex[0] = e;
-              }
-            }
           }
         }
         return true;
@@ -218,7 +190,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
   }
 
-  private static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException, XMLStreamException {
+  private static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException {
     File file = new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
     FileUtil.createParentDirs(file);
     return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));

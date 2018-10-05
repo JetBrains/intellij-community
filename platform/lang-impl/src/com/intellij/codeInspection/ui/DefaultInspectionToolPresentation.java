@@ -12,6 +12,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -41,6 +42,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -260,30 +264,32 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
-    final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
-    exportResults(descriptions, refElement, p -> parentNode.addContent(p), d -> false);
-    final List<Element> list = parentNode.getChildren();
-
     @NonNls final String ext = ".xml";
-    final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
-    try {
-      FileUtil.createDirectory(new File(myContext.getOutputPath()));
-      final File file = new File(fileName);
-      final StringWriter writer = new StringWriter();
-      if (!file.exists()) {
-        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE + "=\"")
-          .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
-      }
-      for (Element element : list) {
-        JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
+    final File file = new File(myContext.getOutputPath(), myToolWrapper.getShortName() + ext);
+    boolean exists = file.exists();
+    FileUtil.createParentDirs(file);
+    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
+
+      XMLStreamWriter xmlWriter = XMLOutputFactory.newFactory().createXMLStreamWriter(writer);
+      if (!exists) {
+        xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+        xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
+        xmlWriter.writeCharacters("\n");
+        xmlWriter.close();
       }
 
-      try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)))) {
-        printWriter.append("\n");
-        printWriter.append(writer.toString());
-      }
+      exportResults(descriptions, refElement, p -> {
+        try {
+          JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }, d -> false);
+
+      writer.append("\n");
     }
-    catch (IOException e) {
+    catch (XMLStreamException | IOException e) {
       LOG.error(e);
     }
   }
