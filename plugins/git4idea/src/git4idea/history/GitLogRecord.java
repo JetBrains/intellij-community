@@ -76,13 +76,11 @@ class GitLogRecord {
   }
 
   @NotNull
-  public List<FilePath> getFilePaths(@NotNull VirtualFile root) throws VcsException {
+  public List<FilePath> getFilePaths(@NotNull VirtualFile root) {
     List<FilePath> res = new ArrayList<>();
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
-      final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePath(prefix + subPath, false);
-      res.add(revisionPath);
+      res.add(VcsUtil.getFilePath(prefix + strPath, false));
     }
     return res;
   }
