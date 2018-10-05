@@ -89,8 +89,6 @@
              icon="AllIcons.Vcs.Merge">
         <reference id="Github.PullRequest.Merge.Group"/>
       </group>
-      <action id="Github.PullRequest.List.Refresh"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
     </group>
     <group id="Github.PullRequest.ToolWindow.List.Popup">
       <reference id="Github.PullRequest.Merge.Group"/>
@@ -98,6 +96,8 @@
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
+      <action id="Github.PullRequest.List.Refresh"
+              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
     </group>
     <action id="Github.PullRequest.Preview.Refresh"
             class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshPreviewAction"

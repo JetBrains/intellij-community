@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class GithubPullRequestRefreshListAction : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
+class GithubPullRequestRefreshListAction : DumbAwareAction("Refresh List", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
     val component = e.getData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT)
     e.presentation.isEnabled = component != null
