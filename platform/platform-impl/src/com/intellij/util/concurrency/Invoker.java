@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -314,7 +315,7 @@ public abstract class Invoker implements Disposable {
     }
   }
 
-  private static final class ObsolescentProgressIndicator extends AbstractProgressIndicatorBase {
+  private static final class ObsolescentProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
     private final Obsolescent obsolescent;
     private final boolean reusable;
 
