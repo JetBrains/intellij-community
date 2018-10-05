@@ -85,10 +85,10 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
   }
 
-  protected void waitForAllAsyncStuff() throws TimeoutException {
-    waitForParameterInfoUpdate();
+  protected void waitForAllAsyncStuff() {
+    try { waitForParameterInfoUpdate(); } catch (TimeoutException e) { fail("Timed out waiting for parameter info update"); }
     myFixture.doHighlighting();
     waitTillAnimationCompletes(getEditor());
-    waitForAutoPopup();
+    try { waitForAutoPopup(); } catch (TimeoutException e) { fail("Timed out waiting for auto-popup"); }
   }
 }
