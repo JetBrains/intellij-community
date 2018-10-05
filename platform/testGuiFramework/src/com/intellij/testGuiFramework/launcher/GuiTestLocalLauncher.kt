@@ -180,7 +180,7 @@ object GuiTestLocalLauncher {
 
   }
 
-  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180,
+  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 240,
                                                                        ideaStartTest = ProcessBuilder().inheritIO().command(args))
 
 
