@@ -53,7 +53,7 @@ internal class GithubPullRequestsListComponent(project: Project,
 
   private val searchModel = GithubPullRequestSearchModel()
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
-    border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
+    border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
   }
 
   init {
@@ -71,14 +71,6 @@ internal class GithubPullRequestsListComponent(project: Project,
       }
     }
 
-    val toolbar = actionManager.createActionToolbar("GithubPullRequestListToolbar",
-                                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Toolbar") as ActionGroup,
-                                                    true)
-      .apply {
-        setReservePlaceAutoPopupIcon(false)
-        setTargetComponent(this@GithubPullRequestsListComponent)
-      }
-
     val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
         if (ListUtil.isPointOnSelection(list, x, y)) {
@@ -92,14 +84,12 @@ internal class GithubPullRequestsListComponent(project: Project,
     }
     list.addMouseListener(popupHandler)
 
-    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(toolbar.component)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
-      .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
 
+    addToTop(search)
     addToCenter(tableWithError)
-    addToTop(headerPanel)
 
     resetSearch()
 
