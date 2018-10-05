@@ -285,6 +285,7 @@ public class CodeCompletionHandlerBase {
         completionFinished(indicator, hasModifiers);
       }
       catch (Throwable e) {
+        indicator.closeAndFinish(true);
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         LOG.error(e);
       }
