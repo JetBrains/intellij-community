@@ -632,7 +632,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       final PyStdlibDocumentationLinkProvider stdlibDocumentationLinkProvider =
-        PythonDocumentationLinkProvider.EP_NAME.getExtension(PyStdlibDocumentationLinkProvider.class);
+        PythonDocumentationLinkProvider.EP_NAME.findExtensionOrFail(PyStdlibDocumentationLinkProvider.class);
       final String url = stdlibDocumentationLinkProvider.getExternalDocumentationUrl(element, element);
       if (url == null) {
         return null;

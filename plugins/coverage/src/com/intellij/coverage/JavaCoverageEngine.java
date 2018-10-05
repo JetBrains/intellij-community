@@ -61,7 +61,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   public static JavaCoverageEngine getInstance() {
-    return EP_NAME.getExtension(JavaCoverageEngine.class);
+    return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
   }
 
   @Override

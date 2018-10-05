@@ -102,12 +102,12 @@ public class Extensions {
   }
 
   /**
-   * @deprecated Use {@link ExtensionPointName#getExtension(Class)}
+   * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
    */
   @Deprecated
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
-    return extensionPointName.getExtension(extClass);
+    return extensionPointName.findExtensionOrFail(extClass);
   }
 
   @NotNull
