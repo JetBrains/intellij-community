@@ -7,17 +7,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvid
 
 internal class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
                                                  private val details: GithubPullRequestDetailsComponent)
-  : OnePixelSplitter(true, "Github.PullRequest.Preview.Component", 0.6f), Disposable {
+  : OnePixelSplitter("Github.PullRequest.Preview.Component", 0.5f), Disposable {
 
   val toolbarComponent = changes.toolbarComponent
-  var detailsVisible: Boolean
-    get() = secondComponent != null
-    set(value) {
-      secondComponent = if (value) details else null
-    }
 
   init {
-    firstComponent = changes
+    firstComponent = details
+    secondComponent = changes
   }
 
   fun setPreviewDataProvider(provider: GithubPullRequestDataProvider?) {

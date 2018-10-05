@@ -2,14 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -21,9 +17,9 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
-internal class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
-  : GithubDataLoadingComponent<List<Change>>(), Disposable {
-  private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
+internal class GithubPullRequestChangesComponent(project: Project) : GithubDataLoadingComponent<List<Change>>(), Disposable {
+
+  private val changesBrowser = PullRequestChangesBrowserWithError(project)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
@@ -68,7 +64,7 @@ internal class GithubPullRequestChangesComponent(project: Project, actionManager
     //language=HTML
     private const val DEFAULT_EMPTY_TEXT = "Select pull request to view list of changed files"
 
-    private class PullRequestChangesBrowserWithError(project: Project, private val actionManager: ActionManager)
+    private class PullRequestChangesBrowserWithError(project: Project)
       : ChangesBrowserBase(project, false, false), ComponentWithEmptyText {
 
       var changes: List<Change> by Delegates.observable(listOf()) { _, _, _ ->
@@ -88,13 +84,6 @@ internal class GithubPullRequestChangesComponent(project: Project, actionManager
       override fun getEmptyText() = myViewer.emptyText
 
       override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
-
-      override fun createToolbarActions(): List<AnAction> {
-        return super.createToolbarActions() +
-               listOf(Separator(), actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP),
-                      Separator(), actionManager.getAction("Github.PullRequest.Preview.Show.Details"))
-
-      }
     }
   }
 }
