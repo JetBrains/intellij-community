@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -125,8 +126,8 @@ public class VcsLogUiUtil {
     ScrollingUtil.installActions(component, false);
 
     // remove shortcuts that conflict with go to child/parent
-    List<KeyboardShortcut> shortcuts = Arrays.asList(conflictingShortcuts);
-    List<KeyStroke> strokes = ContainerUtil.map2List(shortcuts, shortcut -> shortcut.getFirstKeyStroke());
+    List<KeyboardShortcut> shortcuts = ContainerUtil.mapNotNull(conflictingShortcuts, Functions.id());
+    List<KeyStroke> strokes = ContainerUtil.mapNotNull(shortcuts, shortcut -> shortcut.getFirstKeyStroke());
 
     strokes.forEach(stroke -> component.getInputMap(JComponent.WHEN_FOCUSED).remove(stroke));
     for (AnAction action : ContainerUtil.newArrayList(UIUtil.getClientProperty(component, ACTIONS_KEY))) {
