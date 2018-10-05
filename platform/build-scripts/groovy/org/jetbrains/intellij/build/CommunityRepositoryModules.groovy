@@ -159,8 +159,7 @@ class CommunityRepositoryModules {
         "commons-beanutils.jar",
         "maven-dependency-tree-1.2.jar",
         "mercury-artifact-1.0-alpha-6.jar",
-        "nexus-indexer-1.2.3.jar",
-        "plexus-utils-1.5.5.jar"
+        "nexus-indexer-1.2.3.jar"
       ].each {withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib")}
       doNotCopyModuleLibrariesAutomatically([
         "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
@@ -175,6 +174,12 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingExtension.impl")
       withProjectLibrary("Kryo")
       withProjectLibrary("Gradle")
+    },
+    plugin("intellij.platform.testGuiFramework") {
+      mainJarName = "testGuiFramework"
+      withModule("intellij.platform.testGuiFramework")
+      withProjectLibrary("fest")
+      withProjectLibrary("fest-swing")
     },
     plugin("intellij.junit") {
       mainJarName = "idea-junit.jar"

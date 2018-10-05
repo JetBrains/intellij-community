@@ -121,7 +121,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
     }
     if (annotationFQN.equals(myNullabilityManager.getDefaultNotNull()) && owner instanceof PsiParameter && owner.getParent() != null) {
       List<String> annotations = NullableNotNullManager.getInstance(owner.getProject()).getNullables();
-      if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE)) {
+      if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_TYPE)) {
         return true;
       }
       if (HardcodedContracts.hasHardcodedContracts(owner)) {

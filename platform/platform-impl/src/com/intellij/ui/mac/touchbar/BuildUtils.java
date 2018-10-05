@@ -280,7 +280,7 @@ class BuildUtils {
   }
 
   // creates releaseOnClose touchbar
-  static TouchBar createStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
+  static TouchBar createStopRunningBar(List<? extends Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
     tb.addButton().setText("Stop All").setActionOnEDT(() -> {
       stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
@@ -558,7 +558,7 @@ class BuildUtils {
     return ContainerUtil.concat(secondary, main);
   }
 
-  private static void _collectActions(@NotNull AnAction act, @NotNull List<AnAction> out) {
+  private static void _collectActions(@NotNull AnAction act, @NotNull List<? super AnAction> out) {
     if (act instanceof ActionGroup) {
       final ActionGroup group = (ActionGroup)act;
       final AnAction[] children = group.getChildren(null);

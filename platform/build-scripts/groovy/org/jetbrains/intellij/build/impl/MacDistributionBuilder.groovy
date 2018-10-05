@@ -282,7 +282,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
       String zipRoot = getZipRoot(buildContext, customizer)
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      String suffix = buildContext.bundledJreManager.jreSuffix()
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath

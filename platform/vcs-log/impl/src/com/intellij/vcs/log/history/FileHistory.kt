@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
@@ -21,7 +22,10 @@ import com.intellij.vcs.log.graph.utils.BfsUtil.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import gnu.trove.THashMap
+import gnu.trove.THashSet
 import gnu.trove.TIntObjectHashMap
+import gnu.trove.TObjectHashingStrategy
 import java.util.*
 import java.util.function.BiConsumer
 
@@ -207,21 +211,23 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
 abstract class FileNamesData(filePath: FilePath) {
   // file -> (commitId -> (parent commitId -> change kind))
-  private val affectedCommits = mutableMapOf<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>()
+  private val affectedCommits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
   private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
 
   val isEmpty: Boolean
-    get() = affectedCommits.isEmpty()
+    get() = affectedCommits.isEmpty
   val hasRenames: Boolean
     get() = !commitToRename.isEmpty
   val files: Set<FilePath>
     get() = affectedCommits.keys
 
   init {
-    val newPaths = mutableSetOf(filePath)
+    val newPaths = THashSet<FilePath>(FILE_PATH_HASHING_STRATEGY)
+    newPaths.add(filePath)
 
     while (newPaths.isNotEmpty()) {
-      val commits = newPaths.associate { kotlin.Pair(it, getAffectedCommits(it)) }
+      val commits = THashMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
+      newPaths.associateTo(commits) { kotlin.Pair(it, getAffectedCommits(it)) }
       affectedCommits.putAll(commits)
       newPaths.clear()
 
@@ -306,40 +312,105 @@ abstract class FileNamesData(filePath: FilePath) {
   abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>
 }
 
-private data class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
+private class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
   val commits
     get() = UnorderedPair(parent, child)
 
   fun matches(rename: Rename): Boolean {
     if (rename.commit1 == parent && rename.commit2 == child) {
-      return if (isAddition) rename.filePath2 == filePath else rename.filePath1 == filePath
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath1, filePath)
     }
     else if (rename.commit2 == parent && rename.commit1 == child) {
-      return if (isAddition) rename.filePath1 == filePath else rename.filePath2 == filePath
+      return if (isAddition) FILE_PATH_HASHING_STRATEGY.equals(rename.filePath1, filePath)
+      else FILE_PATH_HASHING_STRATEGY.equals(rename.filePath2, filePath)
     }
     return false
   }
 
   fun matches(files: Couple<FilePath>): Boolean {
-    return (isAddition && files.second == filePath) || (!isAddition && files.first == filePath)
+    return (isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.second, filePath)) ||
+           (!isAddition && FILE_PATH_HASHING_STRATEGY.equals(files.first, filePath))
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as AdditionDeletion
+
+    if (!FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    if (child != other.child) return false
+    if (parent != other.parent) return false
+    if (isAddition != other.isAddition) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath)
+    result = 31 * result + child
+    result = 31 * result + parent
+    result = 31 * result + isAddition.hashCode()
+    return result
   }
 }
 
-private data class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
+private class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
 
   fun getOtherPath(commit: Int, filePath: FilePath): FilePath? {
-    if (commit == commit1 && filePath == filePath1) return filePath2
-    if (commit == commit2 && filePath == filePath2) return filePath1
+    if (commit == commit1 && FILE_PATH_HASHING_STRATEGY.equals(filePath, filePath1)) return filePath2
+    if (commit == commit2 && FILE_PATH_HASHING_STRATEGY.equals(filePath, filePath2)) return filePath1
     return null
   }
 
   fun getOtherPath(ad: AdditionDeletion): FilePath? {
     return getOtherPath(if (ad.isAddition) ad.child else ad.parent, ad.filePath)
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Rename
+
+    if (FILE_PATH_HASHING_STRATEGY.equals(filePath1, other.filePath1)) return false
+    if (FILE_PATH_HASHING_STRATEGY.equals(filePath2, other.filePath2)) return false
+    if (commit1 != other.commit1) return false
+    if (commit2 != other.commit2) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath1)
+    result = 31 * result + FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath2)
+    result = 31 * result + commit1
+    result = 31 * result + commit2
+    return result
+  }
 }
 
-data class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
+class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   constructor(filePath: FilePath) : this(filePath, false)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as MaybeDeletedFilePath
+
+    if (FILE_PATH_HASHING_STRATEGY.equals(filePath, other.filePath)) return false
+    if (deleted != other.deleted) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = FILE_PATH_HASHING_STRATEGY.computeHashCode(filePath)
+    result = 31 * result + deleted.hashCode()
+    return result
+  }
 }
 
 internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>) -> Unit) {
@@ -357,4 +428,27 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
     if (value != null) return value
   }
   return null
+}
+
+@JvmField
+val FILE_PATH_HASHING_STRATEGY: TObjectHashingStrategy<FilePath> = FilePathCaseSensitiveStrategy()
+
+internal class FilePathCaseSensitiveStrategy : TObjectHashingStrategy<FilePath> {
+  override fun equals(path1: FilePath?, path2: FilePath?): Boolean {
+    if (path1 === path2) return true
+    if (path1 == null || path2 == null) return false
+
+    if (path1.isDirectory != path2.isDirectory) return false
+    val canonical1 = FileUtil.toCanonicalPath(path1.path)
+    val canonical2 = FileUtil.toCanonicalPath(path2.path)
+    return canonical1 == canonical2
+  }
+
+  override fun computeHashCode(path: FilePath?): Int {
+    if (path == null) return 0
+
+    var result = if (path.path.isEmpty()) 0 else FileUtil.toCanonicalPath(path.path).hashCode()
+    result = 31 * result + if (path.isDirectory) 1 else 0
+    return result
+  }
 }

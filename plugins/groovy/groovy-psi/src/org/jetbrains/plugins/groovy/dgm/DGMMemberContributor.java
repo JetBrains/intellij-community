@@ -97,7 +97,7 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     for (PsiDirectory directory : aPackage.getDirectories(resolveScope)) {
       PsiFile file = directory.findFile(DGMUtil.ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE);
       if (!(file instanceof PropertiesFile)) continue;
-      AstLoadingFilter.forceEnableTreeLoading(file, () -> {
+      AstLoadingFilter.forceAllowTreeLoading(file, () -> {
         IProperty inst = ((PropertiesFile)file).findPropertyByKey("extensionClasses");
         IProperty stat = ((PropertiesFile)file).findPropertyByKey("staticExtensionClasses");
 

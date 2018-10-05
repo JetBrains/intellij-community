@@ -31,7 +31,7 @@ public class RefreshVFsSynchronously {
     refreshFiles(callback.getToRefresh());
   }
 
-  public static void refreshFiles(@NotNull Collection<File> files) {
+  public static void refreshFiles(@NotNull Collection<? extends File> files) {
     Collection<VirtualFile> filesToRefresh = ContainerUtil.newHashSet();
     for (File file : files) {
       VirtualFile vf = findFirstValidVirtualParent(file);

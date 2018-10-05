@@ -70,7 +70,7 @@ public class TestsLocationProviderUtil {
    * @return
    */
   public static List<VirtualFile> findFilesClosestToTarget(@NotNull final List<String> targetParentFolders,
-                                                           final List<FileInfo> candidates,
+                                                           final List<? extends FileInfo> candidates,
                                                            final int minProximityThreshold) {
     // let's find all files with similar relative path
 

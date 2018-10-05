@@ -242,7 +242,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Contract("null -> null")
   @Nullable
-  static TerminalOperation getTerminal(List<OperationRecord> operations) {
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -555,7 +555,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static boolean canUseAsNonFinal(PsiVariable var) {
       if (!(var instanceof PsiLocalVariable)) return false;
       PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).forEach(ref -> {
+      return block != null && ReferencesSearch.search(var).allMatch(ref -> {
         PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
         return context == null || PsiTreeUtil.isAncestor(context, block, false);
       });

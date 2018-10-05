@@ -24,9 +24,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class NestingTreeNode extends PsiFileNode {
-  @NotNull private final Collection<PsiFileNode> myChildNodes;
+  @NotNull private final Collection<? extends PsiFileNode> myChildNodes;
 
-  public NestingTreeNode(@NotNull final PsiFileNode originalNode, @NotNull final Collection<PsiFileNode> childNodes) {
+  public NestingTreeNode(@NotNull final PsiFileNode originalNode, @NotNull final Collection<? extends PsiFileNode> childNodes) {
     super(originalNode.getProject(), originalNode.getValue(), originalNode.getSettings());
     myChildNodes = childNodes;
   }

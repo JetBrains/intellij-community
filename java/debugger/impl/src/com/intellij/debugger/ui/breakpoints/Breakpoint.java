@@ -421,7 +421,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                           EventRequest request,
                                           PsiElement context,
                                           TextWithImports text,
-                                          EvaluatingComputable<ExpressionEvaluator> supplier) throws EvaluateException {
+                                          EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
       if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;

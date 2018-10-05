@@ -1433,7 +1433,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> String join(@NotNull T[] items, @NotNull Function<T, String> f, @NotNull String separator) {
+  public static <T> String join(@NotNull T[] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
     return join(Arrays.asList(items), f, separator);
   }
 
@@ -2024,13 +2024,25 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static CharSequence first(@NotNull CharSequence text, final int length, final boolean appendEllipsis) {
-    return text.length() > length ? text.subSequence(0, length) + (appendEllipsis ? "..." : "") : text;
+    if (text.length() <= length) {
+      return text;
+    }
+    if (appendEllipsis) {
+      return text.subSequence(0, length) + "...";
+    }
+    return text.subSequence(0, length);
   }
 
   @NotNull
   @Contract(pure = true)
   public static CharSequence last(@NotNull CharSequence text, final int length, boolean prependEllipsis) {
-    return text.length() > length ? (prependEllipsis ? "..." : "") + text.subSequence(text.length() - length, text.length()) : text;
+    if (text.length() <= length) {
+      return text;
+    }
+    if (prependEllipsis) {
+      return "..." + text.subSequence(text.length() - length, text.length());
+    }
+    return text.subSequence(text.length() - length, text.length());
   }
 
   @NotNull

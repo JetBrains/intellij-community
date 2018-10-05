@@ -822,7 +822,7 @@ public final class EditorUtil {
     return pos;
   }
 
-  public static int getTotalInlaysHeight(@NotNull List<Inlay> inlays) {
+  public static int getTotalInlaysHeight(@NotNull List<? extends Inlay> inlays) {
     int sum = 0;
     for (Inlay inlay : inlays) {
       sum += inlay.getHeightInPixels();

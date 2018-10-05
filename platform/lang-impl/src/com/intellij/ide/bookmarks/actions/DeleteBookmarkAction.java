@@ -31,9 +31,9 @@ import java.util.List;
 
 class DeleteBookmarkAction extends DumbAwareAction {
   private final Project myProject;
-  private final JList<BookmarkItem> myList;
+  private final JList<? extends BookmarkItem> myList;
 
-  DeleteBookmarkAction(Project project, JList<BookmarkItem> list) {
+  DeleteBookmarkAction(Project project, JList<? extends BookmarkItem> list) {
     super("Delete", "Delete current bookmark", AllIcons.General.Remove);
     setEnabledInModalContext(true);
     myProject = project;

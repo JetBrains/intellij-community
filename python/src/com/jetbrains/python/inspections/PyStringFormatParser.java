@@ -539,7 +539,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
+  public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<? extends FormatStringChunk> chunks) {
     final List<SubstitutionChunk> results = new ArrayList<>();
     for (FormatStringChunk chunk : chunks) {
       if (chunk instanceof SubstitutionChunk) {
@@ -551,7 +551,7 @@ public class PyStringFormatParser {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+  public static List<SubstitutionChunk> getPositionalSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final ArrayList<SubstitutionChunk> result = new ArrayList<>();
     for (SubstitutionChunk s : substitutions) {
       if (s.getMappingKey() == null) {
@@ -563,7 +563,7 @@ public class PyStringFormatParser {
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
-  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<SubstitutionChunk> substitutions) {
+  public static Map<String, SubstitutionChunk> getKeywordSubstitutions(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final Map<String, SubstitutionChunk> result = new HashMap<>();
     for (SubstitutionChunk s : substitutions) {
       final String key = s.getMappingKey();
@@ -575,7 +575,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public static List<TextRange> substitutionsToRanges(@NotNull List<SubstitutionChunk> substitutions) {
+  public static List<TextRange> substitutionsToRanges(@NotNull List<? extends SubstitutionChunk> substitutions) {
     final List<TextRange> ranges = new ArrayList<>();
     for (SubstitutionChunk substitution : substitutions) {
       ranges.add(TextRange.create(substitution.getStartIndex(), substitution.getEndIndex()));

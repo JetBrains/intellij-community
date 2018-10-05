@@ -38,7 +38,7 @@ public class CompositeWhiteSpaceFormattingStrategy implements WhiteSpaceFormatti
   private final List<WhiteSpaceFormattingStrategy> myStrategies = new ArrayList<>();
   private boolean myReplaceDefaultStrategy;
 
-  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<WhiteSpaceFormattingStrategy> strategies)
+  public CompositeWhiteSpaceFormattingStrategy(@NotNull Collection<? extends WhiteSpaceFormattingStrategy> strategies)
     throws IllegalArgumentException
   {
     for (WhiteSpaceFormattingStrategy strategy : strategies) {

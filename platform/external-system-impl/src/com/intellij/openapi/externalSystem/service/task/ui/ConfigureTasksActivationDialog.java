@@ -427,7 +427,7 @@ public class ConfigureTasksActivationDialog extends DialogWrapper {
   }
 
   private class ChooseProjectStep extends BaseListPopupStep<ProjectPopupItem> {
-    protected ChooseProjectStep(List<ProjectPopupItem> values) {
+    protected ChooseProjectStep(List<? extends ProjectPopupItem> values) {
       super("Choose project", values);
     }
 

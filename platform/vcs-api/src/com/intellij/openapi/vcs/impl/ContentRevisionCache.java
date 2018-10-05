@@ -131,7 +131,7 @@ public class ContentRevisionCache {
                                          VcsRevisionNumber number,
                                          @NotNull VcsKey key,
                                          @NotNull UniqueType type,
-                                         @NotNull Throwable2Computable<byte[], VcsException, IOException> loader,
+                                         @NotNull Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader,
                                          @Nullable Charset charset)
     throws VcsException, IOException {
     final byte[] bytes = getOrLoadAsBytes(project, file, number, key, type, loader);
@@ -142,7 +142,7 @@ public class ContentRevisionCache {
 
   @Nullable
   public static String getOrLoadAsString(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                         @NotNull UniqueType type, final Throwable2Computable<byte[], VcsException, IOException> loader)
+                                         @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     return getOrLoadAsString(project, path, number, vcsKey, type, loader, null);
   }
@@ -187,7 +187,7 @@ public class ContentRevisionCache {
   }
 
   public static byte[] getOrLoadAsBytes(final Project project, FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey,
-                                        @NotNull UniqueType type, final Throwable2Computable<byte[], VcsException, IOException> loader)
+                                        @NotNull UniqueType type, final Throwable2Computable<byte[], ? extends VcsException, ? extends IOException> loader)
     throws VcsException, IOException {
     ContentRevisionCache cache = ProjectLevelVcsManager.getInstance(project).getContentRevisionCache();
     byte[] bytes = cache.getBytes(path, number, vcsKey, type);

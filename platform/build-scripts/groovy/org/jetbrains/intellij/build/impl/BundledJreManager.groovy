@@ -63,17 +63,12 @@ class BundledJreManager {
   }
 
 
-  String getJreDir(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+  @CompileDynamic
+  private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
     String targetDir = arch == JvmArchitecture.x64 ?
                        "$baseDirectoryForJre/jre.$osName$arch.fileSuffix$vendorSuffix" :
                        "$baseDirectoryForJre/jre.${osName}32$vendorSuffix"
-    return targetDir
-  }
-
-  @CompileDynamic
-  private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    String targetDir = getJreDir(osName, arch, vendor)
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
@@ -114,13 +109,13 @@ class BundledJreManager {
     def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
-    String prefix = buildContext.options.isBundledJreModular ? vendor.modularJreNamePrefix :
+    String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
                     buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
 
     if (!jreArchive.file || !jreArchive.exists()) {
       def errorMessage = "Cannot extract $osName JRE: file $jreArchive is not found (${jreDir.listFiles()})"
-      if (buildContext.options.isInDevelopmentMode || buildContext.options.isBundledJreModular && arch == JvmArchitecture.x32) {
+      if (buildContext.options.isInDevelopmentMode) {
         buildContext.messages.warning(errorMessage)
       }
       else {
@@ -161,5 +156,13 @@ class BundledJreManager {
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
       this.modularJreNamePrefix = modularJreNamePrefix
     }
+  }
+
+  def jreSuffix() {
+    buildContext.options.bundledJreVersion > 8 ? "-bundled-jre${buildContext.options.bundledJreVersion}" : ""
+  }
+
+  def is32bitArchSupported() {
+    !buildContext.isBundledJreModular()
   }
 }

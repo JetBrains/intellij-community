@@ -72,7 +72,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
 
   public static void showDiff(AbstractTestProxy testProxy,
                               TestFrameworkRunningModel model,
-                              BiConsumer<List<DiffHyperlink>, Integer> showFunction) {
+                              BiConsumer<? super List<DiffHyperlink>, ? super Integer> showFunction) {
     final List<DiffHyperlink> providers = collectAvailableProviders(model);
 
     DiffHyperlink diffViewerProvider = testProxy.getLeafDiffViewerProvider();

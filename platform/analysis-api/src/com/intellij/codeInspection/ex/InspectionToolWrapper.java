@@ -44,7 +44,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   /** Copy ctor */
-  protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, E> other) {
+  protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, ? extends E> other) {
     myEP = other.myEP;
     // we need to create a copy for buffering
     if (other.myTool == null) {

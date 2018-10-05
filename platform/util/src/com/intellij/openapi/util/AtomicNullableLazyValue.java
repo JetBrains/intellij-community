@@ -52,7 +52,7 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
-  public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+  public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
     return new AtomicNullableLazyValue<T>() {
       @Nullable
       @Override

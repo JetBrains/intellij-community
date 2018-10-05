@@ -93,7 +93,7 @@ public class InjectorUtils {
   }
 
   public static void registerInjection(@Nullable Language language,
-                                       @NotNull List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                       @NotNull List<? extends Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
                                        @NotNull PsiFile containingFile,
                                        @NotNull MultiHostRegistrar registrar) {
     // if language isn't injected when length == 0, subsequent edits will not cause the language to be injected as well.
@@ -323,7 +323,7 @@ public class InjectorUtils {
   @Nullable
   public static BaseInjection findCommentInjection(@NotNull PsiElement context,
                                                    @NotNull String supportId,
-                                                   @Nullable Ref<PsiElement> causeRef) {
+                                                   @Nullable Ref<? super PsiElement> causeRef) {
     CommentInjectionData data = findCommentInjectionData(context, causeRef);
     if (data == null) return null;
     BaseInjection injection = new BaseInjection(supportId);

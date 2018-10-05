@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -287,7 +288,14 @@ public class PluginManagerConfigurableNew
       myCardPanel.select(Pair.create(descriptor, label != null && currentTab == UPDATES_TAB), true);
       myPluginsModel.detailPanel.backTabIndex = currentTab;
 
-      myTopController.setLeftComponent(backButton);
+      NonOpaquePanel buttonPanel = new NonOpaquePanel(backButton) {
+        @Override
+        public int getBaseline(int width, int height) {
+          return backButton.getBaseline(width, height);
+        }
+      };
+      buttonPanel.setBorder(JBUI.Borders.empty(0, 3));
+      myTopController.setLeftComponent(buttonPanel);
       myTabHeaderComponent.clearSelection();
     };
 
@@ -1252,9 +1260,9 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static void loadPlugins(@NotNull List<IdeaPluginDescriptor> descriptors,
+  private static void loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                   @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
-                                  @NotNull Set<String> excludeDescriptors,
+                                  @NotNull Set<? super String> excludeDescriptors,
                                   @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
@@ -1354,7 +1362,7 @@ public class PluginManagerConfigurableNew
   @NotNull
   public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
                                        @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<Boolean> enableAction) {
+                                       @NotNull Ref<? super Boolean> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());

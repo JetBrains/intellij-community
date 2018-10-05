@@ -20,8 +20,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
+/**
+ * Provides content, masks for VCS native ignore files (e.g. .gitignore, .hgignore).
+ * Every plugin which have ignore files should implement it to contribute own ignores to VCS.
+ */
 public interface IgnoredFileProvider {
   ExtensionPointName<IgnoredFileProvider> IGNORE_FILE = ExtensionPointName.create("com.intellij.ignoredFileProvider");
 
   boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath);
+
+  @NotNull
+  Set<String> getIgnoredFilesMasks(@NotNull Project project);
+
+  @NotNull
+  String getMasksGroupDescription();
 }

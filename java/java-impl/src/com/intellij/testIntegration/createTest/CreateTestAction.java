@@ -183,7 +183,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
    * @deprecated use {@link #computeTestRoots(Module)} instead
    */
   @Deprecated
-  protected static void checkForTestRoots(Module srcModule, Set<VirtualFile> testFolders) {
+  protected static void checkForTestRoots(Module srcModule, Set<? super VirtualFile> testFolders) {
     testFolders.addAll(computeTestRoots(srcModule));
   }
 

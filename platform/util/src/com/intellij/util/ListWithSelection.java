@@ -25,7 +25,7 @@ public class ListWithSelection<E> extends ArrayList<E> {
     super(collection);
   }
 
-  public ListWithSelection(Collection<E> collection, E selection) {
+  public ListWithSelection(Collection<? extends E> collection, E selection) {
     this(collection);
     select(selection);
   }

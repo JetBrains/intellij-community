@@ -597,7 +597,7 @@ abstract class FunctionHelper {
         PsiElement body = lambda.getBody();
         LOG.assertTrue(body != null);
         boolean mayBeNotFinal = ReferencesSearch.search(parameter, new LocalSearchScope(body))
-          .forEach(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
+          .allMatch(e -> PsiTreeUtil.getParentOfType(e.getElement(), PsiLambdaExpression.class, PsiClass.class) == lambda);
         if (!mayBeNotFinal) {
           var.markFinal();
         }

@@ -110,6 +110,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final StringBuilder myTextBeforeStart = new StringBuilder();
 
   enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
@@ -328,6 +329,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void printToConsole(final String text) {
+    synchronized (myProcessListeners) {
+      if (myExecutionResult == null) {
+        myTextBeforeStart.append(text);
+      }
+      else {
+        printToConsoleImpl(text);
+      }
+    }
+  }
+
+  private void printToConsoleImpl(String text) {
     myExecutionResult.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
   }
 
@@ -1930,6 +1942,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           executionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
+        if (myTextBeforeStart.length() > 0) {
+          printToConsoleImpl(myTextBeforeStart.toString());
+          myTextBeforeStart.setLength(0);
+        }
       }
     }
     catch (ExecutionException e) {

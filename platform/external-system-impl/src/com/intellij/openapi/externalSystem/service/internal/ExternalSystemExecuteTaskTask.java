@@ -73,7 +73,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @Deprecated
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
-                                       @NotNull List<ExternalTaskPojo> tasksToExecute,
+                                       @NotNull List<? extends ExternalTaskPojo> tasksToExecute,
                                        @Nullable String vmOptions,
                                        @Nullable String arguments,
                                        @Nullable String jvmAgentSetup) throws IllegalArgumentException {
@@ -107,7 +107,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @Deprecated
   @NotNull
-  private static String getLinkedExternalProjectPath(@NotNull Collection<ExternalTaskPojo> tasks) throws IllegalArgumentException {
+  private static String getLinkedExternalProjectPath(@NotNull Collection<? extends ExternalTaskPojo> tasks) throws IllegalArgumentException {
     if (tasks.isEmpty()) {
       throw new IllegalArgumentException("Can't execute external tasks. Reason: given tasks list is empty");
     }

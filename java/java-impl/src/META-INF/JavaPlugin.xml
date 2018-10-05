@@ -92,6 +92,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+    <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
+                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -910,7 +912,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JoinDeclarationAndAssignmentJava"
                      key="inspection.join.declaration.and.assignment.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFO"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
@@ -1175,5 +1177,6 @@
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
     </intentionAction>
+    <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
   </extensions>
 </idea-plugin>

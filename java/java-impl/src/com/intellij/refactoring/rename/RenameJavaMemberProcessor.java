@@ -104,7 +104,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return ref;
   }
 
-  protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<UsageInfo> result) {
+  protected static void findMemberHidesOuterMemberCollisions(final PsiMember member, final String newName, final List<? super UsageInfo> result) {
     if (member instanceof PsiCompiledElement) return;
     final PsiMember patternMember;
     if (member instanceof PsiMethod) {
@@ -144,7 +144,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     }
   }
 
-  protected static void qualifyOuterMemberReferences(final List<MemberHidesOuterMemberUsageInfo> outerHides) throws IncorrectOperationException {
+  protected static void qualifyOuterMemberReferences(final List<? extends MemberHidesOuterMemberUsageInfo> outerHides) throws IncorrectOperationException {
     for (MemberHidesOuterMemberUsageInfo usage : outerHides) {
       final PsiElement element = usage.getElement();
       PsiJavaCodeReferenceElement collidingRef = (PsiJavaCodeReferenceElement)element;
@@ -237,7 +237,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     return false;
   }
 
-  protected static void qualifyStaticImportReferences(final List<MemberHidesStaticImportUsageInfo> staticImportHides)
+  protected static void qualifyStaticImportReferences(final List<? extends MemberHidesStaticImportUsageInfo> staticImportHides)
       throws IncorrectOperationException {
     for (MemberHidesStaticImportUsageInfo info : staticImportHides) {
       final PsiReference ref = info.getReference();

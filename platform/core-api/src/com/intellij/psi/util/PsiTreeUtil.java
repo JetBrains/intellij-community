@@ -363,12 +363,12 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findFirstParent(@Nullable PsiElement element, Condition<PsiElement> condition) {
+  public static PsiElement findFirstParent(@Nullable PsiElement element, Condition<? super PsiElement> condition) {
     return findFirstParent(element, false, condition);
   }
 
   @Nullable
-  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<? super PsiElement> condition) {
     if (strict && element != null) {
       element = element.getParent();
     }
@@ -383,7 +383,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
+  public static PsiElement findFirstContext(@Nullable PsiElement element, boolean strict, Condition<? super PsiElement> condition) {
     if (strict && element != null) {
       element = element.getContext();
     }
@@ -431,7 +431,7 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> List<T> getChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
 
     List<T> result = null;
@@ -472,7 +472,7 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> List<T> getStubChildrenOfTypeAsList(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     if (element == null) return Collections.emptyList();
     StubElement<?> stub = element instanceof StubBasedPsiElement ? ((StubBasedPsiElement)element).getStub() : null;
     if (stub == null) {
@@ -720,7 +720,7 @@ public class PsiTreeUtil {
   @Nullable
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
-                                              @Nullable final Consumer<PsiElement> consumer) {
+                                              @Nullable final Consumer<? super PsiElement> consumer) {
     return findSiblingForward(element, elementType, true, consumer);
   }
 
@@ -741,7 +741,7 @@ public class PsiTreeUtil {
   @Nullable
   public static PsiElement findSiblingBackward(@NotNull final PsiElement element,
                                                @NotNull final IElementType elementType,
-                                               @Nullable final Consumer<PsiElement> consumer) {
+                                               @Nullable final Consumer<? super PsiElement> consumer) {
     return findSiblingBackward(element, elementType, true, consumer);
   }
 
@@ -1156,7 +1156,7 @@ public class PsiTreeUtil {
 
   public static boolean treeWalkUp(@NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
-                                   @NotNull PairProcessor<PsiElement, PsiElement> eachScopeAndLastParent) {
+                                   @NotNull PairProcessor<? super PsiElement, ? super PsiElement> eachScopeAndLastParent) {
     PsiElement prevParent = null;
     PsiElement scope = entrance;
 

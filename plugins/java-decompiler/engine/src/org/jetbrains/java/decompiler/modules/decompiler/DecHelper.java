@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class DecHelper {
 
-  public static boolean checkStatementExceptions(List<Statement> lst) {
+  public static boolean checkStatementExceptions(List<? extends Statement> lst) {
 
     Set<Statement> all = new HashSet<>(lst);
 
@@ -55,7 +55,7 @@ public class DecHelper {
     return true;
   }
 
-  public static boolean isChoiceStatement(Statement head, List<Statement> lst) {
+  public static boolean isChoiceStatement(Statement head, List<? super Statement> lst) {
 
     Statement post = null;
 
@@ -189,7 +189,7 @@ public class DecHelper {
     return setHandlers;
   }
 
-  public static List<Exprent> copyExprentList(List<Exprent> lst) {
+  public static List<Exprent> copyExprentList(List<? extends Exprent> lst) {
     List<Exprent> ret = new ArrayList<>();
     for (Exprent expr : lst) {
       ret.add(expr.copy());

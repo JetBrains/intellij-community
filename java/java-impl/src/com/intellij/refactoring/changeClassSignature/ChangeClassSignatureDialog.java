@@ -86,7 +86,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   }
 
   public ChangeClassSignatureDialog(@NotNull PsiClass aClass,
-                                    @NotNull List<ChangeClassSignatureFromUsageFix.TypeParameterInfoView> parameters,
+                                    @NotNull List<? extends ChangeClassSignatureFromUsageFix.TypeParameterInfoView> parameters,
                                     boolean hideDefaultValueColumn) {
     super(aClass.getProject(), true);
     myHideDefaultValueColumn = hideDefaultValueColumn;

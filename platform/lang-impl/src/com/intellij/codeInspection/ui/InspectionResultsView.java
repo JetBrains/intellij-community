@@ -782,7 +782,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (selectedNode instanceof RefElementNode) {
       final RefElementNode refElementNode = (RefElementNode)selectedNode;
       RefEntity refElement = refElementNode.getElement();
-      if (refElement == null) return null;
+      if (refElement == null || !refElement.isValid()) return null;
       final RefEntity item = refElement.getRefManager().getRefinedElement(refElement);
 
       if (!item.isValid()) return null;

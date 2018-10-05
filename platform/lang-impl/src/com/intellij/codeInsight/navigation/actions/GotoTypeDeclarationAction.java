@@ -10,7 +10,6 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction");
 
   @NotNull
   @Override
@@ -49,17 +46,11 @@ public class GotoTypeDeclarationAction extends BaseCodeInsightAction implements 
       return;
     }
     for (TypeDeclarationProvider provider : TypeDeclarationProvider.EP_NAME.getExtensionList()) {
-      //noinspection Duplicates
-      try {
-        String text = provider.getActionText(event.getDataContext());
-        if (text != null) {
-          Presentation presentation = event.getPresentation();
-          presentation.setText(text);
-          break;
-        }
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(provider.toString(), e);
+      String text = provider.getActionText(event.getDataContext());
+      if (text != null) {
+        Presentation presentation = event.getPresentation();
+        presentation.setText(text);
+        break;
       }
     }
     super.update(event);

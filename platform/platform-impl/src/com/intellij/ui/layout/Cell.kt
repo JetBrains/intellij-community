@@ -92,9 +92,7 @@ abstract class Cell {
   }
 
   fun gearButton(vararg actions: AnAction) {
-    val label = JLabel()
-    label.icon = AllIcons.General.GearPlain
-
+    val label = JLabel(AllIcons.General.GearPlain)
     object : ClickListener() {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         JBPopupFactory.getInstance()

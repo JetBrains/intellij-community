@@ -37,7 +37,7 @@ import java.util.*;
 public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<>();
 
-  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
+  public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<? extends UsageInfo> usages) {
     final String oldClassName = aClass.getName();
     final Set<PsiFile> files = new HashSet<>();
     for (final UsageInfo info : usages) {

@@ -67,7 +67,7 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements,
-                                           @NotNull final PsiElementListCellRenderer<PsiElement> renderer,
+                                           @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
                                            final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
       @Override
@@ -85,7 +85,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor) {
+                                                                  @NotNull final PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
@@ -93,7 +93,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   @Nullable final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor,
+                                                                  @NotNull final PsiElementProcessor<? super T> processor,
                                                                   @Nullable final T selection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()

@@ -71,7 +71,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   }
 
   @NotNull
-  protected static PackageDirectoryCache createCache(@NotNull final List<VirtualFile> roots) {
+  protected static PackageDirectoryCache createCache(@NotNull final List<? extends VirtualFile> roots) {
     final MultiMap<String, VirtualFile> map = MultiMap.create();
     map.putValues("", roots);
     return new PackageDirectoryCache(map);

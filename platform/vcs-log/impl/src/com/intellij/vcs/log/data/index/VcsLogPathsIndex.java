@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
@@ -211,17 +210,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parentIndex = 0; parentIndex < parentsCount; parentIndex++) {
         try {
-          Set<String> processedParents = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+          Set<String> processedParents = new THashSet<>();
           Collection<Couple<Integer>> renames = new SmartList<>();
           for (Pair<String, String> renamedPath : inputData.getRenamedPaths(parentIndex)) {
             int beforeId = myPathsEnumerator.enumerate(new LightFilePath(renamedPath.first, false));
             int afterId = myPathsEnumerator.enumerate(new LightFilePath(renamedPath.second, false));
-            if (beforeId == afterId && !SystemInfo.isFileSystemCaseSensitive) {
-              getOrCreateChangeKindList(result, afterId, parentsCount).set(parentIndex, ChangeKind.MODIFIED);
-            }
-            else {
-              renames.add(Couple.of(beforeId, afterId));
-            }
+            renames.add(Couple.of(beforeId, afterId));
             getOrCreateChangeKindList(result, beforeId, parentsCount).set(parentIndex, ChangeKind.REMOVED);
             getOrCreateChangeKindList(result, afterId, parentsCount).set(parentIndex, ChangeKind.ADDED);
             addParentsToResult(result, parentIndex, parentsCount, renamedPath.second, inputData.getRoot(), processedParents);
@@ -378,13 +372,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       LightFilePath path = (LightFilePath)o;
-      return myIsDirectory == path.myIsDirectory &&
-             FileUtil.PATH_HASHING_STRATEGY.equals(myPath, path.myPath);
+      return myIsDirectory == path.myIsDirectory && myPath.equals(path.myPath);
     }
 
     @Override
     public int hashCode() {
-      int result = FileUtil.PATH_HASHING_STRATEGY.computeHashCode(myPath);
+      int result = myPath.hashCode();
       result = 31 * result + (myIsDirectory ? 1 : 0);
       return result;
     }
@@ -403,11 +396,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     @Override
     public void save(@NotNull DataOutput out, LightFilePath value) throws IOException {
-      String path = value.getPath();
-      if (!SystemInfo.isFileSystemCaseSensitive) {
-        path = path.toLowerCase();
-      }
-      IOUtil.writeUTF(out, path);
+      IOUtil.writeUTF(out, value.getPath());
       out.writeBoolean(value.myIsDirectory);
     }
 

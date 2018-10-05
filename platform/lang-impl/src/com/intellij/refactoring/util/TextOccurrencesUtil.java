@@ -31,7 +31,7 @@ public class TextOccurrencesUtil {
   public static void addTextOccurences(@NotNull PsiElement element,
                                        @NotNull String stringToSearch,
                                        @NotNull GlobalSearchScope searchScope,
-                                       @NotNull final Collection<UsageInfo> results,
+                                       @NotNull final Collection<? super UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
     PsiSearchHelperImpl.processTextOccurrences(element, stringToSearch, searchScope, t -> {
       results.add(t);
@@ -39,7 +39,7 @@ public class TextOccurrencesUtil {
     }, factory);
   }
 
-  private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<PsiElement> processor) {
+  private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurenceProcessor = (element, offsetInElement) -> {
       final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
       final ASTNode node = element.getNode();
@@ -59,7 +59,7 @@ public class TextOccurrencesUtil {
   public static boolean processUsagesInStringsAndComments(@NotNull final PsiElement element,
                                                           @NotNull final String stringToSearch,
                                                           final boolean ignoreReferences,
-                                                          @NotNull final PairProcessor<PsiElement, TextRange> processor) {
+                                                          @NotNull final PairProcessor<? super PsiElement, ? super TextRange> processor) {
     PsiSearchHelper helper = PsiSearchHelper.getInstance(element.getProject());
     SearchScope scope = helper.getUseScope(element);
     scope = scope.intersectWith(GlobalSearchScope.projectScope(element.getProject()));
@@ -70,7 +70,7 @@ public class TextOccurrencesUtil {
 
   public static void addUsagesInStringsAndComments(@NotNull PsiElement element,
                                                    @NotNull String stringToSearch,
-                                                   @NotNull final Collection<UsageInfo> results,
+                                                   @NotNull final Collection<? super UsageInfo> results,
                                                    @NotNull final UsageInfoFactory factory) {
     final Object lock = new Object();
     processUsagesInStringsAndComments(element, stringToSearch, false, (commentOrLiteral, textRange) -> {
@@ -84,7 +84,7 @@ public class TextOccurrencesUtil {
     });
   }
 
-  private static boolean processTextIn(PsiElement scope, String stringToSearch, final boolean ignoreReferences, PairProcessor<PsiElement, TextRange> processor) {
+  private static boolean processTextIn(PsiElement scope, String stringToSearch, final boolean ignoreReferences, PairProcessor<? super PsiElement, ? super TextRange> processor) {
     String text = scope.getText();
     for (int offset = 0; offset < text.length(); offset++) {
       offset = text.indexOf(stringToSearch, offset);
@@ -125,7 +125,7 @@ public class TextOccurrencesUtil {
   }
 
   public static void findNonCodeUsages(PsiElement element, String stringToSearch, boolean searchInStringsAndComments,
-                                       boolean searchInNonJavaFiles, String newQName, Collection<UsageInfo> results) {
+                                       boolean searchInNonJavaFiles, String newQName, Collection<? super UsageInfo> results) {
     if (searchInStringsAndComments || searchInNonJavaFiles) {
       UsageInfoFactory factory = createUsageInfoFactory(element, newQName);
 

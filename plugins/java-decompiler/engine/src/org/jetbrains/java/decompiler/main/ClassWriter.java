@@ -1065,7 +1065,7 @@ public class ClassWriter {
     return null;
   }
 
-  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<List<GenericType>> bounds) {
+  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<? extends List<GenericType>> bounds) {
     buffer.append('<');
 
     for (int i = 0; i < parameters.size(); i++) {

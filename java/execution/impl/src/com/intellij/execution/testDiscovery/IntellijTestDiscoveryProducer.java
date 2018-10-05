@@ -60,7 +60,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static <T> MultiMap<String, String> request(List<T> collection, Function<T, String> toString, String what) throws IOException {
+  private static <T> MultiMap<String, String> request(List<T> collection, Function<? super T, String> toString, String what) throws IOException {
     if (collection.isEmpty()) return MultiMap.empty();
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-" + what;
     LOG.debug(url);

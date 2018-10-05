@@ -803,15 +803,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   //temp setter for Rider 2017.1
   public static boolean ourConflictsSolverEnabled = true;
 
-  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
   }
 
-  private void removeDocumentFromCache(@NotNull VirtualFile file) {
+  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
     myDocumentCache.remove(file);
   }
 
-  private Document getDocumentFromCache(@NotNull VirtualFile file) {
+  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 }

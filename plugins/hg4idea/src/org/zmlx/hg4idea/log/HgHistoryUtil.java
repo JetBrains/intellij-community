@@ -306,14 +306,14 @@ public class HgHistoryUtil {
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter) {
     return getCommitRecords(project, result, converter, false);
   }
 
   @NotNull
   public static <CommitInfo> List<CommitInfo> getCommitRecords(@NotNull Project project,
                                                                @Nullable HgCommandResult result,
-                                                               @NotNull Function<String, CommitInfo> converter, boolean silent) {
+                                                               @NotNull Function<? super String, ? extends CommitInfo> converter, boolean silent) {
     final List<CommitInfo> revisions = new LinkedList<>();
     if (result == null) {
       return revisions;
@@ -384,7 +384,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params) {
+                                                   @NotNull final Consumer<? super VcsUser> userRegistry, @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {

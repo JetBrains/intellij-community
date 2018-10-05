@@ -526,7 +526,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       ParamTableModel() {
       }
 
-      ParamTableModel(List<Pair<String, String>> params) {
+      ParamTableModel(List<? extends Pair<String, String>> params) {
         for (Pair<String, String> pair : params) {
           myParams.add(new Param(pair.getFirst(), pair.getSecond()));
         }

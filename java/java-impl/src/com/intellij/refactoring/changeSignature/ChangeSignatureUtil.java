@@ -43,7 +43,7 @@ public class ChangeSignatureUtil {
 
   public static <Parent extends PsiElement, Child extends PsiElement> void synchronizeList(
     Parent list,
-    List<Child> newElements,
+    List<? extends Child> newElements,
     ChildrenGenerator<Parent, Child> generator,
     boolean[] shouldRemoveChild) throws IncorrectOperationException
   {

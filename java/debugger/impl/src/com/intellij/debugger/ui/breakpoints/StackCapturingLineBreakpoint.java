@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -291,6 +293,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     void clearCache() {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myEvaluatorCache.clear();
+    }
+  }
+
+  public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
+    @Nullable
+    @Override
+    public List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext) {
+      if (AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession())) {
+        return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
+      }
+      return null;
     }
   }
 }

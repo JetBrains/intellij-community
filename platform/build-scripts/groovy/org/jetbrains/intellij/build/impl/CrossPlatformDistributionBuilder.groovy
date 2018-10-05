@@ -64,8 +64,8 @@ class CrossPlatformDistributionBuilder {
                                   LinuxDistributionBuilder.getFrameClass(buildContext)),
         new ProductInfoLaunchData(OsFamily.MACOS.osName, "MacOS/$executableName", null, "bin/mac/${executableName}.vmoptions", null)
       ])
-
-      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
+      String suffix = buildContext.bundledJreManager.jreSuffix()
+      String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
         fileset(dir: buildContext.paths.distAll) {
           exclude(name: "bin/idea.properties")

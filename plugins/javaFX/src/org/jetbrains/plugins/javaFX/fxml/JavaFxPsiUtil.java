@@ -543,7 +543,7 @@ public class JavaFxPsiUtil {
   }
 
   public static boolean isClassAcceptable(@Nullable XmlTag targetTag, @Nullable final PsiClass fromClass,
-                                          @NotNull BiConsumer<String, Validator.ValidationHost.ErrorType> messageConsumer) {
+                                          @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
     if (targetTag == null || fromClass == null || !fromClass.isValid()) {
       return true;
     }

@@ -504,7 +504,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         if (nextStatement == null) return null;
         PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
         if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-        if(!ReferencesSearch.search(returnVar).forEach(reference ->
+        if(!ReferencesSearch.search(returnVar).allMatch(reference ->
                                                      PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
                                                      PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) return null;
         return new Context(lambdaExpr, nextStatement, statement, returnVar, orElseCall);

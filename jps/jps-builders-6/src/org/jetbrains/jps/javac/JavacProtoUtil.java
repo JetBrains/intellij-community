@@ -28,12 +28,12 @@ public class JavacProtoUtil {
   }
 
   public static JavacRemoteProto.Message.Request createCompilationRequest(List<String> options,
-                                                                          Collection<File> files,
-                                                                          Collection<File> classpath,
-                                                                          Collection<File> platformCp,
-                                                                          Collection<File> modulePath,
-                                                                          Collection<File> upgradeModulePath,
-                                                                          Collection<File> sourcePath,
+                                                                          Collection<? extends File> files,
+                                                                          Collection<? extends File> classpath,
+                                                                          Collection<? extends File> platformCp,
+                                                                          Collection<? extends File> modulePath,
+                                                                          Collection<? extends File> upgradeModulePath,
+                                                                          Collection<? extends File> sourcePath,
                                                                           Map<File, Set<File>> outs) {
     final JavacRemoteProto.Message.Request.Builder builder = JavacRemoteProto.Message.Request.newBuilder();
     builder.setRequestType(JavacRemoteProto.Message.Request.Type.COMPILE);

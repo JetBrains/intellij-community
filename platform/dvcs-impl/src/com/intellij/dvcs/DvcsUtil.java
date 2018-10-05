@@ -76,12 +76,12 @@ public class DvcsUtil {
   };
 
   @NotNull
-  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<VirtualFile> virtualFiles) {
+  public static List<VirtualFile> sortVirtualFilesByPresentation(@NotNull Collection<? extends VirtualFile> virtualFiles) {
     return ContainerUtil.sorted(virtualFiles, VIRTUAL_FILE_PRESENTATION_COMPARATOR);
   }
 
   @NotNull
-  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<File> files) {
+  public static List<VirtualFile> findVirtualFilesWithRefresh(@NotNull List<? extends File> files) {
     RefreshVFsSynchronously.refreshFiles(files);
     return ContainerUtil.mapNotNull(files, file -> VfsUtil.findFileByIoFile(file, false));
   }
@@ -362,7 +362,7 @@ public class DvcsUtil {
     return rootCandidate;
   }
 
-  public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<T> repositories) {
+  public static <T extends Repository> List<T> sortRepositories(@NotNull Collection<? extends T> repositories) {
     List<T> validRepositories = ContainerUtil.filter(repositories, t -> t.getRoot().isValid());
     Collections.sort(validRepositories, REPOSITORY_COMPARATOR);
     return validRepositories;

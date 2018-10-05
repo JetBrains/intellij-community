@@ -202,17 +202,17 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static MultiMap<Key<?>, DataNode<?>> group(@NotNull Collection<? extends DataNode<?>> nodes) {
     return ContainerUtil.groupBy(nodes, GROUPER);
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, final Class<K> moduleDataClass) {
     return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
-  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+  public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<? extends DataNode<V>> nodes, @NotNull final Key<K> key) {
     return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
@@ -245,7 +245,7 @@ public class ExternalSystemApiUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
-  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<? super DataNode<T>> predicate) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
         return (DataNode<T>)child;

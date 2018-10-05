@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 public class RangeSplitter {
-  public static List<TextRange> split(TextRange target, List<TextRange> deviders) {
+  public static List<TextRange> split(TextRange target, List<? extends TextRange> deviders) {
     List<TextRange> result = new ArrayList<>();
     result.add(target);
 

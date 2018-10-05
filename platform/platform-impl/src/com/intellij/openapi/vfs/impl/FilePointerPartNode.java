@@ -54,7 +54,7 @@ class FilePointerPartNode {
   private static final VirtualFileManager ourFileManager = VirtualFileManager.getInstance();
 
   FilePointerPartNode(@NotNull CharSequence part, FilePointerPartNode parent, Pair<VirtualFile,String> fileAndUrl, int pointersToStore) {
-    this.part = ByteArrayCharSequence.convertToBytesIfAsciiString(part);
+    this.part = ByteArrayCharSequence.convertToBytesIfPossible(part);
     this.parent = parent;
     children = EMPTY_ARRAY;
     myFileAndUrl = fileAndUrl;

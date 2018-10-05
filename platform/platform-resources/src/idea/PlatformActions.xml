@@ -192,6 +192,9 @@
       <!-- e.g. Cmd + Backspace on OS X should work as Delete in lists, and as 'Delete to Line Start' in the editor -->
       <action id="EditorDelete" class="com.intellij.openapi.editor.actions.DeleteAction" use-shortcut-of="$Delete"/>
       <action id="EditorBackSpace" class="com.intellij.openapi.editor.actions.BackspaceAction"/>
+
+      <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction"/>
+      <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
@@ -851,7 +854,6 @@
       <action id="ImageDuplicates" internal="true" class="com.intellij.internal.ShowImageDuplicatesAction" text="Find Image Duplicates"/>
       <action id="ShowNonRetinaImages" internal="true" class="com.intellij.internal.ShowNonRetinaImagesActions" text="Show Non Retina Images"/>
       <action id="ShowUpdateDialogAction" internal="true" class="com.intellij.internal.ShowUpdateInfoDialogAction" text="Show Update Dialog"/>
-      <action id="AssertOnFileTreeLoad" internal="true" class="com.intellij.internal.AssertOnFileTreeLoadAction" text="Assert On File Tree Load"/>
       <separator/>
       <reference ref="MaintenanceGroup"/>
 

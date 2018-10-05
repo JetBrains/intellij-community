@@ -434,7 +434,7 @@ public class ShowAffectedTestsAction extends AnAction {
 
   private static void runAllDiscoveredTests(@NotNull Project project,
                                             @NotNull DiscoveredTestsTree tree,
-                                            @NotNull Ref<JBPopup> ref,
+                                            @NotNull Ref<? extends JBPopup> ref,
                                             @NotNull ConfigurationContext context,
                                             @NotNull String title) {
     Executor executor = DefaultRunExecutor.getRunExecutorInstance();
@@ -508,7 +508,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   @NotNull
-  public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     VirtualFile baseDir = getBasePathAsVirtualFile(project);
     return baseDir == null ?
            Collections.emptyList() :

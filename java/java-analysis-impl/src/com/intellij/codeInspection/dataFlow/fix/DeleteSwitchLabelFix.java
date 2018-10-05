@@ -73,9 +73,8 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
         if (e instanceof PsiDeclarationStatement && nextLabel != null) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)e;
           PsiElement[] elements = declaration.getDeclaredElements();
-          boolean declarationIsReused = Stream.of(elements).anyMatch(
-            element -> !ReferencesSearch.search(element, new LocalSearchScope(scope))
-              .forEach(ref -> ref.getElement().getTextOffset() < end));
+          boolean declarationIsReused = Stream.of(elements).anyMatch(element ->
+              ReferencesSearch.search(element, new LocalSearchScope(scope)).anyMatch(ref -> ref.getElement().getTextOffset() > end));
           if (declarationIsReused) {
             StreamEx.of(elements).select(PsiVariable.class).map(PsiVariable::getInitializer).nonNull().into(toDelete);
             declarations.add(declaration);

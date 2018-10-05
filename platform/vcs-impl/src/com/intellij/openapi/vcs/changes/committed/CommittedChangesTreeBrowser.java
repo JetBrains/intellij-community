@@ -288,7 +288,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
    * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
    */
   @NotNull
-  public static List<Change> zipChanges(@NotNull List<Change> changes) {
+  public static List<Change> zipChanges(@NotNull List<? extends Change> changes) {
     // TODO: further improvements needed
     // We may want to process collisions more consistent
 

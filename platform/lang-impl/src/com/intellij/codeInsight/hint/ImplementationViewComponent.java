@@ -303,7 +303,7 @@ public class ImplementationViewComponent extends JPanel {
 
   }
 
-  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], List<FileDescriptor>, Boolean> fun) {
+  private static void update(@NotNull PsiElement[] elements, @NotNull PairFunction<PsiElement[], ? super List<FileDescriptor>, Boolean> fun) {
     List<PsiElement> candidates = new ArrayList<>(elements.length);
     List<FileDescriptor> files = new ArrayList<>(elements.length);
     final Set<String> names = new HashSet<>();

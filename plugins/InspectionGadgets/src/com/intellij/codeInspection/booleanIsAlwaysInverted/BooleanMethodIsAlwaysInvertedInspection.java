@@ -175,7 +175,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
   private static void checkMethodCall(RefElement refWhat, final PsiElement element) {
     if (!(refWhat instanceof RefMethod)) return;
     final RefMethod refMethod = (RefMethod)refWhat;
-    final PsiElement psiElement = refMethod.getElement();
+    final PsiElement psiElement = refMethod.getPsiElement();
     if (!(psiElement instanceof PsiMethod)) return;
     final PsiMethod psiMethod = (PsiMethod)psiElement;
     if (!PsiType.BOOLEAN.equals(psiMethod.getReturnType())) return;
@@ -220,7 +220,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaBatchInsp
 
     @Override
     public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
-      checkMethodCall(refWhat, refFrom.getElement());
+      checkMethodCall(refWhat, refFrom.getPsiElement());
     }
   }
 }

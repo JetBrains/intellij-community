@@ -133,7 +133,7 @@ public class TestIntegrationUtils {
                                            final PsiClass targetClass,
                                            final PsiMethod method,
                                            @Nullable String name,
-                                           boolean automatic, Set<String> existingNames) {
+                                           boolean automatic, Set<? super String> existingNames) {
     runTestMethodTemplate(methodKind, framework, editor, targetClass, null, method, name, automatic, existingNames);
   }
 
@@ -145,7 +145,7 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            @Nullable String name,
                                            boolean automatic,
-                                           Set<String> existingNames) {
+                                           Set<? super String> existingNames) {
     runTestMethodTemplate(editor, targetClass, method, automatic,
                           createTestMethodTemplate(methodKind, framework, targetClass, sourceClass, name, automatic, existingNames));
   }
@@ -195,7 +195,7 @@ public class TestIntegrationUtils {
                                                   @NotNull PsiClass targetClass,
                                                   @Nullable String name,
                                                   boolean automatic,
-                                                  Set<String> existingNames) {
+                                                  Set<? super String> existingNames) {
     return createTestMethodTemplate(methodKind, descriptor, targetClass, null, name, automatic, existingNames);
   }
 
@@ -205,7 +205,7 @@ public class TestIntegrationUtils {
                                                   @Nullable PsiClass sourceClass,
                                                   @Nullable String name,
                                                   boolean automatic,
-                                                  Set<String> existingNames) {
+                                                  Set<? super String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
     FileTemplate fileTemplate = FileTemplateManager.getInstance(targetClass.getProject()).getCodeTemplate(templateName);

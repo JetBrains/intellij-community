@@ -68,6 +68,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
@@ -86,6 +87,7 @@ import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
+  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
 
@@ -588,12 +590,22 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
                                                                            revision, virtualFile.getPath());
 
-    if (lock.isLocked()) return;
+    if (lock.isLocked()) {
+      for (Window window : Window.getWindows()) {
+        Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
+        if (windowLock != null && lock.equals(windowLock)) {
+          UIUtil.toFront(window);
+          break;
+        }
+      }
+      return;
+    }
     lock.lock();
 
     ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
     dlg.setTitle(title);
 
+    UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
     Disposer.register(dlg.getDisposable(), () -> lock.unlock());
 
     dlg.loadChangesInBackground(() -> {

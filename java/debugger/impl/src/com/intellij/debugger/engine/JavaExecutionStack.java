@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -11,7 +10,6 @@ import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
-import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
@@ -20,7 +18,6 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -218,12 +215,13 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         List<StackFrameItem> relatedStack = null;
-        if (frame instanceof JavaStackFrame &&
-            AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)myDebugProcess.getXdebugProcess().getSession())) {
-          relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext);
-          if (relatedStack != null) {
-            appendRelatedStack(relatedStack);
-            return;
+        if (frame instanceof JavaStackFrame) {
+          for (AsyncStackTraceProvider asyncStackTraceProvider : AsyncStackTraceProvider.EP.getExtensionList()) {
+            relatedStack = asyncStackTraceProvider.getAsyncStackTrace(((JavaStackFrame)frame), suspendContext);
+            if (relatedStack != null) {
+              appendRelatedStack(relatedStack);
+              return;
+            }
           }
           // append agent stack after the next frame
           relatedStack = AsyncStacksUtils.getAgentRelatedStack((JavaStackFrame)frame, suspendContext);

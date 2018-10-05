@@ -70,7 +70,7 @@ public class PatchWriter {
   }
 
   @NotNull
-  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     File commonAncestor = ChangesUtil.findCommonAncestor(changes);
     boolean multiVcs = ChangesUtil.getAffectedVcses(changes, project).size() != 1;
     if (multiVcs || commonAncestor == null) return project.getBaseDir();

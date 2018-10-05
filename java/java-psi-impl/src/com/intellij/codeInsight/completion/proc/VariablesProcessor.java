@@ -23,7 +23,7 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
   private final String myPrefix;
   private boolean myStaticScopeFlag;
   private final boolean myStaticSensitiveFlag;
-  private final List<PsiVariable> myResultList;
+  private final List<? super PsiVariable> myResultList;
 
   /** Collecting _all_ variables in scope */
   public VariablesProcessor(String _prefix, boolean staticSensitiveFlag){
@@ -31,7 +31,7 @@ public class VariablesProcessor implements PsiScopeProcessor, ElementClassHint{
   }
 
   /** Collecting _all_ variables in scope */
-  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<PsiVariable> lst){
+  public VariablesProcessor(String _prefix, boolean staticSensitiveFlag, List<? super PsiVariable> lst){
     myPrefix = _prefix;
     myStaticSensitiveFlag = staticSensitiveFlag;
     myResultList = lst;

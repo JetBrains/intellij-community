@@ -29,6 +29,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.index.IndexedDetails;
+import com.intellij.vcs.log.history.FileHistoryKt;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.MergedChange;
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
@@ -331,7 +332,9 @@ public class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposab
                                          @Nullable FilePath file,
                                          @Nullable FilePath baseFile) {
     return getShortHash(revision) +
-           (file == null || Objects.equals(baseFile, file) ? "" : " (" + getRelativeFileName(baseFile, file) + ")");
+           (file == null || FileHistoryKt.FILE_PATH_HASHING_STRATEGY.equals(baseFile, file)
+            ? ""
+            : " (" + getRelativeFileName(baseFile, file) + ")");
   }
 
   @NotNull

@@ -323,5 +323,7 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.injected.editor.InjectedFileChangesHandlerProvider"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.registryKey" beanClass="com.intellij.openapi.util.registry.RegistryKeyBean"/>
   </extensionPoints>
 </idea-plugin>

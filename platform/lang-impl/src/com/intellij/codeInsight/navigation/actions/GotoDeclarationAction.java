@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -196,7 +195,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   // returns true if processor is run or is going to be run after showing popup
   public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
-                                              @NotNull PsiElementProcessor<PsiElement> processor,
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor,
                                               @NotNull String titlePattern,
                                               @Nullable PsiElement[] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
@@ -277,20 +276,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
     PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
-      try {
-        PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
-        if (result != null && result.length > 0) {
-          for (PsiElement element : result) {
-            if (element == null) {
-              LOG.error("Null target element is returned by " + handler.getClass().getName());
-              return null;
-            }
+      PsiElement[] result = handler.getGotoDeclarationTargets(elementAt, offset, editor);
+      if (result != null && result.length > 0) {
+        for (PsiElement element : result) {
+          if (element == null) {
+            LOG.error("Null target element is returned by " + handler.getClass().getName());
+            return null;
           }
-          return result;
         }
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(new ExtensionException(handler.getClass()));
+        return result;
       }
     }
 
@@ -330,16 +324,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
 
     for (GotoDeclarationHandler handler : GotoDeclarationHandler.EP_NAME.getExtensionList()) {
-      try {
-        String text = handler.getActionText(event.getDataContext());
-        if (text != null) {
-          Presentation presentation = event.getPresentation();
-          presentation.setText(text);
-          break;
-        }
-      }
-      catch (AbstractMethodError e) {
-        LOG.error(handler.toString(), e);
+      String text = handler.getActionText(event.getDataContext());
+      if (text != null) {
+        Presentation presentation = event.getPresentation();
+        presentation.setText(text);
+        break;
       }
     }
 

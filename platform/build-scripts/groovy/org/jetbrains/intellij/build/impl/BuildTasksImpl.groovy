@@ -356,13 +356,11 @@ idea.fatal.error.notification=disabled
       logFreeDiskSpace("before downloading JREs")
       String[] args = [
         'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion",
+        "-Dintellij.build.bundled.jre.prefix=$buildContext.options.bundledJrePrefix"
       ]
-      ['intellij.build.bundled.jre.build', 'intellij.build.bundled.jre.prefix'].each { key ->
-        def value = System.getProperty(key)
-        if (value != null) {
-          args += "-D$key=$value"
-        }
+      if (buildContext.options.bundledJreBuild != null) {
+        args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"
       }
       buildContext.gradle.run('Setting up JetBrains JREs', args)
       logFreeDiskSpace("after downloading JREs")

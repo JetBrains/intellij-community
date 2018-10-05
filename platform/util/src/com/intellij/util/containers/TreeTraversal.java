@@ -129,7 +129,7 @@ public abstract class TreeTraversal {
    * stops when the {@code rangeCondition} return false after that.
    */
   @NotNull
-  public TreeTraversal onRange(@NotNull final Condition<?> rangeCondition) {
+  public <T> TreeTraversal onRange(@NotNull final Condition<T> rangeCondition) {
     final TreeTraversal original = this;
     return new TreeTraversal(original.toString() + " (ON_RANGE)") {
       @NotNull

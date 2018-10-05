@@ -524,6 +524,7 @@ custom_silent_config:
   Call customSilentConfigReader
 validate_install_dir:
   Call silentInstallDirValidate
+  Call OnDirectoryPageLeave
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate done

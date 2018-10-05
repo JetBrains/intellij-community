@@ -56,25 +56,25 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(1, 16));
 
   @Nullable
-  private final Condition<Sdk> myFilter;
+  private final Condition<? super Sdk> myFilter;
   @Nullable
   private final Condition<SdkTypeId> myCreationFilter;
   private JButton mySetUpButton;
-  private final Condition<SdkTypeId> mySdkTypeFilter;
+  private final Condition<? super SdkTypeId> mySdkTypeFilter;
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel) {
     this(jdkModel, null);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<SdkTypeId> filter) {
+                     @Nullable Condition<? super SdkTypeId> filter) {
     this(jdkModel, filter, getSdkFilter(filter), filter, false);
   }
 
   public JdkComboBox(@NotNull final ProjectSdksModel jdkModel,
-                     @Nullable Condition<SdkTypeId> sdkTypeFilter,
-                     @Nullable Condition<Sdk> filter,
-                     @Nullable Condition<SdkTypeId> creationFilter,
+                     @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
+                     @Nullable Condition<? super Sdk> filter,
+                     @Nullable Condition<? super SdkTypeId> creationFilter,
                      boolean addSuggestedItems) {
     super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
     myFilter = filter;
@@ -337,7 +337,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
     }
   }
 
-  public static Condition<Sdk> getSdkFilter(@Nullable final Condition<SdkTypeId> filter) {
+  public static Condition<Sdk> getSdkFilter(@Nullable final Condition<? super SdkTypeId> filter) {
     return filter == null ? Conditions.alwaysTrue() : sdk -> filter.value(sdk.getSdkType());
   }
 

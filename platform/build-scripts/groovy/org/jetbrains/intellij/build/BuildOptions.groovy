@@ -114,7 +114,7 @@ class BuildOptions {
                                                                     System.getProperty("teamcity.buildType.id") == null)
 
   /**
-   * Specifies JRE version to be bundled with distributions.
+   * Specifies JRE version to be bundled with distributions, 8 by default.
    */
   int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
 
@@ -124,7 +124,7 @@ class BuildOptions {
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   *  If {@code true} then bundled JRE version is 9+
+   * Specifies prefix of JRE artifact to be bundled with distributions, JB JRE 8 prefix by default.
    */
-  boolean isBundledJreModular = bundledJreVersion >= 9
+  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix", "jbrex8")
 }

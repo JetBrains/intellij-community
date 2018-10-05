@@ -69,7 +69,7 @@ public class BuiltInServer implements Disposable {
                                     int firstPort,
                                     int portsCount,
                                     boolean tryAnyPort,
-                                    @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+                                    @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
     return start(MultiThreadEventLoopGroup(workerCount, new BuiltInServerThreadFactory()), true, firstPort, portsCount, tryAnyPort, handler);
   }
 
@@ -78,7 +78,7 @@ public class BuiltInServer implements Disposable {
                                             int firstPort,
                                             int portsCount,
                                             boolean tryAnyPort,
-                                            @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+                                            @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
     BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
     EventLoopGroup loopGroup;
     try {
@@ -97,7 +97,7 @@ public class BuiltInServer implements Disposable {
                                     int firstPort,
                                     int portsCount,
                                     boolean tryAnyPort,
-                                    @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
+                                    @Nullable NotNullProducer<? extends ChannelHandler> handler) throws Exception {
     ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     ServerBootstrap bootstrap = serverBootstrap(eventLoopGroup);
     configureChildHandler(bootstrap, channelRegistrar, handler);
@@ -107,7 +107,7 @@ public class BuiltInServer implements Disposable {
 
   static void configureChildHandler(@NotNull ServerBootstrap bootstrap,
                                     @NotNull final ChannelRegistrar channelRegistrar,
-                                    @Nullable final NotNullProducer<ChannelHandler> channelHandler) {
+                                    @Nullable final NotNullProducer<? extends ChannelHandler> channelHandler) {
     final PortUnificationServerHandler portUnificationServerHandler = channelHandler == null ? new PortUnificationServerHandler() : null;
     bootstrap.childHandler(new ChannelInitializer() {
       @Override

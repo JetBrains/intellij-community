@@ -84,7 +84,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
       override fun handle(message: TransportMessage) {
         val content = (message.content as JUnitTestContainer)
-        if (content.additionalInfo.containsKey(RESUME_LABEL)) throw Exception(
+        if (!content.additionalInfo.containsKey(RESUME_LABEL)) throw Exception(
           "Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
         System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo[RESUME_LABEL].toString())
         System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.testName}")

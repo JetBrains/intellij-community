@@ -77,7 +77,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        @NotNull DataContext context,
                                        String place,
@@ -92,7 +92,7 @@ public class Utils{
    */
   private static void expandActionGroup(boolean isInModalContext,
                                         @NotNull ActionGroup group,
-                                        List<AnAction> list,
+                                        List<? super AnAction> list,
                                         PresentationFactory presentationFactory,
                                         DataContext context,
                                         @NotNull String place,
@@ -109,7 +109,7 @@ public class Utils{
    */
   public static void expandActionGroup(boolean isInModalContext,
                                        @NotNull ActionGroup group,
-                                       List<AnAction> list,
+                                       List<? super AnAction> list,
                                        PresentationFactory presentationFactory,
                                        DataContext context,
                                        @NotNull String place,

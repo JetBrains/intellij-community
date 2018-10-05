@@ -39,7 +39,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 

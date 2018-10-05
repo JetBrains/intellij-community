@@ -50,11 +50,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class MainFrame extends JPanel implements DataProvider, Disposable {
   private static final String DIFF_SPLITTER_PROPORTION = "vcs.log.diff.splitter.proportion";
@@ -248,16 +251,22 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return myUiProperties;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      Collection<VirtualFile> roots = chooseNotNull(getSelectedRoots(), VcsLogUtil.getVisibleRoots(myUi));
+      Collection<VirtualFile> roots = getSelectedRoots();
       return toVirtualFileArray(roots);
+    }
+    else if (VcsLogInternalDataKeys.LOG_DIFF_HANDLER.is(dataId)) {
+      Collection<VirtualFile> roots = getSelectedRoots();
+      if (roots.size() != 1) return null;
+      return myUi.getLogData().getLogProvider(notNull(getFirstItem(roots))).getDiffHandler();
     }
     return null;
   }
 
-  @Nullable
-  private Set<VirtualFile> getSelectedRoots() {
+  @NotNull
+  private Collection<VirtualFile> getSelectedRoots() {
+    if (myUi.getLogData().getRoots().size() == 1) return myUi.getLogData().getRoots();
     int[] selectedRows = myGraphTable.getSelectedRows();
-    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
+    if (selectedRows.length == 0 || selectedRows.length > VcsLogUtil.MAX_SELECTED_COMMITS) return VcsLogUtil.getVisibleRoots(myUi);
     return ContainerUtil.map2Set(Ints.asList(selectedRows), row -> myGraphTable.getModel().getRoot(row));
   }
 
