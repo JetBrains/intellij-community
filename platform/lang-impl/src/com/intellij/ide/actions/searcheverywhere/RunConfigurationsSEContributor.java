@@ -14,6 +14,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -123,7 +124,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
                             @NotNull ProgressIndicator progressIndicator,
                             @NotNull Function<Object, Boolean> consumer) {
 
-    if (pattern.isEmpty()) return;
+    if (StringUtil.isEmptyOrSpaces(pattern)) return;
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
@@ -155,29 +156,29 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     }
   }
 
-  private String filterString(String input) {
-    if (input.contains(" ")) {
-      String firstWord = input.split(" ")[0];
-      if (RUN_COMMAND.getCommandWithPrefix().startsWith(firstWord) || DEBUG_COMMAND.getCommandWithPrefix().startsWith(firstWord)) {
-        return input.substring(firstWord.length() + 1);
-      }
+  private static Optional<String> extractFirstWord(String input) {
+    if (!StringUtil.isEmptyOrSpaces(input) && input.contains(" ")) {
+      return Optional.of(input.split(" ")[0]);
     }
 
-    return input;
+    return Optional.empty();
+  }
+
+  private String filterString(String input) {
+    return extractFirstWord(input)
+      .filter(firstWord -> RUN_COMMAND.getCommandWithPrefix().startsWith(firstWord) || DEBUG_COMMAND.getCommandWithPrefix().startsWith(firstWord))
+      .map(firstWord -> input.substring(firstWord.length() + 1))
+      .orElse(input);
   }
 
   private static boolean isCommand(String input, SearchEverywhereCommandInfo command) {
     if (input == null) {
       return false;
-
     }
 
-    if (input.contains(" ")) {
-      String firstWord = input.split(" ")[0];
-      return command.getCommandWithPrefix().startsWith(firstWord);
-    }
-
-    return false;
+    return extractFirstWord(input)
+      .map(firstWord -> command.getCommandWithPrefix().startsWith(firstWord))
+      .orElse(false);
   }
 
   private final Renderer renderer = new Renderer();
