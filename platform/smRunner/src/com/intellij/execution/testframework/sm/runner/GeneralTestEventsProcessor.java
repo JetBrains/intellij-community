@@ -32,8 +32,15 @@ import java.util.List;
  * Processes events of test runner in general text-based form.
  * <p/>
  * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
- *
- * @author: Roman Chernyatchik
+ * 
+ * <p/>
+ * Threading information:
+ * <ul>
+ *   <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
+ *   <li>all other events should be processed in the same output reader thread</li>
+ *   <li>{@link #dispose()} is called from EDT</li>
+ * </ul>
+ * 
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
@@ -261,7 +268,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   @Override
   public void dispose() {
-    
+    disconnectListeners();
   }
 
   protected void disconnectListeners() {
