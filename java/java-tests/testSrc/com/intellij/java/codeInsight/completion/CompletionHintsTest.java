@@ -1037,6 +1037,14 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
+  public void testQuickDocForConstructorOverloadSelectedOnCompletion() throws Exception {
+    configureJava("class C { void m() { new Strin<caret> } }");
+    complete("String(byte[] bytes, String charsetName)");
+    checkResultWithInlays("class C { void m() { new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>) } }");
+    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    assertTrue(doc.contains("If the named charset is not supported"));
+  }
+
   public void testHighlightingOfHintsOnMultipleLines() throws Exception {
     disableVirtualComma();
 
