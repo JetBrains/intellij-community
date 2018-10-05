@@ -121,8 +121,10 @@ public class SearchPopup implements CaretListener {
   }
 
   private void show() {
-    list.clearSelection();
-    myPopup.showInScreenCoordinates(myEditor, getPopupLocation());
+    if (myPopup != null) {
+      list.clearSelection();
+      myPopup.showInScreenCoordinates(myEditor, getPopupLocation());
+    }
   }
 
   public void hide() {
