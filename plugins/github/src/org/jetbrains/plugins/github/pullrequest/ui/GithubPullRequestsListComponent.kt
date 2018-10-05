@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -26,7 +25,6 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.ProgressStripeProgressIndicator
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.Component
-import javax.swing.JComponent
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
@@ -57,7 +55,6 @@ internal class GithubPullRequestsListComponent(project: Project,
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
     border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
   }
-  private val tableToolbarWrapper: Wrapper
 
   init {
     searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
@@ -95,9 +92,7 @@ internal class GithubPullRequestsListComponent(project: Project,
     }
     list.addMouseListener(popupHandler)
 
-    tableToolbarWrapper = Wrapper(toolbar.component)
-
-    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(tableToolbarWrapper)
+    val headerPanel = JBUI.Panels.simplePanel(0, 0).addToCenter(search).addToRight(toolbar.component)
     val tableWithError = JBUI.Panels
       .simplePanel(progressStripe)
       .addToTop(errorPanel)
@@ -113,10 +108,6 @@ internal class GithubPullRequestsListComponent(project: Project,
 
   override fun getData(dataId: String): Any? {
     return if (GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId)) selectionModel.current else null
-  }
-
-  fun setToolbarHeightReferent(referent: JComponent) {
-    tableToolbarWrapper.setVerticalSizeReferent(referent)
   }
 
   @CalledInAwt
