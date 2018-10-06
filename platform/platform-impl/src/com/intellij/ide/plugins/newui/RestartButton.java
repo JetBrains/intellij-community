@@ -2,11 +2,9 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,16 +13,16 @@ import org.jetbrains.annotations.NotNull;
 public class RestartButton extends InstallButton {
   public RestartButton(@NotNull MyPluginModel pluginModel) {
     super(true);
-    addActionListener(e -> IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+    addActionListener(e -> {
       pluginModel.needRestart = true;
       pluginModel.createShutdownCallback = false;
 
-      DialogWrapper settings = DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
+      DialogWrapper settings = DialogWrapper.findInstance(this);
       assert settings instanceof SettingsDialog : settings;
       ((SettingsDialog)settings).doOKAction();
 
       ((ApplicationImpl)ApplicationManager.getApplication()).exit(true, false, true);
-    }, ModalityState.current()));
+    });
   }
 
   @Override
