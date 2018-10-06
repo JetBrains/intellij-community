@@ -14,7 +14,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -301,6 +300,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
     @NotNull private static final String ROOTS = "roots";
     @NotNull private static final String STRUCTURE = "structure";
+    @NotNull private static final String DIR = "dir:";
+    @NotNull private static final String FILE = "file:";
     @NotNull private final Set<VirtualFile> myRoots;
 
     FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
@@ -326,7 +327,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     static List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
-      return ContainerUtil.map(filter.getFiles(), FilePath::getPath);
+      return ContainerUtil.map(filter.getFiles(), path -> (path.isDirectory() ? DIR : FILE) + path.getPath());
     }
 
     @NotNull
@@ -336,7 +337,15 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     @NotNull
     static VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, VcsUtil::getFilePath));
+      return new VcsLogStructureFilterImpl(ContainerUtil.map(values, path -> {
+        if (path.startsWith(DIR)) {
+          return VcsUtil.getFilePath(path.substring(DIR.length()), true);
+        }
+        else if (path.startsWith(FILE)) {
+          return VcsUtil.getFilePath(path.substring(FILE.length()), false);
+        }
+        return VcsUtil.getFilePath(path);
+      }));
     }
 
     @Nullable
