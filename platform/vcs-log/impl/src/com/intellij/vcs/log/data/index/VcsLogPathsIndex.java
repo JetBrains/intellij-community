@@ -53,8 +53,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsIndexableDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
@@ -63,11 +61,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull private final PathsIndexer myPathsIndexer;
 
-  public VcsLogPathsIndex(@NotNull StorageId storageId,
-                          @NotNull Set<VirtualFile> roots,
-                          @NotNull VcsLogStorage storage, @NotNull FatalErrorHandler fatalErrorHandler,
+  public VcsLogPathsIndex(@NotNull StorageId storageId, @NotNull VcsLogStorage storage, @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(storageId), createRenamesMap(storageId), roots),
+    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(storageId), createRenamesMap(storageId)),
           new ChangeKindListKeyDescriptor(), fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
@@ -126,7 +122,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) throws IOException {
     Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
     if (renames == null) return null;
-    for (Couple<Integer> rename: renames) {
+    for (Couple<Integer> rename : renames) {
       FilePath path1 = getPath(rename.first);
       FilePath path2 = getPath(rename.second);
       Couple<FilePath> paths = Couple.of(path1, path2);
@@ -182,19 +178,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final PersistentEnumeratorBase<LightFilePath> myPathsEnumerator;
     @NotNull private final PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> myRenamesMap;
-    @NotNull private final Set<String> myRoots;
     @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
 
     private PathsIndexer(@NotNull VcsLogStorage storage, @NotNull PersistentEnumeratorBase<LightFilePath> enumerator,
-                         @NotNull PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> renamesMap,
-                         @NotNull Set<VirtualFile> roots) {
+                         @NotNull PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> renamesMap) {
       myStorage = storage;
       myPathsEnumerator = enumerator;
       myRenamesMap = renamesMap;
-      myRoots = newTroveSet(FileUtil.PATH_HASHING_STRATEGY);
-      for (VirtualFile root : roots) {
-        myRoots.add(root.getPath());
-      }
     }
 
     public void setFatalErrorConsumer(@NotNull Consumer<Exception> fatalErrorConsumer) {
