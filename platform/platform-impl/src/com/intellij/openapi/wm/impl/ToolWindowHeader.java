@@ -73,13 +73,12 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
           Insets insets = getInsets();
 
           Component c = getComponent(0);
-          c.setBounds(r.x, r.y, r.width, r.height);
-          //Dimension size = c.getPreferredSize();
-          //if (size.width < r.width - insets.left - insets.right) {
-          //  c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
-          //} else {
-          //  c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
-          //}
+          Dimension size = c.getPreferredSize();
+          if (size.width < r.width - insets.left - insets.right) {
+            c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
+          } else {
+            c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+          }
         }
       }
     };
@@ -186,7 +185,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolWindow = null;
   }
 
-  void setWestActions(AnAction[] actions) {
+  void setTabActions(AnAction[] actions) {
     myActionGroupWest.removeAll();
     myActionGroupWest.addSeparator();
     myActionGroupWest.addAll(actions);

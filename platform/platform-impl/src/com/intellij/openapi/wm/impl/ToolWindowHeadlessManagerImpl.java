@@ -445,7 +445,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setWestActions(AnAction... actions) {
+    public void setTabActions(AnAction... actions) {
     }
 
     @Override

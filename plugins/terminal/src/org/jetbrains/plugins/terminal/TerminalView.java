@@ -11,7 +11,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
@@ -77,7 +76,7 @@ public class TerminalView {
     }
 
     myToolWindow = toolWindow;
-    ((ToolWindowImpl)myToolWindow).setWestActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
+    ((ToolWindowImpl)myToolWindow).setTabActions(new AnAction("New Session", "Create new session", AllIcons.General.Add) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         newTab(null);

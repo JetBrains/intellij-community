@@ -281,7 +281,7 @@ class ContentTabLabel extends BaseLabel {
       }
     }
 
-    setBorder(new EmptyBorder(0, left, 0, right));
+    setBorder(JBUI.Borders.empty(0, left, 0, right));
     myIconWithInsetsWidth = iconWidth + right + left;
 
     return new Dimension(iconWidth + size.width, size.height);

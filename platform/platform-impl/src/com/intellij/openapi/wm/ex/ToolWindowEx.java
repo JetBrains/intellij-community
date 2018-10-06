@@ -55,7 +55,7 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setTitleActions(AnAction... actions);
 
-  void setWestActions(AnAction... actions);
+  void setTabActions(AnAction... actions);
 
   void setUseLastFocusedOnActivation(boolean focus);
 

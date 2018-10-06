@@ -310,8 +310,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public void setWestActions(AnAction... actions) {
-    getDecorator().setWestActions(actions);
+  public void setTabActions(AnAction... actions) {
+    getDecorator().setTabActions(actions);
   }
 
   @Override
