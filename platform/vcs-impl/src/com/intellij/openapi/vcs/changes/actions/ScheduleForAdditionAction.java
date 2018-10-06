@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +67,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   public static boolean addUnversioned(@NotNull Project project,
                                        @NotNull List<VirtualFile> files,
                                        @Nullable ChangesBrowserBase browser) {
+    return addUnversioned(project, files, browser, null);
+  }
+
+  public static boolean addUnversioned(@NotNull Project project,
+                                       @NotNull List<VirtualFile> files,
+                                       @Nullable ChangesBrowserBase browser,
+                                       @Nullable PairConsumer<ProgressIndicator, List<VcsException>> additionalTask) {
     LocalChangeList targetChangeList = null;
     Consumer<List<Change>> changeConsumer = null;
 
@@ -76,26 +85,29 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       changeConsumer = changes -> browser.getViewer().includeChanges(changes);
     }
 
-    return addUnversionedFiles(project, targetChangeList, files, changeConsumer);
+    return addUnversionedFiles(project, targetChangeList, files, changeConsumer, additionalTask);
   }
 
   public static void addUnversionedFiles(@NotNull Project project,
                                          @NotNull LocalChangeList list,
                                          @NotNull List<VirtualFile> files) {
-    addUnversionedFiles(project, list, files, null);
+    addUnversionedFiles(project, list, files, null, null);
   }
 
   private static boolean addUnversionedFiles(@NotNull Project project,
                                              @Nullable LocalChangeList targetChangeList,
                                              @NotNull List<VirtualFile> files,
-                                             @Nullable Consumer<? super List<Change>> changesConsumer) {
-    if (files.isEmpty()) return true;
+                                             @Nullable Consumer<? super List<Change>> changesConsumer,
+                                             @Nullable PairConsumer<ProgressIndicator, List<VcsException>> additionalTask) {
+    if (files.isEmpty() && additionalTask == null) return true;
 
     ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
     FileDocumentManager.getInstance().saveAllDocuments();
 
     List<VcsException> exceptions = new ArrayList<>();
     Set<VirtualFile> allProcessedFiles = computeWithModalProgress(project, "Adding Files to VCS...", true, (indicator) -> {
+      if (additionalTask != null) additionalTask.consume(indicator, exceptions);
+
       return manager.addUnversionedToVcs(files, exceptions);
     });
 
@@ -107,7 +119,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"));
     }
 
-    boolean moveRequired = targetChangeList != null && !targetChangeList.isDefault();
+    boolean moveRequired = targetChangeList != null && !targetChangeList.isDefault() && !allProcessedFiles.isEmpty();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {

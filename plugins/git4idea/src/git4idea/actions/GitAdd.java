@@ -17,12 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -80,31 +75,22 @@ public class GitAdd extends ScheduleForAdditionAction {
     ContainerUtil.addAll(toAdd, collectPathsFromFiles(project, files).iterator());
 
     List<VirtualFile> unversionedFiles = getUnversionedFiles(e, project).collect(Collectors.toList());
-    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY));
 
-    Ref<VcsException> exceptionRef = new Ref<>();
-    ProgressManager.getInstance().run(new Task.Modal(project, "Adding Files to VCS...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    addUnversioned(project, unversionedFiles, e.getData(ChangesBrowserBase.DATA_KEY), (indicator, exceptions) -> {
+      VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
 
-        try {
-          Map<VirtualFile, List<FilePath>> pathsByRoot = GitUtil.sortFilePathsByGitRoot(toAdd);
-          for (Map.Entry<VirtualFile, List<FilePath>> e : pathsByRoot.entrySet()) {
-            VirtualFile root = e.getKey();
-            GitFileUtils.addPaths(project, root, e.getValue());
-            dirtyScopeManager.dirDirtyRecursively(root);
-          }
-        }
-        catch (VcsException ex) {
-          exceptionRef.set(ex);
+      try {
+        Map<VirtualFile, List<FilePath>> pathsByRoot = GitUtil.sortFilePathsByGitRoot(toAdd);
+        for (Map.Entry<VirtualFile, List<FilePath>> entry : pathsByRoot.entrySet()) {
+          VirtualFile root = entry.getKey();
+          GitFileUtils.addPaths(project, root, entry.getValue());
+          dirtyScopeManager.dirDirtyRecursively(root);
         }
       }
+      catch (VcsException ex) {
+        exceptions.add(ex);
+      }
     });
-
-    if (!exceptionRef.isNull()) {
-      Messages.showErrorDialog(project, exceptionRef.get().getMessage(), VcsBundle.message("error.adding.files.title"));
-    }
   }
 
   @NotNull
