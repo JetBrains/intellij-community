@@ -10,7 +10,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
@@ -112,25 +111,19 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {
-      final Ref<List<Change>> foundChanges = Ref.create();
-      // find the changes for the added files and move them to the necessary changelist
-      InvokeAfterUpdateMode updateMode = syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
-                                                            : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
-
       manager.invokeAfterUpdate(() -> {
         List<Change> newChanges = ContainerUtil.filter(manager.getDefaultChangeList().getChanges(), change -> {
           return allProcessedFiles.contains(change.getVirtualFile());
         });
-        foundChanges.set(newChanges);
 
         if (moveRequired && !newChanges.isEmpty()) {
           manager.moveChangesTo(targetChangeList, newChanges.toArray(new Change[0]));
         }
-      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
 
-      if (changesConsumer != null) {
-        changesConsumer.consume(foundChanges.get());
-      }
+        if (changesConsumer != null) {
+          changesConsumer.consume(newChanges);
+        }
+      }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, VcsBundle.message("change.lists.manager.add.unversioned"), null);
     }
 
     return exceptions.isEmpty();
