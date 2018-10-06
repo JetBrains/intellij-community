@@ -54,7 +54,7 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
       @NotNull
       @Override
       protected BaseOutputReader.Options readerOptions() {
-        return BaseOutputReader.Options.BLOCKING;
+        return BaseOutputReader.Options.forMostlySilentProcess();
       }
     };
     ProcessTerminatedListener.attach(handler);

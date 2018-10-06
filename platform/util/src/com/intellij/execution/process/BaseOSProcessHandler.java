@@ -195,7 +195,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
       else if (TimeUnit.MILLISECONDS.toMinutes(now - sleepStart) >= 2 &&
                mySleepStart.compareAndSet(sleepStart, -1)) { // report only once
         LOG.warn("Process hasn't generated any output for a long time.\n" +
-                 "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with BLOCKING to reduce CPU usage.\n" +
+                 "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
                  "Command line: " + StringUtil.trimLog(myCommandLine, 1000),
                  myProcessStart);
       }

@@ -367,7 +367,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
           @NotNull
           @Override
           protected BaseOutputReader.Options readerOptions() {
-            return BaseOutputReader.Options.BLOCKING;
+            return BaseOutputReader.Options.forMostlySilentProcess();
           }
         };
         processHandler.setShouldDestroyProcessRecursively(false);
