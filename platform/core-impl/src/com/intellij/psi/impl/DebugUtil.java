@@ -244,7 +244,6 @@ public class DebugUtil {
       }
       buffer.append(node.toString()).append('\n');
 
-      @SuppressWarnings({"unchecked"})
       final List<? extends Stub> children = node.getChildrenStubs();
       for (final Stub child : children) {
         stubTreeToBuffer(child, buffer, indent + 2);
@@ -517,7 +516,6 @@ public class DebugUtil {
       return;
     }
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     if (ourPsiModificationTrace.get() == null) {
       ourPsiModificationTrace.set(trace != null ? trace : new Throwable());
     }

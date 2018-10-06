@@ -51,4 +51,25 @@ public abstract class InspectionElementsMerger {
   public String[] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }
+
+  /**
+   * @param id suppress id in code
+   * @return new merged tool name
+   *         null if merger is not found
+   */
+  public static String getMergedToolName(String id) {
+    for (InspectionElementsMerger merger : EP_NAME.getExtensionList()) {
+      for (String sourceToolName : merger.getSourceToolNames()) {
+        if (id.equals(sourceToolName)) {
+          return merger.getMergedToolName();
+        }
+      }
+      for (String suppressId : merger.getSuppressIds()) {
+        if (id.equals(suppressId)) {
+          return merger.getMergedToolName();
+        }
+      }
+    }
+    return null;
+  }
 }

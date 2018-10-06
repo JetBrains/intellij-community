@@ -38,7 +38,7 @@ import java.util.List;
  * @author dsl
  */
 class OverridingMethodsDialog extends DialogWrapper {
-  private final List<UsageInfo> myOverridingMethods;
+  private final List<? extends UsageInfo> myOverridingMethods;
   private final String[] myMethodText;
   private final boolean[] myChecked;
 
@@ -46,7 +46,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   private Table myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
-  OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
+  OverridingMethodsDialog(Project project, List<? extends UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];

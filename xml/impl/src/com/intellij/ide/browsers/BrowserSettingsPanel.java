@@ -158,7 +158,7 @@ final class BrowserSettingsPanel {
     defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST);
     defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE);
 
-    //noinspection Since15,unchecked
+    // noinspection unchecked
     defaultBrowserPolicyComboBox.setModel(new ListComboBoxModel<>(defaultBrowserPolicies));
     defaultBrowserPolicyComboBox.addItemListener(new ItemListener() {
       @Override

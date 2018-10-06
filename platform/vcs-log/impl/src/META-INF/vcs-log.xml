@@ -42,8 +42,12 @@
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
 
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
-    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffAfterWithLocalFromHistoryActionProvider"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFolderHistoryActionProvider"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromFileHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider
+        implementation="com.intellij.vcs.log.ui.actions.ShowDiffAfterWithLocalFromLogActionProvider"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Dialog"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider$Clipboard"/>
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider$Dialog"/>
@@ -55,6 +59,14 @@
     <action class="com.intellij.vcs.log.ui.actions.GoToHashOrRefAction" id="Vcs.Log.GoToRef" icon="AllIcons.Actions.Find"
             use-shortcut-of="Find"
             text="Go To Hash/Branch/Tag" description="Specify hash or name of a branch or a tag to navigate to the commit it points"/>
+    <action class="com.intellij.vcs.log.ui.actions.GoToParentRowAction" id="Vcs.Log.GoToParent"
+            text="Go to Parent Commit" description="Navigate to the parent row in the commit graph">
+      <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
+    </action>
+    <action class="com.intellij.vcs.log.ui.actions.GoToChildRowAction" id="Vcs.Log.GoToChild"
+            text="Go to Child Commit" description="Navigate to the child row in the commit graph">
+      <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
+    </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
     <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" text="Show VCS Log">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
@@ -95,6 +107,9 @@
     <action class="com.intellij.vcs.log.ui.actions.history.ShowAllAffectedFromHistoryAction" id="Vcs.Log.ShowAllAffected"
             use-shortcut-of="VcsHistory.ShowAllAffected" icon="AllIcons.Actions.ListChanges" text="Show All Affected Files"
             description="Show all changes made in the chosen revision"/>
+    <action class="com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction" id="Vcs.Log.CompareRevisions"
+            text="Compare Versions" description="Compare selected versions"
+            icon="AllIcons.Actions.Diff"/>
 
     <group id="Vcs.Log.PresentationSettings" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
            icon="AllIcons.Actions.Show" text="Presentation Settings" description="Presentation Settings" popup="true">
@@ -122,6 +137,8 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <reference id="Vcs.Log.CompareRevisions"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
@@ -164,8 +181,11 @@
 
     <group id="Log.KeymapGroup" text="Log">
       <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="Vcs.Log.CompareRevisions"/>
       <separator/>
       <reference ref="Vcs.Log.GoToRef"/>
+      <reference ref="Vcs.Log.GoToParent"/>
+      <reference ref="Vcs.Log.GoToChild"/>
       <reference ref="Vcs.Log.FocusTextFilter"/>
       <reference ref="Vcs.Log.TextFilterSettings"/>
       <separator/>

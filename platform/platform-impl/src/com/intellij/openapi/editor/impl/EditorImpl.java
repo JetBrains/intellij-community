@@ -571,6 +571,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int start = Math.min(Math.max(highlighter.getAffectedAreaStartOffset(), 0), textLength);
     int end = Math.min(Math.max(highlighter.getAffectedAreaEndOffset(), 0), textLength);
 
+    if (getGutterComponentEx().getCurrentAccessibleLine() != null &&
+        AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer()))
+    {
+      escapeGutterAccessibleLine(start, end);
+    }
     int startLine = start == -1 ? 0 : myDocument.getLineNumber(start);
     int endLine = end == -1 ? myDocument.getLineCount() : myDocument.getLineNumber(end);
     if (start != end && fontStyleOrColorChanged) {
@@ -964,12 +969,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    if (myProject == null || !myProject.isDisposed()) {
-      CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
-      if (settingsManager != null) {
-        settingsManager.removeListener(this);
-      }
-    }
+    CodeStyleSettingsManager.removeListener(myProject, this);
 
     if (myBulkUpdateListener != null) {
       ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
@@ -1590,6 +1590,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
+    if (getGutterComponentEx().getCurrentAccessibleLine() != null) {
+      escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
+    }
+
     validateSize();
 
     int startLine = offsetToLogicalLine(e.getOffset());
@@ -1617,6 +1621,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
+    }
+  }
+
+  private void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
+    int startVisLine = offsetToVisualLine(offsetStart);
+    int endVisLine = offsetToVisualLine(offsetEnd);
+    int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
+    if (startVisLine <= line && endVisLine >= line) {
+      getGutterComponentEx().escapeCurrentAccessibleLine();
     }
   }
 
@@ -3922,7 +3935,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                     selectWordAtCaret(false);
                     break;
                   }
-                  //noinspection fallthrough
                 case 4:
                   mySelectionModel.selectLineAtCaret();
                   setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);

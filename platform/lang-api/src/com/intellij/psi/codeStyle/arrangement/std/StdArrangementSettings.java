@@ -42,17 +42,17 @@ public class StdArrangementSettings implements ArrangementSettings {
   }
 
   @SuppressWarnings("unchecked")
-  public StdArrangementSettings(@NotNull List<ArrangementSectionRule> rules) {
+  public StdArrangementSettings(@NotNull List<? extends ArrangementSectionRule> rules) {
     this(Collections.EMPTY_LIST, rules);
   }
 
-  public StdArrangementSettings(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                @NotNull List<ArrangementSectionRule> sectionRules) {
+  public StdArrangementSettings(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
+                                @NotNull List<? extends ArrangementSectionRule> sectionRules) {
     myGroupings.addAll(groupingRules);
     mySectionRules.addAll(sectionRules);
   }
 
-  public static StdArrangementSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
+  public static StdArrangementSettings createByMatchRules(@NotNull List<? extends ArrangementGroupingRule> groupingRules,
                                                           @NotNull List<? extends StdArrangementMatchRule> matchRules) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {

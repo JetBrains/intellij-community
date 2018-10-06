@@ -31,7 +31,6 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-@SuppressWarnings("DialogTitleCapitalization")
 public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
   private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");

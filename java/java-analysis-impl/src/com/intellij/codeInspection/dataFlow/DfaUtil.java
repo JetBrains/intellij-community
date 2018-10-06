@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
@@ -29,6 +30,8 @@ import java.util.function.Predicate;
  * @author Gregory.Shrago
  */
 public class DfaUtil {
+  private static final Object UNKNOWN_VALUE = ObjectUtils.sentinel("UNKNOWN_VALUE");
+
   @Nullable("null means DFA analysis has failed (too complex to analyze)")
   public static Collection<PsiExpression> getCachedVariableValues(@Nullable final PsiVariable variable, @Nullable final PsiElement context) {
     if (variable == null || context == null) return Collections.emptyList();
@@ -355,6 +358,54 @@ public class DfaUtil {
       }
     }
     return value;
+  }
+
+  /**
+   * Returns the value of given expression calculated via dataflow; or null if value is null or unknown.
+   * The expression context is not taken into account; only expression itself.
+   *
+   * @param expression expression to analyze
+   * @return expression value if known
+   */
+  public static Object computeValue(PsiExpression expression) {
+    PsiExpression expressionToAnalyze = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expressionToAnalyze == null) return null;
+    Object computed = ExpressionUtils.computeConstantExpression(expression);
+    if (computed != null) return computed;
+
+    DataFlowRunner runner = new StandardDataFlowRunner(false, expression);
+    class Visitor extends StandardInstructionVisitor {
+      Object exprValue;
+
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expr,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        super.beforeExpressionPush(value, expr, range, state);
+        if (expr != expressionToAnalyze) return;
+        Object newValue;
+        if (value instanceof DfaConstValue) {
+          newValue = ((DfaConstValue)value).getValue();
+        } else {
+          newValue = UNKNOWN_VALUE;
+        }
+        if (exprValue == null) {
+          exprValue = newValue;
+        } else if (exprValue != newValue) {
+          exprValue = UNKNOWN_VALUE;
+        }
+        if (exprValue == UNKNOWN_VALUE) {
+          runner.cancel();
+        }
+      }
+    }
+    Visitor visitor = new Visitor();
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
+    if (result == RunnerResult.OK && visitor.exprValue != UNKNOWN_VALUE) {
+      return visitor.exprValue;
+    }
+    return null;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

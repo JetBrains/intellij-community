@@ -36,7 +36,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
+@SuppressWarnings({"JUnitTestClassNamingConvention"})
 public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  {
 
   @Override

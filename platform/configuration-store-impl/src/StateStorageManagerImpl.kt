@@ -34,7 +34,7 @@ private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
  * If componentManager not specified, storage will not add file tracker
  */
 open class StateStorageManagerImpl(private val rootTagName: String,
-                                   final override val macroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                   final override val macroSubstitutor: PathMacroSubstitutor? = null,
                                    override val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = StateStorageManagerImpl.createDefaultVirtualTracker(componentManager)) : StateStorageManager {
   private val macros: MutableList<Macro> = ContainerUtil.createLockFreeCopyOnWriteList()
@@ -291,7 +291,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                      fileSpec: String,
                                      rootElementName: String?,
                                      roamingType: RoamingType,
-                                     pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                                     pathMacroManager: PathMacroSubstitutor? = null,
                                      provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType,
                                                                                           provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
@@ -376,7 +376,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
   }
 
-  protected open fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = macroSubstitutor
+  protected open fun getMacroSubstitutor(fileSpec: String): PathMacroSubstitutor? = macroSubstitutor
 
   override fun expandMacros(path: String): String {
     // replacement can contains $ (php tests), so, this check must be performed before expand

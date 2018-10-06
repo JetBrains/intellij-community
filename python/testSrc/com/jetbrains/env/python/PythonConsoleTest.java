@@ -18,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author traff
  */
+@Staging
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
   public void testConsolePrint() {

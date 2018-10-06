@@ -1035,7 +1035,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return cancelButton;
   }
 
-  public static void installQuickSearch(JBList<AnAction> list) {
+  public static void installQuickSearch(JBList<? extends AnAction> list) {
     new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
         return o.getTemplatePresentation().getText();

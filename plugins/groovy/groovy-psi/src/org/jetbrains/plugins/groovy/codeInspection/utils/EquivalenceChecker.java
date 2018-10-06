@@ -40,8 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-@SuppressWarnings({"OverlyComplexMethod",
-    "MethodWithMultipleLoops",
+@SuppressWarnings({
+  "MethodWithMultipleLoops",
     "OverlyComplexMethod",
     "OverlyLongMethod",
     "SwitchStatementWithTooManyBranches",

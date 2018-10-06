@@ -1,10 +1,13 @@
 <idea-plugin>
 
   <id>com.intellij.testGuiFramework</id>
-  <name>TestGuiFramework</name>
+  <name>Test GUI Framework</name>
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.modules.lang</depends>
+  <description>This plugin helps testing IDEA and other plugins via GUI.</description>
+
+  <idea-version since-build="173"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>

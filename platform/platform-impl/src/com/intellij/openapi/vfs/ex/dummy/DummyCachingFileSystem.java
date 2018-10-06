@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -86,7 +86,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
 
   @Nullable
   public Project getProject(@Nullable String projectId) {
-    Project project = ((ProjectManagerImpl)ProjectManager.getInstance()).findOpenProjectByHash(projectId);
+    Project project = ProjectManagerEx.getInstanceEx().findOpenProjectByHash(projectId);
     if (ApplicationManager.getApplication().isUnitTestMode() && project != null) {
       registerDisposeCallback(project);
       DISPOSE_CALLBACK.set(project, Boolean.TRUE);

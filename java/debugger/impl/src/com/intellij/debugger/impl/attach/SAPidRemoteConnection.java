@@ -42,11 +42,6 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
     }
   }
 
-  public static boolean isSAPidAttachAvailable() {
-    return true;
-    //return getBaseSAJDIClassLoader() != null;
-  }
-
   @NotNull
   private static synchronized ClassLoader getBaseSAJDIClassLoader(Path fallback) {
     if (BASE_SA_JDI_CLASS_LOADER == null) {

@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -66,8 +65,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -101,7 +100,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -303,7 +301,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     add(westPanel, BorderLayout.WEST);
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private JComponent createRightActionsToolbar() {
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));

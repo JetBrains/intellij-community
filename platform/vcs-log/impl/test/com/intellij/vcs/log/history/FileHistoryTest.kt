@@ -2,8 +2,10 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind.*
 import com.intellij.vcs.log.graph.TestGraphBuilder
@@ -13,8 +15,10 @@ import com.intellij.vcs.log.graph.asTestGraphString
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.impl.facade.BaseController
 import com.intellij.vcs.log.graph.impl.facade.FilteredController
+import gnu.trove.THashMap
 import gnu.trove.TIntObjectHashMap
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
 import org.junit.Ignore
 import org.junit.Test
 
@@ -203,7 +207,7 @@ class FileHistoryTest {
   }
 
   @Test
-  fun cyclicHistoryTest() {
+  fun historyWithCyclicRenames() {
     val aFile = LocalFilePath("a.txt", false)
     val bFile = LocalFilePath("b.txt", false)
     val fileNamesData = FileNamesDataBuilder(aFile)
@@ -228,14 +232,64 @@ class FileHistoryTest {
       4()
     }
   }
+
+  @Test
+  fun historyWithCyclicCaseOnlyRenames() {
+    assumeFalse("Case insensitive fs is required", SystemInfo.isFileSystemCaseSensitive)
+
+    val lowercasePath = LocalFilePath("file.txt", false)
+    val uppercasePath = LocalFilePath("FILE.TXT", false)
+    val mixedPath = LocalFilePath("FiLe.TxT", false)
+    val fileNamesData = FileNamesDataBuilder(lowercasePath)
+      .addChange(lowercasePath, 7, listOf(ADDED), listOf(7))
+      .addChange(lowercasePath, 6, listOf(MODIFIED), listOf(7))
+
+      .addChange(lowercasePath, 5, listOf(REMOVED), listOf(6))
+      .addChange(mixedPath, 5, listOf(ADDED), listOf(6))
+      .addRename(6, 5, lowercasePath, mixedPath)
+
+      .addChange(mixedPath, 4, listOf(MODIFIED), listOf(5))
+
+      .addChange(mixedPath, 3, listOf(REMOVED), listOf(4))
+      .addChange(uppercasePath, 3, listOf(ADDED), listOf(4))
+      .addRename(4, 3, mixedPath, uppercasePath)
+
+      .addChange(uppercasePath, 2, listOf(MODIFIED), listOf(3))
+
+      .addChange(uppercasePath, 1, listOf(REMOVED), listOf(2))
+      .addChange(lowercasePath, 1, listOf(ADDED), listOf(2))
+      .addRename(2, 1, uppercasePath, lowercasePath)
+
+      .build()
+
+    graph {
+      0(1)
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6(7)
+      7()
+    }.assert(0, lowercasePath, fileNamesData) {
+      1(2)
+      2(3)
+      3(4)
+      4(5)
+      5(6)
+      6(7)
+      7()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
-  private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> = mutableMapOf()
-  private val renamesMap: MutableMap<Couple<Int>, Couple<FilePath>> = mutableMapOf()
+  private val commitsMap: MutableMap<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>> =
+    THashMap(FILE_PATH_HASHING_STRATEGY)
+  private val renamesMap: MultiMap<Couple<Int>, Couple<FilePath>> = MultiMap.createSmart()
 
   fun addRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
-    renamesMap[Couple(parent, child)] = Couple(beforePath, afterPath)
+    renamesMap.putValue(Couple(parent, child), Couple(beforePath, afterPath))
     return this
   }
 
@@ -247,7 +301,7 @@ private class FileNamesDataBuilder(private val path: FilePath) {
   fun build(): FileNamesData {
     return object : FileNamesData(path) {
       override fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>? {
-        return renamesMap[Couple(parent, child)]
+        return renamesMap[Couple(parent, child)].find { accept(it) }
       }
 
       override fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> {

@@ -154,7 +154,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void loadState(@NotNull Element state) {
     Set<ModulePath> files = getPathsToModuleFiles(state);
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       files.addAll(externalModules);
     }
@@ -164,7 +164,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void noStateLoaded() {
     // if there are only external modules, loadState will be not called
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       loadState(new LinkedHashSet<>(externalModules));
     }

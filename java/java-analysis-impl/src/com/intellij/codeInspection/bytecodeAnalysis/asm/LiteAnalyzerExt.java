@@ -35,7 +35,6 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
     return data;
   }
 
-  @SuppressWarnings("Duplicates")
   public Frame<V>[] analyze(String owner, MethodNode m) throws AnalyzerException {
     if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0) {
       frames = ASMUtils.newFrameArray(0);

@@ -45,7 +45,7 @@ public class ParamHelper {
     walkDownParameters(ContainerUtil.map(params, PyCallableParameterImpl::psi), walker);
   }
 
-  public static void walkDownParameters(@NotNull List<PyCallableParameter> parameters, @NotNull ParamWalker walker) {
+  public static void walkDownParameters(@NotNull List<? extends PyCallableParameter> parameters, @NotNull ParamWalker walker) {
     int i = 0;
     for (PyCallableParameter parameter : parameters) {
       final PyParameter psi = parameter.getParameter();
@@ -79,7 +79,7 @@ public class ParamHelper {
   }
 
   @NotNull
-  public static String getPresentableText(@NotNull List<PyCallableParameter> parameters,
+  public static String getPresentableText(@NotNull List<? extends PyCallableParameter> parameters,
                                           boolean includeDefaultValue,
                                           @Nullable TypeEvalContext context) {
     final StringBuilder result = new StringBuilder();

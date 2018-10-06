@@ -527,7 +527,6 @@ public class CharArrayUtil {
   @NotNull
   public static Reader readerFromCharSequence(@NotNull CharSequence text) {
     char[] chars = fromSequenceWithoutCopying(text);
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return chars == null ? new CharSequenceReader(text.toString()) : new UnsyncCharArrayReader(chars, 0, text.length());
   }
 

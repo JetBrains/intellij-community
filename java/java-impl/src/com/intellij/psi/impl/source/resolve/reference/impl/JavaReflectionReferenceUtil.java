@@ -314,7 +314,7 @@ public class JavaReflectionReferenceUtil {
   @Nullable
   private static PsiPrimitiveType tryUnbox(@Nullable PsiClass psiClass, @NotNull PsiClassType originalType) {
     if (psiClass != null && TypeConversionUtil.isPrimitiveWrapper(psiClass.getQualifiedName())) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       final PsiClassType classType = factory.createType(psiClass, PsiSubstitutor.EMPTY, originalType.getLanguageLevel());
       final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(classType);
       if (unboxedType != null) {
@@ -657,7 +657,7 @@ public class JavaReflectionReferenceUtil {
     @Nullable
     public static ReflectiveType create(@Nullable PsiClass psiClass, boolean isExact) {
       if (psiClass != null) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
         return new ReflectiveType(factory.createType(psiClass), isExact);
       }
       return null;

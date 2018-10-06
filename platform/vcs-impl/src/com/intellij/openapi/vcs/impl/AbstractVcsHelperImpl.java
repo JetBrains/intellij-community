@@ -48,8 +48,6 @@ import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.vfs.VcsFileSystem;
-import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -61,13 +59,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.AsynchConsumer;
-import com.intellij.util.BufferedListConsumer;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
 import com.intellij.util.ui.MessageCategory;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
@@ -86,6 +82,7 @@ import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl");
+  private static final String CHANGES_DETAILS_WINDOW_KEY = "CommittedChangesDetailsLock";
 
   private Consumer<VcsException> myCustomHandler = null;
 
@@ -575,43 +572,51 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     if (provider == null) return;
     if (isNonLocal && provider.getForNonLocal(virtualFile) == null) return;
 
-    loadAndShowCommittedChangesDetails(project, revision, virtualFile, () -> {
+    FilePath filePath = VcsUtil.getFilePath(virtualFile);
+    loadAndShowCommittedChangesDetails(project, revision, filePath, () -> {
       return getAffectedChanges(provider, virtualFile, revision, location, isNonLocal);
     });
   }
 
   public static void loadAndShowCommittedChangesDetails(@NotNull Project project,
                                                         @NotNull VcsRevisionNumber revision,
-                                                        @NotNull VirtualFile virtualFile,
+                                                        @NotNull FilePath filePath,
                                                         @NotNull CommittedChangeListProvider changelistProvider) {
     final String title = VcsBundle.message("paths.affected.in.revision", VcsUtil.getShortRevisionString(revision));
     final BackgroundableActionLock lock = BackgroundableActionLock.getLock(project, VcsBackgroundableActions.COMMITTED_CHANGES_DETAILS,
-                                                                           revision, virtualFile.getPath());
+                                                                           revision, filePath.getPath());
 
-    if (lock.isLocked()) return;
+    if (lock.isLocked()) {
+      for (Window window : Window.getWindows()) {
+        Object windowLock = UIUtil.getWindowClientProperty(window, CHANGES_DETAILS_WINDOW_KEY);
+        if (windowLock != null && lock.equals(windowLock)) {
+          UIUtil.toFront(window);
+          break;
+        }
+      }
+      return;
+    }
     lock.lock();
 
     ChangeListViewerDialog dlg = new ChangeListViewerDialog(project);
     dlg.setTitle(title);
 
+    UIUtil.putWindowClientProperty(dlg.getWindow(), CHANGES_DETAILS_WINDOW_KEY, lock);
     Disposer.register(dlg.getDisposable(), () -> lock.unlock());
 
     dlg.loadChangesInBackground(() -> {
       try {
         Pair<? extends CommittedChangeList, FilePath> pair = changelistProvider.loadChangelist();
-        if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(virtualFile, revision));
+        if (pair == null || pair.getFirst() == null) throw new VcsException(failedText(filePath, revision));
 
         CommittedChangeList changeList = pair.getFirst();
         FilePath targetPath = pair.getSecond();
 
-        VirtualFile navigateToFile = targetPath != null ?
-                                     new VcsVirtualFile(targetPath.getPath(), null, VcsFileSystem.getInstance()) :
-                                     virtualFile;
-
-        return new ChangeListViewerDialog.ChangelistData(changeList, navigateToFile);
+        FilePath navigateToPath = ObjectUtils.notNull(targetPath, filePath);
+        return new ChangeListViewerDialog.ChangelistData(changeList, navigateToPath);
       }
       catch (VcsException e) {
-        throw new VcsException(failedText(virtualFile, revision), e);
+        throw new VcsException(failedText(filePath, revision), e);
       }
     });
     dlg.show();
@@ -672,8 +677,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @NotNull
-  private static String failedText(@NotNull VirtualFile virtualFile, @NotNull VcsRevisionNumber revision) {
-    return "Show all affected files for " + virtualFile.getPath() + " at " + revision.asString() + " failed";
+  private static String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
+    return "Show all affected files for " + filePath.getPath() + " at " + revision.asString() + " failed";
   }
 
   private static class AsynchronousListsLoader extends Task.Backgroundable {

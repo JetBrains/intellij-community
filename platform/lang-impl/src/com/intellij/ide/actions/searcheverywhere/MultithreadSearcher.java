@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +22,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.Action.REPLACE;
+import static com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.Action.SKIP;
+
 /**
  * @author msokolov
  */
@@ -32,26 +34,32 @@ class MultithreadSearcher implements SESearcher {
 
   @NotNull private final Listener myListener;
   @NotNull private final Executor myNotificationExecutor;
+  @NotNull private final SEResultsEqualityProvider myEqualityProvider;
 
   /**
    * Creates MultithreadSearcher with search results {@link Listener} and specifies executor which going to be used to call listener methods.
    * Use this constructor when you for example need to receive listener events only in AWT thread
    * @param listener {@link Listener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
+   * @param equalityProviders collection of equailty providers that checks if found elements is already in the search results
    */
-  MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
+  MultithreadSearcher(@NotNull Listener listener,
+                      @NotNull Executor notificationExecutor,
+                      @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
+    myEqualityProvider = SEResultsEqualityProvider.composite(equalityProviders);
   }
 
   /**
    * Creates MultithreadSearcher with no guarantees about what thread gonna call {@code listener} methods.
    * In this case listener will be called from different threads, so you have to care about thread safety
    * @param listener {@link Listener} to get notifications about searching process
+   * @param equalityProviders collection of equailty providers that checks if found elements is already in the search results
    */
   @SuppressWarnings("unused")
-  MultithreadSearcher(@NotNull Listener listener) {
-    this(listener, Runnable::run);
+  MultithreadSearcher(@NotNull Listener listener, @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
+    this(listener, Runnable::run, equalityProviders);
   }
 
   /**
@@ -68,7 +76,7 @@ class MultithreadSearcher implements SESearcher {
                                   Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
     LOG.debug("Search started for pattern [", pattern, "]");
     Phaser phaser = new Phaser();
-    FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myListener, myNotificationExecutor);
+    FullSearchResultsAccumulator accumulator = new FullSearchResultsAccumulator(contributorsAndLimits, myEqualityProvider, myListener, myNotificationExecutor);
     ProgressIndicator indicator = new ProgressIndicatorBase() {
       @Override
       protected void onRunningChange() {
@@ -106,7 +114,7 @@ class MultithreadSearcher implements SESearcher {
   public ProgressIndicator findMoreItems(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, String pattern,
                                          boolean useNonProjectItems, SearchEverywhereContributor<?> contributorToExpand, int newLimit,
                                          Function<SearchEverywhereContributor<?>, SearchEverywhereContributorFilter<?>> filterSupplier) {
-    ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, contributorToExpand, newLimit, myListener, myNotificationExecutor);
+    ResultsAccumulator accumulator = new ShowMoreResultsAccumulator(alreadyFound, myEqualityProvider, contributorToExpand, newLimit, myListener, myNotificationExecutor);
     SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributorToExpand);
     ProgressIndicator indicator = new ProgressIndicatorBase();
     indicator.start();
@@ -205,21 +213,31 @@ class MultithreadSearcher implements SESearcher {
     protected final Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections;
     protected final MultithreadSearcher.Listener myListener;
     protected final Executor myNotificationExecutor;
+    protected final SEResultsEqualityProvider myEqualityProvider;
 
-    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections, Listener listener,
-                              Executor notificationExecutor) {
+    ResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> sections,
+                       SEResultsEqualityProvider equalityProvider,
+                       Listener listener,
+                       Executor notificationExecutor) {
       this.sections = sections;
+      myEqualityProvider = equalityProvider;
       myListener = listener;
       myNotificationExecutor = notificationExecutor;
     }
 
-    protected Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> findSameElements(Object element) {
-      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> res = new ArrayList<>();
-      sections.forEach((contributor, objects) ->
-                         objects.stream()
-                           .filter(info -> Objects.equals(element, info.element))
-                           .forEach(info -> res.add(Pair.create(contributor, info)))
-      );
+    protected Map<SEResultsEqualityProvider.Action, Collection<ElementInfo>> getActionsWithOtherElements(ElementInfo newElement) {
+      Map<SEResultsEqualityProvider.Action, Collection<ElementInfo>> res = new EnumMap<>(SEResultsEqualityProvider.Action.class);
+      res.put(REPLACE, new ArrayList<>());
+      res.put(SKIP, new ArrayList<>());
+      sections.values()
+        .stream()
+        .flatMap(Collection::stream)
+        .forEach(info -> {
+          SEResultsEqualityProvider.Action action = myEqualityProvider.compareItems(newElement, info);
+          if (action != SEResultsEqualityProvider.Action.DO_NOTHING) {
+            res.get(action).add(info);
+          }
+        });
 
       return res;
     }
@@ -234,9 +252,9 @@ class MultithreadSearcher implements SESearcher {
     private final int myNewLimit;
     private volatile boolean hasMore;
 
-    ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SearchEverywhereContributor<?> contributor,
-                                      int newLimit, Listener listener, Executor notificationExecutor) {
-      super(new ConcurrentHashMap<>(alreadyFound), listener, notificationExecutor);
+    ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SEResultsEqualityProvider equalityProvider,
+                               SearchEverywhereContributor<?> contributor, int newLimit, Listener listener, Executor notificationExecutor) {
+      super(new ConcurrentHashMap<>(alreadyFound), equalityProvider, listener, notificationExecutor);
       myExpandedContributor = contributor;
       myNewLimit = newLimit;
     }
@@ -252,22 +270,22 @@ class MultithreadSearcher implements SESearcher {
         return false;
       }
 
-      Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element);
-      if (!sameElementsInfo.isEmpty() && sameElementsInfo.stream().allMatch(pair -> pair.second.getPriority() >= priority)) {
+      Map<SEResultsEqualityProvider.Action, Collection<ElementInfo>> otherElementsMap = getActionsWithOtherElements(newElementInfo);
+      if (otherElementsMap.get(REPLACE).isEmpty() && !otherElementsMap.get(SKIP).isEmpty()) {
         LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
         return true;
       }
 
       section.add(newElementInfo);
       myNotificationExecutor.execute(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
-      sameElementsInfo.stream()
-        .filter(pair -> pair.second.getPriority() < priority)
-        .forEach(pair -> {
-          Collection<ElementInfo> list = sections.get(pair.first);
-          list.remove(pair.second);
-          myNotificationExecutor.execute(() -> myListener.elementsRemoved(Collections.singletonList(pair.second)));
-          LOG.debug(String.format("Element %s for contributor %s is removed",pair.second.getElement().toString(), pair.second.getContributor().getSearchProviderId()));
-        });
+
+      List<ElementInfo> toRemove = new ArrayList<>(otherElementsMap.get(REPLACE));
+      toRemove.forEach(info -> {
+        Collection<ElementInfo> list = sections.get(info.getContributor());
+            list.remove(info);
+            LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+      });
+      myNotificationExecutor.execute(() -> myListener.elementsRemoved(toRemove));
       return true;
     }
 
@@ -293,10 +311,10 @@ class MultithreadSearcher implements SESearcher {
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 
-    FullSearchResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits, Listener listener,
-                                 Executor notificationExecutor) {
+    FullSearchResultsAccumulator(Map<SearchEverywhereContributor<?>, Integer> contributorsAndLimits,
+                                 SEResultsEqualityProvider equalityProvider, Listener listener, Executor notificationExecutor) {
       super(contributorsAndLimits.entrySet().stream().collect(Collectors.toMap(entry -> entry.getKey(), entry -> new ArrayList<>(entry.getValue()))),
-            listener, notificationExecutor);
+            equalityProvider, listener, notificationExecutor);
       sectionsLimits = contributorsAndLimits;
       conditionsMap = contributorsAndLimits.keySet().stream().collect(Collectors.toMap(Function.identity(), c -> lock.newCondition()));
     }
@@ -324,24 +342,24 @@ class MultithreadSearcher implements SESearcher {
           return false;
         }
 
-        Collection<Pair<SearchEverywhereContributor<?>, ElementInfo>> sameElementsInfo = findSameElements(element);
-        if (!sameElementsInfo.isEmpty() && sameElementsInfo.stream().allMatch(pair -> pair.second.getPriority() >= priority)) {
+        Map<SEResultsEqualityProvider.Action, Collection<ElementInfo>> otherElementsMap = getActionsWithOtherElements(newElementInfo);
+        if (otherElementsMap.get(REPLACE).isEmpty() && !otherElementsMap.get(SKIP).isEmpty()) {
           LOG.debug(String.format("Element %s for contributor %s was skipped", element.toString(), contributor.getSearchProviderId()));
           return true;
         }
 
         section.add(newElementInfo);
         myNotificationExecutor.execute(() -> myListener.elementsAdded(Collections.singletonList(newElementInfo)));
-        sameElementsInfo.stream()
-          .filter(pair -> pair.second.getPriority() < priority)
-          .forEach(pair -> {
-            Collection<ElementInfo> list = sections.get(pair.first);
-            Condition listCondition = conditionsMap.get(pair.first);
-            list.remove(pair.second);
-            myNotificationExecutor.execute(() -> myListener.elementsRemoved(Collections.singletonList(pair.second)));
-            LOG.debug(String.format("Element %s for contributor %s is removed",pair.second.getElement().toString(), pair.second.getContributor().getSearchProviderId()));
-            listCondition.signal();
-          });
+
+        List<ElementInfo> toRemove = new ArrayList<>(otherElementsMap.get(REPLACE));
+        toRemove.forEach(info -> {
+          Collection<ElementInfo> list = sections.get(info.getContributor());
+          Condition listCondition = conditionsMap.get(info.getContributor());
+          list.remove(info);
+          LOG.debug(String.format("Element %s for contributor %s is removed", info.getElement().toString(), info.getContributor().getSearchProviderId()));
+          listCondition.signal();
+        });
+        myNotificationExecutor.execute(() -> myListener.elementsRemoved(toRemove));
 
         if (section.size() >= limit) {
           stopSearchIfNeeded();

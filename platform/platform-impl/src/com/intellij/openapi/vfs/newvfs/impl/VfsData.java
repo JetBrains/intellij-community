@@ -24,12 +24,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -82,7 +84,7 @@ public class VfsData {
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
   
-  private final Object myDeadMarker = new String("dead file");
+  private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
   private final ConcurrentIntObjectMap<Segment> mySegments = ContainerUtil.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = new ConcurrentBitSet();
@@ -106,7 +108,8 @@ public class VfsData {
     synchronized (myDeadMarker) {
       if (!myDyingIds.isEmpty()) {
         for (int id : myDyingIds.toArray()) {
-          assertNotNull(getSegment(id, false)).myObjectArray.set(getOffset(id), myDeadMarker);
+          Segment segment = assertNotNull(getSegment(id, false));
+          segment.myObjectArray.set(getOffset(id), myDeadMarker);
           myChangedParents.remove(id);
         }
         myDyingIds = new TIntHashSet();
@@ -324,11 +327,11 @@ public class VfsData {
         }
       }
     }
-    void addAdoptedName(CharSequence name, boolean caseSensitive) {
+    void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
       if (myAdoptedNames == null) {
         myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
       }
-      myAdoptedNames.add(name);
+      myAdoptedNames.add(ByteArrayCharSequence.convertToBytesIfPossible(name));
     }
     void addAdoptedNames(Collection<? extends CharSequence> names, boolean caseSensitive) {
       if (myAdoptedNames == null) {

@@ -28,10 +28,9 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
   private val avatarCache = CacheBuilder.newBuilder()
     .expireAfterAccess(5, TimeUnit.MINUTES)
     .build<GithubUser, CompletableFuture<Image?>>()
-    .asMap()
 
   init {
-    LowMemoryWatcher.register(Runnable { avatarCache.clear() }, this)
+    LowMemoryWatcher.register(Runnable { avatarCache.invalidateAll() }, this)
   }
 
   fun requestAvatar(requestExecutor: GithubApiRequestExecutor, user: GithubUser): CompletableFuture<Image?> {
@@ -39,7 +38,7 @@ class CachingGithubUserAvatarLoader(private val progressManager: ProgressManager
     // store images at maximum used size with maximum reasonable scale to avoid upscaling (3 for system scale, 2 for user scale)
     val imageSize = MAXIMUM_ICON_SIZE * 6
 
-    return avatarCache.getOrPut(user) {
+    return avatarCache.get(user) {
       val url = user.avatarUrl
       if (url == null) CompletableFuture.completedFuture(null)
       else CompletableFuture.supplyAsync(Supplier {

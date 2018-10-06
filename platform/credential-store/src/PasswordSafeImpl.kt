@@ -17,11 +17,14 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Path
 import java.nio.file.Paths
+
+internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
@@ -34,9 +37,11 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     }
   }
 
-  fun showError(message: String) {
-    NOTIFICATION_MANAGER.notify(content = "$message\nIn-memory password storage will be used.", action = object: NotificationAction("Open Settings") {
+  fun showError(title: String) {
+    NOTIFICATION_MANAGER.notify(title = title, content = "In-memory password storage will be used.", action = object: NotificationAction("Passwords Settings") {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        // to hide before Settings open, otherwise dialog and notification are shown at the same time
+        notification.expire()
         ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
       }
     })
@@ -48,11 +53,11 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
   catch (e: IncorrectMasterPasswordException) {
     LOG.warn(e)
-    showError("Master password of KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}).")
+    showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
   }
   catch (e: Throwable) {
     LOG.error(e)
-    showError("Internal error during opening of KeePass database(${settings.keepassDb})")
+    showError("Failed opening KeePass database")
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY
@@ -60,14 +65,14 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
 }
 
 class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
-                                                 provider: CredentialStore? = null) : PasswordSafe(), SettingsSavingComponent {
+                                                 provider: CredentialStore? = null /* TestOnly */) : PasswordSafe(), SettingsSavingComponent {
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
     set(value) {
       settings.state.isRememberPasswordByDefault = value
     }
 
-  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) lazy { computeProvider(settings) } else lazyOf(provider)
+  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) SynchronizedClearableLazy { computeProvider(settings) } else lazyOf(provider)
 
   internal val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
@@ -77,6 +82,20 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     set(value) {
       _currentProvider = lazyOf(value)
     }
+
+  // force reload KeePass Store if settings changed
+  internal fun closeCurrentStoreIfKeePass() {
+    val store = currentProviderIfComputed as? KeePassCredentialStore ?: return
+    if (!store.isMemoryOnly) {
+      (_currentProvider as SynchronizedClearableLazy).drop()
+      try {
+        store.save()
+      }
+      catch (e: Exception) {
+        LOG.warn(e)
+      }
+    }
+  }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
   private val memoryHelperProvider = lazy { createInMemoryKeePassCredentialStore() }

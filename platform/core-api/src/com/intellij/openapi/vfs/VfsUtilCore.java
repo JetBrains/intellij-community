@@ -60,7 +60,7 @@ public class VfsUtilCore {
   /**
    * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
    */
-  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<? extends VirtualFile> roots) {
     if (roots == null || roots.isEmpty()) return false;
 
     VirtualFile parent = file;
@@ -252,7 +252,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
+    BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
     return inputStreamSkippingBOM(stream, file);
   }
 
@@ -285,7 +285,7 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
-  @SuppressWarnings({"UnsafeVfsRecursion", "Duplicates"})
+  @SuppressWarnings({"UnsafeVfsRecursion"})
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
@@ -716,7 +716,7 @@ public class VfsUtilCore {
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection() { }
 
-    public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
+    public DistinctVFilesRootsCollection(Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
 

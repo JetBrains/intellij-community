@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.command.CommandProcessor;
@@ -13,7 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction {
+public class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
   public BackspaceAction() {
     super(new Handler());
   }

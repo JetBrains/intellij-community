@@ -115,7 +115,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     else if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
     else {
@@ -223,7 +222,7 @@ public class ClassRenderer extends NodeRendererImpl{
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
         fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
@@ -284,7 +283,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
-    //noinspection HardCodedStringLiteral
     final Field field = classType.fieldByName("name");
     if (field == null) {
       return null;

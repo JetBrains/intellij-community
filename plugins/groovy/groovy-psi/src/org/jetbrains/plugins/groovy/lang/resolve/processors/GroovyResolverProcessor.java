@@ -228,9 +228,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     if (element instanceof PsiMethod) {
       return GroovyResolveKind.METHOD;
     }
-    else if (element instanceof PsiEnumConstant) {
-      return GroovyResolveKind.ENUM_CONST;
-    }
     else if (element instanceof PsiField) {
       return GroovyResolveKind.FIELD;
     }

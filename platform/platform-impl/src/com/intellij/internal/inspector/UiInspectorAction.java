@@ -1162,7 +1162,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     final Component myComponent;
     final List<PropertyBean> myProperties = ContainerUtil.newArrayList();
 
-    InspectorTableModel(@NotNull List<PropertyBean> clickInfo) {
+    InspectorTableModel(@NotNull List<? extends PropertyBean> clickInfo) {
       myComponent = null;
       myProperties.addAll(clickInfo);
     }

@@ -28,13 +28,13 @@ public class ChainingFilterTransformer implements Transformer<Reader, Reader> {
   private final Ref<File> myOutputFileRef;
 
 
-  public ChainingFilterTransformer(CompileContext context, Collection<ResourceRootFilter> filters, Ref<File> outputFileRef) {
+  public ChainingFilterTransformer(CompileContext context, Collection<? extends ResourceRootFilter> filters, Ref<File> outputFileRef) {
     myContext = context;
     myOutputFileRef = outputFileRef;
     myFilters.addAll(filters);
   }
 
-  public ChainingFilterTransformer(CompileContext context, Collection<ResourceRootFilter> filters) {
+  public ChainingFilterTransformer(CompileContext context, Collection<? extends ResourceRootFilter> filters) {
     this(context, filters, null);
   }
 

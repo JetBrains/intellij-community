@@ -276,7 +276,7 @@ public class BreakpointManager {
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
-          //noinspection CastConflictsWithInstanceof,unchecked
+          // noinspection unchecked
           return (T)breakpoint;
         }
       }

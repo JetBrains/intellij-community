@@ -35,7 +35,7 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
     this(ParametersListUtil.DEFAULT_LINE_PARSER, ParametersListUtil.DEFAULT_LINE_JOINER);
   }
 
-  public RawCommandLineEditor(final Function<String, List<String>> lineParser, final Function<List<String>, String> lineJoiner) {
+  public RawCommandLineEditor(final Function<? super String, ? extends List<String>> lineParser, final Function<? super List<String>, String> lineJoiner) {
     super(new BorderLayout());
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
     add(myEditor, BorderLayout.CENTER);

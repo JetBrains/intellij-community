@@ -18,7 +18,7 @@ public class JBTabInnerTerminalWidget extends JBTerminalWidget {
   public JBTabInnerTerminalWidget(Project project,
                                   JBTerminalSystemSettingsProviderBase settingsProvider,
                                   Disposable parent,
-                                  Function<String, JBTabInnerTerminalWidget> createNewSessionAction,
+                                  Function<? super String, ? extends JBTabInnerTerminalWidget> createNewSessionAction,
                                   JBTabbedTerminalWidget tabbedWidget) {
     this(project, 80, 24, settingsProvider, parent, pair -> createNewSessionAction.apply(pair));
     myTabbedWidget = tabbedWidget;

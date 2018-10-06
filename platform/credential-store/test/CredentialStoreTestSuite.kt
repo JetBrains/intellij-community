@@ -1,11 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.credentialStore.keePass.KeePassCredentialStoreTest
-import com.intellij.credentialStore.keePass.KeePassFileManagerTest
+import com.intellij.credentialStore.keePass.KeePassTestSuite
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 @RunWith(Suite::class)
-@Suite.SuiteClasses(KeePassCredentialStoreTest::class, CredentialSerializeTest::class, CredentialStoreTest::class, PasswordSafeTest::class, MasterPasswordMigrationTest::class, KeePassFileManagerTest::class)
+@Suite.SuiteClasses(KeePassTestSuite::class, CredentialSerializeTest::class, CredentialStoreTest::class, PasswordSafeTest::class, MasterPasswordMigrationTest::class)
 internal class CredentialStoreTestSuite

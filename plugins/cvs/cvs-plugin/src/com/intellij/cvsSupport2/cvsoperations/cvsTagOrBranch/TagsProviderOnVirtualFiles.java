@@ -26,9 +26,9 @@ import java.util.Collection;
  * author: lesya
  */
 public class TagsProviderOnVirtualFiles implements TagsProvider {
-  private final Collection<FilePath> myFiles;
+  private final Collection<? extends FilePath> myFiles;
 
-  public TagsProviderOnVirtualFiles(Collection<FilePath> files) {
+  public TagsProviderOnVirtualFiles(Collection<? extends FilePath> files) {
     myFiles = files;
   }
 

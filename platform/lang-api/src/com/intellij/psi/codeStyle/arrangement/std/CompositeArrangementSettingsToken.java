@@ -68,7 +68,7 @@ public class CompositeArrangementSettingsToken {
   }
 
   public CompositeArrangementSettingsToken(@NotNull ArrangementSettingsToken token,
-                                           @NotNull Collection<ArrangementSettingsToken> children)
+                                           @NotNull Collection<? extends ArrangementSettingsToken> children)
   {
     this(token, deduceRole(token), ContainerUtilRt.map2List(children, WRAPPER));
   }

@@ -41,7 +41,6 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
     }
 
     if (PsiImplUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
-      @SuppressWarnings("ConstantConditions")
       PsiElement parent = contextElement.getParent();
       if (parent != null) {
         for (PsiReference reference : parent.getReferences()) {

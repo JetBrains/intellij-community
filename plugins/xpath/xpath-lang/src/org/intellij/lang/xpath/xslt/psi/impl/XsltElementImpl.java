@@ -94,7 +94,6 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     public String getPresentableText() {
         return getName();
     }

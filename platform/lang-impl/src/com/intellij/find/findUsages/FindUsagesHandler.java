@@ -161,7 +161,7 @@ public abstract class FindUsagesHandler {
 
   /** @deprecated use/override {@link #isSearchForTextOccurrencesAvailable(PsiElement, boolean)} instead (to be removed in IDEA 18) */
   @Deprecated
-  @SuppressWarnings({"SpellCheckingInspection", "UnusedParameters"})
+  @SuppressWarnings({"SpellCheckingInspection"})
   protected boolean isSearchForTextOccurencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
     return false;
   }

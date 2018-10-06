@@ -462,7 +462,6 @@ public class ConsoleHistoryController {
         }
       }
       catch (Exception ex) {
-        //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = ExceptionUtil.getRootCause(ex);
         if (cause instanceof EOFException) {
           LOG.warn("Failed to load " + myRootType.getId() + " history from: " + file.getPath(), ex);

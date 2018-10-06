@@ -19,7 +19,6 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -56,7 +55,7 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       final Language dataLanguage = ((TemplateLanguageFileViewProvider)viewProvider).getTemplateDataLanguage();
       final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forLanguage(dataLanguage);
-      if (builder instanceof DelegatingFormattingModelBuilder && ((DelegatingFormattingModelBuilder)builder).dontFormatMyModel()) {
+      if (builder instanceof DelegatingFormattingModelBuilder && ((DelegatingFormattingModelBuilder)builder).dontFormatMyModel(element)) {
         return createDummyBlock(node);
       }
       if (builder != null) {

@@ -63,17 +63,12 @@ class BundledJreManager {
   }
 
 
-  String getJreDir(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
+  @CompileDynamic
+  private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
     String vendorSuffix = vendor == JreVendor.Oracle ? ".oracle" : ""
     String targetDir = arch == JvmArchitecture.x64 ?
                        "$baseDirectoryForJre/jre.$osName$arch.fileSuffix$vendorSuffix" :
                        "$baseDirectoryForJre/jre.${osName}32$vendorSuffix"
-    return targetDir
-  }
-
-  @CompileDynamic
-  private String extractJre(String osName, JvmArchitecture arch = JvmArchitecture.x64, JreVendor vendor = JreVendor.JetBrains) {
-    String targetDir = getJreDir(osName, arch, vendor)
     if (new File(targetDir).exists()) {
       buildContext.messages.info("JRE is already extracted to $targetDir")
       return targetDir
@@ -165,5 +160,9 @@ class BundledJreManager {
 
   def jreSuffix() {
     buildContext.options.bundledJreVersion > 8 ? "-bundled-jre${buildContext.options.bundledJreVersion}" : ""
+  }
+
+  def is32bitArchSupported() {
+    !buildContext.isBundledJreModular()
   }
 }

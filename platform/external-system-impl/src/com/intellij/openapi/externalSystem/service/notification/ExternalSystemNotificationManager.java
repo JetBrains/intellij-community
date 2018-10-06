@@ -82,7 +82,7 @@ public class ExternalSystemNotificationManager implements Disposable {
 
   @NotNull private static final Key<Pair<NotificationSource, ProjectSystemId>> CONTENT_ID_KEY = Key.create("CONTENT_ID");
   @NotNull private final MergingUpdateQueue myUpdateQueue;
-  @SuppressWarnings("StatefulEp") @Nullable private volatile Project myProject;
+  @Nullable private volatile Project myProject;
   @NotNull private final Set<Notification> myNotifications;
   @NotNull private final Map<Key, Notification> myUniqueNotifications;
   @NotNull private final Set<ProjectSystemId> initializedExternalSystem;
@@ -137,7 +137,6 @@ public class ExternalSystemNotificationManager implements Disposable {
     Integer line = null;
     Integer column = null;
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof LocationAwareExternalSystemException) {
       LocationAwareExternalSystemException locationAwareExternalSystemException = (LocationAwareExternalSystemException)unwrapped;

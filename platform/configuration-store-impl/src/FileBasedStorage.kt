@@ -6,10 +6,10 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.debugOrInfoIfTestMode
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -34,7 +34,7 @@ import java.nio.file.attribute.BasicFileAttributes
 open class FileBasedStorage(file: Path,
                             fileSpec: String,
                             rootElementName: String?,
-                            pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                            pathMacroManager: PathMacroSubstitutor? = null,
                             roamingType: RoamingType? = null,
                             provider: StreamProvider? = null) :
   XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {

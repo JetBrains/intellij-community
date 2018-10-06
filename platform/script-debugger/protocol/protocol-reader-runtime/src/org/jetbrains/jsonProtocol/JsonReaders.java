@@ -26,7 +26,7 @@ public final class JsonReaders {
   private JsonReaders() {
   }
 
-  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<T> valueFactory) {
+  public static <T> ObjectFactory<Map<String, T>> mapFactory(@NotNull ObjectFactory<? extends T> valueFactory) {
     return new MapFactory<>(valueFactory);
   }
 
@@ -199,7 +199,6 @@ public final class JsonReaders {
 
     List<String> list = new ArrayList<>();
     do {
-      //noinspection unchecked
       list.add(reader.nextString(true));
     }
     while (reader.hasNext());

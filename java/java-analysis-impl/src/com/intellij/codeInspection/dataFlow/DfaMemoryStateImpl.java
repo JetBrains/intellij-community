@@ -1125,7 +1125,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   @Nullable
-  @SuppressWarnings("unchecked")
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;

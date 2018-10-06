@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -177,6 +178,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         setCurrentLookAndFeel(laf); // setup default LAF or one specified by readExternal.
         updateWizardLAF(needUninstall);
       }
+    }
+
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && !((UIThemeBasedLookAndFeelInfo)myCurrentLaf).isInitialised()) {
+      setCurrentLookAndFeel(myCurrentLaf);
     }
 
     updateUI();
@@ -357,6 +362,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         LookAndFeel laf = ((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
         if (laf instanceof MetalLookAndFeel) {
           MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
+        }
+        if (laf instanceof UserDataHolder && lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+          ((UserDataHolder)laf).putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
         }
         UIManager.setLookAndFeel(laf);
       }

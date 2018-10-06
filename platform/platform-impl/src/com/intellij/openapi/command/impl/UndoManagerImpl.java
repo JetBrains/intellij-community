@@ -18,6 +18,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;

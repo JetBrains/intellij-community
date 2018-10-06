@@ -39,7 +39,7 @@ public class TrelloRepositoryEditor extends BaseRepositoryEditor<TrelloRepositor
 
   public TrelloRepositoryEditor(Project project,
                                 TrelloRepository repository,
-                                Consumer<TrelloRepository> changeListener) {
+                                Consumer<? super TrelloRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myURLText.setVisible(false);

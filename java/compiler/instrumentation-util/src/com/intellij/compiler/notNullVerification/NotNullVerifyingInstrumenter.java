@@ -25,7 +25,11 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @SuppressWarnings("SSBasedInspection") private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  @SuppressWarnings("ConstantConditions") private static final boolean NEW_ASM = Opcodes.API_VERSION > Opcodes.ASM6;
+  private static final boolean NEW_ASM;
+  static {
+    try { NEW_ASM = (Integer)Opcodes.class.getField("API_VERSION").get(null) > Opcodes.ASM6; }
+    catch (Exception e) { throw new RuntimeException(e); }
+  }
 
   private final Map<String, Map<Integer, String>> myMethodParamNames;
   private String myClassName;

@@ -26,7 +26,7 @@ import junit.framework.TestSuite;
 /**
  * @author Irina.Chernushina on 4/12/2017.
  */
-@SuppressWarnings({"JUnitTestCaseWithNoTests", "JUnitTestClassNamingConvention"})
+@SuppressWarnings({"JUnitTestClassNamingConvention"})
 public class JsonSchemaTestSuite {
   public static Test suite() {
     final TestSuite suite = new TestSuite(JsonSchemaTestSuite.class.getSimpleName());

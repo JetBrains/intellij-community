@@ -357,7 +357,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     final FormattingModelBuilder childFormatter = LanguageFormatting.INSTANCE.forLanguage(childLanguage);
     return childFormatter == null ||
            childFormatter instanceof DelegatingFormattingModelBuilder &&
-           ((DelegatingFormattingModelBuilder)childFormatter).dontFormatMyModel();
+           ((DelegatingFormattingModelBuilder)childFormatter).dontFormatMyModel(childPsi);
   }
 
   protected boolean isJspxJavaContainingNode(final ASTNode child) {

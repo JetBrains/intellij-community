@@ -620,7 +620,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
    */
   @Nullable
   @Deprecated
-  public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
+  public static List<String> getStringListFromTargetExpression(final String name, List<? extends PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
         return PyUtil.strListValue(attr.findAssignedValue());

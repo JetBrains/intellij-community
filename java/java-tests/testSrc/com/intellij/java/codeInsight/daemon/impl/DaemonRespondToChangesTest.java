@@ -81,7 +81,6 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -148,7 +147,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       Project project = getProject();
       if (project != null) {
         doPostponedFormatting(project);
-        ((ProjectManagerImpl)ProjectManagerEx.getInstanceEx()).forceCloseProject(project, false);
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
     }
     finally {

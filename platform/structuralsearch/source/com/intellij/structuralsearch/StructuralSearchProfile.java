@@ -317,7 +317,7 @@ public abstract class StructuralSearchProfile {
     return false;
   }
 
-  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+  public final boolean isApplicableConstraint(String constraintName, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (nodes.isEmpty()) {
       return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
     }

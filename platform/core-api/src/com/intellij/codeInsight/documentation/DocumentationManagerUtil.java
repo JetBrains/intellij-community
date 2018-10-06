@@ -23,7 +23,7 @@ public class DocumentationManagerUtil {
     return ServiceManager.getService(DocumentationManagerUtil.class);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"HardCodedStringLiteral", "UnusedParameters"})
   protected void createHyperlinkImpl(StringBuilder buffer, PsiElement refElement, String refText, String label, boolean plainLink) {
     buffer.append("<a href=\"");
     buffer.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL); // :-)

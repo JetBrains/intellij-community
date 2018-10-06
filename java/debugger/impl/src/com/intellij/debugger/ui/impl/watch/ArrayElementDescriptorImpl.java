@@ -65,7 +65,7 @@ public class ArrayElementDescriptorImpl extends ValueDescriptorImpl implements A
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText("this[" + myIndex + "]", null);
     }

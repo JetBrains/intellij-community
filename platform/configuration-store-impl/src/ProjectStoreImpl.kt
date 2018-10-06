@@ -49,7 +49,7 @@ internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FIL
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
 // cannot be `internal`, used in Upsource
-abstract class ProjectStoreBase(final override val project: ProjectImpl) : ComponentStoreWithExtraComponents(), IProjectStore {
+abstract class ProjectStoreBase(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme: StorageScheme = StorageScheme.DEFAULT
@@ -246,7 +246,7 @@ abstract class ProjectStoreBase(final override val project: ProjectImpl) : Compo
   override fun getDirectoryStorePathOrBase(): String = PathUtilRt.getParentPath(projectFilePath)
 }
 
-private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+private open class ProjectStoreImpl(project: Project, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
 
   init {
@@ -366,7 +366,7 @@ private fun dropUnableToSaveProjectNotification(project: Project, readOnlyFiles:
 
 private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = Array(readonlyFiles.size) { readonlyFiles[it].file }
 
-private class ProjectWithModulesStoreImpl(project: ProjectImpl, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
+private class ProjectWithModulesStoreImpl(project: Project, pathMacroManager: PathMacroManager) : ProjectStoreImpl(project, pathMacroManager) {
   override fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {
     super.beforeSave(readonlyFiles)
 

@@ -185,7 +185,7 @@ public class ArrayRenderer extends NodeRendererImpl{
     LOG.assertTrue(node.getDescriptor() instanceof ArrayElementDescriptorImpl, node.getDescriptor().getClass().getName());
     ArrayElementDescriptorImpl descriptor = (ArrayElementDescriptorImpl)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       LanguageLevel languageLevel = LanguageLevelProjectExtension.getInstance(node.getProject()).getLanguageLevel();
       return elementFactory.createExpressionFromText("this[" + descriptor.getIndex() + "]", elementFactory.getArrayClass(languageLevel));

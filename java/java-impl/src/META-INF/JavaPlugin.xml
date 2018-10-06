@@ -614,7 +614,7 @@
                      implementationClass="com.intellij.codeInspection.IdempotentLoopBodyInspection"/>
     <localInspection language="JAVA" shortName="ConditionalBreakInInfiniteLoop" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
-                     bundle="messages.InspectionsBundle" key="inspection.conditional.break.in.infinite.loop"
+                     bundle="messages.InspectionsBundle" key="inspection.conditional.break.in.infinite.loop.description"
                      implementationClass="com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection"/>
     <localInspection language="JAVA" shortName="JavaReflectionMemberAccess" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
@@ -652,7 +652,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
-                     displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
+                     displayName="Optional.isPresent() can be replaced with functional-style expression"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OptionalGetWithoutIsPresent"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -678,17 +678,17 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ReplaceInefficientStreamCountInspection"
-                     displayName="Replace inefficient Stream API call chains ending with count()"/>
+                     displayName="Inefficient Stream API call chains ending with count()"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ComparatorCombinators"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ComparatorCombinatorsInspection"
-                     displayName="Use Comparator combinators"/>
+                     displayName="Comparator combinator can be used"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UseBulkOperation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection"
-                     displayName="Use bulk operation instead of iteration"/>
+                     displayName="Bulk operation can be used instead of iteration"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -698,12 +698,12 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyOptionalCallChainsInspection"
-                     displayName="Simplify Optional call chains"/>
+                     displayName="Optional call chain can be simplified"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
-                     displayName="Simplify stream API call chains"/>
+                     displayName="Stream API call chain can be simplified"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObviousNullCheck"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -734,6 +734,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java19api.Java9CollectionFactoryInspection"
                      displayName="Immutable collection creation can be replaced with collection factory call"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ReadWriteStringCanBeUsed"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids11" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ReadWriteStringCanBeUsedInspection"
+                     displayName="'Files.readString()' or 'Files.writeString()' can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8MapForEach"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -743,7 +748,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapApiInspection"
-                     displayName="Replace with single Map method"/>
+                     displayName="Single Map method can be used"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
@@ -912,7 +917,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JoinDeclarationAndAssignmentJava"
                      key="inspection.join.declaration.and.assignment.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFO"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"

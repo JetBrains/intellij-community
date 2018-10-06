@@ -68,7 +68,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     return model;
   }
 
-  public JBList(@NotNull Collection<E> items) {
+  public JBList(@NotNull Collection<? extends E> items) {
     this(createDefaultListModel(items));
   }
 
@@ -285,7 +285,6 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   @Override
   public void setCellRenderer(@NotNull ListCellRenderer<? super E> cellRenderer) {
     // myExpandableItemsHandler may not yeb be initialized
-    //noinspection ConstantConditions
     if (myExpandableItemsHandler == null) {
       super.setCellRenderer(cellRenderer);
       return;

@@ -56,7 +56,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
 
   @Override
   public final char charAt(int index) {
-    return (char)myChars[index + myStart];
+    return (char)(myChars[index + myStart] & 0xff);
   }
 
   @NotNull
@@ -71,18 +71,26 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
     return new String(myChars, myStart, length(), CharsetToolkit.ISO_8859_1_CHARSET);
   }
 
+  /**
+   * @deprecated use {@link #convertToBytesIfPossible(CharSequence)} instead
+   */
+  @Deprecated
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    return convertToBytesIfAsciiString((CharSequence)name);
+    return convertToBytesIfPossible(name);
   }
 
+  /**
+   * @return instance of {@link ByteArrayCharSequence} if the supplied string can be stored internally
+   * as a byte array of 8-bit code points (for more compact representation); its {@code string} argument otherwise
+   */
   @NotNull
-  public static CharSequence convertToBytesIfAsciiString(@NotNull CharSequence name) {
-    int length = name.length();
+  public static CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
+    int length = string.length();
     if (length == 0) return "";
-    if (name instanceof ByteArrayCharSequence) return name;
-    byte[] bytes = toBytesIfPossible(name);
-    return bytes == null ? name : new ByteArrayCharSequence(bytes);
+    if (string instanceof ByteArrayCharSequence) return string;
+    byte[] bytes = toBytesIfPossible(string);
+    return bytes == null ? string : new ByteArrayCharSequence(bytes);
   }
 
   @NotNull

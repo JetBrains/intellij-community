@@ -113,7 +113,9 @@ public class TabHeaderComponent extends JComponent {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.GearPlain) {
+    toolbarActionGroup.add(new DumbAwareAction(null,
+                                               "Manage Repositories, Configure Proxy or Install Plugin from Disk",
+                                               AllIcons.General.GearPlain) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
@@ -217,13 +219,9 @@ public class TabHeaderComponent extends JComponent {
     super.paintComponent(g);
     calculateSize();
 
-    FontMetrics fm = getFontMetrics(getFont());
     int x = getStartX();
     int height = getHeight();
-    int tabTitleY = fm.getAscent() + (height - fm.getHeight()) / 2;
-    if (myBreadcrumbs != null) {
-      tabTitleY = myBaselineY + myBreadcrumbs.getBaseline();
-    }
+    int tabTitleY = getBaseline(-1, -1);
 
     for (int i = 0, size = myTabs.size(); i < size; i++) {
       if (mySelectionTab == i || myHoverTab == i) {
@@ -237,6 +235,16 @@ public class TabHeaderComponent extends JComponent {
 
       g.drawString(myTabs.get(i).compute(), x + mySizeInfo.tabTitleX[i], tabTitleY);
     }
+  }
+
+  @Override
+  public int getBaseline(int width, int height) {
+    FontMetrics fm = getFontMetrics(getFont());
+    int tabTitleY = fm.getAscent() + (getHeight() - fm.getHeight()) / 2;
+    if (myBreadcrumbs != null) {
+      tabTitleY = myBaselineY + Math.max(myBreadcrumbs.getBaseline(-1, -1), 0);
+    }
+    return tabTitleY;
   }
 
   @Override

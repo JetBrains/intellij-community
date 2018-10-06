@@ -95,7 +95,6 @@ public class ManifestParserDefinition implements ParserDefinition {
     return new ManifestFileImpl(viewProvider);
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Override
   public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return left.getPsi() instanceof Header || right.getPsi() instanceof Header ?

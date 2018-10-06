@@ -12,7 +12,7 @@ import java.util.Locale;
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.util.ObjectUtils.notNull;
 
-@SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
+@SuppressWarnings({"HardCodedStringLiteral", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
   public static final String OS_NAME = SystemInfoRt.OS_NAME;
   public static final String OS_VERSION = SystemInfoRt.OS_VERSION;

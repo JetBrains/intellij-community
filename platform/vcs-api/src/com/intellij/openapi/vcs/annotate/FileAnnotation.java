@@ -44,7 +44,7 @@ public abstract class FileAnnotation {
 
   private boolean myIsClosed;
   private Runnable myCloser;
-  private Consumer<FileAnnotation> myReloader;
+  private Consumer<? super FileAnnotation> myReloader;
 
   protected FileAnnotation(@NotNull Project project) {
     myProject = project;
@@ -215,7 +215,7 @@ public abstract class FileAnnotation {
   /**
    * @see #reload(FileAnnotation)
    */
-  public synchronized final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
+  public synchronized final void setReloader(@Nullable Consumer<? super FileAnnotation> reloader) {
     if (myIsClosed) return;
     myReloader = reloader;
   }

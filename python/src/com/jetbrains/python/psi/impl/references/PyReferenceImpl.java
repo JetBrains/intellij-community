@@ -81,7 +81,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   // it is *not* final so that it can be changed in debug time. if set to false, caching is off
-  @SuppressWarnings("FieldCanBeLocal")
   private static final boolean USE_CACHE = true;
 
   /**

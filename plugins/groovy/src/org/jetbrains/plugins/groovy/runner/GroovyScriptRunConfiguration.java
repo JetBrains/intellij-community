@@ -255,7 +255,6 @@ public final class GroovyScriptRunConfiguration extends ModuleBasedConfiguration
     return null;
   }
 
-  @SuppressWarnings("Duplicates")
   @Nullable
   private static String getPathByElement(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();

@@ -233,9 +233,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     @Override
     public int compare(final TreeNode o1, final TreeNode o2) {
       if (o1 instanceof BreakpointItemNode && o2 instanceof BreakpointItemNode) {
-        //noinspection unchecked
         BreakpointItem b1 = ((BreakpointItemNode)o1).getBreakpointItem();
-        //noinspection unchecked
         BreakpointItem b2 = ((BreakpointItemNode)o2).getBreakpointItem();
         boolean default1 = b1.isDefaultBreakpoint();
         boolean default2 = b2.isDefaultBreakpoint();

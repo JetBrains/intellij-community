@@ -676,7 +676,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       dfaLeft != dfaRight && isComparedByEquals(instruction.getExpression()) &&
+       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue) && isComparedByEquals(instruction.getExpression()) &&
        !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();

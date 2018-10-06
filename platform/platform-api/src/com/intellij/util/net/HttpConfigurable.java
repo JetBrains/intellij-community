@@ -359,7 +359,6 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   //these methods are preserved for compatibility with com.intellij.openapi.project.impl.IdeaServerSettings
   @Deprecated
   public void readExternal(Element element) throws InvalidDataException {
-    //noinspection ConstantConditions
     loadState(XmlSerializer.deserialize(element, HttpConfigurable.class));
   }
 
@@ -461,7 +460,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
   @Deprecated
-  @SuppressWarnings({"deprecation", "unused"})
+  @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
     return properties.stream().map(p -> KeyValue.create(p.first, p.second)).collect(Collectors.toList());
@@ -555,7 +554,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
 
   /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
   @Deprecated
-  @SuppressWarnings({"deprecation", "unused"})
+  @SuppressWarnings({"unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {
     if (list.isEmpty()) {

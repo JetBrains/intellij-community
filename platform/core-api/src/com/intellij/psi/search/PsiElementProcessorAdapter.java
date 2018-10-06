@@ -10,9 +10,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 
 public class PsiElementProcessorAdapter<T extends PsiElement> extends ReadActionProcessor<T> implements Processor<T> {
-  private final PsiElementProcessor<T> myProcessor;
+  private final PsiElementProcessor<? super T> myProcessor;
 
-  public PsiElementProcessorAdapter(final PsiElementProcessor<T> processor) {
+  public PsiElementProcessorAdapter(final PsiElementProcessor<? super T> processor) {
     myProcessor = processor;
   }
 

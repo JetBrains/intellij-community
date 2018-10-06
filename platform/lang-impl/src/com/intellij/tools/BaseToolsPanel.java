@@ -529,7 +529,6 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     }
     final List<CheckedTreeNode> nodes = new ArrayList<>();
     new Object() {
-      @SuppressWarnings("unchecked")
       public void collect(CheckedTreeNode node) {
         if (node.isLeaf()) {
           Object userObject = node.getUserObject();

@@ -20,14 +20,13 @@ class GithubAccountInformationProvider {
   private val informationCache = CacheBuilder.newBuilder()
     .expireAfterAccess(30, TimeUnit.MINUTES)
     .build<GithubAccount, GithubUserDetailed>()
-    .asMap()
 
   init {
     ApplicationManager.getApplication().messageBus
       .connect()
       .subscribe(GithubAccountManager.ACCOUNT_TOKEN_CHANGED_TOPIC, object : AccountTokenChangedListener {
         override fun tokenChanged(account: GithubAccount) {
-          informationCache.remove(account)
+          informationCache.invalidate(account)
         }
       })
   }
@@ -35,6 +34,6 @@ class GithubAccountInformationProvider {
   @CalledInBackground
   @Throws(IOException::class)
   fun getInformation(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount): GithubUserDetailed {
-    return informationCache.getOrPut(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)) }
+    return informationCache.get(account) { executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server)) }
   }
 }

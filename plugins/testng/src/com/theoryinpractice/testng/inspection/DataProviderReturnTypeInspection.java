@@ -44,7 +44,6 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
       if (returnType != null && !isSuitableReturnType(method, returnType)) {
         final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
         LOG.assertTrue(returnTypeElement != null);
-        //noinspection DialogTitleCapitalization
         boolean supportOneDimensional = supportOneDimensional(method);
         String message = "Data provider must return " +
                          (supportOneDimensional ? "Object[][]/Object[] or Iterator<Object[]>/Iterator<Object>"

@@ -474,9 +474,9 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private final Map<String, DeploymentImpl> myRemoteDeployments = new HashMap<>();
     private final Map<String, LocalDeploymentImpl> myLocalDeployments = new HashMap<>();
     private List<Deployment> myCachedAllDeployments;
-    private final Comparator<Deployment> myDeploymentComparator;
+    private final Comparator<? super Deployment> myDeploymentComparator;
 
-    MyDeployments(Comparator<Deployment> deploymentComparator) {
+    MyDeployments(Comparator<? super Deployment> deploymentComparator) {
       myDeploymentComparator = deploymentComparator;
     }
 

@@ -47,7 +47,6 @@ public abstract class FileColorManager {
   @Nullable
   public abstract Color getColor(@NotNull String name);
 
-  @SuppressWarnings({"MethodMayBeStatic"})
   public abstract Collection<String> getColorNames();
 
   @Nullable

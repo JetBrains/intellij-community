@@ -57,12 +57,12 @@ public class CommitPanel extends JBPanel {
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final Consumer<CommitId> myNavigate;
+  @NotNull private final Consumer<? super CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
   @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<CommitId> navigate) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<? super CommitId> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
     myNavigate = navigate;

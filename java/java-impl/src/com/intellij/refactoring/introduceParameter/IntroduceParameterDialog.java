@@ -31,7 +31,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
 
   private final Project myProject;
   private final PsiFile myFile;
-  private final List<UsageInfo> myClassMembersList;
+  private final List<? extends UsageInfo> myClassMembersList;
   private final int myOccurenceNumber;
   private final PsiMethod myMethodToSearchFor;
   private final PsiMethod myMethodToReplaceIn;
@@ -54,7 +54,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   private boolean myHasWriteAccess;
 
   IntroduceParameterDialog(@NotNull Project project,
-                           @NotNull List<UsageInfo> classMembersList,
+                           @NotNull List<? extends UsageInfo> classMembersList,
                            PsiExpression[] occurences,
                            PsiLocalVariable onLocalVariable,
                            PsiExpression onExpression,

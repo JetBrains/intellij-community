@@ -166,7 +166,6 @@ public final class DfaFactMap {
     return myMap.hashCode();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public String toString() {
     return facts(DfaFactType::toString).joining(", ");

@@ -56,7 +56,7 @@ public class InsertMethodCallFix implements IntentionAction, LowPriorityAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiExpression methodExpression = myCall.getMethodExpression();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String replacement = methodExpression.getText() + "." + myMethodName;
     methodExpression.replace(factory.createExpressionFromText(replacement, methodExpression));
   }

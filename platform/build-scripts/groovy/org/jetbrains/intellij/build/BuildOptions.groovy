@@ -80,6 +80,7 @@ class BuildOptions {
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.CompilationPartsMetadata} serialized into json format
    */
   String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
@@ -122,9 +123,4 @@ class BuildOptions {
    * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
    */
   String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
-
-  /**
-   * Specifies prefix of JRE artifact to be bundled with distributions, JB JRE 8 prefix by default.
-   */
-  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix", "jbrex8")
 }

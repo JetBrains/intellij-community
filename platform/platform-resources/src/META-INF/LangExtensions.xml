@@ -244,7 +244,7 @@
 
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
-                    serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"/>
+                    serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.psi.search.ProjectScopeBuilderImpl"/>
@@ -1133,6 +1133,9 @@
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Factory" />
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor$Factory" />
     <searchEverywhereContributor implementation="com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor$Factory" />
+
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider"/>
+    <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider"/>
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
 

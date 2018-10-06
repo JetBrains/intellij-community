@@ -176,7 +176,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  @SuppressWarnings("TestMethodWithIncorrectSignature")
   protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override

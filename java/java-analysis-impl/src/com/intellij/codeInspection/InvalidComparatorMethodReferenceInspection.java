@@ -27,7 +27,6 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
         String functionalInterface = getFunctionalInterfaceClassName(expression);
         if (!CommonClassNames.JAVA_UTIL_COMPARATOR.equals(functionalInterface)) return;
 
-        //noinspection DialogTitleCapitalization
         holder
           .registerProblem(expression,
                            "Method reference mapped to Comparator interface does not fulfill the Comparator contract",

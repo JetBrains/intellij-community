@@ -90,7 +90,6 @@ public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer, O
       }
     }
     else {
-      //noinspection HardCodedStringLiteral
       result = "null";
     }
     return result;

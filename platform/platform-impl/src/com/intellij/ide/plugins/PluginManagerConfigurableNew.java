@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -287,7 +288,14 @@ public class PluginManagerConfigurableNew
       myCardPanel.select(Pair.create(descriptor, label != null && currentTab == UPDATES_TAB), true);
       myPluginsModel.detailPanel.backTabIndex = currentTab;
 
-      myTopController.setLeftComponent(backButton);
+      NonOpaquePanel buttonPanel = new NonOpaquePanel(backButton) {
+        @Override
+        public int getBaseline(int width, int height) {
+          return backButton.getBaseline(width, height);
+        }
+      };
+      buttonPanel.setBorder(JBUI.Borders.empty(0, 3));
+      myTopController.setLeftComponent(buttonPanel);
       myTabHeaderComponent.clearSelection();
     };
 
@@ -296,6 +304,7 @@ public class PluginManagerConfigurableNew
       mySearchTextField.setTextIgnoreEvents(query);
       IdeFocusManager.getGlobalInstance()
         .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
+      myCurrentSearchPanel.setEmpty();
       showSearchPanel(query);
     };
 
@@ -310,7 +319,7 @@ public class PluginManagerConfigurableNew
           return;
         }
         if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
-          myCurrentSearchPanel.controller.showAttributesPopup(null);
+          myCurrentSearchPanel.controller.showAttributesPopup(null, 0);
         }
         else {
           myCurrentSearchPanel.controller.handleShowPopup();
@@ -396,9 +405,10 @@ public class PluginManagerConfigurableNew
           if (index == UPDATES_SEARCH_TAB) {
             return myUpdatesSearchPanel.createScrollPane();
           }
+          throw new RuntimeException("Create card unknown KEY index: " + key);
         }
 
-        //noinspection ConstantConditions,unchecked
+        //noinspection unchecked
         return createDetailsPanel((Pair<IdeaPluginDescriptor, Boolean>)key);
       }
     };
@@ -512,11 +522,14 @@ public class PluginManagerConfigurableNew
   }
 
   private static int getStoredSelectionTab() {
-    return PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    int value = PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    return value >= TRENDING_TAB && value <= UPDATES_TAB ? value : TRENDING_TAB;
   }
 
   private static void storeSelectionTab(int value) {
-    PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    if (value >= TRENDING_TAB && value <= UPDATES_TAB) {
+      PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    }
   }
 
   @Override
@@ -763,6 +776,9 @@ public class PluginManagerConfigurableNew
     registerCopyProvider(myUpdatesPanel);
 
     Runnable runnable = () -> {
+      PluginManagerMain.LOG.info("=== Before update info BuildNumber.currentVersion(): " + BuildNumber.currentVersion() + " ===");
+      PluginManagerMain.LOG.info("=== Before update info ApplicationInfoImpl.getShadowInstance().getApiVersion(): " +
+                                 ApplicationInfoImpl.getShadowInstance().getApiVersion() + " ===");
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
 
       ApplicationManager.getApplication().invokeLater(() -> {
@@ -870,7 +886,7 @@ public class PluginManagerConfigurableNew
 
       @Override
       protected void showPopupForQuery() {
-        String query = mySearchTextField.getText();
+        String query = mySearchTextField.getText().trim();
         if (mySearchTextField.getTextEditor().getCaretPosition() < query.length()) {
           hidePopup();
           return;
@@ -888,8 +904,7 @@ public class PluginManagerConfigurableNew
           myPopup.model.replaceAll(result);
         }
         else {
-          hidePopup();
-          createPopup(new CollectionListModel<>(result), SearchPopup.Type.SearchQuery);
+          createPopup(SearchPopup.Type.SearchQuery, new CollectionListModel<>(result), 0);
         }
 
         myPopup.data = query;
@@ -909,7 +924,7 @@ public class PluginManagerConfigurableNew
           protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
             IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
 
-            String splitter = (String)myPopup.data;
+            String splitter = myPopup == null ? null : (String)myPopup.data;
             for (String partName : SearchQueryParser.split(descriptor.getName(), splitter)) {
               append(partName, partName.equalsIgnoreCase(splitter)
                                ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES

@@ -320,7 +320,7 @@ public class TypeMigrationLabeler {
       } else if (element instanceof PsiReferenceParameterList) {
         for (Map.Entry<TypeMigrationUsageInfo, PsiClassType> entry : myClassTypeArgumentsChange.entrySet()) {
           if (element.equals(entry.getKey().getElement())) { //todo check null
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+            final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
             try {
               element.getParent().replace(factory.createReferenceElementByType(entry.getValue()));
             }

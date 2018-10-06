@@ -357,7 +357,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
     else {
       elements.add(rootElement);
-      //noinspection unchecked
       elements.addAll(rootElement.getChildren("component"));
       state = ContainerUtil.find(elements, element -> "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name")));
     }
@@ -727,7 +726,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
 
       if (myDfaOption != DfaOption.RESOLVE) {
-        //noinspection EnumSwitchStatementWhichMissesCases
         switch (myDfaOption) {
           case OFF:
             break;

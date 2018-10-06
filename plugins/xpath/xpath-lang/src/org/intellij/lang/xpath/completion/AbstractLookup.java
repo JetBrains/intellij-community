@@ -53,7 +53,6 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     public Color getColorHint() {
         return null;
     }

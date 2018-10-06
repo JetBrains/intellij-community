@@ -33,7 +33,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   private final PsiElementPredicate predicate;
 
   /**
-   * @noinspection AbstractMethodCallInConstructor, OverridableMethodCallInConstructor
+   * @noinspection AbstractMethodCallInConstructor
    */
   protected Intention() {
     predicate = getElementPredicate();
@@ -138,14 +138,12 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getText() {
-    //noinspection UnresolvedPropertyKey
     return IntentionPowerPackBundle.message(getPrefix() + ".name");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    //noinspection UnresolvedPropertyKey
     return IntentionPowerPackBundle.defaultableMessage(getPrefix() + ".family.name");
   }
 }

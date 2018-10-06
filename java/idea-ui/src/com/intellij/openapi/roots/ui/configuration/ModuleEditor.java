@@ -16,7 +16,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -42,7 +41,6 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
@@ -128,7 +126,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getModifiableModel(new UIRootConfigurationAccessor(myProject));
+        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModel(new UIRootConfigurationAccessor(myProject));
       }
     }
     return myModifiableRootModel;

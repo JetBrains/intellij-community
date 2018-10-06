@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -42,7 +41,7 @@ public abstract class RootType {
 
   @NotNull
   public static <T extends RootType> T findByClass(Class<T> aClass) {
-    return Extensions.findExtension(ROOT_EP, aClass);
+    return ROOT_EP.findExtensionOrFail(aClass);
   }
 
   @Nullable

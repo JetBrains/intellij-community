@@ -243,6 +243,9 @@
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
+
+    <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
+
     <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
   </extensions>
 

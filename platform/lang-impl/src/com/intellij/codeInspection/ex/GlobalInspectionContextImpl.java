@@ -79,12 +79,11 @@ import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
-  //@TestOnly
   @SuppressWarnings("StaticNonFinalField")
-  public volatile static boolean CREATE_VIEW_FORCE = false;
+  public static volatile boolean CREATE_VIEW_FORCE;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
-  private final NotNullLazyValue<ContentManager> myContentManager;
+  private final NotNullLazyValue<? extends ContentManager> myContentManager;
   private volatile InspectionResultsView myView;
   private volatile String myOutputPath;
   private Content myContent;
@@ -95,7 +94,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private AnalysisUIOptions myUIOptions;
   private InspectionTreeState myTreeState;
 
-  public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
+  public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
     myUIOptions = AnalysisUIOptions.getInstance(project).copy();
     myContentManager = contentManager;
@@ -210,7 +209,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             InspectionToolPresentation presentation = getPresentation(toolWrapper);
             presentation.updateContent();
             if (presentation.hasReportedProblems()) {
-              final Element root = new Element(InspectionsBundle.message("inspection.problems"));
+              final Element root = new Element(PROBLEMS_TAG_NAME);
               globalTools.put(root, sameTools);
               LOG.assertTrue(!hasProblems, toolName);
               break;
@@ -223,8 +222,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           new File(outputPath).mkdirs();
           final File file = new File(outputPath, toolName + ext);
           inspectionsResults.add(file);
-          FileUtil
-            .writeToFile(file, ("</" + InspectionsBundle.message("inspection.problems") + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
+          FileUtil.writeToFile(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -242,7 +240,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
             try {
               InspectionToolWrapper toolWrapper = state.getTool();
               InspectionToolPresentation presentation = getPresentation(toolWrapper);
-              presentation.exportResults(element, refEntity, d -> false);
+              //TODO do not keep big root element in memory
+              presentation.exportResults(e -> element.addContent(e), refEntity, d -> false);
             }
             catch (Throwable e) {
               LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
@@ -729,9 +728,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     return app.getInvokator().invokeLater(createView);
   }
 
-  private void appendPairedInspectionsForUnfairTools(@NotNull List<? super Tools> globalTools,
-                                                     @NotNull List<? super Tools> globalSimpleTools,
-                                                     @NotNull List<? super Tools> localTools) {
+  private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
+                                                     @NotNull List<Tools> globalSimpleTools,
+                                                     @NotNull List<Tools> localTools) {
     Tools[] larray = localTools.toArray(new Tools[0]);
     for (Tools tool : larray) {
       LocalInspectionToolWrapper toolWrapper = (LocalInspectionToolWrapper)tool.getTool();
@@ -792,6 +791,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
           if (!(problemDescriptor instanceof ProblemDescriptor)) {
+            continue;
+          }
+          if (SuppressionUtil.inspectionResultSuppressed(((ProblemDescriptor)problemDescriptor).getPsiElement(), toolWrapper.getTool())) {
             continue;
           }
           ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();

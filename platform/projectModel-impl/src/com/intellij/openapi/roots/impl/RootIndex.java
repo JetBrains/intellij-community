@@ -53,7 +53,7 @@ public class RootIndex {
   private final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
 
-  RootIndex(@NotNull Project project) {
+  public RootIndex(@NotNull Project project) {
     myProject = project;
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -518,7 +518,7 @@ public class RootIndex {
 
 
   @NotNull
-  DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
+  public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return NonProjectDirectoryInfo.INVALID;
     }

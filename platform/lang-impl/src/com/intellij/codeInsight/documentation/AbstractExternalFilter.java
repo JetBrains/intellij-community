@@ -384,7 +384,6 @@ public abstract class AbstractExternalFilter {
                   contentEncoding = request.getConnection().getContentEncoding();
                 }
 
-                //noinspection IOResourceOpenedButNotSafelyClosed
                 myBuilder.buildFromStream(url, contentEncoding != null ? new MyReader(stream, contentEncoding) : new MyReader(stream), data);
                 return null;
               }

@@ -14,14 +14,17 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchModel
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
+import org.jetbrains.plugins.github.util.ProgressStripeProgressIndicator
+import org.jetbrains.plugins.github.util.handleOnEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JScrollBar
@@ -31,13 +34,11 @@ import javax.swing.event.ListSelectionEvent
 internal class GithubPullRequestsListComponent(project: Project,
                                                actionManager: ActionManager,
                                                autoPopupController: AutoPopupController,
-                                               private val selectionModel: GithubPullRequestsListSelectionModel,
                                                private val loader: GithubPullRequestsLoader,
                                                avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
-  : BorderLayoutPanel(), Disposable,
-    GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener,
-    DataProvider {
+  : BorderLayoutPanel(), Disposable, DataProvider {
 
+  val selectionModel = GithubPullRequestsListSelectionModel()
   private val listModel = CollectionListModel<GithubSearchedIssue>()
   private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
   private val scrollPane = ScrollPaneFactory.createScrollPane(list,
@@ -50,6 +51,8 @@ internal class GithubPullRequestsListComponent(project: Project,
   private var isDisposed = false
   private val errorPanel = HtmlErrorPanel()
   private val progressStripe = ProgressStripe(scrollPane, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  private var progressIndicator = ProgressStripeProgressIndicator(progressStripe, true)
+
   private val searchModel = GithubPullRequestSearchModel()
   private val search = GithubPullRequestSearchComponent(project, autoPopupController, searchModel).apply {
     border = IdeBorderFactory.createBorder(SideBorder.RIGHT)
@@ -57,13 +60,10 @@ internal class GithubPullRequestsListComponent(project: Project,
   private val tableToolbarWrapper: Wrapper
 
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
-
     searchModel.addListener(object : GithubPullRequestSearchModel.StateListener {
       override fun queryChanged() {
         loader.setSearchQuery(searchModel.query)
-        loader.reset()
+        refresh()
       }
     }, this)
 
@@ -119,6 +119,17 @@ internal class GithubPullRequestsListComponent(project: Project,
     tableToolbarWrapper.setVerticalSizeReferent(referent)
   }
 
+  @CalledInAwt
+  fun refresh() {
+    loadOnScrollThreshold = false
+    list.selectionModel.clearSelection()
+    listModel.removeAll()
+    progressIndicator.cancel()
+    progressIndicator = ProgressStripeProgressIndicator(progressStripe, true)
+    loader.reset()
+    loadMore()
+  }
+
   private fun potentiallyLoadMore() {
     if (loadOnScrollThreshold && isScrollAtThreshold(scrollPane.verticalScrollBar)) {
       loadMore()
@@ -128,7 +139,21 @@ internal class GithubPullRequestsListComponent(project: Project,
   private fun loadMore() {
     if (isDisposed) return
     loadOnScrollThreshold = false
-    loader.requestLoadMore()
+    errorPanel.setError(null)
+
+    list.emptyText.text = "Loading pull requests..."
+    val indicator = progressIndicator
+    loader.requestLoadMore(indicator).handleOnEdt { responsePage, error ->
+      if (indicator.isCanceled) return@handleOnEdt
+      when {
+        error != null && !GithubAsyncUtil.isCancellation(error) -> {
+          loadingErrorOccurred(error)
+        }
+        responsePage != null -> {
+          moreDataLoaded(responsePage.items, responsePage.hasNext)
+        }
+      }
+    }
   }
 
   private fun isScrollAtThreshold(verticalScrollBar: JScrollBar): Boolean {
@@ -141,17 +166,7 @@ internal class GithubPullRequestsListComponent(project: Project,
     return true
   }
 
-  override fun processStarted() {
-    list.emptyText.text = "Loading pull requests..."
-    errorPanel.setError(null)
-    progressStripe.startLoading()
-  }
-
-  override fun processFinished() {
-    progressStripe.stopLoading()
-  }
-
-  override fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
+  private fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
     if (searchModel.query.isEmpty()) {
       list.emptyText.text = "No pull requests loaded."
     }
@@ -173,14 +188,7 @@ internal class GithubPullRequestsListComponent(project: Project,
     search.searchText = "state:open"
   }
 
-  override fun loaderReset() {
-    loadOnScrollThreshold = false
-    list.selectionModel.clearSelection()
-    listModel.removeAll()
-    loader.requestLoadMore()
-  }
-
-  override fun loadingErrorOccurred(error: Throwable) {
+  private fun loadingErrorOccurred(error: Throwable) {
     loadOnScrollThreshold = false
     val prefix = if (list.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
     list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)

@@ -134,9 +134,9 @@ public abstract class AbstractParameterTablePanel<P extends AbstractVariableData
   }
 
   public static class NameColumnInfo extends ColumnInfo<AbstractVariableData, String> {
-    private final Predicate<String> myNameValidator;
+    private final Predicate<? super String> myNameValidator;
 
-    public NameColumnInfo(Predicate<String> nameValidator) {
+    public NameColumnInfo(Predicate<? super String> nameValidator) {
       super("Name");
       myNameValidator = nameValidator;
     }

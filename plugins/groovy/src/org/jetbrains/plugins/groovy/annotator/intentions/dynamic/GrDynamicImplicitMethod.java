@@ -50,14 +50,14 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
   private static final Logger LOG = Logger.getInstance(GrDynamicImplicitMethod.class);
 
   private final String myContainingClassName;
-  private final List<ParamInfo> myParamInfos;
+  private final List<? extends ParamInfo> myParamInfos;
   private final String myReturnType;
 
   public GrDynamicImplicitMethod(PsiManager manager,
                                  String name,
                                  String containingClassName,
                                  boolean isStatic,
-                                 List<ParamInfo> paramInfos,
+                                 List<? extends ParamInfo> paramInfos,
                                  String returnType) {
     super(manager, name);
     myContainingClassName = containingClassName;

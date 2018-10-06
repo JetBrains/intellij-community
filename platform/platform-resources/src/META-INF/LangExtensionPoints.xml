@@ -296,6 +296,8 @@
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
     <extensionPoint name="searchEverywhereContributor"
                     interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
+    <extensionPoint name="searchEverywhereResultsEqualityProvider"
+                    interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 

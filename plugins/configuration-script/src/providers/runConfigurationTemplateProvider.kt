@@ -3,7 +3,6 @@ package com.intellij.configurationScript.providers
 import com.intellij.configurationScript.ConfigurationFileManager
 import com.intellij.configurationScript.Keys
 import com.intellij.configurationScript.RunConfigurationListReader
-import com.intellij.configurationScript.SynchronizedClearableLazy
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.impl.RunConfigurationTemplateProvider
@@ -13,6 +12,7 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import gnu.trove.THashMap
 import org.yaml.snakeyaml.nodes.MappingNode
 import org.yaml.snakeyaml.nodes.ScalarNode

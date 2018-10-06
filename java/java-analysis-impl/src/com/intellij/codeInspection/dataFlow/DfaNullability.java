@@ -51,7 +51,6 @@ public enum DfaNullability {
     return dfaNullability == null ? Nullability.UNKNOWN : dfaNullability.myNullability;
   }
 
-  @SuppressWarnings("Duplicates")
   @NotNull
   public static DfaNullability fromNullability(@NotNull Nullability nullability) {
     switch (nullability) {

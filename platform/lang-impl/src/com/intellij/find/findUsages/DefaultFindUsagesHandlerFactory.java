@@ -12,13 +12,15 @@ import org.jetbrains.annotations.NotNull;
 public final class DefaultFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      if (((PsiFileSystemItem)element).getVirtualFile() == null) return false;
-    }
-    else if (!LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).canFindUsagesFor(element)) {
+    if (!element.isValid()) {
       return false;
     }
-    return element.isValid();
+    if (element instanceof PsiFileSystemItem) {
+      return ((PsiFileSystemItem)element).getVirtualFile() != null;
+    }
+    else {
+      return LanguageFindUsages.canFindUsagesFor(element);
+    }
   }
 
   @Override

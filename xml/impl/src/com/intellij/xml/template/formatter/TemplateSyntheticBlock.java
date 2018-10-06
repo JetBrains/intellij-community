@@ -51,6 +51,7 @@ public class TemplateSyntheticBlock extends SyntheticBlock implements IndentInhe
   @Override
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 != null && isXmlBlock(child1) != isXmlBlock(child2)) {
+      if (shouldKeepWhiteSpacesInside()) return Spacing.getReadOnlySpacing();
       return Spacing.createSpacing(0, 1, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     return super.getSpacing(child1, child2);

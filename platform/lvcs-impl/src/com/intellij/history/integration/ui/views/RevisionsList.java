@@ -144,10 +144,10 @@ public class RevisionsList {
   }
 
   public static class MyModel extends AbstractTableModel {
-    private final List<RevisionItem> myRevisions;
+    private final List<? extends RevisionItem> myRevisions;
     private final Map<RevisionItem, Period> myPeriods;
 
-    public MyModel(List<RevisionItem> revisions, Map<RevisionItem, Period> periods) {
+    public MyModel(List<? extends RevisionItem> revisions, Map<RevisionItem, Period> periods) {
       myRevisions = revisions;
       myPeriods = periods;
     }

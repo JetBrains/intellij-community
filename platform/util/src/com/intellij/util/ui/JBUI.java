@@ -1559,12 +1559,16 @@ public class JBUI {
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
       }
 
       @NotNull
       public static Color tabSelectedActiveBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
       @NotNull
@@ -1749,8 +1753,8 @@ public class JBUI {
 
     //todo #UX-1 maybe move to popup
     public static class BigPopup {
-      public static Color dialogBackground() {
-        return JBColor.namedColor("SearchEverywhere.Dialog.background", 0xf2f2f2);
+      public static Color headerBackground() {
+        return JBColor.namedColor("SearchEverywhere.Header.background", 0xf2f2f2);
       }
 
       public static Insets tabInsets() {
@@ -1758,11 +1762,11 @@ public class JBUI {
       }
 
       public static Color selectedTabColor() {
-        return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+        return JBColor.namedColor("SearchEverywhere.Tab.active.background", 0xdedede);
       }
 
       public static Color selectedTabTextColor() {
-        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
+        return JBColor.namedColor("SearchEverywhere.Tab.active.foreground", 0x000000);
       }
 
       public static Color searchFieldBackground() {
@@ -1770,7 +1774,7 @@ public class JBUI {
       }
 
       public static Color searchFieldBorderColor() {
-        return JBColor.namedColor("SearchEverywhere.SearchField.Border.color", 0xbdbdbd);
+        return JBColor.namedColor("SearchEverywhere.SearchField.borderColor", 0xbdbdbd);
       }
 
       public static Insets searchFieldInsets() {
@@ -1783,6 +1787,28 @@ public class JBUI {
 
       public static Color listSeparatorColor() {
         return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+      }
+
+      public static Color searchFieldGrayForeground()  {
+        return JBColor.namedColor("SearchEverywhere.SearchField.grayForeground", JBColor.GRAY);
+      }
+
+      public static Color advertiserForeground()  {
+        return JBColor.namedColor("SearchEverywhere.Advertiser.foreground", JBColor.GRAY);
+      }
+
+      public static Color advertiserBackground()  {
+        return JBColor.namedColor("SearchEverywhere.Advertiser.background", 0xf2f2f2);
+      }
+    }
+
+    public static class Advertiser {
+      public static Color foreground() {
+        return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
+      }
+
+      public static Color background() {
+        return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
       }
     }
 

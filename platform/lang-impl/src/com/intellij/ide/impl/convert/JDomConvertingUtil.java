@@ -36,7 +36,6 @@ import java.util.*;
 /**
  * @author nik
  */
-@SuppressWarnings({"unchecked"})
 public class JDomConvertingUtil extends JDomSerializationUtil {
 
   private JDomConvertingUtil() {

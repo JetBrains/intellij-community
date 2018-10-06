@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseDataReader;
@@ -18,15 +19,19 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
+  private final AtomicLong mySleepStart = new AtomicLong(System.currentTimeMillis());
+  private final Throwable myProcessStart;
 
   /**
    * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
   public BaseOSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
+    myProcessStart = new Throwable("Process creation:");
   }
 
   /**
@@ -52,7 +57,6 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * Override this method to fine-tune {@link BaseOutputReader} behavior.
    */
   @NotNull
-  @SuppressWarnings("deprecation")
   protected Options readerOptions() {
     if (Registry.is("output.reader.blocking.mode", false)) {
       return Options.BLOCKING;
@@ -112,14 +116,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createErrorDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+  protected BaseDataReader createErrorDataReader(BaseDataReader.SleepingPolicy policy) {
     return createErrorDataReader();
   }
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  protected BaseDataReader createOutputDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
+  protected BaseDataReader createOutputDataReader(BaseDataReader.SleepingPolicy policy) {
     return createOutputDataReader();
   }
 
@@ -177,6 +181,24 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     @Override
     protected void onTextAvailable(@NotNull String text) {
       notifyTextAvailable(text, myProcessOutputType);
+    }
+
+    @Override
+    protected void beforeSleeping(boolean hasJustReadSomething) {
+      long sleepStart = mySleepStart.get();
+      if (sleepStart < 0) return;
+
+      long now = System.currentTimeMillis();
+      if (hasJustReadSomething) {
+        mySleepStart.set(now);
+      }
+      else if (TimeUnit.MILLISECONDS.toMinutes(now - sleepStart) >= 2 &&
+               mySleepStart.compareAndSet(sleepStart, -1)) { // report only once
+        LOG.warn("Process hasn't generated any output for a long time.\n" +
+                 "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with BLOCKING to reduce CPU usage.\n" +
+                 "Command line: " + StringUtil.trimLog(myCommandLine, 1000),
+                 myProcessStart);
+      }
     }
   }
 

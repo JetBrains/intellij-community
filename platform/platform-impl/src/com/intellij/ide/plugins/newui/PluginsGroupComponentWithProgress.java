@@ -22,7 +22,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
                                            @NotNull EventHandler eventHandler,
                                            @NotNull LinkListener<IdeaPluginDescriptor> listener,
                                            @NotNull LinkListener<String> searchListener,
-                                           @NotNull Function<IdeaPluginDescriptor, CellPluginComponent> function) {
+                                           @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
     super(layout, eventHandler, listener, searchListener, function);
     myIcon.setOpaque(false);
     myIcon.setPaintPassiveIcon(false);

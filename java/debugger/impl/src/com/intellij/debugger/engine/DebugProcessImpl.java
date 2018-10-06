@@ -110,6 +110,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final StringBuilder myTextBeforeStart = new StringBuilder();
 
   enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
@@ -328,6 +329,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void printToConsole(final String text) {
+    synchronized (myProcessListeners) {
+      if (myExecutionResult == null) {
+        myTextBeforeStart.append(text);
+      }
+      else {
+        printToConsoleImpl(text);
+      }
+    }
+  }
+
+  private void printToConsoleImpl(String text) {
     myExecutionResult.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
   }
 
@@ -483,7 +495,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
-          //noinspection HardCodedStringLiteral
           final Connector.Argument hostnameArg = myArguments.get("hostname");
           if (hostnameArg != null && myConnection.getHostName() != null) {
             hostnameArg.setValue(myConnection.getHostName());
@@ -491,7 +502,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (address == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
-          //noinspection HardCodedStringLiteral
           final Connector.Argument portArg = myArguments.get("port");
           if (portArg != null) {
             portArg.setValue(address);
@@ -501,13 +511,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (address == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
-          //noinspection HardCodedStringLiteral
           final Connector.Argument nameArg = myArguments.get("name");
           if (nameArg != null) {
             nameArg.setValue(address);
           }
         }
-        //noinspection HardCodedStringLiteral
         final Connector.Argument timeoutArg = myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
@@ -533,7 +541,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
     }
     // zero port number means the caller leaves to debugger to decide at which port to listen
-    //noinspection HardCodedStringLiteral
     final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
     if (portArg != null) {
       portArg.setValue(address);
@@ -544,7 +551,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myArguments.put(uniqueArg.name(), uniqueArg);
       }
     }
-    //noinspection HardCodedStringLiteral
     final Connector.Argument timeoutArg = myArguments.get("timeout");
     if (timeoutArg != null) {
       timeoutArg.setValue("0"); // wait forever
@@ -1405,7 +1411,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return buffer.toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "SpellCheckingInspection"})
+  @SuppressWarnings({"SpellCheckingInspection"})
   public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
@@ -1930,6 +1936,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           executionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
+        if (myTextBeforeStart.length() > 0) {
+          printToConsoleImpl(myTextBeforeStart.toString());
+          myTextBeforeStart.setLength(0);
+        }
       }
     }
     catch (ExecutionException e) {

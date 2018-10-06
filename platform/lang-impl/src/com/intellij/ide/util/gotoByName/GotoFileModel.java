@@ -131,20 +131,7 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
         ItemMatchers defaultMatchers = super.getItemMatchers(list, value);
         if (!(value instanceof PsiFileSystemItem)) return defaultMatchers;
 
-        String shortName = getElementName(value);
-        String fullName = getFullName(value);
-        if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
-          String sanitized = GotoFileItemProvider.getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), GotoFileModel.this);
-          for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
-            MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
-            if (nameMatcher.matches(shortName)) {
-              String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
-              return new ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
-            }
-          }
-        }
-
-        return defaultMatchers;
+        return convertToFileItemMatchers(defaultMatchers, (PsiFileSystemItem) value, GotoFileModel.this);
       }
     };
   }
@@ -206,5 +193,26 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
   @Override
   public int compare(Object o1, Object o2) {
     return 0;
+  }
+
+  @NotNull
+  public static PsiElementListCellRenderer.ItemMatchers convertToFileItemMatchers(@NotNull PsiElementListCellRenderer.ItemMatchers defaultMatchers,
+                                                                                  @NotNull PsiFileSystemItem value,
+                                                                                  @NotNull GotoFileModel model) {
+    String shortName = model.getElementName(value);
+    String fullName = model.getFullName(value);
+    if (shortName != null && fullName != null && defaultMatchers.nameMatcher instanceof MinusculeMatcher) {
+      String sanitized = GotoFileItemProvider
+        .getSanitizedPattern(((MinusculeMatcher)defaultMatchers.nameMatcher).getPattern(), model);
+      for (int i = sanitized.lastIndexOf('/') + 1; i < sanitized.length() - 1; i++) {
+        MinusculeMatcher nameMatcher = NameUtil.buildMatcher("*" + sanitized.substring(i), NameUtil.MatchingCaseSensitivity.NONE);
+        if (nameMatcher.matches(shortName)) {
+          String locationPattern = FileUtil.toSystemDependentName(StringUtil.trimEnd(sanitized.substring(0, i), "/"));
+          return new PsiElementListCellRenderer.ItemMatchers(nameMatcher, GotoFileItemProvider.getQualifiedNameMatcher(locationPattern));
+        }
+      }
+    }
+
+    return defaultMatchers;
   }
 }

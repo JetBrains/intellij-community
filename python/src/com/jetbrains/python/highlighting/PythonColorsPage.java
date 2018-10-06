@@ -29,36 +29,44 @@ import java.util.Map;
  */
 public class PythonColorsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
-    new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
-    new AttributesDescriptor("String (bytes)", PyHighlighter.PY_BYTE_STRING),
-    new AttributesDescriptor("String (Unicode)", PyHighlighter.PY_UNICODE_STRING),
     new AttributesDescriptor("Number", PyHighlighter.PY_NUMBER),
+    new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
-    new AttributesDescriptor("Operation Sign", PyHighlighter.PY_OPERATION_SIGN),
-    new AttributesDescriptor("Parentheses", PyHighlighter.PY_PARENTHS),
-    new AttributesDescriptor("Brackets", PyHighlighter.PY_BRACKETS),
-    new AttributesDescriptor("Braces", PyHighlighter.PY_BRACES),
-    new AttributesDescriptor("f-string expression braces", PyHighlighter.PY_FSTRING_FRAGMENT_BRACES),
-    new AttributesDescriptor("f-string type conversion", PyHighlighter.PY_FSTRING_FRAGMENT_TYPE_CONVERSION),
-    new AttributesDescriptor("f-string format specifier start", PyHighlighter.PY_FSTRING_FRAGMENT_COLON),
-    new AttributesDescriptor("Comma", PyHighlighter.PY_COMMA),
-    new AttributesDescriptor("Dot", PyHighlighter.PY_DOT),
-    new AttributesDescriptor("Function definition", PyHighlighter.PY_FUNC_DEFINITION),
-    new AttributesDescriptor("Class definition", PyHighlighter.PY_CLASS_DEFINITION),
-    new AttributesDescriptor("Docstring", PyHighlighter.PY_DOC_COMMENT),
-    new AttributesDescriptor("Docstring tag", PyHighlighter.PY_DOC_COMMENT_TAG),
-    new AttributesDescriptor("Predefined item definition", PyHighlighter.PY_PREDEFINED_DEFINITION),
-    new AttributesDescriptor("Decorator", PyHighlighter.PY_DECORATOR),
-    new AttributesDescriptor("Built-in name", PyHighlighter.PY_BUILTIN_NAME),
-    new AttributesDescriptor("Predefined name", PyHighlighter.PY_PREDEFINED_USAGE),
-    new AttributesDescriptor("Parameter", PyHighlighter.PY_PARAMETER),
-    new AttributesDescriptor("'self' parameter", PyHighlighter.PY_SELF_PARAMETER),
+
+    new AttributesDescriptor("String//Text (bytes)", PyHighlighter.PY_BYTE_STRING),
+    new AttributesDescriptor("String//Text (unicode)", PyHighlighter.PY_UNICODE_STRING),
+    new AttributesDescriptor("String//Escape sequence//Valid", PyHighlighter.PY_VALID_STRING_ESCAPE),
+    new AttributesDescriptor("String//Escape sequence//Invalid", PyHighlighter.PY_INVALID_STRING_ESCAPE),
+    new AttributesDescriptor("String//f-string//Expression braces", PyHighlighter.PY_FSTRING_FRAGMENT_BRACES),
+    new AttributesDescriptor("String//f-string//Type conversion", PyHighlighter.PY_FSTRING_FRAGMENT_TYPE_CONVERSION),
+    new AttributesDescriptor("String//f-string//Format specifier start", PyHighlighter.PY_FSTRING_FRAGMENT_COLON),
+
+    new AttributesDescriptor("Docstring//Text", PyHighlighter.PY_DOC_COMMENT),
+    new AttributesDescriptor("Docstring//Tag", PyHighlighter.PY_DOC_COMMENT_TAG),
+    
+    new AttributesDescriptor("Braces and Operators//Operation sign", PyHighlighter.PY_OPERATION_SIGN),
+    new AttributesDescriptor("Braces and Operators//Parentheses", PyHighlighter.PY_PARENTHS),
+    new AttributesDescriptor("Braces and Operators//Brackets", PyHighlighter.PY_BRACKETS),
+    new AttributesDescriptor("Braces and Operators//Braces", PyHighlighter.PY_BRACES),
+    new AttributesDescriptor("Braces and Operators//Comma", PyHighlighter.PY_COMMA),
+    new AttributesDescriptor("Braces and Operators//Dot", PyHighlighter.PY_DOT),
+    
+    new AttributesDescriptor("Functions//Function definition", PyHighlighter.PY_FUNC_DEFINITION),
+    new AttributesDescriptor("Functions//Function call", PyHighlighter.PY_FUNCTION_CALL),
+    new AttributesDescriptor("Functions//Method call", PyHighlighter.PY_METHOD_CALL),
+    
+    new AttributesDescriptor("Parameters//Parameter", PyHighlighter.PY_PARAMETER),
+    new AttributesDescriptor("Parameters//'self' parameter", PyHighlighter.PY_SELF_PARAMETER),
+    
     new AttributesDescriptor("Keyword argument", PyHighlighter.PY_KEYWORD_ARGUMENT),
-    new AttributesDescriptor("Function call", PyHighlighter.PY_FUNCTION_CALL),
-    new AttributesDescriptor("Method call", PyHighlighter.PY_METHOD_CALL),
-    new AttributesDescriptor("Type annotations", PyHighlighter.PY_ANNOTATION),
-    new AttributesDescriptor("Valid escape sequence", PyHighlighter.PY_VALID_STRING_ESCAPE),
-    new AttributesDescriptor("Invalid escape sequence", PyHighlighter.PY_INVALID_STRING_ESCAPE),
+
+    new AttributesDescriptor("Special Names//Definition", PyHighlighter.PY_PREDEFINED_DEFINITION),
+    new AttributesDescriptor("Special Names//Usage", PyHighlighter.PY_PREDEFINED_USAGE),
+    
+    new AttributesDescriptor("Built-in name", PyHighlighter.PY_BUILTIN_NAME),
+    new AttributesDescriptor("Decorator", PyHighlighter.PY_DECORATOR),
+    new AttributesDescriptor("Class definition", PyHighlighter.PY_CLASS_DEFINITION),
+    new AttributesDescriptor("Type annotation", PyHighlighter.PY_ANNOTATION),
   };
 
   @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()

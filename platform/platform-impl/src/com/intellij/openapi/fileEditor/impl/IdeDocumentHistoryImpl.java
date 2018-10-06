@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -63,10 +64,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   private boolean myBackInProgress;
   private boolean myForwardInProgress;
   private Object myLastGroupId;
+  private boolean myRegisteredBackPlaceInLastGroup;
 
   // change's navigation
   private final LinkedList<PlaceInfo> myChangePlaces = new LinkedList<>(); // LinkedList of PlaceInfo's
-  private int myStartIndex;
   private int myCurrentIndex;
   private PlaceInfo myCurrentChangePlace;
 
@@ -200,21 +201,37 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return createPlaceInfo(selectedEditorWithProvider.getFileEditor(), selectedEditorWithProvider.getProvider());
   }
 
-  final void onCommandFinished(Object commandGroupId) {
-    if (myCommandStartPlace != null) {
-      if (myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
-        if (!myBackInProgress) {
-          if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) {
-            putLastOrMerge(myBackPlaces, myCommandStartPlace, BACK_QUEUE_LIMIT);
-          }
-          if (!myForwardInProgress) {
-            myForwardPlaces.clear();
-          }
-        }
-        removeInvalidFilesFromStacks();
+  @Nullable
+  private static PlaceInfo getPlaceInfoFromFocus() {
+    FileEditor fileEditor = new FocusBasedCurrentEditorProvider().getCurrentEditor();
+    if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
+      VirtualFile file = fileEditor.getFile();
+      if (file != null) {
+        return new PlaceInfo(file,
+                             fileEditor.getState(FileEditorStateLevel.NAVIGATION),
+                             TextEditorProvider.getInstance().getEditorTypeId(),
+                             null);
       }
     }
+    return null;
+  }
+
+  final void onCommandFinished(Object commandGroupId) {
+    if (!CommandMerger.canMergeGroup(commandGroupId, myLastGroupId)) myRegisteredBackPlaceInLastGroup = false;
     myLastGroupId = commandGroupId;
+
+    if (myCommandStartPlace != null && myCurrentCommandIsNavigation && myCurrentCommandHasMoves) {
+      if (!myBackInProgress) {
+        if (!myRegisteredBackPlaceInLastGroup) {
+          myRegisteredBackPlaceInLastGroup = true;
+          putLastOrMerge(myBackPlaces, myCommandStartPlace);
+        }
+        if (!myForwardInProgress) {
+          myForwardPlaces.clear();
+        }
+      }
+      removeInvalidFilesFromStacks();
+    }
 
     if (myCurrentCommandHasChanges) {
       setCurrentChangePlace();
@@ -236,24 +253,34 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   }
 
   private void setCurrentChangePlace() {
-    final PlaceInfo placeInfo = getCurrentPlaceInfo();
+    boolean fromFocus = false;
+    PlaceInfo placeInfo = getCurrentPlaceInfo();
+    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+      placeInfo = null;
+    }
+    if (placeInfo == null) {
+      placeInfo = getPlaceInfoFromFocus();
+      fromFocus = true;
+    }
+    if (placeInfo != null && !myChangedFilesInCurrentCommand.contains(placeInfo.getFile())) {
+      placeInfo = null;
+    }
     if (placeInfo == null) {
       return;
     }
 
-    final VirtualFile file = placeInfo.getFile();
-    if (myChangedFilesInCurrentCommand.contains(file)) {
-      myRecentlyChangedFiles.register(file);
+    myRecentlyChangedFiles.register(placeInfo.getFile());
 
-      myCurrentChangePlace = placeInfo;
-      if (!myChangePlaces.isEmpty()) {
-        final PlaceInfo lastInfo = myChangePlaces.getLast();
-        if (isSame(placeInfo, lastInfo)) {
-          myChangePlaces.removeLast();
-        }
+    myCurrentChangePlace = placeInfo;
+    if (!myChangePlaces.isEmpty()) {
+      final PlaceInfo lastInfo = myChangePlaces.getLast();
+      if (isSame(placeInfo, lastInfo)) {
+        myChangePlaces.removeLast();
       }
-      myCurrentIndex = myStartIndex + myChangePlaces.size();
     }
+    myCurrentIndex = myChangePlaces.size();
+
+    if (fromFocus) pushCurrentChangePlace();
   }
 
   private void pushCurrentChangePlace() {
@@ -261,11 +288,10 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       myChangePlaces.add(myCurrentChangePlace);
       if (myChangePlaces.size() > CHANGE_QUEUE_LIMIT) {
         myChangePlaces.removeFirst();
-        myStartIndex++;
       }
       myCurrentChangePlace = null;
     }
-    myCurrentIndex = myStartIndex + myChangePlaces.size();
+    myCurrentIndex = myChangePlaces.size();
   }
 
   @Override
@@ -296,7 +322,6 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     myLastGroupId = null;
 
-    myStartIndex = 0;
     myCurrentIndex = 0;
     myCurrentChangePlace = null;
     myCommandStartPlace = null;
@@ -366,9 +391,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
   @Override
   public final void navigatePreviousChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex == myStartIndex) return;
+    if (myCurrentIndex == 0) return;
     int index = myCurrentIndex - 1;
-    final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
+    final PlaceInfo info = myChangePlaces.get(index);
 
     executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
@@ -376,7 +401,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public final boolean isNavigatePreviousChangeAvailable() {
-    return myCurrentIndex > myStartIndex;
+    return myCurrentIndex > 0;
   }
 
   void removeInvalidFilesFromStacks() {
@@ -384,16 +409,16 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
     removeInvalidFilesFrom(myForwardPlaces);
     if (removeInvalidFilesFrom(myChangePlaces)) {
-      myCurrentIndex = myStartIndex + myChangePlaces.size();
+      myCurrentIndex = myChangePlaces.size();
     }
   }
 
   @Override
   public void navigateNextChange() {
     removeInvalidFilesFromStacks();
-    if (myCurrentIndex >= myStartIndex + myChangePlaces.size() - 1) return;
+    if (myCurrentIndex >= myChangePlaces.size() - 1) return;
     int index = myCurrentIndex + 1;
-    final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
+    final PlaceInfo info = myChangePlaces.get(index);
 
     executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
@@ -401,7 +426,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
 
   @Override
   public boolean isNavigateNextChangeAvailable() {
-    return myCurrentIndex < myStartIndex + myChangePlaces.size() - 1;
+    return myCurrentIndex < myChangePlaces.size() - 1;
   }
 
   private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
@@ -418,7 +443,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return removed;
   }
 
-  private void gotoPlaceInfo(@NotNull PlaceInfo info) { // TODO: Msk
+  private void gotoPlaceInfo(@NotNull PlaceInfo info) {
     final boolean wasActive = ToolWindowManager.getInstance(myProject).isEditorComponentActive();
     EditorWindow wnd = info.getWindow();
     FileEditorManagerEx editorManager = myFileEditorManager;
@@ -460,7 +485,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return new PlaceInfo(file, state, fileProvider.getEditorTypeId(), editorManager.getCurrentWindow());
   }
 
-  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next, int limitSizeLimit) {
+  private static void putLastOrMerge(@NotNull LinkedList<PlaceInfo> list, @NotNull PlaceInfo next) {
     if (!list.isEmpty()) {
       PlaceInfo prev = list.getLast();
       if (isSame(prev, next)) {
@@ -469,7 +494,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
 
     list.add(next);
-    if (list.size() > limitSizeLimit) {
+    if (list.size() > BACK_QUEUE_LIMIT) {
       list.removeFirst();
     }
   }

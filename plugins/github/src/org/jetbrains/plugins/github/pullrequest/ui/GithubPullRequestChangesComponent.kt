@@ -15,58 +15,51 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.ComponentWithEmptyText
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
-class GithubPullRequestChangesComponent(project: Project,
-                                        loader: GithubPullRequestsChangesLoader,
-                                        actionManager: ActionManager)
-  : Wrapper(), Disposable, GithubPullRequestsChangesLoader.ChangesLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener {
-
+internal class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
+  : GithubDataLoadingComponent<List<Change>>(), Disposable {
   private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
   val diffAction = changesBrowser.diffAction
-  private val changesLoadingPanel = JBLoadingPanel(BorderLayout(), this,
-                                                   ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
-    changesLoadingPanel.add(changesBrowser, BorderLayout.CENTER)
-    setContent(changesLoadingPanel)
+    loadingPanel.add(changesBrowser, BorderLayout.CENTER)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
+    setContent(loadingPanel)
   }
 
-  override fun processStarted() {
-    changesLoadingPanel.startLoading()
-    changesBrowser.emptyText.clear()
+  override fun reset() {
+    changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.changes = emptyList()
   }
 
-  override fun processFinished() {
-    changesLoadingPanel.stopLoading()
-  }
-
-  override fun changesLoaded(changes: List<Change>) {
+  override fun handleResult(result: List<Change>) {
     changesBrowser.emptyText.text = "Pull request does not contain any changes"
-    changesBrowser.changes = changes
+    changesBrowser.changes = result
   }
 
-  override fun errorOccurred(error: Throwable) {
+  override fun handleError(error: Throwable) {
     changesBrowser.emptyText
+      .clear()
       .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 
-  override fun loaderCleared() {
-    changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
-    changesBrowser.changes = emptyList()
+  override fun setBusy(busy: Boolean) {
+    if (busy) {
+      changesBrowser.emptyText.clear()
+      loadingPanel.startLoading()
+    }
+    else {
+      loadingPanel.stopLoading()
+    }
   }
 
   override fun dispose() {}

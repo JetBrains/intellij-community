@@ -41,7 +41,7 @@ public class TasksNode extends ExternalSystemNode {
   private final MultiMap<String, TaskNode> myTasksMap = new MultiMap<>();
 
   @SuppressWarnings("unchecked")
-  public TasksNode(ExternalProjectsView externalProjectsView, final Collection<DataNode<?>> dataNodes) {
+  public TasksNode(ExternalProjectsView externalProjectsView, final Collection<? extends DataNode<?>> dataNodes) {
     super(externalProjectsView, null, null);
 
     if (dataNodes != null && !dataNodes.isEmpty()) {

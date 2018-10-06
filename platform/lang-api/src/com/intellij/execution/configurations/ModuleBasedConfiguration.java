@@ -53,7 +53,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @NotNull
   @Override
   protected ModuleBasedConfigurationOptions getOptions() {
-    //noinspection unchecked
     return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 

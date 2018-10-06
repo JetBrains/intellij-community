@@ -1392,7 +1392,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   private void readPaneState(@NotNull Element panesElement) {
-    @SuppressWarnings("unchecked")
     final List<Element> paneElements = panesElement.getChildren(ELEMENT_PANE);
 
     for (Element paneElement : paneElements) {
@@ -1608,7 +1607,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
                                 ? getGlobalOptions().getShowExcludedFiles()
                                 : getPaneOptionValue(myShowExcludedFiles, paneId, ourShowExcludedFilesDefaults);
 
-    if (showExcludedFiles == ourShowExcludedFilesDefaults) {
+    if (showExcludedFiles == ourShowExcludedFilesDefaults && EventQueue.isDispatchThread()) {
       AbstractProjectViewPane pane = getProjectViewPaneById(ProjectViewPane.ID);
       if (pane instanceof ProjectViewPane) {
         ProjectViewPane old = (ProjectViewPane)pane;

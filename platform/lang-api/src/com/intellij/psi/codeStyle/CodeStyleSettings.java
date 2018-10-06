@@ -339,7 +339,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
 
   /** @deprecated Use JavaCodeStyleSettings.USE_FQ_CLASS_NAMES */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES;
 
@@ -348,22 +347,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
   /** @deprecated Use JavaCodeStyleSettings.USE_SINGLE_CLASS_IMPORTS */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
   /** @deprecated Use JavaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
   /** @deprecated Use JavaCodeStyleSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
 
   /** @deprecated Use JavaCodeStyleSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 

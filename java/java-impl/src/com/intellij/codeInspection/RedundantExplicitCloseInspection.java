@@ -56,7 +56,7 @@ public class RedundantExplicitCloseInspection extends AbstractBaseJavaLocalInspe
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.explicit.close.fix.name");
+      return CommonQuickFixBundle.message("fix.remove.redundant", "close()");
     }
 
     @Override

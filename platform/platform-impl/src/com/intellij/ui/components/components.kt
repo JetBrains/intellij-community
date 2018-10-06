@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.FontUtil
+import com.intellij.util.SmartList
 import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.SwingHelper.addHistoryOnExpansion
 import com.intellij.util.ui.UIUtil
@@ -27,7 +28,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.util.regex.Pattern
 import javax.swing.*
+import javax.swing.event.DocumentEvent
 import javax.swing.text.BadLocationException
+import javax.swing.text.JTextComponent
 import javax.swing.text.Segment
 
 private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
@@ -138,7 +141,7 @@ fun dialog(title: String,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
            ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {
-  return object: DialogWrapper(project, parent, true, modality) {
+  return object : DialogWrapper(project, parent, true, modality) {
     init {
       setTitle(title)
       setResizable(resizable)
@@ -167,6 +170,23 @@ fun dialog(title: String,
       }
       else {
         setErrorInfoAll(validationInfoList)
+        clearErrorInfoOnFirstChange(validationInfoList)
+      }
+    }
+
+    private fun clearErrorInfoOnFirstChange(validationInfoList: List<ValidationInfo>) {
+      val unchangedFields = SmartList<Component>()
+      for (info in validationInfoList) {
+        val component = info.component as? JTextComponent ?: continue
+        unchangedFields.add(component)
+        component.document.addDocumentListener(object : DocumentAdapter() {
+          override fun textChanged(e: DocumentEvent) {
+            component.document.removeDocumentListener(this)
+            if (unchangedFields.remove(component) && unchangedFields.isEmpty()) {
+              setErrorInfoAll(emptyList())
+            }
+          }
+        })
       }
     }
   }
@@ -185,17 +205,16 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
     return
   }
 
-  component.addActionListener(
-      object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
-        override fun onFileChosen(chosenFile: VirtualFile) {
-          if (fileChosen == null) {
-            super.onFileChosen(chosenFile)
-          }
-          else {
-            textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
-          }
-        }
-      })
+  component.addActionListener(object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
+    override fun onFileChosen(chosenFile: VirtualFile) {
+      if (fileChosen == null) {
+        super.onFileChosen(chosenFile)
+      }
+      else {
+        textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
+      }
+    }
+  })
   FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true, project)
 }
 
@@ -213,13 +232,13 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     addHistoryOnExpansion(textFieldWithHistory, historyProvider)
   }
   installFileCompletionAndBrowseDialog(
-      project,
-      component,
-      component.childComponent.textEditor,
-      browseDialogTitle,
-      fileChooserDescriptor,
-      TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-      fileChosen = fileChosen
+    project,
+    component,
+    component.childComponent.textEditor,
+    browseDialogTitle,
+    fileChooserDescriptor,
+    TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    fileChosen = fileChosen
   )
   return component
 }

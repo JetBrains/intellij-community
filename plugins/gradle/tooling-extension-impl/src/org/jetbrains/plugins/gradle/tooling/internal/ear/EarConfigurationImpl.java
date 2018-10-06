@@ -29,13 +29,13 @@ import java.util.List;
 public class EarConfigurationImpl implements EarConfiguration {
 
   @NotNull
-  private final List<EarConfiguration.EarModel> myEarModels;
+  private final List<? extends EarModel> myEarModels;
   @NotNull
   private final Collection<ExternalDependency> myDeployDependencies;
   @NotNull
   private final Collection<ExternalDependency> myEarlibDependencies;
 
-  public EarConfigurationImpl(@NotNull List<EarConfiguration.EarModel> earModels,
+  public EarConfigurationImpl(@NotNull List<? extends EarModel> earModels,
                               @NotNull Collection<ExternalDependency> deployDependencies,
                               @NotNull Collection<ExternalDependency> earlibDependencies) {
     myEarModels = earModels;

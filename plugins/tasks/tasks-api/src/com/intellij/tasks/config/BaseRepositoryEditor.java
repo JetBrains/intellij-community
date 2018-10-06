@@ -63,12 +63,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private boolean myApplying;
   protected Project myProject;
   protected final T myRepository;
-  private final Consumer<T> myChangeListener;
+  private final Consumer<? super T> myChangeListener;
   private final Document myDocument;
   private final Editor myEditor;
   private JComponent myAnchor;
 
-  public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
+  public BaseRepositoryEditor(final Project project, final T repository, Consumer<? super T> changeListener) {
     myProject = project;
     myRepository = repository;
     myChangeListener = changeListener;
