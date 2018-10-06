@@ -24,8 +24,11 @@
     <projectService serviceInterface="com.intellij.vcs.log.history.FileHistoryUiProperties"
                     serviceImplementation="com.intellij.vcs.log.history.FileHistoryUiProperties"/>
 
+    <projectService serviceImplementation="com.intellij.vcs.log.statistics.VcsLogIndexCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexProjectStatisticsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
