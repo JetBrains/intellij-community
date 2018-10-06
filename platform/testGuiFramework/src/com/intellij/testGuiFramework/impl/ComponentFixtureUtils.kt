@@ -383,10 +383,27 @@ fun <C : Container> ContainerFixture<C>.asyncProcessIcon(timeout: Timeout = defa
 
 /**
  * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return fixture of AsyncProcessIcon
+ * @throws WaitTimedOutError if no icon is found
  */
 fun <C : Container> ContainerFixture<C>.indexingProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
   val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
   return asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+}
+
+/**
+ * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return if found - fixture of AsyncProcessIcon, or null if not found
+ */
+fun <C : Container> ContainerFixture<C>.indexingProcessIconNullable(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture? {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return try {
+    asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+  }
+  catch (ignored: WaitTimedOutError) {
+    // asyncIcon not found and it's OK, so no background process is going
+    null
+  }
 }
 
 /**
