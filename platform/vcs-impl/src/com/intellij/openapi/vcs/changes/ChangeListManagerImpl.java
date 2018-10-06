@@ -12,7 +12,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -64,6 +67,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.computeWithModalProgress;
 import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
@@ -1220,33 +1224,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public boolean addUnversionedFiles(@NotNull final LocalChangeList list,
                                      @NotNull final List<VirtualFile> files,
                                      @Nullable Consumer<? super List<Change>> changesConsumer) {
-    final List<VcsException> exceptions = new ArrayList<>();
-    final Set<VirtualFile> allProcessedFiles = new HashSet<>();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
-          final CheckinEnvironment environment = vcs.getCheckinEnvironment();
-          if (environment != null) {
-            Set<VirtualFile> descendants = new HashSet<>();
-            Set<VirtualFile> parents = new HashSet<>();
-            ReadAction.run(() -> {
-              collectUnversionedDescendantsRecursively(items, descendants);
-              collectUnversionedParents(vcs, items, parents);
-            });
+    List<VcsException> exceptions = new ArrayList<>();
 
-            // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
-            // (inside the method) - so common add logic just needs to refresh statuses of parents
-            List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
-            if (exs != null) {
-              exceptions.addAll(exs);
-            }
-
-            allProcessedFiles.addAll(descendants);
-            allProcessedFiles.addAll(parents);
-          }
-        });
-      }
+    Set<VirtualFile> allProcessedFiles = computeWithModalProgress(myProject, "Adding Files to VCS...", true, (indicator) -> {
+      return addUnversionedToVcs(files, exceptions);
     });
 
     if (!exceptions.isEmpty()) {
@@ -1257,20 +1238,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
     }
 
-    for (VirtualFile file : allProcessedFiles) {
-      myFileStatusManager.fileStatusChanged(file);
-    }
-    VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
-    myChangesViewManager.scheduleRefresh();
-
-    final Ref<List<Change>> foundChanges = Ref.create();
     final boolean moveRequired = !list.isDefault();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {
+      final Ref<List<Change>> foundChanges = Ref.create();
       // find the changes for the added files and move them to the necessary changelist
-      InvokeAfterUpdateMode updateMode =
-        syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+      InvokeAfterUpdateMode updateMode = syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
+                                                            : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
       invokeAfterUpdate(() -> {
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -1294,6 +1269,41 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     return exceptions.isEmpty();
+  }
+
+  @NotNull
+  private Set<VirtualFile> addUnversionedToVcs(@NotNull List<VirtualFile> files,
+                                               @NotNull List<VcsException> exceptions) {
+    Set<VirtualFile> allProcessedFiles = new HashSet<>();
+    ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
+      final CheckinEnvironment environment = vcs.getCheckinEnvironment();
+      if (environment != null) {
+        Set<VirtualFile> descendants = new HashSet<>();
+        Set<VirtualFile> parents = new HashSet<>();
+        ReadAction.run(() -> {
+          collectUnversionedDescendantsRecursively(items, descendants);
+          collectUnversionedParents(vcs, items, parents);
+        });
+
+        // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
+        // (inside the method) - so common add logic just needs to refresh statuses of parents
+        List<VcsException> exs = environment.scheduleUnversionedFilesForAddition(ContainerUtil.newArrayList(descendants));
+        if (exs != null) {
+          exceptions.addAll(exs);
+        }
+
+        allProcessedFiles.addAll(descendants);
+        allProcessedFiles.addAll(parents);
+      }
+    });
+
+    for (VirtualFile file : allProcessedFiles) {
+      myFileStatusManager.fileStatusChanged(file);
+    }
+    VcsDirtyScopeManager.getInstance(myProject).filesDirty(allProcessedFiles, null);
+    myChangesViewManager.scheduleRefresh();
+
+    return allProcessedFiles;
   }
 
   private void collectUnversionedDescendantsRecursively(@NotNull List<? extends VirtualFile> items,
