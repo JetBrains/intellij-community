@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TestName
+import java.awt.IllegalComponentStateException
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -82,16 +83,11 @@ fun GuiTestCase.closeProject() {
  * This function should be used instead of  [waitForBackgroundTasksToFinish]
  * because sometimes the latter doesn't wait enough time
  * */
-fun GuiTestCase.waitAMoment() {
+fun GuiTestCase.waitAMoment(attempts: Int = 0) {
+  val maxAttempts = 3
   ideFrame {
     this.waitForBackgroundTasksToFinish()
-    val asyncIcon = try {
-      indexingProcessIcon(Timeouts.seconds01)
-    }
-    catch (ignored: WaitTimedOutError) {
-      // asyncIcon not found and it's OK, so no background process is going
-      null
-    }
+    val asyncIcon = indexingProcessIconNullable(Timeouts.noTimeout)
     if(asyncIcon != null){
       val timeoutForBackgroundTasks = Timeouts.minutes10
       try {
@@ -101,6 +97,19 @@ fun GuiTestCase.waitAMoment() {
           timeoutToAppear = Timeouts.seconds01,
           timeoutToDisappear = timeoutForBackgroundTasks
         )
+      }
+      catch (e: IllegalStateException){
+        // asyncIcon searched earlier might disappear at all (it's ok)
+        // or new one is shown. So let's try to search it again
+        if(attempts < maxAttempts)
+          waitAMoment(attempts + 1)
+        else{
+          if(indexingProcessIconNullable(Timeouts.noTimeout) !=null)
+            throw WaitTimedOutError("Async icon is shown, but we cannot click on it after $maxAttempts attempts")
+        }
+      }
+      catch (e: IllegalComponentStateException){
+        // do nothing - asyncIcon disappears, background process has stopped
       }
       catch (e: ComponentLookupException){
         // do nothing - panel hasn't appeared and it seems ok
