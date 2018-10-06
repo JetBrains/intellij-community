@@ -5,8 +5,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.StandardProgressIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,6 +30,7 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
+  private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
   private final String description;
   private volatile boolean disposed;
@@ -46,6 +48,7 @@ public abstract class Invoker implements Disposable {
   @Override
   public void dispose() {
     disposed = true;
+    indicators.keySet().forEach(AsyncPromise::cancel);
   }
 
   /**
@@ -132,18 +135,19 @@ public abstract class Invoker implements Disposable {
   private void invokeSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
     try {
       if (canInvoke(task, promise)) {
-        if (isDispatchThread() || getApplication() == null) {
-          // do not care about ReadAction in EDT and in tests without application
-          task.run();
+        if (getApplication() == null) {
+          task.run(); // is not interruptible in tests without application
+        }
+        else if (isDispatchThread()) {
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else if (getApplication().isReadAccessAllowed()) {
           if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
-          task.run();
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
         else {
-          ObsolescentProgressIndicator indicator = new ObsolescentProgressIndicator(() -> !canInvoke(task, promise), true);
           // try to execute a task until it stops throwing ProcessCanceledException
-          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator)) {
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
             if (!canInvoke(task, promise)) return; // stop execution of obsolete task
             ProgressIndicatorUtils.yieldToPendingWriteActions();
             if (!canRestart(task, promise, attempt)) return;
@@ -218,6 +222,17 @@ public abstract class Invoker implements Disposable {
       }
     }
     return true;
+  }
+
+  @NotNull
+  private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
+    ProgressIndicatorBase indicator = indicators.get(promise);
+    if (indicator == null) {
+      indicator = new ProgressIndicatorBase(true);
+      indicators.put(promise, indicator);
+      promise.onProcessed(done -> indicators.remove(promise).cancel());
+    }
+    return indicator;
   }
 
   /**
@@ -312,27 +327,6 @@ public abstract class Invoker implements Disposable {
     }
     else {
       executor.execute(runnable);
-    }
-  }
-
-  private static final class ObsolescentProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
-    private final Obsolescent obsolescent;
-    private final boolean reusable;
-
-    private ObsolescentProgressIndicator(@NotNull Obsolescent obsolescent, boolean reusable) {
-      this.obsolescent = obsolescent;
-      this.reusable = reusable;
-    }
-
-    @Override
-    protected boolean isReuseable() {
-      return reusable;
-    }
-
-    @Override
-    public void checkCanceled() {
-      if (!isCanceled() && obsolescent.isObsolete()) cancel();
-      super.checkCanceled();
     }
   }
 }

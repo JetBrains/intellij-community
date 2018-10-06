@@ -45,8 +45,9 @@ import static javax.swing.SwingUtilities.isEventDispatchThread;
  * @author Sergey.Malenkov
  */
 public class InvokerTest {
+  @SuppressWarnings("unused")
+  private static final IdeaTestApplication application = IdeaTestApplication.getInstance();
   private static final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
-  private final IdeaTestApplication application = IdeaTestApplication.getInstance();
   private final Disposable parent = Disposer.newDisposable();
 
   @After
@@ -308,9 +309,27 @@ public class InvokerTest {
   }
 
   @Test
+  public void testDisposeOnEDT() {
+    Disposable parent = Disposer.newDisposable("disposed");
+    testInterrupt(parent, new Invoker.EDT(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
   public void testDisposeOnBgThread() {
     Disposable parent = Disposer.newDisposable("disposed");
     testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
+  public void testDisposeOnBgPool() {
+    Disposable parent = Disposer.newDisposable("disposed");
+    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
+  public void testCancelOnEDT() {
+    Disposable parent = Disposer.newDisposable("cancelled");
+    testInterrupt(parent, new Invoker.EDT(parent), promise -> promise.cancel());
   }
 
   @Test
@@ -320,9 +339,9 @@ public class InvokerTest {
   }
 
   @Test
-  public void testObsoleteOnBgThread() {
-    Disposable parent = Disposer.newDisposable("obsolete");
-    testInterrupt(parent, new Invoker.BackgroundThread(parent), null);
+  public void testCancelOnBgPool() {
+    Disposable parent = Disposer.newDisposable("cancelled");
+    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> promise.cancel());
   }
 
   private static void testInterrupt(Disposable parent, Invoker invoker, Consumer<CancellablePromise<?>> interrupt) {
@@ -332,6 +351,7 @@ public class InvokerTest {
       wait(task.started, "cannot start infinite task");
       if (interrupt != null) interrupt.accept(promise);
       wait(task.finished, "cannot interrupt " + parent + " infinite task");
+      Assert.assertFalse("too long", task.infinite);
     }
     finally {
       promise.cancel();
@@ -357,6 +377,7 @@ public class InvokerTest {
     private final AsyncPromise<?> started = new AsyncPromise<>();
     private final AsyncPromise<?> finished = new AsyncPromise<>();
     private final boolean obsolete;
+    private volatile boolean infinite;
 
     InfiniteTask(boolean obsolete) {
       this.obsolete = obsolete;
@@ -371,8 +392,9 @@ public class InvokerTest {
     public void run() {
       try {
         started.setResult(null);
-        //noinspection InfiniteLoopStatement
-        while (true) ProgressManager.checkCanceled();
+        long startedAt = System.currentTimeMillis();
+        while (10000 > System.currentTimeMillis() - startedAt) ProgressManager.checkCanceled();
+        infinite = true;
       }
       finally {
         finished.setResult(null);
