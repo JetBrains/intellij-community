@@ -165,7 +165,6 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public void dispose() {
-    System.out.println("Log");
   }
 
   @Override
