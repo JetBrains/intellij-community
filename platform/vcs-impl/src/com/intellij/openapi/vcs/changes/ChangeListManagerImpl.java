@@ -1226,8 +1226,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-
         ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
           final CheckinEnvironment environment = vcs.getCheckinEnvironment();
           if (environment != null) {
