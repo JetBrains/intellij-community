@@ -16,9 +16,8 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 class EditorConfigNoMatchingFilesInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
-      val section = header.section
-      if (!section.header.isValidGlob) return
-      val runAutomaton = getCachedHeaderRunAutomaton(section.header)
+      if (!header.isValidGlob) return
+      val runAutomaton = getCachedHeaderRunAutomaton(header)
       val folder = EditorConfigPsiTreeUtil.getOriginalFile(header.containingFile)?.virtualFile?.parent ?: return
       var pass = 0
       val found = !VfsUtilCore.iterateChildrenRecursively(folder, null) {
