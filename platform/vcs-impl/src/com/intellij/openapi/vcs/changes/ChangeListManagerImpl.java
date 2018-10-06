@@ -1249,8 +1249,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       invokeAfterUpdate(() -> {
         List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-          FilePath path = ChangesUtil.getAfterPath(change);
-          return path != null && allProcessedFiles.contains(path.getVirtualFile());
+          return allProcessedFiles.contains(change.getVirtualFile());
         });
         foundChanges.set(newChanges);
 
