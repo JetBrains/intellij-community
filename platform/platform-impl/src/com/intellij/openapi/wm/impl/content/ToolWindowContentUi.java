@@ -266,13 +266,16 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   @Override
   public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
+    Dimension size = new Dimension();
     size.height = 0;
+    size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
+      size.width += each.getPreferredSize().width;
     }
-    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
+
+    size.width = Math.max(size.width, getMinimumSize().width);
     return size;
   }
 

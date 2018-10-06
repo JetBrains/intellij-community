@@ -27,6 +27,7 @@ import java.util.*;
 class TabContentLayout extends ContentLayout {
 
   static final int MORE_ICON_BORDER = 6;
+  public static final int TAB_LAYOUT_START = 4;
   LayoutData myLastLayout;
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
@@ -92,7 +93,7 @@ class TabContentLayout extends ContentLayout {
     ContentManager manager = myUi.myManager;
     LayoutData data = new LayoutData(myUi);
 
-    data.eachX = 4;
+    data.eachX = TAB_LAYOUT_START;
     data.eachY = 0;
 
     if (isIdVisible()) {
@@ -125,7 +126,6 @@ class TabContentLayout extends ContentLayout {
       for (ContentTabLabel eachTab : myTabs) {
         final Dimension eachSize = eachTab.getPreferredSize();
         data.requiredWidth += eachSize.width;
-        data.requiredWidth++;
         data.toLayout.add(eachTab);
       }
 
@@ -160,7 +160,7 @@ class TabContentLayout extends ContentLayout {
         }
         else {
           if (!reachedBounds) {
-            final int width = bounds.width - data.eachX;
+            final int width = bounds.width - data.eachX - data.moreRectWidth;
             each.setBounds(data.eachX, data.eachY, width, bounds.height - data.eachY);
             data.eachX += width;
           }
@@ -200,10 +200,8 @@ class TabContentLayout extends ContentLayout {
         result += insets.left + insets.right;
       }
     }
-    if (myLastLayout != null) {
-      result += myLastLayout.moreRectWidth + myLastLayout.requiredWidth;
-      result -= myLastLayout.toLayout.size() > 1 ? myLastLayout.moreRectWidth + 1 : -14;
-    }
+    result += myTabs.size()>0? myTabs.get(0).getMinimumSize().width + (myTabs.size()>1? myLastLayout.moreRectWidth:0) : 0;
+
     return result;
   }
 
