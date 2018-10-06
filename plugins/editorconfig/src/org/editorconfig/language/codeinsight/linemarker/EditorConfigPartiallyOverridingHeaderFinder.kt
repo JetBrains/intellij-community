@@ -2,20 +2,11 @@
 package org.editorconfig.language.codeinsight.linemarker
 
 import icons.EditorconfigIcons
-import org.editorconfig.language.codeinsight.linemarker.EditorConfigSectionLineMarkerProviderUtil.createActualParentFilter
-import org.editorconfig.language.codeinsight.linemarker.EditorConfigSectionLineMarkerProviderUtil.isPartialOverride
-import org.editorconfig.language.psi.EditorConfigHeader
-import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.util.EditorConfigPsiTreeUtil
+import org.editorconfig.language.util.headers.EditorConfigPartiallyOverridingHeaderSearcher
 import javax.swing.Icon
 
 class EditorConfigPartiallyOverridingHeaderFinder : EditorConfigHeaderLineMarkerProviderBase() {
-  override fun findRelevantPsiFiles(file: EditorConfigPsiFile) = EditorConfigPsiTreeUtil.findAllParentsFiles(file)
-  override fun createRelevantHeaderFilter(header: EditorConfigHeader) = createActualParentFilter(header)
-  override fun createMatchingHeaderFilter(header: EditorConfigHeader): (EditorConfigHeader) -> Boolean = {
-    isPartialOverride(it, header)
-  }
-
+  override val searcher = EditorConfigPartiallyOverridingHeaderSearcher()
   override val navigationTitleKey = "message.header.partially-overriding.title"
   override val findUsagesTitleKey = "message.header.partially-overriding.find-usages-title"
   override val tooltipKeySingular = "message.header.partially-overriding.element"
