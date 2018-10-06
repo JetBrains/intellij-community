@@ -9,14 +9,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
@@ -24,13 +20,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.progress.util.BackgroundTaskUtil.computeWithModalProgress;
 import static com.intellij.util.containers.UtilKt.isEmpty;
 import static com.intellij.util.containers.UtilKt.notNullize;
 
@@ -80,6 +80,12 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     return addUnversioned(project, files, targetChangeList, changeConsumer);
   }
 
+  public static void addUnversionedFiles(@NotNull Project project,
+                                         @NotNull LocalChangeList list,
+                                         @NotNull List<VirtualFile> files) {
+    addUnversionedFiles(project, list, files, null);
+  }
+
   private static boolean addUnversioned(@NotNull Project project,
                                         @NotNull List<VirtualFile> files,
                                         @Nullable LocalChangeList targetChangeList,
@@ -90,7 +96,54 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    return manager.addUnversionedFiles(targetChangeList, files, changesConsumer);
+    return addUnversionedFiles(project, targetChangeList, files, changesConsumer);
+  }
+
+  private static boolean addUnversionedFiles(@NotNull Project project,
+                                             @NotNull LocalChangeList list,
+                                             @NotNull List<VirtualFile> files,
+                                             @Nullable Consumer<? super List<Change>> changesConsumer) {
+    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
+    List<VcsException> exceptions = new ArrayList<>();
+
+    Set<VirtualFile> allProcessedFiles = computeWithModalProgress(project, "Adding Files to VCS...", true, (indicator) -> {
+      return manager.addUnversionedToVcs(files, exceptions);
+    });
+
+    if (!exceptions.isEmpty()) {
+      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
+      for (VcsException ex : exceptions) {
+        message.append("\n").append(ex.getMessage());
+      }
+      Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"));
+    }
+
+    final boolean moveRequired = !list.isDefault();
+    boolean syncUpdateRequired = changesConsumer != null;
+
+    if (moveRequired || syncUpdateRequired) {
+      final Ref<List<Change>> foundChanges = Ref.create();
+      // find the changes for the added files and move them to the necessary changelist
+      InvokeAfterUpdateMode updateMode = syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
+                                                            : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
+
+      manager.invokeAfterUpdate(() -> {
+        List<Change> newChanges = ContainerUtil.filter(manager.getDefaultChangeList().getChanges(), change -> {
+          return allProcessedFiles.contains(change.getVirtualFile());
+        });
+        foundChanges.set(newChanges);
+
+        if (moveRequired && !newChanges.isEmpty()) {
+          manager.moveChangesTo(list, newChanges.toArray(new Change[0]));
+        }
+      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
+
+      if (changesConsumer != null) {
+        changesConsumer.consume(foundChanges.get());
+      }
+    }
+
+    return exceptions.isEmpty();
   }
 
   @NotNull

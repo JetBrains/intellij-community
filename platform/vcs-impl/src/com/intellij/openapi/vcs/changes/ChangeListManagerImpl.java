@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
@@ -67,7 +68,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.progress.util.BackgroundTaskUtil.computeWithModalProgress;
 import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
@@ -1215,60 +1215,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void addUnversionedFiles(@NotNull final LocalChangeList list, @NotNull final List<VirtualFile> files) {
-    addUnversionedFiles(list, files, null);
-  }
-
-  // TODO this is for quick-fix for GitAdd problem. To be removed after proper fix
-  // (which should introduce something like VcsAddRemoveEnvironment)
-  @Deprecated
-  public boolean addUnversionedFiles(@NotNull final LocalChangeList list,
-                                     @NotNull final List<VirtualFile> files,
-                                     @Nullable Consumer<? super List<Change>> changesConsumer) {
-    List<VcsException> exceptions = new ArrayList<>();
-
-    Set<VirtualFile> allProcessedFiles = computeWithModalProgress(myProject, "Adding Files to VCS...", true, (indicator) -> {
-      return addUnversionedToVcs(files, exceptions);
-    });
-
-    if (!exceptions.isEmpty()) {
-      StringBuilder message = new StringBuilder(VcsBundle.message("error.adding.files.prompt"));
-      for (VcsException ex : exceptions) {
-        message.append("\n").append(ex.getMessage());
-      }
-      Messages.showErrorDialog(myProject, message.toString(), VcsBundle.message("error.adding.files.title"));
-    }
-
-    final boolean moveRequired = !list.isDefault();
-    boolean syncUpdateRequired = changesConsumer != null;
-
-    if (moveRequired || syncUpdateRequired) {
-      final Ref<List<Change>> foundChanges = Ref.create();
-      // find the changes for the added files and move them to the necessary changelist
-      InvokeAfterUpdateMode updateMode = syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE
-                                                            : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
-
-      invokeAfterUpdate(() -> {
-        List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-          return allProcessedFiles.contains(change.getVirtualFile());
-        });
-        foundChanges.set(newChanges);
-
-        if (moveRequired && !newChanges.isEmpty()) {
-          moveChangesTo(list, newChanges.toArray(new Change[0]));
-        }
-      }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
-
-      if (changesConsumer != null) {
-        changesConsumer.consume(foundChanges.get());
-      }
-    }
-
-    return exceptions.isEmpty();
+    ScheduleForAdditionAction.addUnversionedFiles(myProject, list, files);
   }
 
   @NotNull
-  private Set<VirtualFile> addUnversionedToVcs(@NotNull List<VirtualFile> files,
-                                               @NotNull List<VcsException> exceptions) {
+  public Set<VirtualFile> addUnversionedToVcs(@NotNull List<VirtualFile> files,
+                                              @NotNull List<VcsException> exceptions) {
     Set<VirtualFile> allProcessedFiles = new HashSet<>();
     ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
