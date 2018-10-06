@@ -1248,19 +1248,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                                             : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
       invokeAfterUpdate(() -> {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          synchronized (myDataLock) {
-            List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
-              FilePath path = ChangesUtil.getAfterPath(change);
-              return path != null && allProcessedFiles.contains(path.getVirtualFile());
-            });
-            foundChanges.set(newChanges);
-
-            if (moveRequired && !newChanges.isEmpty()) {
-              moveChangesTo(list, newChanges.toArray(new Change[0]));
-            }
-          }
+        List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
+          FilePath path = ChangesUtil.getAfterPath(change);
+          return path != null && allProcessedFiles.contains(path.getVirtualFile());
         });
+        foundChanges.set(newChanges);
+
+        if (moveRequired && !newChanges.isEmpty()) {
+          moveChangesTo(list, newChanges.toArray(new Change[0]));
+        }
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
 
       if (changesConsumer != null) {
