@@ -22,10 +22,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
@@ -192,6 +189,18 @@ public class BackgroundTaskUtil {
     return Pair.create(result, indicator);
   }
 
+  public static <T, E extends Exception> T computeWithModalProgress(@Nullable Project project,
+                                                                    @NotNull String title,
+                                                                    boolean canBeCancelled,
+                                                                    @NotNull ThrowableConvertor<? super ProgressIndicator, T, E> computable)
+    throws E {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, E>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws E {
+        return computable.convert(indicator);
+      }
+    });
+  }
 
   /**
    * An alternative to plain {@link Application#executeOnPooledThread(Runnable)} which wraps the task in a process with a
