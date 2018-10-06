@@ -77,7 +77,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       changeConsumer = changes -> browser.getViewer().includeChanges(changes);
     }
 
-    return addUnversioned(project, files, targetChangeList, changeConsumer);
+    return addUnversionedFiles(project, targetChangeList, files, changeConsumer);
   }
 
   public static void addUnversionedFiles(@NotNull Project project,
@@ -86,26 +86,16 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     addUnversionedFiles(project, list, files, null);
   }
 
-  private static boolean addUnversioned(@NotNull Project project,
-                                        @NotNull List<VirtualFile> files,
-                                        @Nullable LocalChangeList targetChangeList,
-                                        @Nullable Consumer<List<Change>> changesConsumer) {
+  private static boolean addUnversionedFiles(@NotNull Project project,
+                                             @Nullable LocalChangeList targetChangeList,
+                                             @NotNull List<VirtualFile> files,
+                                             @Nullable Consumer<? super List<Change>> changesConsumer) {
     if (files.isEmpty()) return true;
 
     ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-    if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
-
     FileDocumentManager.getInstance().saveAllDocuments();
-    return addUnversionedFiles(project, targetChangeList, files, changesConsumer);
-  }
 
-  private static boolean addUnversionedFiles(@NotNull Project project,
-                                             @NotNull LocalChangeList list,
-                                             @NotNull List<VirtualFile> files,
-                                             @Nullable Consumer<? super List<Change>> changesConsumer) {
-    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
     List<VcsException> exceptions = new ArrayList<>();
-
     Set<VirtualFile> allProcessedFiles = computeWithModalProgress(project, "Adding Files to VCS...", true, (indicator) -> {
       return manager.addUnversionedToVcs(files, exceptions);
     });
@@ -118,7 +108,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       Messages.showErrorDialog(project, message.toString(), VcsBundle.message("error.adding.files.title"));
     }
 
-    final boolean moveRequired = !list.isDefault();
+    boolean moveRequired = targetChangeList != null && !targetChangeList.isDefault();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {
@@ -134,7 +124,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
         foundChanges.set(newChanges);
 
         if (moveRequired && !newChanges.isEmpty()) {
-          manager.moveChangesTo(list, newChanges.toArray(new Change[0]));
+          manager.moveChangesTo(targetChangeList, newChanges.toArray(new Change[0]));
         }
       }, updateMode, VcsBundle.message("change.lists.manager.add.unversioned"), null);
 
