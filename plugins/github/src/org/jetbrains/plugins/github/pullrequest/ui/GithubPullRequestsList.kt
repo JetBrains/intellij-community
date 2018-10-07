@@ -64,8 +64,7 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
     init {
       border = JBUI.Borders.empty(5, 8)
 
-      layout = MigLayout(LC().debug()
-                           .gridGap("0", "0")
+      layout = MigLayout(LC().gridGap("0", "0")
                            .insets("0", "0", "0", "0")
                            .fillX())
 
