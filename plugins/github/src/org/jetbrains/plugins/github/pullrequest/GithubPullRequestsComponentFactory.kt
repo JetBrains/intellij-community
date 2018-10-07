@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -95,9 +96,12 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
       dataLoader.addProviderChangesListener(object : GithubPullRequestsDataLoader.ProviderChangedListener {
         override fun providerChanged(pullRequestNumber: Long) {
-          val selection = list.selectionModel.current
-          if (selection != null && selection.number == pullRequestNumber) {
-            preview.setPreviewDataProvider(dataLoader.getDataProvider(selection))
+          runInEdt {
+            if (Disposer.isDisposed(preview)) return@runInEdt
+            val selection = list.selectionModel.current
+            if (selection != null && selection.number == pullRequestNumber) {
+              preview.setPreviewDataProvider(dataLoader.getDataProvider(selection))
+            }
           }
         }
       }, preview)
