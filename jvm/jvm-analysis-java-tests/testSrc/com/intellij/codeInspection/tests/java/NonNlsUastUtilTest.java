@@ -17,7 +17,7 @@ import static com.intellij.codeInspection.tests.JvmAnalysisTestsUastUtil.getUEle
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public class NonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
-  protected String getBasePath() {
+  protected String getTestDataPath() {
     return JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/nonNls";
   }
 
