@@ -23,7 +23,7 @@ public class GithubPullRequest {
   @Mandatory private String patchUrl;
 
   @Mandatory private Long number;
-  @Mandatory private String state;
+  @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private String activeLockReason;
   @Mandatory private String title;
@@ -36,9 +36,9 @@ public class GithubPullRequest {
   @Mandatory private Date createdAt;
   private String mergeCommitSha;
   @Mandatory private List<GithubUser> assignees;
-  //requestedReviewers
+  @Mandatory private List<GithubUser> requestedReviewers;
   //requestedTeams
-  //labels
+  @Mandatory private List<GithubIssueLabel> labels;
   //milestone
 
   private Tag head;
@@ -71,7 +71,7 @@ public class GithubPullRequest {
   }
 
   @NotNull
-  public String getState() {
+  public GithubIssueState getState() {
     return state;
   }
 
@@ -116,6 +116,16 @@ public class GithubPullRequest {
   }
 
   @NotNull
+  public List<GithubUser> getRequestedReviewers() {
+    return requestedReviewers;
+  }
+
+  @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
+  }
+
+  @NotNull
   public Links getLinks() {
     return _links;
   }
@@ -128,10 +138,6 @@ public class GithubPullRequest {
   @NotNull
   public Tag getBase() {
     return base;
-  }
-
-  public boolean isClosed() {
-    return "closed".equals(state);
   }
 
   @RestModel

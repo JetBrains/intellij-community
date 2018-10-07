@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
@@ -17,7 +16,6 @@ import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import java.awt.Color
 import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.event.MouseAdapter
@@ -106,12 +104,7 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
       }
       labels.apply {
         removeAll()
-        for (label in value.labels) {
-          add(JBLabel(" ${label.name} ", UIUtil.ComponentStyle.MINI).apply {
-            foreground = Color.black
-            background = Color.decode("0x${label.color}")
-          }.andOpaque())
-        }
+        for (label in value.labels) add(GithubUIUtil.createIssueLabelLabel(label))
       }
       assignees.apply {
         removeAll()
