@@ -135,7 +135,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaConstValue getInt(int value) {
-    return getConstFactory().createFromValue(value, PsiType.INT, null);
+    return getConstFactory().createFromValue(value, PsiType.INT);
   }
 
   @Nullable

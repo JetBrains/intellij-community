@@ -49,7 +49,7 @@ public class DfaFactMapValue extends DfaValue {
       if (factType == DfaFactType.RANGE && value instanceof LongRangeSet) {
         LongRangeSet rangeSet = (LongRangeSet)value;
         if (!rangeSet.isEmpty() && rangeSet.min() == rangeSet.max()) {
-          return myFactory.getConstFactory().createFromValue(rangeSet.min(), PsiType.LONG, null);
+          return myFactory.getConstFactory().createFromValue(rangeSet.min(), PsiType.LONG);
         }
       }
       return createValue(DfaFactMap.EMPTY.with(factType, value));

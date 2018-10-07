@@ -117,7 +117,7 @@ public class DfaExpressionFactory {
     if (value != null) {
       PsiType type = expression.getType();
       if (type != null) {
-        return myFactory.getConstFactory().createFromValue(value, type, null);
+        return myFactory.getConstFactory().createFromValue(value, type);
       }
     }
 

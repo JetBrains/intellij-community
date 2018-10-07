@@ -1200,7 +1200,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaConstValue) {
       Object constant = ((DfaConstValue)value).getValue();
       if (Double.valueOf(-0.0).equals(constant)) {
-        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE, null);
+        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE);
       }
     }
     return value;

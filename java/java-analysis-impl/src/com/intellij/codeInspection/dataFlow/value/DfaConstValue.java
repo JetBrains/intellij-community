@@ -45,11 +45,11 @@ public class DfaConstValue extends DfaValue {
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      dfaNull = new DfaConstValue(null, PsiType.NULL, factory, null);
-      dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory, null);
-      dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory, null);
-      dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory, null);
-      dfaSentinel = new DfaConstValue(SENTINEL, PsiType.VOID, factory, null);
+      dfaNull = new DfaConstValue(null, PsiType.NULL, factory);
+      dfaFalse = new DfaConstValue(Boolean.FALSE, PsiType.BOOLEAN, factory);
+      dfaTrue = new DfaConstValue(Boolean.TRUE, PsiType.BOOLEAN, factory);
+      dfaFail = new DfaConstValue(ourThrowable, PsiType.VOID, factory);
+      dfaSentinel = new DfaConstValue(SENTINEL, PsiType.VOID, factory);
     }
 
     @Nullable
@@ -59,7 +59,7 @@ public class DfaConstValue extends DfaValue {
       if (PsiType.NULL.equals(type)) return dfaNull;
       Object value = expr.getValue();
       if (value == null) return null;
-      return createFromValue(value, type, null);
+      return createFromValue(value, type);
     }
 
     @Nullable
@@ -70,7 +70,7 @@ public class DfaConstValue extends DfaValue {
       if (value == null) {
         Boolean boo = computeJavaLangBooleanFieldReference(variable);
         if (boo != null) {
-          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN, variable);
+          DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
           return myFactory.getBoxedFactory().createBoxed(unboxed);
         }
         PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
@@ -78,11 +78,11 @@ public class DfaConstValue extends DfaValue {
           return dfaNull;
         }
         if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNewObject(initializer)) {
-          return createFromValue(variable, type, variable);
+          return createFromValue(variable, type);
         }
         return null;
       }
-      return createFromValue(value, type, variable);
+      return createFromValue(value, type);
     }
 
     @Nullable
@@ -102,11 +102,11 @@ public class DfaConstValue extends DfaValue {
      */
     @NotNull
     public DfaConstValue createDefault(@NotNull PsiType type) {
-      return createFromValue(PsiTypesUtil.getDefaultValue(type), type, null);
+      return createFromValue(PsiTypesUtil.getDefaultValue(type), type);
     }
 
     @NotNull
-    public DfaConstValue createFromValue(Object value, @NotNull PsiType type, @Nullable PsiVariable constant) {
+    public DfaConstValue createFromValue(Object value, @NotNull PsiType type) {
       if (Boolean.TRUE.equals(value)) return dfaTrue;
       if (Boolean.FALSE.equals(value)) return dfaFalse;
       if (value == null) return dfaNull;
@@ -123,7 +123,7 @@ public class DfaConstValue extends DfaValue {
       }
       DfaConstValue instance = myValues.get(value);
       if (instance == null) {
-        instance = new DfaConstValue(value, type, myFactory, constant);
+        instance = new DfaConstValue(value, type, myFactory);
         myValues.put(value, instance);
       }
 
@@ -156,14 +156,12 @@ public class DfaConstValue extends DfaValue {
   }
 
   private final Object myValue;
-  @Nullable private final PsiVariable myConstant;
   @NotNull private final PsiType myType;
 
-  private DfaConstValue(Object value, @NotNull PsiType type, DfaValueFactory factory, @Nullable PsiVariable constant) {
+  private DfaConstValue(Object value, @NotNull PsiType type, DfaValueFactory factory) {
     super(factory);
     myValue = value;
     myType = type;
-    myConstant = constant;
   }
 
   public String toString() {
@@ -179,11 +177,6 @@ public class DfaConstValue extends DfaValue {
 
   public Object getValue() {
     return myValue;
-  }
-
-  @Nullable
-  public PsiVariable getConstant() {
-    return myConstant;
   }
 
   @Override

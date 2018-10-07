@@ -543,7 +543,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       assert qualifierValue != null;
       if (qualifierValue instanceof DfaConstValue && type != null) {
         Object casted = TypeConversionUtil.computeCastTo(((DfaConstValue)qualifierValue).getValue(), type);
-        return factory.getConstFactory().createFromValue(casted, type, ((DfaConstValue)qualifierValue).getConstant());
+        return factory.getConstFactory().createFromValue(casted, type);
       }
       return qualifierValue;
     }

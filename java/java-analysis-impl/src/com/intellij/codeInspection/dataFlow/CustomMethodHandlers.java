@@ -119,7 +119,7 @@ class CustomMethodHandlers {
     catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
       return null;
     }
-    return factory.getConstFactory().createFromValue(result, returnType, null);
+    return factory.getConstFactory().createFromValue(result, returnType);
   }
 
   private static Method toJvmMethod(PsiMethod method) {
