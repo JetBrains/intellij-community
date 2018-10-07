@@ -259,6 +259,13 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     return myVirtualFile;
   }
 
+  public void notifyStarted() {
+    if (myListener != null) {
+      myListener.onTerminalStarted();
+    }
+  }
+
+
   private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
     private final JBTerminalWidget myObject;
 

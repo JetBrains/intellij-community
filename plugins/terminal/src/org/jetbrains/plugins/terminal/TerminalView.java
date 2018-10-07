@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -122,9 +123,21 @@ public class TerminalView {
     }
   }
 
+
+  public void createNewSession(final AbstractTerminalRunner terminalRunner) {
+    createNewTab(null, terminalRunner, myToolWindow);
+  }
+
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
-    final Content content = createTerminalContent(myTerminalRunner, myToolWindow, terminalWidget);
-    final ContentManager contentManager = myToolWindow.getContentManager();
+    return createNewTab(terminalWidget, myTerminalRunner, myToolWindow);
+  }
+
+  @NotNull
+  private Content createNewTab(@Nullable JBTerminalWidget terminalWidget,
+                               @NotNull AbstractTerminalRunner terminalRunner,
+                               @NotNull ToolWindow toolWindow) {
+    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget);
+    final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
     return content;
@@ -135,10 +148,7 @@ public class TerminalView {
                                         @Nullable JBTerminalWidget terminalWidget) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
-    String name = (terminalWidget != null
-                   ? terminalWidget.getSettingsProvider().tabName(terminalWidget.getTtyConnector(), terminalWidget.getSessionName())
-                   : TerminalOptionsProvider.Companion.getInstance().getTabName()) + " " + (myNextTabNumber++);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, name, false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, TerminalOptionsProvider.Companion.getInstance().getTabName(), false);
     if (terminalWidget == null) {
       terminalWidget = terminalRunner.createTerminalWidget(content);
     }
@@ -147,10 +157,22 @@ public class TerminalView {
       terminalWidget.moveDisposable(content);
     }
 
+    JBTerminalWidget finalTerminalWidget = terminalWidget;
+    terminalWidget.setListener(new JBTerminalWidgetListener() {
+      @Override
+      public void onNewSession() {
+        newTab(null);
+      }
+
+      @Override
+      public void onTerminalStarted() {
+        content.setDisplayName(finalTerminalWidget.getSettingsProvider().tabName(finalTerminalWidget.getTtyConnector(), finalTerminalWidget.getSessionName()));
+      }
+    });
+
     content.setCloseable(true);
     content.putUserData(TERMINAL_WIDGET_KEY, terminalWidget);
 
-    terminalWidget.setListener(() -> newTab(null));
     panel.setContent(terminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 

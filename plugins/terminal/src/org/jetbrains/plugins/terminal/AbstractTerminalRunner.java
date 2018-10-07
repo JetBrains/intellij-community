@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.ui.AbstractTabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -187,6 +186,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
             terminalWidget.createTerminalSession(createTtyConnector(process));
             terminalWidget.start();
             terminalWidget.getComponent().revalidate();
+            terminalWidget.notifyStarted();
           }
           catch (RuntimeException e) {
             showCannotOpenTerminalDialog(e);
