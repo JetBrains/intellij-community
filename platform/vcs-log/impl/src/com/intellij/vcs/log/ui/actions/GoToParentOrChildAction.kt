@@ -58,7 +58,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {
     var text = commitMetadata.id.toShortString()
     if (commitMetadata !is LoadingDetails) {
-      text += " " + CommitPresentationUtil.getShortSummary(commitMetadata, false, 30)
+      text += " " + CommitPresentationUtil.getShortSummary(commitMetadata, false, 40)
     }
     return text
   }
