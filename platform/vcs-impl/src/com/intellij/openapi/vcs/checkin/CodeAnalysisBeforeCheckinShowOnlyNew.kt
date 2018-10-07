@@ -100,7 +100,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
       var i = 0
       val changeLists = changeListManager.changeLists
       val size = changeLists.size
-      changeLists.forEach {
+      changeLists.filter { it.changes.isNotEmpty() }.forEach {
         progressIndicator.fraction = (i++).toDouble() / size.toDouble()
         progressIndicator.text = VcsBundle.message("searching.for.code.smells.shelving", it.name)
         val shelveChanges = shelveChangeManager.shelveChanges(it.changes, it.name, true, true)
