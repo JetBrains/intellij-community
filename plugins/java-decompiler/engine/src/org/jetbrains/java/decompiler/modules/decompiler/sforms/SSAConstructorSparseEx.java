@@ -14,8 +14,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
-import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
-import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
+import org.jetbrains.java.decompiler.util.Universe;
+import org.jetbrains.java.decompiler.util.Universe.UniversedSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
@@ -39,13 +39,13 @@ public class SSAConstructorSparseEx {
   private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
 
   // (var, version), version
-  private final HashMap<VarVersionPair, FastSparseSet<Integer>> phi = new HashMap<>();
+  private final HashMap<VarVersionPair, UniversedSet<Integer>> phi = new HashMap<>();
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
 
   // set factory
-  private FastSparseSetFactory<Integer> factory;
+  private Universe<Integer> factory;
 
   public void splitVariables(RootStatement root, StructMethod mt) {
 
@@ -60,7 +60,7 @@ public class SSAConstructorSparseEx {
     for (int i = 0; i < 64; i++) {
       setInit.add(i);
     }
-    factory = new FastSparseSetFactory<>(setInit);
+    factory = new Universe<>(setInit, true);
 
     SFormsFastMapDirect firstmap = createFirstMap(mt);
     extraVarVersions.put(dgraph.first.id, firstmap);
@@ -237,15 +237,15 @@ public class SSAConstructorSparseEx {
 
       VarExprent vardest = (VarExprent)expr;
       Integer varindex = vardest.getIndex();
-      FastSparseSet<Integer> vers = varmap.get(varindex);
+      UniversedSet<Integer> vers = varmap.get(varindex);
 
-      int cardinality = vers.getCardinality();
+      int cardinality = vers.size();
       if (cardinality == 1) { // == 1
         // set version
         Integer it = vers.iterator().next();
         vardest.setVersion(it);
       }
-      else if (cardinality == 2) { // size > 1
+      else if (cardinality > 1) { // size > 1
         Integer current_vers = vardest.getVersion();
 
         VarVersionPair currpaar = new VarVersionPair(varindex, current_vers);
@@ -421,7 +421,7 @@ public class SSAConstructorSparseEx {
       return false;
     }
 
-    for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
+    for (Entry<Integer, UniversedSet<Integer>> ent2 : map2.entryList()) {
       if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
@@ -431,7 +431,7 @@ public class SSAConstructorSparseEx {
   }
 
   private void setCurrentVar(SFormsFastMapDirect varmap, Integer var, Integer vers) {
-    FastSparseSet<Integer> set = factory.spawnEmptySet();
+    UniversedSet<Integer> set = factory.spawnEmptySet();
     set.add(vers);
     varmap.put(var, set);
   }
@@ -480,7 +480,7 @@ public class SSAConstructorSparseEx {
     for (int i = 0; i < paramcount; i++) {
       int version = getNextFreeVersion(varindex); // == 1
 
-      FastSparseSet<Integer> set = factory.spawnEmptySet();
+      UniversedSet<Integer> set = factory.spawnEmptySet();
       set.add(version);
       map.put(varindex, set);
 
@@ -500,7 +500,7 @@ public class SSAConstructorSparseEx {
     return map;
   }
 
-  public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
+  public HashMap<VarVersionPair, UniversedSet<Integer>> getPhi() {
     return phi;
   }
 }

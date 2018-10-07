@@ -3,8 +3,8 @@ package org.jetbrains.java.decompiler.modules.decompiler.decompose;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
-import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
-import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
+import org.jetbrains.java.decompiler.util.Universe;
+import org.jetbrains.java.decompiler.util.Universe.UniversedSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
@@ -14,13 +14,13 @@ public class FastExtendedPostdominanceHelper {
 
   private List<Statement> lstReversePostOrderList;
 
-  private HashMap<Integer, FastFixedSet<Integer>> mapSupportPoints = new HashMap<>();
+  private HashMap<Integer, UniversedSet<Integer>> mapSupportPoints = new HashMap<>();
 
-  private final HashMap<Integer, FastFixedSet<Integer>> mapExtPostdominators = new HashMap<>();
+  private final HashMap<Integer, UniversedSet<Integer>> mapExtPostdominators = new HashMap<>();
 
   private Statement statement;
 
-  private FastFixedSetFactory<Integer> factory;
+  private Universe<Integer> factory;
 
   public HashMap<Integer, Set<Integer>> getExtendedPostdominators(Statement statement) {
 
@@ -30,7 +30,7 @@ public class FastExtendedPostdominanceHelper {
     for (Statement st : statement.getStats()) {
       set.add(st.id);
     }
-    this.factory = new FastFixedSetFactory<>(set);
+    this.factory = new Universe<>(set, true);
 
     lstReversePostOrderList = statement.getReversePostOrderList();
 
@@ -51,10 +51,10 @@ public class FastExtendedPostdominanceHelper {
 
     filterOnDominance(filter);
 
-    Set<Entry<Integer, FastFixedSet<Integer>>> entries = mapExtPostdominators.entrySet();
+    Set<Entry<Integer, UniversedSet<Integer>>> entries = mapExtPostdominators.entrySet();
     HashMap<Integer, Set<Integer>> res = new HashMap<>(entries.size());
-    for (Entry<Integer, FastFixedSet<Integer>> entry : entries) {
-      res.put(entry.getKey(), entry.getValue().toPlainSet());
+    for (Entry<Integer, UniversedSet<Integer>> entry : entries) {
+      res.put(entry.getKey(), entry.getValue());
     }
 
     return res;
@@ -67,10 +67,10 @@ public class FastExtendedPostdominanceHelper {
 
     for (Integer head : new HashSet<>(mapExtPostdominators.keySet())) {
 
-      FastFixedSet<Integer> setPostdoms = mapExtPostdominators.get(head);
+      UniversedSet<Integer> setPostdoms = mapExtPostdominators.get(head);
 
       LinkedList<Statement> stack = new LinkedList<>();
-      LinkedList<FastFixedSet<Integer>> stackPath = new LinkedList<>();
+      LinkedList<UniversedSet<Integer>> stackPath = new LinkedList<>();
 
       stack.add(statement.getStats().getWithKey(head));
       stackPath.add(factory.spawnEmptySet());
@@ -82,13 +82,13 @@ public class FastExtendedPostdominanceHelper {
       while (!stack.isEmpty()) {
 
         Statement stat = stack.removeFirst();
-        FastFixedSet<Integer> path = stackPath.removeFirst();
+        UniversedSet<Integer> path = stackPath.removeFirst();
 
         if (setPostdoms.contains(stat.id)) {
           path.add(stat.id);
         }
 
-        if (path.contains(setPostdoms)) {
+        if (path.containsAll(setPostdoms)) {
           continue;
         }
 
@@ -119,7 +119,7 @@ public class FastExtendedPostdominanceHelper {
 
   private void filterOnExceptionRanges(DominatorTreeExceptionFilter filter) {
     for (Integer head : new HashSet<>(mapExtPostdominators.keySet())) {
-      FastFixedSet<Integer> set = mapExtPostdominators.get(head);
+      UniversedSet<Integer> set = mapExtPostdominators.get(head);
       for (Iterator<Integer> it = set.iterator(); it.hasNext(); ) {
         if (!filter.acceptStatementPair(head, it.next())) {
           it.remove();
@@ -139,11 +139,11 @@ public class FastExtendedPostdominanceHelper {
     iterateReachability((node, mapSets) -> {
       Integer nodeid = node.id;
 
-      FastFixedSet<Integer> setReachability = mapSets.get(nodeid);
-      List<FastFixedSet<Integer>> lstPredSets = new ArrayList<>();
+      UniversedSet<Integer> setReachability = mapSets.get(nodeid);
+      List<UniversedSet<Integer>> lstPredSets = new ArrayList<>();
 
       for (StatEdge prededge : node.getPredecessorEdges(StatEdge.TYPE_REGULAR)) {
-        FastFixedSet<Integer> setPred = mapSets.get(prededge.getSource().id);
+        UniversedSet<Integer> setPred = mapSets.get(prededge.getSource().id);
         if (setPred == null) {
           setPred = mapSupportPoints.get(prededge.getSource().id);
         }
@@ -154,12 +154,12 @@ public class FastExtendedPostdominanceHelper {
 
       for (Integer id : setReachability) {
 
-        FastFixedSet<Integer> setReachabilityCopy = setReachability.getCopy();
+        UniversedSet<Integer> setReachabilityCopy = setReachability.getCopy();
 
-        FastFixedSet<Integer> setIntersection = factory.spawnEmptySet();
+        UniversedSet<Integer> setIntersection = factory.spawnEmptySet();
         boolean isIntersectionInitialized = false;
 
-        for (FastFixedSet<Integer> predset : lstPredSets) {
+        for (UniversedSet<Integer> predset : lstPredSets) {
           if (predset.contains(id)) {
             if (!isIntersectionInitialized) {
               setIntersection.union(predset);
@@ -188,7 +188,7 @@ public class FastExtendedPostdominanceHelper {
 
     // exception handlers cannot be postdominator nodes
     // TODO: replace with a standard set?
-    FastFixedSet<Integer> setHandlers = factory.spawnEmptySet();
+    UniversedSet<Integer> setHandlers = factory.spawnEmptySet();
     boolean handlerfound = false;
 
     for (Statement stat : statement.getStats()) {
@@ -200,7 +200,7 @@ public class FastExtendedPostdominanceHelper {
     }
 
     if (handlerfound) {
-      for (FastFixedSet<Integer> set : mapExtPostdominators.values()) {
+      for (UniversedSet<Integer> set : mapExtPostdominators.values()) {
         set.complement(setHandlers);
       }
     }
@@ -217,7 +217,7 @@ public class FastExtendedPostdominanceHelper {
 
     iterateReachability((node, mapSets) -> {
       Integer nodeid = node.id;
-      FastFixedSet<Integer> setReachability = mapSets.get(nodeid);
+      UniversedSet<Integer> setReachability = mapSets.get(nodeid);
 
       for (Integer id : setReachability) {
         mapExtPostdominators.get(id).add(nodeid);
@@ -233,7 +233,7 @@ public class FastExtendedPostdominanceHelper {
       for (StatEdge sucedge : node.getAllSuccessorEdges()) {
         if ((sucedge.getType() & edgetype) != 0) {
           if (mapSets.containsKey(sucedge.getDestination().id)) {
-            FastFixedSet<Integer> setReachability = mapSets.get(node.id);
+            UniversedSet<Integer> setReachability = mapSets.get(node.id);
 
             if (!InterpreterUtil.equalObjects(setReachability, mapSupportPoints.get(node.id))) {
               mapSupportPoints.put(node.id, setReachability);
@@ -251,18 +251,18 @@ public class FastExtendedPostdominanceHelper {
     while (true) {
       boolean iterate = false;
 
-      HashMap<Integer, FastFixedSet<Integer>> mapSets = new HashMap<>();
+      HashMap<Integer, UniversedSet<Integer>> mapSets = new HashMap<>();
 
       for (Statement stat : lstReversePostOrderList) {
 
-        FastFixedSet<Integer> set = factory.spawnEmptySet();
+        UniversedSet<Integer> set = factory.spawnEmptySet();
         set.add(stat.id);
 
         for (StatEdge prededge : stat.getAllPredecessorEdges()) {
           if ((prededge.getType() & edgetype) != 0) {
             Statement pred = prededge.getSource();
 
-            FastFixedSet<Integer> setPred = mapSets.get(pred.id);
+            UniversedSet<Integer> setPred = mapSets.get(pred.id);
             if (setPred == null) {
               setPred = mapSupportPoints.get(pred.id);
             }
@@ -311,6 +311,6 @@ public class FastExtendedPostdominanceHelper {
 
 
   private interface IReachabilityAction {
-    boolean action(Statement node, HashMap<Integer, FastFixedSet<Integer>> mapSets);
+    boolean action(Statement node, HashMap<Integer, UniversedSet<Integer>> mapSets);
   }
 }

@@ -1,6 +1,14 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
@@ -8,13 +16,22 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.FastExtendedPostdominanceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.IrreducibleCFGDeobfuscator;
-import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
-import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
-import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.BasicBlockStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchAllStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.CatchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.DummyExitStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.GeneralStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
+import org.jetbrains.java.decompiler.modules.decompiler.stats.SynchronizedStatement;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.KeyedList;
-
-import java.util.*;
+import org.jetbrains.java.decompiler.util.Universe;
+import org.jetbrains.java.decompiler.util.Universe.UniversedSet;
 
 public class DomHelper {
 
@@ -89,23 +106,23 @@ public class DomHelper {
 
   public static KeyedList<Integer, List<Integer>> calcPostDominators(Statement container) {
 
-    HashMap<Statement, FastFixedSet<Statement>> lists = new HashMap<>();
+    HashMap<Statement, UniversedSet<Statement>> lists = new HashMap<>();
 
     StrongConnectivityHelper schelper = new StrongConnectivityHelper(container);
     List<List<Statement>> components = schelper.getComponents();
 
     List<Statement> lstStats = container.getPostReversePostOrderList(StrongConnectivityHelper.getExitReps(components));
 
-    FastFixedSetFactory<Statement> factory = new FastFixedSetFactory<>(lstStats);
+    Universe<Statement> factory = new Universe<>(lstStats);
 
-    FastFixedSet<Statement> setFlagNodes = factory.spawnEmptySet();
+    UniversedSet<Statement> setFlagNodes = factory.spawnEmptySet();
     setFlagNodes.setAllElements();
 
-    FastFixedSet<Statement> initSet = factory.spawnEmptySet();
+    UniversedSet<Statement> initSet = factory.spawnEmptySet();
     initSet.setAllElements();
 
     for (List<Statement> lst : components) {
-      FastFixedSet<Statement> tmpSet;
+      UniversedSet<Statement> tmpSet;
 
       if (StrongConnectivityHelper.isExitComponent(lst)) {
         tmpSet = factory.spawnEmptySet();
@@ -129,13 +146,13 @@ public class DomHelper {
         }
         setFlagNodes.remove(stat);
 
-        FastFixedSet<Statement> doms = lists.get(stat);
-        FastFixedSet<Statement> domsSuccs = factory.spawnEmptySet();
+        UniversedSet<Statement> doms = lists.get(stat);
+        UniversedSet<Statement> domsSuccs = factory.spawnEmptySet();
 
         List<Statement> lstSuccs = stat.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_FORWARD);
         for (int j = 0; j < lstSuccs.size(); j++) {
           Statement succ = lstSuccs.get(j);
-          FastFixedSet<Statement> succlst = lists.get(succ);
+          UniversedSet<Statement> succlst = lists.get(succ);
 
           if (j == 0) {
             domsSuccs.union(succlst);
