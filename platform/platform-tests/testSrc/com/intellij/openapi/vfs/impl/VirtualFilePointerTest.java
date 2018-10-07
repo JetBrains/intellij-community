@@ -57,24 +57,24 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
   private final Disposable disposable = Disposer.newDisposable();
   private VirtualFilePointerManagerImpl myVirtualFilePointerManager;
-  private int numberOfPointersBefore;
+  private Collection<VirtualFilePointer> pointersBefore;
   private int numberOfListenersBefore;
 
   @Before
   public void setUp() {
     myVirtualFilePointerManager = (VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance();
-    numberOfPointersBefore = myVirtualFilePointerManager.numberOfPointers();
+    pointersBefore = myVirtualFilePointerManager.dumpPointers();
     numberOfListenersBefore = myVirtualFilePointerManager.numberOfListeners();
   }
 
   @After
   public void tearDown() {
     Disposer.dispose(disposable);
-    int nPointers = myVirtualFilePointerManager.numberOfPointers();
+    Collection<VirtualFilePointer> pointersAfter = myVirtualFilePointerManager.dumpPointers();
     int nListeners = myVirtualFilePointerManager.numberOfListeners();
     myVirtualFilePointerManager = null;
-    assertEquals(numberOfPointersBefore, nPointers);
     assertEquals(numberOfListenersBefore, nListeners);
+    assertEquals(pointersBefore, pointersAfter);
   }
 
   private static class LoggingListener implements VirtualFilePointerListener {
