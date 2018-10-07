@@ -200,7 +200,9 @@ class TabContentLayout extends ContentLayout {
         result += insets.left + insets.right;
       }
     }
-    result += myTabs.size()>0? myTabs.get(0).getMinimumSize().width + (myTabs.size()>1? myLastLayout.moreRectWidth:0) : 0;
+    if (myLastLayout != null) {
+      result += myTabs.size() > 0 ? myTabs.get(0).getMinimumSize().width + (myTabs.size() > 1 ? myLastLayout.moreRectWidth : 0) : 0;
+    }
 
     return result;
   }
