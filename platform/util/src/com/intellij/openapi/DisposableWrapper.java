@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
 
 public class DisposableWrapper<T extends Disposable> implements Disposable {
-  private T myObject;
+  private volatile T myObject;
 
   public DisposableWrapper(T object, Disposable parent) {
     myObject = object;
