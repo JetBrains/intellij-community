@@ -1,4 +1,5 @@
-[![official JetBrains project](http://jb.gg/badges/official-plastic.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![JetBrains community Discord](https://goo.gl/xe5fjk)](https://discord.gg/4W2RCkH)
 
 # PyCharm Community Edition
 
@@ -25,6 +26,6 @@ To build the Python plugin for IntelliJ IDEA Community Edition:
  * Download the .tar.gz distribution of the most recent EAP or release build of IntelliJ IDEA Community Edition;
  * Run the following command:
 
-   ant -Didea.path=<download path> -Didea.build.number=<build number of the build you're using> plugin
+   `ant -Didea.path=<download path> -Didea.build.number=<build number of the build you're using> plugin`
 
 The .zip file of the built plugin will be placed at distCE/python-community-<branch number>.SNAPSHOT.zip
