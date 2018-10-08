@@ -1036,4 +1036,10 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "}\n" +
                 "\n");
   }
+
+  public void testComplicatedConditions() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions_schema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
+    doTest(schemaText, inputText);
+  }
 }

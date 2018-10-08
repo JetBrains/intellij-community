@@ -1033,6 +1033,7 @@ class JsonSchemaAnnotatorChecker {
                                                           @NotNull List<JsonSchemaObject> candidateErroneousSchemas,
                                                           boolean isOneOf) {
     JsonSchemaObject current = null;
+    JsonSchemaObject currentWithMinAverage = null;
     Optional<AverageFailureAmount> minAverage = candidateErroneousCheckers.stream()
                                                                           .map(c -> getAverageFailureAmount(c))
                                                                           .min(Comparator.comparingInt(c -> c.ordinal()));
@@ -1040,17 +1041,27 @@ class JsonSchemaAnnotatorChecker {
 
     int minErrorCount = candidateErroneousCheckers.stream().map(c -> c.getErrors().size()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
 
+    MultiMap<PsiElement, JsonValidationError> errorsWithMinAverage = MultiMap.create();
     MultiMap<PsiElement, JsonValidationError> allErrors = MultiMap.create();
     for (int i = 0; i < candidateErroneousCheckers.size(); i++) {
       JsonSchemaAnnotatorChecker checker = candidateErroneousCheckers.get(i);
-      if (checker.getErrors().size() > minErrorCount) continue;
-      if (getAverageFailureAmount(checker).ordinal() <= min) {
-        current = candidateErroneousSchemas.get(i);
+      final boolean isMoreThanMinErrors = checker.getErrors().size() > minErrorCount;
+      final boolean isMoreThanAverage = getAverageFailureAmount(checker).ordinal() > min;
+      if (!isMoreThanMinErrors) {
+        if (isMoreThanAverage) {
+          currentWithMinAverage = candidateErroneousSchemas.get(i);
+        }
+        else {
+          current = candidateErroneousSchemas.get(i);
+        }
+
         for (Map.Entry<PsiElement, JsonValidationError> entry: checker.getErrors().entrySet()) {
-          allErrors.putValue(entry.getKey(), entry.getValue());
+          (isMoreThanAverage ? errorsWithMinAverage : allErrors).putValue(entry.getKey(), entry.getValue());
         }
       }
     }
+
+    if (allErrors.isEmpty()) allErrors = errorsWithMinAverage;
 
     for (Map.Entry<PsiElement, Collection<JsonValidationError>> entry : allErrors.entrySet()) {
       Collection<JsonValidationError> value = entry.getValue();
@@ -1070,6 +1081,9 @@ class JsonSchemaAnnotatorChecker {
       }
     }
 
+    if (current == null) {
+      current = currentWithMinAverage;
+    }
     if (current == null) {
       current = ContainerUtil.getLastItem(candidateErroneousSchemas);
     }
