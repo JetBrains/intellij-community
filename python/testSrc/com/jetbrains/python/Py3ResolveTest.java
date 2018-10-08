@@ -809,4 +809,22 @@ public class Py3ResolveTest extends PyResolveTestCase {
         )
     );
   }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+        )
+    );
+  }
 }
