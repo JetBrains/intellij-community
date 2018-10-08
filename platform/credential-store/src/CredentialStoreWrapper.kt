@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
@@ -32,7 +31,7 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     postponedCredentials.get(attributes)?.let {
-      return if (it == nullCredentials) null else it
+      return if (it === nullCredentials) null else it
     }
 
     if (deniedItems.getIfPresent(attributes) != null) {
@@ -41,17 +40,12 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-    val requestor = attributes.requestor
-    val userName = attributes.userName
     try {
       val value = store.get(attributes)
       if (value === ACCESS_TO_KEY_CHAIN_DENIED) {
         deniedItems.put(attributes, true)
-        return null
       }
-      if (value != null || requestor == null || userName == null) {
-        return value
-      }
+      return value
     }
     catch (e: UnsatisfiedLinkError) {
       store = fallbackStore.value
@@ -62,27 +56,6 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
       LOG.error(e)
       return null
     }
-
-    LOG.runAndLogException {
-      fun setNew(oldKey: CredentialAttributes): Credentials? {
-        return store.get(oldKey)?.let {
-          set(oldKey, null)
-
-          // https://youtrack.jetbrains.com/issue/IDEA-160341
-          set(attributes, Credentials(userName, it.password?.clone(false, true)))
-          Credentials(userName, it.password)
-        }
-      }
-
-      // try old key - as hash
-      setNew(toOldKey(requestor, userName))?.let { return it }
-
-      val appInfo = ApplicationInfoEx.getInstanceEx()
-      if (appInfo.isEAP || appInfo.build.isSnapshot) {
-        setNew(CredentialAttributes(SERVICE_NAME_PREFIX, "${requestor.name}/$userName"))?.let { return it }
-      }
-    }
-    return null
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
