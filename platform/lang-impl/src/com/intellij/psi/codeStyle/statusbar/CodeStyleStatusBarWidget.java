@@ -8,6 +8,7 @@ import com.intellij.application.options.codeStyle.OtherFileTypesCodeStyleConfigu
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -120,10 +121,10 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     }
     allActions.add(
       DumbAwareAction.create(
-        "Configure indents for " + psiFile.getLanguage().getDisplayName() + "...",
+        ApplicationBundle.message("code.style.widget.configure.indents",psiFile.getLanguage().getDisplayName()),
         event -> {
           String id = findCodeStyleConfigurableId(psiFile);
-          ShowSettingsUtilImpl.showSettingsDialog(psiFile.getProject(), id, "Indent");
+          ShowSettingsUtilImpl.showSettingsDialog(psiFile.getProject(), id, "Tab,Indent");
         }
       )
     );
