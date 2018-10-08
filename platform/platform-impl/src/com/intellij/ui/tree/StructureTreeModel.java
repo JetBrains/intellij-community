@@ -77,22 +77,15 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     }
   }
 
-  /**
-   * @param structure a structure to build tree model or {@code null} to clear its content
-   */
-  public void setStructure(@Nullable AbstractTreeStructure structure) {
-    if (disposed) return;
-    this.structure = structure;
-    invalidate();
-  }
-
   @Override
   public void dispose() {
-    super.dispose();
     comparator = null;
     structure = null;
     Node node = root.set(null);
     if (node != null) node.dispose();
+    // notify tree to clean up inner structures
+    treeStructureChanged(null, null, null);
+    super.dispose(); // remove listeners after notification
   }
 
   @NotNull
