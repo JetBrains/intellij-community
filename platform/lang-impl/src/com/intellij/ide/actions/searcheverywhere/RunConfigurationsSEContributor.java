@@ -206,23 +206,31 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
       setBackground(UIUtil.getListBackground(isSelected));
       setFont(list.getFont());
-      runConfigInfo.append(wrapper.getText());
+      Color foreground = isSelected ? list.getSelectionForeground() : list.getForeground();
+      runConfigInfo.append(wrapper.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground));
       runConfigInfo.setIcon(wrapper.getIcon());
 
-      fillExecutorInfo(wrapper);
+      fillExecutorInfo(wrapper, list, isSelected);
 
       return this;
     }
 
-    private void fillExecutorInfo(ChooseRunConfigurationPopup.ItemWrapper wrapper) {
+    private void fillExecutorInfo(ChooseRunConfigurationPopup.ItemWrapper wrapper, JList<?> list, boolean selected) {
+
+      SimpleTextAttributes commandAttributes = selected
+                                               ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getSelectionForeground())
+                                               : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      SimpleTextAttributes shortcutAttributes = selected
+                                                ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getSelectionForeground())
+                                                : SimpleTextAttributes.GRAY_ATTRIBUTES;
 
       String input = myCommandSupplier.get();
       if (isCommand(input, RUN_COMMAND)) {
-        fillWithMode(wrapper, RUN_MODE);
+        fillWithMode(wrapper, RUN_MODE, commandAttributes);
         return;
       }
       if (isCommand(input, DEBUG_COMMAND)) {
-        fillWithMode(wrapper, DEBUG_MODE);
+        fillWithMode(wrapper, DEBUG_MODE, commandAttributes);
         return;
       }
 
@@ -232,25 +240,26 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       } else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
     }
 
-    private void fillWithMode(ChooseRunConfigurationPopup.ItemWrapper wrapper, @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
+    private void fillWithMode(ChooseRunConfigurationPopup.ItemWrapper wrapper, @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode,
+                              SimpleTextAttributes attributes) {
      Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
        .map(settings -> findExecutor(settings, mode))
        .ifPresent(executor -> {
-         executorInfo.append(executor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+         executorInfo.append(executor.getId(), attributes);
          executorInfo.setIcon(executor.getToolWindowIcon());
        });
     }
