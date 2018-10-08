@@ -28,7 +28,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.attribute
-import com.intellij.util.element
 import com.maddyhome.idea.copyright.CopyrightProfile
 import com.maddyhome.idea.copyright.actions.UpdateCopyrightProcessor
 import com.maddyhome.idea.copyright.options.LanguageOptions
@@ -52,7 +51,7 @@ private val LOG = Logger.getInstance(CopyrightManager::class.java)
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
+    fun getInstance(project: Project) = project.service<CopyrightManager>()
   }
 
   private var defaultCopyrightName: String? = null
@@ -63,8 +62,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
-  val options: Options = Options()
+  val scopeToCopyright = LinkedHashMap<String, String>()
+  val options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
     val element = scheme.writeScheme()
@@ -126,9 +125,11 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       if (!scopeToCopyright.isEmpty()) {
         val map = Element(MODULE_TO_COPYRIGHT)
         for ((scopeName, profileName) in scopeToCopyright) {
-          map.element(ELEMENT)
-              .attribute(MODULE, scopeName)
-              .attribute(COPYRIGHT, profileName)
+          val e = Element(ELEMENT)
+          e
+            .attribute(MODULE, scopeName)
+            .attribute(COPYRIGHT, profileName)
+          map.addContent(e)
         }
         result.addContent(map)
       }
