@@ -384,7 +384,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Roboto", attachedTo: "intellij.platform.resources", version: "1.100141", license: "Apache 2.0",
                        url: "https://github.com/google/roboto/blob/master/LICENSE"),
-    new LibraryLicense(name: "sa-jdwp", version: "1.0.6", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/jdk-sa-jdwp",
+    new LibraryLicense(name: "sa-jdwp", version: "1.0.7", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/jdk-sa-jdwp",
                        licenseUrl: "https://raw.githubusercontent.com/JetBrains/jdk-sa-jdwp/master/LICENSE.txt"),
     new LibraryLicense(name: "Saxon-6.5.5", version: "6.5.5", license: "Mozilla Public License", url: "http://saxon.sourceforge.net/",
                        licenseUrl: "http://www.mozilla.org/MPL/"),
