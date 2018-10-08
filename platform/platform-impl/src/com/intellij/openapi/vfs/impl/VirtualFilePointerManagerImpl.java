@@ -629,7 +629,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static void dumpPointersTo(FilePointerPartNode node, Collection<? super VirtualFilePointer> result) {
     node.addAllPointersTo(result);
     for (FilePointerPartNode child : node.children) {
-      dumpPointersTo(node, result);
+      dumpPointersTo(child, result);
     }
   }
 }
