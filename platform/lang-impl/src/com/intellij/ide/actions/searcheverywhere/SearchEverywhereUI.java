@@ -573,21 +573,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     myNonProjectCB.addItemListener(e -> rebuildList());
     myNonProjectCB.addActionListener(e -> nonProjectCheckBoxAutoSet = false);
 
-    myResultsList.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
-        if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
-          e.consume();
-          final int i = myResultsList.locationToIndex(e.getPoint());
-          if (i > -1) {
-            myResultsList.setSelectedIndex(i);
-            elementsSelected(new int[]{i}, e.getModifiers());
-          }
-        }
-      }
-    });
-
     myResultsList.addListSelectionListener(e -> {
       Object selectedValue = myResultsList.getSelectedValue();
       if (selectedValue != null && myHint != null && myHint.isVisible()) {
