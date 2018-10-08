@@ -214,7 +214,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path,
   }
 }
 
-internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {
+internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: CredentialStore) {
   for ((k, v) in from) {
     store.set(k, v)
   }

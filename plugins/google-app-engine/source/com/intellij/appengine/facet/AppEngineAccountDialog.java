@@ -5,12 +5,15 @@ import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineCloudConfigurable;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 /**
  * @author nik
@@ -44,7 +47,8 @@ public class AppEngineAccountDialog {
   }
 
   public static void storePassword(@NotNull String email, @NotNull String password) {
-    PasswordSafe.getInstance().setPassword(AppEngineAccountDialog.class, getPasswordKey(email), password);
+    String accountName = getPasswordKey(email);
+    PasswordSafe.getInstance().set(CredentialAttributes(AppEngineAccountDialog.class, accountName), password == null ? null : new Credentials(accountName, password));
   }
 
   private static String getPasswordKey(String email) {
