@@ -893,7 +893,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
                                    final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
     ShelvedChangeList listCopy;
     try {
-      listCopy = !changeList.isRecycled() ? createRecycledChangelist(changeList) : null;
+      listCopy = !changeList.isRecycled() ? createChangelistCopy(changeList) : null;
     }
     catch (IOException e) {
       // do not delete if cannot recycle
@@ -912,7 +912,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   @NotNull
-  private ShelvedChangeList createRecycledChangelist(ShelvedChangeList changeList) throws IOException {
+  private ShelvedChangeList createChangelistCopy(@NotNull ShelvedChangeList changeList) throws IOException {
     final File newPatchDir = generateUniqueSchemePatchDir(changeList.DESCRIPTION, true);
     final File newPath = getPatchFileInConfigDir(newPatchDir);
     FileUtil.copy(new File(changeList.PATH), newPath);
