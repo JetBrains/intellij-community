@@ -74,7 +74,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
 
   private var _currentProvider: Lazy<CredentialStore> = if (provider == null) SynchronizedClearableLazy { computeProvider(settings) } else lazyOf(provider)
 
-  internal val currentProviderIfComputed: CredentialStore?
+  private val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
 
   internal var currentProvider: CredentialStore
@@ -154,8 +154,15 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
   override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> = runAsync { get(attributes) }
 
   override fun save() {
-    if ((currentProviderIfComputed as? KeePassCredentialStore ?: return).isNeedToSave()) {
-      saveAlarm.request()
+    val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
+
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      keePassCredentialStore.save()
+      return
+    }
+
+    if (keePassCredentialStore.isNeedToSave()) {
+      saveAlarm.request(ApplicationManager.getApplication().isUnitTestMode)
     }
   }
 
