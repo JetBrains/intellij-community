@@ -814,11 +814,7 @@ public class PyUtil {
     // Don't use ConcurrentHashMap#computeIfAbsent(), it blocks if the function tries to update the cache recursively for the same key
     // during computation. We can accept here that some values will be computed several times due to non-atomic updates.
     final Optional<P> wrappedParam = Optional.ofNullable(param);
-    Optional<T> value = cache.get(wrappedParam);
-    if (value == null) {
-      value = Optional.ofNullable(f.fun(param));
-      cache.put(wrappedParam, value);
-    }
+    Optional<T> value = cache.computeIfAbsent(wrappedParam, k -> Optional.ofNullable(f.fun(param)));
     return value.orElse(null);
   }
 
