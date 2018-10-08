@@ -5,6 +5,7 @@ package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -54,7 +55,7 @@ fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
   if (!withoutStubs &&
       containingFile != null &&
       LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37) &&
-      dir.virtualFile.let { it == ProjectFileIndex.getInstance(containingFile.project).getClassRootForFile(it) }) {
+      dir.virtualFile.let { it == getClassOrContentOrSourceRoot(containingFile.project, it) }) {
 
     val stubPackageName = "${resolvedSubdir.name}$STUBS_SUFFIX"
     val subdirectory = dir.findSubdirectory(stubPackageName)
@@ -113,6 +114,16 @@ fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<
   else {
     listOf(groupedResults.values.first().first())
   }
+}
+
+fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): VirtualFile? {
+  val index = ProjectFileIndex.getInstance(project)
+
+  index.getClassRootForFile(file)?.let { return it }
+  index.getSourceRootForFile(file)?.let { return it }
+  index.getContentRootForFile(file)?.let { return it }
+
+  return null
 }
 
 private fun pyi(element: PsiElement) = element is PyiFile || PyUtil.turnDirIntoInit(element) is PyiFile
@@ -179,7 +190,7 @@ private fun getPyTyped(element: PsiElement?): VirtualFile? {
   val file = if (element is PsiFileSystemItem) element.virtualFile else element.containingFile?.virtualFile
   if (file == null) return null
 
-  val root = ProjectFileIndex.getInstance(element.project).getClassRootForFile(file) ?: return null
+  val root = getClassOrContentOrSourceRoot(element.project, file) ?: return null
   var current = if (file.isDirectory) file else file.parent
 
   while (current != null && current != root && current.isDirectory) {
