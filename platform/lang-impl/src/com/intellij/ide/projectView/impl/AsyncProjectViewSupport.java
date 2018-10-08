@@ -205,7 +205,9 @@ class AsyncProjectViewSupport {
         return selectPaths(tree, new SelectionDescriptor(null, fileVisitor.getElement(), paths));
       }
     }
-    TreeUtil.selectPath(tree, paths.get(0)); // make visible, select and scroll to center
+    TreePath path = paths.get(0);
+    tree.expandPath(path); // request to expand found path
+    TreeUtil.selectPath(tree, path); // select and scroll to center
     return true;
   }
 
