@@ -15,19 +15,18 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
-import java.util.ArrayDeque;
+import java.util.List;
 
 /**
  * @author Sergey.Malenkov
  */
 public final class TreeModelListenerList implements TreeModelListener {
-  private static final TreeModelListener[] EMPTY_ARRAY = new TreeModelListener[0];
-  private final ArrayDeque<TreeModelListener> myDeque = new ArrayDeque<TreeModelListener>();
-  private volatile boolean myDequeEmpty = true;
+  private final List<TreeModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Adds a listener for changes in a tree model.
@@ -36,10 +35,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @param listener a listener to add
    */
   public void add(@NotNull TreeModelListener listener) {
-    synchronized (myDeque) {
-      myDeque.addFirst(listener);
-      myDequeEmpty = myDeque.isEmpty();
-    }
+    myListeners.add(listener);
   }
 
   /**
@@ -49,12 +45,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @param listener a listener to remove
    */
   public void remove(@NotNull TreeModelListener listener) {
-    if (!myDequeEmpty) {
-      synchronized (myDeque) {
-        myDeque.remove(listener);
-        myDequeEmpty = myDeque.isEmpty();
-      }
-    }
+    myListeners.remove(listener);
   }
 
   /**
@@ -62,12 +53,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    * This method is safe for use by multiple concurrent threads.
    */
   public void clear() {
-    if (!myDequeEmpty) {
-      synchronized (myDeque) {
-        myDeque.clear();
-        myDequeEmpty = true;
-      }
-    }
+    myListeners.clear();
   }
 
   /**
@@ -77,21 +63,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @return {@code true} if no listeners have been added, or {@code false} otherwise
    */
   public boolean isEmpty() {
-    return myDequeEmpty;
-  }
-
-  /**
-   * Returns all added listeners or an empty array if no listeners have been added.
-   * This method is safe for use by multiple concurrent threads.
-   *
-   * @return all added listeners
-   */
-  @NotNull
-  public TreeModelListener[] get() {
-    if (myDequeEmpty) return EMPTY_ARRAY;
-    synchronized (myDeque) {
-      return myDeque.toArray(EMPTY_ARRAY);
-    }
+    return myListeners.isEmpty();
   }
 
   /**
@@ -101,7 +73,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    */
   @Override
   public void treeStructureChanged(@NotNull TreeModelEvent event) {
-    for (TreeModelListener listener : get()) {
+    for (TreeModelListener listener : myListeners) {
       listener.treeStructureChanged(event);
     }
   }
@@ -113,7 +85,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    */
   @Override
   public void treeNodesChanged(@NotNull TreeModelEvent event) {
-    for (TreeModelListener listener : get()) {
+    for (TreeModelListener listener : myListeners) {
       listener.treeNodesChanged(event);
     }
   }
@@ -125,7 +97,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    */
   @Override
   public void treeNodesInserted(@NotNull TreeModelEvent event) {
-    for (TreeModelListener listener : get()) {
+    for (TreeModelListener listener : myListeners) {
       listener.treeNodesInserted(event);
     }
   }
@@ -137,7 +109,7 @@ public final class TreeModelListenerList implements TreeModelListener {
    */
   @Override
   public void treeNodesRemoved(@NotNull TreeModelEvent event) {
-    for (TreeModelListener listener : get()) {
+    for (TreeModelListener listener : myListeners) {
       listener.treeNodesRemoved(event);
     }
   }
