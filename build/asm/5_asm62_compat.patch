@@ -1,3 +1,17 @@
+Index: org/objectweb/asm/MethodVisitor
+===================================================================
+--- org/objectweb/asm/MethodVisitor.java
++++ org/objectweb/asm/MethodVisitor.java
+@@ -189,6 +189,9 @@
+         return null;
+     }
+
++    //[JB: ASM 6.1+ compatibility stub]
++    public void visitAnnotableParameterCount(final int parameterCount, final boolean visible) { }
++
+     /**
+      * Visits an annotation of a parameter this method.
+      *
 Index: org/objectweb/asm/tree/analysis/Analyzer.java
 ===================================================================
 --- org/objectweb/asm/tree/analysis/Analyzer.java
