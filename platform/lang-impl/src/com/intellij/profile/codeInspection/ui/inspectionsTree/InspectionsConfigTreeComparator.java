@@ -2,12 +2,14 @@
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.openapi.util.text.NaturalComparator;
+
 import java.util.Comparator;
 
 public class InspectionsConfigTreeComparator {
   public static final Comparator<InspectionConfigTreeNode> INSTANCE =
     Comparator.<InspectionConfigTreeNode>comparingInt(n -> n instanceof InspectionConfigTreeNode.Group ? 0 : 1)
-      .thenComparing(n -> getDisplayTextToSort(n.getText()), String.CASE_INSENSITIVE_ORDER);
+      .thenComparing(n -> getDisplayTextToSort(n.getText()), NaturalComparator.INSTANCE);
 
   public static String getDisplayTextToSort(String s) {
     if (s.length() == 0) {
