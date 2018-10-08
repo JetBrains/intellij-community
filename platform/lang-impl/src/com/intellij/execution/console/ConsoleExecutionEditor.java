@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ConsoleEditor implements Disposable {
+public class ConsoleExecutionEditor implements Disposable {
   private final EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;
   private final Document myEditorDocument;
@@ -42,7 +42,7 @@ public class ConsoleEditor implements Disposable {
   @NotNull
   private ConsoleViewContentType myPromptAttributes = ConsoleViewContentType.USER_INPUT;
 
-  public ConsoleEditor(@NotNull LanguageConsoleImpl.Helper helper)  {
+  public ConsoleExecutionEditor(@NotNull LanguageConsoleImpl.Helper helper)  {
     myHelper = helper;
     EditorFactory editorFactory = EditorFactory.getInstance();
     myEditorDocument = helper.getDocument();
@@ -62,7 +62,7 @@ public class ConsoleEditor implements Disposable {
     public void focusGained(@NotNull Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-        TransactionGuard.submitTransaction(ConsoleEditor.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
+        TransactionGuard.submitTransaction(ConsoleExecutionEditor.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
     }
 
