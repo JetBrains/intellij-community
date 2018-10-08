@@ -105,7 +105,7 @@ public class DuplexConsoleActionsTest extends LightPlatformTestCase {
 
   private static void assertHasActions(AnAction[] mergedActions, String... actionNames) {
     for (String name : actionNames) {
-      assertNotNull(findAction(mergedActions, name));
+      assertNotNull(name + " in " + Arrays.toString(mergedActions), findAction(mergedActions, name));
     }
   }
   

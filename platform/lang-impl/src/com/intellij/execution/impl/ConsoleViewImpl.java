@@ -1079,35 +1079,43 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return null;
   }
 
-  public static class ClearAllAction extends DumbAwareAction {
+  private static class ClearThisConsoleAction extends ClearAllAction {
     private final ConsoleView myConsoleView;
 
-    @SuppressWarnings("unused") // in LangActions.xml
-    public ClearAllAction() {
-      this(null);
-    }
-
-    ClearAllAction(ConsoleView consoleView) {
-      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    ClearThisConsoleAction(@NotNull ConsoleView consoleView) {
       myConsoleView = consoleView;
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      boolean enabled = myConsoleView != null && myConsoleView.getContentSize() > 0;
-      if (!enabled) {
-        enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-        Editor editor = e.getData(CommonDataKeys.EDITOR);
-        if (editor != null && editor.getDocument().getTextLength() == 0) {
-          enabled = false;
-        }
+      boolean enabled = myConsoleView.getContentSize() > 0;
+      e.getPresentation().setEnabled(enabled);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull final AnActionEvent e) {
+      myConsoleView.clear();
+    }
+  }
+
+  public static class ClearAllAction extends DumbAwareAction {
+    public ClearAllAction() {
+      super(ExecutionBundle.message("clear.all.from.console.action.name"), "Clear the contents of the console", AllIcons.Actions.GC);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      if (editor != null && editor.getDocument().getTextLength() == 0) {
+        enabled = false;
       }
       e.getPresentation().setEnabled(enabled);
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      final ConsoleView consoleView = myConsoleView != null ? myConsoleView : e.getData(LangDataKeys.CONSOLE_VIEW);
+      final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);
       if (consoleView != null) {
         consoleView.clear();
       }
@@ -1387,19 +1395,16 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     };
     final AnAction autoScrollToTheEndAction = new ScrollToTheEndToolbarAction(myEditor);
 
-    //Initializing custom actions
-    final AnAction[] consoleActions = new AnAction[6 + customActions.size()];
-    consoleActions[0] = prevAction;
-    consoleActions[1] = nextAction;
-    consoleActions[2] = switchSoftWrapsAction;
-    consoleActions[3] = autoScrollToTheEndAction;
-    consoleActions[4] = ActionManager.getInstance().getAction("Print");
-    consoleActions[5] = new ClearAllAction(this);
-    for (int i = 0; i < customActions.size(); ++i) {
-      consoleActions[i + 6] = customActions.get(i);
-    }
+    List<AnAction> consoleActions = new ArrayList<>();
+    consoleActions.add(prevAction);
+    consoleActions.add(nextAction);
+    consoleActions.add(switchSoftWrapsAction);
+    consoleActions.add(autoScrollToTheEndAction);
+    consoleActions.add(ActionManager.getInstance().getAction("Print"));
+    consoleActions.add(new ClearThisConsoleAction(this));
+    consoleActions.addAll(customActions);
     List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
-    AnAction[] result = consoleActions;
+    AnAction[] result = consoleActions.toArray(AnAction.EMPTY_ARRAY);
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
       result = postProcessor.postProcess(this, result);
     }

@@ -1046,12 +1046,14 @@ public class PsiTreeUtil {
     return nextLeaf(parent);
   }
 
+  @NotNull
   public static PsiElement lastChild(@NotNull PsiElement element) {
     PsiElement lastChild = element.getLastChild();
     if (lastChild != null) return lastChild(lastChild);
     return element;
   }
 
+  @NotNull
   public static PsiElement firstChild(@NotNull final PsiElement element) {
     PsiElement child = element.getFirstChild();
     if (child != null) return firstChild(child);
