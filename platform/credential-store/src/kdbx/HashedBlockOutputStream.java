@@ -53,7 +53,7 @@ final class HashedBlockOutputStream extends OutputStream {
   private final ByteArrayOutputStream blockOutputStream = new ByteArrayOutputStream();
   private boolean isClosed = false;
 
-  private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();
+  private final MessageDigest md = KdbxKt.sha256MessageDigest();
 
   HashedBlockOutputStream(OutputStream outputStream) {
     this.outputStream = outputStream;
@@ -87,7 +87,6 @@ final class HashedBlockOutputStream extends OutputStream {
     outputStream.write(ZERO_HASH);
     writeInt(0);
     isClosed = true;
-    outputStream.flush();
     outputStream.close();
   }
 

@@ -145,9 +145,9 @@ class KeePassCredentialStoreTest {
     assertThat(pdbFile).doesNotExist()
     assertThat(pdbPwdFile).doesNotExist()
   }
-
-  private fun randomString() = UUID.randomUUID().toString()
 }
+
+private fun randomString() = UUID.randomUUID().toString()
 
 // avoid this constructor in production sources to avoid m
 @Suppress("TestFunctionName")

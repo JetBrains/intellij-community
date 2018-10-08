@@ -171,6 +171,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path,
     val oldAttributes = toOldKey(requestor, userName)
     db.rootGroup.getGroup(ROOT_GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
       fun createCredentials() = Credentials(userName, it.password?.get())
+      @Suppress("DEPRECATION")
       set(CredentialAttributes(requestor, userName), createCredentials())
       return createCredentials()
     }
@@ -196,16 +197,6 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path,
 
     if (db.isDirty) {
       isNeedToSave.set(true)
-    }
-  }
-
-  fun copyTo(store: PasswordStorage) {
-    val group = db.rootGroup.getGroup(ROOT_GROUP_NAME) ?: return
-    for (entry in group.entries) {
-      val title = entry.title
-      if (title != null) {
-        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password?.get()))
-      }
     }
   }
 
