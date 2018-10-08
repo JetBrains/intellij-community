@@ -47,11 +47,12 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     myParamAnnotationOffset = paramAnnotationOffset;
   }
 
-  @SuppressWarnings("override")
+  @Override
   public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
     if (myParamAnnotationOffset != 0 && parameterCount == myArgTypes.length) {
       myParamAnnotationOffset = 0;
     }
+    super.visitAnnotableParameterCount(parameterCount, visible);
   }
 
   @Override
