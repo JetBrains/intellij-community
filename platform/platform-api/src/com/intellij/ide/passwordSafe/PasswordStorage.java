@@ -21,7 +21,6 @@ public interface PasswordStorage extends CredentialStore {
   @SuppressWarnings("unused")
   @Deprecated
   default void removePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, String key) {
-    //noinspection deprecation
     setPassword(requestor, key, null);
   }
 
@@ -30,14 +29,12 @@ public interface PasswordStorage extends CredentialStore {
    */
   @Deprecated
   default void storePassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, @NotNull String key, @Nullable String value) {
-    //noinspection deprecation
     setPassword(requestor, key, value);
   }
 
   @Deprecated
   @Nullable
   default String getPassword(@SuppressWarnings("UnusedParameters") @Nullable Project project, @NotNull Class requestor, @NotNull String key) {
-    //noinspection deprecation
     return getPassword(CredentialAttributes(requestor, key));
   }
 }
