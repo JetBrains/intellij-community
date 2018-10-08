@@ -34,7 +34,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
         content.append(lineSeparator()).append(lineSeparator())
       }
     }
-    return content.toString()
+    return content.trimEnd { it == '\r' || it == '\n' }.toString()
   }
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
