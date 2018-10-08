@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -55,7 +56,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
 
   @Override
   public final char charAt(int index) {
-    return (char)myChars[index + myStart];
+    return (char)(myChars[index + myStart] & 0xff);
   }
 
   @NotNull
@@ -70,31 +71,58 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
     return new String(myChars, myStart, length(), CharsetToolkit.ISO_8859_1_CHARSET);
   }
 
+  /**
+   * @deprecated use {@link #convertToBytesIfPossible(CharSequence)} instead
+   */
+  @Deprecated
   @NotNull
   public static CharSequence convertToBytesIfAsciiString(@NotNull String name) {
-    return convertToBytesIfAsciiString((CharSequence)name);
+    return convertToBytesIfPossible(name);
   }
 
+  /**
+   * @return instance of {@link ByteArrayCharSequence} if the supplied string can be stored internally
+   * as a byte array of 8-bit code points (for more compact representation); its {@code string} argument otherwise
+   */
   @NotNull
-  public static CharSequence convertToBytesIfAsciiString(@NotNull CharSequence name) {
-    int length = name.length();
+  public static CharSequence convertToBytesIfPossible(@NotNull CharSequence string) {
+    int length = string.length();
     if (length == 0) return "";
-
-    byte[] bytes = new byte[length];
-    for (int i = 0; i < length; i++) {
-      char c = name.charAt(i);
-      if (c >= 128) {
-        //noinspection RedundantStringConstructorCall
-        return new String(name.toString()); // So we don't hold whole char[] buffer of a lengthy path on JDK 6
-      }
-
-      bytes[i] = (byte)c;
-    }
-    return new ByteArrayCharSequence(bytes);
+    if (string instanceof ByteArrayCharSequence) return string;
+    byte[] bytes = toBytesIfPossible(string);
+    return bytes == null ? string : new ByteArrayCharSequence(bytes);
   }
 
   @NotNull
   byte[] getBytes() {
     return myStart == 0 && myEnd == myChars.length ? myChars : Arrays.copyOfRange(myChars, myStart , myEnd);
+  }
+
+  @Nullable
+  static byte[] toBytesIfPossible(CharSequence seq) {
+    if (seq instanceof ByteArrayCharSequence) {
+      return ((ByteArrayCharSequence)seq).getBytes();
+    }
+    byte[] bytes = new byte[seq.length()];
+    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
+    if (chars == null) {
+      for (int i = 0; i < bytes.length; i++) {
+        char c = seq.charAt(i);
+        if ((c & 0xff00) != 0) {
+          return null;
+        }
+        bytes[i] = (byte)c;
+      }
+    }
+    else {
+      for (int i = 0; i < bytes.length; i++) {
+        char c = chars[i];
+        if ((c & 0xff00) != 0) {
+          return null;
+        }
+        bytes[i] = (byte)c;
+      }
+    }
+    return bytes;
   }
 }

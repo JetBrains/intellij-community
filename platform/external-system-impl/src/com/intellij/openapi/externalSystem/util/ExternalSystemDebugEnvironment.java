@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NonNls;
  * @author Vladislav.Soroka
  * @since 10/24/13
  */
-@SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
 public class ExternalSystemDebugEnvironment {
 
   @NonNls public static final boolean DEBUG_ORPHAN_MODULES_PROCESSING =

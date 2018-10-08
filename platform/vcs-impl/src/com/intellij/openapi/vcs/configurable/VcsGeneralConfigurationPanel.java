@@ -210,7 +210,6 @@ public class VcsGeneralConfigurationPanel {
   private static void selectInGroup(final JRadioButton[] group, final VcsShowConfirmationOption confirmation) {
     final VcsShowConfirmationOption.Value value = confirmation.getValue();
     final int index;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch(value) {
       case SHOW_CONFIRMATION: index = 0; break;
       case DO_ACTION_SILENTLY: index = 1; break;

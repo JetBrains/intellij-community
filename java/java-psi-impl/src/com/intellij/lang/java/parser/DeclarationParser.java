@@ -78,7 +78,6 @@ public class DeclarationParser {
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
 
-    //noinspection Duplicates
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
@@ -187,7 +186,6 @@ public class DeclarationParser {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null || tokenType == JavaTokenType.RBRACE) break;
 
-      //noinspection Duplicates
       if (tokenType == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
           invalidElements.error(JavaErrorMessages.message("unexpected.token"));

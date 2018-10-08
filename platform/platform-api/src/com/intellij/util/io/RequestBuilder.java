@@ -39,6 +39,7 @@ public abstract class RequestBuilder {
   public abstract RequestBuilder isReadResponseOnError(boolean isReadResponseOnError);
 
   /** @deprecated wrap "connect" calls with {@link com.intellij.util.net.ssl.CertificateManager#runWithUntrustedCertificateStrategy} if needed */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   public abstract RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy);
 

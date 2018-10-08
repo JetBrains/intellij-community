@@ -70,7 +70,6 @@ public class CoreProjectEnvironment {
     myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
     return new MockProject(parent, parentDisposable);
@@ -90,7 +89,6 @@ public class CoreProjectEnvironment {
     return new MockFileIndexFacade(myProject);
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
     return new MockResolveScopeManager(psiManager.getProject());

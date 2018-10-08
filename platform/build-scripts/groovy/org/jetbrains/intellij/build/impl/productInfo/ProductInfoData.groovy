@@ -14,5 +14,6 @@ class ProductInfoData {
   String version
   String buildNumber
   String productCode
+  String svgIconPath
   List<ProductInfoLaunchData> launch = []
 }

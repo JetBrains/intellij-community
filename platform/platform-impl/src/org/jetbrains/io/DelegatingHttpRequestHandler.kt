@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.ide.ui.ProductIcons
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.IconLoader
 import com.intellij.util.io.isWriteFromBrowserWithoutOrigin
 import com.intellij.util.ui.UIUtil
 import io.netty.buffer.Unpooled
@@ -51,16 +50,14 @@ internal class DelegatingHttpRequestHandler : DelegatingHttpRequestHandlerBase()
     }
 
     if (urlDecoder.path() == "/favicon.ico") {
-      val icon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().smallIconUrl)
-      if (icon != null) {
-        val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
-        icon.paintIcon(null, image.graphics, 0, 0)
-        val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
-        response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))
-          .addNoCache()
-          .send(context.channel(), request)
-        return true
-      }
+      val icon = ProductIcons.getInstance().productIcon
+      val image = UIUtil.createImage(icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
+      icon.paintIcon(null, image.graphics, 0, 0)
+      val icoBytes = Imaging.writeImageToBytes(image, ImageFormats.ICO, null)
+      response(FileResponses.getContentType(urlDecoder.path()), Unpooled.wrappedBuffer(icoBytes))
+        .addNoCache()
+        .send(context.channel(), request)
+      return true
     }
 
     return false

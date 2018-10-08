@@ -5,7 +5,7 @@ import com.intellij.openapi.application.PathMacroFilter
 import org.jdom.Attribute
 import org.jdom.Element
 
-class CompositePathMacroFilter(private val filters: Array<PathMacroFilter>) : PathMacroFilter() {
+class CompositePathMacroFilter(private val filters: List<PathMacroFilter>) : PathMacroFilter() {
   override fun skipPathMacros(element: Element) = filters.any { it.skipPathMacros(element) }
 
   override fun skipPathMacros(attribute: Attribute) = filters.any { it.skipPathMacros(attribute) }

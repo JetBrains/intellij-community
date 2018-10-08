@@ -251,6 +251,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     if (info.install) {
       if (myInstalling != null && myInstalling.ui != null) {
+        clearInstallingProgress(descriptor);
         if (myInstallingPlugins.isEmpty()) {
           myDownloadedPanel.removeGroup(myInstalling);
         }
@@ -283,6 +284,22 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (!success) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
+    }
+  }
+
+  private void clearInstallingProgress(@NotNull IdeaPluginDescriptor descriptor) {
+    if (myInstallingPlugins.isEmpty()) {
+      for (CellPluginComponent listComponent : myInstalling.ui.plugins) {
+        ((ListPluginComponent)listComponent).clearProgress();
+      }
+    }
+    else {
+      for (CellPluginComponent listComponent : myInstalling.ui.plugins) {
+        if (listComponent.myPlugin == descriptor) {
+          ((ListPluginComponent)listComponent).clearProgress();
+          return;
+        }
+      }
     }
   }
 

@@ -67,7 +67,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
   }
 
   @NotNull
-  private static TextRange getManipulatorRange(@NotNull ElementManipulator<PsiElement> manipulator, @NotNull PsiElement element) {
+  private static TextRange getManipulatorRange(@NotNull ElementManipulator<? super PsiElement> manipulator, @NotNull PsiElement element) {
     TextRange rangeInElement = manipulator.getRangeInElement(element);
     TextRange elementRange = TextRange.from(0, element.getTextLength());
     if (!elementRange.contains(rangeInElement)) {

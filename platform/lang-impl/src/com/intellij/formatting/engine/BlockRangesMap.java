@@ -17,6 +17,7 @@ package com.intellij.formatting.engine;
 
 import com.intellij.formatting.LeafBlockWrapper;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +40,19 @@ public class BlockRangesMap {
     return result;
   }
   
-  public boolean containsLineFeeds(final TextRange dependency) {
+  public boolean containsLineFeedsOrTooLong(final TextRange dependency) {
     LeafBlockWrapper child = myTextRangeToWrapper.get(dependency.getStartOffset());
     if (child == null) return false;
-    if (child.containsLineFeeds()) return true;
     final int endOffset = dependency.getEndOffset();
-    while (child.getEndOffset() < endOffset) {
+    final int startOffset = child.getStartOffset();
+    while (child != null && child.getEndOffset() < endOffset) {
+      if (child.containsLineFeeds() || (child.getStartOffset() - startOffset) > CodeStyleConstraints.MAX_RIGHT_MARGIN) return true;
       child = child.getNextBlock();
-      if (child == null) return false;
-      if (child.getWhiteSpace().containsLineFeeds()) return true;
-      if (child.containsLineFeeds()) return true;
+      if (child != null &&
+          child.getWhiteSpace().getEndOffset() <= endOffset &&
+          child.getWhiteSpace().containsLineFeeds()) {
+        return true;
+      }
     }
     return false;
   }

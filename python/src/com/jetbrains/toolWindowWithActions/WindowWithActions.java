@@ -57,7 +57,7 @@ public final class WindowWithActions {
                                             @Nullable final JComponent actionListenerComponent,
                                             @NotNull final String title,
                                             @NotNull final Project project,
-                                            @Nullable final Collection<Runnable> closeListeners,
+                                            @Nullable final Collection<? extends Runnable> closeListeners,
                                             @NotNull final AnAction... customActions) {
     final ConsoleStopProcessAction stopProcessAction = new ConsoleStopProcessAction(consoleWithProcess);
 
@@ -85,7 +85,7 @@ public final class WindowWithActions {
                                  @Nullable final JComponent actionListenerComponent,
                                  @NotNull final String title,
                                  @NotNull final Project project,
-                                 @Nullable final Collection<Runnable> closeListeners,
+                                 @Nullable final Collection<? extends Runnable> closeListeners,
                                  @NotNull final AnAction... customActions) {
     final AnAction[] actions = ArrayUtil.mergeArrays(customActions, consoleView.createConsoleActions());
     show(consoleView.getComponent(), actionListenerComponent, title, project, closeListeners, actions);
@@ -106,7 +106,7 @@ public final class WindowWithActions {
                           @Nullable final JComponent actionListenerComponent,
                           @NotNull final String title,
                           @NotNull final Project project,
-                          @Nullable final Collection<Runnable> closeListeners,
+                          @Nullable final Collection<? extends Runnable> closeListeners,
                           @NotNull final AnAction... customActions) {
     final ToolWindowApi api = new ToolWindowApi(project, title);
 

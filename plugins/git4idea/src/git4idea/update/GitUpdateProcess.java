@@ -44,6 +44,7 @@ import java.util.*;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static git4idea.GitUtil.getRootsFromRepositories;
 import static git4idea.GitUtil.mention;
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 import static git4idea.util.GitUIUtil.*;
 
 /**
@@ -313,7 +314,7 @@ public class GitUpdateProcess {
 
   // fetch all roots. If an error happens, return false and notify about errors.
   private boolean fetchAndNotify(@NotNull Collection<GitRepository> repositories) {
-    return new GitFetcher(myProject, myProgressIndicator, false).fetchRootsAndNotify(repositories, "Update failed", false);
+    return fetchSupport(myProject).fetch(repositories).showNotificationIfFailed("Update failed");
   }
 
   /**

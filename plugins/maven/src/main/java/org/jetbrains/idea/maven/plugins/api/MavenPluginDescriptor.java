@@ -147,7 +147,7 @@ public class MavenPluginDescriptor extends AbstractExtensionPointBean {
     return res;
   }
 
-  public static boolean processDescriptors(Processor<MavenPluginDescriptor> processor, MavenDomConfiguration cfg) {
+  public static boolean processDescriptors(Processor<? super MavenPluginDescriptor> processor, MavenDomConfiguration cfg) {
     Map<String, Map<String, Map<String, List<MavenPluginDescriptor>>>> map = getDescriptorsMap();
 
     DomElement parent = cfg.getParent();

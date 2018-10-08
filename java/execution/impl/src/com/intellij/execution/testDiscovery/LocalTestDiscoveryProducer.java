@@ -14,8 +14,7 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
   @NotNull
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                     byte frameworkId,
-                                                     @NotNull List<String> filePaths) {
+                                                     byte frameworkId) {
     MultiMap<String, String> result = new MultiMap<>();
     TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
     classesAndMethods.forEach(couple -> result.putAllValues(couple.second == null ?
@@ -24,20 +23,25 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
     return result;
   }
 
+  @NotNull
+  @Override
+  public MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project, @NotNull List<String> paths, byte frameworkId) {
+    MultiMap<String, String> result = new MultiMap<>();
+    TestDiscoveryIndex instance = TestDiscoveryIndex.getInstance(project);
+    for (String path : paths) {
+      result.putAllValues(instance.getTestsByFile(path, frameworkId));
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) {
+    return Collections.emptyList();
+  }
+
   @Override
   public boolean isRemote() {
     return false;
-  }
-
-  @NotNull
-  @Override
-  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project, @NotNull List<String> filePaths) {
-    return MultiMap.empty();
-  }
-
-  @NotNull
-  @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) {
-    return Collections.emptyList();
   }
 }

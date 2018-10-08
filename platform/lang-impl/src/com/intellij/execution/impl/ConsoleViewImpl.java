@@ -43,7 +43,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -64,7 +63,6 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,9 +76,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
@@ -125,7 +126,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myLastStickingToEnd;
   private boolean myCancelStickToEnd;
 
-  private final Set<FlushRunnable> myCurrentRequests = new THashSet<>();
   private final Alarm myFlushAlarm = new Alarm(this);
 
   private final Project myProject;
@@ -179,8 +179,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFilters = new CompositeFilter(project, usePredefinedMessageFilter ? computeConsoleFilters(project, searchScope) : new SmartList<>());
     myFilters.setForceUseAllFilters(true);
 
-    ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
-    if (inputFilters.length > 0) {
+    List<ConsoleInputFilterProvider> inputFilters = ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getExtensionList();
+    if (!inputFilters.isEmpty()) {
       CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
       myInputMessageFilter = compositeInputFilter;
       for (ConsoleInputFilterProvider eachProvider : inputFilters) {
@@ -310,7 +310,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void scrollTo(final int offset) {
     if (myEditor == null) return;
     class ScrollRunnable extends FlushRunnable {
-      private final int myOffset = offset;
+      private ScrollRunnable() {
+        super(true); // each request must be executed
+      }
 
       @Override
       public void doRun() {
@@ -323,11 +325,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         myEditor.getCaretModel().moveToOffset(moveOffset);
         myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-
-      @Override
-      public boolean equals(Object o) {
-        return super.equals(o) && myOffset == ((ScrollRunnable)o).myOffset;
-      }
     }
     addFlushRequest(0, new ScrollRunnable());
   }
@@ -337,7 +334,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return;
     }
 
-    addFlushRequest(0, new FlushRunnable() {
+    addFlushRequest(0, new FlushRunnable(true) {
       @Override
       public void doRun() {
         flushDeferredText();
@@ -349,11 +346,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void addFlushRequest(final int millis, @NotNull FlushRunnable flushRunnable) {
-    synchronized (myCurrentRequests) {
-      if (!myFlushAlarm.isDisposed() && myCurrentRequests.add(flushRunnable)) {
-        myFlushAlarm.addRequest(flushRunnable, millis, getStateForUpdate());
-      }
-    }
+    flushRunnable.queue(millis);
   }
 
   @Override
@@ -511,10 +504,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void cancelAllFlushRequests() {
-    synchronized (myCurrentRequests) {
-      myCurrentRequests.clear();
-      myFlushAlarm.cancelAllRequests();
-    }
+    myFlushAlarm.cancelAllRequests();
+    CLEAR.clearRequested();
+    FLUSH.clearRequested();
   }
 
   @TestOnly
@@ -577,14 +569,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    // optimisation: most of the strings don't contain line separators
-    for (int i=0; i<text.length(); i++) {
-      char c = text.charAt(i);
-      if (c == '\n' || c == '\r') {
-        text = StringUtil.convertLineSeparators(text, keepSlashR);
-        break;
-      }
-    }
+    text = StringUtil.convertLineSeparators(text, keepSlashR);
     synchronized (LOCK) {
       myDeferredBuffer.print(text, contentType, info);
 
@@ -925,7 +910,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (group == null) {
       group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
     }
-    final ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
+    final List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
     AnAction[] result = group.getChildren(null);
 
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
@@ -983,7 +968,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         if (!myFilters.shouldRunHeavy()) return;
         try {
           myFilters.applyHeavyFilter(documentCopy, startOffset, startLine, additionalHighlight ->
-              addFlushRequest(0, new FlushRunnable() {
+              addFlushRequest(0, new FlushRunnable(true) {
                 @Override
                 public void doRun() {
                   if (myHeavyUpdateTicket != currentValue) return;
@@ -995,11 +980,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                   else {
                     myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
                   }
-                }
-
-                @Override
-                public boolean equals(Object o) {
-                  return this == o;
                 }
               })
           );
@@ -1418,7 +1398,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 6] = customActions.get(i);
     }
-    ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
+    List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
     AnAction[] result = consoleActions;
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
       result = postProcessor.postProcess(this, result);
@@ -1528,7 +1508,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (!myState.isCommandLine(text)) {
         return null;
       }
-      
+
       int index = 0;
       if (text.charAt(0) == '"') {
         index = text.indexOf('"', 1) + 1;
@@ -1562,36 +1542,47 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private class FlushRunnable implements Runnable {
+    // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
+    private final AtomicBoolean requested = new AtomicBoolean();
+    private final boolean adHoc; // true if requests of this class should not be merged (i.e they can be requested multiple times)
+
+    private FlushRunnable(boolean adHoc) {
+      this.adHoc = adHoc;
+    }
+
+    void queue(long delay) {
+      if (myFlushAlarm.isDisposed()) return;
+      if (adHoc || requested.compareAndSet(false, true)) {
+        myFlushAlarm.addRequest(this, delay, getStateForUpdate());
+      }
+    }
+    void clearRequested() {
+      requested.set(false);
+    }
+
     @Override
     public final void run() {
       // flush requires UndoManger/CommandProcessor properly initialized
       if (!isDisposed() && !StartupManagerEx.getInstanceEx(myProject).startupActivityPassed()) {
         addFlushRequest(DEFAULT_FLUSH_DELAY, FLUSH);
       }
-      synchronized (myCurrentRequests) {
-        myCurrentRequests.remove(this);
-      }
+
+      clearRequested();
       doRun();
     }
 
     protected void doRun() {
       flushDeferredText();
     }
-
-    // by default all instances of the same class are treated equal
-    @Override
-    public boolean equals(Object o) {
-      return this == o || o != null && getClass() == o.getClass();
-    }
-
-    @Override
-    public int hashCode() {
-      return getClass().hashCode();
-    }
   }
-  private final FlushRunnable FLUSH = new FlushRunnable();
+
+  private final FlushRunnable FLUSH = new FlushRunnable(false);
 
   private final class ClearRunnable extends FlushRunnable {
+    private ClearRunnable() {
+      super(false);
+    }
+
     @Override
     public void doRun() {
       doClear();

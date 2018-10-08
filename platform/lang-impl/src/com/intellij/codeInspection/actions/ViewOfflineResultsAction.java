@@ -23,9 +23,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
@@ -57,10 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ViewOfflineResultsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
@@ -154,21 +149,24 @@ public class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfileImpl inspectionProfile;
+    final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+      @Override
+      public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
+        return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
+      }
+    };
     if (profile != null) {
-      inspectionProfile = profile;
+      inspectionProfile.copyFrom(profile);
     }
-    else {
-      inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
-        @Override
-        public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
-          return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
-        }
-      };
-      for (String id : resMap.keySet()) {
-        if (inspectionProfile.getToolsOrNull(id, project) != null) {
-          inspectionProfile.enableTool(id, project);
-        }
+    for (Tools tool : inspectionProfile.getAllEnabledInspectionTools(project)) {
+      String id = tool.getShortName();
+      if (!resMap.containsKey(id)) {
+        ((ToolsImpl)tool).setEnabled(false);
+      }
+    }
+    for (String id : resMap.keySet()) {
+      if (inspectionProfile.getToolsOrNull(id, project) != null) {
+        inspectionProfile.enableTool(id, project);
       }
     }
     return showOfflineView(project, resMap, inspectionProfile, title);

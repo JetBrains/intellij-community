@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -827,7 +826,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private Pair<String, String> decouple() {
-      @SuppressWarnings("ThrowableNotThrown") String className = first.getThrowable().getClass().getName();
+      String className = first.getThrowable().getClass().getName();
       int p = detailsText.indexOf(className);
       if (p == 0) {
         return pair(null, detailsText);
@@ -956,9 +955,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return null;
     }
 
-    ErrorReportSubmitter[] reporters;
+    List<ErrorReportSubmitter> reporters;
     try {
-      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
+      reporters = ExtensionPoints.ERROR_HANDLER_EP.getExtensionList();
     }
     catch (Throwable ignored) {
       return null;

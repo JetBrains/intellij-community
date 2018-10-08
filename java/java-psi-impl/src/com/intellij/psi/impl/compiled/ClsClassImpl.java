@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Key;
@@ -83,7 +82,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     return stub instanceof PsiClassStubImpl &&
            ((PsiClassStubImpl)stub).isAnonymousInner();
   }
-  
+
   private boolean isAnonymousOrLocalClass() {
     return isAnonymousClass() || isLocalClass();
   }
@@ -210,7 +209,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   public List<PsiClass> getOwnInnerClasses() {
     PsiClass[] classes = getStub().getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
     if (classes.length == 0) return Collections.emptyList();
-    
+
     int anonymousOrLocalClassesCount = 0;
     for(PsiClass aClass:classes) {
       if (aClass instanceof ClsClassImpl && ((ClsClassImpl)aClass).isAnonymousOrLocalClass()) {
@@ -218,7 +217,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       }
     }
     if (anonymousOrLocalClassesCount == 0) return asList(classes);
-    
+
     ArrayList<PsiClass> result = new ArrayList<>(classes.length - anonymousOrLocalClassesCount);
     for(PsiClass aClass:classes) {
       if (!(aClass instanceof ClsClassImpl) || !((ClsClassImpl)aClass).isAnonymousOrLocalClass()) {
@@ -537,7 +536,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;

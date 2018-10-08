@@ -52,7 +52,7 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
-  public static <T> AtomicNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<T> value) {
+  public static <T> AtomicNotNullLazyValue<T> createValue(@NotNull final NotNullFactory<? extends T> value) {
     return new AtomicNotNullLazyValue<T>() {
       @NotNull
       @Override

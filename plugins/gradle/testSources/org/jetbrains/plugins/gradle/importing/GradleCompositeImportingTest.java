@@ -28,7 +28,6 @@ import static com.intellij.openapi.roots.DependencyScope.COMPILE;
  * @author Vladislav.Soroka
  * @since 2/20/2017
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.3+")

@@ -7,7 +7,6 @@ import com.intellij.ide.fileTemplates.impl.CustomFileTemplate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -340,7 +339,7 @@ public class FileTemplateUtil {
 
   @NotNull
   public static CreateFromTemplateHandler findHandler(@NotNull FileTemplate template) {
-    for (CreateFromTemplateHandler handler : Extensions.getExtensions(CreateFromTemplateHandler.EP_NAME)) {
+    for (CreateFromTemplateHandler handler : CreateFromTemplateHandler.EP_NAME.getExtensionList()) {
       if (handler.handlesTemplate(template)) {
         return handler;
       }
@@ -349,8 +348,7 @@ public class FileTemplateUtil {
   }
 
   public static void fillDefaultProperties(@NotNull Properties props, @NotNull PsiDirectory directory) {
-    final DefaultTemplatePropertiesProvider[] providers = Extensions.getExtensions(DefaultTemplatePropertiesProvider.EP_NAME);
-    for (DefaultTemplatePropertiesProvider provider : providers) {
+    for (DefaultTemplatePropertiesProvider provider : DefaultTemplatePropertiesProvider.EP_NAME.getExtensionList()) {
       provider.fillProperties(directory, props);
     }
     props.setProperty(FileTemplate.ATTRIBUTE_FILE_NAME, "");

@@ -104,7 +104,7 @@ public class HgUpdateCommand {
     return exitCode.get();
   }
 
-  public static void updateTo(@NotNull final String targetRevision, @NotNull List<HgRepository> repos, @Nullable final Runnable callInAwtLater) {
+  public static void updateTo(@NotNull final String targetRevision, @NotNull List<? extends HgRepository> repos, @Nullable final Runnable callInAwtLater) {
     FileDocumentManager.getInstance().saveAllDocuments();
     for (HgRepository repo : repos) {
       final VirtualFile repository = repo.getRoot();

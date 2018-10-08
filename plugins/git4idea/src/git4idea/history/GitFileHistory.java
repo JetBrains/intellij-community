@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.log.impl.VcsFileStatusInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.commands.Git;
@@ -82,7 +83,7 @@ public class GitFileHistory {
   private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
-    myPath = GitHistoryUtils.getLastCommitName(myProject, path);
+    myPath = VcsUtil.getLastCommitPath(myProject, path);
     myStartingRevision = revision;
   }
 
@@ -260,7 +261,7 @@ public class GitFileHistory {
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
     GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
-                                @NotNull Consumer<VcsException> exceptionConsumer) {
+                         @NotNull Consumer<VcsException> exceptionConsumer) {
       myExceptionConsumer = exceptionConsumer;
       myRevisionConsumer = revisionConsumer;
     }
@@ -301,9 +302,11 @@ public class GitFileHistory {
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),
-                                 null, new Date(record.getAuthorTimeStamp()), parents);
+                                 null, new Date(record.getAuthorTimeStamp()), parents, deleted);
     }
 
     @NotNull

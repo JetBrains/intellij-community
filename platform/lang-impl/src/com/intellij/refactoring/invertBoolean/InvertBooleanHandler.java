@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -41,7 +40,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
   }
 
   public static InvertBooleanDelegate findDelegate(PsiElement element, Project project, Editor editor) {
-    for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {
+    for (InvertBooleanDelegate delegate : InvertBooleanDelegate.EP_NAME.getExtensionList()) {
       if (delegate.isVisibleOnElement(element)) {
         return delegate;
       }

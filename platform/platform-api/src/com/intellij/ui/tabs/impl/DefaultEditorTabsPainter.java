@@ -20,7 +20,6 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   public DefaultEditorTabsPainter(JBEditorTabs tabs) {
@@ -59,7 +58,7 @@ public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   @Override
   public Color getBackgroundColor() {
-    return BACKGROUND_COLOR;
+    return BORDER_COLOR;
   }
 
   protected Color getDefaultTabColor() {

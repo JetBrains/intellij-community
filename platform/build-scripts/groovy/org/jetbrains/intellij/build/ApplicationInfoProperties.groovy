@@ -39,6 +39,7 @@ class ApplicationInfoProperties {
   final String motto
   final String companyName
   final String shortCompanyName
+  final String svgRelativePath
   final boolean isEAP
 
   @SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
@@ -57,6 +58,8 @@ class ApplicationInfoProperties {
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)
     shortCompanyName = root.company.first().@shortName ?: shortenCompanyName(companyName)
+    def svgPath = root.icon.first().@svg
+    svgRelativePath = isEAP && !root."icon-eap".isEmpty() ? (root."icon-eap".first().@svg ?: svgPath) : svgPath
   }
 
   String getUpperCaseProductName() { shortProductName.toUpperCase() }

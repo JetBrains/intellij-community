@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,13 +46,12 @@ public class ExtractChainedMapAction extends PsiElementBaseIntentionAction {
     ChainCallExtractor extractor = ChainCallExtractor.findExtractor(lambda, initializer, variable.getType());
     if (extractor == null) return false;
     PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-    if (!ReferencesSearch.search(parameter).forEach(
-      (Processor<PsiReference>)ref -> PsiTreeUtil.isAncestor(initializer, ref.getElement(), false))) {
-      return false;
+    if (ReferencesSearch.search(parameter).allMatch(ref -> PsiTreeUtil.isAncestor(initializer, ref.getElement(), false))) {
+      setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName(),
+                                        extractor.getMethodName(parameter, initializer, variable.getType())));
+      return true;
     }
-    setText(CodeInsightBundle.message("intention.extract.map.step.text", variable.getName(),
-                                      extractor.getMethodName(parameter, initializer, variable.getType())));
-    return true;
+    return false;
   }
 
   @Override

@@ -49,7 +49,7 @@ public class TestClassCollector {
   public static String[] collectClassFQNames(String packageName,
                                              @Nullable Path rootPath,
                                              JavaTestConfigurationBase configuration,
-                                             Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
+                                             Function<? super ClassLoader, ? extends Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
     ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();
@@ -135,17 +135,14 @@ public class TestClassCollector {
   }
 
   @Nullable
-  public static Path getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile[] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
-      VirtualFile[] roots = OrderEnumerator.orderEntries(module)
+      return OrderEnumerator.orderEntries(module)
         .withoutSdk()
         .withoutLibraries()
         .withoutDepModules()
         .classes()
         .getRoots();
-      if (roots.length > 0) {
-        return Paths.get(VfsUtilCore.virtualToIoFile(roots[0]).toURI());
-      }
     }
     return null;
   }

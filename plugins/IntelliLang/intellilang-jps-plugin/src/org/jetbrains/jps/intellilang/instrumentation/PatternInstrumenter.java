@@ -26,7 +26,11 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   static final String JAVA_UTIL_REGEX_PATTERN = "[Ljava/util/regex/Pattern;";
   static final String NULL_PATTERN = "((((";
 
-  @SuppressWarnings("ConstantConditions") static final boolean NEW_ASM = Opcodes.API_VERSION > Opcodes.ASM6;
+  static final boolean NEW_ASM;
+  static {
+    try { NEW_ASM = (Integer)Opcodes.class.getField("API_VERSION").get(null) > Opcodes.ASM6; }
+    catch (Exception e) { throw new RuntimeException(e); }
+  }
 
   private final String myPatternAnnotationClassName;
   private final boolean myDoAssert;

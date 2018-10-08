@@ -454,7 +454,6 @@ public class GrUnresolvedAccessChecker {
 
   private static void registerAddImportFixes(GrReferenceElement refElement, @Nullable HighlightInfo info, final HighlightDisplayKey key) {
     final String referenceName = refElement.getReferenceName();
-    //noinspection ConstantConditions
     if (StringUtil.isEmpty(referenceName)) return;
     if (!(refElement instanceof GrCodeReferenceElement) && Character.isLowerCase(referenceName.charAt(0))) return;
     if (refElement.getQualifier() != null) return;

@@ -8,10 +8,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor.ConstantResult;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
-import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
-import com.intellij.codeInspection.dataFlow.fix.SimplifyToAssignmentFix;
+import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
@@ -46,7 +43,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-@SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
   static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
@@ -693,7 +689,20 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     else if (psiAnchor instanceof PsiSwitchLabelStatement) {
       if (falseSet.contains(instruction)) {
         holder.registerProblem(psiAnchor,
-                               InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
+                               InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
+                               new DeleteSwitchLabelFix((PsiSwitchLabelStatement)psiAnchor));
+      } else if (trueSet.contains(instruction)) {
+        // If switch branch is always reachable, then all the subsequent branches are unreachable (thus weren't analyzed)
+        PsiSwitchLabelStatement current = (PsiSwitchLabelStatement)psiAnchor;
+        while(true) {
+          current = PsiTreeUtil.getNextSiblingOfType(current, PsiSwitchLabelStatement.class);
+          if (current == null) break;
+          if (!current.isDefaultCase()) {
+            holder.registerProblem(current,
+                                   InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
+                                   new DeleteSwitchLabelFix(current));
+          }
+        }
       }
     }
     else if (psiAnchor != null && !isFlagCheck(psiAnchor)) {

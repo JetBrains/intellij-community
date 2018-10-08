@@ -91,7 +91,7 @@ public class RefManagerImpl extends RefManager {
     myContext = context;
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
-    for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
+    for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
       final RefManagerExtension<?> extension = factory.createRefManagerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
@@ -169,7 +169,7 @@ public class RefManagerImpl extends RefManager {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting);
     }
   }
-  
+
   void fireNodeMarkedReferenced(RefElement refWhat,
                                 RefElement refFrom,
                                 boolean referencedFromClassInitializer,
@@ -245,8 +245,9 @@ public class RefManagerImpl extends RefManager {
     return ref;
   }
 
+  @Nullable
   @Override
-  public Element export(@NotNull RefEntity refEntity, @NotNull final Element element, final int actualLine) {
+  public Element export(@NotNull RefEntity refEntity, final int actualLine) {
     refEntity = getRefinedElement(refEntity);
 
     Element problem = new Element("problem");
@@ -298,7 +299,6 @@ public class RefManagerImpl extends RefManager {
     }
 
     new SmartRefElementPointerImpl(refEntity, true).writeExternal(problem);
-    element.addContent(problem);
     return problem;
   }
 
@@ -364,7 +364,7 @@ public class RefManagerImpl extends RefManager {
   public boolean isOfflineView() {
     return myOfflineView;
   }
-  
+
   public boolean isInProcess() {
     return myIsInProcess;
   }
@@ -619,9 +619,9 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
-    return getFromRefTableOrCache(element, factory, null); 
+    return getFromRefTableOrCache(element, factory, null);
   }
-  
+
   @Nullable
   private <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
                                                           @NotNull NullableFactory<? extends T> factory,

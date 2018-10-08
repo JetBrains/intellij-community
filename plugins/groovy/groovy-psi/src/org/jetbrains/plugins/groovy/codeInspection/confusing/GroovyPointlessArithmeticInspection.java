@@ -173,7 +173,6 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   /**
-   * @noinspection FloatingPointEquality
    */
   private static boolean isZero(GrExpression expression) {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);
@@ -191,7 +190,6 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
   }
 
   /**
-   * @noinspection FloatingPointEquality
    */
   private static boolean isOne(GrExpression expression) {
     final PsiElement inner = PsiUtil.skipParentheses(expression, false);

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.util.SystemProperties;
 import com.sun.jdi.connect.AttachingConnector;
@@ -28,7 +29,7 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
   }
 
   @Override
-  public AttachingConnector getConnector() throws ExecutionException {
+  public AttachingConnector getConnector(DebugProcessImpl debugProcess) throws ExecutionException {
     try {
       Path saJarPath = Paths.get(mySAJarPath);
       Class<?> connectorClass = Class.forName("sun.jvm.hotspot.jdi.SAPIDAttachingConnector",
@@ -39,11 +40,6 @@ public class SAPidRemoteConnection extends PidRemoteConnection {
     catch (Exception e) {
       throw new ExecutionException("Unable to create SAPIDAttachingConnector", e);
     }
-  }
-
-  public static boolean isSAPidAttachAvailable() {
-    return true;
-    //return getBaseSAJDIClassLoader() != null;
   }
 
   @NotNull

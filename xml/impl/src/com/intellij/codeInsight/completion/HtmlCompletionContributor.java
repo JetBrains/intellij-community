@@ -59,6 +59,19 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
   public static final String[] TYPE = {"text/css", "text/html", "text/plain", "text/xml"};
   public static final String[] SANDBOX = {"allow-forms", "allow-pointer-lock", "allow-popups", "allow-same-origin",
     "allow-scripts", "allow-top-navigation"};
+  public static final String[] LANG =
+    {"aa", "ab", "ae", "af", "ak", "am", "an", "ar", "as", "av", "ay", "az", "ba", "be", "bg", "bh", "bi", "bm", "bn", "bo", "br", "bs",
+      "ca", "ce", "ch", "co", "cr", "cs", "cu", "cv", "cy", "da", "de", "dv", "dz", "ee", "el", "en", "eo", "es", "et", "eu", "fa", "ff",
+      "fi", "fj", "fo", "fr", "fy", "ga", "gd", "gl", "gn", "gu", "gv", "ha", "he", "hi", "ho", "hr", "ht", "hu", "hy", "hz", "ia", "id",
+      "ie", "ig", "ii", "ik", "io", "is", "it", "iu", "ja", "jv", "ka", "kg", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kr", "ks", "ku",
+      "kv", "kw", "ky", "la", "lb", "lg", "li", "ln", "lo", "lt", "lu", "lv", "mg", "mh", "mi", "mk", "ml", "mn", "mr", "ms", "mt", "my",
+      "na", "nb", "nd", "ne", "ng", "nl", "nn", "no", "nr", "nv", "ny", "oc", "oj", "om", "or", "os", "pa", "pi", "pl", "ps", "pt", "qu",
+      "rm", "rn", "ro", "ru", "rw", "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "ss", "st", "su", "sv",
+      "sw", "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty", "ug", "uk", "ur", "uz", "ve", "vi", "vo",
+      "wa", "wo", "xh", "yi", "yo", "za", "zh", "zu",};
+  public static final String[] VUE_SCRIPT_LANGUAGE = {"js", "ts", "Flow JS"};
+  public static final String[] VUE_STYLE_LANGUAGE = {"scss", "sass", "stylus", "css", "less", "postcss"};
+  public static final String[] VUE_TEMPLATE_LANGUAGE = {"html", "pug"};
 
   public HtmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
@@ -107,6 +120,23 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       if ("target".equals(name) || "formtarget".equals(name)) {
         return TARGET;
       }
+      else if ("lang".equals(name)) {
+        if (tagName.equalsIgnoreCase("script")) {
+          return VUE_SCRIPT_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("style")) {
+          return VUE_STYLE_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("template")) {
+          return VUE_TEMPLATE_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("html")) {
+          return LANG;
+        }
+      }
+      else if (tagName.equalsIgnoreCase("html") && "xml:lang".equals(name)) {
+        return LANG;
+      }
       else if ("enctype".equals(name)) {
         return ENCTYPE;
       }
@@ -128,20 +158,21 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       else if ("http-equiv".equals(name) && "meta".equals(tagName)) {
         return HtmlUtil.RFC2616_HEADERS;
       }
-      else if("content".equals(name) && "meta".equals(tagName) && tag.getAttribute("name") == null) {
+      else if ("content".equals(name) && "meta".equals(tagName) && tag.getAttribute("name") == null) {
         return HtmlUtil.CONTENT_TYPES;
       }
       else if ("accept".equals(name) && "input".equals(tagName)) {
         return HtmlUtil.CONTENT_TYPES;
       }
-      else if("accept-charset".equals(name) || "charset".equals(name)) {
+      else if ("accept-charset".equals(name) || "charset".equals(name)) {
         Charset[] charSets = CharsetToolkit.getAvailableCharsets();
         String[] names = new String[charSets.length];
         for (int i = 0; i < names.length; i++) {
           names[i] = charSets[i].toString();
         }
         return names;
-      } else if ("itemprop".equals(name) && !DumbService.isDumb(attribute.getProject())) {
+      }
+      else if ("itemprop".equals(name) && !DumbService.isDumb(attribute.getProject())) {
         XmlTag scopeTag = findScopeTag(tag);
         return scopeTag != null ? findItemProperties(scopeTag) : ArrayUtil.EMPTY_STRING_ARRAY;
       }
@@ -166,5 +197,4 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
     }
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
-
 }

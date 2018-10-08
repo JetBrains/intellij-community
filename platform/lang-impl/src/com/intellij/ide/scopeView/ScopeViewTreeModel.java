@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
@@ -209,8 +210,13 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       root.childrenValid = false;
       LOG.debug("whole structure changed");
       ViewSettings settings = root.getSettings();
-      model.setSettings(settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles(),
-                        hasModules() && settings.isShowModules());
+      boolean isShowExcludedFiles = false;
+      if (settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
+        NamedScopeFilter filter = getFilter();
+        Class<? extends NamedScope> type = filter == null ? null : filter.getScope().getClass();
+        isShowExcludedFiles = !NamedScope.class.equals(type); // disable excluded files for custom scopes
+      }
+      model.setSettings(isShowExcludedFiles, hasModules() && settings.isShowModules());
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
@@ -570,9 +576,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         }
       });
       if (provider == null) return children;
-      children.addAll(provider.modify(parent, files.stream()
+      List<AbstractTreeNode> nodes = files
+        .stream()
         .map(file -> new PsiFileNode(getProject(), file, getSettings()))
-        .collect(Collectors.toList()), getSettings()));
+        .collect(Collectors.toList());
+      children.addAll(provider.modify(parent, nodes, getSettings()));
       return children;
     }
 

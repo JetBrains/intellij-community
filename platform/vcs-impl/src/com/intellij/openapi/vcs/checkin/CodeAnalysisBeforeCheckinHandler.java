@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.CodeSmellDetector;
@@ -19,8 +20,10 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -99,15 +102,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       }
 
       try {
-        final List<CodeSmellInfo> codeSmells =
-          CodeSmellDetector.getInstance(myProject)
-            .findCodeSmells(CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject));
-        if (!codeSmells.isEmpty()) {
-          return processFoundCodeSmells(codeSmells, executor);
-        }
-        else {
-          return ReturnResult.COMMIT;
-        }
+        return runCodeAnalysis(executor);
       }
       catch (ProcessCanceledException e) {
         return ReturnResult.CANCEL;
@@ -120,6 +115,24 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
         }
         return ReturnResult.CANCEL;
       }
+    }
+    else {
+      return ReturnResult.COMMIT;
+    }
+  }
+
+  @NotNull
+  private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
+    final List<CodeSmellInfo> codeSmells;
+    final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
+    if (Registry.is("vcs.code.analysis.before.checkin.show.only.new", false)) {
+      codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files);
+    }
+    else {
+      codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
+    }
+    if (!codeSmells.isEmpty()) {
+      return processFoundCodeSmells(codeSmells, commitExecutor);
     }
     else {
       return ReturnResult.COMMIT;

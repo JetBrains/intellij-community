@@ -25,7 +25,7 @@ public class ExportEclipseProjectsDialog extends DialogWrapper {
   private JCheckBox myExportProjectLibrariesCb;
   private JLabel myPathToUserLibsLabel;
 
-  public ExportEclipseProjectsDialog(final Project project, List<Module> modules) {
+  public ExportEclipseProjectsDialog(final Project project, List<? extends Module> modules) {
     super(project, false);
     moduleChooser.setElements(modules, true);
     setTitle(EclipseBundle.message("eclipse.export.dialog.title"));

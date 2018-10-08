@@ -2,6 +2,7 @@
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger
+import com.intellij.internal.statistic.utils.getProjectId
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -53,7 +54,7 @@ open class FeatureUsageSettingsEventPrinter {
     }
 
     val isDefaultProject = project?.isDefault == true
-    val hash = if (!isDefaultProject) toHash(project?.name) else null
+    val hash = if (!isDefaultProject) toHash(project) else null
 
     for (accessor in accessors) {
       val type = accessor.genericType
@@ -84,9 +85,9 @@ open class FeatureUsageSettingsEventPrinter {
     FeatureUsageLogger.logState(groupId, eventId, data)
   }
 
-  internal fun toHash(projectName: String?): String? {
-    return projectName?.let {
-      return projectName.hashCode().toString()
+  internal fun toHash(project: Project?): String? {
+    return project?.let {
+      return getProjectId(project)
     }
   }
 }

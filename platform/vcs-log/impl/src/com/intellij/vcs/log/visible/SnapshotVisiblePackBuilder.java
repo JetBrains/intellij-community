@@ -29,6 +29,7 @@ import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +45,8 @@ public class SnapshotVisiblePackBuilder {
   @NotNull
   public VisiblePack build(@NotNull VisiblePack visiblePack) {
     if (visiblePack.getVisibleGraph() instanceof VisibleGraphImpl && visiblePack.getVisibleGraph().getVisibleCommitCount() > 0) {
-      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters());
+      return build(visiblePack.getDataPack(), ((VisibleGraphImpl<Integer>)visiblePack.getVisibleGraph()), visiblePack.getFilters(),
+                   visiblePack.getAdditionalData());
     }
     else {
       VisibleGraph<Integer> newGraph = EmptyVisibleGraph.getInstance();
@@ -56,7 +58,8 @@ public class SnapshotVisiblePackBuilder {
   @NotNull
   private VisiblePack build(@NotNull DataPackBase oldPack,
                             @NotNull VisibleGraphImpl<Integer> oldGraph,
-                            @NotNull VcsLogFilterCollection filters) {
+                            @NotNull VcsLogFilterCollection filters,
+                            @Nullable Object data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);
@@ -73,7 +76,7 @@ public class SnapshotVisiblePackBuilder {
     VisibleGraph<Integer> newGraph =
       new VisibleGraphImpl<>(new CollapsedController(new BaseController(info), info, null), info, colorManager);
 
-    return new VisiblePack(newPack, newGraph, true, filters);
+    return new VisiblePack(newPack, newGraph, true, filters, data);
   }
 
   @NotNull

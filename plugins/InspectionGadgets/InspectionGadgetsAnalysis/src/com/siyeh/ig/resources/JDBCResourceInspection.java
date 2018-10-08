@@ -53,7 +53,6 @@ public class JDBCResourceInspection extends ResourceInspection {
       "getGeneratedKeys"
     };
 
-  @SuppressWarnings({"StaticCollection"})
   private static final Set<String> creationMethodNameSet = new HashSet<>(9);
 
   static {

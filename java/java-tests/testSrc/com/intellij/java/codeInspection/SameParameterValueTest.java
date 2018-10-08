@@ -101,4 +101,8 @@ public class SameParameterValueTest extends InspectionTestCase {
   public void testField() {
     doTest(getTestDir(), myTool, false, true);
   }
+
+  public void testOverrideGroovy() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

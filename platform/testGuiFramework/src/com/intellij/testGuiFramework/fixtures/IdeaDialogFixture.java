@@ -65,7 +65,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
   }
 
   @NotNull
-  public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<T> clz) {
+  public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<? extends T> clz) {
     return find(robot, clz, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog component) {
@@ -75,7 +75,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
   }
 
   @NotNull
-  public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<T> clz,
+  public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<? extends T> clz,
                                                                    @NotNull final GenericTypeMatcher<JDialog> matcher) {
     final Ref<T> wrapperRef = new Ref<T>();
     JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {

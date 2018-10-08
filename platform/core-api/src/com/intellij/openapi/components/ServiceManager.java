@@ -76,7 +76,7 @@ public class ServiceManager {
    * @return Key instance.
    */
   @NotNull
-  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<T> serviceClass) {
+  public static <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull final Class<? extends T> serviceClass) {
     return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> getService(project, serviceClass));
   }
 }

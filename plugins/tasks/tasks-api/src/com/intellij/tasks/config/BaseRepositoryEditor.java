@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CommitPlaceholderProvider;
@@ -64,12 +63,12 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private boolean myApplying;
   protected Project myProject;
   protected final T myRepository;
-  private final Consumer<T> myChangeListener;
+  private final Consumer<? super T> myChangeListener;
   private final Document myDocument;
   private final Editor myEditor;
   private JComponent myAnchor;
 
-  public BaseRepositoryEditor(final Project project, final T repository, Consumer<T> changeListener) {
+  public BaseRepositoryEditor(final Project project, final T repository, Consumer<? super T> changeListener) {
     myProject = project;
     myRepository = repository;
     myChangeListener = changeListener;
@@ -151,8 +150,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private void setupPlaceholdersComment() {
     StringBuilder comment = new StringBuilder(myRepository.getComment());
 
-    CommitPlaceholderProvider[] extensions = Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME);
-    for (CommitPlaceholderProvider extension : extensions) {
+    for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(myRepository);
       for (String placeholder : placeholders) {
         comment.append(", {").append(placeholder).append("}");

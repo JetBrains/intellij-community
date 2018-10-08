@@ -60,7 +60,7 @@ public abstract class NotNullLazyValue<T> {
   }
 
   @NotNull
-  public static <T> NotNullLazyValue<T> createValue(@NotNull final NotNullFactory<T> value) {
+  public static <T> NotNullLazyValue<T> createValue(@NotNull final NotNullFactory<? extends T> value) {
     return new NotNullLazyValue<T>() {
       @NotNull
       @Override

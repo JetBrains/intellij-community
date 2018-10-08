@@ -97,6 +97,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
     }
 
     Component parent = myParent.get();
+    Component previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     try {
       myFileDialog.setVisible(true);
     }
@@ -104,9 +105,9 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       if (appStarted) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myFileDialog);
-        if (parent != null) {
+        if (previousFocusOwner != null) {
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(parent, true);
+            previousFocusOwner.requestFocus();
           });
         }
       }

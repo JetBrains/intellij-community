@@ -88,6 +88,8 @@ public class UIUtil {
 
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
+  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
+
   static {
     blockATKWrapper();
     // save the default JRE CSS and ..
@@ -113,13 +115,20 @@ public class UIUtil {
 
   // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
   public static void markAsTypeAheadAware(Window window) {
-    if (window instanceof RootPaneContainer) {
-      ((RootPaneContainer)window).getRootPane().putClientProperty("TypeAheadAwareWindow", Boolean.TRUE);
-    }
+    putWindowClientProperty(window, "TypeAheadAwareWindow", Boolean.TRUE);
   }
 
   public static boolean isTypeAheadAware(Window window) {
-    return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
+    return isWindowClientPropertyTrue(window, "TypeAheadAwareWindow");
+  }
+
+  // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
+  public static void markAsPossibleOwner(Dialog dialog) {
+    putWindowClientProperty(dialog, "PossibleOwner", Boolean.TRUE);
+  }
+
+  public static boolean isPossibleOwner(Dialog dialog) {
+    return isWindowClientPropertyTrue(dialog, "PossibleOwner");
   }
 
   private static void blockATKWrapper() {
@@ -702,6 +711,29 @@ public class UIUtil {
     }
   }
 
+  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
+    return Boolean.TRUE.equals(getWindowClientProperty(window, key));
+  }
+
+  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        return pane.getClientProperty(key);
+      }
+    }
+    return null;
+  }
+
+  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(key, value);
+      }
+    }
+  }
+
   /**
    * @param component a Swing component that may hold a client property value
    * @param key       the client property key
@@ -1070,7 +1102,7 @@ public class UIUtil {
   }
 
   public static Color getLabelForeground() {
-    return UIManager.getColor("Label.foreground");
+    return JBColor.namedColor("Label.foreground", new JBColor(Gray._0, Gray.xBB));
   }
 
   public static Color getLabelDisabledForeground() {
@@ -1080,7 +1112,7 @@ public class UIUtil {
   }
 
   public static Color getContextHelpForeground() {
-    return Gray.x78;
+    return JBColor.namedColor("Label.grayForeground", Gray.x78);
   }
 
   @NotNull
@@ -1331,6 +1363,10 @@ public class UIUtil {
     return new JBColor(UNFOCUSED_SELECTION_COLOR, new Color(13, 41, 62));
   }
 
+  public static Color getListSelectionBackground(boolean focused) {
+    return focused ? getListSelectionBackground() : getListUnfocusedSelectionBackground();
+  }
+
   public static Color getTreeSelectionBackground(boolean focused) {
     return focused ? getTreeSelectionBackground() : getTreeUnfocusedSelectionBackground();
   }
@@ -1546,7 +1582,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
     return false;
   }
@@ -1557,7 +1592,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1586,7 +1620,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
@@ -1597,12 +1630,10 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
@@ -1613,11 +1644,20 @@ public class UIUtil {
   }
 
   public static boolean isUnderDefaultMacTheme() {
-    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui");
+    return SystemInfo.isMac && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.macos.ui") && !isCustomTheme();
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
+    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui") && !isCustomTheme();
+  }
+
+  private static boolean isCustomTheme() {
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel instanceof UserDataHolder) {
+      Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
+      return value != null && value.booleanValue();
+    }
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -2598,7 +2638,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2621,6 +2661,15 @@ public class UIUtil {
       }
     }
     return component;
+  }
+
+  public static void layoutRecursively(@NotNull Component component) {
+    if (component instanceof JComponent) {
+      component.doLayout();
+      for (Component child : ((JComponent)component).getComponents()) {
+        layoutRecursively(child);
+      }
+    }
   }
 
   @Language("HTML")
@@ -3393,7 +3442,6 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -3588,7 +3636,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<T> cls) {
+  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<? extends T> cls) {
     final ArrayList<T> result = new ArrayList<T>();
     findComponentsOfType(parent, cls, result);
     return result;

@@ -84,7 +84,6 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     @Override
     @NotNull
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return "Activate DSL Descriptor";
     }
 

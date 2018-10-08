@@ -14,18 +14,19 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: -1, value: 0.0}
+  - align: &id003 {horizontal: false, unit: -1, value: 0.0}
     noGrid: true
-  - {}
-  - {}
-  - {noGrid: true}
+  - align: *id003
+  - align: *id003
+  - align: *id003
+    noGrid: true
   count: 4
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id003 {horizontal: true, value: 6.0}
-      min: *id003
-      preferred: *id003
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
     grow: 0.0
   - {}
   count: 2
@@ -34,11 +35,11 @@ componentConstrains:
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id004 {horizontal: false, value: 20.0}
-        preferred: *id004
-      gapBefore:
         min: &id005 {horizontal: false, value: 10.0}
         preferred: *id005
+      gapBefore:
+        min: &id006 {horizontal: false, value: 10.0}
+        preferred: *id006
     wrap: true
   'Sudo password:': {}
   'JPasswordField #2': {spanX: 2097051, wrap: true}
@@ -47,22 +48,22 @@ componentConstrains:
     spanX: 2097051
     vertical:
       gapAfter:
-        min: &id006 {horizontal: false, value: 20.0}
-        preferred: *id006
-      gapBefore:
-        min: &id007 {horizontal: false, value: 12.0}
+        min: &id007 {horizontal: false, value: 10.0}
         preferred: *id007
+      gapBefore:
+        min: &id008 {horizontal: false, value: 12.0}
+        preferred: *id008
     wrap: true
 cellBounds:
-- [0, 0, 480, 60]
-- [0, 70, 98, 24]
-- [104, 70, 376, 24]
-- [104, 104, 376, 13]
-- [0, 127, 480, 52]
+- [0, 0, 480, 50]
+- [0, 60, 98, 24]
+- [104, 60, 376, 24]
+- [104, 94, 376, 13]
+- [0, 117, 480, 42]
 componentBounds:
   Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
     0, 10, 292, 30]
-  'Sudo password:': [0, 74, 98, 15]
-  'JPasswordField #2': [101, 67, 256, 30]
-  !!binary "G1JlbWVtYmVy": [101, 102, 93, 18]
-  'SimpleColoredComponent #4': [0, 139, 300, 20]
+  'Sudo password:': [0, 64, 98, 15]
+  'JPasswordField #2': [101, 57, 256, 30]
+  !!binary "G1JlbWVtYmVy": [101, 92, 93, 18]
+  'SimpleColoredComponent #4': [0, 129, 300, 20]

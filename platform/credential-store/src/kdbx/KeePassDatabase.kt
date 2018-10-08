@@ -4,7 +4,6 @@ package com.intellij.credentialStore.kdbx
 import com.intellij.util.get
 import com.intellij.util.getOrCreate
 import org.jdom.Element
-import org.jdom.xpath.XPath
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.time.LocalDateTime
@@ -12,28 +11,27 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-internal const val LOCATION_CHANGED = "Times/LocationChanged"
-internal const val USAGE_COUNT_ELEMENT_NAME = "Times/UsageCount"
-internal const val EXPIRES_ELEMENT_NAME = "Times/Expires"
-internal const val GROUP_ELEMENT_NAME = "Group"
 internal const val ENTRY_ELEMENT_NAME = "Entry"
-internal const val ICON_ELEMENT_NAME = "IconID"
-internal const val UUID_ELEMENT_NAME = "UUID"
+internal const val GROUP_ELEMENT_NAME = "Group"
 internal const val NAME_ELEMENT_NAME = "Name"
-internal const val LAST_MODIFICATION_TIME_ELEMENT_NAME = "Times/LastModificationTime"
-internal const val CREATION_TIME_ELEMENT_NAME = "Times/CreationTime"
-internal const val LAST_ACCESS_TIME_ELEMENT_NAME = "Times/LastAccessTime"
-internal const val EXPIRY_TIME_ELEMENT_NAME = "Times/ExpiryTime"
+
+internal val LOCATION_CHANGED = arrayOf("Times", "LocationChanged")
+internal val USAGE_COUNT_ELEMENT_NAME = arrayOf("Times", "UsageCount")
+internal val EXPIRES_ELEMENT_NAME = arrayOf("Times", "Expires")
+internal val ICON_ELEMENT_NAME = arrayOf("IconID")
+internal val UUID_ELEMENT_NAME = arrayOf("UUID")
+internal val LAST_MODIFICATION_TIME_ELEMENT_NAME = arrayOf("Times", "LastModificationTime")
+internal val CREATION_TIME_ELEMENT_NAME = arrayOf("Times", "CreationTime")
+internal val LAST_ACCESS_TIME_ELEMENT_NAME = arrayOf("Times", "LastAccessTime")
+internal val EXPIRY_TIME_ELEMENT_NAME = arrayOf("Times", "ExpiryTime")
 
 private const val ROOT_ELEMENT_NAME = "Root"
 
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
-  private val dbMeta: Element
-    get() = rootElement.getChild("Meta") ?: throw IllegalStateException("no meta")
-
-  @Volatile var isDirty: Boolean = false
+  @Volatile
+  var isDirty: Boolean = false
     internal set
 
   val rootGroup: KdbxGroup
@@ -70,51 +68,44 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
     result.title = title
     return result
   }
-
-  fun setDescription(description: String) {
-    dbMeta.getOrCreate("DatabaseDescription").text = description
-    dbMeta.getOrCreate("DatabaseDescriptionChanged").text = formattedNow()
-    isDirty = true
-  }
 }
 
-interface Icon {
-  var index: Int
-}
-
-private val mandatoryEntryElements: Map<String, ValueCreator> = linkedMapOf (
-    UUID_ELEMENT_NAME to UuidValueCreator(),
-    ICON_ELEMENT_NAME to ConstantValueCreator("0"),
-    CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRES_ELEMENT_NAME to  ConstantValueCreator("False"),
-    USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
-    LOCATION_CHANGED to DateValueCreator()
+private val mandatoryEntryElements: Map<Array<String>, ValueCreator> = linkedMapOf(
+  UUID_ELEMENT_NAME to UuidValueCreator(),
+  ICON_ELEMENT_NAME to ConstantValueCreator("0"),
+  CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
+  LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
+  LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
+  EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
+  EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
+  USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
+  LOCATION_CHANGED to DateValueCreator()
 )
 
-internal fun ensureElements(element: Element, childElements: Map<String, ValueCreator>) {
+internal fun ensureElements(element: Element, childElements: Map<Array<String>, ValueCreator>) {
   for ((elementPath, value) in childElements) {
-    var result = XPath.newInstance(elementPath).selectSingleNode(element)
+    val result = findElement(element, elementPath)
     if (result == null) {
-      result = createHierarchically(elementPath, element)
-      result.text = value.value
+      var currentElement = element
+      for (elementName in elementPath) {
+        currentElement = currentElement.getOrCreate(elementName)
+      }
+      currentElement.text = value.value
     }
   }
 }
 
-private fun createHierarchically(elementPath: String, startElement: Element): Element {
-  var currentElement = startElement
-  for (elementName in elementPath.split('/')) {
-    currentElement = currentElement.getOrCreate(elementName)
+private fun findElement(element: Element, elementPath: Array<String>): Element? {
+  var result = element
+  for (elementName in elementPath) {
+    result = result.getChild(elementName) ?: return null
   }
-  return currentElement
+  return result
 }
 
 internal fun formattedNow() = LocalDateTime.now(ZoneOffset.UTC).format(dateFormatter)
 
-interface ValueCreator {
+internal interface ValueCreator {
   val value: String
 }
 

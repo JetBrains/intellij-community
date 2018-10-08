@@ -330,7 +330,7 @@ public class SemanticEditorPosition {
   
   @NotNull
   public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
-                                                            @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                            @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                                             @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }

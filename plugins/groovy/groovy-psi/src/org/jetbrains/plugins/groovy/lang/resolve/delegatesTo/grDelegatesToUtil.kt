@@ -64,6 +64,13 @@ private fun doResolveActualCall(call: GrMethodCall): GroovyResolveResult {
   val expression = call.invokedExpression
   val type = expression.type ?: return result
 
-  val calls = ResolveUtil.getMethodCandidates(type, "call", expression, *getArgumentTypes(expression, false))
+  val argumentTypes = getArgumentTypes(expression, false)
+  // work around KT-27229
+  val calls = if (argumentTypes == null) {
+    ResolveUtil.getMethodCandidates(type, "call", expression, null)
+  }
+  else {
+    ResolveUtil.getMethodCandidates(type, "call", expression, *argumentTypes)
+  }
   return calls.singleOrNull() ?: EmptyGroovyResolveResult
 }

@@ -9,7 +9,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -76,7 +75,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof GrNamedArgument || child instanceof GrExpression) args.add((GroovyPsiElement)child);
     }
-    return ContainerUtil.toArray(args, new GroovyPsiElement[args.size()]);
+    return args.toArray(GroovyPsiElement.EMPTY_ARRAY);
   }
 
   @Override

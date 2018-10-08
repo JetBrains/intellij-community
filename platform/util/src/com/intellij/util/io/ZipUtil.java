@@ -36,7 +36,7 @@ public class ZipUtil {
   public static boolean addFileToZip(@NotNull ZipOutputStream zos,
                                      @NotNull File file,
                                      @NotNull String relativeName,
-                                     @Nullable Set<String> writtenItemRelativePaths,
+                                     @Nullable Set<? super String> writtenItemRelativePaths,
                                      @Nullable FileFilter fileFilter) throws IOException {
     return addFileToZip(zos, file, relativeName, writtenItemRelativePaths, fileFilter, FileContentProcessor.STANDARD);
   }

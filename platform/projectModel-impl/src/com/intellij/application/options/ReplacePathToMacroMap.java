@@ -65,7 +65,6 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   @Override
   public String substitute(@Nullable String text, boolean caseSensitive) {
     if (text == null) {
-      //noinspection ConstantConditions
       return null;
     }
 

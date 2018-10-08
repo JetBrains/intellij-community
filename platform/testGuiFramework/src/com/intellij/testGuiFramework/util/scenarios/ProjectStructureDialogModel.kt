@@ -46,7 +46,7 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
 val GuiTestCase.projectStructureDialogModel by ProjectStructureDialogModel
 
 fun ProjectStructureDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(projectStructureTitle, true, defaultTimeout)
+  testCase.dialog(projectStructureTitle, true)
 
 fun ProjectStructureDialogModel.checkInProjectStructure(actions: GuiTestCase.()->Unit){
   with(guiTestCase){

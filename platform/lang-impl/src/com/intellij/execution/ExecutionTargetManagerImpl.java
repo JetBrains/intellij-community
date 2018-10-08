@@ -11,7 +11,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -192,7 +191,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       RunConfiguration configuration = each.first.getConfiguration();
       if (!(configuration instanceof TargetAwareRunProfile)) return true;
 
-      if ((ApplicationManager.getApplication().isInternal() || Registry.is("update.run.configuration.actions.from.cache"))
+      if ((Registry.is("update.run.configuration.actions.from.cache"))
           && RunManagerImpl.getInstanceImpl(myProject).isInvalidInCache(each.first)) {
         return false;
       }
@@ -211,7 +210,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
       return Collections.emptyList();
     }
 
-    ExecutionTargetProvider[] providers = Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME);
+    List<ExecutionTargetProvider> providers = ExecutionTargetProvider.EXTENSION_NAME.getExtensionList();
     LinkedHashSet<ExecutionTarget> result = new LinkedHashSet<>();
 
     Set<ExecutionTarget> specifiedTargets = new THashSet<>();

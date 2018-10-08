@@ -293,7 +293,7 @@ public class PackageUtil {
     return false;
   }
 
-  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<VirtualFile> vFiles, @NotNull Module module, PsiManager manager) {
+  private static PsiDirectory getWritableModuleDirectory(@NotNull Query<? extends VirtualFile> vFiles, @NotNull Module module, PsiManager manager) {
     for (VirtualFile vFile : vFiles) {
       if (ModuleUtil.findModuleForFile(vFile, module.getProject()) != module) continue;
       PsiDirectory directory = manager.findDirectory(vFile);

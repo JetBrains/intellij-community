@@ -98,8 +98,9 @@ class ProductInfoValidator {
       return archiveFile.withInputStream {
         def inputStream = new TarInputStream(new GZIPInputStream(it))
         TarEntry entry
+        def altEntryPath = "./$entryPath"
         while (null != (entry = inputStream.nextEntry)) {
-          if (entry.name == entryPath) {
+          if (entry.name == entryPath || entry.name == altEntryPath) {
             return true
           }
         }

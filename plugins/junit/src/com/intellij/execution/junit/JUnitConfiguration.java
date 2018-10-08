@@ -137,12 +137,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
-    super(name, new JavaRunConfigurationModule(project, false), configurationFactory);
+    super(name, new JavaRunConfigurationModule(project, true), configurationFactory);
     myData = data;
   }
 
   protected JUnitConfiguration(@NotNull Project project, Data data, @NotNull ConfigurationFactory configurationFactory) {
-    super(new JavaRunConfigurationModule(project, false), configurationFactory);
+    super(new JavaRunConfigurationModule(project, true), configurationFactory);
     myData = data;
   }
 

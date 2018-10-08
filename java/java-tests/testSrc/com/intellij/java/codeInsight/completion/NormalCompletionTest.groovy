@@ -1800,6 +1800,8 @@ class Bar {{
 
   void testMethodReferenceCallContext() { doTest('\n') }
 
+  void testDestroyingCompletedClassDeclaration() { doTest('\n') }
+
   void testResourceParentInResourceList() {
     configureByTestName()
     assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
@@ -1866,5 +1868,7 @@ class Abc {
     myFixture.type(Lookup.COMPLETE_STATEMENT_SELECT_CHAR)
     myFixture.checkResult 'class Foo<T> { Foo<List<String>><caret> }'
   }
+
+  void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
 
 }

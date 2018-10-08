@@ -49,14 +49,10 @@ public class VariableShadowingInspection extends XsltInspection {
             final LocalQuickFix fix1 = new RenameVariableFix(tag, "local").createQuickFix(isOnTheFly);
             final LocalQuickFix fix2 = new RenameVariableFix(shadowedVariable, "outer").createQuickFix(isOnTheFly);
 
-            final XmlAttribute name = tag.getAttribute("name");
-            assert name != null;
-
-            final PsiElement token = XsltSupport.getAttValueToken(name);
-            assert token != null;
-
+            final PsiElement token = XsltSupport.getAttValueToken(nameAttr);
+            if (token == null) return;
             holder.registerProblem(token,
-                    innerKind + " '" + name.getValue() + "' shadows " + outerKind,
+                    innerKind + " '" + nameAttr.getValue() + "' shadows " + outerKind,
                     AbstractFix.createFixes(fix1, fix2));
           }
         }

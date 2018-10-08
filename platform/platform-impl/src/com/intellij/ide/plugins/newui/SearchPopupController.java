@@ -5,11 +5,10 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,12 +37,12 @@ public abstract class SearchPopupController {
   public void handleShowPopup() {
     String query = myTextField.getText();
     int length = query.length();
-    int position = myTextField.getTextEditor().getCaretPosition();
+    int position = getCaretPosition();
 
     if (position < length) {
       if (query.charAt(position) == ' ') {
         if (position == 0 || query.charAt(position - 1) == ' ') {
-          showAttributesPopup(null);
+          showAttributesPopup(null, position);
           return;
         }
       }
@@ -54,21 +53,26 @@ public abstract class SearchPopupController {
       }
     }
     else if (query.charAt(position - 1) == ' ') {
-      showAttributesPopup(null);
+      showAttributesPopup(null, position);
       return;
     }
 
-    Pair<String, String> attribute = parseAttributeInQuery(query, position);
+    Ref<Integer> startPosition = new Ref<>();
+    Pair<String, String> attribute = parseAttributeInQuery(query, position, startPosition);
     if (attribute.second == null) {
-      showAttributesPopup(attribute.first);
+      showAttributesPopup(attribute.first, startPosition.get());
     }
     else {
-      handleShowAttributeValuesPopup(attribute.first, attribute.second);
+      handleShowAttributeValuesPopup(attribute.first, attribute.second, startPosition.get());
     }
   }
 
+  private int getCaretPosition() {
+    return myTextField.getTextEditor().getCaretPosition();
+  }
+
   @NotNull
-  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end) {
+  private static Pair<String, String> parseAttributeInQuery(@NotNull String query, int end, @NotNull Ref<Integer> startPosition) {
     int index = end - 1;
     String value = null;
 
@@ -76,6 +80,7 @@ public abstract class SearchPopupController {
       char ch = query.charAt(index);
       if (ch == ':') {
         value = query.substring(index + 1, end);
+        startPosition.set(index + 1);
         end = index + 1;
         index--;
         while (index >= 0) {
@@ -92,10 +97,16 @@ public abstract class SearchPopupController {
       index--;
     }
 
-    return Pair.create(StringUtil.trimStart(query.substring(index + 1, end), "-"), value);
+    String name = StringUtil.trimStart(query.substring(index + 1, end), "-");
+
+    if (startPosition.isNull()) {
+      startPosition.set(index + (query.charAt(index + 1) == '-' ? 2 : 1));
+    }
+
+    return Pair.create(name, value);
   }
 
-  public void showAttributesPopup(@Nullable String namePrefix) {
+  public void showAttributesPopup(@Nullable String namePrefix, int caretPosition) {
     CollectionListModel<Object> model = new CollectionListModel<>(getAttributes());
 
     if (noPrefixSearchValues(model, namePrefix)) {
@@ -104,39 +115,79 @@ public abstract class SearchPopupController {
 
     boolean async = myPopup != null;
 
-    if (myPopup == null || myPopup.type != SearchPopup.Type.AttributeName || !myPopup.isValid()) {
-      hidePopup();
-      createPopup(model, SearchPopup.Type.AttributeName);
-    }
-    else {
-      myPopup.model.replaceAll(model.getItems());
-      myPopup.callback.prefix = namePrefix;
-      myPopup.update();
+    if (updatePopupOrCreate(SearchPopup.Type.AttributeName, model, namePrefix, caretPosition)) {
       return;
     }
 
-    SearchPopupCallback callback = new SearchPopupCallback() {
+    createAndShow(async, new SearchPopupCallback(namePrefix) {
       @Override
       public void consume(String value) {
         appendSearchText(value, prefix);
-        handleShowAttributeValuesPopup(value, null);
+        handleShowAttributeValuesPopup(value, null, getCaretPosition());
       }
-    };
-    callback.prefix = namePrefix;
+    });
+  }
 
+  private void handleShowAttributeValuesPopup(@NotNull String name, @Nullable String valuePrefix, int caretPosition) {
+    List<String> values = getValues(name);
+    if (ContainerUtil.isEmpty(values)) {
+      showPopupForQuery();
+      return;
+    }
+
+    CollectionListModel<Object> model = new CollectionListModel<>(values);
+
+    if (noPrefixSearchValues(model, valuePrefix)) {
+      return;
+    }
+
+    if (updatePopupOrCreate(SearchPopup.Type.AttributeValue, model, valuePrefix, caretPosition)) {
+      return;
+    }
+
+    createAndShow(true, new SearchPopupCallback(valuePrefix) {
+      @Override
+      public void consume(String value) {
+        if (StringUtil.containsAnyChar(value, " ,:")) {
+          value = "\"" + value + "\"";
+        }
+        appendSearchText(value, prefix);
+        handleAppendAttributeValue();
+      }
+    });
+  }
+
+  private boolean updatePopupOrCreate(@NotNull SearchPopup.Type type,
+                                      @NotNull CollectionListModel<Object> model,
+                                      @Nullable String prefix,
+                                      int caretPosition) {
+    if (myPopup == null || myPopup.type != type || !myPopup.isValid()) {
+      createPopup(type, model, caretPosition);
+    }
+    else {
+      myPopup.model.replaceAll(model.getItems());
+      myPopup.callback.prefix = prefix;
+      myPopup.caretPosition = caretPosition;
+      myPopup.update();
+      return true;
+    }
+    return false;
+  }
+
+  protected void createPopup(@NotNull SearchPopup.Type type, @NotNull CollectionListModel<Object> model, int caretPosition) {
+    hidePopup();
+    myPopup = new SearchPopup(myTextField, mySearchPopupListener, type, model, caretPosition);
+  }
+
+  private void createAndShow(boolean async, @NotNull SearchPopupCallback callback) {
     ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append((String)value, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append((String)value);
       }
     };
 
     myPopup.createAndShow(callback, renderer, async);
-  }
-
-  protected void createPopup(@NotNull CollectionListModel<Object> model, @NotNull SearchPopup.Type type) {
-    myPopup = new SearchPopup(myTextField, mySearchPopupListener, type);
-    myPopup.model = model;
   }
 
   private boolean noPrefixSearchValues(@NotNull CollectionListModel<Object> model, @Nullable String prefix) {
@@ -167,52 +218,6 @@ public abstract class SearchPopupController {
     return false;
   }
 
-  private void handleShowAttributeValuesPopup(@NotNull String name, @Nullable String valuePrefix) {
-    List<String> values = getValues(name);
-    if (ContainerUtil.isEmpty(values)) {
-      showPopupForQuery();
-      return;
-    }
-
-    CollectionListModel<Object> model = new CollectionListModel<>(values);
-
-    if (noPrefixSearchValues(model, valuePrefix)) {
-      return;
-    }
-
-    if (myPopup == null || myPopup.type != SearchPopup.Type.AttributeValue || !myPopup.isValid()) {
-      hidePopup();
-      createPopup(model, SearchPopup.Type.AttributeValue);
-    }
-    else {
-      myPopup.model.replaceAll(model.getItems());
-      myPopup.callback.prefix = valuePrefix;
-      myPopup.update();
-      return;
-    }
-
-    SearchPopupCallback callback = new SearchPopupCallback() {
-      @Override
-      public void consume(String value) {
-        if (StringUtil.containsAnyChar(value, " ,:")) {
-          value = "\"" + value + "\"";
-        }
-        appendSearchText(value, prefix);
-        handleAppendAttributeValue();
-      }
-    };
-    callback.prefix = valuePrefix;
-
-    ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        append((String)value);
-      }
-    };
-
-    myPopup.createAndShow(callback, renderer, true);
-  }
-
   @NotNull
   protected abstract List<String> getAttributes();
 
@@ -241,8 +246,7 @@ public abstract class SearchPopupController {
   private void appendSearchText(@NotNull String value, @Nullable String prefix) {
     String text = myTextField.getText();
     String suffix = "";
-    JBTextField editor = myTextField.getTextEditor();
-    int position = editor.getCaretPosition();
+    int position = getCaretPosition();
 
     if (myPopup != null) {
       myPopup.skipCaretEvent = true;
@@ -256,17 +260,14 @@ public abstract class SearchPopupController {
     if (prefix == null) {
       myTextField.setTextIgnoreEvents(text + value + suffix);
     }
-    else if (value.startsWith(prefix)) {
-      myTextField.setTextIgnoreEvents(text + value.substring(prefix.length()) + suffix);
-    }
-    else if (StringUtil.startsWithIgnoreCase(value, prefix)) {
+    else if (StringUtil.startsWithIgnoreCase(value, prefix) || StringUtil.startsWithIgnoreCase(value, "\"" + prefix)) {
       myTextField.setTextIgnoreEvents(text.substring(0, text.length() - prefix.length()) + value + suffix);
     }
     else {
       myTextField.setTextIgnoreEvents(text + value + suffix);
     }
 
-    editor.setCaretPosition(myTextField.getText().length() - suffix.length());
+    myTextField.getTextEditor().setCaretPosition(myTextField.getText().length() - suffix.length());
   }
 
   public boolean handleEnter(@NotNull KeyEvent event) {

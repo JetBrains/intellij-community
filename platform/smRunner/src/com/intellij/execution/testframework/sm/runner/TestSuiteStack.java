@@ -9,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EmptyStackException;
+import java.util.Iterator;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 /**
  * @author Roman Chernyatchik
@@ -19,7 +21,7 @@ public class TestSuiteStack {
 
   @NonNls private static final String EMPTY = "empty";
 
-  private final Stack<SMTestProxy> myStack = new Stack<>();
+  private final ConcurrentLinkedDeque<SMTestProxy> myStack = new ConcurrentLinkedDeque<>();
   private final String myTestFrameworkName;
 
   public TestSuiteStack(@NotNull String testFrameworkName) {
@@ -35,10 +37,7 @@ public class TestSuiteStack {
    */
   @Nullable
   public SMTestProxy getCurrentSuite() {
-    if (getStackSize() != 0) {
-      return myStack.peek();
-    }
-    return null;
+    return myStack.peek();
   }
 
   /**
@@ -109,8 +108,9 @@ public class TestSuiteStack {
   protected String[] getSuitePath() {
     final int stackSize = getStackSize();
     final String[] names = new String[stackSize];
-    for (int i = 0; i < stackSize; i++) {
-      names[i] = myStack.get(i).getName();
+    int i = 0;
+    for (Iterator<SMTestProxy> it = myStack.descendingIterator(); it.hasNext();) {
+      names[i++] = it.next().getName();
     }
     return names;
   }

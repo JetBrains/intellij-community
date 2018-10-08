@@ -84,4 +84,12 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
     if (isConfiguredFromContext(context, patterns)) return true;
     return false;
   }
+
+  @Override
+  protected boolean isRequiredVisibility(PsiMember psiElement) {
+    if (JUnitUtil.isJUnit5(psiElement)) {
+      return true;
+    }
+    return super.isRequiredVisibility(psiElement);
+  }
 }

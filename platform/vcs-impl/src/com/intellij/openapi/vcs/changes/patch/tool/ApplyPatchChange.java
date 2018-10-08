@@ -382,5 +382,11 @@ class ApplyPatchChange {
     public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
     }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "marker: " + getTooltipText();
+    }
   }
 }

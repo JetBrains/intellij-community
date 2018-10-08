@@ -236,6 +236,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
             return false
           }
           GitInit.refreshAndConfigureVcsMappings(project, root, root.path)
+          GitUtil.generateGitignoreFileIfNeeded(project)
           return true
         }
 

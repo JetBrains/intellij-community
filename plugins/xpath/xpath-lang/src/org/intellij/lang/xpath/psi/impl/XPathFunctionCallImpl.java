@@ -196,7 +196,6 @@ public class XPathFunctionCallImpl extends XPathElementImpl implements XPathFunc
       }
 
       @Override
-      @SuppressWarnings({"ConstantConditions"})
       public String getText() {
         return getName();
       }

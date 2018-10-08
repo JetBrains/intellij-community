@@ -320,7 +320,7 @@ public class MethodSignatureUtil {
     PsiSubstitutor result = superMethodSignature.getSubstitutor();
     for (int i = 0; i < methodTypeParameters.length; i++) {
       PsiTypeParameter methodTypeParameter = methodTypeParameters[i];
-      PsiElementFactory factory = JavaPsiFacade.getInstance(methodTypeParameter.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodTypeParameter.getProject());
       result = result.put(superTypeParameters[i], factory.createType(methodTypeParameter));
     }
 

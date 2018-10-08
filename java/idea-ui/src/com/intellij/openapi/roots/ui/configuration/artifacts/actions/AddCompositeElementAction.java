@@ -45,7 +45,7 @@ public class AddCompositeElementAction extends DumbAwareAction {
     myArtifactEditor.addNewPackagingElement(myElementType);
   }
 
-  public static void addCompositeCreateActions(List<AnAction> actions, final ArtifactEditorEx artifactEditor) {
+  public static void addCompositeCreateActions(List<? super AnAction> actions, final ArtifactEditorEx artifactEditor) {
     for (CompositePackagingElementType packagingElementType : PackagingElementFactory.getInstance().getCompositeElementTypes()) {
       actions.add(new AddCompositeElementAction(artifactEditor, packagingElementType));
     }

@@ -377,7 +377,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   /**
    * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
    */
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
+  @Deprecated
+  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
 }

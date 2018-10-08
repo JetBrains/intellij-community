@@ -4,6 +4,7 @@ import com.intellij.json.formatter.JsonCodeStyleSettings.PropertyAlignment;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -94,6 +95,11 @@ public class JsonFormattingTest extends JsonTestCase {
 
   public void testIndentForElements() { doTest();}
   public void testNoExtraNewLineByWrap() { doTest();}
+
+  public void testHugeJsonFile() {
+    // IDEA-195340 bad JSON kills IntelliJ
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 20000, this::doTest).attempts(1).usesAllCPUCores().assertTiming();
+  }
 
   private void doTest() {
     myFixture.configureByFile(getTestName(false) + ".json");

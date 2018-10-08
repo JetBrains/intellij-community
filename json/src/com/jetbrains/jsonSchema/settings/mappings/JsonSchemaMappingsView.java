@@ -62,7 +62,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private static final String EDIT_SCHEMA_MAPPING = "settings.json.schema.edit.mapping";
   private static final String REMOVE_SCHEMA_MAPPING = "settings.json.schema.remove.mapping";
   private final TreeUpdater myTreeUpdater;
-  private final Consumer<String> mySchemaPathChangedCallback;
+  private final Consumer<? super String> mySchemaPathChangedCallback;
   private TableView<UserDefinedJsonSchemaConfiguration.Item> myTableView;
   private JComponent myComponent;
   private Project myProject;
@@ -75,7 +75,7 @@ public class JsonSchemaMappingsView implements Disposable {
 
   public JsonSchemaMappingsView(Project project,
                                 TreeUpdater treeUpdater,
-                                Consumer<String> schemaPathChangedCallback) {
+                                Consumer<? super String> schemaPathChangedCallback) {
     myTreeUpdater = treeUpdater;
     mySchemaPathChangedCallback = schemaPathChangedCallback;
     createUI(project);

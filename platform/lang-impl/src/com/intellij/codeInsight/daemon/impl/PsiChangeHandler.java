@@ -14,7 +14,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -259,7 +258,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
   @Nullable
   private static PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
-    for (ChangeLocalityDetector detector : Extensions.getExtensions(EP_NAME)) {
+    for (ChangeLocalityDetector detector : EP_NAME.getExtensionList()) {
       if (detector instanceof DefaultChangeLocalityDetector) {
         // run default detector last
         assert defaultDetector == null : defaultDetector;

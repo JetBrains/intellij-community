@@ -14,7 +14,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrVa
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 
-@SuppressWarnings("Duplicates")
 class GroovyCallResolverProcessorImpl extends GroovyResolverProcessorImpl {
 
   GroovyCallResolverProcessorImpl(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {
@@ -27,11 +26,6 @@ class GroovyCallResolverProcessorImpl extends GroovyResolverProcessorImpl {
     final List<GroovyResolveResult> variables = getCandidates(VARIABLE);
     if (!variables.isEmpty()) {
       return variables;
-    }
-
-    final List<GroovyResolveResult> enumConstants = getCandidates(ENUM_CONST);
-    if (!enumConstants.isEmpty()) {
-      return enumConstants;
     }
 
     final List<? extends GroovyResolveResult> methods = getAllCandidates(METHOD);

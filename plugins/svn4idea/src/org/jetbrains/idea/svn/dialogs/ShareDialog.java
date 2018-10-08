@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.dialogs;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -233,7 +232,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     myCommitMessage.setText(text);
     panel.add(myCommitMessage, gb);
     myCommitMessage.setSeparatorText("Commit Comment Prefix");
-    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, project)) {
+    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(myCommitMessage.getEditorField(), myCommitMessage.getEditorField());
     }
 
@@ -242,7 +241,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     return panel;
   }
 
-  public static enum ShareTarget {
+  public enum ShareTarget {
     useSelected,
     useProjectName,
     trunkUnderProjectName

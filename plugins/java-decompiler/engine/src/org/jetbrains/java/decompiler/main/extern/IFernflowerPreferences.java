@@ -33,6 +33,7 @@ public interface IFernflowerPreferences {
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
   String BYTECODE_SOURCE_MAPPING = "bsm";
   String IGNORE_INVALID_BYTECODE = "iib";
+  String VERIFY_ANONYMOUS_CLASSES = "vac";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -78,6 +79,7 @@ public interface IFernflowerPreferences {
     defaults.put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
     defaults.put(BYTECODE_SOURCE_MAPPING, "0");
     defaults.put(IGNORE_INVALID_BYTECODE, "0");
+    defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

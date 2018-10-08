@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class MethodSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
-  public MethodSmartPointerNode(Project project, @NotNull PsiMethod value, ViewSettings viewSettings) {
+  public MethodSmartPointerNode(@NotNull Project project, @NotNull PsiMethod value, @NotNull ViewSettings viewSettings) {
     super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 

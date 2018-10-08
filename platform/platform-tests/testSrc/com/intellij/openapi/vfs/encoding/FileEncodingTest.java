@@ -41,6 +41,7 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
@@ -63,7 +64,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -729,7 +729,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testNewFileCreatedInProjectEncoding() {
-    doEncodingTest(myProject, () -> {
+    EncodingManagerUtilKt.doEncodingTest(myProject, () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
@@ -738,7 +738,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() {
-    doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
+    EncodingManagerUtilKt.doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
@@ -920,12 +920,12 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Document document = ObjectUtils.notNull(getDocument(file));
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-    encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+    encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
     PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }
-      encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
     }).assertTiming();
   }
@@ -992,7 +992,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       }
 
       EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-      encodingManager.waitAllTasksExecuted(2, TimeUnit.SECONDS);
+      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
 
       Thread thread = assertOneElement(detectThreads);

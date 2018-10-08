@@ -254,10 +254,8 @@ public class PsiImplUtil {
       PsiElement next = varDecl.getNextSibling();
 
       // remove redundant semicolons
-      //noinspection ConstantConditions
       while (next != null && next.getNode() != null && next.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
         PsiElement tmpNext = next.getNextSibling();
-        //noinspection ConstantConditions
         next.delete();
         next = tmpNext;
       }
@@ -822,7 +820,6 @@ public class PsiImplUtil {
     if (lValue instanceof GrReferenceExpression) {
       GrReferenceExpression expression = (GrReferenceExpression)lValue;
       final PsiElement dot = expression.getDotToken();
-      //noinspection ConstantConditions
       if (dot != null && dot.getNode().getElementType() == GroovyTokenTypes.mSPREAD_DOT) {
         return true;
       }

@@ -15,89 +15,51 @@
  */
 package org.jetbrains.plugins.github.api.data;
 
-import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.Mandatory;
 import org.jetbrains.io.mandatory.RestModel;
-import org.jetbrains.plugins.github.api.GithubFullPath;
 
 import java.util.Date;
 
+//example/GithubRepo.json
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubRepo {
-  private Long id;
-  @Mandatory private String name;
-  private String fullName;
-  private String description;
-
-  @SerializedName("private")
-  @Mandatory private Boolean isPrivate;
-  @SerializedName("fork")
-  @Mandatory private Boolean isFork;
-
-  private String url;
-  @Mandatory private String htmlUrl;
-  @Mandatory private String cloneUrl;
-  private String gitUrl;
-  private String sshUrl;
-  private String svnUrl;
-  private String mirrorUrl;
-
-  private String homepage;
-  private String language;
-  private Integer size;
-
-  private Integer forks;
-  private Integer forksCount;
-  private Integer watchers;
-  private Integer watchersCount;
-  private Integer openIssues;
-  private Integer openIssuesCount;
-
-  private String masterBranch;
-  private String defaultBranch;
-
-  private Boolean hasIssues;
-  private Boolean hasWiki;
-  private Boolean hasDownloads;
-
-  @Mandatory private GithubUser owner;
-  private GithubUser organization;
-
-  private Date pushedAt;
+public class GithubRepo extends GithubRepoBasic {
   private Date createdAt;
   private Date updatedAt;
+  private Date pushedAt;
 
-  @NotNull
-  public String getName() {
-    return name;
-  }
+  //more urls
+  @Mandatory private String cloneUrl;
+  //more urls
 
-  @NotNull
-  public String getDescription() {
-    return StringUtil.notNullize(description);
-  }
+  private String homepage;
 
-  public boolean isPrivate() {
-    return isPrivate;
-  }
+  private Integer size;
 
-  public boolean isFork() {
-    return isFork;
-  }
+  private Integer stargazersCount;
+  private Integer watchersCount;
 
-  @NotNull
-  public String getHtmlUrl() {
-    return htmlUrl;
-  }
+  private String language;
 
-  @NotNull
-  public String getCloneUrl() {
-    return cloneUrl;
-  }
+  private Boolean hasIssues;
+  private Boolean hasProjects;
+  private Boolean hasWiki;
+  private Boolean hasPages;
+  private Boolean hasDownloads;
+
+  private Integer forksCount;
+
+  private String mirrorUrl;
+  private Boolean archived;
+
+  private Integer openIssuesCount;
+  //private ??? license;
+  private Integer forks;
+  private Integer openIssues;
+  private Integer watchers;
+  private String defaultBranch;
 
   @Nullable
   public String getDefaultBranch() {
@@ -105,24 +67,7 @@ public class GithubRepo {
   }
 
   @NotNull
-  public GithubUser getOwner() {
-    return owner;
+  public String getCloneUrl() {
+    return cloneUrl;
   }
-
-
-  @NotNull
-  public String getUserName() {
-    return getOwner().getLogin();
-  }
-
-  @NotNull
-  public String getFullName() {
-    return getUserName() + "/" + getName();
-  }
-
-  @NotNull
-  public GithubFullPath getFullPath() {
-    return new GithubFullPath(getUserName(), getName());
-  }
-
 }

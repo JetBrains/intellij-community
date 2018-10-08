@@ -33,7 +33,6 @@ import java.io.DataOutput
 
 private val indexId = ID.create<Int, PropertyIndexValue>("java.simple.property")
 private val log = Logger.getInstance(JavaSimplePropertyIndex::class.java)
-private val allowedExpressions = TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
 
 fun getFieldOfGetter(method: PsiMethodImpl): PsiField? = resolveFieldFromIndexValue(method, true)
 
@@ -64,6 +63,10 @@ private fun resolveFieldFromIndexValue(method: PsiMethodImpl, isGetter: Boolean)
 data class PropertyIndexValue(val propertyRefText: String, val getter: Boolean)
 
 class JavaSimplePropertyIndex : FileBasedIndexExtension<Int, PropertyIndexValue>(), PsiDependentIndex {
+  private val allowedExpressions by lazy {
+    TokenSet.create(ElementType.REFERENCE_EXPRESSION, ElementType.THIS_EXPRESSION, ElementType.SUPER_EXPRESSION)
+  } 
+  
   override fun getIndexer(): DataIndexer<Int, PropertyIndexValue, FileContent> = DataIndexer { inputData ->
     val result = ContainerUtil.newHashMap<Int, PropertyIndexValue>()
     val tree = (inputData as FileContentImpl).lighterASTForPsiDependentIndex

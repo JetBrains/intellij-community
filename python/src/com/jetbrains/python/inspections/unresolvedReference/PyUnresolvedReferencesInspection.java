@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.unresolvedReference;
 
 import com.google.common.collect.FluentIterable;
@@ -12,7 +12,6 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -353,7 +352,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (unresolved) {
         boolean ignoreUnresolved = false;
-        for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
           if (extension.ignoreUnresolvedReference(node, reference, myTypeEvalContext)) {
             ignoreUnresolved = true;
             break;
@@ -822,7 +821,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return PyTypeChecker.definesGetAttr(module, myTypeEvalContext);
         }
       }
-      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+      for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
         if (extension.ignoreUnresolvedMember(type, name, myTypeEvalContext)) {
           return true;
         }
@@ -839,7 +838,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
 
       for (final PyClassType typeToCheck : types) {
-        for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+        for (PyClassMembersProvider provider : PyClassMembersProvider.EP_NAME.getExtensionList()) {
           final Collection<PyCustomMember> resolveResult = provider.getMembers(typeToCheck, reference.getElement(), typeEvalContext);
           for (PyCustomMember member : resolveResult) {
             if (member.getName().equals(name)) return true;
@@ -1034,16 +1033,16 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {
-      for (PyUnresolvedReferenceQuickFixProvider provider : Extensions.getExtensions(PyUnresolvedReferenceQuickFixProvider.EP_NAME)) {
+      for (PyUnresolvedReferenceQuickFixProvider provider : PyUnresolvedReferenceQuickFixProvider.EP_NAME.getExtensionList()) {
         provider.registerQuickFixes(reference, localQuickFix -> actions.add(localQuickFix));
       }
     }
 
     public void highlightUnusedImports() {
-      final PyInspectionExtension[] extensions = Extensions.getExtensions(PyInspectionExtension.EP_NAME);
+      final List<PyInspectionExtension> extensions = PyInspectionExtension.EP_NAME.getExtensionList();
       final List<PsiElement> unused = collectUnusedImportElements();
       for (PsiElement element : unused) {
-        if (Arrays.stream(extensions).anyMatch(extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
+        if (extensions.stream().anyMatch(extension -> extension.ignoreUnused(element, myTypeEvalContext))) {
           continue;
         }
         if (element.getTextLength() > 0) {

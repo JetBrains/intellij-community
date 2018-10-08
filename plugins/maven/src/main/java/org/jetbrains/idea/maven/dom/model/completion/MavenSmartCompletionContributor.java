@@ -71,14 +71,12 @@ public class MavenSmartCompletionContributor extends CompletionContributor {
           }
         }
         else if (converter instanceof ResolvingConverter) {
-          //noinspection unchecked
           ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
           Collection variants = resolvingConverter.getVariants(reference.getConvertContext());
           addVariants(resolvingConverter, variants, result);
         }
       }
       else {
-        //noinspection unchecked
         Collections.addAll((Collection)result, each.getVariants());
       }
     }

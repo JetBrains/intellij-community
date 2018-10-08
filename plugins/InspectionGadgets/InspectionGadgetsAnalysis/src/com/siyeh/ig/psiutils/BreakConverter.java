@@ -23,13 +23,11 @@ public class BreakConverter {
     myReplacement = replacement;
   }
 
-  public void process(boolean removeRemovable) {
+  public void process() {
     List<PsiBreakStatement> breaks = collectBreaks();
     for (PsiBreakStatement breakStatement : breaks) {
       if (isRemovable(mySwitchStatement, breakStatement)) {
-        if (removeRemovable) {
-          DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(breakStatement);
-        }
+        DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(breakStatement);
       } else {
         assert myReplacement != null;
         new CommentTracker().replaceAndRestoreComments(breakStatement, myReplacement);
@@ -100,17 +98,19 @@ public class BreakConverter {
       return isRemovable(switchStatement, (PsiStatement)parent);
     }
     PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(statement, PsiStatement.class);
-    if (nextStatement != null) {
-      return nextStatement instanceof PsiBreakStatement &&
-             ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;
-    }
-    if (parent == null) return false;
-    if (parent instanceof PsiCodeBlock) {
-      PsiElement grandParent = parent.getParent();
-      if (grandParent instanceof PsiBlockStatement) {
-        return isRemovable(switchStatement, (PsiStatement)grandParent);
+    if (nextStatement == null) {
+      if (parent instanceof PsiCodeBlock) {
+        PsiElement grandParent = parent.getParent();
+        return grandParent == switchStatement ||
+               grandParent instanceof PsiBlockStatement && isRemovable(switchStatement, (PsiStatement)grandParent);
       }
-      return grandParent == switchStatement;
+    }
+    if (nextStatement instanceof PsiSwitchLabelStatement) {
+      return (((PsiSwitchLabelStatement)nextStatement).getEnclosingSwitchStatement() == switchStatement &&
+              !ControlFlowUtils.statementMayCompleteNormally(statement));
+    }
+    if (nextStatement instanceof PsiBreakStatement) {
+      return ((PsiBreakStatement)nextStatement).findExitedStatement() == switchStatement;
     }
     return false;
   }

@@ -1176,6 +1176,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return myAmendComponent.isAmend();
     }
 
+    @Nullable
+    public String getAuthor() {
+      String author = myAuthorField.getText();
+      if (StringUtil.isEmptyOrSpaces(author)) return null;
+      return GitCommitAuthorCorrector.correct(author);
+    }
+
     @NotNull
     private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
@@ -1283,12 +1290,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      String author = myAuthorField.getText();
-      if (StringUtil.isEmptyOrSpaces(author)) {
-        myNextCommitAuthor = null;
-      }
-      else {
-        myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
+      myNextCommitAuthor = getAuthor();
+      if (myNextCommitAuthor != null) {
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
       myNextCommitAmend = isAmend();

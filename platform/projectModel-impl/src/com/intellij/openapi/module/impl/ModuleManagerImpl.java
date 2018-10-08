@@ -14,6 +14,7 @@ import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.Project;
@@ -153,7 +154,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void loadState(@NotNull Element state) {
     Set<ModulePath> files = getPathsToModuleFiles(state);
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       files.addAll(externalModules);
     }
@@ -163,7 +164,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public void noStateLoaded() {
     // if there are only external modules, loadState will be not called
-    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getLoadedState();
+    Set<ModulePath> externalModules = myProject.getComponent(ExternalModuleListStorage.class).getExternalModules();
     if (externalModules != null) {
       loadState(new LinkedHashSet<>(externalModules));
     }

@@ -54,7 +54,7 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
       PsiUtil.setModifierProperty(myMethod, PsiModifier.STATIC, true);
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     final boolean needQualifier = match.getInstanceExpression() != null;
     final boolean needStaticQualifier = isExternal(match);
     final boolean nameConflicts = nameConflicts(match);

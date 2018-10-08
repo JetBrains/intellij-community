@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -241,7 +242,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
 
   @Contract("null -> null")
   @Nullable
-  static TerminalOperation getTerminal(List<OperationRecord> operations) {
+  static TerminalOperation getTerminal(List<? extends OperationRecord> operations) {
     if (operations == null || operations.isEmpty()) return null;
     OperationRecord record = operations.get(operations.size()-1);
     if(record.myOperation instanceof TerminalOperation) {
@@ -334,7 +335,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static PsiElement normalize(@NotNull Project project, PsiElement element) {
       element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(element);
-      RedundantCastUtil.getRedundantCastsInside(element).forEach(RedundantCastUtil::removeCast);
+      RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
       return element;
     }
 
@@ -554,7 +555,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static boolean canUseAsNonFinal(PsiVariable var) {
       if (!(var instanceof PsiLocalVariable)) return false;
       PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).forEach(ref -> {
+      return block != null && ReferencesSearch.search(var).allMatch(ref -> {
         PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
         return context == null || PsiTreeUtil.isAncestor(context, block, false);
       });

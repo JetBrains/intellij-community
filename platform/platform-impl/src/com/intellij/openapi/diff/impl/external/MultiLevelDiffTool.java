@@ -23,9 +23,9 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.MultiLevelDiffTool");
-  private final List<DiffTool> myTools;
+  private final List<? extends DiffTool> myTools;
 
-  public MultiLevelDiffTool(final List<DiffTool> tools) {
+  public MultiLevelDiffTool(final List<? extends DiffTool> tools) {
     myTools = tools;
   }
 

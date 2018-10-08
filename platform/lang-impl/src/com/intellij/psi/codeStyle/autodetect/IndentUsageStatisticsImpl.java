@@ -28,7 +28,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private static final Comparator<IndentUsageInfo> DECREASING_ORDER =
     (o1, o2) -> Integer.compare(o2.getTimesUsed(), o1.getTimesUsed());
 
-  private final List<LineIndentInfo> myLineInfos;
+  private final List<? extends LineIndentInfo> myLineInfos;
 
   private int myPreviousLineIndent;
   private int myPreviousRelativeIndent;
@@ -40,7 +40,7 @@ public class IndentUsageStatisticsImpl implements IndentUsageStatistics {
   private List<IndentUsageInfo> myIndentUsages = ContainerUtil.newArrayList();
   private final Stack<IndentData> myParentIndents = ContainerUtil.newStack(new IndentData(0, 0));
 
-  public IndentUsageStatisticsImpl(@NotNull List<LineIndentInfo> lineInfos) {
+  public IndentUsageStatisticsImpl(@NotNull List<? extends LineIndentInfo> lineInfos) {
     myLineInfos = lineInfos;
     buildIndentToUsagesMap();
     myIndentUsages = toIndentUsageList(myIndentToUsagesMap);

@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import java.util.*
 import kotlin.properties.Delegates
 
-class GithubPullRequestsListSelectionModel {
+internal class GithubPullRequestsListSelectionModel {
   var current: GithubSearchedIssue? by Delegates.observable<GithubSearchedIssue?>(null) { _, _, _ ->
     changeEventDispatcher.multicaster.selectionChanged()
   }

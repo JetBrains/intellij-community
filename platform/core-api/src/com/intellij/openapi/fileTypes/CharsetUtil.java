@@ -29,7 +29,6 @@ import java.util.Map;
  * @author peter
  */
 public class CharsetUtil {
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final Map<LanguageFileType, Boolean> ourSupportsCharsetDetection = ConcurrentFactoryMap.createMap(fileType-> {
       Class<?> ftClass = fileType.getClass();
       String methodName = "extractCharsetFromFileContent";

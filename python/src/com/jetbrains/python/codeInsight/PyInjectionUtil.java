@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
@@ -23,8 +22,6 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.fstrings.FStringParser;
-import com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import one.util.streamex.StreamEx;
@@ -32,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.*;
@@ -43,18 +39,14 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 public class PyInjectionUtil {
 
   public static class InjectionResult {
-    public static final InjectionResult EMPTY = new InjectionResult(false, true, Collections.emptyList());
+    public static final InjectionResult EMPTY = new InjectionResult(false, true);
 
     private final boolean myInjected;
     private final boolean myStrict;
-    private final List<PyStringLiteralExpression> myCollectedFStrings;
 
-    public InjectionResult(boolean injected, boolean strict) {this(injected, strict, Collections.emptyList());}
-
-    private InjectionResult(boolean injected, boolean strict, @NotNull List<PyStringLiteralExpression> nodes) {
+    public InjectionResult(boolean injected, boolean strict) {
       myInjected = injected;
       myStrict = strict;
-      myCollectedFStrings = nodes;
     }
 
     public boolean isInjected() {
@@ -66,9 +58,7 @@ public class PyInjectionUtil {
     }
 
     public InjectionResult append(@NotNull InjectionResult result) {
-      return new InjectionResult(myInjected || result.isInjected(),
-                                 myStrict && result.isStrict(),
-                                 ContainerUtil.concat(myCollectedFStrings, result.myCollectedFStrings));
+      return new InjectionResult(myInjected || result.isInjected(), myStrict && result.isStrict());
     }
   }
 
@@ -103,12 +93,6 @@ public class PyInjectionUtil {
     final InjectionResult result = processStringLiteral(element, registrar, "", "", Formatting.NONE);
     if (result.isInjected()) {
       registrar.doneInjecting();
-    }
-
-    // Only one injector can process the given element, thus we should additionally
-    // take care of f-string here instead of PyFStringsInjector
-    for (PyStringLiteralExpression literal: result.myCollectedFStrings) {
-      PyFStringsInjector.injectFStringFragments(registrar, literal);
     }
     return result;
   }
@@ -165,29 +149,23 @@ public class PyInjectionUtil {
       boolean injected = false;
       boolean strict = true;
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
-      boolean hasFormattedNodes = false;
-      for (ASTNode node : expr.getStringNodes()) {
-        final int nodeOffsetInParent = node.getStartOffset() - expr.getTextRange().getStartOffset();
-        final PyUtil.StringNodeInfo nodeInfo = new PyUtil.StringNodeInfo(node);
-        final TextRange contentRange = nodeInfo.getContentRange();
+      for (PyStringElement stringElem : expr.getStringElements()) {
+        final int nodeOffsetInParent = stringElem.getTextOffset() - expr.getTextRange().getStartOffset();
+        final TextRange contentRange = stringElem.getContentRange();
         final int contentStartOffset = contentRange.getStartOffset();
-        if (formatting != Formatting.NONE || nodeInfo.isFormatted()) {
-          // Each range is relative to the start of the string node
+        if (formatting != Formatting.NONE || stringElem.isFormatted()) {
+          // Each range is relative to the start of the string element
           final List<TextRange> subsRanges;
           if (formatting != Formatting.NONE) {
-            final String content = nodeInfo.getContent();
+            final String content = stringElem.getContent();
             subsRanges = StreamEx.of(formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(content) : parsePercentFormat(content))
                                  .select(SubstitutionChunk.class)
                                  .map(chunk -> chunk.getTextRange().shiftRight(contentStartOffset))
                                  .toList();
           }
           else {
-            hasFormattedNodes = true;
-            // f-string fragment parser handles string literal prefix and opening quotes itself
-            subsRanges = StreamEx.of(FStringParser.parse(node.getText()).getFragments())
-                                 .filter(f -> f.getDepth() == 1) // don't consider nested fragments like {foo:{bar}}
-                                 .map(f -> TextRange.create(f.getLeftBraceOffset(),
-                                                            Math.max(f.getRightBraceOffset() + 1, f.getContentEndOffset())))
+            subsRanges = StreamEx.of(((PyFormattedStringElement)stringElem).getFragments())
+                                 .map(f -> f.getTextRange().shiftLeft(stringElem.getTextOffset()))
                                  .toList();
           }
           if (!subsRanges.isEmpty()) {
@@ -238,7 +216,7 @@ public class PyInjectionUtil {
           injected = true;
         }
       }
-      return new InjectionResult(injected, strict, hasFormattedNodes ? Collections.singletonList(expr) : Collections.emptyList());
+      return new InjectionResult(injected, strict);
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();

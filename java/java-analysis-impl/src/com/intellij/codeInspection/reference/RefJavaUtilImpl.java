@@ -85,6 +85,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        @Override
+                       public boolean visitVariable(@NotNull UVariable node) {
+                         visitTypeRefs(node.getType());
+                         return false;
+                       }
+
+                       @Override
                        public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
                          final PsiElement target = node.resolve();
 
@@ -191,6 +197,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                        }
 
                        private void visitReferenceExpression(UExpression node) {
+                         UElement uastParent = node.getUastParent();
+                         if (uastParent instanceof UQualifiedReferenceExpression && ((UQualifiedReferenceExpression)uastParent).getSelector() == node) {
+                           return;
+                         }
                          PsiElement psiResolved = null;
                          if (node instanceof UResolvable) {
                            psiResolved = ((UResolvable)node).resolve();
@@ -290,7 +300,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                                           final UDeclaration from,
                                                           boolean defaultConstructorOnly) {
                          if (psiClass != null) {
-                           RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(psiClass.getNavigationElement());
+                           RefClassImpl refClass = ObjectUtils.tryCast(refFrom.getRefManager().getReference(psiClass.getNavigationElement()), RefClassImpl.class);
 
                            if (refClass != null) {
                              boolean hasConstructorsMarked = false;
@@ -418,7 +428,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
           if (containingClass != null) {
             fqName = containingClass.getQualifiedName();
             if (fqName != null) {
-              final PsiClassType methodOwnerType = JavaPsiFacade.getInstance(psiResolved.getProject()).getElementFactory()
+              final PsiClassType methodOwnerType = JavaPsiFacade.getElementFactory(psiResolved.getProject())
                 .createTypeByFQClassName(fqName, GlobalSearchScope.allScope(psiResolved.getProject()));
               if (!usedType.equals(methodOwnerType)) {
                 refMethod.setCalledOnSubClass(true);

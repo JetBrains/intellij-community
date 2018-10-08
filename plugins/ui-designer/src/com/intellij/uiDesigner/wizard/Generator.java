@@ -556,7 +556,6 @@ public final class Generator {
     methodsBuffer.append(";}\n");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private static String suggestGetterName(final String propertyName, final String propertyType) {
     return PropertyUtilBase.suggestGetterName(propertyName, "boolean".equals(propertyType) ? PsiType.BOOLEAN : null);
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -24,7 +22,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -453,7 +450,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
 
     final Set<FileType> types = new HashSet<>();
-    for (BackendCompiler compiler : Extensions.getExtensions(BackendCompiler.EP_NAME, myProject)) {
+    for (BackendCompiler compiler : BackendCompiler.EP_NAME.getExtensions(myProject)) {
       myRegisteredCompilers.add(compiler);
       types.addAll(compiler.getCompilableFileTypes());
     }

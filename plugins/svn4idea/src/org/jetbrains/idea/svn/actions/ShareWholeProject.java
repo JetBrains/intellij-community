@@ -76,7 +76,7 @@ public class ShareWholeProject extends AnAction implements DumbAware {
       myEnabled = (!vcsManager.isBackgroundVcsOperationRunning());
     }
 
-    private static enum MyCheckResult {
+    private enum MyCheckResult {
       disable,
       notMapped,
       rootToSvn

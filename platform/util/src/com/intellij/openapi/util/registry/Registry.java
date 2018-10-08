@@ -15,6 +15,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+/**
+ * Provides a UI to configure internal settings of the IDE. Plugins can provide their own registry keys using the
+ * {@code <registryKey>} extension point (see com.intellij.openapi.util.registry.RegistryKeyBean for more details).
+ */
 public class Registry  {
   private static Reference<ResourceBundle> ourBundle;
 

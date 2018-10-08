@@ -4,7 +4,6 @@ package com.intellij.usages;
 import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
@@ -16,7 +15,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -341,7 +339,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     VirtualFile sourcesRoot = fileIndex.getSourceRootForFile(virtualFile);
     if (sourcesRoot != null) {
       List<SyntheticLibrary> list = new ArrayList<>();
-      for (AdditionalLibraryRootsProvider e : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
           if (library.getSourceRoots().contains(sourcesRoot)) {
             Condition<VirtualFile> excludeFileCondition = library.getExcludeFileCondition();
@@ -481,15 +479,13 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
 
   @NotNull
   private static String clsType(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(psiElement.getLanguage());
-    String type = provider.getType(psiElement);
+    String type = LanguageFindUsages.getType(psiElement);
     if (!type.isEmpty()) return type;
     return ObjectUtils.notNull(TypePresentationService.getService().getTypePresentableName(psiElement.getClass()), "");
   }
   @NotNull
   private static String clsName(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(psiElement.getLanguage());
-    String name = provider.getNodeText(psiElement, false);
+    String name = LanguageFindUsages.getNodeText(psiElement, false);
     if (!name.isEmpty()) return name;
     return ObjectUtils.notNull(psiElement instanceof PsiNamedElement ? ((PsiNamedElement)psiElement).getName() : null, "");
   }

@@ -1,10 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalModuleBuildClasspathPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectBuildClasspathPojo;
@@ -88,7 +85,7 @@ public class GradleBuildClasspathManager {
       set.addAll(virtualFiles);
     }
     allFilesCache = ContainerUtil.newArrayList(set);
-    for (PsiElementFinder finder : Extensions.getExtensions(PsiElementFinder.EP_NAME, myProject)) {
+    for (PsiElementFinder finder : PsiElementFinder.EP_NAME.getExtensions(myProject)) {
       if (finder instanceof GradleClassFinder) {
         ((GradleClassFinder)finder).clearCache();
         break;

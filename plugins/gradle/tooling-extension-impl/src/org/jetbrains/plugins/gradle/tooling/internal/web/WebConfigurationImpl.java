@@ -27,9 +27,9 @@ import java.util.List;
 public class WebConfigurationImpl implements WebConfiguration {
 
   @NotNull
-  private final List<WarModel> myWarModels;
+  private final List<? extends WarModel> myWarModels;
 
-  public WebConfigurationImpl(@NotNull List<WarModel> warModels) {
+  public WebConfigurationImpl(@NotNull List<? extends WarModel> warModels) {
     myWarModels = warModels;
   }
 

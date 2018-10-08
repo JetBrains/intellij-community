@@ -176,11 +176,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
     return (List)range;
   }
 
-  private static <T extends Inlay> List<T> getElementsInRange(@NotNull IntervalTreeImpl<T> tree,
-                                                int startOffset,
-                                                int endOffset,
-                                                Predicate<T> predicate,
-                                                Comparator<? super T> comparator) {
+  private static <T extends Inlay> List<T> getElementsInRange(@NotNull IntervalTreeImpl<? extends T> tree,
+                                                              int startOffset,
+                                                              int endOffset,
+                                                              Predicate<? super T> predicate,
+                                                              Comparator<? super T> comparator) {
     List<T> result = new ArrayList<>();
     tree.processOverlappingWith(startOffset, endOffset, inlay -> {
       if (predicate.test(inlay)) result.add(inlay);

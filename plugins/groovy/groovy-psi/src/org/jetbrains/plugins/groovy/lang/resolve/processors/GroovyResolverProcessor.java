@@ -29,17 +29,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
-public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint {
+public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
   protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
@@ -82,7 +85,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
     final Lazy<PsiType> receiverType = LazyKt.lazy(() -> getTopLevelQualifierType());
     if (myIsLValue) {
-      return Collections.singletonList(
+      return singletonList(
         new PropertyProcessor(receiverType, myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
       );
     }
@@ -104,16 +107,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   public boolean isPropertyResolve() {
     return myAcceptableKinds.contains(GroovyResolveKind.PROPERTY);
-  }
-
-  public static List<PsiScopeProcessor> allProcessors(PsiScopeProcessor processor) {
-    if (processor instanceof GroovyResolverProcessor && !((GroovyResolverProcessor)processor).myStopExecutingMethods) {
-      List<GrResolverProcessor<? extends GroovyResolveResult>> accessors = ((GroovyResolverProcessor)processor).myAccessorProcessors;
-      if (!accessors.isEmpty()) {
-        return ContainerUtil.concat(Collections.singletonList(processor), accessors);
-      }
-    }
-    return Collections.singletonList(processor);
   }
 
   @Override
@@ -208,6 +201,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
+  @Override
+  public Collection<? extends PsiScopeProcessor> getProcessors() {
+    return myStopExecutingMethods ? singletonList(this)
+                                  : concat(singletonList(this), myAccessorProcessors);
+  }
+  
+  @NotNull
   public abstract List<GroovyResolveResult> getCandidates();
 
   public final GroovyResolveResult[] getCandidatesArray() {
@@ -227,9 +227,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
     if (element instanceof PsiMethod) {
       return GroovyResolveKind.METHOD;
-    }
-    else if (element instanceof PsiEnumConstant) {
-      return GroovyResolveKind.ENUM_CONST;
     }
     else if (element instanceof PsiField) {
       return GroovyResolveKind.FIELD;

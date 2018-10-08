@@ -29,7 +29,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @noinspection CallToPrintStackTrace,UseOfSystemOutOrSystemErr,IOResourceOpenedButNotSafelyClosed,SocketOpenedButNotSafelyClosed,UseOfArchaicSystemPropertyAccessors */
+/** @noinspection CallToPrintStackTrace, UseOfSystemOutOrSystemErr, IOResourceOpenedButNotSafelyClosed, SocketOpenedButNotSafelyClosed */
 public class XSLTRunner implements XSLTMain {
 
     private XSLTRunner() {
@@ -267,8 +267,7 @@ public class XSLTRunner implements XSLTMain {
                     }
 
                     public String getPublicId() {
-                        //noinspection ConstantConditions
-                        return null;
+                      return null;
                     }
 
                     public String getSystemId() {

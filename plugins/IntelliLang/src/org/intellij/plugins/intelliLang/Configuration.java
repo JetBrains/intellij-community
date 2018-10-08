@@ -24,7 +24,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -262,7 +261,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new THashSet<>();
-    for (LanguageInjectionConfigBean configBean : Extensions.getExtensions(LanguageInjectionSupport.CONFIG_EP_NAME)) {
+    for (LanguageInjectionConfigBean configBean : LanguageInjectionSupport.CONFIG_EP_NAME.getExtensionList()) {
       PluginDescriptor descriptor = configBean.getPluginDescriptor();
       final ClassLoader loader = descriptor.getPluginClassLoader();
       try {
@@ -358,7 +357,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
     else {
       elements.add(rootElement);
-      //noinspection unchecked
       elements.addAll(rootElement.getChildren("component"));
       state = ContainerUtil.find(elements, element -> "component".equals(element.getName()) && COMPONENT_NAME.equals(element.getAttributeValue("name")));
     }
@@ -728,7 +726,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
 
       if (myDfaOption != DfaOption.RESOLVE) {
-        //noinspection EnumSwitchStatementWhichMissesCases
         switch (myDfaOption) {
           case OFF:
             break;

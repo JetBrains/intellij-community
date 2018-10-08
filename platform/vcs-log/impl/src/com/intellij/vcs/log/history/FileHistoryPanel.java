@@ -27,6 +27,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -105,10 +107,22 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     add(createActionsToolbar(), BorderLayout.WEST);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
-    EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION)).
-      registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, tableWithProgress);
+    invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
     Disposer.register(myUi, this);
+  }
+
+  private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
+    new EmptyAction.MyDelegatingAction(action) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (e.getInputEvent() instanceof MouseEvent && myGraphTable.isResizingColumns()) {
+          // disable action during columns resize
+          return;
+        }
+        super.actionPerformed(e);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
   @NotNull
@@ -138,6 +152,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Override
   public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      Change change = myUi.getSelectedChange();
+      if (change != null) {
+        return new Change[]{change};
+      }
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)), Change.class);
@@ -146,12 +164,12 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return myUi.getProperties();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty()) return null;
       return myUi.createRevision(getFirstItem(details));
     }
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, myUi::createRevision), VcsFileRevision.class);
     }
@@ -159,9 +177,9 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return myFilePath;
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty()) return null;
-      VcsFullCommitDetails detail = notNull(getFirstItem(details));
+      VcsCommitMetadata detail = notNull(getFirstItem(details));
       Object revision = FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
       if (revision != null) return revision;
     }

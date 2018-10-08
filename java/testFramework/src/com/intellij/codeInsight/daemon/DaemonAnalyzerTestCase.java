@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeHighlighting.Pass;
@@ -40,7 +26,6 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -105,11 +90,11 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
       LanguageAnnotators.INSTANCE.allForLanguage(JavaLanguage.INSTANCE); // pile of annotator classes loads
       LanguageAnnotators.INSTANCE.allForLanguage(StdLanguages.XML);
       ProblemHighlightFilter.EP_NAME.getExtensions();
-      Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-      Extensions.getExtensions(XmlSchemaProvider.EP_NAME);
-      Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
-      Extensions.getExtensions(ExternalAnnotatorsFilter.EXTENSION_POINT_NAME);
-      Extensions.getExtensions(IndexPatternBuilder.EP_NAME);
+      ImplicitUsageProvider.EP_NAME.getExtensionList();
+      XmlSchemaProvider.EP_NAME.getExtensionList();
+      XmlFileNSInfoProvider.EP_NAME.getExtensionList();
+      ExternalAnnotatorsFilter.EXTENSION_POINT_NAME.getExtensionList();
+      IndexPatternBuilder.EP_NAME.getExtensionList();
     }
   }
 
@@ -191,7 +176,6 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   }
 
   @NotNull
-  @SuppressWarnings("TestMethodWithIncorrectSignature")
   protected HighlightTestInfo testFile(@NonNls @NotNull String... filePath) {
     return new HighlightTestInfo(getTestRootDisposable(), filePath) {
       @Override

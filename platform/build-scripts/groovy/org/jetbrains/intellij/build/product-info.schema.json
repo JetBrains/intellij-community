@@ -25,6 +25,10 @@
       "description": "Product code (e.g. 'IC' for IntelliJ IDEA Community Edition) as used in full build number",
       "type": "string"
     },
+    "svgIconPath": {
+      "description": "Path to an svg file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
+      "type": "string"
+    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",

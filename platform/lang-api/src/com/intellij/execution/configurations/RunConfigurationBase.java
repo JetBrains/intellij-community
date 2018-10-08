@@ -135,11 +135,10 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
     result.doCopyOptionsFrom(this);
     return result;
   }
-  
+
   void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
     myOptions.copyFrom(template.myOptions);
     myOptions.resetModificationCount();
-    template.copyCopyableDataTo(this);
     myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
@@ -198,7 +197,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
 
   public void customizeLogConsole(LogConsole console) {
   }
-  
+
   @Nullable
   public T getState() {
     //noinspection unchecked
@@ -226,8 +225,8 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   }
 
   @ApiStatus.Experimental
-  public void setState(@NotNull BaseState state) {
-    myOptions = (RunConfigurationOptions)state;
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    myOptions.copyFrom(state, /* isMustBeTheSameType= */false);
   }
 
   // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
@@ -305,7 +304,7 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   public boolean excludeCompileBeforeLaunchOption() {
     return false;
   }
-  
+
   @Override
   public String toString() {
     return getType().getDisplayName() + ": " + getName();

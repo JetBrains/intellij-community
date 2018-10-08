@@ -153,6 +153,10 @@ public class ListPluginComponent extends CellPluginComponent {
     fullRepaint();
   }
 
+  public void clearProgress() {
+    myIndicator = null;
+  }
+
   @NotNull
   private static AbstractLayoutManager createCheckboxIconLayout() {
     return new AbstractLayoutManager() {
@@ -336,7 +340,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -350,7 +354,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     group.addSeparator();
-    group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
+    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         for (CellPluginComponent component : selection) {
@@ -404,7 +408,7 @@ public class ListPluginComponent extends CellPluginComponent {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+      else if (keyCode == EventHandler.DELETE_CODE) {
         for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
@@ -465,9 +469,16 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   private abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nullable String text, int keyCode) {
+    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0)));
+      ShortcutSet shortcutSet = null;
+      if (actionId != null) {
+        shortcutSet = EventHandler.getShortcuts(actionId);
+      }
+      if (shortcutSet == null) {
+        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
+      }
+      setShortcutSet(shortcutSet);
     }
   }
 }

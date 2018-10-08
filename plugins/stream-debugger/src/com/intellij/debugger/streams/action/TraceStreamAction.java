@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -78,7 +77,7 @@ public class TraceStreamAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
-    Extensions.getExtensions(LibrarySupportProvider.EP_NAME);
+    LibrarySupportProvider.EP_NAME.getExtensionList();
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
 
     if (element != null) {

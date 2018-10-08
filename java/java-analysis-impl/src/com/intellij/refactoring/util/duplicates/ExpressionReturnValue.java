@@ -46,7 +46,7 @@ public class ExpressionReturnValue implements ReturnValue {
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType)
     throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodCallExpression.getProject());
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());
     PsiExpressionStatement expressionStatement;
     expressionStatement = (PsiExpressionStatement)elementFactory.createStatementFromText("x = y();", null);

@@ -38,13 +38,14 @@ class RetypeFileAction : AnAction() {
     else {
       val retypeOptionsDialog = RetypeOptionsDialog(project, editor)
       if (!retypeOptionsDialog.showAndGet()) return
+      val scriptBuilder = if (retypeOptionsDialog.recordScript) StringBuilder() else null
       if (retypeOptionsDialog.isRetypeCurrentFile) {
-        val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay)
+        val session = RetypeSession(project, editor!!, retypeOptionsDialog.retypeDelay, scriptBuilder, retypeOptionsDialog.threadDumpDelay)
         session.start()
       }
       else {
         latencyMap.clear()
-        val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay)
+        val queue = RetypeQueue(project, retypeOptionsDialog.retypeDelay, retypeOptionsDialog.threadDumpDelay, scriptBuilder)
         if (!collectSizeSampledFiles(project,
                                      retypeOptionsDialog.retypeExtension.removePrefix("."),
                                      retypeOptionsDialog.fileCount,
@@ -104,7 +105,10 @@ interface RetypeFileAssistant {
   }
 }
 
-private class RetypeQueue(private val project: Project, private val retypeDelay: Int, private val threadDumpDelay: Int) {
+private class RetypeQueue(private val project: Project,
+                          private val retypeDelay: Int,
+                          private val threadDumpDelay: Int,
+                          private val scriptBuilder: StringBuilder?) {
   val files = mutableListOf<VirtualFile>()
   private val threadDumps = mutableListOf<String>()
 
@@ -115,7 +119,7 @@ private class RetypeQueue(private val project: Project, private val retypeDelay:
 
     val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, 0), true) as EditorImpl
     selectFragmentToRetype(editor)
-    val retypeSession = RetypeSession(project, editor, retypeDelay, threadDumpDelay, threadDumps)
+    val retypeSession = RetypeSession(project, editor, retypeDelay, scriptBuilder, threadDumpDelay, threadDumps)
     if (files.isNotEmpty()) {
       retypeSession.startNextCallback = {
         ApplicationManager.getApplication().invokeLater { processNext() }

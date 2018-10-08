@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -433,7 +432,7 @@ public class ResolveImportUtil {
       if (target != null) {
         int rate = RatedResolveResult.RATE_HIGH;
         if (target instanceof PyFile) {
-          for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+          for (PyResolveResultRater rater : PyResolveResultRater.EP_NAME.getExtensionList()) {
             rate += rater.getImportElementRate(target);
           }
         }
@@ -459,7 +458,7 @@ public class ResolveImportUtil {
 
       if (element != null) {
         int delta = 0;
-        for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+        for (PyResolveResultRater rater : PyResolveResultRater.EP_NAME.getExtensionList()) {
           delta += rater.getImportElementRate(element);
         }
 

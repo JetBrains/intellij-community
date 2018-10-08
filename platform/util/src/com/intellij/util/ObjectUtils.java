@@ -111,7 +111,7 @@ public class ObjectUtils {
   }
 
   @NotNull
-  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<T> defaultValue) {
+  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<? extends T> defaultValue) {
     return value == null ? defaultValue.create() : value;
   }
 
@@ -125,7 +125,7 @@ public class ObjectUtils {
   }
 
   @Nullable
-  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<T, S> convertor) {
+  public static <T, S> S doIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Convertor<? super T, ? extends S> convertor) {
     if (clazz.isInstance(obj)) {
       //noinspection unchecked
       return convertor.convert((T)obj);
@@ -140,7 +140,7 @@ public class ObjectUtils {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
+  public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<? super T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
   }
 

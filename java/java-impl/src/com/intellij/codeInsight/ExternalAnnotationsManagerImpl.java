@@ -771,7 +771,6 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     @Override
     @NotNull
-    @SuppressWarnings("NonStaticInitializer")
     protected Action[] createActions() {
       final Action okAction = getOKAction();
       assignMnemonic(ADD_IN_CODE, okAction);

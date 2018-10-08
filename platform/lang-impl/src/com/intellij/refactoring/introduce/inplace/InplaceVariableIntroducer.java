@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduce.inplace;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -27,7 +13,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -48,7 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class InplaceVariableIntroducer<E extends PsiElement> extends InplaceRefactoring {
- 
+
 
   protected E myExpr;
   protected RangeMarker myExprMarker;
@@ -56,7 +41,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   protected E[] myOccurrences;
   protected List<RangeMarker> myOccurrenceMarkers;
 
- 
+
 
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
@@ -99,7 +84,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     return null;
   }
 
-  
+
   public void setOccurrenceMarkers(List<RangeMarker> occurrenceMarkers) {
     myOccurrenceMarkers = occurrenceMarkers;
   }
@@ -168,7 +153,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     }
   }
 
- 
+
 
   @Override
   protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
@@ -208,7 +193,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           if (!text.isEmpty() && !Comparing.strEqual(text, name)) {
             final LinkedHashSet<String> names = new LinkedHashSet<>();
             names.add(text);
-            for (NameSuggestionProvider provider : Extensions.getExtensions(NameSuggestionProvider.EP_NAME)) {
+            for (NameSuggestionProvider provider : NameSuggestionProvider.EP_NAME.getExtensionList()) {
               final SuggestedNameInfo suggestedNameInfo = provider.getSuggestedNames(psiVariable, psiVariable, names);
               if (suggestedNameInfo != null &&
                   provider instanceof PreferrableNameSuggestionProvider &&

@@ -73,6 +73,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement semicolonElement = descriptor.getPsiElement();
+      if (semicolonElement instanceof PsiFile) return;
       final PsiElement parent = semicolonElement.getParent();
       if (parent instanceof PsiEmptyStatement) {
         final PsiElement lastChild = parent.getLastChild();

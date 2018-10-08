@@ -86,6 +86,23 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     fill(pattern, consumer);
   }
 
+  @NotNull
+  @Override
+  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
+    List<SearchEverywhereCommandInfo> res = new ArrayList<>();
+    final HashSet<String> found = new HashSet<>();
+    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
+      if (provider instanceof OptionsTopHitProvider) {
+        final String providerId = ((OptionsTopHitProvider)provider).getId();
+        if (!found.contains(providerId)) {
+          found.add(providerId);
+          res.add(new SearchEverywhereCommandInfo(providerId, "", this));
+        }
+      }
+    }
+    return res;
+  }
+
   @Override
   public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     return null;
@@ -118,18 +135,19 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     return new TopHitRenderer(myProject);
   }
 
-  private boolean fill(String pattern, Function<Object, Boolean> consumer) {
+  private void fill(String pattern, Function<Object, Boolean> consumer) {
     if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
-      return fillOptionProviders(pattern, consumer);
-    } else {
-      if (fillActions(pattern, consumer)) {
-        return true;
-      }
-      return fillFromExtensions(pattern, consumer);
+      return;
     }
+
+    if (fillActions(pattern, consumer)) {
+      return;
+    }
+
+    fillFromExtensions(pattern, consumer);
   }
 
-  private boolean fillFromExtensions(String pattern, Function<Object, Boolean> consumer) {
+  private void fillFromExtensions(String pattern, Function<Object, Boolean> consumer) {
     for (SearchTopHitProvider provider : myTopHitProviders) {
       if (provider instanceof OptionsTopHitProvider && !((OptionsTopHitProvider)provider).isEnabled(myProject)) {
         continue;
@@ -137,11 +155,9 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
       boolean[] interrupted = {false};
       provider.consumeTopHits(pattern, o -> interrupted[0] = consumer.apply(o), myProject);
       if (interrupted[0]) {
-        return true;
+        return;
       }
     }
-
-    return false;
   }
 
   private boolean fillActions(String pattern, Function<Object, Boolean> consumer) {
@@ -149,30 +165,12 @@ public class TopHitSEContributor implements SearchEverywhereContributor<Void> {
     List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
     for (String actionId : actions) {
       AnAction action = actionManager.getAction(actionId);
-      if (!isEnabled(action)) {
+      if (action == null || !isEnabled(action)) {
         continue;
       }
 
       if (!consumer.apply(action)) {
         return true;
-      }
-    }
-
-    return false;
-  }
-
-  private boolean fillOptionProviders(String pattern, Function<Object, Boolean> consumer) {
-    String id = pattern.substring(1);
-    final HashSet<String> ids = new HashSet<>();
-    for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-      if (provider instanceof OptionsTopHitProvider) {
-        final String providerId = ((OptionsTopHitProvider)provider).getId();
-        if (!ids.contains(providerId) && StringUtil.startsWithIgnoreCase(providerId, id)) {
-          if (!consumer.apply(provider)) {
-            return true;
-          }
-          ids.add(providerId);
-        }
       }
     }
 

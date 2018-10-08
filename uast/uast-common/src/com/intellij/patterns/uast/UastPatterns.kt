@@ -52,17 +52,44 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
 
   fun callParameter(parameterIndex: Int, callPattern: ElementPattern<UCallExpression>): Self =
-    filter {
-      val call = it.uastParent.getUCallExpression() as? UCallExpressionEx ?: return@filter false
-      call.getArgumentForParameter(parameterIndex) == it && callPattern.accepts(call)
-    }
+    filter { isCallExpressionParameter(it, parameterIndex, callPattern) }
 
   fun constructorParameter(parameterIndex: Int, classFQN: String): Self = callParameter(parameterIndex, callExpression().constructor(classFQN))
+
+  fun setterParameter(methodPattern: ElementPattern<out PsiMethod>): Self = filter {
+    isPropertyAssignCall(it, methodPattern) ||
+    isCallExpressionParameter(it, 0, callExpression().withAnyResolvedMethod(methodPattern))
+  }
 
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
     callParameter(parameterIndex, callExpression().withAnyResolvedMethod(methodPattern))
 
+  fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
+    val aae: UArrayAccessExpression = self.uastParent as? UArrayAccessExpression ?: return@filter false
+    val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
+    receiverClassPattern.accepts(receiverClass)
+  }
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
+}
+
+private fun isCallExpressionParameter(argumentExpression: UElement,
+                                      parameterIndex: Int,
+                                      callPattern: ElementPattern<UCallExpression>): Boolean {
+  val call = argumentExpression.uastParent.getUCallExpression() as? UCallExpressionEx ?: return false
+  return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
+}
+
+private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
+  val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
+  val leftOperand = uBinaryExpression.leftOperand
+
+  val uastReference = when (leftOperand) {
+    is UQualifiedReferenceExpression -> leftOperand.selector
+    else -> leftOperand
+  }
+  val references = uastReference.sourcePsi?.references ?: return false // via `sourcePsi` because of KT-27385
+  return references.any { methodPattern.accepts(it.resolve()) }
 }
 
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {

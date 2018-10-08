@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -100,7 +99,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
       return true;
     });
 
-    ReferenceImporter[] importers = Extensions.getExtensions(ReferenceImporter.EP_NAME);
+    List<ReferenceImporter> importers = ReferenceImporter.EP_NAME.getExtensionList();
     for (HighlightInfo info : infos) {
       for(ReferenceImporter importer: importers) {
         if (importer.autoImportReferenceAt(myEditor, myFile, info.getActualStartOffset())) break;

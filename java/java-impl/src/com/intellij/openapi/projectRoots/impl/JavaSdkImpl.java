@@ -215,6 +215,7 @@ public class JavaSdkImpl extends JavaSdk {
     return JdkUtil.checkForJdk(path);
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return suggestJavaSdkName(this, currentSdkName, sdkHome);

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -23,31 +24,48 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import static com.intellij.codeInspection.util.OptionalUtil.*;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_OPTIONAL;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
 public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
   private static final CallMatcher OPTIONAL_GET =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "get").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1);
   private static final CallMatcher OPTIONAL_MAP =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_NULLABLE =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
+    CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "ofNullable").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF_OF_NULLABLE =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "ofNullable", "of").parameterCount(1);
+    CallMatcher.staticCall(JAVA_UTIL_OPTIONAL, "ofNullable", "of").parameterCount(1);
+  private static final CallMatcher OPTIONAL_IS_PRESENT =
+    CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_INT, "isPresent").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_LONG, "isPresent").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isPresent").parameterCount(0)
+    );
+  private static final CallMatcher OPTIONAL_IS_EMPTY =
+    CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_INT, "isEmpty").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_LONG, "isEmpty").parameterCount(0),
+      CallMatcher.exactInstanceCall(OPTIONAL_DOUBLE, "isEmpty").parameterCount(0)
+    );
 
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    LanguageLevel level = PsiUtil.getLanguageLevel(holder.getFile());
+    if (level.isLessThan(LanguageLevel.JDK_1_8)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    return new OptionalChainVisitor() {
+    return new OptionalChainVisitor(level) {
       @Override
       protected void handleSimplification(@NotNull PsiElement element,
                                           @NotNull OptionalChainSimplification simplification) {
@@ -57,12 +75,19 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
   }
 
   private static abstract class OptionalChainVisitor extends JavaElementVisitor {
+    private final LanguageLevel myLevel;
+
+    private OptionalChainVisitor(LanguageLevel level) {
+      myLevel = level;
+    }
+
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression call) {
       if (OPTIONAL_GET.test(call)) {
         handleRewrapping(call, OPTIONAL_OF_OF_NULLABLE);
         return;
       }
+      handleInvertedPresentOrEmpty(call);
       PsiExpression falseArg = null;
       boolean useOrElseGet = false;
       if (OPTIONAL_OR_ELSE.test(call)) {
@@ -81,6 +106,19 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       }
       handleOrElseNullConditionalReturn(call, falseArg);
       handleOrElseNullConditionalAction(call, falseArg);
+    }
+
+    private void handleInvertedPresentOrEmpty(PsiMethodCallExpression call) {
+      if (myLevel.isLessThan(LanguageLevel.JDK_11)) return;
+      if (!BoolUtils.isNegated(call)) return;
+      PsiElement nameElement = call.getMethodExpression().getReferenceNameElement();
+      if (nameElement == null) return;
+      if (OPTIONAL_IS_EMPTY.test(call)) {
+        handleSimplification(nameElement, new FlipEmptyPresentFix("isPresent"));
+      }
+      else if (OPTIONAL_IS_PRESENT.test(call)) {
+        handleSimplification(nameElement, new FlipEmptyPresentFix("isEmpty"));
+      }
     }
 
     private void handleRewrapping(PsiMethodCallExpression call, CallMatcher wrapper) {
@@ -466,13 +504,11 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         if (nextStatement == null) return null;
         PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
         if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
-        if(!ReferencesSearch.search(returnVar).forEach(reference ->
+        if(!ReferencesSearch.search(returnVar).allMatch(reference ->
                                                      PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
                                                      PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) return null;
         return new Context(lambdaExpr, nextStatement, statement, returnVar, orElseCall);
       }
-
-
     }
 
 
@@ -497,6 +533,35 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
   }
 
+  private static class FlipEmptyPresentFix implements OptionalChainSimplification {
+    private final String myReplacement;
+
+    private FlipEmptyPresentFix(String replacement) {
+      myReplacement = replacement;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement + "()");
+    }
+
+    @NotNull
+    @Override
+    public String getDescription() {
+      return "'" + myReplacement + "()' can be used instead";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull PsiElement element) {
+      PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if (call == null) return;
+      PsiPrefixExpression negation = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiPrefixExpression.class);
+      if (negation == null || BoolUtils.getNegated(negation) != call) return;
+      ExpressionUtils.bindCallTo(call, myReplacement);
+      new CommentTracker().replaceAndRestoreComments(negation, call);
+    }
+  }
 
   private static class SimplifyOptionalChainFix implements OptionalChainSimplification {
     private final String myReplacement;

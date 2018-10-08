@@ -136,7 +136,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     invokeOnScope(project, Collections.singleton(member), scope, false);
   }
 
-  public static void invokeOnScope(final Project project, final Set<PsiMember> members, final AnalysisScope scope, boolean silent) {
+  public static void invokeOnScope(final Project project, final Set<? extends PsiMember> members, final AnalysisScope scope, boolean silent) {
     final Map<PsiMember, List<Match>> duplicates = new HashMap<>();
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
@@ -214,7 +214,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     }
   }
 
-  public static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<PsiMember> methods) {
+  public static void replaceDuplicate(final Project project, final Map<PsiMember, List<Match>> duplicates, final Set<? extends PsiMember> methods) {
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (progressIndicator != null && progressIndicator.isCanceled()) return;
 

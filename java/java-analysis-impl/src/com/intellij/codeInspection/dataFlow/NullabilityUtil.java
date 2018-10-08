@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -91,7 +90,7 @@ public class NullabilityUtil {
   }
 
   private static boolean isImplicitlyInitializedNotNull(PsiField field) {
-    return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
+    return ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isImplicitlyNotNullInitialized(field));
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
@@ -100,8 +99,7 @@ public class NullabilityUtil {
 
     if (!isCheapEnoughToSearch(field, name)) return false;
 
-    return ReferencesSearch
-      .search(field).forEach(
+    return ReferencesSearch.search(field).allMatch(
         reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
   }
 

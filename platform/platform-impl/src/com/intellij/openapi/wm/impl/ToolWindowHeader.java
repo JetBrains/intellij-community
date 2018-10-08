@@ -36,7 +36,7 @@ import java.awt.image.BufferedImage;
  * @author pegov
  */
 public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
-  @NotNull private final Producer<ActionGroup> myGearProducer;
+  @NotNull private final Producer<? extends ActionGroup> myGearProducer;
 
   private ToolWindow myToolWindow;
   private BufferedImage myImage;
@@ -46,7 +46,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private ActionToolbar myToolbar;
 
-  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<ActionGroup> gearProducer) {
+  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
     setLayout(new BorderLayout());
     AccessibleContextUtil.setName(this, "Tool Window Header");

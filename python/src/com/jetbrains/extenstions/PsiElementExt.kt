@@ -37,7 +37,7 @@ import java.util.*
  * @param classOnly limit ancestors to this class only
  * @param limit upper limit to prevent huge unstub. [com.intellij.psi.PsiFile] is good choice
  */
-fun <T : PsiElement> PsiElement.getAncestors(limit: PsiElement = this.containingFile, classOnly: Class<T>): List<T> {
+fun <T : PsiElement> PsiElement.getAncestors(limit: PsiElement = this.containingFile, classOnly: Class<out T>): List<T> {
   var currentElement = this
   val result = ArrayList<T>()
   while (currentElement != limit) {

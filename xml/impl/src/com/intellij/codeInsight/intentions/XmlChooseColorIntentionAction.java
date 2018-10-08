@@ -18,7 +18,6 @@ package com.intellij.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -82,7 +81,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     catch (NumberFormatException e) {
       oldColor = JBColor.GRAY;
     }
-    Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
+    Color color = ColorChooser.chooseColor(element.getProject(), editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;

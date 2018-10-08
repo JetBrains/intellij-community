@@ -1,14 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.Trinity
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
-import groovy.json.JsonSlurper
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
@@ -27,11 +24,9 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
 
-import java.security.MessageDigest
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -189,7 +184,7 @@ class CompilationContextImpl implements CompilationContext {
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchivesMetadata != null) {
-      fetchAndUnpackCompiledClasses(messages, ant, classesOutput, options)
+      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
     else if (options.pathToCompiledClassesArchive != null) {
@@ -269,132 +264,8 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   @CompileStatic
-  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
-    Map<String, File> all = new LinkedHashMap<>()
-    Map<String, String> pathToHashMap
-
-    messages.block("Fetch compiled classes archives") {
-      long start = System.nanoTime()
-      def metadata = new JsonSlurper().parse(new File(options.pathToCompiledClassesArchivesMetadata), CharsetToolkit.UTF8) as Map
-
-      String persistentCache = System.getProperty('agent.persistent.cache')
-      String cache = persistentCache ?: new File(classesOutput).parentFile.getAbsolutePath()
-      File tempDownloadsStorage = new File(cache, 'idea-compile-parts')
-
-      Deque<Pair<String, File>> toDownload = new ConcurrentLinkedDeque<>()
-
-      pathToHashMap = new LinkedHashMap<>(metadata['files'] as Map<String, String>)
-      pathToHashMap.each { path, hash ->
-        def file = new File(tempDownloadsStorage, "$path/${hash}.jar")
-        def moduleTempDir = file.parentFile
-        moduleTempDir.mkdirs()
-        // Remove other files for same module if cache is not managed by TeamCity
-        if (persistentCache == null) {
-          moduleTempDir.eachFile { f -> if (f.name != file.name) FileUtil.delete(f) }
-        }
-        if (file.exists() && hash != computeHash(file)) {
-          messages.info("File $file has unexpected hash, will refetch")
-          file.delete()
-        }
-        // Download if needed
-        if (!file.exists()) {
-          toDownload.add(Pair.create(path, file))
-        }
-        all.put(path, file)
-      }
-
-      String prefix = metadata['prefix'] as String
-      String serverUrl = metadata['server-url'] as String
-
-      // todo: make parallel
-      toDownload.each { pair ->
-        antGet(ant, pair, serverUrl, prefix)
-      }
-      messages.reportStatisticValue('compile-parts:download:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-
-      long downloadedBytes = toDownload.collect { it.second.size() }.sum(0l) as long
-      long totalBytes = all.collect { it.value.size() }.sum(0l) as long
-
-      messages.reportStatisticValue('compile-parts:total:bytes', totalBytes.toString())
-      messages.reportStatisticValue('compile-parts:total:count', all.size().toString())
-      messages.reportStatisticValue('compile-parts:downloaded:bytes', downloadedBytes.toString())
-      messages.reportStatisticValue('compile-parts:downloaded:count', toDownload.size().toString())
-      messages.reportStatisticValue('compile-parts:reused:bytes', (totalBytes - downloadedBytes).toString())
-      messages.reportStatisticValue('compile-parts:reused:count', (all.size() - toDownload.size()).toString())
-    }
-
-    messages.block("Verify archives consistency") {
-      long start = System.nanoTime()
-      // todo: make parallel, retry download
-      List<Trinity<File, String, String>> failed = all.collect { entry ->
-        def file = entry.value
-        def computed = computeHash(file)
-        def expected = pathToHashMap[entry.key]
-        if (expected != computed) {
-          messages.warning("Downloaded file '$file' hash mismatch, expected '$expected', got $computed")
-          return Trinity.create(file, expected, computed)
-        }
-        return null
-      }.findAll {it != null}
-      messages.reportStatisticValue('compile-parts:verify:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-      if (!failed.isEmpty()) {
-        failed.each { trinity ->
-          messages.warning("Downloaded file '$trinity.first' hash mismatch, expected '$trinity.second', got $trinity.third")
-        }
-        messages.error("Hash mismatch for ${failed.size()} downloaded files, see details above")
-      }
-    }
-
-    messages.block("Unpack compiled classes archives") {
-      long start = System.nanoTime()
-      // Unpack everything to ensure correct classes are in classesOutput
-      FileUtil.delete(new File(classesOutput))
-      // todo: make parallel
-      all.each { entry ->
-        unpack(messages, ant, classesOutput, entry)
-      }
-      messages.reportStatisticValue('compile-parts:unpack:time',
-                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
-    }
-  }
-
-  private static String computeHash(final File file) {
-    if (!file.exists()) return null;
-    def md = MessageDigest.getInstance("SHA-256")
-    def fis = new FileInputStream(file)
-    try {
-      final byte[] buffer = FileUtil.getThreadLocalBuffer()
-      while (true) {
-        int read = fis.read(buffer)
-        if (read < 0) break
-        md.update(buffer, 0, read)
-      }
-      def digest = md.digest()
-      def hex = StringUtil.toHexString(digest)
-      return hex
-    }
-    finally {
-      fis.close()
-    }
-  }
-
-  @CompileDynamic
-  private static void unpack(BuildMessages messages, AntBuilder ant, String classesOutput, Map.Entry<String, File> entry) {
-    messages.block("Unpacking $entry.key") {
-      def dst = "$classesOutput/$entry.key"
-      ant.mkdir(dir: dst)
-      ant.unzip(src: entry.value.getAbsolutePath(), dest: dst)
-    }
-  }
-
-  @CompileDynamic
-  private static void antGet(AntBuilder ant, Pair<String, File> pair, String serverUrl, String prefix) {
-    ant.get(src: "$serverUrl/$prefix/${pair.first}/${pair.second.name}",
-            dest: pair.second.getAbsolutePath(),
-            useragent: 'Parts Downloader',
-            quiet: true)
+  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -526,6 +397,11 @@ class CompilationContextImpl implements CompilationContext {
       pathToReport += "=>" + targetDirectoryPath
     }
     messages.artifactBuilt(pathToReport)
+  }
+
+  @Override
+  boolean isBundledJreModular() {
+    return options.bundledJreVersion >= 9
   }
 
   private static String toCanonicalPath(String path) {

@@ -127,7 +127,7 @@ public class BreakpointChooser {
   }
 
   @Nullable
-  private static BreakpointItem findItem(Object baseBreakpoint, List<BreakpointItem> breakpointItems) {
+  private static BreakpointItem findItem(Object baseBreakpoint, List<? extends BreakpointItem> breakpointItems) {
     BreakpointItem breakpointItem = null;
     for (BreakpointItem item : breakpointItems) {
       if (item.getBreakpoint() == baseBreakpoint) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -78,7 +77,7 @@ public class PackagePrefixElementFinder extends PsiElementFinder implements Dumb
   }
 
   public static PackagePrefixElementFinder getInstance(Project project) {
-    for (PsiElementFinder o : Extensions.getExtensions(PsiElementFinder.EP_NAME, project)) {
+    for (PsiElementFinder o : PsiElementFinder.EP_NAME.getExtensions(project)) {
       if (o instanceof PackagePrefixElementFinder) {
         return (PackagePrefixElementFinder) o;
       }

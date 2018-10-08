@@ -34,7 +34,6 @@ import java.util.Objects;
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
              RefactoringListenerProvider, InputRedirectAware {
-
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated public String MAIN_CLASS_NAME;
@@ -308,8 +307,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void setState(@NotNull BaseState state) {
-    super.setState(state);
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    super.setOptionsFromConfigurationFile(state);
     syncOldStateFields();
   }
 

@@ -23,7 +23,7 @@ class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   private fun doTest() {
     val filePath = "/retype/${getTestName(false)}.java"
     myFixture.configureByFile(filePath)
-    RetypeSession(project, myFixture.editor as EditorImpl, 0, 0).start()
+    RetypeSession(project, myFixture.editor as EditorImpl, 0, null, 0).start()
     while (editor.getUserData(RETYPE_SESSION_KEY) != null) {
       IdeEventQueue.getInstance().flushQueue()
     }

@@ -111,7 +111,7 @@ public class RenameUtil {
     return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void addTextOccurrence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
+  private static void addTextOccurrence(final PsiElement element, final List<? super UsageInfo> result, final GlobalSearchScope projectScope,
                                         final String stringToSearch, final String stringToReplace) {
     UsageInfoFactory factory = new UsageInfoFactory() {
       @Override

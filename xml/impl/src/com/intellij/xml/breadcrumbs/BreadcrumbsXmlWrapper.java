@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -117,7 +116,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     editor.getCaretModel().addCaretListener(caretListener, this);
 
     myBreadcrumbsCollector = findBreadcrumbsCollector();
-    myBreadcrumbsCollector.watchForChanges(myFile, this, () -> queueUpdate());
+    if (myFile != null) {
+      myBreadcrumbsCollector.watchForChanges(myFile, this, () -> queueUpdate());
+    }
 
     breadcrumbs.onHover(this::itemHovered);
     breadcrumbs.onSelect(this::itemSelected);
@@ -167,16 +168,18 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   private FileBreadcrumbsCollector findBreadcrumbsCollector() {
-    for (FileBreadcrumbsCollector extension : Extensions.getExtensions(FileBreadcrumbsCollector.EP_NAME, myProject)) {
-      if (extension.handlesFile(myFile)) {
-        return extension;
+    if (myFile != null) {
+      for (FileBreadcrumbsCollector extension : FileBreadcrumbsCollector.EP_NAME.getExtensions(myProject)) {
+        if (extension.handlesFile(myFile)) {
+          return extension;
+        }
       }
     }
     return new PsiFileBreadcrumbsCollector(myProject);
   }
 
   private void updateCrumbs() {
-    if (myEditor == null || myEditor.isDisposed()) return;
+    if (myEditor == null || myFile == null || myEditor.isDisposed()) return;
 
     if (myAsyncUpdateProgress != null) {
       myAsyncUpdateProgress.cancel();
@@ -186,7 +189,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     myAsyncUpdateProgress = progress;
 
     myBreadcrumbsCollector.updateCrumbs(myFile, myEditor, myAsyncUpdateProgress, (crumbs) -> {
-      if (!progress.isCanceled() && myFile != null && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
+      if (!progress.isCanceled() && myEditor != null && !myEditor.isDisposed() && !myProject.isDisposed()) {
         breadcrumbs.setFont(getNewFont(myEditor));
         if (!breadcrumbs.isShowing()) {
           breadcrumbs.setCrumbs(null);

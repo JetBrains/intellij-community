@@ -28,7 +28,12 @@ object GuiTestOptions {
 
   val configPath: String by lazy { getSystemProperty("idea.config.path", configDefaultPath) }
   val systemPath: String by lazy { getSystemProperty("idea.system.path", systemDefaultPath) }
+  val guiTestRootDirPath: String? by lazy { System.getProperty("idea.gui.tests.root.dir.path", null) }
+  val isGradleRunner: Boolean by lazy { getSystemProperty("idea.gui.tests.gradle.runner", false) }
+
   val isDebug: Boolean by lazy { getSystemProperty("idea.debug.mode", false) }
+  val isPassPrivacyPolicy: Boolean by lazy { getSystemProperty("idea.pass.privacy.policy", true) }
+  val isPassDataSharing: Boolean by lazy { getSystemProperty("idea.pass.data.sharing", true) }
   val suspendDebug: String by lazy { if (isDebug) "y" else "n" }
   val isInternal: Boolean by lazy { getSystemProperty("idea.is.internal", true) }
   val useAppleScreenMenuBar: Boolean by lazy { getSystemProperty("apple.laf.useScreenMenuBar", false) }
@@ -65,13 +70,6 @@ object GuiTestOptions {
     catch (e: RuntimeException) {
       "../system"
     }
-  }
-
-  val tempDirPath: File by lazy { File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))) }
-  val projectDirPath: File by lazy {
-    // The temporary location might contain symlinks, such as /var@ -> /private/var on MacOS.
-    // EditorFixture seems to require a canonical path when opening the file.
-    File(tempDirPath, "guiTest").canonicalFile
   }
 
   private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {

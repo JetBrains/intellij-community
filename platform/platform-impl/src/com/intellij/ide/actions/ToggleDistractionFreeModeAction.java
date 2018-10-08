@@ -45,7 +45,6 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    //noinspection ConditionalExpressionWithIdenticalBranches
     String text = Registry.is(key) ? ActionsBundle.message("action.ToggleDistractionFreeMode.exit")
                                    : ActionsBundle.message("action.ToggleDistractionFreeMode.enter");
     e.getPresentation().setText(text);

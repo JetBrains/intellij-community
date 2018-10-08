@@ -26,14 +26,14 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   private final EventHandler myEventHandler;
   private final LinkListener<IdeaPluginDescriptor> myListener;
   private final LinkListener<String> mySearchListener;
-  private final Function<IdeaPluginDescriptor, CellPluginComponent> myFunction;
+  private final Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> myFunction;
   private final List<UIPluginGroup> myGroups = new ArrayList<>();
 
   public PluginsGroupComponent(@NotNull LayoutManager layout,
                                @NotNull EventHandler eventHandler,
                                @NotNull LinkListener<IdeaPluginDescriptor> listener,
                                @NotNull LinkListener<String> searchListener,
-                               @NotNull Function<IdeaPluginDescriptor, CellPluginComponent> function) {
+                               @NotNull Function<? super IdeaPluginDescriptor, ? extends CellPluginComponent> function) {
     super(layout);
     myEventHandler = eventHandler;
     myListener = listener;
@@ -204,6 +204,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     remove(group.ui.panel);
 
     for (CellPluginComponent plugin : group.ui.plugins) {
+      plugin.close();
       remove(plugin);
       myEventHandler.removeCell(plugin);
     }
@@ -215,6 +216,7 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     int index = ContainerUtil.indexOf(group.ui.plugins, component -> component.myPlugin == descriptor);
     assert index != -1;
     CellPluginComponent component = group.ui.plugins.remove(index);
+    component.close();
     remove(component);
     myEventHandler.removeCell(component);
     group.descriptors.remove(descriptor);
@@ -231,6 +233,12 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
   }
 
   public void clear() {
+    for (UIPluginGroup group : myGroups) {
+      for (CellPluginComponent plugin : group.plugins) {
+        plugin.close();
+      }
+    }
+
     myGroups.clear();
     myEventHandler.clear();
     removeAll();

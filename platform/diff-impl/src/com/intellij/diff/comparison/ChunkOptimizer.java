@@ -35,16 +35,16 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
 abstract class ChunkOptimizer<T> {
-  @NotNull protected final List<T> myData1;
-  @NotNull protected final List<T> myData2;
+  @NotNull protected final List<? extends T> myData1;
+  @NotNull protected final List<? extends T> myData2;
   @NotNull private final FairDiffIterable myIterable;
 
   @NotNull protected final ProgressIndicator myIndicator;
 
   @NotNull private final List<Range> myRanges;
 
-  ChunkOptimizer(@NotNull List<T> data1,
-                        @NotNull List<T> data2,
+  ChunkOptimizer(@NotNull List<? extends T> data1,
+                        @NotNull List<? extends T> data2,
                         @NotNull FairDiffIterable iterable,
                         @NotNull ProgressIndicator indicator) {
     myData1 = data1;
@@ -152,7 +152,7 @@ abstract class ChunkOptimizer<T> {
 
     @Override
     protected int getShift(@NotNull Side touchSide, int equalForward, int equalBackward, @NotNull Range range1, @NotNull Range range2) {
-      List<InlineChunk> touchWords = touchSide.select(myData1, myData2);
+      List<? extends InlineChunk> touchWords = touchSide.select(myData1, myData2);
       CharSequence touchText = touchSide.select(myText1, myText2);
       int touchStart = touchSide.select(range2.start1, range2.start2);
 
@@ -173,7 +173,7 @@ abstract class ChunkOptimizer<T> {
       return 0;
     }
 
-    private static int findSequenceEdgeShift(@NotNull CharSequence text, @NotNull List<InlineChunk> words, int offset, int count,
+    private static int findSequenceEdgeShift(@NotNull CharSequence text, @NotNull List<? extends InlineChunk> words, int offset, int count,
                                              boolean leftToRight) {
       for (int i = 0; i < count; i++) {
         InlineChunk word1;
@@ -214,8 +214,8 @@ abstract class ChunkOptimizer<T> {
    *      bad: "ABooYZ AB[uuYZ AB]zzYZ" - "ABooYZ AB[]zzYZ"
    */
   public static class LineChunkOptimizer extends ChunkOptimizer<Line> {
-    public LineChunkOptimizer(@NotNull List<Line> lines1,
-                              @NotNull List<Line> lines2,
+    public LineChunkOptimizer(@NotNull List<? extends Line> lines1,
+                              @NotNull List<? extends Line> lines2,
                               @NotNull FairDiffIterable changes,
                               @NotNull ProgressIndicator indicator) {
       super(lines1, lines2, changes, indicator);
@@ -250,7 +250,7 @@ abstract class ChunkOptimizer<T> {
                                               int equalForward, int equalBackward,
                                               @NotNull Range range1, @NotNull Range range2,
                                               int threshold) {
-      List<Line> touchLines = touchSide.select(myData1, myData2);
+      List<? extends Line> touchLines = touchSide.select(myData1, myData2);
       int touchStart = touchSide.select(range2.start1, range2.start2);
 
       int shiftForward = findNextUnimportantLine(touchLines, touchStart, equalForward + 1, threshold);
@@ -269,7 +269,7 @@ abstract class ChunkOptimizer<T> {
                                             @NotNull Range range1, @NotNull Range range2,
                                             int threshold) {
       Side nonTouchSide = touchSide.other();
-      List<Line> nonTouchLines = nonTouchSide.select(myData1, myData2);
+      List<? extends Line> nonTouchLines = nonTouchSide.select(myData1, myData2);
       int changeStart = nonTouchSide.select(range1.end1, range1.end2);
       int changeEnd = nonTouchSide.select(range2.start1, range2.start2);
 
@@ -279,14 +279,14 @@ abstract class ChunkOptimizer<T> {
       return getShift(shiftForward, shiftBackward);
     }
 
-    private static int findNextUnimportantLine(@NotNull List<Line> lines, int offset, int count, int threshold) {
+    private static int findNextUnimportantLine(@NotNull List<? extends Line> lines, int offset, int count, int threshold) {
       for (int i = 0; i < count; i++) {
         if (lines.get(offset + i).getNonSpaceChars() <= threshold) return i;
       }
       return -1;
     }
 
-    private static int findPrevUnimportantLine(@NotNull List<Line> lines, int offset, int count, int threshold) {
+    private static int findPrevUnimportantLine(@NotNull List<? extends Line> lines, int offset, int count, int threshold) {
       for (int i = 0; i < count; i++) {
         if (lines.get(offset - i).getNonSpaceChars() <= threshold) return i;
       }

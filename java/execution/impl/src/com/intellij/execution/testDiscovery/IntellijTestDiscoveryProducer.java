@@ -7,8 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
@@ -18,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
@@ -27,8 +32,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   @Override
   public MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                     byte frameworkId,
-                                                     @NotNull List<String> filePaths) {
+                                                     byte frameworkId) {
     if (!ApplicationManager.getApplication().isInternal()) {
       return MultiMap.empty();
     }
@@ -56,7 +60,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
   }
 
   @NotNull
-  private static <T> MultiMap<String, String> request(List<T> collection, Function<T, String> toString, String what) throws IOException {
+  private static <T> MultiMap<String, String> request(List<T> collection, Function<? super T, String> toString, String what) throws IOException {
     if (collection.isEmpty()) return MultiMap.empty();
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/tests/by-" + what;
     LOG.debug(url);
@@ -76,7 +80,7 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public MultiMap<String, String> getDiscoveredTests(@NotNull Project project, @NotNull List<String> filePaths) {
+  public MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project, @NotNull List<String> filePaths, byte frameworkId) {
     try {
       return request(filePaths, s -> "\"" + s + "\"", "files");
     }
@@ -88,15 +92,27 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
 
   @NotNull
   @Override
-  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns) throws IOException {
+  public List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) throws IOException {
     String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/test/details";
-    return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
+    ThrowableComputable<List<String>, IOException> query = () -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
       r.write(testFqns.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
       return Arrays.stream(new ObjectMapper().readValue(r.getInputStream(), TestDetails[].class))
         .map(details -> details.files)
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
     });
+    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+      List<String> result = ProgressManager.getInstance().run(new Task.WithResult<List<String>, IOException>(project,
+                                                                                                             "Searching for Affected File Paths...",
+                                                                                                             true) {
+        @Override
+        protected List<String> compute(@NotNull ProgressIndicator indicator) throws IOException {
+          return query.compute();
+        }
+      });
+      return result == null ? Collections.emptyList() : result;
+    }
+    return query.compute();
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)

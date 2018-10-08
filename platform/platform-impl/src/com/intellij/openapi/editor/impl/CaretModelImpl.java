@@ -269,7 +269,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
     CaretImpl caret = new CaretImpl(myEditor);
-    caret.moveToVisualPosition(pos, false);
+    caret.doMoveToVisualPosition(pos, false);
     if (addCaret(caret, makePrimary)) {
       return caret;
     }

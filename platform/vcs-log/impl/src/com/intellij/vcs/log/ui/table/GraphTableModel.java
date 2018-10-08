@@ -38,13 +38,13 @@ public class GraphTableModel extends AbstractTableModel {
   public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull private final Consumer<Runnable> myRequestMore;
+  @NotNull private final Consumer<? super Runnable> myRequestMore;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<Runnable> requestMore) {
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<? super Runnable> requestMore) {
     myLogData = logData;
     myDataPack = dataPack;
     myRequestMore = requestMore;
@@ -119,7 +119,7 @@ public class GraphTableModel extends AbstractTableModel {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }
 
-    VcsShortCommitDetails data = getShortDetails(rowIndex);
+    VcsShortCommitDetails data = getCommitMetadata(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
         return getRoot(rowIndex);
@@ -186,7 +186,7 @@ public class GraphTableModel extends AbstractTableModel {
   }
 
   @NotNull
-  public VcsShortCommitDetails getShortDetails(int row) {
+  public VcsCommitMetadata getCommitMetadata(int row) {
     return getDetails(row, myLogData.getMiniDetailsGetter());
   }
 

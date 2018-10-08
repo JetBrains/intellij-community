@@ -422,7 +422,7 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.UUID)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -988,7 +988,7 @@ public final class JavacRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Failure)
       }
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -1794,7 +1794,7 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request.OutputGroup)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -3495,7 +3495,7 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Request)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -4797,7 +4797,7 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.CompileMessage)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -5937,7 +5937,7 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.OutputObject)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -6922,7 +6922,7 @@ public final class JavacRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response.ClassData)
         }
         private byte memoizedIsInitialized = -1;
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+        @java.lang.SuppressWarnings({"unchecked"})
         protected final java.lang.Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             java.lang.Object arg0, java.lang.Object arg1) {
@@ -7629,7 +7629,7 @@ public final class JavacRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message.Response)
       }
       private byte memoizedIsInitialized = -1;
-      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+      @java.lang.SuppressWarnings({"unchecked"})
       protected final java.lang.Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           java.lang.Object arg0, java.lang.Object arg1) {
@@ -8420,7 +8420,7 @@ public final class JavacRemoteProto {
       // @@protoc_insertion_point(builder_scope:org.jetbrains.javac.Message)
     }
     private byte memoizedIsInitialized = -1;
-    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
+    @java.lang.SuppressWarnings({"unchecked"})
     protected final java.lang.Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
         java.lang.Object arg0, java.lang.Object arg1) {

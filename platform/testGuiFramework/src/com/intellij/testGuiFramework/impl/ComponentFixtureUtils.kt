@@ -372,20 +372,52 @@ fun <C : Container> ContainerFixture<C>.label(labelName: String, timeout: Timeou
   return JLabelFixture(robot(), jbLabel)
 }
 
-
 /**
  * Find an AsyncProcessIcon component in a current context (gets by receiver) and returns a fixture for it.
  * Indexing processIcon is excluded from this search
  */
 fun <C : Container> ContainerFixture<C>.asyncProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
   val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.notEquality, timeout)
+}
+
+/**
+ * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return fixture of AsyncProcessIcon
+ * @throws WaitTimedOutError if no icon is found
+ */
+fun <C : Container> ContainerFixture<C>.indexingProcessIcon(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+}
+
+/**
+ * Find an AsyncProcessIcon component corresponding to background tasks
+ * @return if found - fixture of AsyncProcessIcon, or null if not found
+ */
+fun <C : Container> ContainerFixture<C>.indexingProcessIconNullable(timeout: Timeout = defaultTimeout): AsyncProcessIconFixture? {
+  val indexingProcessIconTooltipText = ActionsBundle.message("action.ShowProcessWindow.double.click")
+  return try {
+    asyncProcessIconByTooltip(indexingProcessIconTooltipText, Predicate.equality, timeout)
+  }
+  catch (ignored: WaitTimedOutError) {
+    // asyncIcon not found and it's OK, so no background process is going
+    null
+  }
+}
+
+/**
+ * Find an AsyncProcessIcon component by tooltip and predicate
+ * @param expectedTooltip
+ */
+fun <C : Container> ContainerFixture<C>.asyncProcessIconByTooltip(expectedTooltip: String, predicate: FinderPredicate, timeout: Timeout = defaultTimeout): AsyncProcessIconFixture {
   val asyncProcessIcon = GuiTestUtil.waitUntilFound(
     robot(),
     target(),
     GuiTestUtilKt.typeMatcher(AsyncProcessIcon::class.java) {
       it.isShowing &&
       it.isVisible &&
-      it.toolTipText != indexingProcessIconTooltipText
+      predicate(it.toolTipText ?: "", expectedTooltip)
     },
     timeout)
   return AsyncProcessIconFixture(robot(), asyncProcessIcon)

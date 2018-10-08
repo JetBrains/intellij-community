@@ -48,12 +48,12 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -130,7 +130,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     LeakHunter.checkLeak(documentManager, DocumentImpl.class, doc -> id == System.identityHashCode(doc));
     LeakHunter.checkLeak(documentManager, PsiFileImpl.class, psiFile -> vFile.equals(psiFile.getVirtualFile()));
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNull(documentManager.getCachedDocument(findFile(vFile)));
 
     Document newDoc = documentManager.getDocument(findFile(vFile));
@@ -758,7 +758,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(invoked.get());
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
     Document document = createDocument();
 

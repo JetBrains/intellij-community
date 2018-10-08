@@ -105,7 +105,7 @@ public class TextDiffViewerUtil {
   }
 
   public static void installDocumentListeners(@NotNull DocumentListener listener,
-                                              @NotNull List<Document> documents,
+                                              @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
     for (Document document : ContainerUtil.newHashSet(documents)) {
       document.addDocumentListener(listener, disposable);

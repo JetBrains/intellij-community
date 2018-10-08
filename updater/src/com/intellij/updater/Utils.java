@@ -81,7 +81,6 @@ public class Utils {
     }
   }
 
-  @SuppressWarnings("BusyWait")
   private static void tryDelete(Path path) throws IOException {
     for (int i = 0; i < 10; i++) {
       try {
@@ -274,7 +273,7 @@ public class Utils {
     return result;
   }
 
-  private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
+  private static void collectRelativePaths(File dir, LinkedHashSet<? super String> result, String parentPath) {
     File[] children = dir.listFiles();
     if (children == null) return;
 

@@ -18,7 +18,9 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.RESUME_LABEL
 import com.intellij.testGuiFramework.remote.JUnitClientListener
 import com.intellij.testGuiFramework.remote.client.ClientHandler
 import com.intellij.testGuiFramework.remote.client.JUnitClient
@@ -28,6 +30,8 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.junit.runner.JUnitCore
 import org.junit.runner.Request
+import org.junit.runners.model.TestClass
+import org.junit.runners.parameterized.TestWithParameters
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -80,8 +84,9 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
       override fun handle(message: TransportMessage) {
         val content = (message.content as JUnitTestContainer)
-        if (content.additionalInfo.isEmpty()) throw Exception("Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
-        System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo)
+        if (!content.additionalInfo.containsKey(RESUME_LABEL)) throw Exception(
+          "Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
+        System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo[RESUME_LABEL].toString())
         System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.testName}")
         LOG.info("Added test to testQueue: $content")
         testQueue.add(content)
@@ -110,8 +115,18 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private fun port(): Int = System.getProperty(GuiTestStarter.GUI_TEST_PORT).toInt()
 
   private fun runTest(testContainer: JUnitTestContainer) {
-    val request = Request.method(testContainer.testClass, testContainer.testName)
-    core.run(request)
+    if (testContainer.additionalInfo["parameters"] == null) {
+      //todo: replace request with a runner
+      val request = Request.method(testContainer.testClass, testContainer.testName)
+      core.run(request)
+    } else {
+      val runner = GuiTestLocalRunnerParam(TestWithParameters(testContainer.testName, TestClass(testContainer.testClass), testContainer.additionalInfo["parameters"] as MutableList<*>))
+      core.run(runner)
+    }
+  }
+
+  private fun String.getParameterisedPart(): String {
+    return Regex("\\[(.)*]").find(this)?.value ?: ""
   }
 
 }

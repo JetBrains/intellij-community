@@ -174,8 +174,23 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     myListeners.add(listener);
   }
 
-  public void removeListener(@NotNull CodeStyleSettingsListener listener) {
+  private void removeListener(@NotNull CodeStyleSettingsListener listener) {
     myListeners.remove(listener);
+  }
+
+  public static void removeListener(@Nullable Project project, @NotNull CodeStyleSettingsListener listener) {
+    if (project == null || project.isDefault()) {
+      //noinspection deprecation
+      getInstance().removeListener(listener);
+    }
+    else {
+      if (!project.isDisposed()) {
+        CodeStyleSettingsManager projectInstance = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
+        if (projectInstance != null) {
+          projectInstance.removeListener(listener);
+        }
+      }
+    }
   }
 
   public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {

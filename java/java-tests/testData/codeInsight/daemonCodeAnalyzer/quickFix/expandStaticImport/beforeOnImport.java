@@ -1,5 +1,5 @@
 // "Replace static import with qualified access to Arrays" "true"
-import static java.util.Arrays.so<caret>rt;
+import static java.util.Arrays.sort<caret>;
 
 class Test {
     public void sendMessage(String... destinationAddressNames) {

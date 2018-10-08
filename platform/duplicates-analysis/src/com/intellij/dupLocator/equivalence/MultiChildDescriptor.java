@@ -26,7 +26,7 @@ public class MultiChildDescriptor {
     return myElements;
   }
 
-  public static enum MyType {
+  public enum MyType {
     DEFAULT,
     OPTIONALLY,
     OPTIONALLY_IN_PATTERN,

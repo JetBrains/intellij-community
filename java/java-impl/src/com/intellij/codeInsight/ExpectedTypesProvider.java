@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -463,7 +465,7 @@ public class ExpectedTypesProvider {
         myResult.add(createInfoImpl(arrayType, arrayType));
 
         PsiManager manager = statement.getManager();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
         if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
@@ -483,7 +485,7 @@ public class ExpectedTypesProvider {
       }
 
       PsiManager manager = statement.getManager();
-      PsiClassType enumType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
+      PsiClassType enumType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
       myResult.add(createInfoImpl(enumType, enumType));
     }
 
@@ -503,7 +505,7 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
       PsiType objectType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, myExpr.getResolveScope());
       myResult.add(createInfoImpl(objectType, objectType));
     }
@@ -906,7 +908,7 @@ public class ExpectedTypesProvider {
     public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
-        PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
+        PsiType throwableType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
         PsiElement container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
@@ -920,7 +922,7 @@ public class ExpectedTypesProvider {
         }
 
         if (throwsTypes.length == 0) {
-          final PsiClassType exceptionType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
+          final PsiClassType exceptionType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
           throwsTypes = new PsiClassType[]{exceptionType};
         }
 
@@ -953,6 +955,10 @@ public class ExpectedTypesProvider {
                                                                      @Nullable PsiMethod targetMethod) {
       if (allCandidates.length == 0) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
+      }
+
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        allCandidates = selectCandidateChosenOnCompletion(argumentList.getParent(), allCandidates);
       }
 
       PsiMethod toExclude = JavaPsiConstructorUtil.isConstructorCall(argumentList.getParent())
@@ -1037,6 +1043,22 @@ public class ExpectedTypesProvider {
       }
 
       return array.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+    }
+
+    @NotNull
+    private static CandidateInfo[] selectCandidateChosenOnCompletion(@Nullable PsiElement call, @NotNull CandidateInfo[] candidates) {
+      if (call instanceof PsiCall) {
+        PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+        if (originalCall != null) {
+          PsiMethod method = CompletionMemory.getChosenMethod(originalCall);
+          if (method != null) {
+            for (CandidateInfo candidate : candidates) {
+              if (CompletionUtil.getOriginalOrSelf(candidate.getElement()) == method) return new CandidateInfo[]{candidate};
+            }
+          }
+        }
+      }
+      return candidates;
     }
 
     @NotNull

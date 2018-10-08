@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -56,7 +55,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                      @NotNull Usage[] usages,
                                      @NotNull UsageViewPresentation presentation,
                                      Factory<UsageSearcher> usageSearcherFactory) {
-    for (UsageViewFactory factory : Extensions.getExtensions(UsageViewFactory.EP_NAME)) {
+    for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
         return result;

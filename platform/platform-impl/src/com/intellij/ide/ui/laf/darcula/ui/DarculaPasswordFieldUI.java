@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -135,7 +134,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
     super.installDefaults();
 
     JTextComponent component = getComponent();
-    if (SystemInfoRt.isMac && SystemProperties.getBooleanProperty("idea.ui.set.password.echo.char", false)) {
+    if (SystemInfoRt.isMac) {
       LookAndFeel.installProperty(component, "echoChar", '•');
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.switchtoif;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -50,6 +51,9 @@ class SwitchPredicate implements PsiElementPredicate {
       return false;
     }
     if (ErrorUtil.containsError(switchStatement)) {
+      return false;
+    }
+    if (!ConvertSwitchToIfIntention.isAvailable(switchStatement)) {
       return false;
     }
     final PsiStatement[] statements = body.getStatements();

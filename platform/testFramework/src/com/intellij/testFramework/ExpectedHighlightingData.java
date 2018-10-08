@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -82,7 +81,7 @@ public class ExpectedHighlightingData {
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
   private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
-  @SuppressWarnings("StatefulEp") private final PsiFile myFile;
+  private final PsiFile myFile;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
 
@@ -126,7 +125,7 @@ public class ExpectedHighlightingData {
     registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, false));
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
     registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity severity = type.getSeverity(null);
         registerHighlightingType(severity.getName(), new ExpectedHighlightingSet(severity, false, true));
@@ -612,7 +611,7 @@ public class ExpectedHighlightingData {
     assert start != null: "textLength = " + text.length() + ", startOffset = " + startOffset;
 
     LineColumn end = StringUtil.offsetToLineColumn(text, endOffset);
-    assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;;
+    assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;
 
     if (start.line == end.line) {
       return String.format("(%d:%d/%d)", start.line + 1, start.column + 1, end.column - start.column);

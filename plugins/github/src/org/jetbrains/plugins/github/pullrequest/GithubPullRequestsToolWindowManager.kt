@@ -18,11 +18,12 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsComponentFactory
-import org.jetbrains.plugins.github.util.GithubUrlUtil
+import javax.swing.JComponent
 
 const val TOOL_WINDOW_ID = "GitHub Pull Requests"
 
@@ -31,48 +32,73 @@ private val REMOTE_KEY = Key<GitRemote>("REMOTE")
 private val REMOTE_URL_KEY = Key<String>("REMOTE_URL")
 private val ACCOUNT_KEY = Key<GithubAccount>("ACCOUNT")
 
-class GithubPullRequestsToolWindowManager internal constructor(private val project: Project,
-                                                               private val toolWindowManager: ToolWindowManager,
-                                                               private val gitRepositoryManager: GitRepositoryManager,
-                                                               private val accountManager: GithubAccountManager,
-                                                               private val componentFactory: GithubPullRequestsComponentFactory) {
+internal class GithubPullRequestsToolWindowManager(private val project: Project,
+                                                   private val toolWindowManager: ToolWindowManager,
+                                                   private val gitRepositoryManager: GitRepositoryManager,
+                                                   private val accountManager: GithubAccountManager,
+                                                   private val componentFactory: GithubPullRequestsComponentFactory) {
 
-  fun showPullRequestsTab(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) {
-    val toolWindow = getCurrentOrRegisterNewToolWindow()
-    val contentManager = toolWindow.contentManager
+  fun createPullRequestsTab(requestExecutor: GithubApiRequestExecutor,
+                            repository: GitRepository, remote: GitRemote, remoteUrl: String,
+                            repoDetails: GithubRepoDetailed,
+                            account: GithubAccount) {
+    var toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
+    val contentManager: ContentManager
 
-    var content = contentManager.findContentByRemoteUrlInContent(remoteUrl)
-    if (content == null) {
-      val component = componentFactory.createComponent(repository, remote, remoteUrl, account) ?: return
-      content = contentManager.factory.createContent(component, null, false)
+    if (toolWindow == null) {
+      val component = componentFactory.createComponent(requestExecutor, repository, remote, repoDetails, account) ?: return
+
+      toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
         .apply {
-          setPreferredFocusedComponent { component }
-          isCloseable = true
-          displayName = GithubUrlUtil.removeProtocolPrefix(remoteUrl)
-
-          putUserData(REPOSITORY_KEY, repository)
-          putUserData(REMOTE_KEY, remote)
-          putUserData(REMOTE_URL_KEY, remoteUrl)
-          putUserData(ACCOUNT_KEY, account)
+          icon = GithubIcons.PullRequestsToolWindow
         }
+
+      contentManager = toolWindow.contentManager
+      contentManager.addContentManagerListener(object : ContentManagerAdapter() {
+        override fun contentRemoved(event: ContentManagerEvent) {
+          if (contentManager.contentCount == 0) unregisterToolWindow()
+        }
+      })
+
+      val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
       contentManager.addContent(content)
     }
-
-    contentManager.setSelectedContent(content, true)
-    toolWindow.show { }
+    else {
+      contentManager = toolWindow.contentManager
+      val existingContent = contentManager.findContent(repository, remote, remoteUrl, account)
+      if (existingContent == null) {
+        val component = componentFactory.createComponent(requestExecutor, repository, remote, repoDetails, account) ?: return
+        val content = createContent(contentManager, component, repository, remote, remoteUrl, account)
+        contentManager.addContent(content)
+      }
+    }
   }
 
-  private fun getCurrentOrRegisterNewToolWindow(): ToolWindow {
-    return toolWindowManager.getToolWindow(TOOL_WINDOW_ID)
-           ?: toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
-             .apply {
-               icon = GithubIcons.PullRequestsToolWindow
-               contentManager.addContentManagerListener(object : ContentManagerAdapter() {
-                 override fun contentRemoved(event: ContentManagerEvent) {
-                   if (contentManager.contentCount == 0) unregisterToolWindow()
-                 }
-               })
-             }
+  fun showPullRequestsTabIfExists(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount): Boolean {
+    val toolWindow = toolWindowManager.getToolWindow(TOOL_WINDOW_ID) ?: return false
+    val content = toolWindow.contentManager.findContent(repository, remote, remoteUrl, account) ?: return false
+    toolWindow.contentManager.setSelectedContent(content, true)
+    toolWindow.show { }
+    return true
+  }
+
+  private fun createContent(contentManager: ContentManager,
+                            component: JComponent,
+                            repository: GitRepository,
+                            remote: GitRemote,
+                            remoteUrl: String,
+                            account: GithubAccount): Content {
+    return contentManager.factory.createContent(component, null, false)
+      .apply {
+        setPreferredFocusedComponent { component }
+        isCloseable = true
+        displayName = remote.name
+
+        putUserData(REPOSITORY_KEY, repository)
+        putUserData(REMOTE_KEY, remote)
+        putUserData(REMOTE_URL_KEY, remoteUrl)
+        putUserData(ACCOUNT_KEY, account)
+      }
   }
 
   private fun unregisterToolWindow() = toolWindowManager.unregisterToolWindow(TOOL_WINDOW_ID)
@@ -144,6 +170,11 @@ class GithubPullRequestsToolWindowManager internal constructor(private val proje
     }
   }
 
-  private fun ContentManager.findContentByRemoteUrlInContent(remoteUrl: String) =
-    contents.find { it.getUserData(REMOTE_URL_KEY) == remoteUrl }
+  private fun ContentManager.findContent(repository: GitRepository, remote: GitRemote, remoteUrl: String, account: GithubAccount) =
+    contents.find {
+      it.getUserData(REMOTE_URL_KEY) == remoteUrl &&
+      it.getUserData(REMOTE_KEY) == remote &&
+      it.getUserData(REPOSITORY_KEY) == repository &&
+      it.getUserData(ACCOUNT_KEY) == account
+    }
 }

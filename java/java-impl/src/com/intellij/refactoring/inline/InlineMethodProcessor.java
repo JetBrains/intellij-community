@@ -114,7 +114,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
     myManager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
     myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
@@ -1060,7 +1060,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
       final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
       if (RefactoringChangeUtil.getThisClass(ref) != varThisClass) {
-        initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+        initializer = JavaPsiFacade.getElementFactory(myManager.getProject()).createExpressionFromText(varThisClass.getName() + ".this", variable);
       }
     }
 
@@ -1565,7 +1565,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static boolean checkUnableToInsertCodeBlock(final PsiCodeBlock methodBody,
                                                       final PsiElement element,
-                                                      final Predicate<PsiMethodCallExpression> errorCondition) {
+                                                      final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
     if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);

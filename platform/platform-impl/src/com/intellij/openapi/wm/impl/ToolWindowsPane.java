@@ -1217,7 +1217,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static class ImageCache extends ScaleContext.Cache<ImageRef> {
-    ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
+    ImageCache(@NotNull Function<? super ScaleContext, ? extends ImageRef> imageProvider) {
       super(imageProvider);
     }
 

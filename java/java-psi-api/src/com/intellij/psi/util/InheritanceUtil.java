@@ -43,7 +43,7 @@ public class InheritanceUtil {
     return manager.areElementsEquivalent(baseClass, aClass) || aClass.isInheritor(baseClass, checkDeep);
   }
 
-  public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, @NotNull Processor<PsiClass> superProcessor) {
+  public static boolean processSupers(@Nullable PsiClass aClass, boolean includeSelf, @NotNull Processor<? super PsiClass> superProcessor) {
     if (aClass == null) return true;
 
     if (includeSelf && !superProcessor.process(aClass)) return false;
@@ -104,7 +104,7 @@ public class InheritanceUtil {
    * @param results
    * @param includeNonProject
    */
-  public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<PsiClass> results, boolean includeNonProject) {
+  public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<? super PsiClass> results, boolean includeNonProject) {
     getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<>(), aClass.getManager());
   }
 

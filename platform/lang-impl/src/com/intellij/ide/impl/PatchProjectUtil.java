@@ -151,7 +151,7 @@ public class PatchProjectUtil {
     ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(models, modulesModel));
   }
 
-  public static void processIncluded(final ContentEntry contentEntry, final Set<VirtualFile> included) {
+  public static void processIncluded(final ContentEntry contentEntry, final Set<? extends VirtualFile> included) {
     if (included.isEmpty()) return;
     final Set<VirtualFile> parents = new HashSet<>();
     for (VirtualFile file : included) {

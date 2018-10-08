@@ -33,11 +33,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
       return filterMethodCandidates(methods);
     }
 
-    final List<GroovyResolveResult> enumConstants = getCandidates(GroovyResolveKind.ENUM_CONST);
-    if (!enumConstants.isEmpty()) {
-      return enumConstants;
-    }
-
     final List<GroovyResolveResult> properties = getCandidates(GroovyResolveKind.PROPERTY);
     if (!properties.isEmpty()) {
       return properties.size() <= 1 ? properties : ContainerUtil.newSmartList(properties.get(0));

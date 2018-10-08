@@ -75,7 +75,7 @@ public class PluginsGroup {
     sortByName(descriptors);
   }
 
-  public static void sortByName(@NotNull List<IdeaPluginDescriptor> descriptors) {
+  public static void sortByName(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
     ContainerUtil.sort(descriptors, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
   }
 }

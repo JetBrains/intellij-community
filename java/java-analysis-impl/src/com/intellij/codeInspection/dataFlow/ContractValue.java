@@ -71,7 +71,7 @@ public abstract class ContractValue {
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
+    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type), String.valueOf(value));
   }
 
   public static ContractValue booleanValue(boolean value) {

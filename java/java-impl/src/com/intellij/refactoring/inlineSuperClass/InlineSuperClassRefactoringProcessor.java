@@ -208,8 +208,8 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
 
   private static void processChainedCallsInSuper(PsiMethod superConstructorWithChain,
                                                  PsiClass targetClass,
-                                                 List<FixableUsageInfo> usages,
-                                                 Set<PsiMethod> addedSuperConstructors) {
+                                                 List<? super FixableUsageInfo> usages,
+                                                 Set<? super PsiMethod> addedSuperConstructors) {
     addedSuperConstructors.add(superConstructorWithChain);
     PsiMethod chainedConstructor = InlineUtil.getChainedConstructor(superConstructorWithChain);
     while (chainedConstructor != null && addedSuperConstructors.add(chainedConstructor)) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -148,7 +147,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
-      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+      for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
         if (extension.ignorePackageNameInRequirements(importedExpression)) {
           return;
         }

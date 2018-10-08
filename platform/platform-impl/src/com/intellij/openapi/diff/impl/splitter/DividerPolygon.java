@@ -130,7 +130,7 @@ public class DividerPolygon {
     return myApplied;
   }
 
-  public static void paintPolygons(ArrayList<DividerPolygon> polygons, Graphics2D g, int width) {
+  public static void paintPolygons(ArrayList<? extends DividerPolygon> polygons, Graphics2D g, int width) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
     //Composite composite = g.getComposite();

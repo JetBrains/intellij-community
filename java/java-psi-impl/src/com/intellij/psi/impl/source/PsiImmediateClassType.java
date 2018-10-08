@@ -146,7 +146,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @Override
   @NotNull
   public PsiClassType rawType() {
-    return JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory().createType(myClass);
+    return JavaPsiFacade.getElementFactory(myClass.getProject()).createType(myClass);
   }
 
   @NotNull
@@ -291,7 +291,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     if (name == null || !text.contains(name)) return false;
     if (text.equals(getCanonicalText(false))) return true;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
     final PsiType patternType;
     try {
       patternType = factory.createTypeFromText(text, myClass);

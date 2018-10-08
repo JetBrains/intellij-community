@@ -710,7 +710,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                                                               boolean isSelected,
                                                               boolean cellHasFocus) {
                   Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                  MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                   XmlElement xmlElement = mavenDomProfile.getXmlElement();
                   if (xmlElement != null) {
                     setText(xmlElement.getContainingFile().getVirtualFile().getPath());

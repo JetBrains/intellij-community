@@ -113,7 +113,7 @@ public class FileReferenceUtil {
       }).toArray();
     }
 
-    private static boolean match(Object o, Condition<PsiFile> cond) {
+    private static boolean match(Object o, Condition<? super PsiFile> cond) {
       return !(o instanceof PsiFileSystemItem) ||
               ((PsiFileSystemItem)o).isDirectory() ||
               (o instanceof PsiFile && cond.value((PsiFile)o));

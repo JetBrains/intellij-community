@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,7 +25,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -62,8 +61,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   private OverrideImplementUtil() { }
 
   @NotNull
-  protected static MethodImplementor[] getImplementors() {
-    return Extensions.getExtensions(MethodImplementor.EXTENSION_POINT_NAME);
+  protected static List<MethodImplementor> getImplementors() {
+    return MethodImplementor.EXTENSION_POINT_NAME.getExtensionList();
   }
 
   /**
@@ -200,7 +199,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
     }
 
-    final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
+    final PsiCodeBlock body = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlockFromText("{}", null);
     PsiCodeBlock oldBody = result.getBody();
     if (oldBody != null) {
       oldBody.replace(body);
@@ -262,7 +261,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @NotNull
   public static List<PsiGenerationInfo<PsiMethod>> overrideOrImplementMethods(@NotNull PsiClass aClass,
-                                                                              @NotNull Collection<PsiMethodMember> candidates,
+                                                                              @NotNull Collection<? extends PsiMethodMember> candidates,
                                                                               boolean toCopyJavaDoc,
                                                                               boolean toInsertAtOverride)
     throws IncorrectOperationException {
@@ -285,7 +284,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
   }
 
   @NotNull
-  public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<PsiMethod> methods) {
+  public static List<PsiGenerationInfo<PsiMethod>> convert2GenerationInfos(@NotNull Collection<? extends PsiMethod> methods) {
     return ContainerUtil.map2List(methods, s -> createGenerationInfo(s));
   }
 
@@ -366,7 +365,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
-    if (factory == null) factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
+    if (factory == null) factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
     @NonNls String methodText;
 
     try {
@@ -515,7 +514,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       int offset = editor.getCaretModel().getOffset();
       PsiElement brace = aClass.getLBrace();
       if (brace == null) {
-        PsiClass psiClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClass("X");
+        PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
         brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
         LOG.assertTrue(brace != null, aClass.getLastChild());
       }
@@ -536,7 +535,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
         }
       }
       else {
-        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, (Collection<PsiMethodMember>)candidates, copyJavadoc, insertOverrideWherePossible);
+        List<PsiGenerationInfo<PsiMethod>> prototypes = overrideOrImplementMethods(aClass, candidates, copyJavadoc, insertOverrideWherePossible);
         resultMembers = GenerateMembersUtil.insertMembersAtOffset(aClass, offset, prototypes);
       }
 

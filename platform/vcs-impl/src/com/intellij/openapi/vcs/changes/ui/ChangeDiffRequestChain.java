@@ -52,7 +52,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
    */
   @NotNull
   public static AnAction createGoToChangeAction(@NotNull DiffRequestChain chain,
-                                                @NotNull Consumer<Integer> onSelected) {
+                                                @NotNull Consumer<? super Integer> onSelected) {
     return new ChangeGoToChangePopupAction<DiffRequestChain>(chain, chain.getIndex()) {
       @NotNull
       @Override

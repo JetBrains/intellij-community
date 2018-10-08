@@ -79,4 +79,13 @@ final class Banner extends SimpleBanner {
     super.setLeftComponent(component);
     myBreadcrumbs.setVisible(component == null);
   }
+
+  @Override
+  void updateProgressBorder() {
+  }
+
+  @Override
+  Component getBaselineTemplate() {
+    return myBreadcrumbs;
+  }
 }

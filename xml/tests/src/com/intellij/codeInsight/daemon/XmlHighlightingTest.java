@@ -1008,9 +1008,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     EditorHighlighter xmlHighlighter = XmlHighlighterFactory.createXMLHighlighter(EditorColorsManager.getInstance().getGlobalScheme());
     xmlHighlighter.setText(text);
     HighlighterIterator iterator = xmlHighlighter.createIterator(1);
-    assertSame("Xml tag name", iterator.getTokenType(), XmlTokenType.XML_TAG_NAME);
+    assertSame("Xml tag name", XmlTokenType.XML_TAG_NAME, iterator.getTokenType());
     iterator = xmlHighlighter.createIterator(8);
-    assertSame("Xml tag name at end of tag", iterator.getTokenType(), XmlTokenType.XML_TAG_NAME);
+    assertSame("Xml tag name at end of tag", XmlTokenType.XML_TAG_NAME, iterator.getTokenType());
 
     //               10        20         30
     //      0123456789012345678901234567890
@@ -1034,9 +1034,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     text = "<!DOCTYPE schema [ <!ENTITY RelativeURL  \"[^:#/\\?]*(:{0,0}|[#/\\?].*)\">";
     xmlHighlighter.setText(text);
     iterator = xmlHighlighter.createIterator(53);
-    assertSame("Xml attribute value", iterator.getTokenType(), XmlTokenType.XML_DATA_CHARACTERS);
-    assertEquals(iterator.getStart(),41);
-    assertEquals(iterator.getEnd(),70);
+    assertSame("Xml attribute value", XmlTokenType.XML_DATA_CHARACTERS, iterator.getTokenType());
+    assertEquals(41, iterator.getStart());
+    assertEquals(70, iterator.getEnd());
 
     //              10        20        30        40          50        60
     //    012345678901234567890123456789012345678901 234567 890123456789012 345678 90
@@ -1332,9 +1332,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       .createHighlighter(StdFileTypes.XHTML, EditorColorsManager.getInstance().getGlobalScheme(), myProject);
     xhtmlHighlighter.setText(text);
     HighlighterIterator iterator = xhtmlHighlighter.createIterator(1);
-    assertSame("Xml tag name", iterator.getTokenType(), XmlTokenType.XML_TAG_NAME);
+    assertSame("Xml tag name", XmlTokenType.XML_TAG_NAME, iterator.getTokenType());
     iterator = xhtmlHighlighter.createIterator(8);
-    assertSame("Xml tag name at end of tag", iterator.getTokenType(), XmlTokenType.XML_TAG_NAME);
+    assertSame("Xml tag name at end of tag", XmlTokenType.XML_TAG_NAME, iterator.getTokenType());
 
   }
 
@@ -1356,26 +1356,26 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     dtdHighlighter.setText(text);
     HighlighterIterator iterator = dtdHighlighter.createIterator(3);
 
-    assertSame("Xml entity name", iterator.getTokenType(), XmlTokenType.XML_ENTITY_DECL_START);
+    assertSame("Xml entity name", XmlTokenType.XML_ENTITY_DECL_START, iterator.getTokenType());
     iterator = dtdHighlighter.createIterator(13);
-    assertSame("Xml name in dtd", iterator.getTokenType(), XmlTokenType.XML_NAME);
+    assertSame("Xml name in dtd", XmlTokenType.XML_NAME, iterator.getTokenType());
     iterator = dtdHighlighter.createIterator(23);
-    assertSame("Xml attribute value in dtd", iterator.getTokenType(), XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
+    assertSame("Xml attribute value in dtd", XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, iterator.getTokenType());
 
     //                10        20        30        40
     //      0123456789012345678901 2345678901234567890123456789
     text = "<!ELEMENT base EMPTY>\n<!ATTLIST base id ID #IMPLIED>";
     dtdHighlighter.setText(text);
     iterator = dtdHighlighter.createIterator(3);
-    assertSame("Xml element name", iterator.getTokenType(), XmlTokenType.XML_ELEMENT_DECL_START);
+    assertSame("Xml element name", XmlTokenType.XML_ELEMENT_DECL_START, iterator.getTokenType());
     iterator = dtdHighlighter.createIterator(25);
-    assertSame("Xml attr list", iterator.getTokenType(), XmlTokenType.XML_ATTLIST_DECL_START);
+    assertSame("Xml attr list", XmlTokenType.XML_ATTLIST_DECL_START, iterator.getTokenType());
 
     iterator = dtdHighlighter.createIterator(14);
-    assertSame("Xml attr list", iterator.getTokenType(), TokenType.WHITE_SPACE);
+    assertSame("Xml attr list", TokenType.WHITE_SPACE, iterator.getTokenType());
 
     iterator = dtdHighlighter.createIterator(21);
-    assertSame("Xml attr list", iterator.getTokenType(), TokenType.WHITE_SPACE);
+    assertSame("Xml attr list", TokenType.WHITE_SPACE, iterator.getTokenType());
 
     //                10        20        30        40        50        60
     //      0123456789012345678901234567890123456789012345678901234567890123456789
@@ -1993,6 +1993,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testEnumeratedList() {
     configureByFiles(null, BASE_PATH + "servers.xml", BASE_PATH + "servers.xsd");
+    doDoTest(true, false);
+  }
+
+  public void testEnumeratedExtension() {
+    configureByFiles(null, BASE_PATH + "enumerations.xml", BASE_PATH + "enumerations.xsd");
     doDoTest(true, false);
   }
 

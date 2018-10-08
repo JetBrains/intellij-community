@@ -47,8 +47,6 @@ import javax.swing.*;
 import java.lang.reflect.Array;
 import java.util.*;
 
-import static com.intellij.util.AstLoadingFilter.assertTreeLoadingEnabled;
-
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFileImpl");
   static final String STUB_PSI_MISMATCH = "stub-psi mismatch";
@@ -191,7 +189,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final FileViewProvider viewProvider = getViewProvider();
     if (viewProvider.isPhysical()) {
       final VirtualFile vFile = viewProvider.getVirtualFile();
-      assertTreeLoadingEnabled(vFile);
+      AstLoadingFilter.assertTreeLoadingAllowed(vFile);
       if (myManager.isAssertOnFileLoading(vFile)) {
         LOG.error("Access to tree elements not allowed. path='" + vFile.getPresentableUrl() + "'");
       }
@@ -339,7 +337,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException", "CloneDoesntCallSuperClone"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   protected PsiFileImpl clone() {
     FileViewProvider viewProvider = getViewProvider();
     FileViewProvider providerCopy = viewProvider.clone();

@@ -66,7 +66,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
       }
     }
     if (callExpression != null) {
-      JavaMethodCallElement.showParameterHints(context, myConstructor, callExpression);
+      JavaMethodCallElement.showParameterHints(this, context, myConstructor, callExpression);
     }
   }
 

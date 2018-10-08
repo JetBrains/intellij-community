@@ -7,7 +7,6 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -98,7 +97,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       final String docStringSummary = getDocStringSummary(function);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(docStringSummary);
+        result.addItem("\n").addItem(escaped(docStringSummary));
       }
 
       return result.toString();
@@ -113,13 +112,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       final String docStringSummary = getDocStringSummary(cls);
       if (docStringSummary != null) {
-        result.addItem("\n").addItem(docStringSummary);
+        result.addItem("\n").addItem(escaped(docStringSummary));
       }
       else {
         Optional
           .ofNullable(cls.findInitOrNew(false, context))
           .map(PythonDocumentationProvider::getDocStringSummary)
-          .ifPresent(summary -> result.addItem("\n").addItem(summary));
+          .ifPresent(summary -> result.addItem("\n").addItem(escaped(summary)));
       }
 
       return result.toString();
@@ -413,8 +412,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
-                                             @NotNull Function<String, String> escapedNameMapper,
-                                             @NotNull Function<String, String> escaper,
+                                             @NotNull Function<? super String, String> escapedNameMapper,
+                                             @NotNull Function<? super String, String> escaper,
                                              boolean link,
                                              boolean linkAncestors,
                                              @NotNull TypeEvalContext context) {
@@ -448,7 +447,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   private static String describeSuperClass(@NotNull PyExpression expression,
-                                           @NotNull Function<String, String> escaper,
+                                           @NotNull Function<? super String, String> escaper,
                                            boolean link,
                                            @NotNull TypeEvalContext context) {
     if (link) {
@@ -574,7 +573,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (url != null) {
       return url;
     }
-    for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
+    for (PythonDocumentationLinkProvider provider : PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
         return providerUrl;
@@ -633,7 +632,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       final PyStdlibDocumentationLinkProvider stdlibDocumentationLinkProvider =
-        Extensions.findExtension(PythonDocumentationLinkProvider.EP_NAME, PyStdlibDocumentationLinkProvider.class);
+        PythonDocumentationLinkProvider.EP_NAME.findExtensionOrFail(PyStdlibDocumentationLinkProvider.class);
       final String url = stdlibDocumentationLinkProvider.getExternalDocumentationUrl(element, element);
       if (url == null) {
         return null;

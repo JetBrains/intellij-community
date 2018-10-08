@@ -7,7 +7,8 @@
   <logo url="/pycharm_edu_logo.png" textcolor="ffffff" progressColor="ffffff" progressY="281" progressTailIcon="/community_progress_tail.png"/>
   <about url="/pycharm_edu_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="e5e5e5"
          copyrightForeground="858585" linkColor="589df6"/>
-  <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>
+  <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico" svg="/PyCharmEdu.svg"/>
+  <icon-eap svg="/PyCharmEdu-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" edition="Edu" script="charm"/>
 

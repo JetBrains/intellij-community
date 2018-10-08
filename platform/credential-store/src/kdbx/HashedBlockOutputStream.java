@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.credentialStore.kdbx;
 
 import org.jetbrains.annotations.NotNull;
@@ -151,7 +150,7 @@ public class HashedBlockOutputStream extends OutputStream {
    * @param value the value to write
    * @throws IOException
    */
-  protected void writeInt(int value) throws IOException {
+  private void writeInt(int value) throws IOException {
     int output = Integer.reverseBytes(value);
     outputStream.write(new byte[]{(byte)(output >> 24), (byte)(output >> 16), (byte)(output >> 8), (byte)output});
   }

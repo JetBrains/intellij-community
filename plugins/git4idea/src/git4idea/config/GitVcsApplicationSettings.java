@@ -12,17 +12,14 @@ import org.jetbrains.annotations.Nullable;
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
 
-  /**
-   * Kinds of SSH executable to be used with the git
-   */
   public enum SshExecutable {
-    IDEA_SSH,
-    NATIVE_SSH,
+    BUILT_IN,
+    NATIVE,
   }
 
   public static class State {
     public String myPathToGit = null;
-    public SshExecutable SSH_EXECUTABLE = SshExecutable.NATIVE_SSH;
+    public SshExecutable SSH_EXECUTABLE = SshExecutable.NATIVE;
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
@@ -72,7 +69,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   }
 
   public boolean isUseIdeaSsh() {
-    return getIdeaSsh() == SshExecutable.IDEA_SSH;
+    return getIdeaSsh() == SshExecutable.BUILT_IN;
   }
 
   public boolean isIgnoreWhitespaces() {

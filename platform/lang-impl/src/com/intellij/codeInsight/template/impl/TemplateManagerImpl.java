@@ -513,7 +513,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return isApplicable(template, getApplicableContextTypes(file, offset));
   }
 
-  public static boolean isApplicable(TemplateImpl template, Set<TemplateContextType> contextTypes) {
+  public static boolean isApplicable(TemplateImpl template, Set<? extends TemplateContextType> contextTypes) {
     for (TemplateContextType type : contextTypes) {
       if (template.getTemplateContext().isEnabled(type)) {
         return true;

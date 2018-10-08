@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,11 +66,11 @@ public class SwitchStatementWithTooManyBranchesInspection extends BaseInspection
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       final int branchCount = SwitchUtils.calculateBranchCount(statement);
-      final int branchCountIncludingDefault = (branchCount < 0) ? -branchCount + 1 : branchCount;
-      if (branchCountIncludingDefault <= m_limit) {
+      final int branchCountExcludingDefault = (branchCount < 0) ? -branchCount - 1 : branchCount;
+      if (branchCountExcludingDefault <= m_limit) {
         return;
       }
-      registerStatementError(statement, Integer.valueOf(branchCountIncludingDefault));
+      registerStatementError(statement, Integer.valueOf(branchCountExcludingDefault));
     }
   }
 }

@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -90,7 +89,7 @@ public class FindUsagesManager {
   }
 
   public boolean canFindUsages(@NotNull final PsiElement element) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       try {
         if (factory.canFindUsages(element)) {
           return true;
@@ -156,7 +155,7 @@ public class FindUsagesManager {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       if (factory.canFindUsages(element)) {
         final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
         if (handler == FindUsagesHandler.NULL_HANDLER) return null;
@@ -170,7 +169,7 @@ public class FindUsagesManager {
 
   @Nullable
   public FindUsagesHandler getNewFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
-    for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
+    for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       if (factory.canFindUsages(element)) {
         Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
         FindUsagesHandlerFactory copy = (FindUsagesHandlerFactory)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass)
@@ -354,7 +353,7 @@ public class FindUsagesManager {
       try {
         for (final PsiElement element : elements) {
           handler.processElementUsages(element, usageInfoProcessor, optionsClone);
-          for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
+          for (CustomUsageSearcher searcher : CustomUsageSearcher.EP_NAME.getExtensionList()) {
             try {
               searcher.processElementUsages(element, processor, optionsClone);
             }
@@ -386,7 +385,7 @@ public class FindUsagesManager {
   }
 
   @NotNull
-  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
+  private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<? extends PsiElement> elementsToSearch,
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
                                                                           element -> convertToUsageTarget(element, findUsagesOptions));
@@ -615,7 +614,7 @@ public class FindUsagesManager {
   }
 
   public static String getHelpID(@NotNull PsiElement element) {
-    return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
+    return LanguageFindUsages.getHelpId(element);
   }
 
   public void rerunAndRecallFromHistory(@NotNull ConfigurableUsageTarget usageTarget) {

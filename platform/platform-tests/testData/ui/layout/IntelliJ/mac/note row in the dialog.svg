@@ -29,24 +29,24 @@
     <g fill="rgb(236,236,236)" font-family="sans-serif" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(0,137)" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(0,127)" stroke="rgb(236,236,236)">
       <rect x="0" width="300" height="20" y="0" clip-path="url(#1)" stroke="none"/>
       <text fill="rgb(29,29,29)" x="3" xml:space="preserve" y="14" clip-path="url(#1)" stroke="none">Should be an empty row above as a gap. </text>
       <text fill="rgb(36,112,179)" x="244" xml:space="preserve" y="14" clip-path="url(#1)" stroke="none">Click me</text>
       <text fill="rgb(29,29,29)" x="293" xml:space="preserve" y="14" clip-path="url(#1)" stroke="none">.</text>
     </g>
-    <g fill="rgb(29,29,29)" font-weight="bold" font-family="sans-serif" transform="translate(100,97)" stroke="rgb(29,29,29)">
+    <g fill="rgb(29,29,29)" font-weight="bold" font-family="sans-serif" transform="translate(100,87)" stroke="rgb(29,29,29)">
       <image x="0" y="0" clip-path="url(#2)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBoxSelected.png" height="22" preserveAspectRatio="none"/>
       <text x="25" xml:space="preserve" y="16" clip-path="url(#2)" stroke="none">&amp;Remember</text>
     </g>
-    <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(101,67)" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(101,57)" stroke="rgb(236,236,236)">
       <rect x="0" width="256" height="27" y="0" clip-path="url(#3)" stroke="none"/>
       <rect x="3" y="3" clip-path="url(#3)" fill="white" width="250" height="21" stroke="none"/>
     </g>
-    <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(101,67)" stroke="rgb(188,188,188)">
+    <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(101,57)" stroke="rgb(188,188,188)">
       <path d="M3 3 L253 3 L253 24 L3 24 L3 3 ZM4 4 L252 4 L252 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#4)" stroke="none"/>
     </g>
-    <g font-family="sans-serif" font-weight="bold" transform="translate(0,73)">
+    <g font-family="sans-serif" font-weight="bold" transform="translate(0,63)">
       <text x="0" xml:space="preserve" y="12" clip-path="url(#5)" stroke="none">Sudo password:</text>
     </g>
     <g font-family="sans-serif" font-weight="bold" transform="translate(0,10)">

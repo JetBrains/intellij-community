@@ -101,7 +101,6 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     return false;
   }
 
-  @SuppressWarnings("RedundantMethodOverride")
   @NotNull
   @Override
   protected Future<?> executeOnPooledThread(@NotNull Runnable task) {

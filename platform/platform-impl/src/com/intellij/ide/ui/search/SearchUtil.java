@@ -84,14 +84,14 @@ public class SearchUtil {
     }
   }
 
-  private static void processComponent(Configurable configurable, Set<OptionDescription> configurableOptions, JComponent component) {
+  private static void processComponent(Configurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
     if (component != null) {
       processUILabel(configurable.getDisplayName(), configurableOptions, null);
       processComponent(component, configurableOptions, null);
     }
   }
 
-  private static void processComponent(JComponent component, Set<OptionDescription> configurableOptions, String path) {
+  private static void processComponent(JComponent component, Set<? super OptionDescription> configurableOptions, String path) {
     if (component instanceof SkipSelfSearchComponent) return;
     final Border border = component.getBorder();
     if (border instanceof TitledBorder) {

@@ -274,7 +274,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     if (oldIdentifier == null) {
       throw new IncorrectOperationException();
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }
@@ -307,14 +307,14 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
       throw new IncorrectOperationException();
     }
 
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(((PsiNamedElement)element).getName());
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(((PsiNamedElement)element).getName());
     oldIdentifier.replace(identifier);
     return this;
   }
 
   private PsiElement replaceWithRegularImport(final PsiClass psiClass) throws IncorrectOperationException {
     PsiImportStaticStatement baseStatement = PsiTreeUtil.getParentOfType(getElement(), PsiImportStaticStatement.class);
-    PsiImportStatement statement = JavaPsiFacade.getInstance(getProject()).getElementFactory().createImportStatement(psiClass);
+    PsiImportStatement statement = JavaPsiFacade.getElementFactory(getProject()).createImportStatement(psiClass);
     statement = (PsiImportStatement) baseStatement.replace(statement);
     final PsiJavaCodeReferenceElement reference = statement.getImportReference();
     assert reference != null;

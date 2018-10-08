@@ -33,6 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <br><br>
  * Warning: be careful not to use the links in HTML content, use {@link #addAction(AnAction)}
  *
+ * @see NotificationAction
+ * @see com.intellij.notification.SingletonNotificationManager
+ *
  * @author spleaner
  * @author Alexander Lobas
  */

@@ -341,7 +341,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  public final String getCannotPreviewMessage(@Nullable final List<UsageInfo> infos) {
+  public final String getCannotPreviewMessage(@Nullable final List<? extends UsageInfo> infos) {
     return cannotPreviewMessage(infos);
   }
 

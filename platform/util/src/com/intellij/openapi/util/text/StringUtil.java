@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //TeamCity inherits StringUtil: do not add private constructors!!!
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class StringUtil extends StringUtilRt {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.text.StringUtil");
 
@@ -1261,7 +1261,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     final com.intellij.util.text.StringTokenizer tokenizer = new com.intellij.util.text.StringTokenizer(s, separators);
     return new Iterable<String>() {
@@ -1290,7 +1289,6 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static Iterable<String> tokenize(@NotNull final StringTokenizer tokenizer) {
     return new Iterable<String>() {
       @NotNull
@@ -1433,7 +1431,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T> String join(@NotNull T[] items, @NotNull Function<T, String> f, @NotNull String separator) {
+  public static <T> String join(@NotNull T[] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
     return join(Arrays.asList(items), f, separator);
   }
 
@@ -1577,12 +1575,15 @@ public class StringUtil extends StringUtilRt {
     return formatDuration(duration, " ");
   }
 
+  private static final String[] TIME_UNITS = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
+  private static final long[] TIME_MULTIPLIERS = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+
   /** Formats given duration as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration, @NotNull String unitSeparator) {
-    String[] units = {"ms", "s", "m", "h", "d", "mo", "yr", "c", "ml", "ep"};
-    long[] multipliers = {1, 1000, 60, 60, 24, 30, 12, 100, 10, 10000};
+    String[] units = TIME_UNITS;
+    long[] multipliers = TIME_MULTIPLIERS;
 
     StringBuilder sb = new StringBuilder();
     long count = duration, remainder;
@@ -2021,13 +2022,25 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static CharSequence first(@NotNull CharSequence text, final int length, final boolean appendEllipsis) {
-    return text.length() > length ? text.subSequence(0, length) + (appendEllipsis ? "..." : "") : text;
+    if (text.length() <= length) {
+      return text;
+    }
+    if (appendEllipsis) {
+      return text.subSequence(0, length) + "...";
+    }
+    return text.subSequence(0, length);
   }
 
   @NotNull
   @Contract(pure = true)
   public static CharSequence last(@NotNull CharSequence text, final int length, boolean prependEllipsis) {
-    return text.length() > length ? (prependEllipsis ? "..." : "") + text.subSequence(text.length() - length, text.length()) : text;
+    if (text.length() <= length) {
+      return text;
+    }
+    if (prependEllipsis) {
+      return "..." + text.subSequence(text.length() - length, text.length());
+    }
+    return text.subSequence(text.length() - length, text.length());
   }
 
   @NotNull
@@ -2521,7 +2534,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int getOccurrenceCount(@NotNull String text, final char c) {
     int res = 0;
     int i = 0;
@@ -2539,7 +2551,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  @SuppressWarnings("Duplicates")
   public static int getOccurrenceCount(@NotNull String text, @NotNull String s) {
     int res = 0;
     int i = 0;

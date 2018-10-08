@@ -302,7 +302,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myQNameUsagesRequests);
       for (SmartPsiElementPointer id : sortedIDs) {
         final UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(id), UClass.class));
-        String qualifiedName = uClass != null ? uClass.getQualifiedName() : null;
+        String qualifiedName = uClass != null ? ReadAction.compute(() -> uClass.getQualifiedName()) : null;
         if (qualifiedName != null) {
           List<Runnable> callbacks = myQNameUsagesRequests.get(id);
           final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(context.getProject());

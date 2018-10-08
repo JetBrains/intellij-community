@@ -22,7 +22,7 @@ public class AntFinishedExecutionEvent extends AntExecutionEvent{
   private final int myErrorCount;
 
   public enum Status {
-    SUCCESS, CANCELED, FAILURE;
+    SUCCESS, CANCELED, FAILURE
   }
 
   AntFinishedExecutionEvent(AntBuildFile buildFile, Status status, int errorCount) {

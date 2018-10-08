@@ -79,7 +79,11 @@
     <localInspection language="JSON" shortName="JsonSchemaCompliance"
                      bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection"/>
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaRefReference"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection" />
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>

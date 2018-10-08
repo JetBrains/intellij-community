@@ -14,9 +14,9 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
     return node.toString();
   };
-  private final Convertor<TreePath, String> myToStringConvertor;
+  private final Convertor<? super TreePath, String> myToStringConvertor;
 
-  public TreeTableSpeedSearch(TreeTable tree, Convertor<TreePath, String> toStringConvertor) {
+  public TreeTableSpeedSearch(TreeTable tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree);
     myToStringConvertor = toStringConvertor;
   }

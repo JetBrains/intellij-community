@@ -100,7 +100,6 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
           dependency.getScope().setStringValue("test");
         }
       }
-      ;
     });
   }
 

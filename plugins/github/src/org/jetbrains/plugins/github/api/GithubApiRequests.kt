@@ -134,6 +134,9 @@ object GithubApiRequests {
           GithubApiPagesLoader.Request(get(server, username, repoName, issueId), ::get)
 
         @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
         fun get(server: GithubServerPath, username: String, repoName: String, issueId: String,
                 pagination: GithubRequestPagination? = null) =
           get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix,
@@ -160,6 +163,26 @@ object GithubApiRequests {
         Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
                                              GithubPullRequestRequest(title, description, head, base))
           .withOperationName("create pull request in $username/$repoName")
+
+      @JvmStatic
+      fun merge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
+          .withOperationName("merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun squashMerge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
+          .withOperationName("squash and merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun rebaseMerge(pullRequest: GithubPullRequest, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRebaseRequest(headSha))
+          .withOperationName("rebase and merge pull request ${pullRequest.number}")
+
+      private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
     }
   }
 

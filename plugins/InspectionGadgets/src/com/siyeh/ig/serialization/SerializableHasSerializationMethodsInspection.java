@@ -26,15 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class SerializableHasSerializationMethodsInspection
-  extends SerializableInspectionBase {
+public class SerializableHasSerializationMethodsInspection extends SerializableInspectionBase {
 
   public boolean ignoreClassWithoutFields = false;
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return SerializableInspectionUtil.createOptions(this);
-  }
 
   @Override
   @NotNull

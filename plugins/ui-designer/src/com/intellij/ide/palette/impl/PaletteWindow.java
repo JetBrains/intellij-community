@@ -7,7 +7,6 @@ import com.intellij.ide.palette.PaletteItem;
 import com.intellij.ide.palette.PaletteItemProvider;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
@@ -64,7 +63,7 @@ public class PaletteWindow extends JPanel implements LightToolWindowContent, Dat
 
   public PaletteWindow(Project project) {
     myProject = project;
-    myProviders = Extensions.getExtensions(PaletteItemProvider.EP_NAME, project);
+    myProviders = PaletteItemProvider.EP_NAME.getExtensions(project);
 
     setLayout(new GridLayout(1, 1));
     myScrollPane.addMouseListener(new MyScrollPanePopupHandler());

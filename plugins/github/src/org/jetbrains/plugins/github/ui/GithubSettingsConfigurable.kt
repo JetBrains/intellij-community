@@ -6,7 +6,12 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.authentication.accounts.*
+import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
+import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -15,7 +20,8 @@ class GithubSettingsConfigurable internal constructor(private val project: Proje
                                                       private val accountManager: GithubAccountManager,
                                                       private val defaultAccountHolder: GithubProjectDefaultAccountHolder,
                                                       private val executorFactory: GithubApiRequestExecutor.Factory,
-                                                      private val accountInformationProvider: GithubAccountInformationProvider) :
+                                                      private val avatarLoader: CachingGithubUserAvatarLoader,
+                                                      private val imageResizer: GithubImageResizer) :
   ConfigurableBase<GithubSettingsPanel, GithubSettingsConfigurable.GithubSettingsHolder>("settings.github",
                                                                                          GithubUtil.SERVICE_DISPLAY_NAME,
                                                                                          "settings.github"),
@@ -36,7 +42,7 @@ class GithubSettingsConfigurable internal constructor(private val project: Proje
   }
 
   override fun createUi(): GithubSettingsPanel {
-    return GithubSettingsPanel(project, executorFactory, accountInformationProvider)
+    return GithubSettingsPanel(project, executorFactory, avatarLoader, imageResizer)
   }
 
   inner class GithubSettingsHolder internal constructor(val application: GithubSettings,

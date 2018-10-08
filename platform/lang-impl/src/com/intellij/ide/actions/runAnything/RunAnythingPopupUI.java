@@ -70,7 +70,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.ALT_IS_PRESSED;
 import static com.intellij.ide.actions.runAnything.RunAnythingAction.SHIFT_IS_PRESSED;
@@ -174,7 +173,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
       @Override
       public void focusLost(FocusEvent e) {
         final ActionCallback result = new ActionCallback();
-        //noinspection SSBasedInspection
         UIUtil.invokeLaterIfNeeded(() -> {
           try {
             if (myCalcThread != null) {
@@ -603,7 +601,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
   }
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked"})
+  @SuppressWarnings({"SSBasedInspection"})
   private class CalcThread implements Runnable {
     @NotNull private final Project myProject;
     @NotNull private final String myPattern;
@@ -634,7 +632,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
           myResultsList.getEmptyText().setText("Searching...");
 
           if (getSearchingModel(myResultsList) != null) {
-            //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (DumbService.getInstance(myProject).isDumb()) {
@@ -769,7 +766,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
               int shift = 0;
               int i = index + 1;
               for (Object o : result) {
-                //noinspection unchecked
                 myListModel.insertElementAt(o, i);
                 shift++;
                 i++;

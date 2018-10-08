@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
@@ -60,13 +47,17 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
 
         PsiType nonVoid = PsiType.VOID.equals(returnType) && !isCompileStatic(callExpression) ? PsiType.NULL : returnType;
 
-        PsiType normalized = nonVoid instanceof GrLiteralClassType
-                             ? nonVoid
-                             : TypesUtil.substituteAndNormalizeType(nonVoid, resolveResult.getSubstitutor(), resolveResult.getSpreadState(),
-                                                                    callExpression);
-
-        LOG.assertTrue(normalized != null, "return type: " + returnType + "; substitutor: " + resolveResult.getSubstitutor());
-
+        PsiType normalized;
+        if (nonVoid instanceof GrLiteralClassType) {
+          normalized = nonVoid;
+        }
+        else {
+          boolean needsSubstitutor = hasGenerics(nonVoid);
+          PsiSubstitutor substitutor = needsSubstitutor ? resolveResult.getSubstitutor() : PsiSubstitutor.EMPTY;
+          normalized = TypesUtil.substituteAndNormalizeType(nonVoid, substitutor, resolveResult.getSpreadState(), callExpression);
+          LOG.assertTrue(normalized != null, "return type: " + returnType + "; substitutor: " + substitutor);
+        }
+        
         if (result == null || normalized.isAssignableFrom(result)) {
           result = normalized;
         }
@@ -195,4 +186,38 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     return null;
   }
 
+  private static boolean hasGenerics(@NotNull PsiType type) {
+    if (!Registry.is("groovy.return.type.optimization")) {
+      // optimization is disabled, fall back to old behaviour
+      return true;
+    }
+    return type.accept(new PsiTypeVisitor<Boolean>() {
+
+      @Nullable
+      @Override
+      public Boolean visitClassType(PsiClassType classType) {
+        if (classType.resolve() instanceof PsiTypeParameter) {
+          return true;
+        }
+        if (!classType.hasParameters()) return null;
+        for (PsiType parameter : classType.getParameters()) {
+          if (parameter.accept(this) == Boolean.TRUE) return true;
+        }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitArrayType(PsiArrayType arrayType) {
+        return arrayType.getComponentType().accept(this);
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        return bound == null ? null : bound.accept(this);
+      }
+    }) == Boolean.TRUE;
+  }
 }

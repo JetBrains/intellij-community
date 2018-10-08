@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -89,7 +90,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.builder.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "StringBuilder");
     }
 
     @Override

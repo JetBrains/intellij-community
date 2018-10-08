@@ -44,7 +44,7 @@ public class WSLDistributionWithRoot extends WSLDistribution {
     String wslRootInHost = DISTRIBUTION_TO_ROOTFS.getValue().get(wslDistribution.getMsId());
 
     if (wslRootInHost == null) {
-      LOG.warn("WSL rootfs is null");
+      LOG.warn("WSL (" + wslDistribution.getPresentableName() +") rootfs is null");
     }
     else if (!FileUtil.exists(wslRootInHost)) {
       LOG.warn("WSL rootfs doesn't exist: " + wslRootInHost);

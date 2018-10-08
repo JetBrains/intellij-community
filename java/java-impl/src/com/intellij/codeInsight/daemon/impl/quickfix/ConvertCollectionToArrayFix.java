@@ -65,7 +65,7 @@ public class ConvertCollectionToArrayFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String replacement = ParenthesesUtils.getText(myCollectionExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) +
                          ".toArray(" + myNewArrayText + ")";
     myExpressionToReplace.replace(factory.createExpressionFromText(replacement, myCollectionExpression));

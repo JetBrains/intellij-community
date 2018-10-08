@@ -80,6 +80,7 @@ class BuildOptions {
 
   /**
    * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.CompilationPartsMetadata} serialized into json format
    */
   String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
@@ -112,4 +113,14 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
+
+  /**
+   * Specifies JRE version to be bundled with distributions, 8 by default.
+   */
+  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+
+  /**
+   * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
+   */
+  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 }

@@ -29,11 +29,11 @@ import org.jetbrains.annotations.NotNull;
 public class SequentialLimitedLifoExecutor<Task> implements Disposable {
 
   private final int myMaxTasks;
-  @NotNull private final ThrowableConsumer<Task, ? extends Throwable> myLoadProcess;
+  @NotNull private final ThrowableConsumer<? super Task, ? extends Throwable> myLoadProcess;
   @NotNull private final QueueProcessor<Task> myLoader;
 
   public SequentialLimitedLifoExecutor(Disposable parentDisposable, int maxTasks,
-                                       @NotNull ThrowableConsumer<Task, ? extends Throwable> loadProcess) {
+                                       @NotNull ThrowableConsumer<? super Task, ? extends Throwable> loadProcess) {
     myMaxTasks = maxTasks;
     myLoadProcess = loadProcess;
     myLoader = new QueueProcessor<>(new DetailsLoadingTask());

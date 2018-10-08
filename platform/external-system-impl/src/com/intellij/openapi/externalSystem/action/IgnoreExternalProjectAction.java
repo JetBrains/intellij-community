@@ -30,11 +30,19 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -45,32 +53,48 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   private static final Logger LOG = Logger.getInstance(IgnoreExternalProjectAction.class);
 
   public IgnoreExternalProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("action.ignore.external.project.text", "external"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.ignore.external.project.description", "external"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("action.ignore.external.projects.text", "external", "project"));
+    getTemplatePresentation()
+      .setDescription(ExternalSystemBundle.message("action.ignore.external.projects.description", "external", "project"));
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ProjectSystemId projectSystemId = getSystemId(e);
-    final ExternalSystemNode<ExternalConfigPathAware> projectNode = getProjectNode(e);
-    if (projectSystemId == null || projectNode == null || projectNode.getData() == null) return;
-
-    projectNode.setIgnored(state);
+    final List<ExternalSystemNode<ExternalConfigPathAware>> projectNodes = getProjectNodes(e);
+    if (projectNodes.isEmpty()) return;
 
     final Project project = getProject(e);
 
-    final String externalProjectPath = projectNode.getData().getLinkedExternalProjectPath();
-    final ExternalProjectInfo externalProjectInfo =
-      ExternalSystemUtil.getExternalProjectInfo(project, projectSystemId, externalProjectPath);
-    if (externalProjectInfo == null || externalProjectInfo.getExternalProjectStructure() == null) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(String.format("external project data not found, path: %s, data: %s", externalProjectPath, externalProjectInfo));
-      }
-      return;
-    }
+    projectNodes.forEach(projectNode -> projectNode.setIgnored(state));
 
-    final DataNode<ProjectData> projectDataNode = externalProjectInfo.getExternalProjectStructure();
-    ServiceManager.getService(ProjectDataManager.class).importData(projectDataNode, project, true);
+    Set<DataNode<ProjectData>> uniqueExternalProjects = projectNodes.stream()
+      .map(
+        projectNode -> {
+          final String externalProjectPath = projectNode.getData().getLinkedExternalProjectPath();
+          final ExternalProjectInfo externalProjectInfo =
+            ExternalSystemUtil.getExternalProjectInfo(project, projectSystemId, externalProjectPath);
+          final DataNode<ProjectData> projectDataNode =
+            externalProjectInfo == null ? null : externalProjectInfo.getExternalProjectStructure();
+
+          if (projectDataNode == null && LOG.isDebugEnabled()) {
+            LOG.debug(String.format("external project data not found, path: %s, data: %s", externalProjectPath, externalProjectInfo));
+          }
+          return projectDataNode;
+        }
+      )
+      .filter(Objects::nonNull)
+      .collect(Collectors.toSet());
+
+    // async import to not block UI on big projects
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, e.getPresentation().getText(), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        uniqueExternalProjects.forEach(
+          externalProjectInfo -> ServiceManager.getService(ProjectDataManager.class).importData(externalProjectInfo, project, true)
+        );
+      }
+    });
   }
 
   @Override
@@ -78,13 +102,14 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
     boolean selected = super.isSelected(e);
     ProjectSystemId systemId = getSystemId(e);
     final String systemIdName = systemId != null ? systemId.getReadableName() : "external";
+    final String pluralizedProjects = StringUtil.pluralize("project", getProjectNodes(e).size());
     if (selected) {
-      setText(e, ExternalSystemBundle.message("action.unignore.external.project.text", systemIdName));
-      setDescription(e, ExternalSystemBundle.message("action.unignore.external.project.description", systemIdName));
+      setText(e, ExternalSystemBundle.message("action.unignore.external.projects.text", systemIdName, pluralizedProjects));
+      setDescription(e, ExternalSystemBundle.message("action.unignore.external.projects.description", systemIdName, pluralizedProjects));
     }
     else {
-      setText(e, ExternalSystemBundle.message("action.ignore.external.project.text", systemIdName));
-      setDescription(e, ExternalSystemBundle.message("action.ignore.external.project.description", systemIdName));
+      setText(e, ExternalSystemBundle.message("action.ignore.external.projects.text", systemIdName, pluralizedProjects));
+      setDescription(e, ExternalSystemBundle.message("action.ignore.external.projects.description", systemIdName, pluralizedProjects));
     }
     return selected;
   }
@@ -92,22 +117,22 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
-    return getProjectNode(e) != null;
+    return !getProjectNodes(e).isEmpty();
   }
 
   @Override
   protected boolean doIsSelected(@NotNull AnActionEvent e) {
-    final ExternalSystemNode projectNode = getProjectNode(e);
-    if (projectNode == null) return false;
-    return projectNode.isIgnored();
+    return ContainerUtil.exists(getProjectNodes(e), projectNode -> projectNode.isIgnored());
   }
 
-  @Nullable
-  private static ExternalSystemNode<ExternalConfigPathAware> getProjectNode(@NotNull AnActionEvent e) {
+  @NotNull
+  private static List<ExternalSystemNode<ExternalConfigPathAware>> getProjectNodes(@NotNull AnActionEvent e) {
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
-    if (selectedNodes == null || selectedNodes.size() != 1) return null;
-    final ExternalSystemNode<?> node = selectedNodes.get(0);
-    //noinspection unchecked
-    return (node instanceof ModuleNode || node instanceof ProjectNode) ? (ExternalSystemNode<ExternalConfigPathAware>)node : null;
+    if (selectedNodes == null || selectedNodes.isEmpty()) return Collections.emptyList();
+
+    return selectedNodes.stream()
+      .map(node -> (node instanceof ModuleNode || node instanceof ProjectNode) ? (ExternalSystemNode<ExternalConfigPathAware>)node : null)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 }

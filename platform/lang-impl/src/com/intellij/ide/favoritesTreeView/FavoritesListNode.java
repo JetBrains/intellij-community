@@ -76,7 +76,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
 
   @NotNull
   private static Collection<AbstractTreeNode> createFavoriteRoots(Project project,
-                                                                  @NotNull Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
+                                                                  @NotNull Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
                                                                   final AbstractTreeNode me) {
     Collection<AbstractTreeNode> result = new ArrayList<>();
     processUrls(project, urls, result, me);
@@ -84,8 +84,8 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
   }
 
   private static void processUrls(Project project,
-                                  Collection<TreeItem<Pair<AbstractUrl, String>>> urls,
-                                  Collection<AbstractTreeNode> result, final AbstractTreeNode me) {
+                                  Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
+                                  Collection<? super AbstractTreeNode> result, final AbstractTreeNode me) {
     for (TreeItem<Pair<AbstractUrl, String>> pair : urls) {
       AbstractUrl abstractUrl = pair.getData().getFirst();
       final Object[] path = abstractUrl.createPath(project);

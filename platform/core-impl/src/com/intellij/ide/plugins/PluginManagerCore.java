@@ -335,6 +335,19 @@ public class PluginManagerCore {
     ourPluginClasses.addPluginClass(pluginId);
   }
 
+  /**
+   * Creates an exception caused by a problem in a plugin's code.
+   * @param pluginClass a problematic class which caused the error
+   */
+  @NotNull
+  public static PluginException createPluginException(@NotNull String errorMessage, @Nullable Throwable cause,
+                                                      @NotNull Class pluginClass) {
+    ClassLoader classLoader = pluginClass.getClassLoader();
+    PluginId pluginId = classLoader instanceof PluginClassLoader ? ((PluginClassLoader)classLoader).getPluginId()
+                                                                 : getPluginByClassName(pluginClass.getName());
+    return new PluginException(errorMessage, cause, pluginId);
+  }
+
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
     if (className.startsWith("java.") || className.startsWith("javax.") || className.startsWith("kotlin.") || className.startsWith("groovy.")) {
@@ -855,7 +868,7 @@ public class PluginManagerCore {
     return false;
   }
 
-  private static void resolveOptionalDescriptors(@NotNull String fileName,
+  public static void resolveOptionalDescriptors(@NotNull String fileName,
                                                 @NotNull IdeaPluginDescriptorImpl descriptor,
                                                 @NotNull Function<? super String, ? extends IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
     Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();

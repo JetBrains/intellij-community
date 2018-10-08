@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -43,7 +42,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     this.myIsSelectedTextEnabled = isSelectedTextEnabled;
     setTitle(CodeEditorBundle.message("export.to.html.title"));
     myExtensions = new ArrayList<>();
-    for (PrintOption extension : Extensions.getExtensions(PrintOption.EP_NAME)) {
+    for (PrintOption extension : PrintOption.EP_NAME.getExtensionList()) {
       myExtensions.add(extension.createConfigurable());
     }
     init();

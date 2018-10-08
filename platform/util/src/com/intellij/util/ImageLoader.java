@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
@@ -387,6 +388,28 @@ public class ImageLoader implements Serializable {
     return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
   }
 
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetSize) {
+    return scaleImage(image, targetSize, targetSize);
+  }
+
+  @NotNull
+  public static Image scaleImage(@NotNull Image image, int targetWidth, int targetHeight) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).scale(targetWidth, targetHeight);
+    }
+    int w = image.getWidth(null);
+    int h = image.getHeight(null);
+
+    if (w <= 0 || h <= 0 || w == targetWidth && h == targetHeight) {
+      return image;
+    }
+
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT,
+                        targetWidth, targetHeight,
+                        (BufferedImageOp[])null);
+  }
+
   @Nullable
   public static Image loadFromResource(@NonNls @NotNull String s) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
@@ -399,6 +422,10 @@ public class ImageLoader implements Serializable {
     ScaleContext ctx = ScaleContext.create();
     return ImageDescList.create(path, aClass, UIUtil.isUnderDarcula(), true, ctx).
       load(ImageConverterChain.create().withHiDPI(ctx));
+  }
+
+  public static Image loadFromBytes(@NotNull final byte[] bytes) {
+    return loadFromStream(new ByteArrayInputStream(bytes));
   }
 
   public static Image loadFromStream(@NotNull final InputStream inputStream) {

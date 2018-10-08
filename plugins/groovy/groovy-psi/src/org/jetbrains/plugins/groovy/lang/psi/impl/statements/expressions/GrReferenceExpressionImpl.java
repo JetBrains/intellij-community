@@ -485,7 +485,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
       if (element instanceof PsiMethod && target instanceof PsiMethod) {
         PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
-        //noinspection SuspiciousMethodCalls
         if (Arrays.asList(superMethods).contains(element)) {
           return true;
         }

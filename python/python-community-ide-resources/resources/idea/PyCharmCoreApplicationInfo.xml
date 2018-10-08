@@ -7,7 +7,8 @@
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="114" progressY="278" progressHeight="3"/>
   <about url="/pycharm_core_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="cccccc"
          copyrightForeground="cccccc" linkColor="ffffff"/>
-  <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
+  <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico" svg="/PyCharmCore.svg"/>
+  <icon-eap svg="/PyCharmCore-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" edition="Community Edition" script="charm" motto="Python IDE for Professional Developers"/>
 

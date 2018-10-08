@@ -17,29 +17,26 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenAndConfigureKotlinJvm() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JVM
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     configureKotlinJvmFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     saveAndCloseCurrentEditor()
     editPomXml(
-      kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind
+      kotlinVersion = kotlinVersion
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
+        expectedJars = kotlinProjects.getValue(Projects.MavenProjectJvm).jars.getJars(kotlinVersion)
       )
       projectStructureDialogModel.checkFacetInOneModule(
         defaultFacetSettings[TargetPlatform.JVM18]!!,
@@ -53,29 +50,26 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   fun createMavenAndConfigureKotlinJs() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JS
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
       artifact = projectName)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     configureKotlinJsFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     saveAndCloseCurrentEditor()
     editPomXml(
-      kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind
+      kotlinVersion = kotlinVersion
     )
-    waitAMoment(extraTimeOut)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
       projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars(kotlinVersion)
+        expectedJars = kotlinProjects.getValue(Projects.MavenProjectJs).jars.getJars(kotlinVersion)
       )
       projectStructureDialogModel.checkFacetInOneModule(
         defaultFacetSettings[TargetPlatform.JavaScript]!!,
@@ -91,23 +85,4 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       }
       else true
 
-  /*@Test
-  @Ignore
-  @JvmName("maven_jvm_from_file")
-  fun createMavenAndConfigureKotlinJvmFromFile() {
-    val groupName = "group_maven_jvm"
-    val artifactName = "art_maven_jvm"
-    createMavenProject(
-        projectPath = projectFolder.absolutePath,
-        group = groupName,
-        artifact = artifactName)
-    waitAMoment(10000)
-//    configureKotlinJvm(libInPlugin = false)
-    createKotlinFile(
-        projectName = testMethod.methodName,
-        packageName = "src/main/java",
-        fileName = "K1"
-    )
-    waitAMoment(10000)
-  }*/
 }

@@ -279,7 +279,6 @@ public class TypeInferenceHelper {
       this.flow = scope.getControlFlow();
       this.flowByElements = Arrays.stream(flow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
       List<TypeDfaState> noTypes = new ArrayList<>();
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < flow.length; i++) {
         noTypes.add(new TypeDfaState());
       }

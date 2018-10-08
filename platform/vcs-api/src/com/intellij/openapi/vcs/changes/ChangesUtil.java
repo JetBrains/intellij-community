@@ -125,12 +125,12 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static List<FilePath> getPaths(@NotNull Collection<Change> changes) {
+  public static List<FilePath> getPaths(@NotNull Collection<? extends Change> changes) {
     return getPaths(changes.stream()).collect(toList());
   }
 
   @NotNull
-  public static List<File> getIoFilesFromChanges(@NotNull Collection<Change> changes) {
+  public static List<File> getIoFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getPaths(changes.stream())
       .map(FilePath::getIOFile)
       .distinct()
@@ -168,7 +168,7 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
+  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<? extends Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
@@ -326,7 +326,7 @@ public class ChangesUtil {
   }
 
   @NotNull
-  public static List<File> filePathsToFiles(@NotNull Collection<FilePath> filePaths) {
+  public static List<File> filePathsToFiles(@NotNull Collection<? extends FilePath> filePaths) {
     return filePaths.stream()
       .map(FilePath::getIOFile)
       .collect(toList());

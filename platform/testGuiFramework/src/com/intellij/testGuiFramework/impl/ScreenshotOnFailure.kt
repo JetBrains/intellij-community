@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.framework.IdeTestApplication
+import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.fest.swing.core.BasicComponentPrinter
 import org.fest.swing.exception.ComponentLookupException
@@ -44,6 +44,7 @@ class ScreenshotOnFailure: TestWatcher() {
         val file = getOrCreateScreenshotFile(screenshotName)
         if (t is ComponentLookupException) LOG.error("${getHierarchy()} \n caused by:", t)
         myScreenshotTaker.safeTakeScreenshotAndSave(file)
+        println("Screenshot saved to $file")
         LOG.info("Screenshot: $file")
       }
       catch (e: Exception) {
@@ -52,9 +53,9 @@ class ScreenshotOnFailure: TestWatcher() {
     }
 
     private fun getOrCreateScreenshotFile(screenshotName: String): File {
-      var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.jpg")
+      var file = File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.jpg")
       if (file.exists())
-        file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.jpg")
+        file = File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.${getDateAndTime()}.jpg")
       file.delete()
       return file
     }

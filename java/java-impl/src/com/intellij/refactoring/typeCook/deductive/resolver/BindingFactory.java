@@ -48,7 +48,7 @@ public class BindingFactory {
   private final Project myProject;
   private final PsiTypeVariableFactory myFactory;
 
-  private PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
+  private static PsiClass[] getGreatestLowerClasses(final PsiClass aClass, final PsiClass bClass) {
     if (InheritanceUtil.isInheritorOrSelf(aClass, bClass, true)) {
       return new PsiClass[]{aClass};
     }
@@ -132,7 +132,7 @@ public class BindingFactory {
             theSubst = theSubst.put(aParm, apply(aType));
           }
 
-          return JavaPsiFacade.getInstance(theClass.getProject()).getElementFactory().createType(theClass, theSubst);
+          return JavaPsiFacade.getElementFactory(theClass.getProject()).createType(theClass, theSubst);
         }
         else {
           return type;
@@ -355,7 +355,7 @@ public class BindingFactory {
 
               if (kindX + kindY == 5) {
                 try {
-                  final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+                  final PsiElementFactory f = JavaPsiFacade.getElementFactory(myProject);
                   final PsiType cloneable = f.createTypeFromText("java.lang.Cloneable", null);
                   final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
                   final PsiType serializable = f.createTypeFromText("java.io.Serializable", null);
@@ -657,7 +657,7 @@ public class BindingFactory {
             theSubst = theSubst.put(parm, substitute(type));
           }
 
-          return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+          return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
         }
       }
       return t;
@@ -835,61 +835,58 @@ public class BindingFactory {
   private Binding unify(final PsiType x, final PsiType y, final Unifier unifier) {
     final int indicator = (x instanceof PsiTypeVariable ? 1 : 0) + (y instanceof PsiTypeVariable ? 2 : 0);
 
-    switch (indicator) {
-    case 0:
-           if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
-             return unifier.unify(x, y);
-           }
-           else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
-             final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
-             final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
+    if (indicator == 0) {
+      if (x instanceof PsiWildcardType || y instanceof PsiWildcardType) {
+        return unifier.unify(x, y);
+      }
+      else if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
+        final PsiType xType = x instanceof PsiArrayType ? ((PsiArrayType)x).getComponentType() : x;
+        final PsiType yType = y instanceof PsiArrayType ? ((PsiArrayType)y).getComponentType() : y;
 
-             return unify(xType, yType, unifier);
-           }
-           else if (x instanceof PsiClassType && y instanceof PsiClassType) {
-             final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
-             final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
+        return unify(xType, yType, unifier);
+      }
+      else if (x instanceof PsiClassType && y instanceof PsiClassType) {
+        final PsiClassType.ClassResolveResult resultX = Util.resolveType(x);
+        final PsiClassType.ClassResolveResult resultY = Util.resolveType(y);
 
-             final PsiClass xClass = resultX.getElement();
-             final PsiClass yClass = resultY.getElement();
+        final PsiClass xClass = resultX.getElement();
+        final PsiClass yClass = resultY.getElement();
 
-             if (xClass != null && yClass != null) {
-               final PsiSubstitutor ySubst = resultY.getSubstitutor();
+        if (xClass != null && yClass != null) {
+          final PsiSubstitutor ySubst = resultY.getSubstitutor();
 
-               final PsiSubstitutor xSubst = resultX.getSubstitutor();
+          final PsiSubstitutor xSubst = resultX.getSubstitutor();
 
-               if (!xClass.equals(yClass)) {
-                 return null;
-               }
+          if (!xClass.equals(yClass)) {
+            return null;
+          }
 
-               Binding b = create();
+          Binding b = create();
 
-               for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
-                 final PsiType xType = xSubst.substitute(aParm);
-                 final PsiType yType = ySubst.substitute(aParm);
+          for (final PsiTypeParameter aParm : xSubst.getSubstitutionMap().keySet()) {
+            final PsiType xType = xSubst.substitute(aParm);
+            final PsiType yType = ySubst.substitute(aParm);
 
-                 final Binding b1 = unify(xType, yType, unifier);
+            final Binding b1 = unify(xType, yType, unifier);
 
-                 if (b1 == null) {
-                   return null;
-                 }
+            if (b1 == null) {
+              return null;
+            }
 
-                 b = b.compose(b1);
-               }
+            b = b.compose(b1);
+          }
 
-               return b;
-             }
-           }
-           else if (y instanceof Bottom) {
-             return create();
-           }
-           else {
-             return null;
-           }
-
-    default:
-           return unifier.unify(x, y);
+          return b;
+        }
+      }
+      else if (y instanceof Bottom) {
+        return create();
+      }
+      else {
+        return null;
+      }
     }
+    return unifier.unify(x, y);
   }
 
   public Binding riseWithWildcard(final PsiType x, final PsiType y, final Set<Constraint> constraints) {
@@ -1055,7 +1052,7 @@ public class BindingFactory {
               final PsiSubstitutor y2aSubst = TypeConversionUtil.getClassSubstitutor(yClass, descendant, ySubst);
               LOG.assertTrue(x2aSubst != null && y2aSubst != null);
 
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               union(factory.createType(descendant, x2aSubst), factory.createType(descendant, y2aSubst), list);
             }
@@ -1081,7 +1078,7 @@ public class BindingFactory {
         if (x instanceof PsiArrayType || y instanceof PsiArrayType) {
           if (x instanceof PsiClassType || y instanceof PsiClassType) {
             try {
-              final PsiElementFactory f = JavaPsiFacade.getInstance(myProject).getElementFactory();
+              final PsiElementFactory f = JavaPsiFacade.getElementFactory(myProject);
               final PsiType keyType = x instanceof PsiClassType ? x : y;
 
               final PsiType object = f.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, null);
@@ -1118,7 +1115,7 @@ public class BindingFactory {
             final Binding risen = rise(x, y, null);
 
             if (risen == null) {
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               list.addFirst(Pair.create(Util.banalize(factory.createType(xClass, factory.createRawSubstitutor(xClass))),
                                         create()));
@@ -1138,7 +1135,7 @@ public class BindingFactory {
               final PsiSubstitutor x2aSubst = TypeConversionUtil.getSuperClassSubstitutor(ancestor, xClass, xSubst);
               final PsiSubstitutor y2aSubst = TypeConversionUtil.getSuperClassSubstitutor(ancestor, yClass, ySubst);
 
-              final PsiElementFactory factory = JavaPsiFacade.getInstance(xClass.getProject()).getElementFactory();
+              final PsiElementFactory factory = JavaPsiFacade.getElementFactory(xClass.getProject());
 
               intersect(factory.createType(ancestor, x2aSubst), factory.createType(ancestor, y2aSubst), list);
             }

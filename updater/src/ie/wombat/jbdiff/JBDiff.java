@@ -217,7 +217,6 @@ public class JBDiff {
 
     //noinspection UnusedAssignment
     V = null;
-    System.gc();
   }
 
   /**
@@ -409,7 +408,6 @@ public class JBDiff {
 
     //noinspection UnusedAssignment
     I = null;
-    System.gc();
 
     /* Write diff block */
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);

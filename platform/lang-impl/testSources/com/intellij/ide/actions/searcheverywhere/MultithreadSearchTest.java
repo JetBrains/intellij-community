@@ -22,13 +22,14 @@ import java.util.function.Function;
  */
 public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  public static final String MORE_ITEM = "...MORE";
+  private static final String MORE_ITEM = "...MORE";
+  private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider());
 
   public void testMultiThread() {
     Collection<Scenario> scenarios = createMultithreadScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
       searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
@@ -45,7 +46,7 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     Collection<Scenario> scenarios = createSingleThreadScenarios();
     SearchResultsCollector collector = new SearchResultsCollector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
       searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);

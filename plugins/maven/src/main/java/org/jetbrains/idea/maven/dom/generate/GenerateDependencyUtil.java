@@ -44,7 +44,7 @@ public class GenerateDependencyUtil {
   }
 
   @NotNull
-  public static List<MavenDomDependency> chooseDependencies(Collection<MavenDomDependency> candidates, final Project project) {
+  public static List<MavenDomDependency> chooseDependencies(Collection<? extends MavenDomDependency> candidates, final Project project) {
     List<MavenDomDependency> dependencies = new ArrayList<>();
 
     MavenDomProjectModelMember[] memberCandidates =

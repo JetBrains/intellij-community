@@ -94,7 +94,7 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
 
 
-  protected static String findBucket(long value, Function<Long, String> valueConverter, long...ranges) {
+  protected static String findBucket(long value, Function<? super Long, String> valueConverter, long...ranges) {
     double[] dRanges = new double[ranges.length];
     for (int i = 0; i < dRanges.length; i++) {
       dRanges[i] = ranges[i];
@@ -102,7 +102,7 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
     return findBucket((double)value, (d) -> valueConverter.apply(d.longValue()), dRanges);
   }
 
-  protected static String findBucket(double value, Function<Double, String> valueConverter, double...ranges) {
+  protected static String findBucket(double value, Function<? super Double, String> valueConverter, double...ranges) {
     for (double range : ranges) {
       if (range == value) {
         return valueConverter.apply(value);

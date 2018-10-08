@@ -15,9 +15,14 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 import org.junit.After;
 import org.junit.Assert;
@@ -40,6 +45,8 @@ import static javax.swing.SwingUtilities.isEventDispatchThread;
  * @author Sergey.Malenkov
  */
 public class InvokerTest {
+  @SuppressWarnings("unused")
+  private static final IdeaTestApplication application = IdeaTestApplication.getInstance();
   private static final List<Promise<?>> futures = Collections.synchronizedList(new ArrayList<>());
   private final Disposable parent = Disposer.newDisposable();
 
@@ -298,6 +305,100 @@ public class InvokerTest {
     finally {
       if (!success.getAsBoolean()) error.set(message);
       latch.countDown();
+    }
+  }
+
+  @Test
+  public void testDisposeOnEDT() {
+    Disposable parent = Disposer.newDisposable("disposed");
+    testInterrupt(parent, new Invoker.EDT(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
+  public void testDisposeOnBgThread() {
+    Disposable parent = Disposer.newDisposable("disposed");
+    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
+  public void testDisposeOnBgPool() {
+    Disposable parent = Disposer.newDisposable("disposed");
+    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> Disposer.dispose(parent));
+  }
+
+  @Test
+  public void testCancelOnEDT() {
+    Disposable parent = Disposer.newDisposable("cancelled");
+    testInterrupt(parent, new Invoker.EDT(parent), promise -> promise.cancel());
+  }
+
+  @Test
+  public void testCancelOnBgThread() {
+    Disposable parent = Disposer.newDisposable("cancelled");
+    testInterrupt(parent, new Invoker.BackgroundThread(parent), promise -> promise.cancel());
+  }
+
+  @Test
+  public void testCancelOnBgPool() {
+    Disposable parent = Disposer.newDisposable("cancelled");
+    testInterrupt(parent, new Invoker.BackgroundPool(parent), promise -> promise.cancel());
+  }
+
+  private static void testInterrupt(Disposable parent, Invoker invoker, Consumer<CancellablePromise<?>> interrupt) {
+    InfiniteTask task = new InfiniteTask(interrupt == null);
+    CancellablePromise<?> promise = invoker.invokeLater(task, 10);
+    try {
+      wait(task.started, "cannot start infinite task");
+      if (interrupt != null) interrupt.accept(promise);
+      wait(task.finished, "cannot interrupt " + parent + " infinite task");
+      Assert.assertFalse("too long", task.infinite);
+    }
+    finally {
+      promise.cancel();
+      if (!Disposer.isDisposed(parent)) {
+        Disposer.dispose(parent);
+      }
+    }
+  }
+
+  private static void wait(CancellablePromise<?> promise, String error) {
+    try {
+      promise.blockingGet(100, TimeUnit.MILLISECONDS);
+    }
+    catch (Throwable throwable) {
+      throw new AssertionError(error, throwable);
+    }
+    finally {
+      promise.cancel();
+    }
+  }
+
+  private static final class InfiniteTask implements Obsolescent, Runnable {
+    private final AsyncPromise<?> started = new AsyncPromise<>();
+    private final AsyncPromise<?> finished = new AsyncPromise<>();
+    private final boolean obsolete;
+    private volatile boolean infinite;
+
+    InfiniteTask(boolean obsolete) {
+      this.obsolete = obsolete;
+    }
+
+    @Override
+    public boolean isObsolete() {
+      return obsolete && started.isDone();
+    }
+
+    @Override
+    public void run() {
+      try {
+        started.setResult(null);
+        long startedAt = System.currentTimeMillis();
+        while (10000 > System.currentTimeMillis() - startedAt) ProgressManager.checkCanceled();
+        infinite = true;
+      }
+      finally {
+        finished.setResult(null);
+      }
     }
   }
 }

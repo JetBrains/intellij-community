@@ -76,7 +76,7 @@ public class ExecutionNode extends CachingSimpleNode {
 
   @Override
   protected SimpleNode[] buildChildren() {
-    return myChildrenList.size() == 0 ? NO_CHILDREN : ContainerUtil.toArray(myChildrenList, new ExecutionNode[myChildrenList.size()]);
+    return myChildrenList.toArray(NO_CHILDREN);
   }
 
   @Override

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -165,7 +164,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        //noinspection ThrowableResultOfMethodCallIgnored
         Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
         if (cause == null) throw e;
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
@@ -438,8 +436,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   @Override
   public void initComponent() {
     long started = System.nanoTime();
-    StubIndexExtension<?, ?>[] extensions = IndexInfrastructure.hasIndices() ? initExtensions() : new StubIndexExtension[0];
-    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.length);
+    List<StubIndexExtension<?, ?>> extensions = IndexInfrastructure.hasIndices() ? initExtensions() : Collections.emptyList();
+    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.size());
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));
@@ -456,10 +454,12 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   @NotNull
-  static StubIndexExtension<?, ?>[] initExtensions() {
-    StubIndexExtension[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
+  static List<StubIndexExtension<?, ?>> initExtensions() {
+    List<StubIndexExtension<?, ?>> extensions = StubIndexExtension.EP_NAME.getExtensionList();
     // initialize stub index keys
-    for (StubIndexExtension extension : extensions) extension.getKey();
+    for (StubIndexExtension extension : extensions) {
+      extension.getKey();
+    }
     return extensions;
   }
 
@@ -603,9 +603,9 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   private class StubIndexInitialization extends IndexInfrastructure.DataInitialization<AsyncState> {
     private final AsyncState state = new AsyncState();
     private final StringBuilder updated = new StringBuilder();
-    private final StubIndexExtension<?, ?>[] myExtensions;
+    private final List<? extends StubIndexExtension<?, ?>> myExtensions;
 
-    StubIndexInitialization(@NotNull StubIndexExtension<?, ?>[] extensions) {
+    StubIndexInitialization(@NotNull List<? extends StubIndexExtension<?, ?>> extensions) {
       myExtensions = extensions;
     }
 

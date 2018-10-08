@@ -43,7 +43,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
       FileEditorManager.getInstance(project).closeFile(virtualFile);
     });
 
-    GCUtil.tryForceGC();
+    GCUtil.tryGcSoftlyReachableObjects();
     assertNull(FileDocumentManager.getInstance().getCachedDocument(virtualFile));
 
     openProjectPerformTaskCloseProject(dir, project -> {});

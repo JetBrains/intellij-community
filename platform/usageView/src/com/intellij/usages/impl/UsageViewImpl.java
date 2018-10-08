@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -541,7 +540,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       };
 
-      UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
+      UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
       Map<String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
@@ -615,8 +614,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
-    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
-    List<UsageFilteringRule> list = new ArrayList<>(providers.length);
+    final List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
+    List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
@@ -625,8 +624,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
-    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<UsageGroupingRule> list = new ArrayList<>(providers.length);
+    final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
+    List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
     }
@@ -770,8 +769,7 @@ public class UsageViewImpl implements UsageViewEx {
       group.add(mergeDupLines);
     }
 
-    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
-    for (UsageFilteringRuleProvider provider : providers) {
+    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
       AnAction[] actions = provider.createFilteringActions(this);
       for (AnAction action : actions) {
         group.add(action);
@@ -896,8 +894,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private AnAction[] createGroupingActions() {
-    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<AnAction> list = new ArrayList<>(providers.length);
+    final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
+    List<AnAction> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
@@ -1033,7 +1031,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   public void select() {
     // can be null during ctr execution
-    //noinspection ConstantConditions
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }
@@ -1903,12 +1900,14 @@ public class UsageViewImpl implements UsageViewEx {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
-        sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
-          .stream()
-          .filter(u -> u instanceof PsiElementUsage)
-          .map(u -> ((PsiElementUsage)u).getElement())
-          .filter(Objects::nonNull)
-          .toArray(PsiElement.ARRAY_FACTORY::create));
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+            .stream()
+            .filter(u -> u instanceof PsiElementUsage)
+            .map(u -> ((PsiElementUsage)u).getElement())
+            .filter(Objects::nonNull)
+            .toArray(PsiElement.ARRAY_FACTORY::create));
+        }
       }
       else {
         // can arrive here outside EDT from usage view preview.

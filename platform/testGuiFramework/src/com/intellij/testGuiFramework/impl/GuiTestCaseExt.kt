@@ -7,7 +7,10 @@ import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
@@ -16,8 +19,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.rules.ErrorCollector
-import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
+import java.awt.IllegalComponentStateException
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -34,7 +37,7 @@ open class GuiTestCaseExt : GuiTestCase() {
   val logActionsDuringTest = LogActionsDuringTest()
 
   val projectFolder: String by lazy {
-    testRootPath.newFolder(testMethod.methodName).canonicalPath
+    projectsFolder.newFolder(testMethod.methodName).canonicalPath
   }
 
 //  @Rule
@@ -76,19 +79,47 @@ fun GuiTestCase.closeProject() {
 }
 
 /**
- * Wrapper for [waitForBackgroundTasksToFinish]
- * adds an extra pause
+ * Provide waiting for background tasks to finish
  * This function should be used instead of  [waitForBackgroundTasksToFinish]
- * because sometimes it doesn't wait enough time
- * After [waitForBackgroundTasksToFinish] fixing this function should be removed
- * @param extraTimeOut time of additional waiting
+ * because sometimes the latter doesn't wait enough time
  * */
-fun GuiTestCase.waitAMoment(extraTimeOut: Long = 2000L) {
+fun GuiTestCase.waitAMoment(attempts: Int = 0) {
+  val maxAttempts = 3
   ideFrame {
     this.waitForBackgroundTasksToFinish()
+    val asyncIcon = indexingProcessIconNullable(Timeouts.noTimeout)
+    if(asyncIcon != null){
+      val timeoutForBackgroundTasks = Timeouts.minutes10
+      try {
+        asyncIcon.click()
+        waitForPanelToDisappear(
+          panelTitle = "Background Tasks",
+          timeoutToAppear = Timeouts.seconds01,
+          timeoutToDisappear = timeoutForBackgroundTasks
+        )
+      }
+      catch (e: IllegalStateException){
+        // asyncIcon searched earlier might disappear at all (it's ok)
+        // or new one is shown. So let's try to search it again
+        if(attempts < maxAttempts)
+          waitAMoment(attempts + 1)
+        else{
+          if(indexingProcessIconNullable(Timeouts.noTimeout) !=null)
+            throw WaitTimedOutError("Async icon is shown, but we cannot click on it after $maxAttempts attempts")
+        }
+      }
+      catch (e: IllegalComponentStateException){
+        // do nothing - asyncIcon disappears, background process has stopped
+      }
+      catch (e: ComponentLookupException){
+        // do nothing - panel hasn't appeared and it seems ok
+      }
+      catch (e: WaitTimedOutError) {
+        throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+      }
+    }
   }
   robot().waitForIdle()
-  Pause.pause(extraTimeOut)
 }
 
 /**
@@ -200,7 +231,6 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
             }
             else true
             // calculate result whether to continue waiting
-            logInfo("$currentTimeInHumanString: waitForGradleReimport: jtree = $gradleWindowHasPath, button enabled = $isReimportButtonEnabled")
             result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
@@ -212,7 +242,6 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
               val tree = treeTable().target.tree
               val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
               val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
-              logInfo("$currentTimeInHumanString: state of Build toolwindow: $state")
               syncState = state.contains("sync finished")
             }
           }

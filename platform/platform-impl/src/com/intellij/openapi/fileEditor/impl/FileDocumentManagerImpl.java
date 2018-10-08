@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -304,7 +303,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
           doSaveDocument(document, isExplicit);
         }
         catch (IOException e) {
-          //noinspection ThrowableResultOfMethodCallIgnored
           failedToSave.put(document, e);
         }
         catch (SaveVetoException e) {
@@ -388,7 +386,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
   private boolean maySaveDocument(@NotNull VirtualFile file, @NotNull Document document, boolean isExplicit) {
     return !myConflictResolver.hasConflict(file) &&
-           Arrays.stream(Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)).allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
+           (FileDocumentSynchronizationVetoer.EP_NAME).getExtensionList().stream().allMatch(vetoer -> vetoer.maySaveDocument(document, isExplicit));
   }
 
   private void doSaveDocumentInWriteAction(@NotNull final Document document, @NotNull final VirtualFile file) throws IOException {
@@ -717,7 +715,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   private boolean fireBeforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
-    for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
+    for (FileDocumentSynchronizationVetoer vetoer : FileDocumentSynchronizationVetoer.EP_NAME.getExtensionList()) {
       try {
         if (!vetoer.mayReloadFileContent(file, document)) {
           return false;
@@ -804,15 +802,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   //temp setter for Rider 2017.1
   public static boolean ourConflictsSolverEnabled = true;
 
-  private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
+  protected void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);
   }
 
-  private void removeDocumentFromCache(@NotNull VirtualFile file) {
+  protected void removeDocumentFromCache(@NotNull VirtualFile file) {
     myDocumentCache.remove(file);
   }
 
-  private Document getDocumentFromCache(@NotNull VirtualFile file) {
+  protected Document getDocumentFromCache(@NotNull VirtualFile file) {
     return myDocumentCache.get(file);
   }
 }

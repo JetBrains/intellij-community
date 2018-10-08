@@ -426,7 +426,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   public static void setupGenericParameters(PsiClass targetClass, PsiJavaCodeReferenceElement ref) {
     int numParams = ref.getTypeParameters().length;
     if (numParams == 0) return;
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(ref.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
     final Set<String> typeParamNames = new HashSet<>();
     for (PsiType type : ref.getTypeParameters()) {
       final PsiClass psiClass = PsiUtil.resolveClassInType(type);

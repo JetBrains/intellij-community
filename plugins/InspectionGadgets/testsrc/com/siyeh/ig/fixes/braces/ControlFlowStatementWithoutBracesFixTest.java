@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.braces;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,7 +29,7 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
 
   public void testForEachBody() { doTest("for"); }
   public void testForEachExpression() { doTest("for"); }
-  public void testForEachKeyword() { System.out.println(getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);doTest("for"); }
+  public void testForEachKeyword() { doTest("for"); }
   public void testForIndex() { doTest("for"); }
 
   public void testWhile() { doTest("while"); }
@@ -43,13 +44,8 @@ public class ControlFlowStatementWithoutBracesFixTest extends IGQuickFixesTestCa
   public void testLadderOutside() { assertQuickfixNotAvailable(getMessagePrefix()); }
 
   public void testNewlineInBlock() {
-    final boolean previous = getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
-    getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
-    try {
-      doTest("if");
-    } finally {
-      getLanguageSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = previous;
-    }
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    doTest("if");
   }
 
   @Override

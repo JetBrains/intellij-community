@@ -12,7 +12,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditorConfigurable
@@ -545,7 +544,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
   override fun createComponent(): JComponent? {
-    for (each in Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT, project)) {
+    for (each in RunConfigurationsSettings.EXTENSION_POINT.getExtensions(project)) {
       val configurable = each.createConfigurable()
       additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
     }

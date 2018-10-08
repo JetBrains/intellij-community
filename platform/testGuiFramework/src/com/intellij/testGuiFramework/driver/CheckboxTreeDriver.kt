@@ -19,6 +19,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
   }
 
   fun getCheckboxComponent(tree: CheckboxTree, path: TreePath): JCheckBox? {
+    robot.waitForIdle()
     val rendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, path.lastPathComponent, false, false, false,
                                                                            tree.getRowForPath(path),
                                                                            false)

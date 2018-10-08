@@ -184,18 +184,13 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
 
     wasSingletonSpecifiedExplicitly = false
-    if (isTemplate) {
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
       configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
     }
     else {
-      val singletonStr = element.getAttributeValue(SINGLETON)
-      if (singletonStr.isNullOrEmpty()) {
-        configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-      }
-      else {
-        wasSingletonSpecifiedExplicitly = true
-        configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
-      }
+      wasSingletonSpecifiedExplicitly = true
+      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
     }
 
     _configuration = configuration

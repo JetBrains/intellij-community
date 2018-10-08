@@ -17,8 +17,8 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 
 import java.util.Collections;
 
