@@ -50,6 +50,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.containers.ContainerUtil;
@@ -80,8 +81,7 @@ import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.containers.ContainerUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.process;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
@@ -265,12 +265,10 @@ public class ShelvedChangesViewManager implements Disposable {
     myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
-    Collections.sort(changeLists, ChangelistComparator.getInstance());
     if (myShelveChangesManager.isShowRecycled()) {
-      ArrayList<ShelvedChangeList> recycled = new ArrayList<>(myShelveChangesManager.getRecycledShelvedChangeLists());
-      changeLists.addAll(recycled);
-      Collections.sort(changeLists, ChangelistComparator.getInstance());
+      changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
     }
+    changeLists.sort(ChangelistComparator.getInstance());
     myMoveRenameInfo.clear();
 
     changeLists.forEach(changeList -> model.insertNodeInto(createShelvedListNode(changeList), myRoot, myRoot.getChildCount()));
@@ -292,7 +290,7 @@ public class ShelvedChangesViewManager implements Disposable {
       putMovedMessage(file.BEFORE_PATH, file.AFTER_PATH);
       shelvedFilesNodes.add(file);
     }
-    Collections.sort(shelvedFilesNodes, ShelvedFilePatchComparator.getInstance());
+    shelvedFilesNodes.sort(ShelvedFilePatchComparator.getInstance());
 
     shelvedFilesNodes.forEach(fNode -> shelvedListNode.add(new DefaultMutableTreeNode(fNode)));
     return shelvedListNode;
@@ -420,7 +418,7 @@ public class ShelvedChangesViewManager implements Disposable {
               changes.add(file.createChange(myProject));
             }
           }
-          return changes.toArray(new Change[0]);
+          return ArrayUtil.toObjectArray(changes, Change.class);
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
@@ -619,7 +617,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (project == null) return;
 
       List<ShelvedChangeList> shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType(myTree, ShelvedChangeList.class);
-      ArrayList<ShelvedChangeList> shelvedListsFromChanges = ContainerUtil.newArrayList(getShelvedLists(dataContext));
+      ArrayList<ShelvedChangeList> shelvedListsFromChanges = newArrayList(getShelvedLists(dataContext));
       // filter changes
       shelvedListsFromChanges.removeAll(shelvedListsToDelete);
       List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, getShelveChanges(dataContext));
@@ -631,7 +629,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       String message = VcsBundle.message("shelve.changes.delete.items.confirm", constructDeleteFilesInfoMessage(fileListSize),
                                          changeListSize != 0 && fileListSize != 0 ? " and " : "",
-                                         constructShelvedListInfoMessage(changeListSize, ContainerUtil.getFirstItem(shelvedListsToDelete)));
+                                         constructShelvedListInfoMessage(changeListSize, getFirstItem(shelvedListsToDelete)));
       int rc = Messages
         .showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"),
                             CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
