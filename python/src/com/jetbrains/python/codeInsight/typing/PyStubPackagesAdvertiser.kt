@@ -312,7 +312,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
       val reqs = mutableListOf<PyRequirement>()
       val args = mutableListOf("--no-deps")
 
-      (cached + loaded.values.flatten())
+      (cached.asSequence().filterNot { ignoredPackages.contains(it.name.removeSuffix(STUBS_SUFFIX)) } + loaded.values.asSequence().flatten())
         .forEach {
           val version = it.latestVersion
           val url = it.repoUrl
