@@ -891,25 +891,39 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
                                    final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
-    ShelvedChangeList listCopy;
+    if (changeList.isRecycled()) {
+      saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
+    }
+    else {
+      saveRemainingAndRecycleOthers(changeList, remainingPatches, remainingBinaries, commitContext);
+    }
+    notifyStateChanged();
+  }
+
+  private void saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
+                                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
+
     try {
-      listCopy = !changeList.isRecycled() ? createChangelistCopy(changeList) : null;
+      ShelvedChangeList listCopy = createChangelistCopy(changeList);
+      saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
+
+      filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
+      listCopy.updateDate();
+      listCopy.setRecycled(true);
+      saveListAsScheme(listCopy);
     }
     catch (IOException e) {
       // do not delete if cannot recycle
-      return;
     }
+  }
+
+  private void saveRemainingChangesInList(@NotNull ShelvedChangeList changeList,
+                                          List<FilePatch> remainingPatches,
+                                          List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
     writePatchesToFile(myProject, changeList.PATH, remainingPatches, commitContext);
 
     changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
-    if (listCopy != null) {
-      filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
-      recycleChangeList(listCopy);
-      // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
-      saveListAsScheme(listCopy);
-    }
-    notifyStateChanged();
   }
 
   private void saveListAsScheme(@NotNull ShelvedChangeList list) {
