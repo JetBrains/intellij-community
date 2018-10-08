@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
@@ -16,7 +15,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,7 +33,11 @@ import java.util.Collections;
 import java.util.List;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RevertCommittedStuffAbstractAction");
+  private final boolean myReverse;
+
+  protected RevertCommittedStuffAbstractAction(boolean reverse) {
+    myReverse = reverse;
+  }
 
   @Nullable
   protected abstract Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate);
@@ -52,9 +55,13 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
     String defaultName = null;
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+
+    String action = myReverse ? "Revert" : "Apply";
     if (changeLists != null && changeLists.length > 0) {
-      defaultName = VcsBundle.message("revert.changes.default.name", changeLists[0].getName());
+      defaultName = String.format("%s: %s", action, changeLists[0].getName());
     }
+    String title = String.format("%s Changes", action);
+    String errorPrefix = String.format("Failed to %s changes: ", StringUtil.toLowerCase(action));
 
     final ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(), null,
                                                             "Select Target Changelist", defaultName);
@@ -63,15 +70,17 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     }
 
     final List<FilePatch> patches = new ArrayList<>();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           final List<Change> preprocessed = ChangesPreprocess.preprocessChangesRemoveDeletedForDuplicateMoved(changesList);
-          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), true));
+          patches.addAll(IdeaTextPatchBuilder.buildPatch(project, preprocessed, baseDir.getPresentableUrl(), myReverse));
         }
         catch (final VcsException ex) {
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages.showErrorDialog(project, "Failed to revert changes: " + ex.getMessage(), VcsBundle.message("revert.changes.title")), null, myProject);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
+            Messages.showErrorDialog(project, errorPrefix + ex.getMessage(), title);
+          }, null, myProject);
           indicator.cancel();
         }
       }
