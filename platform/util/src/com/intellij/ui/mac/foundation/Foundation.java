@@ -74,6 +74,9 @@ public class Foundation {
     return invoke(id, createSelector(selector), args);
   }
 
+  public static double invoke_fpret(ID receiver, Pointer selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, selector, args); }
+  public static double invoke_fpret(ID receiver, String selector, Object... args) { return myFoundationLibrary.objc_msgSend_fpret(receiver, createSelector(selector), args); }
+
   public static boolean isNil(ID id) {
     return id == null || ID.NIL.equals(id);
   }
