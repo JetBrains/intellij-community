@@ -452,6 +452,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     myParametersTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myParametersTable.getSelectionModel().setSelectionInterval(0, 0);
     myParametersTable.setSurrendersFocusOnKeystroke(true);
+    myParametersTable.getAccessibleContext().setAccessibleName("Parameters");
     myPropagateParamChangesButton.setShortcut(CustomShortcutSet.fromString("alt G"));
 
     if (isListTableViewSupported()) {
@@ -460,6 +461,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
         .addExtraAction(myPropagateParamChangesButton)
         .createPanel();
       myParametersList.getTable().getModel().addTableModelListener(mySignatureUpdater);
+      myParametersList.getTable().getAccessibleContext().setAccessibleName("Parameters");
       return buttonsPanel;
     }
     else {
