@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -145,6 +146,12 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   @Test
+  public void testGroovyEnum() throws Exception {
+    Class testClass = prepareTest();
+    assertNotNull(testClass.getField("Value").get(null));
+  }
+
+  @Test
   public void testStaticInnerClass() throws Exception {
     Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
@@ -152,6 +159,12 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testNonStaticInnerClass() throws Exception {
+    Class aClass = prepareTest();
+    assertNotNull(aClass.newInstance());
+  }
+
+  @Test
+  public void testGroovyInnerClass() throws Exception {
     Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
   }
@@ -277,15 +290,29 @@ public class NotNullVerifyingInstrumenterTest {
 
     List<String> cmdLine = ContainerUtil.newArrayList("-d", classesDir.getAbsolutePath(), "-classpath", testDir + "/annotations.jar");
     if (withDebugInfo) cmdLine.add("-g");
-    cmdLine.add(testDir + '/' + testName + ".java");
-    com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
 
-    Class mainClass = null;
+    File testFile = new File(testDir, testName + ".java");
+    if (testFile.exists()) {
+      cmdLine.add(testFile.getPath());
+      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
+    }
+    else {
+      testFile = new File(testDir, testName + ".groovy");
+      if (testFile.exists()) {
+        cmdLine.add(testFile.getPath());
+        org.codehaus.groovy.tools.FileSystemCompiler.main(ArrayUtil.toStringArray(cmdLine));
+      }
+      else {
+        throw new FileNotFoundException("No test source for " + testName);
+      }
+    }
+
     File[] files = classesDir.listFiles();
     assertNotNull(files);
     Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     boolean modified = false;
     MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
+    Class mainClass = null;
     for (File file: files) {
       FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
       ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
