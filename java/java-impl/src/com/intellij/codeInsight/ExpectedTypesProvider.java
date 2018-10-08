@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -955,6 +957,10 @@ public class ExpectedTypesProvider {
         return ExpectedTypeInfo.EMPTY_ARRAY;
       }
 
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        allCandidates = selectCandidateChosenOnCompletion(argumentList.getParent(), allCandidates);
+      }
+
       PsiMethod toExclude = JavaPsiConstructorUtil.isConstructorCall(argumentList.getParent())
                             ? PsiTreeUtil.getParentOfType(argument, PsiMethod.class) : null;
 
@@ -1037,6 +1043,22 @@ public class ExpectedTypesProvider {
       }
 
       return array.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
+    }
+
+    @NotNull
+    private static CandidateInfo[] selectCandidateChosenOnCompletion(@Nullable PsiElement call, @NotNull CandidateInfo[] candidates) {
+      if (call instanceof PsiCall) {
+        PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+        if (originalCall != null) {
+          PsiMethod method = CompletionMemory.getChosenMethod(originalCall);
+          if (method != null) {
+            for (CandidateInfo candidate : candidates) {
+              if (CompletionUtil.getOriginalOrSelf(candidate.getElement()) == method) return new CandidateInfo[]{candidate};
+            }
+          }
+        }
+      }
+      return candidates;
     }
 
     @NotNull

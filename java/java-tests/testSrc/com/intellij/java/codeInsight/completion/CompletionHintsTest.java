@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
@@ -280,7 +279,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     type("new String().trim");
-    myFixture.complete(CompletionType.SMART);
+    completeSmart();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>new String().trim(), <HINT text=\"value:\"/><caret>) } }");
   }
@@ -1651,6 +1650,15 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
       waitForAllAsyncStuff();
     });
     checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
+  }
+
+  public void testCommaAfterSmartCompletionOfOverloadedMethodParameter() {
+    configureJava("class C { int codePoint = 123; void m() { Character.to<caret> } }");
+    complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    type("codePoin");
+    completeSmart("codePoint");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
   }
 
   private void checkResultWithInlays(String text) {
