@@ -1056,7 +1056,15 @@ public class JsonSchemaObject {
   private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
                                                          @NotNull final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter) {
     final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      final String id = splitter.getSchemaId();
+      if (id != null && id.startsWith("#")) {
+        final String resolvedId = JsonCachedValues.resolveId(schema.getJsonObject().getContainingFile(), id);
+        if (resolvedId == null || id.equals("#" + resolvedId)) return null;
+        return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId));
+      }
+      return schema;
+    }
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
     if (definition == null) {
       LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));
