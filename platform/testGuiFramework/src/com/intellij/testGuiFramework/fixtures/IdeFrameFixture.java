@@ -727,6 +727,10 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   public void closeProject() {
+    closeProject(true);
+  }
+
+  public void closeProject(Boolean waitWelcomeFrame) {
     invokeMainMenu("CloseProject");
     execute(new GuiTask() {
       @Override
@@ -735,6 +739,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         WelcomeFrame.showIfNoProjectOpened();
       }
     });
+    if (!waitWelcomeFrame) return;
     pause(new Condition("Waiting for 'Welcome' page to show up") {
       @Override
       public boolean test() {

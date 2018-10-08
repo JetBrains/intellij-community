@@ -60,7 +60,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     } catch (cle: ComponentLookupException) { /*do nothing here */ }
   }
 
-  private fun GuiTestCase.openMainInCommandLineProject() {
+  fun GuiTestCase.openMainInCommandLineProject() {
     ideFrame {
       projectView {
         path(project.name, "src", "com.company", "Main").doubleClick()
@@ -69,7 +69,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     }
   }
 
-  private fun GuiTestCase.openFileInCommandLineProject(fileName: String) {
+  fun GuiTestCase.openFileInCommandLineProject(fileName: String) {
     ideFrame {
       projectView {
         path(project.name, "src", "com.company", fileName).doubleClick()
@@ -78,7 +78,7 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
     }
   }
 
-  private fun GuiTestCase.waitForFirstIndexing() {
+  fun GuiTestCase.waitForFirstIndexing() {
     ideFrame {
       val secondToWaitIndexing = 10
       try {
@@ -114,10 +114,10 @@ class CommunityProjectCreator(guiTestCase: GuiTestCase) : TestUtilsClass(guiTest
   /**
    * @projectName of importing project should be locate in the current module testData/
    */
-  fun importProject(projectName: String) {
-    val commandLineAppDirUrl = this.javaClass.classLoader.getResource(projectName)
-    val commandLineAppDir = File(commandLineAppDirUrl.toURI())
-    guiTestCase.guiTestRule.importProject(commandLineAppDir)
+  fun importProject(projectName: String): File {
+    val projectDirUrl = this.javaClass.classLoader.getResource(projectName)
+    val projectDirFile = File(projectDirUrl.toURI())
+    return guiTestCase.guiTestRule.importProject(projectDirFile)
   }
 
   fun importCommandLineApp() {
