@@ -184,7 +184,7 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       Type returnType = Type.getReturnType(desc);
       if (isCandidate(argTypes, returnType)) {
         int offset = !"<init>".equals(name) ? 0 : NEW_ASM
-          ? (myEnum ? -2 : myInner ? -1 : 0)
+          ? (myEnum && signature != null ? -2 : myInner ? -1 : 0)
           : (myEnclosed && myInner && signature != null ? Math.max(0, argTypes.length - countSignatureParameters(signature) - 1) : 0);
         return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, myClassName, name, myDoAssert, isStatic, offset);
       }
