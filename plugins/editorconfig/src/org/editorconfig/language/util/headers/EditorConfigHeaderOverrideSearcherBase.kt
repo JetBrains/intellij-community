@@ -6,15 +6,21 @@ import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 
-abstract class EditorConfigHeaderSearcher {
-  fun getMatchingHeaders(header: EditorConfigHeader): List<EditorConfigHeader> {
+abstract class EditorConfigHeaderOverrideSearcherBase {
+  fun findMatchingHeaders(header: EditorConfigHeader): List<OverrideSearchResult> {
     if (!header.isValidGlob) return emptyList()
     val relevantHeaders = getRelevantHeaders(header)
-    return getMatchingHeaders(header, relevantHeaders)
+    return findMatchingHeaders(header, relevantHeaders)
   }
 
-  fun getMatchingHeaders(header: EditorConfigHeader, relevantHeaders: Sequence<EditorConfigHeader>): List<EditorConfigHeader> {
-    return relevantHeaders.filter { isMatchingHeader(header, it) }.toList()
+  fun findMatchingHeaders(header: EditorConfigHeader, relevantHeaders: Sequence<EditorConfigHeader>): List<OverrideSearchResult> {
+    return relevantHeaders.mapNotNull {
+      when (getOverrideKind(header, it)) {
+        OverrideKind.NONE -> null
+        OverrideKind.PARTIAL -> OverrideSearchResult(it, true)
+        OverrideKind.STRICT -> OverrideSearchResult(it, false)
+      }
+    }.toList()
   }
 
   fun getRelevantHeaders(header: EditorConfigHeader): Sequence<EditorConfigHeader> {
@@ -28,5 +34,13 @@ abstract class EditorConfigHeaderSearcher {
   }
 
   protected abstract fun findRelevantPsiFiles(file: EditorConfigPsiFile): Sequence<EditorConfigPsiFile>
-  protected abstract fun isMatchingHeader(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader): Boolean
+  protected abstract fun getOverrideKind(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader): OverrideKind
+
+  data class OverrideSearchResult(val header: EditorConfigHeader, val isPartial: Boolean)
+
+  enum class OverrideKind {
+    NONE,
+    PARTIAL,
+    STRICT
+  }
 }

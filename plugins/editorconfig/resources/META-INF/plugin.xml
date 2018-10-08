@@ -442,12 +442,6 @@
         implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenKeyLineMarkerProvider"/>
     <lineMarkerProvider
         language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverridingHeaderFinder"/>
-    <lineMarkerProvider
-        language="EditorConfig"
-        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverriddenHeaderLineMarkerProvider"/>
-    <lineMarkerProvider
-        language="EditorConfig"
         implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingHeaderLineMarkerProvider"/>
     <lineMarkerProvider
         language="EditorConfig"
