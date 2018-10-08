@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -39,7 +38,6 @@ import gnu.trove.THashSet;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
-import org.jdom.output.StAXStreamOutputter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -190,10 +188,16 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
   }
 
-  private static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException {
-    File file = new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
+  @NotNull
+  public static BufferedWriter getWriter(String outputDirectoryName, String name) throws FileNotFoundException {
+    File file = getInspectionResultFile(outputDirectoryName, name);
     FileUtil.createParentDirs(file);
     return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), CharsetToolkit.UTF8_CHARSET));
+  }
+
+  @NotNull
+  public static File getInspectionResultFile(String outputDirectoryName, String name) {
+    return new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
   }
 
   private static void writeDocument(@NotNull Element problems, String outputDirectoryName, String name) throws IOException {
