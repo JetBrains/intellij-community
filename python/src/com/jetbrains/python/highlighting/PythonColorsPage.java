@@ -17,6 +17,7 @@ import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,9 +115,8 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
   @Override
   @NotNull
   public SyntaxHighlighter getHighlighter() {
-    final SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(PythonFileType.INSTANCE, null, null);
-    assert highlighter != null;
-    return highlighter;
+    final SyntaxHighlighterFactory factory = SyntaxHighlighterFactory.LANGUAGE_FACTORY.forLanguage(PythonLanguage.getInstance());
+    return ((PySyntaxHighlighterFactory)factory).getForLanguageLevel(LanguageLevel.PYTHON37);
   }
 
   @Override
@@ -136,7 +136,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "class <classDef>Foo</classDef>:\n" +
       "    tags: <annotation>List[<builtin>str</builtin>]</annotation>\n" +
       "    def <predefined>__init__</predefined>(<self>self</self>: <annotation>Foo</annotation>):\n" +
-      "        <localVar>byte_string</localVar>: <annotation><builtin>str</builtin></annotation> = 'newline:\\n also newline:\\x0a'\n" +
+      "        <localVar>byte_string</localVar>: <annotation><builtin>str</builtin></annotation> = b'newline:\\n also newline:\\x0a'\n" +
       "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
       "        <self>self</self>.<mcall>makeSense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
