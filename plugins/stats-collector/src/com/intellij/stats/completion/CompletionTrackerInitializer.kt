@@ -36,6 +36,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     }
     else if (lookup is LookupImpl) {
       if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
+      lookup.putUserData(CompletionUtil.COMPLETION_STARTING_TIME_KEY, System.currentTimeMillis())
 
       val globalStorage = UserFactorStorage.getInstance()
       val projectStorage = UserFactorStorage.getInstance(lookup.project)

@@ -31,8 +31,8 @@ import java.util.concurrent.LinkedBlockingQueue
  */
 class ValidationOnClientTest : PlatformTestCase() {
     fun `test validation before log`() {
-        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1)
-        val event2 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1)
+        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1, System.currentTimeMillis())
+        val event2 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1, System.currentTimeMillis())
 
         TestCase.assertEquals(ValidationStatus.UNKNOWN, event1.validationStatus)
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
@@ -46,9 +46,9 @@ class ValidationOnClientTest : PlatformTestCase() {
     }
 
     fun `test log after session finished`() {
-        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1)
-        val event2 = DownPressedEvent("1", "1", emptyList(), emptyList(), 2)
-        val event3 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1)
+        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1, System.currentTimeMillis())
+        val event2 = DownPressedEvent("1", "1", emptyList(), emptyList(), 2, System.currentTimeMillis())
+        val event3 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1, System.currentTimeMillis())
 
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
 
@@ -69,8 +69,8 @@ class ValidationOnClientTest : PlatformTestCase() {
     }
 
     fun `test log executed on pooled thread`() {
-        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1)
-        val event2 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1)
+        val event1 = DownPressedEvent("1", "1", emptyList(), emptyList(), 1, System.currentTimeMillis())
+        val event2 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1, System.currentTimeMillis())
 
         val queue = LinkedBlockingQueue<Boolean>()
         val logger = createLogger { queue.add(ApplicationManager.getApplication().isDispatchThread) }

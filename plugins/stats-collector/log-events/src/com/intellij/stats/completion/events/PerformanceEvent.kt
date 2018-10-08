@@ -5,12 +5,12 @@ package com.intellij.stats.completion.events
 import com.intellij.stats.completion.Action
 import com.intellij.stats.completion.LogEventVisitor
 
-
-class CustomMessageEvent(userId: String, sessionId: String, @JvmField var text: String, timestamp: Long)
-    : LogEvent(userId, sessionId, Action.CUSTOM, timestamp) {
-
+class PerformanceEvent(userUid: String,
+                       sessionUid: String,
+                       @JvmField var description: String,
+                       @JvmField var value: Long,
+                       timestamp: Long) : LogEvent(userUid, sessionUid, Action.PERFORMANCE, timestamp) {
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
-
 }
