@@ -1,6 +1,7 @@
 <idea-plugin>
 
   <module value="org.jetbrains.plugins.gradle.java"/>
+  <module value="com.intellij.modules.gradle.java"/>
 
   <depends>com.intellij.modules.java</depends>
 
