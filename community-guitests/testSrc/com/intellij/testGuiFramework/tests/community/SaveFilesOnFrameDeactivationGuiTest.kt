@@ -9,7 +9,8 @@ import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Key.*
+import com.intellij.testGuiFramework.util.Key.A
+import com.intellij.testGuiFramework.util.Key.TAB
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
 import org.fest.swing.exception.WaitTimedOutError
@@ -112,7 +113,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
   private fun dummyUiApp(): ProcessBuilder {
     val dummyUIAppClassStr: String = DummyUIApp::class.java.name.replace(".", "/") + ".class"
     val cl = this.javaClass.classLoader.getResource(dummyUIAppClassStr)
-    val classpath = File(cl.toURI()).path.substringBefore(dummyUIAppClassStr)
+    val classpath = File(cl.toURI()).path.dropLast(dummyUIAppClassStr.length)
     return ProcessBuilder("java", "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
   }
 
@@ -151,7 +152,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
   private fun IdeFrameFixture.switchFrameTo() {
     if (this.target().isActive) return
-    shortcut(ALT + BACK_QUOTE, META + BACK_QUOTE)
+    shortcut(ALT + TAB, META + TAB)
     GuiTestUtilKt.waitUntil("IdeFrame[${this.projectPath}] will be activated", Timeouts.seconds02) { this.target().isActive }
   }
 
