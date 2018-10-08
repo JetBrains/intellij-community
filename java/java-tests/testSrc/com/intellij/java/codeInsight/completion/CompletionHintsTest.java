@@ -1661,6 +1661,19 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
   }
 
+  public void testOverloadSwitchingForVarargMethod() {
+    configureJava("class C { void some(int a) {} void some(int a, int... b) {} void m() { s<caret> } }");
+    complete("some(int a, int... b)");
+    type('1');
+    next();
+    type('2');
+    next();
+    type('3');
+    showParameterInfo();
+    methodOverloadUp();
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
