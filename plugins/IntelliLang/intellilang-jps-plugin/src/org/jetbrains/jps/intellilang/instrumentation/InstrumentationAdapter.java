@@ -21,7 +21,7 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   private final String myMethodName;
   private final boolean myDoAssert;
   private final boolean myIsStatic;
-  private final int myParamAnnotationOffset;
+  private int myParamAnnotationOffset;
 
   private final List<PatternValue> myParameterPatterns = new ArrayList<>();
   private PatternValue myMethodPattern;
@@ -45,6 +45,13 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     myMethodName = methodName;
     myIsStatic = isStatic;
     myParamAnnotationOffset = paramAnnotationOffset;
+  }
+
+  @SuppressWarnings("override")
+  public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
+    if (myParamAnnotationOffset != 0 && parameterCount == myArgTypes.length) {
+      myParamAnnotationOffset = 0;
+    }
   }
 
   @Override
