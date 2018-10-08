@@ -14,8 +14,11 @@ class PyRunAnythingCommandCustomizer : RunAnythingCommandCustomizer() {
   override fun customizeCommandLine(workDirectory: VirtualFile,
                                     dataContext: DataContext,
                                     commandLine: GeneralCommandLine): GeneralCommandLine {
-    dataContext.virtualFile?.findPythonSdk(dataContext.project)?.let {
-      PythonSdkType.patchCommandLineForVirtualenv(commandLine, it.homePath, true)
+    dataContext.virtualFile?.findPythonSdk(dataContext.project)?.let { sdk ->
+      PythonSdkType.patchCommandLineForVirtualenv(commandLine, sdk.homePath, true)
+      commandLine.findExecutableInPath()?.let {
+        commandLine.exePath = it
+      }
     }
     return commandLine
   }
