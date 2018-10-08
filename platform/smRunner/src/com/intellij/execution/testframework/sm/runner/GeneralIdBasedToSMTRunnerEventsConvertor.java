@@ -14,13 +14,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
-  private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
+  private final Map<String, Node> myNodeByIdMap = ContainerUtil.newConcurrentMap();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
   private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
   private final Node myTestsRootNode;
