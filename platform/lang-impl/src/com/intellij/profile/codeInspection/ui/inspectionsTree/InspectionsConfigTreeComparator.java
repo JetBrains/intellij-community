@@ -12,12 +12,12 @@ public class InspectionsConfigTreeComparator {
       .thenComparing(n -> getDisplayTextToSort(n.getText()), NaturalComparator.INSTANCE);
 
   public static String getDisplayTextToSort(String s) {
-    if (s.length() == 0) {
+    if (s.isEmpty()) {
       return s;
     }
     while (!Character.isLetterOrDigit(s.charAt(0))) {
       s = s.substring(1);
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return s;
       }
     }
