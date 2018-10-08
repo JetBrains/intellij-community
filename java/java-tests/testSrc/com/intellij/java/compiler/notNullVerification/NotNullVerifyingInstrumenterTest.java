@@ -271,47 +271,34 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
-    String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
-    String javaPath = (base + baseClassName) + ".java";
+    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification";
+    String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File classesDir = tempDir.newFolder("output");
 
-    try {
-      List<String> cmdLine = ContainerUtil.newArrayList("-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath());
-      if (withDebugInfo) {
-        cmdLine.add("-g");
+    List<String> cmdLine = ContainerUtil.newArrayList("-d", classesDir.getAbsolutePath(), "-classpath", testDir + "/annotations.jar");
+    if (withDebugInfo) cmdLine.add("-g");
+    cmdLine.add(testDir + '/' + testName + ".java");
+    com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
+
+    Class mainClass = null;
+    File[] files = classesDir.listFiles();
+    assertNotNull(files);
+    Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    boolean modified = false;
+    MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
+    for (File file: files) {
+      FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
+      ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
+      String className = FileUtil.getNameWithoutExtension(file.getName());
+      Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
+      if (className.equals(testName)) {
+        mainClass = aClass;
       }
-      cmdLine.add(javaPath);
-      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
-
-      Class mainClass = null;
-      File[] files = classesDir.listFiles();
-      assertNotNull(files);
-      Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-      boolean modified = false;
-      MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      for (File file: files) {
-        String fileName = file.getName();
-        byte[] content = FileUtil.loadFileBytes(file);
-
-        FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-
-        byte[] instrumented = writer.toByteArray();
-        String className = FileUtil.getNameWithoutExtension(fileName);
-        Class aClass = classLoader.doDefineClass(className, instrumented);
-        if (className.equals(baseClassName)) {
-          mainClass = aClass;
-        }
-      }
-      assertTrue("Class file not instrumented!", modified);
-      assertNotNull("Class " + baseClassName + " not found!", mainClass);
-      return mainClass;
     }
-    finally {
-      FileUtil.delete(classesDir);
-    }
+    assertTrue("Class file not instrumented!", modified);
+    assertNotNull("Class " + testName + " not found!", mainClass);
+    return mainClass;
   }
 
   private static class MyClassLoader extends ClassLoader {
