@@ -187,7 +187,7 @@ class PasswordSafeImpl @JvmOverloads constructor(val settings: PasswordSafeSetti
     get() = memoryHelperProvider.value
 }
 
-internal fun createPersistentCredentialStore(): PasswordStorage? {
+internal fun createPersistentCredentialStore(): CredentialStore? {
   LOG.runAndLogException {
     for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
       @Suppress("UnnecessaryVariable")

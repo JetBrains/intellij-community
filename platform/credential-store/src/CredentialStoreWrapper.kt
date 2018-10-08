@@ -2,7 +2,6 @@
 package com.intellij.credentialStore
 
 import com.google.common.cache.CacheBuilder
-import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -21,7 +20,7 @@ internal val NOTIFICATION_MANAGER by lazy {
   SingletonNotificationManager(NotificationGroup("Password Safe", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
 }
 
-private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
+private class CredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
   private val fallbackStore = lazy { createInMemoryKeePassCredentialStore() }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
@@ -98,7 +97,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
-  override fun create(): PasswordStorage? {
+  override fun create(): CredentialStore? {
     if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
       return CredentialStoreWrapper(KeyChainCredentialStore())
     }
@@ -107,7 +106,7 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
 }
 
 private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
-  override fun create(): PasswordStorage? {
+  override fun create(): CredentialStore? {
     if (SystemInfo.isLinux && SystemProperties.getBooleanProperty("use.linux.keychain", true)) {
       return CredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
     }
