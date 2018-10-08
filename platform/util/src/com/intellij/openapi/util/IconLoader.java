@@ -512,7 +512,7 @@ public final class IconLoader {
     private volatile Object myRealIcon;
     private volatile String myOriginalPath;
     @Nullable private volatile ClassLoader myClassLoader;
-    @NotNull private volatile MyUrlResolver myResolver;
+    @NotNull private volatile MyUrlResolver myResolver = new MyUrlResolver(null);
     private volatile boolean myStrict;
     private volatile boolean myDark;
     private volatile boolean myDarkOverridden;
@@ -578,7 +578,7 @@ public final class IconLoader {
 
     @NotNull
     private String getUrlOrPathString() {
-      return myResolver.isResolved() ? myResolver.getResolveUrl().toString() : myOriginalPath != null ? myOriginalPath : "unknown path";
+      return myResolver.isResolved() ? myResolver.getURL().toString() : myOriginalPath != null ? myOriginalPath : "unknown path";
     }
 
     public String getOriginalPath() {
@@ -612,7 +612,7 @@ public final class IconLoader {
     @NotNull
     private synchronized ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
-        myResolver.getResolveUrl();
+        myResolver.resolve();
         if (isLoaderDisabled()) return EMPTY_ICON;
         myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
@@ -627,7 +627,7 @@ public final class IconLoader {
             myClassLoader = patchedPath.second;
           }
           if (myClassLoader != null && path != null && path.startsWith("/")) {
-            myResolver = new MyUrlResolver(path.substring(1), null);
+            myResolver = new MyUrlResolver(path.substring(1), null).resolve();
           }
         }
       }
@@ -736,7 +736,7 @@ public final class IconLoader {
     }
 
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
-      return ImageLoader.loadFromUrl(myResolver.getResolveUrl(), true, myUseCacheOnLoad, dark, myFilters, ctx);
+      return ImageLoader.loadFromUrl(myResolver.getURL(), true, myUseCacheOnLoad, dark, myFilters, ctx);
     }
 
     private class MyScaledIconsCache {
@@ -781,35 +781,34 @@ public final class IconLoader {
      */
     private class MyUrlResolver {
       @Nullable private final Class myClass;
-      @Nullable private String myOverridenPath;
-      @Nullable private URL myUrl;
+      @Nullable private final String myOverridenPath;
+      @Nullable private volatile URL myUrl;
 
       MyUrlResolver(@Nullable URL url) {
-        myUrl = url;
         myClass = null;
+        myOverridenPath = null;
+        myUrl = url;
       }
 
       MyUrlResolver(@Nullable String path, @Nullable Class clazz) {
         myOverridenPath = path;
         myClass = clazz;
-        if (!Registry.is("ide.icons.deferUrlResolve")) getResolveUrl();
+        if (!Registry.is("ide.icons.deferUrlResolve")) resolve();
       }
 
       boolean isResolved() {
         return myUrl != null;
       }
 
-      @NotNull
-      URL getResolveUrl() {
-        if (myUrl != null) return myUrl;
+      MyUrlResolver resolve() {
+        if (myUrl != null) return this;
 
         String path = ObjectUtils.notNull(myOverridenPath, myOriginalPath);
         Icon icon = findReflectiveIcon(path, myClassLoader);
         if (icon != null) {
           assert icon instanceof CachedImageIcon;
           copy((CachedImageIcon)icon);
-          // return URL from the reflective icon
-          return myResolver.getResolveUrl();
+          return myResolver.resolve(); // resolve in the copied icon's resolver
         }
 
         URL url = findURL(path, myClassLoader);
@@ -820,8 +819,21 @@ public final class IconLoader {
         if (url == null && myStrict) {
           throw new RuntimeException("Can't find icon in '" + myOriginalPath + "' near " + myClassLoader);
         }
-        //noinspection ConstantConditions
-        return myUrl = url;
+        //noinspection SynchronizeOnThis
+        synchronized (this) {
+          // sync write only to exclude any potential deadlocks
+          if (myUrl == null) myUrl = url;
+        }
+        return this;
+      }
+
+      @SuppressWarnings("ConstantConditions")
+      @NotNull
+      URL getURL() {
+        if (!isResolved()) {
+          return resolve().myUrl;
+        }
+        return myUrl;
       }
     }
   }
