@@ -35,6 +35,7 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import kotlin.jvm.functions.Function1;
@@ -200,7 +201,11 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        TroveUtil.addAll(result, createFileNamesData(path).getCommits());
+        Set<Integer> commits = createFileNamesData(path).getCommits();
+        if (commits.isEmpty() && !path.isDirectory()) {
+          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+        }
+        TroveUtil.addAll(result, commits);
       }
       return result;
     }, new TIntHashSet());
