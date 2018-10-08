@@ -555,7 +555,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
     Color colorUnderCaretRow = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR);
-    g.setColor(color != null ? color : JBColor.blue);
     Font font = getFontForLineNumbers();
     g.setFont(font);
 
