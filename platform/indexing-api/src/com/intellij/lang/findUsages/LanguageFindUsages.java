@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -51,7 +52,7 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
    * @return true iff could be found usages by some provider for this element
    */
   public static boolean canFindUsagesFor(@NotNull PsiElement psiElement) {
-    return forPsiElement(psiElement) != null;
+    return applyForProviders(p -> p.canFindUsagesFor(psiElement), psiElement, Boolean.FALSE);
   }
 
   @Nullable
@@ -67,8 +68,7 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
 
   @NotNull
   public static String getDescriptiveName(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getDescriptiveName(psiElement);
+    return applyForProviders(p -> p.getDescriptiveName(psiElement), psiElement, "");
   }
 
   /**
@@ -76,33 +76,31 @@ public class LanguageFindUsages extends LanguageExtension<FindUsagesProvider> {
    */
   @NotNull
   public static String getType(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getType(psiElement);
+    return applyForProviders(p -> p.getType(psiElement), psiElement, "");
   }
 
   @NotNull
   public static String getNodeText(@NotNull PsiElement psiElement, boolean useFullName) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? "" : provider.getNodeText(psiElement, useFullName);
+    return applyForProviders(p -> p.getNodeText(psiElement, useFullName), psiElement, "");
   }
 
   @Nullable
   public static String getHelpId(@NotNull PsiElement psiElement) {
-    FindUsagesProvider provider = forPsiElement(psiElement);
-    return provider == null ? null : provider.getHelpId(psiElement);
+    return applyForProviders(p -> p.getHelpId(psiElement), psiElement, null);
   }
 
-  private static FindUsagesProvider forPsiElement(@NotNull PsiElement psiElement) {
+  private static <T> T applyForProviders(@NotNull Function<FindUsagesProvider, T> method, @NotNull PsiElement psiElement, T defaultValue) {
     Language language = psiElement.getLanguage();
     List<FindUsagesProvider> providers = INSTANCE.allForLanguage(language);
     assert !providers.isEmpty() : "Element: " + psiElement + ", language: " + language;
 
     for (FindUsagesProvider provider : providers) {
-      if (provider.canFindUsagesFor(psiElement)) {
-        return provider;
+      T res = method.apply(provider);
+      if (res != null && !res.equals(defaultValue)) {
+        return res;
       }
     }
-    return null;
+    return defaultValue;
   }
 
 }
