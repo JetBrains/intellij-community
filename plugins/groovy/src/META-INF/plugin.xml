@@ -1,7 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
-  <description>Plugin for Groovy language support, including, Grape, Gant and Griffon</description>
+  <description>Plugin for Groovy language support, including, Grape and Gant</description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
@@ -249,10 +249,6 @@
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
 
-    <mvc.framework implementation="org.jetbrains.plugins.groovy.griffon.GriffonFramework"/>
-    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
-    <importContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
-
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
 
@@ -264,7 +260,6 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.DelegatesToAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.DelegateAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BuilderAnnotationChecker"/>
-    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BaseScriptAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.NamedParamAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.ImmutableOptionsAnnotationChecker"/>
@@ -1631,26 +1626,12 @@
       <className>org.jetbrains.plugins.groovy.intentions.annotations.AddAnnotationValueIntention</className>
     </intentionAction>
 
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
-                    serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
-
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryPresentationProvider"/>
-    <moduleBuilder builderClass="org.jetbrains.plugins.groovy.griffon.GriffonModuleBuilder" id="griffonModuleBuilder"/>
-    <projectStructureDetector implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectStructureDetector"
-                              order="before groovyDetector"/>
-    <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
-    <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
-    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="JetgroovyIcons.Griffon.GriffonToolWindow"
-                factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
 
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
                     serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
-    <selectInTarget implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewSelectInTarget"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"
                         serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory"
@@ -1796,11 +1777,6 @@
       <action id="Mvc.Upgrade"
               class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
               text="Change SDK version" description="Change Grails/Griffon SDK version">
-      </action>
-
-      <action id="Griffon.UpdateDependencies" class="org.jetbrains.plugins.groovy.griffon.UpdateGriffonSettingsAction"
-              text="Synchronize Griffon settings"
-              description="Refresh IntelliJ IDEA project structure so that it matches Griffon build settings">
       </action>
 
       <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction"
