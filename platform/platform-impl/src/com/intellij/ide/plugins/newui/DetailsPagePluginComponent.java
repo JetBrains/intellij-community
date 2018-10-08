@@ -583,7 +583,9 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   }
 
   private void doUninstall() {
-    myPluginsModel.doUninstall(this, myPlugin, this::changeInstallOrUpdateToRestart);
+    if (myPluginsModel.showUninstallDialog(myPlugin.getName(), 1)) {
+      myPluginsModel.doUninstall(this, myPlugin, this::changeInstallOrUpdateToRestart);
+    }
   }
 
   private void changeInstallOrUpdateToRestart() {

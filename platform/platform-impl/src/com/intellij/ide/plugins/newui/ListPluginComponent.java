@@ -99,6 +99,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
       myEnableDisableButton.setSelected(false);
       myEnableDisableButton.setEnabled(false);
+      myEnableDisableButton.setVisible(false);
 
       myUninstalled = true;
     }
@@ -215,7 +216,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
-    updateIcon(errors, !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (errors) {
       Ref<Boolean> enableAction = new Ref<>();
@@ -247,7 +248,7 @@ public class ListPluginComponent extends CellPluginComponent {
       myLastUpdated.setForeground(grayedFg);
     }
 
-    boolean enabled = MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin);
+    boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
     myName.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
 
     if (myDescription != null) {
@@ -261,9 +262,11 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateAfterUninstall() {
     myUninstalled = true;
+    updateColors(mySelection);
 
     myEnableDisableButton.setSelected(false);
     myEnableDisableButton.setEnabled(false);
+    myEnableDisableButton.setVisible(false);
 
     changeUpdateToRestart();
   }
@@ -357,6 +360,9 @@ public class ListPluginComponent extends CellPluginComponent {
     group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
+        }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
@@ -413,6 +419,9 @@ public class ListPluginComponent extends CellPluginComponent {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
+        }
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
         }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(this, component.myPlugin, null);
