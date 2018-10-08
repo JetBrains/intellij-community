@@ -5,7 +5,7 @@ class C {
         bar();/*comment 2*//*comment 3*///comment 4
         // comment A
         /*comment B*/
-        int n = 1;// comment C
+        int n = 1; // comment C
     }
     void bar(){}
 }

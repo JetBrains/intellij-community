@@ -7,11 +7,9 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -20,8 +18,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -232,84 +228,29 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     }
 
     public void applyFixImpl(@NotNull Context context) {
-      PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
+      PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
-      if (initializerExpression != null && elementToReplace != null) {
-        List<String> commentTexts = collectCommentTexts(elementToReplace);
-        List<String> reverseTrailingCommentTexts = collectReverseTrailingCommentTexts(elementToReplace);
+      if (initializer != null && elementToReplace != null) {
+        CommentTracker declTracker = new CommentTracker();
+        declTracker.markUnchanged(initializer);
+        String declText = context.getDeclarationText(initializer);
+        PsiElement declaration = declTracker.replaceAndRestoreComments(elementToReplace, declText);
 
-        PsiElement declaration = replaceWithDeclaration(context, elementToReplace, initializerExpression);
-        restoreComments(commentTexts, reverseTrailingCommentTexts, declaration);
-
-        deleteAndRestoreComments(context.myVariable, declaration);
+        CommentTracker varTracker = new CommentTracker();
+        varTracker.delete(context.myVariable);
+        PsiElement anchor = findCommentAnchor(declaration);
+        varTracker.insertCommentsBefore(anchor);
       }
     }
 
     @NotNull
-    private static PsiElement replaceWithDeclaration(@NotNull Context context,
-                                                     @NotNull PsiElement elementToReplace,
-                                                     @NotNull PsiExpression initializerExpression) {
-      Project project = elementToReplace.getProject();
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String text = context.getDeclarationText(initializerExpression);
-      PsiStatement statement = factory.createStatementFromText(text, context.myAssignment);
-      PsiElement replaced = elementToReplace.replace(statement);
-      return CodeStyleManager.getInstance(project).reformat(replaced);
-    }
-
-    @NotNull
-    public List<String> collectCommentTexts(@NotNull PsiElement element) {
-      return ContainerUtil.map(collectElementsOfType(element, PsiComment.class), PsiElement::getText);
-    }
-
-    @NotNull
-    private static List<String> collectReverseTrailingCommentTexts(@NotNull PsiElement element) {
-      List<String> result = new ArrayList<>();
-      for (PsiElement child = element.getLastChild();
-           child instanceof PsiComment || child instanceof PsiWhiteSpace;
-           child = child.getPrevSibling()) {
-        if (child instanceof PsiComment) {
-          result.add(child.getText());
-        }
-      }
-      return result;
-    }
-
-    private void restoreComments(@NotNull List<String> commentTexts,
-                                 @NotNull List<String> reverseTrailingCommentTexts,
-                                 @NotNull PsiElement target) {
-      if (commentTexts.isEmpty()) return;
-
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
-      List<String> newCommentTexts = collectCommentTexts(target);
-      PsiElement parent = target.getParent();
-
-      for (String commentText : commentTexts) {
-        if (!newCommentTexts.contains(commentText) && !reverseTrailingCommentTexts.contains(commentText)) {
-          PsiComment comment = factory.createCommentFromText(commentText, target);
-          parent.addBefore(comment, target);
-        }
-      }
-
-      if (reverseTrailingCommentTexts.isEmpty()) return;
-      for (String commentText : reverseTrailingCommentTexts) {
-        if (!newCommentTexts.contains(commentText)) {
-          PsiComment comment = factory.createCommentFromText(commentText, target);
-          parent.addAfter(comment, target); // adding immediately after the target restores the original order
-        }
-      }
-    }
-
-    public static void deleteAndRestoreComments(@NotNull PsiElement elementToDelete, @NotNull PsiElement anchor) {
-      assert elementToDelete != anchor : "can't delete anchor";
-      CommentTracker tracker = new CommentTracker();
-      tracker.delete(elementToDelete);
+    public static PsiElement findCommentAnchor(@NotNull PsiElement anchor) {
       for (PsiElement element = skipWhitespacesBackward(anchor);
            element instanceof PsiComment;
            element = skipWhitespacesBackward(element)) {
         anchor = element;
       }
-      tracker.insertCommentsBefore(anchor);
+      return anchor;
     }
   }
 

@@ -2,7 +2,7 @@
 class C {
     int foo(int x) {
         int b = System.in.read();
-        int a = x + 1;/*A*//*B*/// C
+        int a = x + 1; /*A*/ /*B*/ // C
         return a + b;
     }
 }
