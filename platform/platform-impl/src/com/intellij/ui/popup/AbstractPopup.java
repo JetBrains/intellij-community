@@ -32,10 +32,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -46,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -124,6 +122,7 @@ public class AbstractPopup implements JBPopup {
   @Nullable private BooleanFunction<KeyEvent> myKeyEventHandler;
 
   protected boolean myOk;
+  private final List<Runnable> myResizeListeners = new ArrayList<>();
 
   private static final WeakList<JBPopup> all = new WeakList<>();
 
@@ -452,6 +451,17 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
+  public Point getBestPositionFor(@NotNull DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor != null && editor.getComponent().isShowing()) {
+      return getBestPositionFor(editor).getScreenPoint();
+    }
+    else {
+      return relativePointByQuickSearch(dataContext).getScreenPoint();
+    }
+  }
+
+  @Override
   public void showInBestPositionFor(@NotNull DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && editor.getComponent().isShowing()) {
@@ -511,44 +521,67 @@ public class AbstractPopup implements JBPopup {
     // a window context change -- the tooltip is "logically" hosted
     // inside the component (e.g. editor) it appears on top of.
     AccessibleContextUtil.setParent((Component)myComponent, editor.getContentComponent());
+    show(getBestPositionFor(editor));
+  }
+
+  @NotNull
+  private RelativePoint getBestPositionFor(@NotNull Editor editor) {
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
       final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
-      show(relativePointWithDominantRectangle(layeredPane, dominantArea));
+      return relativePointWithDominantRectangle(layeredPane, dominantArea);
     }
     else {
-      show(guessBestPopupLocation(editor));
+      return guessBestPopupLocation(editor);
     }
   }
 
   @NotNull
   private RelativePoint guessBestPopupLocation(@NotNull Editor editor) {
     RelativePoint preferredLocation = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-    if (myDimensionServiceKey == null) {
-      return preferredLocation;
+    Dimension targetSize = myDimensionServiceKey == null ? null : DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    if (targetSize == null) {
+      targetSize = getSize();
     }
-    Dimension preferredSize = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
-    if (preferredSize == null) {
-      return preferredLocation;
+    if (targetSize == null) {
+      targetSize = myComponent.getPreferredSize();
     }
-    Rectangle preferredBounds = new Rectangle(preferredLocation.getScreenPoint(), preferredSize);
+    Point preferredPoint = preferredLocation.getScreenPoint();
+    Point result = getLocationAboveEditorLineIfPopupIsClippedAtTheBottom(preferredPoint, targetSize, editor);
+    if (myLocateWithinScreen) {
+      Rectangle rectangle = new Rectangle(result, targetSize);
+      Rectangle screen = ScreenUtil.getScreenRectangle(preferredPoint);
+      ScreenUtil.moveToFit(rectangle, screen, null);
+      result = rectangle.getLocation();
+    }
+    return toRelativePoint(result, preferredLocation.getComponent());
+  }
+
+  @NotNull
+  private static RelativePoint toRelativePoint(@NotNull Point screenPoint, @Nullable Component component) {
+    if (component == null) {
+      return RelativePoint.fromScreen(screenPoint);
+    }
+    SwingUtilities.convertPointFromScreen(screenPoint, component);
+    return new RelativePoint(component, screenPoint);
+  }
+
+  @NotNull
+  private static Point getLocationAboveEditorLineIfPopupIsClippedAtTheBottom(@NotNull Point originalLocation,
+                                                                             @NotNull Dimension popupSize,
+                                                                             @NotNull Editor editor) {
+    Rectangle preferredBounds = new Rectangle(originalLocation, popupSize);
     Rectangle adjustedBounds = new Rectangle(preferredBounds);
     ScreenUtil.moveRectangleToFitTheScreen(adjustedBounds);
     if (preferredBounds.y - adjustedBounds.y <= 0) {
-      return preferredLocation;
+      return originalLocation;
     }
-    int adjustedY = preferredBounds.y - editor.getLineHeight() - preferredSize.height;
+    int adjustedY = preferredBounds.y - editor.getLineHeight() - popupSize.height;
     if (adjustedY < 0) {
-      return preferredLocation;
+      return originalLocation;
     }
-    Point point = new Point(preferredBounds.x, adjustedY);
-    Component component = preferredLocation.getComponent();
-    if (component == null) {
-      return RelativePoint.fromScreen(point);
-    }
-    SwingUtilities.convertPointFromScreen(point, component);
-    return new RelativePoint(component, point);
+    return new Point(preferredBounds.x, adjustedY);
   }
 
   protected void addPopupListener(JBPopupListener listener) {
@@ -865,6 +898,11 @@ public class AbstractPopup implements JBPopup {
             }
             super.setCursor(content, cursor);
           }
+        }
+
+        @Override
+        protected void notifyResized() {
+          myResizeListeners.forEach(Runnable::run);
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
@@ -1495,11 +1533,15 @@ public class AbstractPopup implements JBPopup {
   }
 
   @Override
-  public void setLocation(@NotNull final Point screenPoint) {
+  public void setLocation(@NotNull Point screenPoint) {
     if (myPopup == null) {
       myForcedLocation = screenPoint;
     }
     else if (!isBusy()) {
+      final Insets insets = myContent.getInsets();
+      if (insets != null && (insets.top != 0 || insets.left != 0)) {
+        screenPoint = new Point(screenPoint.x - insets.left, screenPoint.y - insets.top);
+      }
       moveTo(myContent, screenPoint, myLocateByContent ? myHeaderPanel.getPreferredSize() : null);
     }
   }
@@ -1883,5 +1925,18 @@ public class AbstractPopup implements JBPopup {
       }
       return false;
     }).collect(Collectors.toList());
+  }
+
+  @Override
+  public boolean canShow() {
+    return myState == State.INIT;
+  }
+
+  /**
+   * Passed listener will be notified if popup is resized by user (using mouse)
+   */
+  public void addResizeListener(@NotNull Runnable runnable, @NotNull Disposable parentDisposable) {
+    myResizeListeners.add(runnable);
+    Disposer.register(parentDisposable, () -> myResizeListeners.remove(runnable));
   }
 }
