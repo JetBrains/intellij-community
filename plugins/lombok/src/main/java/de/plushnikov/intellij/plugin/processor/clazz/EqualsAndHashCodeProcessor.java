@@ -1,17 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
@@ -334,6 +324,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     } else {
       result = declaredAnnotationValue;
     }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addFieldsAnnotation(result, psiClass, EqualsAndHashCode.Include.class, EqualsAndHashCode.Exclude.class);
     return result;
   }
 

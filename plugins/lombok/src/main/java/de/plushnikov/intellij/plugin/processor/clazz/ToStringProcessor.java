@@ -1,16 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiArrayType;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -175,6 +165,14 @@ public class ToStringProcessor extends AbstractClassProcessor {
       paramString.delete(paramString.length() - 2, paramString.length());
     }
     return paramString.toString();
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
+    final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
+    addFieldsAnnotation(result, psiClass, ToString.Include.class, ToString.Exclude.class);
+    return result;
   }
 
   @Override

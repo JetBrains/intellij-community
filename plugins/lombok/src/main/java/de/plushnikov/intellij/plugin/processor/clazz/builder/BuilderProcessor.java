@@ -51,12 +51,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Singular.class);
-      if (null != psiAnnotation) {
-        result.add(psiAnnotation);
-      }
-    }
+    addFieldsAnnotation(result, psiClass, Singular.class, Builder.Default.class);
     return result;
   }
 

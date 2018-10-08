@@ -137,6 +137,10 @@ public class PsiAnnotationSearchUtil {
     return null != findAnnotation(psiModifierListOwner, annotationType);
   }
 
+  public static boolean isAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String annotationFQN) {
+    return null != findAnnotation(psiModifierListOwner, annotationFQN);
+  }
+
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
     return !isAnnotatedWith(psiModifierListOwner, annotationType);
   }

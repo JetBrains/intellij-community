@@ -37,6 +37,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Base lombok processor class for class annotations
@@ -79,6 +81,15 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
       result.add(psiAnnotation);
     }
     return result;
+  }
+
+  protected void addFieldsAnnotation(Collection<PsiAnnotation> result, @NotNull PsiClass psiClass, Class<? extends Annotation>... annotations) {
+    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, annotations);
+      if (null != psiAnnotation) {
+        result.add(psiAnnotation);
+      }
+    }
   }
 
   @NotNull
@@ -134,19 +145,8 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   private String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
     String result = null;
-    final Collection<String> restProperties = new ArrayList<String>(allProperties);
-    restProperties.remove(fieldName);
-
-    if (!restProperties.isEmpty()) {
-      final StringBuilder builder = new StringBuilder();
-      builder.append('{');
-      for (final String property : restProperties) {
-        builder.append('"').append(property).append('"').append(',');
-      }
-      builder.deleteCharAt(builder.length() - 1);
-      builder.append('}');
-
-      result = builder.toString();
+    if (!allProperties.isEmpty() && (allProperties.size() > 1 || !allProperties.contains(fieldName))) {
+      result = allProperties.stream().filter(((Predicate<String>) fieldName::equals).negate()).collect(Collectors.joining("\",\"", "{\"", "\"}"));
     }
     return result;
   }
@@ -154,6 +154,11 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   protected Collection<PsiField> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean filterTransient) {
     final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
     final boolean explicitExclude = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "exclude");
+    final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
+
+    final String annotationFQN = psiAnnotation.getQualifiedName();
+    final String annotationIncludeFQN = annotationFQN + ".Include";
+    final String annotationExcludeFQN = annotationFQN + ".Exclude";
 
     //Having both exclude and of generates a warning; the exclude parameter will be ignored in that case.
     final Collection<String> ofProperty;
@@ -171,22 +176,28 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     final Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
 
     for (PsiField classField : psiFields) {
-      if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
-        continue;
-      }
-      final String fieldName = classField.getName();
-      if (null == fieldName) {
-        continue;
-      }
-      if (explicitExclude && excludeProperty.contains(fieldName)) {
-        continue;
-      }
-      if (explicitOf && !ofProperty.contains(fieldName)) {
-        continue;
-      }
+      if (!onlyExplicitlyIncluded || !PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationIncludeFQN)) {
+        if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
+          continue;
+        }
+        final String fieldName = classField.getName();
+        if (null == fieldName) {
+          continue;
+        }
+        if (explicitExclude && excludeProperty.contains(fieldName)) {
+          continue;
+        }
+        if (explicitOf && !ofProperty.contains(fieldName)) {
+          continue;
+        }
 
-      if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
-        continue;
+        if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
+          continue;
+        }
+
+        if (PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationExcludeFQN)) {
+          continue;
+        }
       }
 
       result.add(classField);
