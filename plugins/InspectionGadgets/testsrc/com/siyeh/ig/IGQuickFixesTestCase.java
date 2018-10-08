@@ -112,9 +112,9 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doExpressionTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
-    doTest(hint, "class $X$ {{System.out.print(" + before + ");}}", "class $X$ {{System.out.print(" + after + ");}}");
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
+    doTest(hint, "class $X$ {static {System.out.print(" + before + ");}}", "class $X$ {static {System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
