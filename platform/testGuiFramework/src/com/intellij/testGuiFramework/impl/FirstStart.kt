@@ -154,7 +154,7 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   private fun scrollDown() {
-    val amount: Int = if (SystemInfo.isMac) -10 else 10
+    val amount: Int = if (SystemInfo.isMac) -100 else 100
     myRobot.rotateMouseWheel(amount)
   }
 
