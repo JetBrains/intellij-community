@@ -303,11 +303,20 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Nullable
-  public SearchableConfigurable findSubConfigurable(final String name) {
-    if (myPanels == null) {
-      buildConfigurables();
+  public SearchableConfigurable findSubConfigurable(@NotNull final String name) {
+    return findSubConfigurable(this, name);
+  }
+
+  private static SearchableConfigurable findSubConfigurable(SearchableConfigurable.Parent topConfigurable, @NotNull final String name) {
+    for (Configurable configurable : topConfigurable.getConfigurables()) {
+      if (configurable instanceof SearchableConfigurable) {
+        if (name.equals(configurable.getDisplayName())) return (SearchableConfigurable)configurable;
+        if (configurable instanceof SearchableConfigurable.Parent) {
+          SearchableConfigurable child = findSubConfigurable((Parent)configurable, name);
+          if (child != null) return child;
+        }
+      }
     }
-    Configurable found = myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
-    return found instanceof SearchableConfigurable ? (SearchableConfigurable)found : null;
+    return null;
   }
 }
