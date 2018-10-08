@@ -397,27 +397,13 @@ public class ShelvedChangesViewManager implements Disposable {
         List<ShelvedChange> shelvedChanges = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
         final List<ShelvedBinaryFile> shelvedBinaryFiles = TreeUtil.collectSelectedObjectsOfType(this, ShelvedBinaryFile.class);
         if (!shelvedChanges.isEmpty() || !shelvedBinaryFiles.isEmpty()) {
-          final List<Change> changes = new ArrayList<>(shelvedChanges.size() + shelvedBinaryFiles.size());
-          for (ShelvedChange shelvedChange : shelvedChanges) {
-            changes.add(shelvedChange.getChange(myProject));
-          }
-          for (ShelvedBinaryFile binaryFile : shelvedBinaryFiles) {
-            changes.add(binaryFile.createChange(myProject));
-          }
-          return changes.toArray(new Change[0]);
+          return ArrayUtil.toObjectArray(getChangesFromShelvedChanges(shelvedChanges, shelvedBinaryFiles), Change.class);
         }
         else {
           final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
           final List<Change> changes = new ArrayList<>();
-          for (ShelvedChangeList changeList : changeLists) {
-            shelvedChanges = changeList.getChanges(myProject);
-            for (ShelvedChange shelvedChange : shelvedChanges) {
-              changes.add(shelvedChange.getChange(myProject));
-            }
-            final List<ShelvedBinaryFile> binaryFiles = changeList.getBinaryFiles();
-            for (ShelvedBinaryFile file : binaryFiles) {
-              changes.add(file.createChange(myProject));
-            }
+          for (ShelvedChangeList list : changeLists) {
+            changes.addAll(getChangesFromShelvedChanges(list.getChanges(myProject), list.getBinaryFiles()));
           }
           return ArrayUtil.toObjectArray(changes, Change.class);
         }
@@ -449,6 +435,19 @@ public class ShelvedChangesViewManager implements Disposable {
         return navigatables.toArray(new Navigatable[0]);
       }
       return null;
+    }
+
+    @NotNull
+    private List<Change> getChangesFromShelvedChanges(@NotNull List<ShelvedChange> shelvedChanges,
+                                                      @NotNull List<ShelvedBinaryFile> shelvedBinaryFiles) {
+      final List<Change> changes = new ArrayList<>(shelvedChanges.size() + shelvedBinaryFiles.size());
+      for (ShelvedChange shelvedChange : shelvedChanges) {
+        changes.add(shelvedChange.getChange(myProject));
+      }
+      for (ShelvedBinaryFile binaryFile : shelvedBinaryFiles) {
+        changes.add(binaryFile.createChange(myProject));
+      }
+      return changes;
     }
 
     private Set<ShelvedChangeList> getSelectedLists(final boolean recycled) {
