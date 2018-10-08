@@ -55,7 +55,7 @@ final class HashedBlockInputStream extends InputStream {
   private final InputStream inputStream;
   private ByteArrayInputStream blockInputStream = new ByteArrayInputStream(new byte[0]);
 
-  private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();
+  private final MessageDigest md = KdbxKt.sha256MessageDigest();
 
   HashedBlockInputStream(@NotNull InputStream inputStream) {
     this.inputStream = inputStream;

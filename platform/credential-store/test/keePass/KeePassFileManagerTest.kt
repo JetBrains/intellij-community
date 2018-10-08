@@ -9,12 +9,12 @@ import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.Base64
 import com.intellij.util.io.*
 import org.junit.Rule
 import org.junit.Test
 import java.awt.Component
 import java.nio.file.Path
+import java.util.*
 
 private val testCredentialAttributes = CredentialAttributes("foo", "u")
 
@@ -138,7 +138,7 @@ internal class KeePassFileManagerTest {
     // assert that other store not corrupted
     fsRule.fs.getPath("/other/otherKey").move(fsRule.fs.getPath("/other/${MASTER_KEY_FILE_NAME}"))
     otherStore.reload()
-    assertThat(otherStore.get(testCredentialAttributes)!!.getPasswordAsString()).isEqualTo("p")
+    assertThat(otherStore.get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }
 
   @Test
@@ -158,7 +158,19 @@ internal class KeePassFileManagerTest {
   fun reuseExisting() {
     val dbFile = fsRule.fs.getPath("/existingDb.kdbx")
     @Suppress("SpellCheckingInspection")
-    dbFile.write(Base64.decode("A9mimmf7S7UBAAMAAhAAMcHy5r9xQ1C+WAUhavxa/wMEAAEAAAAEIAAWuDmigh57N8BZgj1w0GctkaqFTO7nPOroO5AnmUliFgUgAHCRnuiXHvLqSv2oJPMHI5QS9Ony+oIOww4kHcpz2wmEBggAcBcAAAAAAAAHEAB2bInsMKh/zNzzBaegBa/kCCAAw3NSQcu+oGXwJvY9Ht6NSCC19uGFN+sEP9n9E3tNCvoJIADD/kYwUqnCSzrzYXu3tcJcvBKzTinwcSZQ769wYZ/oPwoEAAIAAAAABAAA0K0KdKTDfpMiRxKSe1xkvCDuBDdlDe/hiU3YnkhhCZk48sB9OV4uZI1LPJAgQ8HogjxMjAhnNThYdjlFQ9TTfsb3wUXH/7IK8n69a8IoWuRp9fnchQFnnArXcZeimeUREb/3jcwTXrIHGg+AN7MPQCD/b47us2h07oaAVvGFLCaLU111mJNZrdjNvO9BKODUbqfFFVhJhMAazjsdVpRfV3dbm0apdgluJQ8eUFzrF4YZUUkenG869o/yngD2cm1BxmG2QZe2fel/PSWRRFZ0i6zJm3h9CnYStnDL2N6lm9MPqOm3pKUk0uOG8p9P4U4UHMOnwIFw4RReO5wnqpMN4DFUCfM1qqx0fuqc/sy3DEgpRg3ENsHU7AbidobJzIqGOeK9ywU6Rp5peJrLjbIszedVWVPvxwt/xgAHcaqfntV86XcG8MlJElLSsK4fh9gspySNeyP43wnLjAdFGHq5OtAkhTTwXzHSZTxhazTjClssAHYAyTEQrlYRFl4+4apzdq5g3crGl1vR0Ekj22ytIsQXu9HYVTZ6pk6ESQAIg1qieDZQl4B1eEaRNnyvkfhgPIUDLuG4ULMGm/L1dur2nhHlooqgR8gHo5MNclghOKZdOhJNOvsd7/1XDsziizOqbocjJtBCEOWSgI1Ht1fbmG1nO9C6MrzkkxK+xQaXZDG2fmitUw2flN3OMky/RJgMD4LVdZLoaHj3uq86USXjDc0ql7lHeRRmOhIJ3X8DZObJmyhlylBGYwmYB/PmOuoe28iM8/wQ4Xr8bSYco5kxOK8Bii5TotDXqhVlTdajCo5NN33nqeSc/f+5BGL/CmdxannLel1bnEJrY2ESYXrjzUSM0pgnJlLNxZYynw/XMtSPbXI8/m2ciAP9iXv5efJMOv8O6dmzlbiYz7efSEpIDiwHG7HAIVnVzmy26jhyHXchaQpouPnwj/QhzTL1lRv0qA2K5+wNIexkKQa4G4iZhSHVzZTHY12rpnLDTxWv2GXHCvwdY5AD6jTJazimlTpbVOf+UvDIPiY2ksmhnaZU9Lc/ItkInhtZwW0e0XtdcgunaVr5BvHTRRancrtRN23VAUlNzQ7Uror55JG3PxUThOX8XRmqJxMnIlgpNbv/tgqbks7zuCESLFjz0EM19QygatS+uHCWnsUp8sWl14bcrwGRoFsdPj/AFRGAv2xYwfMT8VBOZx1KpQ0vqxOx8t67pxpBUaH/Cqlh8Jje7vxXT7wrXQK3bVjpk2uYncAkd7ruk0y7X/Jzvyu9cfoEDn6EMOS0b5aE6VoywNHhbo3dGyZq3K25jOGvgLzRSj9ETBNL8DTccaNzkcyXBsj/gqUZ1rYxVZHPaJWi2Cgy07b+jV5FSRSMYkjNG90ADHKnqyuEG1Y7+pvIX1hOBGIVJ0HA9Ij6xYTZXkGRu6V+WGYEPnDJ4Pi+EYwD400nxtrxwpGiEHWYzyjACHB2BKS9J3BDh4S/"))
+    dbFile.write(Base64.getDecoder().decode(
+      "A9mimmf7S7UBAAMAAhAAMcHy5r9xQ1C+WAUhavxa/wMEAAEAAAAEIAAWuDmigh57N8BZgj1w0GctkaqFTO7nPOroO5AnmUliFgUgAHCRnuiXHvLqSv2oJPMHI5QS9Ony+oIOww4kHcpz2wmEBgg" +
+      "AcBcAAAAAAAAHEAB2bInsMKh/zNzzBaegBa/kCCAAw3NSQcu+oGXwJvY9Ht6NSCC19uGFN+sEP9n9E3tNCvoJIADD/kYwUqnCSzrzYXu3tcJcvBKzTinwcSZQ769wYZ/oPwoEAAIAAAAABAAA0K0" +
+      "KdKTDfpMiRxKSe1xkvCDuBDdlDe/hiU3YnkhhCZk48sB9OV4uZI1LPJAgQ8HogjxMjAhnNThYdjlFQ9TTfsb3wUXH/7IK8n69a8IoWuRp9fnchQFnnArXcZeimeUREb/3jcwTXrIHGg+AN7MPQCD/b" +
+      "47us2h07oaAVvGFLCaLU111mJNZrdjNvO9BKODUbqfFFVhJhMAazjsdVpRfV3dbm0apdgluJQ8eUFzrF4YZUUkenG869o/yngD2cm1BxmG2QZe2fel/PSWRRFZ0i6zJm3h9CnYStnDL2N6lm9MPqOm3p" +
+      "KUk0uOG8p9P4U4UHMOnwIFw4RReO5wnqpMN4DFUCfM1qqx0fuqc/sy3DEgpRg3ENsHU7AbidobJzIqGOeK9ywU6Rp5peJrLjbIszedVWVPvxwt/xgAHcaqfntV86XcG8MlJElLSsK4fh9gspySNeyP43" +
+      "wnLjAdFGHq5OtAkhTTwXzHSZTxhazTjClssAHYAyTEQrlYRFl4+4apzdq5g3crGl1vR0Ekj22ytIsQXu9HYVTZ6pk6ESQAIg1qieDZQl4B1eEaRNnyvkfhgPIUDLuG4ULMGm/L1dur2nhHlooqgR8gHo5" +
+      "MNclghOKZdOhJNOvsd7/1XDsziizOqbocjJtBCEOWSgI1Ht1fbmG1nO9C6MrzkkxK+xQaXZDG2fmitUw2flN3OMky/RJgMD4LVdZLoaHj3uq86USXjDc0ql7lHeRRmOhIJ3X8DZObJmyhlylBGYwmYB/Pm" +
+      "Ouoe28iM8/wQ4Xr8bSYco5kxOK8Bii5TotDXqhVlTdajCo5NN33nqeSc/f+5BGL/CmdxannLel1bnEJrY2ESYXrjzUSM0pgnJlLNxZYynw/XMtSPbXI8/m2ciAP9iXv5efJMOv8O6dmzlbiYz7efSEpIDi" +
+      "wHG7HAIVnVzmy26jhyHXchaQpouPnwj/QhzTL1lRv0qA2K5+wNIexkKQa4G4iZhSHVzZTHY12rpnLDTxWv2GXHCvwdY5AD6jTJazimlTpbVOf+UvDIPiY2ksmhnaZU9Lc/ItkInhtZwW0e0XtdcgunaVr5Bv" +
+      "HTRRancrtRN23VAUlNzQ7Uror55JG3PxUThOX8XRmqJxMnIlgpNbv/tgqbks7zuCESLFjz0EM19QygatS+uHCWnsUp8sWl14bcrwGRoFsdPj/AFRGAv2xYwfMT8VBOZx1KpQ0vqxOx8t67pxpBUaH/Cqlh8J" +
+      "je7vxXT7wrXQK3bVjpk2uYncAkd7ruk0y7X/Jzvyu9cfoEDn6EMOS0b5aE6VoywNHhbo3dGyZq3K25jOGvgLzRSj9ETBNL8DTccaNzkcyXBsj/gqUZ1rYxVZHPaJWi2Cgy07b+jV5FSRSMYkjNG90ADHKnqyuEG1" +
+      "Y7+pvIX1hOBGIVJ0HA9Ij6xYTZXkGRu6V+WGYEPnDJ4Pi+EYwD400nxtrxwpGiEHWYzyjACHB2BKS9J3BDh4S/"))
 
     fun checkEntry(db: KeePassDatabase) {
       assertThat(db.rootGroup.getEntry("foo", "foo")!!.password!!.get().toString()).isEqualTo("bar")

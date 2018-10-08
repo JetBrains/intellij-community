@@ -15,6 +15,8 @@
  */
 package com.intellij.credentialStore.kdbx
 
+import com.google.common.io.LittleEndianDataInputStream
+import com.google.common.io.LittleEndianDataOutputStream
 import com.intellij.credentialStore.createSecureRandom
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.io.CipherInputStream
@@ -26,7 +28,9 @@ import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
-import java.security.MessageDigest
+import java.security.DigestInputStream
+import java.security.DigestOutputStream
+import java.security.SecureRandom
 import java.util.*
 
 /**
@@ -39,6 +43,37 @@ import java.util.*
  * This UUID denotes that AES Cipher is in use. No other values are known.
  */
 private val AES_CIPHER = UUID.fromString("31C1F2E6-BF71-4350-BE58-05216AFC5AFF")
+
+private const val FILE_VERSION_CRITICAL_MASK = 0xFFFF0000.toInt()
+
+private const val SIG1 = 0x9AA2D903.toInt()
+private const val SIG2 = 0xB54BFB67.toInt()
+
+private const val FILE_VERSION_32 = 0x00030001
+
+internal fun createProtectedStreamKey(random: SecureRandom) = random.generateSeed(32)
+
+private object HeaderType {
+  const val END: Byte = 0
+  const val COMMENT: Byte = 1
+  const val CIPHER_ID: Byte = 2
+  const val COMPRESSION_FLAGS: Byte = 3
+  const val MASTER_SEED: Byte = 4
+  const val TRANSFORM_SEED: Byte = 5
+  const val TRANSFORM_ROUNDS: Byte = 6
+  const val ENCRYPTION_IV: Byte = 7
+  const val PROTECTED_STREAM_KEY: Byte = 8
+  const val STREAM_START_BYTES: Byte = 9
+  const val INNER_RANDOM_STREAM_ID: Byte = 10
+}
+
+private fun readSignature(input: LittleEndianDataInputStream): Boolean {
+  return input.readInt() == SIG1 && input.readInt() == SIG2
+}
+
+private fun verifyFileVersion(input: LittleEndianDataInputStream): Boolean {
+  return input.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
+}
 
 internal class KdbxHeader {
   /**
@@ -55,21 +90,19 @@ internal class KdbxHeader {
     NONE, ARC_FOUR, SALSA_20
   }
 
-  /* the cipher in use */
-  var cipherUuid = AES_CIPHER!!
-    private set
+  // the cipher in use
+  private var cipherUuid = AES_CIPHER
 
   /* whether the data is compressed */
   var compressionFlags = CompressionFlags.GZIP
     private set
 
-  var masterSeed: ByteArray
-  var transformSeed: ByteArray
-  var transformRounds: Long = 6000
-  var encryptionIv: ByteArray
+  private var masterSeed: ByteArray
+  private var transformSeed: ByteArray
+  private var transformRounds: Long = 6000
+  private var encryptionIv: ByteArray
   var protectedStreamKey: ByteArray
-  var protectedStreamAlgorithm = ProtectedStreamAlgorithm.SALSA_20
-    private set
+  private var protectedStreamAlgorithm = ProtectedStreamAlgorithm.SALSA_20
 
   /* these bytes appear in cipher text immediately following the header */
   var streamStartBytes = ByteArray(32)
@@ -82,7 +115,7 @@ internal class KdbxHeader {
     masterSeed = random.generateSeed(32)
     transformSeed = random.generateSeed(32)
     encryptionIv = random.generateSeed(16)
-    protectedStreamKey = random.generateSeed(32)
+    protectedStreamKey = createProtectedStreamKey(random)
   }
 
   /**
@@ -103,7 +136,7 @@ internal class KdbxHeader {
     return getEncryptedOutputStream(outputStream, finalKeyDigest, encryptionIv)
   }
 
-  fun setCipherUuid(uuid: ByteArray) {
+  private fun setCipherUuid(uuid: ByteArray) {
     val b = ByteBuffer.wrap(uuid)
     val incoming = UUID(b.long, b.getLong(8))
     if (incoming != AES_CIPHER) {
@@ -112,12 +145,115 @@ internal class KdbxHeader {
     cipherUuid = incoming
   }
 
-  fun setCompressionFlags(flags: Int) {
-    compressionFlags = CompressionFlags.values()[flags]
+  /**
+   * Populate a KdbxHeader from the input stream supplied
+   */
+  internal fun readKdbxHeader(inputStream: InputStream) {
+    val digest = sha256MessageDigest()
+    // we do not close this stream, otherwise we lose our place in the underlying stream
+    val digestInputStream = DigestInputStream(inputStream, digest)
+    // we do not close this stream, otherwise we lose our place in the underlying stream
+    val input = LittleEndianDataInputStream(digestInputStream)
+
+    if (!readSignature(input)) {
+      throw KdbxException("Bad signature")
+    }
+
+    if (!verifyFileVersion(input)) {
+      throw IllegalStateException("File version did not match")
+    }
+
+    while (true) {
+      val headerType = input.readByte()
+      if (headerType == HeaderType.END) {
+        break
+      }
+
+      when (headerType) {
+        HeaderType.COMMENT -> getByteArray(input)
+        HeaderType.CIPHER_ID -> setCipherUuid(getByteArray(input))
+        HeaderType.COMPRESSION_FLAGS -> {
+          compressionFlags = CompressionFlags.values()[getInt(input)]
+        }
+        HeaderType.MASTER_SEED -> masterSeed = getByteArray(input)
+        HeaderType.TRANSFORM_SEED -> transformSeed = getByteArray(input)
+        HeaderType.TRANSFORM_ROUNDS -> transformRounds = getLong(input)
+        HeaderType.ENCRYPTION_IV -> encryptionIv = getByteArray(input)
+        HeaderType.PROTECTED_STREAM_KEY -> protectedStreamKey = getByteArray(input)
+        HeaderType.STREAM_START_BYTES -> streamStartBytes = getByteArray(input)
+        HeaderType.INNER_RANDOM_STREAM_ID -> {
+          protectedStreamAlgorithm = ProtectedStreamAlgorithm.values()[getInt(input)]
+        }
+
+        else -> throw IllegalStateException("Unknown File Header")
+      }
+    }
+
+    // consume length etc. following END flag
+    getByteArray(input)
+
+    headerHash = digest.digest()
   }
 
-  fun setInnerRandomStreamId(innerRandomStreamId: Int) {
-    protectedStreamAlgorithm = ProtectedStreamAlgorithm.values()[innerRandomStreamId]
+  /**
+   * Write a KdbxHeader to the output stream supplied. The header is updated with the
+   * message digest of the written stream.
+   */
+  fun writeKdbxHeader(outputStream: OutputStream) {
+    val messageDigest = sha256MessageDigest()
+    val digestOutputStream = DigestOutputStream(outputStream, messageDigest)
+    val output = LittleEndianDataOutputStream(digestOutputStream)
+
+    // write the magic number
+    output.writeInt(SIG1)
+    output.writeInt(SIG2)
+    // write a file version
+    output.writeInt(FILE_VERSION_32)
+
+    output.writeByte(HeaderType.CIPHER_ID.toInt())
+    output.writeShort(16)
+    val b = ByteArray(16)
+    val bb = ByteBuffer.wrap(b)
+    bb.putLong(cipherUuid.mostSignificantBits)
+    bb.putLong(8, cipherUuid.leastSignificantBits)
+    output.write(b)
+
+    output.writeByte(HeaderType.COMPRESSION_FLAGS.toInt())
+    output.writeShort(4)
+    output.writeInt(compressionFlags.ordinal)
+
+    output.writeByte(HeaderType.MASTER_SEED.toInt())
+    output.writeShort(masterSeed.size)
+    output.write(masterSeed)
+
+    output.writeByte(HeaderType.TRANSFORM_SEED.toInt())
+    output.writeShort(transformSeed.size)
+    output.write(transformSeed)
+
+    output.writeByte(HeaderType.TRANSFORM_ROUNDS.toInt())
+    output.writeShort(8)
+    output.writeLong(transformRounds)
+
+    output.writeByte(HeaderType.ENCRYPTION_IV.toInt())
+    output.writeShort(encryptionIv.size)
+    output.write(encryptionIv)
+
+    output.writeByte(HeaderType.PROTECTED_STREAM_KEY.toInt())
+    output.writeShort(protectedStreamKey.size)
+    output.write(protectedStreamKey)
+
+    output.writeByte(HeaderType.STREAM_START_BYTES.toInt())
+    output.writeShort(streamStartBytes.size)
+    output.write(streamStartBytes)
+
+    output.writeByte(HeaderType.INNER_RANDOM_STREAM_ID.toInt())
+    output.writeShort(4)
+    output.writeInt(protectedStreamAlgorithm.ordinal)
+
+    output.writeByte(HeaderType.END.toInt())
+    output.writeShort(0)
+
+    headerHash = digestOutputStream.messageDigest.digest()
   }
 }
 
@@ -141,8 +277,6 @@ private fun getFinalKeyDigest(key: ByteArray, masterSeed: ByteArray, transformSe
   return md.digest(transformedKeyDigest)
 }
 
-fun sha256MessageDigest(): MessageDigest = MessageDigest.getInstance("SHA-256")
-
 /**
  * Create a decrypted input stream from an encrypted one
  */
@@ -161,4 +295,26 @@ private fun getEncryptedOutputStream(decryptedOutputStream: OutputStream, keyDat
   val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
   cipher.init(true, keyAndIV)
   return CipherOutputStream(decryptedOutputStream, cipher)
+}
+
+private fun getInt(input: LittleEndianDataInputStream): Int {
+  val fieldLength = input.readShort()
+  if (fieldLength.toInt() != 4) {
+    throw IllegalStateException("Int required but length was $fieldLength")
+  }
+  return input.readInt()
+}
+
+private fun getLong(input: LittleEndianDataInputStream): Long {
+  val fieldLength = input.readShort()
+  if (fieldLength.toInt() != 8) {
+    throw IllegalStateException("Long required but length was $fieldLength")
+  }
+  return input.readLong()
+}
+
+private fun getByteArray(input: LittleEndianDataInputStream): ByteArray {
+  val value = ByteArray(input.readShort().toInt())
+  input.readFully(value)
+  return value
 }
