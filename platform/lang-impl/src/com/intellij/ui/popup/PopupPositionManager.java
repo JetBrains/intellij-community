@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
@@ -30,8 +29,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class PopupPositionManager {
-  private static final Position[] DEFAULT_POSITION_ORDER = {Position.RIGHT, Position.LEFT, Position.TOP, Position.BOTTOM};
-
   private PopupPositionManager() {
   }
 
@@ -42,16 +39,9 @@ public class PopupPositionManager {
   public static void positionPopupInBestPosition(final JBPopup hint,
                                                  @Nullable final Editor editor,
                                                  @Nullable DataContext dataContext) {
-    positionPopupInBestPosition(hint, editor, dataContext, DEFAULT_POSITION_ORDER);
-  }
-
-  public static void positionPopupInBestPosition(final JBPopup hint,
-                                                 @Nullable final Editor editor,
-                                                 @Nullable DataContext dataContext,
-                                                 @NotNull Position... relationToExistingPopup) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
-      new PositionAdjuster(lookup.getComponent()).adjust(hint, relationToExistingPopup);
+      new PositionAdjuster(lookup.getComponent()).adjust(hint);
       lookup.addLookupListener(new LookupListener() {
         @Override
         public void lookupCanceled(@NotNull LookupEvent event) {
@@ -63,23 +53,19 @@ public class PopupPositionManager {
       return;
     }
 
-    final PositionAdjuster positionAdjuster = createPositionAdjuster(hint);
+    final PositionAdjuster positionAdjuster = createPositionAdjuster();
     if (positionAdjuster != null) {
-      positionAdjuster.adjust(hint, relationToExistingPopup);
+      positionAdjuster.adjust(hint);
       return;
     }
 
-    if (editor != null && editor.getComponent().isShowing() && editor instanceof EditorEx) {
-      dataContext = ((EditorEx)editor).getDataContext();
+    if (editor != null && editor.getComponent().isShowing()) {
+      hint.showInBestPositionFor(editor);
+      return;
     }
 
     if (dataContext != null) {
-      if (hint.isVisible()) {
-        hint.setLocation(hint.getBestPositionFor(dataContext));
-      }
-      else {
-        hint.showInBestPositionFor(dataContext);
-      }
+      hint.showInBestPositionFor(dataContext);
     }
   }
 
@@ -91,6 +77,8 @@ public class PopupPositionManager {
     if (focusOwner == null) return null;
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+    if (dataContext == null) return null;
+
     final JBPopup popup = datakey.getData(dataContext);
     if (popup != null && popup.isVisible()) {
       return popup.getContent();
@@ -100,12 +88,12 @@ public class PopupPositionManager {
   }
 
   @Nullable
-  private static PositionAdjuster createPositionAdjuster(JBPopup hint) {
+  private static PositionAdjuster createPositionAdjuster() {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) return null;
 
     JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
-    if (popup != null && popup != hint) {
+    if (popup != null) {
       return new PositionAdjuster(popup.getContent());
     }
 
@@ -181,40 +169,21 @@ public class PopupPositionManager {
      * @param popup
      */
     public void adjust(final JBPopup popup) {
-      adjust(popup, DEFAULT_POSITION_ORDER);
+      adjust(popup, Position.RIGHT, Position.LEFT, Position.TOP, Position.BOTTOM);
     }
 
     public void adjust(final JBPopup popup, Position... traversalPolicy) {
-      if (traversalPolicy.length == 0) traversalPolicy = DEFAULT_POSITION_ORDER;
-
       final Dimension d = getPopupSize(popup);
 
       Rectangle popupRect = null;
       Rectangle r = null;
-      final List<Rectangle> boxes = new ArrayList<>();
 
       for (Position position : traversalPolicy) {
         switch (position) {
-          case TOP:
-            r = positionAbove(d);
-            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
-                                                       myScreenRect.width, getYForTopPositioning() - myScreenRect.y - myGap)));
-            break;
-          case BOTTOM:
-            r = positionUnder(d);
-            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
-                                                       myScreenRect.width, myScreenRect.height)));
-            break;
-          case LEFT:
-            r = positionLeft(d);
-            boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - myGap,
-                                                       myScreenRect.height)));
-            break;
-          case RIGHT:
-            r = positionRight(d);
-            boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
-                                                       myScreenRect.width, myScreenRect.height)));
-            break;
+          case TOP:    r = positionAbove(d); break;
+          case BOTTOM: r = positionUnder(d); break;
+          case LEFT:   r = positionLeft(d);  break;
+          case RIGHT:  r = positionRight(d); break;
         }
         if (myScreenRect.contains(r)) {
           popupRect = r;
@@ -233,6 +202,23 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
+        final List<Rectangle> boxes = new ArrayList<>();
+        // right
+        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
+                                                   myScreenRect.width, myScreenRect.height)));
+
+        // left
+        boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - myGap,
+                                                   myScreenRect.height)));
+
+        // top
+        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
+                                                   myScreenRect.width, getYForTopPositioning() - myScreenRect.y - myGap)));
+
+        // bottom
+        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
+                                                   myScreenRect.width, myScreenRect.height)));
+
         Collections.sort(boxes, Comparator.comparingInt((Rectangle o) -> o.width).thenComparingInt(o -> o.height));
 
         final Rectangle suitableBox = boxes.get(boxes.size() - 1);
