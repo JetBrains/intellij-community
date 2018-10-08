@@ -1657,6 +1657,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("toChars(int codePoint, char[] dst, int dstIndex)");
     type("codePoin");
     completeSmart("codePoint");
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<HINT text=\"codePoint:\"/>codePoint, <hint text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
   }

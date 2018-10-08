@@ -17,9 +17,13 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -1079,7 +1083,26 @@ public class ExpectedTypesProvider {
         if (returnType != null) returnType = substitutor.substitute(returnType);
         return getFinalCallParameterTailType(call, returnType, method);
       }
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        PsiCall completedOuterCall = getCompletedOuterCall(argument);
+        if (completedOuterCall != null) return new CommaTailTypeWithSyncHintUpdate(completedOuterCall);
+      }
       return TailType.COMMA;
+    }
+
+    @Nullable
+    private static PsiCall getCompletedOuterCall(@NotNull PsiExpression argument) {
+      PsiElement expressionList = argument.getParent();
+      if (expressionList != null) {
+        PsiElement call = expressionList.getParent();
+        if (call instanceof PsiCall) {
+          PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+          if (originalCall != null && JavaMethodCallElement.isCompletionMode(originalCall)) {
+            return originalCall;
+          }
+        }
+      }
+      return null;
     }
 
     private static void inferMethodCallArgumentTypes(@NotNull final PsiExpression argument,
@@ -1308,4 +1331,37 @@ public class ExpectedTypesProvider {
     return TailTypes.CALL_RPARENTH;
   }
 
+  private static class CommaTailTypeWithSyncHintUpdate extends TailType {
+    private final PsiCall myOriginalCall;
+
+    private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}
+
+    @Override
+    public boolean isApplicable(@NotNull InsertionContext context) {
+      return TailType.COMMA.isApplicable(context);
+    }
+
+    @Override
+    public int processTail(Editor editor, int tailOffset) {
+      int result = TailType.COMMA.processTail(editor, tailOffset);
+      if (myOriginalCall.isValid()) {
+        PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
+        ParameterHintsPass.syncUpdate(myOriginalCall, editor);
+      }
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CommaTailTypeWithSyncHintUpdate update = (CommaTailTypeWithSyncHintUpdate)o;
+      return myOriginalCall.equals(update.myOriginalCall);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myOriginalCall);
+    }
+  }
 }
