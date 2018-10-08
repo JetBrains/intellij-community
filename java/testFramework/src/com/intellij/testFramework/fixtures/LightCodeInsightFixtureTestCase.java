@@ -24,7 +24,7 @@ import java.io.File;
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final LanguageLevel myLanguageLevel;
+    protected final LanguageLevel myLanguageLevel;
     private final boolean myWithAnnotations;
 
     public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {

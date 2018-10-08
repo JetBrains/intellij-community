@@ -849,6 +849,11 @@
                       key="cyclic.package.dependency.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.dependency.CyclicPackageDependencyInspection"/>
+    <localInspection groupPath="Java" language="UAST" shortName="SuspiciousPackagePrivateAccess" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.package.private.access.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.dependency.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.dependency.SuspiciousPackagePrivateAccessInspection"/>
+
 
     <!--group.names.encapsulation.issues-->
     <inspectionElementsMerger implementation="com.siyeh.ig.encapsulation.AssignmentOrReturnOfFieldWithMutableTypeInspectionMerger"/>
