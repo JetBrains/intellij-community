@@ -130,7 +130,7 @@ class TabContentLayout extends ContentLayout {
       }
 
 
-      data.moreRectWidth = myMoreIcon.getIconWidth() + MORE_ICON_BORDER * TAB_ARC;
+      data.moreRectWidth = calcMoreIconWidth();
       data.toFitWidth = bounds.getSize().width - data.eachX;
 
       final ContentTabLabel selectedTab = myContent2Tabs.get(selected);
@@ -190,6 +190,10 @@ class TabContentLayout extends ContentLayout {
     myLastLayout = data;
   }
 
+  private int calcMoreIconWidth() {
+    return myMoreIcon.getIconWidth() + MORE_ICON_BORDER * TAB_ARC;
+  }
+
   @Override
   public int getMinimumWidth() {
     int result = 0;
@@ -200,9 +204,13 @@ class TabContentLayout extends ContentLayout {
         result += insets.left + insets.right;
       }
     }
-    if (myLastLayout != null) {
-      result += myTabs.size() > 0 ? myTabs.get(0).getMinimumSize().width + (myTabs.size() > 1 ? myLastLayout.moreRectWidth : 0) : 0;
+
+    Content selected = myUi.myManager.getSelectedContent();
+    if (selected == null && myUi.myManager.getContents().length>0) {
+      selected = myUi.myManager.getContents()[0];
     }
+
+    result += selected != null ? myContent2Tabs.get(selected).getWidth() + (myTabs.size() > 1 ? calcMoreIconWidth() : 0) : 0;
 
     return result;
   }
