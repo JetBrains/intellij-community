@@ -26,30 +26,25 @@ import com.intellij.openapi.vcs.changes.ChangesPreprocess;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
-  private final Convertor<? super AnActionEvent, Change[]> myForUpdateConvertor;
-  private final Convertor<? super AnActionEvent, Change[]> myForPerformConvertor;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RevertCommittedStuffAbstractAction");
 
-  RevertCommittedStuffAbstractAction(final Convertor<? super AnActionEvent, Change[]> forUpdateConvertor,
-                                            final Convertor<? super AnActionEvent, Change[]> forPerformConvertor) {
-    myForUpdateConvertor = forUpdateConvertor;
-    myForPerformConvertor = forPerformConvertor;
-  }
+  @Nullable
+  protected abstract Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate);
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
-    final Change[] changes = myForPerformConvertor.convert(e);
+    final Change[] changes = getChanges(e, false);
     if (changes == null || changes.length == 0) return;
     final List<Change> changesList = new ArrayList<>();
     Collections.addAll(changesList, changes);
@@ -95,7 +90,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
   protected boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    Change[] changes = myForUpdateConvertor.convert(e);
+    Change[] changes = getChanges(e, true);
 
     return project != null && changes != null && changes.length > 0;
   }

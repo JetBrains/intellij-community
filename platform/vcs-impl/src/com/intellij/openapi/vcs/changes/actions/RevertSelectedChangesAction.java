@@ -17,9 +17,11 @@ package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAction {
   @Override
@@ -42,11 +44,14 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
     return true;
   }
 
-  public RevertSelectedChangesAction() {
-    super(e -> e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS), e -> {
+  @Nullable
+  @Override
+  protected Change[] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
+    if (!isFromUpdate) {
       // to ensure directory flags for SVN are initialized
       e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
-      return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
-    });
+    }
+
+    return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
   }
 }
