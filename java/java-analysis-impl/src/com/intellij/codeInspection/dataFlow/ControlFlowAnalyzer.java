@@ -175,8 +175,29 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiStatement && !(element instanceof PsiReturnStatement)) {
-      addInstruction(new FinishElementInstruction(element));
+      List<DfaVariableValue> synthetics = getSynthetics(element);
+      FinishElementInstruction instruction = new FinishElementInstruction(element);
+      instruction.getVarsToFlush().addAll(synthetics);
+      addInstruction(instruction);
     }
+  }
+
+  @NotNull
+  private List<DfaVariableValue> getSynthetics(PsiElement element) {
+    int startOffset = myCurrentFlow.getStartOffset(element).getInstructionOffset();
+    List<DfaVariableValue> synthetics = new ArrayList<>();
+    for (DfaValue value : myFactory.getValues()) {
+      if (value instanceof DfaVariableValue) {
+        DfaVariableValue var = (DfaVariableValue)value;
+        DfaVariableSource source = var.getSource();
+        if (source instanceof Synthetic) {
+          if (((Synthetic)source).myLocation >= startOffset) {
+            synthetics.add(var);
+          }
+        }
+      }
+    }
+    return synthetics;
   }
 
   @Override
