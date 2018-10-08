@@ -44,7 +44,8 @@ class EditorConfigGotoSuperHandler : GotoTargetHandler() {
     }
 
     private fun findTargets(element: PsiElement) = when (element) {
-      is EditorConfigHeader -> EditorConfigOverridingHeaderSearcher().getMatchingHeaders(element)
+      // todo icons
+      is EditorConfigHeader -> EditorConfigOverridingHeaderSearcher().findMatchingHeaders(element).map { it.header }
       is EditorConfigFlatOptionKey -> element.reference.findParents()
       else -> emptyList()
     }

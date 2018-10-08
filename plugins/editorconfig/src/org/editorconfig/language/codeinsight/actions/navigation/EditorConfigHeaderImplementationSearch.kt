@@ -10,8 +10,9 @@ import org.editorconfig.language.util.headers.EditorConfigOverriddenHeaderSearch
 class EditorConfigHeaderImplementationSearch : QueryExecutorBase<EditorConfigHeader, DefinitionsScopedSearch.SearchParameters>(true) {
   override fun processQuery(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in EditorConfigHeader>) {
     val header = queryParameters.element as? EditorConfigHeader ?: return
-    EditorConfigOverriddenHeaderSearcher().getMatchingHeaders(header).forEach {
-      if (!consumer.process(it)) return
+    EditorConfigOverriddenHeaderSearcher().findMatchingHeaders(header).forEach {
+      // todo icons
+      if (!consumer.process(it.header)) return
     }
   }
 }

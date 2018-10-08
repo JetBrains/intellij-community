@@ -2,14 +2,38 @@
 package org.editorconfig.language.codeinsight.linemarker
 
 import com.intellij.icons.AllIcons
+import com.intellij.psi.PsiElement
+import icons.EditorconfigIcons
+import org.editorconfig.language.messages.EditorConfigBundle
+import org.editorconfig.language.util.headers.EditorConfigHeaderOverrideSearcherBase.OverrideSearchResult
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 import javax.swing.Icon
 
 class EditorConfigOverridingHeaderLineMarkerProvider : EditorConfigHeaderLineMarkerProviderBase() {
   override val searcher = EditorConfigOverridingHeaderSearcher()
-  override val navigationTitleKey = "message.header.overriding.title"
-  override val findUsagesTitleKey = "message.header.overriding.find-usages-title"
-  override val tooltipKeySingular = "message.header.overriding.element"
-  override val tooltipKeyPlural = "message.header.overriding.multiple"
-  override val icon: Icon = AllIcons.Gutter.OverridingMethod
+
+  override fun createTooltipProvider(searchResults: List<OverrideSearchResult>): (PsiElement) -> String {
+    val isPartial = searchResults.any { it.isPartial }
+    val isSingle = searchResults.size == 1
+
+    val tooltip = if (isSingle) {
+      val key = if (isPartial) "message.header.partially-overriding.element" else "message.header.overriding.element"
+      EditorConfigBundle.get(key, searchResults.first().header.text)
+    }
+    else {
+      val key = if (isPartial) "message.header.partially-overriding.multiple" else "message.header.overriding.multiple"
+      EditorConfigBundle[key]
+    }
+
+    return { tooltip }
+  }
+
+  override fun getIcon(isPartial: Boolean, element: PsiElement): Icon {
+    return if (isPartial) EditorconfigIcons.PartiallyOverriding else AllIcons.Gutter.OverridingMethod
+  }
+
+  override fun getFindUsagesTitle(isPartial: Boolean, element: PsiElement): String {
+    val key = if (isPartial) "message.header.partially-overriding.find-usages-title" else "message.header.overriding.find-usages-title"
+    return EditorConfigBundle.get(key, element.text)
+  }
 }

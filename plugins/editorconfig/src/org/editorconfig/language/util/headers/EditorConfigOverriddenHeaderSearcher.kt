@@ -4,17 +4,15 @@ package org.editorconfig.language.util.headers
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.findAllChildrenFiles
+import org.editorconfig.language.util.headers.EditorConfigHeaderSearcherUtil.isPartialOverride
+import org.editorconfig.language.util.headers.EditorConfigHeaderSearcherUtil.isStrictOverride
 
-class EditorConfigOverriddenHeaderSearcher : EditorConfigHeaderSearcher() {
+class EditorConfigOverriddenHeaderSearcher : EditorConfigHeaderOverrideSearcherBase() {
   override fun findRelevantPsiFiles(file: EditorConfigPsiFile) = (findAllChildrenFiles(file) + file).asSequence()
 
-  override fun isMatchingHeader(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader) =
-    EditorConfigHeaderSearcherUtil.isOverride(baseHeader, testedHeader)
-}
-
-class EditorConfigPartiallyOverriddenHeaderSearcher : EditorConfigHeaderSearcher() {
-  override fun findRelevantPsiFiles(file: EditorConfigPsiFile) = (findAllChildrenFiles(file) + file).asSequence()
-
-  override fun isMatchingHeader(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader) =
-    EditorConfigHeaderSearcherUtil.isPartialOverride(baseHeader, testedHeader)
+  override fun getOverrideKind(baseHeader: EditorConfigHeader, testedHeader: EditorConfigHeader): OverrideKind {
+    if (isStrictOverride(baseHeader, testedHeader)) return OverrideKind.STRICT
+    if (isPartialOverride(baseHeader, testedHeader)) return OverrideKind.PARTIAL
+    return OverrideKind.NONE
+  }
 }

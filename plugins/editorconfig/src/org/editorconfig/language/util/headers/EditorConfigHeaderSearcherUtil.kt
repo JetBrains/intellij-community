@@ -13,14 +13,13 @@ object EditorConfigHeaderSearcherUtil {
 
   fun isPartialOverride(parent: EditorConfigHeader, child: EditorConfigHeader): Boolean {
     if (!isActualParent(parent, child)) return false
-    if (child.isSubcaseOf(parent)) return false // todo replace with EditorConfigOverrideKind
     val childAutomaton = getCachedHeaderAutomaton(child)
     val parentAutomaton = getCachedHeaderAutomaton(parent)
     val intersection = childAutomaton.intersection(parentAutomaton)
     return !intersection.isEmpty
   }
 
-  fun isOverride(parent: EditorConfigHeader, child: EditorConfigHeader): Boolean {
+  fun isStrictOverride(parent: EditorConfigHeader, child: EditorConfigHeader): Boolean {
     if (!isActualParent(parent, child)) return false
     return child.isSubcaseOf(parent)
   }
