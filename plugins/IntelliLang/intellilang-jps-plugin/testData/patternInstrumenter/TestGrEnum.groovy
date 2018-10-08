@@ -2,8 +2,8 @@ import org.intellij.lang.annotations.Pattern
 
 @SuppressWarnings("unused")
 enum TestGrEnum {
-  G1("0", "1", "2"),
-  G2("3", "4", "5");
+  G1("-", "0"),
+  G2("-", "1");
 
-  TestGrEnum(@Pattern("\\d+") String s1, @Pattern("\\d+") String s2, @Pattern("\\d+") String s3) { }
+  TestGrEnum(String s1, @Pattern("\\d+") String s2) { }
 }

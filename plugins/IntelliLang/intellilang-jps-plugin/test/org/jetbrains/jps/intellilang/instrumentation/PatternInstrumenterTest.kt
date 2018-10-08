@@ -87,6 +87,12 @@ class PatternInstrumenterTest {
     assertFails(method, "0", "-")
   }
 
+  @Test fun groovyInnerClass() {
+    val testClass = loadClass("TestGrInner")
+    val method = testClass.getConstructor(String::class.java, String::class.java)
+    assertFails(method, "0", "-")
+  }
+
   @Test fun skipBridgeMethod() {
     val testClass = loadClass()
     try {
