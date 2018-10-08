@@ -10,9 +10,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.testGuiFramework.util.Key.*
-import com.intellij.testGuiFramework.util.Modifier
-import com.intellij.testGuiFramework.util.Modifier.CONTROL
-import com.intellij.testGuiFramework.util.Modifier.META
+import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Timeout
@@ -98,7 +96,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
   }
 
   private fun openSettings() {
-    shortcut(CONTROL + Modifier.ALT + Key.S, META + Key.COMMA)
+    shortcut(CONTROL + ALT + Key.S, META + Key.COMMA)
   }
 
   private fun getCurrentEditorFilePath(ideFrame2: IdeFrameFixture) =
@@ -153,7 +151,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
   private fun IdeFrameFixture.switchFrameTo() {
     if (this.target().isActive) return
-    shortcut(CONTROL + BACK_QUOTE, META + BACK_QUOTE)
+    shortcut(ALT + BACK_QUOTE, META + BACK_QUOTE)
     GuiTestUtilKt.waitUntil("IdeFrame[${this.projectPath}] will be activated", Timeouts.seconds02) { this.target().isActive }
   }
 
