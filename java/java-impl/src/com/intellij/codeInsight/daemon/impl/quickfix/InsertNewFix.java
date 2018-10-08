@@ -59,7 +59,7 @@ public class InsertNewFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethodCall.getProject());
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 
     CommentTracker tracker = new CommentTracker();

@@ -653,7 +653,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       prototype = factory.createMethod(getChosenMethodName(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
       for (VariableData data : myInputVariables) {

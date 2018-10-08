@@ -67,10 +67,10 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
   private final Runnable mySdkSettingsWereModified;
-  private final NullableConsumer<Sdk> myShowMoreCallback;
+  private final NullableConsumer<? super Sdk> myShowMoreCallback;
   private SdkModel.Listener myListener;
 
-  public PythonSdkDetailsDialog(Project project, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
+  public PythonSdkDetailsDialog(Project project, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(project, true);
     myModule = null;
     mySdkSettingsWereModified = sdkSettingsWereModified;
@@ -89,7 +89,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public PythonSdkDetailsDialog(Module module, NullableConsumer<Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
+  public PythonSdkDetailsDialog(Module module, NullableConsumer<? super Sdk> showMoreCallback, Runnable sdkSettingsWereModified) {
     super(module.getProject());
     myModule = module;
     mySdkSettingsWereModified = sdkSettingsWereModified;
@@ -107,7 +107,6 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     mySdkList = new JBList<>();
-    //noinspection unchecked
     mySdkList.setCellRenderer(new PySdkListCellRenderer(myModificators));
     mySdkList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     new ListSpeedSearch<>(mySdkList);

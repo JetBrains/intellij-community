@@ -552,7 +552,6 @@ public class StringUtilTest {
     assertEquals("", StringUtil.getPackageName("Number"));
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Test
   public void testIndexOf_1() {
     char[] chars = new char[]{'a','b','c','d','a','b','c','d','A','B','C','D'};

@@ -17,7 +17,6 @@ import java.awt.*;
 import java.util.List;
 
 
-@SuppressWarnings({"RefusedBequest"})
 public class ReplaceDialog extends SearchDialog {
   private Editor replaceCriteriaEdit;
   private JCheckBox shortenFQN;

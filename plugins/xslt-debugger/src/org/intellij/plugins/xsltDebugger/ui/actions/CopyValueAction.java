@@ -28,7 +28,6 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.datatransfer.StringSelection;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class CopyValueAction extends AnAction {
   public static final DataKey<DefaultMutableTreeNode> SELECTED_NODE = DataKey.create("SELECTED_NODE");
 

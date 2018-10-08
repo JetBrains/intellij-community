@@ -192,7 +192,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   @Override
   public void pushDownToClass(PsiElement targetElement, PushDownData<MemberInfo, PsiMember> pushDownData) {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(pushDownData.getSourceClass().getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(pushDownData.getSourceClass().getProject());
     final PsiClass targetClass = targetElement instanceof PsiClass ? (PsiClass)targetElement : null;
     if (targetClass == null) {
       return;
@@ -464,7 +464,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
   }
 
   private static void decodeRefs(PsiClass sourceClass, final PsiMember member, final PsiClass targetClass) {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(sourceClass.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(sourceClass.getProject());
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {

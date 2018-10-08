@@ -58,7 +58,6 @@ public class IssueLinkHtmlRenderer {
     return comment.replace("\n", "<br>");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(final Project project, final String c) {
     return formatTextWithLinks(project, c, Convertor.SELF);
   }

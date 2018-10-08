@@ -93,7 +93,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isFieldDecla
 /**
  * @author ven
  */
-@SuppressWarnings({"unchecked"})
 public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
   public static final Condition<PsiClass> IS_INTERFACE = aClass -> aClass.isInterface();
@@ -1034,7 +1033,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     holder.createErrorAnnotation(element, GroovyBundle.message("unexpected.attribute.type.0", element.getType()));
   }
 
-  @SuppressWarnings("Duplicates")
   static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
     final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
@@ -1343,7 +1341,6 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       parts = ((GrRegex)regex).getTextParts();
     }
     else {
-      //noinspection ConstantConditions
       parts = new String[]{regex.getFirstChild().getNextSibling().getText()};
     }
 

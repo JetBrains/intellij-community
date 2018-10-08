@@ -21,7 +21,7 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
-class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
+internal class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
   : GithubDataLoadingComponent<List<Change>>(), Disposable {
   private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)

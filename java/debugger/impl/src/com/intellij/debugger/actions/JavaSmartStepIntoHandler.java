@@ -134,7 +134,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
       while (true);
 
-      //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<>();
 
       final Ref<TextRange> textRange = new Ref<>(lineRange);

@@ -119,7 +119,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       }
     }
     else {
-      PsiType collectionType = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory()
+      PsiType collectionType = JavaPsiFacade.getElementFactory(variable.getProject())
         .createTypeByFQClassName("java.util.Collection", variable.getResolveScope());
       if (!collectionType.isAssignableFrom(variable.getType())) return;
       final PsiTypeElement[] typeParameterElements = ref.getParameterList().getTypeParameterElements();

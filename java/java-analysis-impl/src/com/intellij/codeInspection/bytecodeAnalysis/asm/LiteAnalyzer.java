@@ -29,7 +29,6 @@ public class LiteAnalyzer<V extends Value> implements Opcodes {
     this.interpreter = interpreter;
   }
 
-  @SuppressWarnings("Duplicates")
   public Frame<V>[] analyze(String owner, MethodNode m) throws AnalyzerException {
     if ((m.access & (ACC_ABSTRACT | ACC_NATIVE)) != 0 || m.instructions.size() == 0) {
       frames = ASMUtils.newFrameArray(0);

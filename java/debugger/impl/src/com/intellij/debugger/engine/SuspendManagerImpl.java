@@ -65,7 +65,6 @@ public class SuspendManagerImpl implements SuspendManager {
               catch (InternalException e) {
                 //InternalException 13 means that there are running threads that we are trying to resume
                 //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-                //noinspection StatementWithEmptyBody
                 if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED) {
                   //Its funny, but second resume solves the problem
                 }
@@ -136,7 +135,6 @@ public class SuspendManagerImpl implements SuspendManager {
           catch (InternalException e) {
             //InternalException 13 means that there are running threads that we are trying to resume
             //On MacOS it happened that native thread didn't stop while some java thread reached breakpoint
-            //noinspection StatementWithEmptyBody
             if (/*Patches.MAC_RESUME_VM_HACK && */e.errorCode() == JvmtiError.THREAD_NOT_SUSPENDED &&
                                                   set.suspendPolicy() == EventRequest.SUSPEND_ALL) {
               //Its funny, but second resume solves the problem

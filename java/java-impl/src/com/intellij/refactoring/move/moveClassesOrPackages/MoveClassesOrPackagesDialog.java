@@ -148,7 +148,6 @@ public class MoveClassesOrPackagesDialog extends MoveDialogBase {
   /** @deprecated use {@link #MoveClassesOrPackagesDialog(Project, boolean, PsiElement[], PsiElement, MoveCallback, String, PsiDirectory, boolean, boolean)} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public void setData(PsiElement[] elementsToMove,
                       String targetPackageName,
                       PsiDirectory initialTargetDirectory,

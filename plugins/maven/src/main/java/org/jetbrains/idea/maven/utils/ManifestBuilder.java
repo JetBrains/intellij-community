@@ -211,7 +211,6 @@ public class ManifestBuilder {
       if (manifestFile.isFile()) {
         FileInputStream fis = null;
         try {
-          //noinspection IOResourceOpenedButNotSafelyClosed
           fis = new FileInputStream(manifestFile);
           manifest = new Manifest(fis);
         }

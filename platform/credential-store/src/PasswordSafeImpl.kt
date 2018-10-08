@@ -37,8 +37,8 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     }
   }
 
-  fun showError(message: String) {
-    NOTIFICATION_MANAGER.notify(content = "$message\nIn-memory password storage will be used.", action = object: NotificationAction("Open Settings") {
+  fun showError(title: String) {
+    NOTIFICATION_MANAGER.notify(title = title, content = "In-memory password storage will be used.", action = object: NotificationAction("Passwords Settings") {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
         // to hide before Settings open, otherwise dialog and notification are shown at the same time
         notification.expire()
@@ -53,11 +53,11 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
   catch (e: IncorrectMasterPasswordException) {
     LOG.warn(e)
-    showError("Master password of KeePass database is ${if (e.isFileMissed) "not found" else "not correct"} (${settings.keepassDb}).")
+    showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
   }
   catch (e: Throwable) {
     LOG.error(e)
-    showError("Internal error during opening of KeePass database(${settings.keepassDb})")
+    showError("Failed opening KeePass database")
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY

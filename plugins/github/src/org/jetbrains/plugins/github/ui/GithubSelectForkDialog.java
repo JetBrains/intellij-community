@@ -35,13 +35,13 @@ import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.ForkInf
 public class GithubSelectForkDialog extends DialogWrapper {
   @NotNull private final GithubSelectForkPanel myPanel;
   @NotNull private final Project myProject;
-  @NotNull private final Convertor<String, ForkInfo> myCheckFork;
+  @NotNull private final Convertor<? super String, ? extends ForkInfo> myCheckFork;
   private ForkInfo mySelectedFork;
 
 
   public GithubSelectForkDialog(@NotNull Project project,
                                 @Nullable List<GithubFullPath> forks,
-                                @NotNull Convertor<String, ForkInfo> checkFork) {
+                                @NotNull Convertor<? super String, ? extends ForkInfo> checkFork) {
     super(project);
     myProject = project;
     myCheckFork = checkFork;

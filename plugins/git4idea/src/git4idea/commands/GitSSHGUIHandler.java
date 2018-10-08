@@ -157,7 +157,7 @@ public class GitSSHGUIHandler {
    * @param lastError   the last error
    * @return replies to the challenges
    */
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
                                          final String instruction,

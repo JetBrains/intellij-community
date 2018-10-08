@@ -84,7 +84,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
         elementToDelete.delete();
       }
       else if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT) {
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
         final PsiElement parent = elementToDelete.getParent();
         if (parent instanceof PsiExpressionStatement) {

@@ -114,7 +114,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
     myManager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
     myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
@@ -1060,7 +1060,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
       final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
       if (RefactoringChangeUtil.getThisClass(ref) != varThisClass) {
-        initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+        initializer = JavaPsiFacade.getElementFactory(myManager.getProject()).createExpressionFromText(varThisClass.getName() + ".this", variable);
       }
     }
 

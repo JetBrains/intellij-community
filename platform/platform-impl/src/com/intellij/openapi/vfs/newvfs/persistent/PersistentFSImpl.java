@@ -575,7 +575,6 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
       storeContentToStorage(fileLength, file, readOnly, bytes, bytes.length);
       return nativeStream;
     }
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
     return new ReplicatorInputStream(nativeStream, cache) {
       @Override

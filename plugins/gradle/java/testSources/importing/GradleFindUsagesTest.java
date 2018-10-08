@@ -28,7 +28,6 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 /**
  * @author Vladislav.Soroka
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleFindUsagesTest extends GradleImportingTestCase {
 
   /**

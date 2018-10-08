@@ -24,7 +24,7 @@ import java.util.Set;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class KeywordArgumentCompletionUtil {
-  public static void collectFunctionArgNames(PyElement element, List<LookupElement> ret, @NotNull final TypeEvalContext context) {
+  public static void collectFunctionArgNames(PyElement element, List<? super LookupElement> ret, @NotNull final TypeEvalContext context) {
     PyCallExpression callExpr = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpr != null) {
       PyExpression callee = callExpr.getCallee();
@@ -122,12 +122,12 @@ public class KeywordArgumentCompletionUtil {
   public static class KwArgParameterCollector extends PyElementVisitor {
     private int myCount;
     private final boolean myNeedSelf;
-    private final List<String> myRet;
+    private final List<? super String> myRet;
     private boolean myHasSelf = false;
     private boolean myHasKwArgs = false;
     private PyParameter kwArgsParam = null;
 
-    public KwArgParameterCollector(boolean needSelf, List<String> ret) {
+    public KwArgParameterCollector(boolean needSelf, List<? super String> ret) {
       myNeedSelf = needSelf;
       myRet = ret;
     }

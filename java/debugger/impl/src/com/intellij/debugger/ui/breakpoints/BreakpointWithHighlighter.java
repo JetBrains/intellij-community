@@ -117,8 +117,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         process.getSession().updateBreakpointPresentation(((XLineBreakpoint)myXBreakpoint), myIcon, myInvalidMessage);
       }
     }
-    myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
-    myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+    if (debugProcess != null && debugProcess.getVirtualMachineProxy().canBeModified()) {
+      myClassName = JVMNameUtil.getSourcePositionClassDisplayName(debugProcess, getSourcePosition());
+      myPackageName = JVMNameUtil.getSourcePositionPackageDisplayName(debugProcess, getSourcePosition());
+    }
   }
 
   private Icon calcIcon(@Nullable DebugProcessImpl debugProcess) {
@@ -361,16 +363,13 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void readExternal(@NotNull Element breakpointNode) throws InvalidDataException {
     super.readExternal(breakpointNode);
-    //noinspection HardCodedStringLiteral
     //final String url = breakpointNode.getAttributeValue("url");
 
-    //noinspection HardCodedStringLiteral
     final String className = breakpointNode.getAttributeValue("class");
     if (className != null) {
       myClassName = className;
     }
 
-    //noinspection HardCodedStringLiteral
     final String packageName = breakpointNode.getAttributeValue("package");
     if (packageName != null) {
       myPackageName = packageName;

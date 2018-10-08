@@ -107,6 +107,6 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 }

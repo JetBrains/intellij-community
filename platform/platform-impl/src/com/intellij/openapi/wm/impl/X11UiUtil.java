@@ -160,16 +160,14 @@ public class X11UiUtil {
             if (format == FORMAT_BYTE) {
               byte[] bytes = new byte[length];
               for (int i = 0; i < length; i++) bytes[i] = unsafe.getByte(pointer + i);
-              @SuppressWarnings("unchecked") T t = (T)bytes;
-              return t;
+              return (T)bytes;
             }
             else if (format == FORMAT_LONG) {
               long[] values = newLongArray(length);
               for (int i = 0; i < length; i++) {
                 values[i] = SystemInfo.is64Bit ? unsafe.getLong(pointer + 8 * i) : unsafe.getInt(pointer + 4 * i);
               }
-              @SuppressWarnings("unchecked") T t = (T)values;
-              return t;
+              return (T)values;
             }
             else if (format != None) {
               LOG.info("unexpected format: " + format);
@@ -348,7 +346,7 @@ public class X11UiUtil {
     if (X11 == null) return;
 
     try {
-      @SuppressWarnings("deprecation") ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer == null) throw new IllegalStateException(frame + " has no peer");
       long window = (Long)X11.getWindow.invoke(peer);
       long screen = (Long)X11.getScreenNumber.invoke(peer);

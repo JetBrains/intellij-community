@@ -45,7 +45,7 @@ class TypeSafeMovingStrategy<T extends PyElement> {
   @SuppressWarnings({"unchecked", "rawtypes"}) //We check types at runtime
   static void moveCheckingTypesAtRunTime(@NotNull final PyClass from,
                    @NotNull final MembersManager<?> manager,
-                   @NotNull final Collection<PyMemberInfo<PyElement>> memberInfoCollection,
+                   @NotNull final Collection<? extends PyMemberInfo<PyElement>> memberInfoCollection,
                    @NotNull final PyClass... to) {
     manager.checkElementTypes((Collection)MembersManager.fetchElements(memberInfoCollection));
     new TypeSafeMovingStrategy(from, manager, memberInfoCollection, to).moveTyped();

@@ -120,7 +120,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @NotNull
   private static PsiExpressionStatement addAssignment(@NotNull PsiCodeBlock codeBlock, @NotNull PsiField field) throws IncorrectOperationException {
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(codeBlock.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(codeBlock.getProject());
 
     final PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(field.getName() + " = y;", codeBlock);
 

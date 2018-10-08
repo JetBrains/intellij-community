@@ -1,0 +1,3 @@
+[*.java]
+charset<error>.</error> = utf-8
+qualified.key.foo<error>.</error> = value

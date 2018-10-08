@@ -30,10 +30,8 @@ private const val ROOT_ELEMENT_NAME = "Root"
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
-  private val dbMeta: Element
-    get() = rootElement.getChild("Meta") ?: throw IllegalStateException("no meta")
-
-  @Volatile var isDirty: Boolean = false
+  @Volatile
+  var isDirty: Boolean = false
     internal set
 
   val rootGroup: KdbxGroup
@@ -69,12 +67,6 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
     val result = KdbxEntry(element, this, null)
     result.title = title
     return result
-  }
-
-  fun setDescription(description: String) {
-    dbMeta.getOrCreate("DatabaseDescription").text = description
-    dbMeta.getOrCreate("DatabaseDescriptionChanged").text = formattedNow()
-    isDirty = true
   }
 }
 

@@ -189,7 +189,6 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       }
 
       FileOutputStream fileStream = new FileOutputStream(file);
-      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
       ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
       mapArchiveStreams.put(file.getPath(), zipStream);
     }

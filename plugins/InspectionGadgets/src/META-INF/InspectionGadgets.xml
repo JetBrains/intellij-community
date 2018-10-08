@@ -2292,7 +2292,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="CStyleArrayDeclaration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="c.style.array.declaration.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.style.CStyleArrayDeclarationInspection"/>
+                     implementationClass="com.siyeh.ig.style.CStyleArrayDeclarationInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ChainedEqualityComparisons" shortName="ChainedEquality" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="chained.equality.comparisons.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"

@@ -270,16 +270,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyle.getDefaultSettings();
+  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
+    return CodeStyle.getSettings(project);
   }
 
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
-    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCommonSettings(language);
   }
 
-  protected final <T extends CustomCodeStyleSettings> CustomCodeStyleSettings getCustomSettings(@NotNull Class<T> settingsClass) {
-    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
+  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCustomSettings(settingsClass);
   }
 
   @NotNull

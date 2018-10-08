@@ -36,7 +36,7 @@ public class FindParameterTest extends PsiTestCase {
             "  System.out.println(i);" +
             "}";
     final PsiManager psiManager = PsiManager.getInstance(myProject);
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     final PsiMethod methodFromText = elementFactory.createMethodFromText(text, null);
     final PsiParameter[] parameters = methodFromText.getParameterList().getParameters();
     final PsiReference[] references =

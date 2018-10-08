@@ -73,7 +73,7 @@ public class JavaFilePasteProvider implements PasteProvider {
         (oldStatement == null && aPackage.getQualifiedName().length() > 0))) {
       CommandProcessor.getInstance().executeCommand(project, () -> {
         try {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
           final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
           if (oldStatement != null) {
             oldStatement.replace(newStatement);

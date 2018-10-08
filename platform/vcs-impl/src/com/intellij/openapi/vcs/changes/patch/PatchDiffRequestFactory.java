@@ -197,7 +197,7 @@ public class PatchDiffRequestFactory {
                                                    @Nullable String localTitle,
                                                    @Nullable String resultTitle,
                                                    @Nullable String patchTitle,
-                                                   @Nullable Consumer<MergeResult> callback)
+                                                   @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     if (!DiffUtil.canMakeWritable(document)) {
       throw new InvalidDiffRequestException("Output is read only" + (file != null ? " : '" + file.getPresentableUrl() +"'": ""));

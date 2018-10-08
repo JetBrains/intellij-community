@@ -203,7 +203,6 @@ public class NavBarModel {
     myChanged = changed;
   }
 
-  @SuppressWarnings({"SimplifiableIfStatement"})
   static boolean isValid(final Object object) {
     if (object instanceof Project) {
       return !((Project)object).isDisposed();

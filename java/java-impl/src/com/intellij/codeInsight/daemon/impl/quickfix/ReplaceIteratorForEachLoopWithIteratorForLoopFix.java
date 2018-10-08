@@ -79,7 +79,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     }
     final PsiStatement forEachBody = myStatement.getBody();
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
     final String name = javaStyleManager.suggestUniqueVariableName("it", myStatement, true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(

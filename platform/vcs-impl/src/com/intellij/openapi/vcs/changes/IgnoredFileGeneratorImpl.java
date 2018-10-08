@@ -47,7 +47,8 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
     IgnoredFileContentProvider ignoredFileContentProvider = findIgnoredFileContentProvider(vcs);
     if (ignoredFileContentProvider == null) {
-      throw new IllegalStateException("Cannot find content provider for vcs " + vcs.getName());
+      LOG.debug("Cannot find content provider for vcs " + vcs.getName());
+      return false;
     }
 
     synchronized (myWriteLock) {

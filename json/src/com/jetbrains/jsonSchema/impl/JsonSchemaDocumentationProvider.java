@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonProperty;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,7 +121,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
-    htmlDescription = "<b>" + name + "</b>" + type + apiInfo + "<br/><br/>" + htmlDescription;
+    htmlDescription = DocumentationMarkup.DEFINITION_START + name  + type + apiInfo + DocumentationMarkup.DEFINITION_END +
+                      DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END;
     return htmlDescription;
   }
 

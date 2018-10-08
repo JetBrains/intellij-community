@@ -271,7 +271,7 @@ public class PyPackageUtil {
   }
 
   @NotNull
-  public static String requirementsToString(@NotNull List<PyRequirement> requirements) {
+  public static String requirementsToString(@NotNull List<? extends PyRequirement> requirements) {
     return StringUtil.join(requirements, requirement -> String.format("'%s'", requirement.getPresentableText()), ", ");
   }
 
@@ -352,7 +352,7 @@ public class PyPackageUtil {
 
 
     final Ref<List<PyPackage>> packagesRef = Ref.create();
-    @SuppressWarnings("ThrowableInstanceNeverThrown") final Throwable callStacktrace = new Throwable();
+    final Throwable callStacktrace = new Throwable();
     LOG.debug("Showing modal progress for collecting installed packages", new Throwable());
     PyUtil.runWithProgress(null, PyBundle.message("sdk.scanning.installed.packages"), true, false, indicator -> {
       indicator.setIndeterminate(true);
@@ -398,7 +398,7 @@ public class PyPackageUtil {
 
 
   @Nullable
-  public static PyPackage findPackage(@NotNull List<PyPackage> packages, @NotNull String name) {
+  public static PyPackage findPackage(@NotNull List<? extends PyPackage> packages, @NotNull String name) {
     for (PyPackage pkg : packages) {
       if (name.equalsIgnoreCase(pkg.getName())) {
         return pkg;
@@ -407,7 +407,7 @@ public class PyPackageUtil {
     return null;
   }
 
-  public static boolean hasManagement(@NotNull List<PyPackage> packages) {
+  public static boolean hasManagement(@NotNull List<? extends PyPackage> packages) {
     return (findPackage(packages, SETUPTOOLS) != null || findPackage(packages, DISTRIBUTE) != null) ||
            findPackage(packages, PIP) != null;
   }

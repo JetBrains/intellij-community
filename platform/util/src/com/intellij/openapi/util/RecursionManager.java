@@ -48,7 +48,6 @@ public class RecursionManager {
   /**
    * @see RecursionGuard#doPreventingRecursion(Object, boolean, Computable)
    */
-  @SuppressWarnings("JavaDoc")
   @Nullable
   public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
     return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);

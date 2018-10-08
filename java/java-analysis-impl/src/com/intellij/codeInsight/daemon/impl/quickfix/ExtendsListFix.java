@@ -42,7 +42,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   public ExtendsListFix(@NotNull PsiClass aClass, @NotNull PsiClass classToExtendFrom, boolean toAdd) {
-    this(aClass, classToExtendFrom, JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(classToExtendFrom), toAdd);
+    this(aClass, classToExtendFrom, JavaPsiFacade.getElementFactory(aClass.getProject()).createType(classToExtendFrom), toAdd);
   }
 
   private ExtendsListFix(@NotNull PsiClass aClass,
@@ -159,7 +159,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
         anchor = referenceElements[position - 1];
       }
       PsiJavaCodeReferenceElement classReferenceElement =
-        JavaPsiFacade.getInstance(extendsList.getProject()).getElementFactory().createReferenceElementByType(myTypeToExtendFrom);
+        JavaPsiFacade.getElementFactory(extendsList.getProject()).createReferenceElementByType(myTypeToExtendFrom);
       PsiElement element;
       if (anchor == null) {
         if (referenceElements.length == 0) {

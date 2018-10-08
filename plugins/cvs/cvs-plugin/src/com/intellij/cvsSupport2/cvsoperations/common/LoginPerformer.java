@@ -30,11 +30,11 @@ import java.util.Collection;
 
 public class LoginPerformer {
   private final Project myProject;
-  private final Collection<CvsEnvironment> myRoots;
-  private final Consumer<VcsException> myExceptionConsumer;
+  private final Collection<? extends CvsEnvironment> myRoots;
+  private final Consumer<? super VcsException> myExceptionConsumer;
   private boolean myForceCheck;
 
-  public LoginPerformer(final Project project, Collection<CvsEnvironment> roots, Consumer<VcsException> exceptionConsumer) {
+  public LoginPerformer(final Project project, Collection<? extends CvsEnvironment> roots, Consumer<? super VcsException> exceptionConsumer) {
     myProject = project;
     myRoots = roots;
     myExceptionConsumer = exceptionConsumer;

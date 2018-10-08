@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 /**
  * @author peter
  */
@@ -101,7 +99,6 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self methodCallParameter(final int index, final ElementPattern<? extends PsiMethod> methodPattern) {
-    //noinspection unchecked
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
     return with(new PatternCondition<T>("methodCallParameter") {
@@ -132,7 +129,6 @@ public class PsiJavaElementPattern<T extends PsiElement,Self extends PsiJavaElem
   }
 
   public Self methodCallParameter(@NotNull final ElementPattern<? extends PsiMethod> methodPattern) {
-    //noinspection unchecked
     final PsiNamePatternCondition nameCondition = ContainerUtil.findInstance(methodPattern.getCondition().getConditions(), PsiNamePatternCondition.class);
 
     return with(new PatternCondition<T>("methodCallParameter") {

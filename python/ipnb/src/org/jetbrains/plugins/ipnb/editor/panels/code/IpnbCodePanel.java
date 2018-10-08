@@ -381,7 +381,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return getText(from, myCodeSourcePanel.getEditor().getDocument().getTextLength());
   }
 
-  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   @Override
   protected Object clone() {
     return new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)myCell.clone());

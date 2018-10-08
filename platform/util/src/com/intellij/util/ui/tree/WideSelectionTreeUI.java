@@ -55,7 +55,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private boolean myForceDontPaintLines = false;
   private final boolean mySkinny = false;
 
-  @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
     this(true, Conditions.<Integer>alwaysTrue());
   }

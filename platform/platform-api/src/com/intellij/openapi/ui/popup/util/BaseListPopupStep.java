@@ -48,7 +48,6 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   public BaseListPopupStep(@Nullable String aTitle, @NotNull List<? extends T> aValues, Icon aSameIcon) {
     List<Icon> icons = new ArrayList<>();
-    //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < aValues.size(); i++) {
       icons.add(aSameIcon);
     }

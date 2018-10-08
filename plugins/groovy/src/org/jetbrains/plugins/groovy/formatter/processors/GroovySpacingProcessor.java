@@ -830,7 +830,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
 
-    @SuppressWarnings("SimplifiableConditionalExpression" )
     boolean spaceAround = isLeftOrRight(LOGICAL_OPERATORS) ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
                           isLeftOrRight(EQUALITY_OPERATORS) ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
                           isLeftOrRight(RELATIONAL_OPERATORS) ? mySettings.SPACE_AROUND_RELATIONAL_OPERATORS :

@@ -64,7 +64,10 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       sortType: PermanentGraph.SortType,
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
-    val filePath = getFilePath(filters) ?: return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+    val filePath = getFilePath(filters)
+    if (filePath == null || (filePath.isDirectory && logProviders.keys.contains(filePath.virtualFile))) {
+      return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
+    }
     val root = VcsLogUtil.getActualRoot(project, filePath)!!
     return MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount)
   }

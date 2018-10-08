@@ -112,7 +112,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     final List<PsiMethod> affectedMethods = changeReturnType(myMethod, myReturnType);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiReturnStatement statementToSelect = null;
     if (!PsiType.VOID.equals(myReturnType)) {
       final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType);

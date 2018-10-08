@@ -133,7 +133,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), NullPointerException.class);
       assertEquals("Argument 1 for @NotNull parameter of CustomExceptionType.foo must not be null", e.getCause().getMessage());
     }
@@ -165,7 +164,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), IllegalArgumentException.class);
       String trace = ExceptionUtil.getThrowableText(e.getCause());
       assertEquals("Exception should happen in real, non-bridge method: " + trace,

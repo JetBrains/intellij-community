@@ -13,6 +13,7 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Iterator;
 import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
@@ -20,8 +21,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newHashSet();
+  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;
@@ -393,7 +394,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void dispose() {
     super.dispose();
-    disconnectListeners();
 
     if (!myRunningTestNodes.isEmpty()) {
       Application application = ApplicationManager.getApplication();
@@ -434,11 +434,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
 
   @NotNull
   private Node findActiveNode() {
-    if (!myRunningTestNodes.isEmpty()) {
-      return myRunningTestNodes.iterator().next();
+    Iterator<Node> testsIterator = myRunningTestNodes.iterator();
+    if (testsIterator.hasNext()) {
+      return testsIterator.next();
     }
-    if (!myRunningSuiteNodes.isEmpty()) {
-      return myRunningSuiteNodes.iterator().next();
+    Iterator<Node> suitesIterator = myRunningSuiteNodes.iterator();
+    if (suitesIterator.hasNext()) {
+      return suitesIterator.next();
     }
     return myTestsRootNode;
   }

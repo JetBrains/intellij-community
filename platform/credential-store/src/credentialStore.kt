@@ -86,10 +86,10 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 
 // check isEmpty before
 @JvmOverloads
-fun Credentials.serialize(storePassword: Boolean = true): ByteArray = joinData(userName, if (storePassword) password else null)!!
+fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
 @Suppress("FunctionName")
-internal fun SecureString(value: CharSequence): SecureString = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+internal fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
 
 internal class SecureString(value: ByteArray) {
   companion object {
@@ -98,12 +98,12 @@ internal class SecureString(value: ByteArray) {
 
   private val data = encryptionSupport.encrypt(value)
 
-  fun get(clearable: Boolean = true): OneTimeString = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
+  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
 }
 
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
 
-fun createSecureRandom(): SecureRandom {
+internal fun createSecureRandom(): SecureRandom {
   try {
     return SecureRandom.getInstanceStrong()
   }

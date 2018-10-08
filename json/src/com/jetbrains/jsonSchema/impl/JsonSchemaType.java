@@ -69,7 +69,6 @@ public enum JsonSchemaType {
 
   public static boolean isInteger(@NotNull String text) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(text);
       return true;
     }

@@ -209,7 +209,7 @@ public class OverrideImplementExploreUtil {
     PsiTypeParameter[] typeParameters = method.getTypeParameters();
     if (typeParameters.length > 0) {
       if (PsiUtil.isRawSubstitutor(hisClass, substitutor)) {
-        substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, typeParameters);
+        substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, typeParameters);
       }
     }
     return substitutor;

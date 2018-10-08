@@ -288,7 +288,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return scrollPane;
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private DialogWrapper createIgnoreExceptionsConfigurationDialog(final Project project, final JTextField specifiedExceptions) {
     return new DialogWrapper(true) {
       private AddDeleteListPanel myPanel;

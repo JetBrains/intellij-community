@@ -309,7 +309,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private void fillLanguages(JComponent parentMenu) {
       Language[] languages = LanguageCodeStyleSettingsProvider.getLanguagesWithCodeStyleSettings();
-      @SuppressWarnings("UnnecessaryFullyQualifiedName")
       java.util.List<JMenuItem> langItems = new ArrayList<>();
       for (final Language lang : languages) {
         if (!lang.equals(getDefaultLanguage())) {
@@ -555,7 +554,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
-      //noinspection NullableProblems
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
     }
 

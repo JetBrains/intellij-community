@@ -461,7 +461,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  public static String extractDeprecationMessage(List<PyStatement> statements) {
+  public static String extractDeprecationMessage(List<? extends PyStatement> statements) {
     for (PyStatement statement : statements) {
       if (statement instanceof PyExpressionStatement) {
         PyExpressionStatement expressionStatement = (PyExpressionStatement)statement;

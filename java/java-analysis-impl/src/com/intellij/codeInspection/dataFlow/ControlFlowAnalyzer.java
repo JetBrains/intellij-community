@@ -640,7 +640,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     DfaValue origin = null;
     Object initialValue = ExpressionUtils.computeConstantExpression(initializer);
     if (initialValue instanceof Number) {
-      origin = myFactory.getConstFactory().createFromValue(initialValue, type, null);
+      origin = myFactory.getConstFactory().createFromValue(initialValue, type);
     }
     else if (initializer instanceof PsiReferenceExpression) {
       PsiVariable initialVariable = ObjectUtils.tryCast(((PsiReferenceExpression)initializer).resolve(), PsiVariable.class);
@@ -656,7 +656,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // Unroll small loops
       addInstruction(new PushInstruction(loopVar, null, true));
       addInstruction(new PushInstruction(loopVar, null));
-      addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT, null), null));
+      addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(1, PsiType.INT), null));
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, loopVar.getType()));
       addInstruction(new AssignInstruction(null, null));
       addInstruction(new PopInstruction());
@@ -1337,7 +1337,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void checkZeroDivisor() {
     addInstruction(new DupInstruction());
-    addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(0, PsiType.LONG, null), null));
+    addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(0, PsiType.LONG), null));
     addInstruction(new BinopInstruction(JavaTokenType.NE, null, PsiType.BOOLEAN));
     ConditionalGotoInstruction ifNonZero = new ConditionalGotoInstruction(null, false, null);
     addInstruction(ifNonZero);
@@ -1525,7 +1525,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {
     startElement(expression);
     PsiTypeElement operand = expression.getOperand();
-    DfaConstValue classConstant = myFactory.getConstFactory().createFromValue(operand.getType(), expression.getType(), null);
+    DfaConstValue classConstant = myFactory.getConstFactory().createFromValue(operand.getType(), expression.getType());
     addInstruction(new PushInstruction(classConstant, expression));
     finishElement(expression);
   }

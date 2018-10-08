@@ -1363,6 +1363,10 @@ public class UIUtil {
     return new JBColor(UNFOCUSED_SELECTION_COLOR, new Color(13, 41, 62));
   }
 
+  public static Color getListSelectionBackground(boolean focused) {
+    return focused ? getListSelectionBackground() : getListUnfocusedSelectionBackground();
+  }
+
   public static Color getTreeSelectionBackground(boolean focused) {
     return focused ? getTreeSelectionBackground() : getTreeUnfocusedSelectionBackground();
   }
@@ -1578,7 +1582,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
     return false;
   }
@@ -1589,7 +1592,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
   }
@@ -1618,7 +1620,6 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
   }
@@ -1629,12 +1630,10 @@ public class UIUtil {
    * @deprecated
    */
   @Deprecated
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
@@ -3443,7 +3442,6 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();

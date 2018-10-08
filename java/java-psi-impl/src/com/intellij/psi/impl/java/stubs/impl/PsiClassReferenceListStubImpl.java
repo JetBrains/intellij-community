@@ -59,7 +59,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       }
     }
     else {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
 
       int nullCount = 0;
       final PsiReferenceList psi = getPsi();

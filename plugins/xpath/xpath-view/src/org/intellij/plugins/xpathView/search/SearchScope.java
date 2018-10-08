@@ -161,7 +161,6 @@ public final class SearchScope {
   void iterateContent(@NotNull final Project project, @NotNull Processor<? super VirtualFile> processor) {
     switch (getScopeType()) {
       case PROJECT:
-        //noinspection unchecked
         ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new MyFileIterator(processor, Conditions.alwaysTrue()));
         break;
       case MODULE:

@@ -60,7 +60,6 @@ class ScopedClassHierarchy {
   private final GlobalSearchScope myResolveScope;
   private volatile Map<PsiClass, PsiClassType.ClassResolveResult> mySupersWithSubstitutors;
   private volatile List<PsiClassType.ClassResolveResult> myImmediateSupersWithCapturing;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<LanguageLevel, Map<PsiClass, PsiSubstitutor>> myAllSupersWithCapturing = ConcurrentFactoryMap.createMap(this::calcAllMemberSupers);
 
   ScopedClassHierarchy(PsiClass psiClass, GlobalSearchScope resolveScope) {

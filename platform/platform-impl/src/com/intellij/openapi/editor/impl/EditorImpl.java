@@ -3935,7 +3935,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                     selectWordAtCaret(false);
                     break;
                   }
-                  //noinspection fallthrough
                 case 4:
                   mySelectionModel.selectLineAtCaret();
                   setMouseSelectionState(MOUSE_SELECTION_STATE_LINE_SELECTED);

@@ -113,7 +113,6 @@ public class HierarchyViewTestFixture {
     }
 
     Object[] children = treeStructure.getChildElements(descriptor);
-    //noinspection unchecked
     List<Element> expectedChildren = new ArrayList<>(element.getChildren(NODE_ELEMENT_NAME));
 
     StringBuilder messageBuilder = new StringBuilder("Actual children of [" + descriptor.getHighlightedText().getText() + "]:\n");
@@ -128,7 +127,6 @@ public class HierarchyViewTestFixture {
 
     Collections.sort(expectedChildren, Comparator.comparing(child -> child.getAttributeValue(TEXT_ATTR_NAME)));
 
-    //noinspection unchecked
     Iterator<Element> iterator = expectedChildren.iterator();
     for (Object child : children) {
       checkNodeDescriptorRecursively(treeStructure, ((HierarchyNodeDescriptor)child), iterator.next());

@@ -17,10 +17,10 @@ import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
 import java.util.concurrent.CompletableFuture
 
-class GithubPullRequestsLoader(private val progressManager: ProgressManager,
-                               private val requestExecutor: GithubApiRequestExecutor,
-                               private val serverPath: GithubServerPath,
-                               private val repoPath: GithubFullPath) : Disposable {
+internal class GithubPullRequestsLoader(private val progressManager: ProgressManager,
+                                        private val requestExecutor: GithubApiRequestExecutor,
+                                        private val serverPath: GithubServerPath,
+                                        private val repoPath: GithubFullPath) : Disposable {
   private var initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(null))
   private var lastFuture = CompletableFuture.completedFuture(GithubResponsePage.empty<GithubSearchedIssue>(initialRequest.url))
 

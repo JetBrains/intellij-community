@@ -88,7 +88,7 @@ public class GenerateEqualsHelper implements Runnable {
     ContainerUtil.addAll(myNonNullSet, nonNullFields);
     final PsiManager manager = PsiManager.getInstance(project);
 
-    myFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
     myCodeStyleManager = CodeStyleManager.getInstance(manager.getProject());

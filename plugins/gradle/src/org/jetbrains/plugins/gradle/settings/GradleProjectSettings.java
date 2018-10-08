@@ -27,6 +27,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = ExternalSystemApiUtil.isJavaCompatibleIde();
+  private boolean resolveExternalAnnotations;
   @Nullable private CompositeBuild myCompositeBuild;
 
   private ThreeState storeProjectFilesExternally = ThreeState.NO;
@@ -74,6 +75,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     this.resolveModulePerSourceSet = useIdeModulePerSourceSet;
   }
 
+  public boolean isResolveExternalAnnotations() {
+    return resolveExternalAnnotations;
+  }
+
+  public void setResolveExternalAnnotations(boolean resolveExternalAnnotations) {
+    this.resolveExternalAnnotations = resolveExternalAnnotations;
+  }
+
   @OptionTag(tag = "compositeConfiguration", nameAttribute = "")
   @Nullable
   public CompositeBuild getCompositeBuild() {
@@ -94,6 +103,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
+    result.resolveExternalAnnotations = resolveExternalAnnotations;
     result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
     return result;
   }

@@ -45,7 +45,7 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import java.util.regex.Pattern;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class FileUtil extends FileUtilRt {
   static {
     if (!Patches.USE_REFLECTION_TO_ACCESS_JDK7) throw new RuntimeException("Please migrate FileUtilRt to JDK8");
@@ -235,7 +235,6 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String loadTextAndClose(@NotNull InputStream stream) throws IOException {
-    //noinspection IOResourceOpenedButNotSafelyClosed
     return loadTextAndClose(new InputStreamReader(stream));
   }
 

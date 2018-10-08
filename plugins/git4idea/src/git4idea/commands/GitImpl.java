@@ -51,7 +51,6 @@ import static java.util.Collections.*;
  *
  * @author Kirill Likhodedov
  */
-@SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class GitImpl extends GitImplBase {
 
   private static final Logger LOG = Logger.getInstance(Git.class);

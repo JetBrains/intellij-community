@@ -207,7 +207,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   private static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
   }
 

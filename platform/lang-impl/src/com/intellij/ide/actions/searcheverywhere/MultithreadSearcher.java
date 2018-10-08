@@ -45,7 +45,7 @@ class MultithreadSearcher implements SESearcher {
    */
   MultithreadSearcher(@NotNull Listener listener,
                       @NotNull Executor notificationExecutor,
-                      @NotNull Collection<SEResultsEqualityProvider> equalityProviders) {
+                      @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
     myEqualityProvider = SEResultsEqualityProvider.composite(equalityProviders);
@@ -58,7 +58,7 @@ class MultithreadSearcher implements SESearcher {
    * @param equalityProviders collection of equailty providers that checks if found elements is already in the search results
    */
   @SuppressWarnings("unused")
-  MultithreadSearcher(@NotNull Listener listener, @NotNull Collection<SEResultsEqualityProvider> equalityProviders) {
+  MultithreadSearcher(@NotNull Listener listener, @NotNull Collection<? extends SEResultsEqualityProvider> equalityProviders) {
     this(listener, Runnable::run, equalityProviders);
   }
 

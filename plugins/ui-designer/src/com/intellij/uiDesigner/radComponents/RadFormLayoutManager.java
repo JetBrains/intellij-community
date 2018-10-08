@@ -922,7 +922,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     CellConstraints cc;
     try {
       LayoutManager layout = parent.getLayout();
-      //noinspection HardCodedStringLiteral
       Method method = layout.getClass().getMethod("getConstraints", Component.class);
       cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
     }

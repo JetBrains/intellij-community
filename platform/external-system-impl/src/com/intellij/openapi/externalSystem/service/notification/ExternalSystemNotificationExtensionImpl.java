@@ -39,7 +39,6 @@ public class ExternalSystemNotificationExtensionImpl implements ExternalSystemNo
                         @NotNull Project project,
                         @Nullable Throwable error) {
     if (error == null) return;
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof ExternalSystemException) {
       updateNotification(notification, project, (ExternalSystemException)unwrapped);

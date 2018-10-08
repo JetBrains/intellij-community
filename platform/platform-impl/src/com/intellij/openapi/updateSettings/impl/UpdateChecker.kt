@@ -218,6 +218,8 @@ object UpdateChecker {
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {
     val updateable = collectUpdateablePlugins()
+    val kotlinId = PluginId.findId("org.jetbrains.kotlin")
+    LOG.info("=== Kotlin: ${updateable[kotlinId]?.version} in update list ===")
     if (updateable.isEmpty()) return null
 
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
@@ -229,11 +231,17 @@ object UpdateChecker {
         val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)
         for (descriptor in list) {
           val id = descriptor.pluginId
+          if (id.idString == kotlinId?.idString) {
+            LOG.info("=== New Kotlin: ${descriptor.version} from: ${host} ===")
+          }
           if (updateable.containsKey(id)) {
             updateable.remove(id)
             state.onDescriptorDownload(descriptor)
             val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber, forceHttps)
             checkAndPrepareToInstall(downloader, state, toUpdate, incompatiblePlugins, indicator)
+            if (toUpdate.containsKey(kotlinId)) {
+              LOG.info("=== In result list new Kotlin: ${descriptor.version} from: ${host} ===")
+            }
             if (updateable.isEmpty()) {
               break@outer
             }

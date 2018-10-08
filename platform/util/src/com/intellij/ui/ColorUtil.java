@@ -113,12 +113,24 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color dimmer(@NotNull Color color) {
-    float[] rgb = color.getRGBColorComponents(null);
+  public static Color dimmer(@NotNull final Color color) {
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
 
-    float alpha = 0.80f;
-    float rem = 1 - alpha;
-    return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
+      @NotNull
+      @Override
+      public Color produce() {
+        float[] rgb = color.getRGBColorComponents(null);
+
+        float alpha = 0.80f;
+        float rem = 1 - alpha;
+        return new Color(rgb[0] * alpha + rem, rgb[1] * alpha + rem, rgb[2] * alpha + rem);
+      }
+    };
+    return wrap(color, func);
+  }
+
+  private static Color wrap(@NotNull Color color, NotNullProducer<Color> func) {
+    return color instanceof JBColor ? new JBColor(func) : func.produce();
   }
 
   private static int shift(int colorComponent, double d) {
@@ -127,8 +139,15 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color shift(@NotNull Color c, double d) {
-    return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+  public static Color shift(@NotNull final Color c, final double d) {
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return new Color(shift(c.getRed(), d), shift(c.getGreen(), d), shift(c.getBlue(), d), c.getAlpha());
+      }
+    };
+    return wrap(c, func);
   }
 
   @NotNull
@@ -158,9 +177,16 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color toAlpha(@Nullable Color color, int a) {
-    Color c = color == null ? Color.black : color;
-    return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+  public static Color toAlpha(@Nullable Color color, final int a) {
+    final Color c = color == null ? Color.black : color;
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+      }
+    };
+    return wrap(c, func);
   }
 
   @NotNull
@@ -230,7 +256,18 @@ public class ColorUtil {
   public static Color getColor(@NotNull Class<?> cls) {
     final Colored colored = cls.getAnnotation(Colored.class);
     if (colored != null) {
-      return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
+      return new JBColor(new NotNullProducer<Color>() {
+        @NotNull
+        @Override
+        public Color produce() {
+          String colorString = UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color();
+          Color color = fromHex(colorString, null);
+          if (color == null) {
+            throw new IllegalArgumentException("Can't parse " + colorString);
+          }
+          return color;
+        }
+      });
     }
     return null;
   }
@@ -244,11 +281,18 @@ public class ColorUtil {
   }
 
   @NotNull
-  public static Color mix(@NotNull Color c1, @NotNull Color c2, double balance) {
-    balance = Math.min(1, Math.max(0, balance));
-    return new Color((int)((1 - balance) * c1.getRed() + c2.getRed() * balance + .5),
-                     (int)((1 - balance) * c1.getGreen() + c2.getGreen() * balance + .5),
-                     (int)((1 - balance) * c1.getBlue() + c2.getBlue() * balance + .5),
-                     (int)((1 - balance) * c1.getAlpha() + c2.getAlpha() * balance + .5));
+  public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
+    final double b = Math.min(1, Math.max(0, balance));
+    NotNullProducer<Color> func = new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return new Color((int)((1 - b) * c1.getRed() + c2.getRed() * b + .5),
+                         (int)((1 - b) * c1.getGreen() + c2.getGreen() * b + .5),
+                         (int)((1 - b) * c1.getBlue() + c2.getBlue() * b + .5),
+                         (int)((1 - b) * c1.getAlpha() + c2.getAlpha() * b + .5));
+      }
+    };
+    return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
   }
 }

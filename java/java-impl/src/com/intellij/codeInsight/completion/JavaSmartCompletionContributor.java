@@ -255,7 +255,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(PsiElement position, boolean voidable) {
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<>();

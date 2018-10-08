@@ -21,16 +21,15 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -108,12 +107,22 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, newValue, row, column);
                   changed = true;
                 }
-              } else if (value instanceof Border) {
+              } else if (value instanceof EmptyBorder) {
                 Insets i = ((Border)value).getBorderInsets(null);
-                String oldBorder = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
-                Border newValue = editBorder(key.toString(), oldBorder);
-                if (newValue != null) {
-                  updateValue(pair, newValue, row, column);
+
+                String oldInsets = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
+                Insets newInsets = editInsets(key.toString(), oldInsets);
+                if (newInsets != null) {
+                  updateValue(pair, new JBEmptyBorder(newInsets), row, column);
+                  changed = true;
+                }
+              } else if (value instanceof Insets) {
+                Insets i = (Insets)value;
+
+                String oldInsets = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
+                Insets newInsets = editInsets(key.toString(), oldInsets);
+                if (newInsets != null) {
+                  updateValue(pair, newInsets, row, column);
                   changed = true;
                 }
               } else if (value instanceof UIUtil.GrayFilter) {
@@ -335,14 +344,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       @Nullable
-      private Border editBorder(String key, String value) {
+      private Insets editInsets(String key, String value) {
         String newValue = Messages.showInputDialog(getRootPane(),
            "Enter new value for " + key + "\nin form top,left,bottom,right",
-           "Border Editor", null, value,
+           "Insets Editor", null, value,
            new InputValidator() {
              @Override
              public boolean checkInput(String inputString) {
-               return parseBorder(inputString) != null;
+               return parseInsets(inputString) != null;
              }
 
              @Override
@@ -351,11 +360,11 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
              }
            });
 
-        return newValue != null ? parseBorder(newValue) : null;
+        return newValue != null ? parseInsets(newValue) : null;
       }
 
       @Nullable
-      private Border parseBorder(String value) {
+      private Insets parseInsets(String value) {
         String[] parts = value.split(",");
         if(parts.length != 4) {
           return null;
@@ -363,7 +372,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
         try {
           List<Integer> v = Arrays.stream(parts).map(p -> Integer.parseInt(p)).collect(Collectors.toList());
-          return JBUI.Borders.empty(v.get(0), v.get(1), v.get(2), v.get(3));
+          return JBUI.insets(v.get(0), v.get(1), v.get(2), v.get(3));
         } catch (NumberFormatException nex) {
           return null;
         }
@@ -464,7 +473,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         Object value = ((Pair)getValueAt(row, column)).second;
         return (value instanceof Color ||
                 value instanceof Integer ||
-                value instanceof Border ||
+                value instanceof EmptyBorder ||
+                value instanceof Insets ||
                 value instanceof UIUtil.GrayFilter ||
                 value instanceof Font);
       }

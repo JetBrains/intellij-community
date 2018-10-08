@@ -126,7 +126,7 @@ public class StaticGenericInfoBuilder {
       }
     }
 
-    //noinspection ConstantIfStatement,ConstantConditions
+    // noinspection ConstantConditions
     if (false) {
       if (!methods.isEmpty()) {
         assert false : methods.stream().map(method -> "\n  " + method)

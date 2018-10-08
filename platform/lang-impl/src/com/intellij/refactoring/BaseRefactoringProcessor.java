@@ -305,7 +305,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DEFAULT;

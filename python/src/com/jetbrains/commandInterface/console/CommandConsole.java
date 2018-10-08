@@ -70,7 +70,7 @@ import java.util.Collection;
  *
  * @author Ilya.Kazakevich
  */
-@SuppressWarnings({"DeserializableClassInSecureContext", "SerializableClassInSecureContext"}) // Nobody will serialize console
+@SuppressWarnings({"SerializableClassInSecureContext"}) // Nobody will serialize console
 final class CommandConsole extends LanguageConsoleImpl implements Consumer<String>, Condition<LanguageConsoleView>, ConsoleWithProcess {
   /**
    * Width of border to create around console

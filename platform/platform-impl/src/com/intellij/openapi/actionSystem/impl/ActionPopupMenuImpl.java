@@ -95,7 +95,6 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     @Override
     public void show(final Component component, int x, int y) {
       if (!component.isShowing()) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("component must be shown on the screen");
       }
 

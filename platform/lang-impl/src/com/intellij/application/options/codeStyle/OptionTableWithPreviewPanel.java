@@ -54,14 +54,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
  * @author max
  */
-@SuppressWarnings("Duplicates")
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 

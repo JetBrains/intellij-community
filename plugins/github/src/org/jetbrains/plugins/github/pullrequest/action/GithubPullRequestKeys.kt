@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
 
 object GithubPullRequestKeys {
   @JvmStatic
@@ -22,7 +22,7 @@ object GithubPullRequestKeys {
   val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")
   @JvmStatic
   val SELECTED_PULL_REQUEST_DATA_PROVIDER =
-    DataKey.create<GithubPullRequestsDataLoader.DataProvider>("org.jetbrains.plugins.github.pullrequest.selected.dataprovider")
+    DataKey.create<GithubPullRequestDataProvider>("org.jetbrains.plugins.github.pullrequest.selected.dataprovider")
   @JvmStatic
   val REPOSITORY = DataKey.create<GitRepository>("org.jetbrains.plugins.github.pullrequest.repository")
   @JvmStatic

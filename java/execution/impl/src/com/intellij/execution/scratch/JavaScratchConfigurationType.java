@@ -43,7 +43,7 @@ public final class JavaScratchConfigurationType extends ConfigurationTypeBase {
     return "reference.dialogs.rundebug.Java Scratch";
   }
 
-  /** @noinspection MethodOverridesStaticMethodOfSuperclass*/
+  /** */
   @NotNull
   public static JavaScratchConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JavaScratchConfigurationType.class);

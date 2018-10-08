@@ -272,7 +272,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getInstance(project).getElementFactory()
+        defToInline = JavaPsiFacade.getElementFactory(project)
                                    .createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {

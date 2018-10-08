@@ -386,7 +386,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private ActionCallback onFocusLost() {
     final ActionCallback result = new ActionCallback();
-    //noinspection SSBasedInspection
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
         if (myCalcThread != null) {
@@ -1320,7 +1319,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked", "Duplicates"})
+  @SuppressWarnings({"SSBasedInspection", "Duplicates"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
@@ -1348,7 +1347,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.getEmptyText().setText("Searching...");
 
           if (myList.getModel() instanceof SearchListModel) {
-            //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (!myDone.isRejected()) {

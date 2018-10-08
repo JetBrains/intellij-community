@@ -165,7 +165,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private static final int MAX_LEAKY_PROJECTS = 5;
   private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
   private static long CHECK_START = System.currentTimeMillis();
-  @SuppressWarnings("FieldCanBeLocal") private final Map<Project, String> myProjects = new WeakHashMap<>();
+  private final Map<Project, String> myProjects = new WeakHashMap<>();
 
   @Override
   @Nullable
@@ -218,7 +218,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     String message = e.getMessage();
     if (message != null) return message;
     message = e.getLocalizedMessage();
-    //noinspection ConstantConditions
     if (message != null) return message;
     message = e.toString();
     Throwable cause = e.getCause();

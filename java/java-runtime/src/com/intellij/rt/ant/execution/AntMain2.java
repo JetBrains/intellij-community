@@ -26,7 +26,6 @@ public final class AntMain2 {
     // preferred way for us to run ant will be using the traditional ant entry point, via the "Main" class 
     try {
       final Class antMain = Class.forName("org.apache.tools.ant.Main");
-      //noinspection HardCodedStringLiteral
       antMain.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
       return;
     }
@@ -38,7 +37,6 @@ public final class AntMain2 {
     // This approach is less preferred in our case, but still...
     // From the ant documentation: "You should start the launcher with the most minimal classpath possible, generally just the ant-launcher.jar."
     final Class antLauncher = Class.forName("org.apache.tools.ant.launch.Launcher");
-    //noinspection HardCodedStringLiteral
     antLauncher.getMethod("main", new Class[]{args.getClass()}).invoke(null, new Object[]{args});
 
   }

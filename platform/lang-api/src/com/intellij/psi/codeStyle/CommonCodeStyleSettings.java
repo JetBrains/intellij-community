@@ -121,7 +121,6 @@ public class CommonCodeStyleSettings {
     return myForceArrangeMenuAvailable;
   }
 
-  @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);

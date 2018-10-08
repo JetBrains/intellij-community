@@ -64,7 +64,6 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myFactories[0];
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project project,

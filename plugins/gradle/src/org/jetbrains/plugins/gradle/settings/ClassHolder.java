@@ -37,7 +37,6 @@ public class ClassHolder<T> implements Serializable {
   /**
    * @param targetClass  class to use
    */
-  @SuppressWarnings("NullableProblems")
   public ClassHolder(@NotNull Class<T> targetClass) {
     myTargetClass = targetClass;
     myClassName = myTargetClass.getName();

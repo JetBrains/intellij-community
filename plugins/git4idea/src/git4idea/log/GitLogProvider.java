@@ -521,7 +521,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
-                                                @NotNull List<String> filterParameters) {
+                                                @NotNull List<? super String> filterParameters) {
     if (text != null) {
       filterParameters.add(prepareParameter("grep", text));
     }

@@ -349,7 +349,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private static void findPublicClassConflicts(PsiClass aClass, final MyClassInstanceReferenceVisitor instanceReferenceVisitor) {
-    //noinspection MismatchedQueryAndUpdateOfCollection
     NonPublicClassMemberWrappersSet members = new NonPublicClassMemberWrappersSet();
 
     members.addElements(aClass.getFields());

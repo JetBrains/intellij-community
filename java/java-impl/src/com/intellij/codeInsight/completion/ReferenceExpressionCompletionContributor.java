@@ -202,7 +202,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   static PsiExpression createExpression(String text, PsiElement element) {
-    return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText(text, element);
+    return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, element);
   }
 
   static String getQualifierText(@Nullable final PsiElement qualifier) {

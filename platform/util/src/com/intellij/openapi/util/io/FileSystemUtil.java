@@ -399,7 +399,7 @@ public class FileSystemUtil {
 
   // thanks to SVNKit for the idea of platform-specific offsets
   private static class JnaUnixMediatorImpl extends Mediator {
-    @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
+    @SuppressWarnings({"OctalInteger"})
     private static class LibC {
       static final int S_MASK = 0177777;
       static final int S_IFMT = 0170000;
@@ -417,7 +417,6 @@ public class FileSystemUtil {
       static native int access(String path, int mode);
     }
 
-    @SuppressWarnings("SpellCheckingInspection")
     private static class UnixLibC {
       static native int lstat(String path, Pointer stat);
       static native int stat(String path, Pointer stat);

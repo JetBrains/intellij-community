@@ -147,7 +147,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   boolean myForceRightFreePaintersAreaShown;
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
-  private @Nullable AccessibleGutterLine myAccessibleGutterLine;
+  @Nullable private AccessibleGutterLine myAccessibleGutterLine;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -184,7 +184,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor;
   }
 
-  @SuppressWarnings("ConstantConditions")
   private void installDnD() {
     DnDSupport.createBuilder(this)
       .setBeanProvider(info -> {
@@ -555,6 +554,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
 
     Color color = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
+    Color colorUnderCaretRow = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR);
     g.setColor(color != null ? color : JBColor.blue);
     Font font = getFontForLineNumbers();
     g.setFont(font);
@@ -575,9 +575,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
               g.setColor(color);
             }
 
-            //todo[kb] move to editor scheme when have colors for Default and Darcula
-            if (Registry.is("editor.highlight.current.line.number") && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
-              g.setColor(Registry.getColor("editor.highlight.current.line.color", color));
+            if (colorUnderCaretRow != null && myEditor.getCaretModel().getLogicalPosition().line == logLine) {
+              g.setColor(colorUnderCaretRow);
             }
 
             String s = String.valueOf(logLine + 1);
@@ -1013,7 +1012,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return (int) (getEditorScaleFactor() * width);
   }
 
-  void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
+  void processIconsRow(int line, @NotNull List<? extends GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
     int middleCount = 0;
     int middleSize = 0;
     int x = getIconAreaOffset() + 2;
@@ -1488,7 +1487,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     x = convertX(x);
     for (DisplayedFoldingAnchor anchor : displayedAnchors) {
       Rectangle r = rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX);
-      if (r.x < x && x <= (r.x + r.width) && r.y < y && y <= (r.y + r.height)) return anchor.foldRegion;
+      if (r.x < x && x <= r.x + r.width && r.y < y && y <= r.y + r.height) return anchor.foldRegion;
     }
 
     return null;

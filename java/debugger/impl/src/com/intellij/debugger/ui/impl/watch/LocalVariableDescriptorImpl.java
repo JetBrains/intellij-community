@@ -98,7 +98,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }

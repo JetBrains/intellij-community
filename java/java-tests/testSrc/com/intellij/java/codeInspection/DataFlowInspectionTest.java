@@ -658,4 +658,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     assertEquals(0, intentions.stream().filter(i -> i.getText().equals("Simplify 'expirationDay != other.expirationDay' to false")).count());
   }
   public void testAlwaysTrueSwitchLabel() { doTest(); }
+  public void testWideningToDouble() { doTest(); }
 }

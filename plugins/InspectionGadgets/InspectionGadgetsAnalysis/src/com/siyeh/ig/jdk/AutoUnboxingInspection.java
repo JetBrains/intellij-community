@@ -46,7 +46,6 @@ import java.util.Map;
 public class AutoUnboxingInspection extends BaseInspection {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls static final Map<String, String> s_unboxingMethods = new HashMap<>(8);
 

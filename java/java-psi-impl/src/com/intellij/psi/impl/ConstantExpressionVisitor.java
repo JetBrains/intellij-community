@@ -221,7 +221,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       value = compareNumbers(lOperandValue, rOperandValue, tokenType);
     }
     else if (tokenType == JavaTokenType.EQEQ || tokenType == JavaTokenType.NE) {
-      value = areValuesEqual(lOperandValue, rOperandValue, tokenType);
+      value = handleEqualityComparison(lOperandValue, rOperandValue, tokenType);
     }
     else if (tokenType == JavaTokenType.ASTERISK) {
       if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
@@ -394,7 +394,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
   }
 
   @Nullable
-  private static Boolean areValuesEqual(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
+  private static Boolean handleEqualityComparison(Object lOperandValue, Object rOperandValue, IElementType tokenType) {
     if (lOperandValue instanceof String && rOperandValue instanceof String ||
         lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
       return lOperandValue.equals(rOperandValue) == (tokenType == JavaTokenType.EQEQ);

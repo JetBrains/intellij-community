@@ -63,7 +63,6 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<VirtualFile> myImages;
