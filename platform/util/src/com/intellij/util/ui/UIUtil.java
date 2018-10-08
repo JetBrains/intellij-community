@@ -3840,8 +3840,7 @@ public class UIUtil {
             g.drawString(text, xOffset, yOffset[0]);
             if (!StringUtil.isEmpty(shortcut)) {
               Color oldColor = g.getColor();
-              g.setColor(new JBColor(new Color(82, 99, 155),
-                                     new Color(88, 157, 246)));
+              g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
               g.drawString(shortcut, xOffset + fm.stringWidth(text + (isUnderDarcula() ? " " : "")), yOffset[0]);
               g.setColor(oldColor);
             }
