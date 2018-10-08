@@ -405,7 +405,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
 
   private void showProgress(boolean repaint) {
     myIndicator = new OneLineProgressIndicator();
-    myIndicator.setCancelRunnable(() -> myPluginsModel.finishInstall(myPlugin, false));
+    myIndicator.setCancelRunnable(() -> myPluginsModel.finishInstall(myPlugin, false, false));
 
     myButtonsPanel.remove(myInstallButton == null ? myUpdateButton : myInstallButton);
     if (myEnableDisableButton != null) {

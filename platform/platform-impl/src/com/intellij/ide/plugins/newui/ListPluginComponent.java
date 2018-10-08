@@ -133,7 +133,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setEnabled(false);
 
     OneLineProgressIndicator indicator = new OneLineProgressIndicator();
-    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false));
+    indicator.setCancelRunnable(() -> myPluginModel.finishInstall(myPlugin, false, false));
     myBaselinePanel.setProgressComponent(this, indicator.createBaselineWrapper());
     myPluginModel.addProgress(myPlugin, indicator);
     myIndicator = indicator;

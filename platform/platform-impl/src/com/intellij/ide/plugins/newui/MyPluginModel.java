@@ -226,7 +226,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return info;
   }
 
-  public void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success) {
+  public void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success, boolean showErrors) {
     InstallPluginInfo info = finishInstall(descriptor);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -281,7 +281,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
-    if (!success) {
+    if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
     }
