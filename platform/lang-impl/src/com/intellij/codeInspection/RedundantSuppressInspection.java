@@ -303,11 +303,6 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     return false;
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   protected GlobalInspectionContextBase createContext(PsiFile file) {
     final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
     return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
