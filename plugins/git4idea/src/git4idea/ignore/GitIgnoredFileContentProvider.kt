@@ -18,23 +18,25 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
   override fun buildIgnoreFileContent(ignoreFileRoot: VirtualFile, ignoredFileProviders: Array<IgnoredFileProvider>): String {
     val content = StringBuilder()
+    val lineSeparator = lineSeparator()
+
     for (i in ignoredFileProviders.indices) {
       val provider = ignoredFileProviders[i]
       val ignoredFileMasks = provider.getIgnoredFilesMasks(project, ignoreFileRoot)
       if (ignoredFileMasks.isEmpty()) continue
 
+      if (!content.isEmpty()) {
+        content.append(lineSeparator).append(lineSeparator)
+      }
+
       val description = provider.masksGroupDescription
       if (description.isNotBlank()) {
         content.append(prependCommentHashCharacterIfNeeded(description))
-        content.append(lineSeparator())
+        content.append(lineSeparator)
       }
-      content.append(ignoredFileMasks.joinToString(lineSeparator()))
-
-      if (i + 1 < ignoredFileProviders.size) {
-        content.append(lineSeparator()).append(lineSeparator())
-      }
+      content.append(ignoredFileMasks.joinToString(lineSeparator))
     }
-    return content.trimEnd { it == '\r' || it == '\n' }.toString()
+    return content.toString()
   }
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
