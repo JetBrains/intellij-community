@@ -274,7 +274,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     if (nextUnreachable) {
       setElseBranch(ifStatement, thenBranch, flow, ct);
 
-      PsiElement first = ifStatement.getNextSibling();
+      PsiElement first = PsiTreeUtil.skipWhitespacesForward(ifStatement);
       if (first != null) {
         PsiElement last = first;
         PsiElement next = last.getNextSibling();

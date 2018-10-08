@@ -60,8 +60,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       "}",
       "class X {\n" +
       "    void m(String s) {\n" +
-      "        //end of line comment\n" +
-      "        String hello = \"hello\";\n" +
+      "        String hello = \"hello\";//end of line comment\n" +
       "        System.out.println(hello);\n" +
       "    }\n" +
       "}"
