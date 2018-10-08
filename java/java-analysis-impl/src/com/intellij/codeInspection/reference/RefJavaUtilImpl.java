@@ -5,6 +5,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -213,6 +214,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          if (psiResolved == null) {
                            psiResolved = tryFindKotlinParameter(node, decl);
+                         }
+                         if (psiResolved instanceof LightElement) {
+                           psiResolved = psiResolved.getNavigationElement();
                          }
                          RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
                          boolean writing = isAccessedForWriting(node);

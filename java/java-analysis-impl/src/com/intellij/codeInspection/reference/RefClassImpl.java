@@ -284,11 +284,18 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   public void buildReferences() {
     UClass uClass = getUastElement();
     if (uClass != null) {
+      if (uClass instanceof UAnonymousClass) {
+        UObjectLiteralExpression objectAccess = UastUtils.getParentOfType(uClass, UObjectLiteralExpression.class);
+        if (objectAccess != null && objectAccess.getDeclaration().getSourcePsi() == uClass.getSourcePsi()) {
+          RefJavaUtil.getInstance().addReferencesTo(uClass, this, objectAccess.getValueArguments().toArray(UElementKt.EMPTY_ARRAY));
+        }
+      }
+
       for (UClassInitializer classInitializer : uClass.getInitializers()) {
         RefJavaUtil.getInstance().addReferencesTo(uClass, this, classInitializer.getUastBody());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(new UElement[0]));
+      RefJavaUtil.getInstance().addReferencesTo(uClass, this, ((UAnnotated)uClass).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
 
       for (PsiTypeParameter parameter : uClass.getJavaPsi().getTypeParameters()) {
         UElement uTypeParameter = UastContextKt.toUElement(parameter);
@@ -311,7 +318,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         getRefManager().getReference(uMethod.getSourcePsi());
       }
 
-      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(new UElement[0]));
+      RefJavaUtil.getInstance().addReferencesTo(uClass, this, uClass.getUastSuperTypes().toArray(UElementKt.EMPTY_ARRAY));
 
       getRefManager().fireBuildReferences(this);
     }
