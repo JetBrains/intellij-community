@@ -11,15 +11,15 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
-import com.jetbrains.python.psi.resolve.resolveModuleAt
+import com.jetbrains.python.psi.impl.ResolveResultList
+import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.pyi.PyiFile
-import com.jetbrains.python.sdk.PythonSdkType
 
 private const val STUBS_SUFFIX = "-stubs"
 private val STUB_PACKAGE_KEY = Key<Boolean>("PY_STUB_PACKAGE")
@@ -42,35 +42,50 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
 }
 
 /**
- * Resolves [name] in corresponding stub package.
+ * Replaces [resolvedSubdir] with stub package if it's stub only or
+ * collects [resolvedSubdir] and stub package into list if stub package is partial.
  *
- * Returns empty list if [context] disallow stubs,
- * or language level is older than [LanguageLevel.PYTHON37],
- * or [item] is not lib root.
+ * Requires language level to be at least [LanguageLevel.PYTHON37], [withoutStubs] to be False, [dir] to be lib root.
  */
-fun resolveModuleAtStubPackage(name: QualifiedName,
-                               item: PsiFileSystemItem,
-                               context: PyQualifiedNameResolveContext): List<PsiElement> {
-  if (!context.withoutStubs && name.componentCount > 0) {
-    val head = name.firstComponent!!
+fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
+                                  dir: PsiDirectory,
+                                  resolvedSubdir: PsiDirectory,
+                                  withoutStubs: Boolean): List<RatedResolveResult> {
+  // check that stub packages are allowed and dir is lib root
+  if (!withoutStubs &&
+      containingFile != null &&
+      LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37) &&
+      dir.virtualFile.let { it == ProjectFileIndex.getInstance(containingFile.project).getClassRootForFile(it) }) {
 
-    // prevent recursion and check that stub packages are allowed
-    if (!head.endsWith(STUBS_SUFFIX) && contextLanguageLevel(context).isAtLeast(LanguageLevel.PYTHON37)) {
-      val virtualFile = item.virtualFile
+    val stubPackageName = "${resolvedSubdir.name}$STUBS_SUFFIX"
+    val subdirectory = dir.findSubdirectory(stubPackageName)
 
-      // check that resolve is running from lib root
-      if (virtualFile != null && virtualFile == ProjectFileIndex.getInstance(context.project).getClassRootForFile(virtualFile)) {
-        val nameInStubPackage = sequenceOf("$head$STUBS_SUFFIX") + name.components.asSequence().drop(1)
-        return resolveModuleAt(QualifiedName.fromComponents(nameInStubPackage.toList()), item, context)
-          .asSequence()
-          .filter(::pyi)
-          .onEach { it.putUserData(STUB_PACKAGE_KEY, true) }
-          .toList()
+    // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
+    if (subdirectory?.name == stubPackageName) {
+      subdirectory.putUserData(STUB_PACKAGE_KEY, true)
+
+      if (subdirectory
+          .findFile("py.typed")
+          ?.virtualFile
+          .let { it != null && VfsUtilCore.loadText(it, "partial\n".length + 1) == "partial\n" }) {
+        // +1 to length is to ensure that py.typed has exactly this content
+        return ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
+      }
+      else {
+        return ResolveResultList.to(subdirectory)
       }
     }
   }
 
-  return emptyList()
+  return ResolveResultList.to(resolvedSubdir)
+}
+
+/**
+ * Puts special mark to module resolved in stub package.
+ */
+fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubmodule: PsiFile): PsiFile {
+  if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubmodule.putUserData(STUB_PACKAGE_KEY, true)
+  return resolvedSubmodule
 }
 
 /**
@@ -87,37 +102,18 @@ fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<
 
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
-  if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
+  return if (groupedResults.containsKey(Priority.STUB_PACKAGE) && groupedResults.headMap(Priority.STUB_PACKAGE).isEmpty()) {
     // stub packages + next by priority
     // because stub packages could be partial
 
     val stub = groupedResults[Priority.STUB_PACKAGE]!!.first()
+    val nextByPriority = groupedResults.tailMap(Priority.STUB_PACKAGE).values.asSequence().drop(1).take(1).flatten().firstOrNull()
 
-    val nextResults = groupedResults.tailMap(Priority.STUB_PACKAGE)
-    if (nextResults.isNotEmpty() &&
-        getPyTyped(stub).let { it != null && VfsUtilCore.loadText(it, "partial\n".length + 1) == "partial\n" }) {
-      // +1 to length is to ensure that py.typed has exactly this content
-      val nextByPriority = nextResults.values.asSequence().drop(1).take(1).flatten().firstOrNull()
-      return listOfNotNull(stub, nextByPriority)
-    }
-
-    return listOfNotNull(stub)
+    listOfNotNull(stub, nextByPriority)
   }
   else {
-    return listOf(groupedResults.values.first().first())
+    listOf(groupedResults.values.first().first())
   }
-}
-
-private fun contextLanguageLevel(context: PyQualifiedNameResolveContext): LanguageLevel {
-  context.foothold?.also { return LanguageLevel.forElement(it) }
-  context.footholdFile?.also { return LanguageLevel.forElement(it) }
-
-  context.sdk?.also { return PythonSdkType.getLanguageLevelForSdk(it) }
-  context.effectiveSdk?.also { return PythonSdkType.getLanguageLevelForSdk(it) }
-
-  context.module?.also { return PyUtil.getLanguageLevelForModule(it) }
-
-  return LanguageLevel.getDefault()
 }
 
 private fun pyi(element: PsiElement) = element is PyiFile || PyUtil.turnDirIntoInit(element) is PyiFile
@@ -152,7 +148,7 @@ private fun isUserFile(element: PsiElement, module: Module?) =
   }
 
 /**
- * See [resolveModuleAtStubPackage].
+ * See [replaceOrUniteWithStubPackage] and [transferStubPackageMarker].
  */
 private fun isInStubPackage(element: PsiElement, module: Module?) = element.getUserData(STUB_PACKAGE_KEY) == true && isPEP561Enabled(module)
 
