@@ -54,9 +54,9 @@ public class RemoveUnusedVariableUtil {
     return !writes.isEmpty();
   }
 
-  static PsiElement replaceElementWithExpression(PsiExpression expression,
-                                                 PsiElementFactory factory,
-                                                 PsiElement element) throws IncorrectOperationException {
+  public static PsiElement replaceElementWithExpression(PsiExpression expression,
+                                                        PsiElementFactory factory,
+                                                        PsiElement element) throws IncorrectOperationException {
     PsiElement elementToReplace = element;
     PsiElement expressionToReplaceWith = expression;
     if (element.getParent() instanceof PsiExpressionStatement) {

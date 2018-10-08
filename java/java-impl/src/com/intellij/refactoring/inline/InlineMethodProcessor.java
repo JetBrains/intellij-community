@@ -1026,8 +1026,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void inlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
     PsiReference firstRef = ReferencesSearch.search(variable).findFirst();
 
+    PsiExpression initializer = variable.getInitializer();
     if (firstRef == null) {
-      variable.getParent().delete(); //Q: side effects?
+      if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
+        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.SERVICE.getInstance(myProject), variable);
+      }
+      else {
+        variable.getParent().delete();
+      }
       return;
     }
 
@@ -1043,7 +1049,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    PsiExpression initializer = variable.getInitializer();
     boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
     if (canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting)) {
       if (shouldBeFinal) {
@@ -1153,7 +1158,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
     else if (initializer instanceof PsiCallExpression) {
-      if (accessCount > 1) return false;
+      if (accessCount != 1) return false;//don't allow deleting probable side effects or multiply those side effects
       if (initializer instanceof PsiNewExpression) {
         final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
         if (arrayInitializer != null) {
