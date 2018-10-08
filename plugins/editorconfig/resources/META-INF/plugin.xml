@@ -42,7 +42,6 @@
         id="EditorConfigCompletionContributor"
         order="last"
         implementationClass="org.editorconfig.language.codeinsight.completion.EditorConfigCompletionContributor"/>
-    <codeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
     <statementUpDownMover implementation="org.editorconfig.language.codeinsight.actions.EditorConfigStatementUpDownMover"/>
     <moveLeftRightHandler

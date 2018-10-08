@@ -1,25 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codestyle
 
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
+import com.intellij.psi.codeStyle.*
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import org.editorconfig.language.EditorConfigLanguage
 
 class EditorConfigLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
   override fun getLanguage() = EditorConfigLanguage
 
-  override fun getDefaultCommonSettings(): CommonCodeStyleSettings {
-    val settings = CommonCodeStyleSettings(EditorConfigLanguage)
-    settings.SPACE_AROUND_ASSIGNMENT_OPERATORS = true
-    settings.SPACE_BEFORE_COMMA = false
-    settings.SPACE_AFTER_COMMA = true
-    settings.SPACE_BEFORE_COLON = false
-    settings.SPACE_AFTER_COLON = false
-    settings.SPACE_AROUND_EQUALITY_OPERATORS = false
-    settings.ALIGN_GROUP_FIELD_DECLARATIONS = false
+  override fun createConfigurable(baseSettings: CodeStyleSettings, modelSettings: CodeStyleSettings):
+    CodeStyleConfigurable = EditorConfigCodeStyleConfigurable(baseSettings, modelSettings)
 
-    return settings
+  override fun getConfigurableDisplayName() = "EditorConfig"
+
+  override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: IndentOptions) {
+    commonSettings.SPACE_AROUND_ASSIGNMENT_OPERATORS = true
+    commonSettings.SPACE_BEFORE_COMMA = false
+    commonSettings.SPACE_AFTER_COMMA = true
+    commonSettings.SPACE_BEFORE_COLON = false
+    commonSettings.SPACE_AFTER_COLON = false
+    commonSettings.SPACE_AROUND_EQUALITY_OPERATORS = false
+    commonSettings.ALIGN_GROUP_FIELD_DECLARATIONS = false
   }
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) = when (settingsType) {
