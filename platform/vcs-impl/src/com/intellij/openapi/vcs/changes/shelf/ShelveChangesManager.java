@@ -904,11 +904,20 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     changeList.getBinaryFiles().retainAll(remainingBinaries);
     changeList.clearLoadedChanges();
     if (listCopy != null) {
-      recycleChangeList(listCopy, changeList);
+      filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
+      recycleChangeList(listCopy);
       // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
-      mySchemeManager.addScheme(listCopy, false);
+      saveListAsScheme(listCopy);
     }
     notifyStateChanged();
+  }
+
+  private void saveListAsScheme(@NotNull ShelvedChangeList list) {
+    if (!list.getBinaryFiles().isEmpty() ||
+        !list.getChanges(myProject).isEmpty()) {
+      // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
+      mySchemeManager.addScheme(list, false);
+    }
   }
 
   @NotNull
@@ -952,52 +961,55 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  private void recycleChangeList(@NotNull final ShelvedChangeList listCopy, @Nullable final ShelvedChangeList newList) {
-    if (newList != null) {
-      for (Iterator<ShelvedBinaryFile> shelvedChangeListIterator = listCopy.getBinaryFiles().iterator();
-           shelvedChangeListIterator.hasNext(); ) {
-        final ShelvedBinaryFile binaryFile = shelvedChangeListIterator.next();
-        for (ShelvedBinaryFile newBinary : newList.getBinaryFiles()) {
-          if (Comparing.equal(newBinary.BEFORE_PATH, binaryFile.BEFORE_PATH)
-              && Comparing.equal(newBinary.AFTER_PATH, binaryFile.AFTER_PATH)) {
-            shelvedChangeListIterator.remove();
-          }
-        }
-      }
-      for (Iterator<ShelvedChange> iterator = listCopy.getChanges(myProject).iterator(); iterator.hasNext(); ) {
-        final ShelvedChange change = iterator.next();
-        for (ShelvedChange newChange : newList.getChanges(myProject)) {
-          if (Comparing.equal(change.getBeforePath(), newChange.getBeforePath()) &&
-              Comparing.equal(change.getAfterPath(), newChange.getAfterPath())) {
-            iterator.remove();
-          }
-        }
-      }
+  private void filterShelvedList(@NotNull final ShelvedChangeList listCopy,
+                                 @NotNull List<ShelvedChange> shelvedChanges,
+                                 @NotNull List<ShelvedBinaryFile> shelvedBinaryChanges) {
+    filterBinaries(listCopy, shelvedBinaryChanges);
+    filterShelvedChanges(listCopy, shelvedChanges);
 
-      // needed only if partial unshelve
-      try {
-        final CommitContext commitContext = new CommitContext();
-        final List<FilePatch> patches = new ArrayList<>();
-        for (ShelvedChange change : listCopy.getChanges(myProject)) {
-          patches.add(change.loadFilePatch(myProject, commitContext));
-        }
-        writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
+    // create patch file based on filtered changes
+    try {
+      final CommitContext commitContext = new CommitContext();
+      final List<FilePatch> patches = new ArrayList<>();
+      for (ShelvedChange change : listCopy.getChanges(myProject)) {
+        patches.add(change.loadFilePatch(myProject, commitContext));
       }
-      catch (IOException | PatchSyntaxException e) {
-        LOG.info(e);
-        // left file as is
+      writePatchesToFile(myProject, listCopy.PATH, patches, commitContext);
+    }
+    catch (IOException | PatchSyntaxException e) {
+      LOG.info(e);
+      // left file as is
+    }
+  }
+
+  private void filterShelvedChanges(@NotNull ShelvedChangeList list, @NotNull List<ShelvedChange> shelvedChanges) {
+    for (Iterator<ShelvedChange> iterator = list.getChanges(myProject).iterator(); iterator.hasNext(); ) {
+      final ShelvedChange change = iterator.next();
+      for (ShelvedChange newChange : shelvedChanges) {
+        if (Comparing.equal(change.getBeforePath(), newChange.getBeforePath()) &&
+            Comparing.equal(change.getAfterPath(), newChange.getAfterPath())) {
+          iterator.remove();
+        }
       }
     }
+  }
 
-    if (!listCopy.getBinaryFiles().isEmpty() || !listCopy.getChanges(myProject).isEmpty()) {
-      listCopy.setRecycled(true);
-      listCopy.updateDate();
-      notifyStateChanged();
+  private static void filterBinaries(@NotNull ShelvedChangeList list, @NotNull List<ShelvedBinaryFile> binaryFiles) {
+    for (Iterator<ShelvedBinaryFile> shelvedChangeListIterator = list.getBinaryFiles().iterator();
+         shelvedChangeListIterator.hasNext(); ) {
+      final ShelvedBinaryFile binaryFile = shelvedChangeListIterator.next();
+      for (ShelvedBinaryFile newBinary : binaryFiles) {
+        if (Comparing.equal(newBinary.BEFORE_PATH, binaryFile.BEFORE_PATH)
+            && Comparing.equal(newBinary.AFTER_PATH, binaryFile.AFTER_PATH)) {
+          shelvedChangeListIterator.remove();
+        }
+      }
     }
   }
 
   public void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
-    recycleChangeList(changeList, null);
+    changeList.setRecycled(true);
+    changeList.updateDate();
     notifyStateChanged();
   }
 
