@@ -147,15 +147,18 @@ public class IndexDataGetter {
 
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
-    for (VcsLogDetailsFilter filter : filters) {
+
+    return ContainerUtil.all(filters, filter -> {
       if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
+          filter instanceof VcsLogUserFilter) {
+        return true;
+      }
+      if (filter instanceof VcsLogStructureFilter) {
+        Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
+        return ContainerUtil.find(files, file -> file.isDirectory() && myRoots.contains(file.getVirtualFile())) == null;
       }
       return false;
-    }
-    return true;
+    });
   }
 
   @NotNull

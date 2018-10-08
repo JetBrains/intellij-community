@@ -1080,6 +1080,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    for (T t : collection) {
+      if (!condition.value(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
     Set<T> collected = newHashSet();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
