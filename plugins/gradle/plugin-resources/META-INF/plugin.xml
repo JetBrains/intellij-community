@@ -113,6 +113,9 @@
 
     <runAnything.executionProvider implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider" order="first"/>
     <runAnything.helpGroup implementation="org.jetbrains.plugins.gradle.execution.GradleRunAnythingHelpGroup"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector"/>
   </extensions>
 
   <actions>

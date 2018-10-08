@@ -192,6 +192,9 @@
     <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
     <runAnything.executionProvider implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingProvider"/>
     <runAnything.helpGroup implementation="org.jetbrains.idea.maven.execution.MavenRunAnythingHelpGroup"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
+    <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

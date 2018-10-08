@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -63,6 +64,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     final T data = getExternalData(e, myExternalDataClazz);
     if (data == null) return;
 
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
     perform(project, projectSystemId, data, e);
   }
 

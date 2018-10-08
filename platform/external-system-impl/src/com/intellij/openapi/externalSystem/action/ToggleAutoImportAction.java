@@ -17,11 +17,14 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,8 +67,12 @@ public class ToggleAutoImportAction extends ExternalSystemToggleAction {
     final ExternalProjectSettings projectSettings = getProjectSettings(e);
     if (projectSettings != null) {
       if (state != projectSettings.isUseAutoImport()) {
+        Project project = getProject(e);
+        ProjectSystemId systemId = getSystemId(e);
+        ExternalSystemActionsCollector.trigger(project, systemId, this, e);
+
         projectSettings.setUseAutoImport(state);
-        ExternalSystemApiUtil.getSettings(getProject(e), getSystemId(e)).getPublisher()
+        ExternalSystemApiUtil.getSettings(project, systemId).getPublisher()
           .onUseAutoImportChange(state, projectSettings.getExternalProjectPath());
       }
     }
