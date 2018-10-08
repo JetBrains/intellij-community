@@ -60,6 +60,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myToolWindow = toolWindow;
 
     JPanel westEndPanel = new JPanel();
+    westEndPanel.setOpaque(false);
+
     westEndPanel.setLayout(new MigLayout(new LC().insets("0").gridGap("0", "0"),
                                          new AC().align("left").gap("0").align("left"),
                                          new AC()));
