@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -357,7 +358,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
   }
-  
+
   // PY-20864
   public void testTopLevelVariableAnnotationFromTyping() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyElement.class, "List"));
@@ -653,5 +654,71 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-21493
   public void testRegexpAndFStringCombined() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyTargetExpression.class, "foo"));
+  }
+
+  // PY-30942
+  public void testStubPackage() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    final VirtualFile libDir = myFixture.findFileInTempDir("lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            myFixture.configureByFile("main.py");
+
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.pyi", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testStubPackageFullyQName() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    final VirtualFile libDir = myFixture.findFileInTempDir("lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            myFixture.configureByFile("main.py");
+
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.pyi", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testStubPackagePy36() {
+    myFixture.copyDirectoryToProject("resolve/StubPackage", "");
+    final VirtualFile libDir = myFixture.findFileInTempDir("lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            myFixture.configureByFile("main.py");
+
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.py", element.getContainingFile().getName());
+          }
+        )
+    );
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.codeInsight.typing.resolveModuleAtStubPackage
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
 import com.jetbrains.python.psi.LanguageLevel
@@ -144,7 +145,7 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
                                                        !context.withPlainDirectories, context.withoutStubs, context.withoutForeign)
       PyUtil.filterTopPriorityResults(children.toTypedArray())
     }
-  }
+  } + resolveModuleAtStubPackage(name, item, context)
 }
 
 /**

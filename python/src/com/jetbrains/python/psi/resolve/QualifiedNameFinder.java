@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.jetbrains.python.codeInsight.typing.PyPEP561.convertStubToRuntimePackageName;
+
 /**
  * @author yole
  */
@@ -207,21 +209,22 @@ public class QualifiedNameFinder {
 
     @Override
     public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
-      final List<String> result = pathToNameComponents(VfsUtilCore.getRelativePath(myVFile, root, '/'));
-      if (!result.isEmpty()) {
-        for (String component : result) {
+      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
+      final QualifiedName result = convertStubToRuntimePackageName(pathToQualifiedName(relativePath));
+      if (result.getComponentCount() != 0) {
+        for (String component : result.getComponents()) {
           if (!PyNames.isIdentifier(component)) {
             return true;
           }
         }
-        myResults.add(QualifiedName.fromComponents(result));
+        myResults.add(result);
       }
       return true;
     }
 
     @NotNull
-    private List<String> pathToNameComponents(@Nullable String relativePath) {
-      if (StringUtil.isEmpty(relativePath)) return Collections.emptyList();
+    private QualifiedName pathToQualifiedName(@Nullable String relativePath) {
+      if (StringUtil.isEmpty(relativePath)) return QualifiedName.fromComponents();
 
       final List<String> result = new ArrayList<>(StringUtil.split(relativePath, "/"));
       if (!result.isEmpty()) {
@@ -235,10 +238,16 @@ public class QualifiedNameFinder {
           result.remove(lastIndex);
         }
 
-        return result;
+        for (String component : result) {
+          if (component.contains(".")) {
+            return QualifiedName.fromComponents();
+          }
+        }
+
+        return QualifiedName.fromComponents(result);
       }
 
-      return Collections.emptyList();
+      return QualifiedName.fromComponents();
     }
 
     @NotNull
