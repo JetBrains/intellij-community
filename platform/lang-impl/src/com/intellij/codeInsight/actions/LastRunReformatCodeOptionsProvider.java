@@ -79,7 +79,6 @@ public class LastRunReformatCodeOptionsProvider {
     myPropertiesComponent.setValue(CODE_CLEANUP_KEY, value);
   }
 
-  // TODO should it be for a language?
   public boolean getLastCodeCleanup() {
     return myPropertiesComponent.getBoolean(CODE_CLEANUP_KEY);
   }

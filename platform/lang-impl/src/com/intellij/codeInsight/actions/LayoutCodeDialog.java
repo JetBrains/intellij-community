@@ -106,7 +106,6 @@ public class LayoutCodeDialog extends DialogWrapper {
       myRearrangeCodeCb.setSelected(myLastRunOptions.isRearrangeCode(myFile.getLanguage()));
     }
 
-    // TODO can code cleanup??
     myApplyCodeCleanup.setSelected(myLastRunOptions.getLastCodeCleanup());
 
     myOptionalLabel.setVisible(canOptimizeImports || canRearrangeCode);
