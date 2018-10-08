@@ -501,12 +501,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
         }
-        catch (ProcessCanceledException ignored) {
+        catch (ProcessCanceledException e) {
           progressIndicator.checkCanceled();
           // PCE may be thrown from inside wrapper when write action started
           // go on with the write and then resume processing the rest of the queue
-          assert !ApplicationManager.getApplication().isReadAccessAllowed();
-          assert !ApplicationManager.getApplication().isDispatchThread();
+          assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
+            : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
+          assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
+            : "Must be outside EDT. PCE=\n" + ExceptionUtil.getThrowableText(e);
 
           // wait for write action to complete
           ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
@@ -921,9 +923,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
 
   @Nullable
-  public InspectionToolPresentation getPresentationOrNull(@NotNull InspectionToolWrapper toolWrapper) {
+  private InspectionToolPresentation getPresentationOrNull(@NotNull InspectionToolWrapper toolWrapper) {
     return myPresentationMap.get(toolWrapper);
   }
+
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);
