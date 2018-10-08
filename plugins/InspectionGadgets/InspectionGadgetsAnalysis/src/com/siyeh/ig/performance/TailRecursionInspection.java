@@ -127,11 +127,11 @@ public class TailRecursionInspection extends BaseInspection {
       replaceTailCalls(body, method, thisVariableName, tailCallIsContainedInLoop, builder);
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
-      postProcess(block);
+      removeEmptyElse(block);
       body.replace(block);
     }
 
-    private static void postProcess(PsiElement element) {
+    private static void removeEmptyElse(PsiElement element) {
       final List<PsiStatement> emptyElseBranches = new SmartList<>();
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
@@ -145,14 +145,24 @@ public class TailRecursionInspection extends BaseInspection {
       });
       for (PsiStatement statement : emptyElseBranches) {
         final List<PsiComment> comments = new ArrayList<>(PsiTreeUtil.collectElementsOfType(statement, PsiComment.class));
-        final PsiElement whiteSpace = PsiParserFacade.SERVICE.getInstance(statement.getProject()).createWhiteSpaceFromText("\n    ");
+        final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(statement.getProject());
         for (int i = comments.size() - 1; i >= 0; i--) {
           final PsiElement parent = statement.getParent();
-          parent.addAfter(comments.get(i), statement);
-          parent.addAfter(whiteSpace, statement);
+          final PsiComment comment = comments.get(i);
+          parent.addAfter(comment, statement);
+          // newline followed by space convinces formatter to indent line
+          parent.addAfter(parserFacade.createWhiteSpaceFromText(isAtStartOfLine(comment) ? "\n" : "\n "), statement);
         }
         statement.delete();
       }
+    }
+
+    private static boolean isAtStartOfLine(PsiElement element) {
+      final PsiElement prev = element.getPrevSibling();
+      if (!(prev instanceof PsiWhiteSpace)) {
+        return false;
+      }
+      return prev.getText().endsWith("\n");
     }
 
     private static boolean methodReturnsContainingClassType(PsiMethod method, PsiClass containingClass) {
@@ -236,8 +246,16 @@ public class TailRecursionInspection extends BaseInspection {
         if (!isInBlock) {
           out.append('{');
         }
+        else {
+          // remove tabs and spaces at the end
+          int index = out.length() - 1;
+          char c = out.charAt(index);
+          while (c == ' ' || c == '\t') c = out.charAt(--index);
+          out.delete(index + 1, out.length());
+        }
         for (PsiComment comment : PsiTreeUtil.findChildrenOfType(element, PsiComment.class)) {
-          out.append(comment.getText()).append("\n    ");
+          if (!isAtStartOfLine(comment)) out.append(' ');
+          out.append(comment.getText()).append('\n');
         }
         final Graph<Integer> graph = buildGraph(parameters, arguments);
         // When replacing recursion with iteration, new values are assigned to the parameters,
