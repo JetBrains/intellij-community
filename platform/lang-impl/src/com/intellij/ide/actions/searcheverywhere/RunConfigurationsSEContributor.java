@@ -152,7 +152,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     } else if (isCommand(searchText, RUN_COMMAND)) {
       return RUN_MODE;
     } else {
-      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? RUN_MODE : DEBUG_MODE;
+      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
     }
   }
 
