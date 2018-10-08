@@ -226,11 +226,15 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     final Project project = file.getProject();
     final Language language = file.getLanguage();
     LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    String name = provider != null ? provider.getConfigurableDisplayName() : language.getDisplayName();
-    CodeStyleSchemesConfigurable topConfigurable = new CodeStyleSchemesConfigurable(project);
-    SearchableConfigurable result = topConfigurable.findSubConfigurable(name);
-    if (result != null) {
-      return result.getId();
+    if (provider != null && provider.getIndentOptionsEditor() != null) {
+      String name = provider.getConfigurableDisplayName();
+      if (name != null) {
+        CodeStyleSchemesConfigurable topConfigurable = new CodeStyleSchemesConfigurable(project);
+        SearchableConfigurable result = topConfigurable.findSubConfigurable(name);
+        if (result != null) {
+          return result.getId();
+        }
+      }
     }
     return CodeStyleConfigurableWrapper.getConfigurableId(OtherFileTypesCodeStyleConfigurable.DISPLAY_NAME);
   }
