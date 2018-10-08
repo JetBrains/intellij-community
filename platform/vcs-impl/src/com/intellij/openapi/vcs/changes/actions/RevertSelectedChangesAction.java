@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -50,8 +48,5 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
       e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
       return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
     });
-
-    getTemplatePresentation().setText(VcsBundle.message("action.revert.selected.changes.text"));
-    getTemplatePresentation().setIcon(AllIcons.Actions.Rollback);
   }
 }
