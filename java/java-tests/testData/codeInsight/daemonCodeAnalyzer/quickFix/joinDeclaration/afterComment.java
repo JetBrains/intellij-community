@@ -2,9 +2,9 @@
 class Test {
     {
         // comment A
-        /*comment B*/ /*comment 1*/ /*comment 2*/ /*comment 3*/ // comment 4
+        /*comment B*/ // comment 4
         /*comment C*/
         /*comment E*/
-        String ss = "hello" + /*comment D*/ " world"; // comment F
+        String /*comment 1*/ ss /*comment 2*/   /*comment 3*/ = "hello" + /*comment D*/ " world"; // comment F
     }
 }
