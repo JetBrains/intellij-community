@@ -74,25 +74,7 @@
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="ConsoleEditorPopupMenu"/>
     </action>
-
-    <group id="Github.PullRequest.Merge.Group">
-      <action id="Github.PullRequest.Merge.Commit"
-              class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestMergeCommitAction"/>
-      <action id="Github.PullRequest.Merge.Squash" class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestSquashAction"/>
-      <action id="Github.PullRequest.Merge.Rebase" class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRebaseAction"/>
-    </group>
-
-    <group id="Github.PullRequest.ToolWindow.List.Toolbar">
-      <group class="org.jetbrains.plugins.github.pullrequest.action.merge.GithubPullRequestMergeActionGroup"
-             popup="true"
-             text="Merge Pull Request"
-             icon="AllIcons.Vcs.Merge">
-        <reference id="Github.PullRequest.Merge.Group"/>
-      </group>
-    </group>
     <group id="Github.PullRequest.ToolWindow.List.Popup">
-      <reference id="Github.PullRequest.Merge.Group"/>
-      <separator/>
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
