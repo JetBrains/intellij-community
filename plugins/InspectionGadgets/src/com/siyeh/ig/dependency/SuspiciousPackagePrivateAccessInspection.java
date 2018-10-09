@@ -136,7 +136,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     }, true);
   }
 
-  private UElement getReferenceNameElement(UCallableReferenceExpression node) {
+  private static UElement getReferenceNameElement(UCallableReferenceExpression node) {
     PsiElement psi = node.getSourcePsi();
     if (psi instanceof PsiReferenceExpression) {
       PsiElement nameElement = ((PsiReferenceExpression)psi).getReferenceNameElement();
