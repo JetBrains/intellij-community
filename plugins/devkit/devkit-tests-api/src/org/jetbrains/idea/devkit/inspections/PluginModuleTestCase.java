@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,20 @@ import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 
 public abstract class PluginModuleTestCase extends LightCodeInsightFixtureTestCase {
+
+  private static final DefaultLightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
+
+    @NotNull
+    @Override
+    public ModuleType getModuleType() {
+      return PluginModuleType.getInstance();
+    }
+  };
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new DefaultLightProjectDescriptor() {
-      @NotNull
-      @Override
-      public ModuleType getModuleType() {
-        return PluginModuleType.getInstance();
-      }
-    };
+    return ourProjectDescriptor;
   }
 
   protected void setPluginXml(@TestDataFile String pluginXml) {
