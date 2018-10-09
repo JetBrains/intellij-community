@@ -63,7 +63,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -1549,23 +1548,27 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     @Override
     public Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
       Set<String> masks = ContainerUtil.newLinkedHashSet();
-      @SystemIndependent String projectBasePath =  project.getBasePath();
+      @SystemIndependent String projectBasePath = project.getBasePath();
       if (projectBasePath == null) return masks;
+      if (!FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) return masks;
 
-      if (FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) {
-        String shelfPath = ShelveChangesManager.getShelfPath(project);
-        if (FileUtil.isAncestor(projectBasePath, shelfPath, true)) {
-          String relativeShelfPath =
-            FileUtil.getRelativePath(projectBasePath, shelfPath, '/');
-          if (relativeShelfPath != null) {
-            masks.add("/" + relativeShelfPath + "/");
-          }
+      String shelfPath = ShelveChangesManager.getShelfPath(project);
+      if (FileUtil.isAncestor(ignoreFileRoot.getPath(), shelfPath, false)) {
+        String relativeShelfPath =
+          FileUtil.getRelativePath(ignoreFileRoot.getPath(), shelfPath, '/');
+        if (relativeShelfPath != null) {
+          masks.add("/" + relativeShelfPath + "/");
         }
       }
-      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
+
       if (ProjectKt.isDirectoryBased(project)) {
+        String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
         if (workspaceFilePath != null && FileUtil.isAncestor(ignoreFileRoot.getPath(), workspaceFilePath, false)) {
-          masks.add("/" + DIRECTORY_STORE_FOLDER + "/workspace.xml");
+          String relativeWorkspaceFilePath =
+            FileUtil.getRelativePath(ignoreFileRoot.getPath(), workspaceFilePath, '/');
+          if (relativeWorkspaceFilePath != null) {
+            masks.add("/" + relativeWorkspaceFilePath);
+          }
         }
       }
       else {

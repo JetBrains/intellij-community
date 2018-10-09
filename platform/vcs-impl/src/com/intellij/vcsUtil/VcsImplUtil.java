@@ -55,6 +55,17 @@ public class VcsImplUtil {
     return Registry.is("vcs.non.modal.commit");
   }
 
+  public static void generateIgnoreFileIfNeeded(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
+      AbstractVcs vcs = VcsUtil.getVcsFor(project, vcsRoot);
+      if (vcs == null) {
+        LOG.warn("Cannot get VCS for root " + vcsRoot.getPath());
+        return;
+      }
+
+      LOG.debug("Generate VCS ignore file for " + vcs.getName());
+      generateIgnoreFileIfNeeded(project, vcs, vcsRoot);
+  }
+
   public static boolean generateIgnoreFileIfNeeded(@NotNull Project project,
                                                    @NotNull AbstractVcs vcs,
                                                    @NotNull VirtualFile ignoreFileRoot) {
