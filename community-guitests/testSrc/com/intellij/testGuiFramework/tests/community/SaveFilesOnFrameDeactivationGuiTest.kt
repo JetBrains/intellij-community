@@ -109,6 +109,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
       shortcut(CONTROL + A, META + A)
       typeText(text)
     }
+    waitUntil("text in editor will match entered text", Timeouts.seconds05) { editor.getCurrentFileContents(false) == text }
   }
 
   private fun dummyUiApp(): ProcessBuilder {
@@ -116,10 +117,6 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     val cl = this.javaClass.classLoader.getResource(dummyUIAppClassStr)
     val classpath = File(cl.toURI()).path.dropLast(dummyUIAppClassStr.length)
     return ProcessBuilder("java", "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
-  }
-
-  private fun switchApp() {
-    shortcut(CONTROL + TAB, META + TAB)
   }
 
   private fun ensureSaveFilesOnFrameDeactivation() {
@@ -155,7 +152,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
   private fun IdeFrameFixture.switchFrameTo() {
     if (this.target().isActive) return
     when {
-      isWin() -> shortcut(ALT + TAB)
+      isWin() -> shortcut(CONTROL + ALT + OPEN_BRACKET)
       isMac() -> shortcut(META + BACK_QUOTE)
       isUnix() -> shortcut(ALT + BACK_QUOTE)
     }
