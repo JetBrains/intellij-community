@@ -15,6 +15,8 @@
  */
 package com.intellij.tasks.config;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -26,20 +28,30 @@ import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.ExpandableEditorSupport;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -195,6 +207,29 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     }
     Project project = ProjectManager.getInstance().getDefaultProject();
     myBranchNameFormat = new EditorTextField(project, fileType);
+    setupAddAction(myBranchNameFormat);
     myChangelistNameFormat = new EditorTextField(project, fileType);
+    setupAddAction(myChangelistNameFormat);
+  }
+
+  private void setupAddAction(EditorTextField field) {
+    field.addSettingsProvider(editor -> {
+      ExtendableTextComponent.Extension extension =
+        ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Add placeholder", () -> {
+          Set<String> placeholders = new HashSet<>();
+          for (CommitPlaceholderProvider provider : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+            placeholders.addAll(Arrays.asList(provider.getPlaceholders(null)));
+          }
+          JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Placeholders", ArrayUtil.toStringArray(placeholders)) {
+            @Override
+            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+              WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()
+                .insertString(editor.getCaretModel().getOffset(), "${" + selectedValue + "}"));
+              return FINAL_CHOICE;
+            }
+          }).showInBestPositionFor(editor);
+        });
+      ExpandableEditorSupport.setupExtension(editor, field.getBackground(), extension);
+    });
   }
 }
