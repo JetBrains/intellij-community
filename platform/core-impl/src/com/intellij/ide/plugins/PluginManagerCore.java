@@ -83,6 +83,7 @@ public class PluginManagerCore {
   private static List<String> ourDisabledPlugins;
   private static MultiMap<String, String> ourBrokenPluginVersions;
   private static IdeaPluginDescriptor[] ourPlugins;
+  private static boolean ourUnitTestWithBundledPlugins = false;
 
   static String myPluginError;
   static List<String> myPlugins2Disable;
@@ -457,7 +458,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    if (isUnitTestMode()) return null;
+    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return null;
 
     try {
       List<URL> urls = new ArrayList<>(classPath.length);
@@ -511,7 +512,7 @@ public class PluginManagerCore {
 
   @NotNull
   private static ClassLoader[] getParentLoaders(@NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idToDescriptorMap, @NotNull PluginId[] pluginIds) {
-    if (isUnitTestMode()) return new ClassLoader[0];
+    if (isUnitTestMode() && !ourUnitTestWithBundledPlugins) return new ClassLoader[0];
 
     LinkedHashSet<ClassLoader> loaders = new LinkedHashSet<>(pluginIds.length);
     for (PluginId id : pluginIds) {
@@ -1130,6 +1131,11 @@ public class PluginManagerCore {
     loadDescriptorsFromProperty(result);
 
     loadDescriptorsFromClassPath(result, PluginManagerCore.class.getClassLoader(), fromSources ? progress : null);
+    if (application != null && application.isUnitTestMode() && result.size() <= 1) {
+      // We're running in unit test mode but the classpath doesn't contain any plugins; try to load bundled plugins anyway
+      ourUnitTestWithBundledPlugins = true;
+      loadDescriptors(new File(PathManager.getPreInstalledPluginsPath()), result, progress, pluginsCount, true);
+    }
 
     return topoSortPlugins(result, errors);
   }
