@@ -363,7 +363,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     newTypeParameterList(stub, info.typeParameters);
 
     boolean isEnumConstructor = isConstructor && isEnum;
-    boolean isInnerClassConstructor = isConstructor && isInner() && !isGroovyClosure(canonicalMethodName);
+    boolean isInnerClassConstructor = isConstructor && !isEnum && isInner() && !isGroovyClosure(canonicalMethodName);
 
     List<String> args = info.argTypes;
     if (!hasSignature && isEnumConstructor && args.size() >= 2 && CommonClassNames.JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
@@ -390,7 +390,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
-    int paramIgnoreCount = myNoAnnotationOffsets ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
+    boolean noSynthetics = isConstructor && hasSignature && Type.getArgumentTypes(desc).length == info.argTypes.size();
+    int paramIgnoreCount = myNoAnnotationOffsets || noSynthetics ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     int localVarIgnoreCount = isEnumConstructor ? 3 : isStatic ? 0 : 1;
     return new MethodAnnotationCollectingVisitor(stub, modList, paramStubs, paramIgnoreCount, localVarIgnoreCount, myMapping);
   }
