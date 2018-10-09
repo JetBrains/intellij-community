@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.fields.ExpandableSupport;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +37,16 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   }
 
   protected void initFieldEditor(@NotNull EditorEx editor, Color background) {
-    JLabel label = ExpandableSupport.createLabel(createExpandExtension());
-    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
+    ExtendableTextComponent.Extension extension = createExpandExtension();
+    setupExtension(editor, background, extension);
+  }
+
+  public static void setupExtension(@NotNull EditorEx editor,
+                                     Color background,
+                                     ExtendableTextComponent.Extension extension) {
+    JLabel label = ExpandableSupport.createLabel(extension);
+    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
     editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);
