@@ -46,6 +46,7 @@ import java.util.Set;
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   private boolean myHasManagement = false;
+  private boolean myHasDistutils = false;
 
   public PyInstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(project, area);
@@ -97,7 +98,13 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     application.executeOnPooledThread(() -> {
       PyExecutionException exception = null;
       try {
-        myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
+        final PyPackageManager packageManager = PyPackageManager.getInstance(selectedSdk);
+        myHasDistutils = packageManager.hasDistutils();
+        if (!myHasDistutils) {
+          throw new PyExecutionException("Module 'distutils.core' not found. Install it using the system package manager", 
+                                         "", Collections.emptyList(), "", "", 0, Collections.emptyList());
+        }
+        myHasManagement = packageManager.hasManagement();
         if (!myHasManagement) {
           throw new PyExecutionException("Python packaging tools not found", "pip", Collections.emptyList(), "", "", 0,
                                          ImmutableList.of(new PyInstallPackageManagementFix()));

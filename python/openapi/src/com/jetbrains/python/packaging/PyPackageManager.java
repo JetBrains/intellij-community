@@ -41,6 +41,8 @@ public abstract class PyPackageManager {
 
   public abstract void installManagement() throws ExecutionException;
 
+  public abstract boolean hasDistutils() throws ExecutionException;
+
   public abstract boolean hasManagement() throws ExecutionException;
 
   public abstract void install(@NotNull String requirementString) throws ExecutionException;

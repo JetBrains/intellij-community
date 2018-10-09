@@ -7,6 +7,7 @@ ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
 ERROR_NO_SETUPTOOLS = 3
 ERROR_EXCEPTION = 4
+ERROR_NO_DISTUTILS = 5
 
 os.putenv("PIP_REQUIRE_VIRTUALENV", "false")
 
@@ -117,6 +118,13 @@ def mkdtemp_ifneeded():
     return None
 
 
+def do_check_distutils():
+    try:
+        import distutils.core
+    except ImportError:
+        error("Python packaging tool 'distutils' not found", ERROR_NO_DISTUTILS)
+
+
 def main():
     try:
         # As a workaround for #885 in setuptools, don't expose other helpers
@@ -168,6 +176,8 @@ def main():
                 if opt == '--system-site-packages':
                     system_site_packages = True
             do_pyvenv(path, system_site_packages)
+        elif cmd == 'check_distutils':
+            do_check_distutils()
         else:
             usage()
     except Exception:

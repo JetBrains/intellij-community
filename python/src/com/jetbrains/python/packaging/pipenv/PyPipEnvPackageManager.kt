@@ -31,6 +31,8 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
 
   override fun installManagement() {}
 
+  override fun hasDistutils() = true
+
   override fun hasManagement() = true
 
   override fun install(requirementString: String) {

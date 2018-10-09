@@ -56,6 +56,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private static final String VIRTUALENV_VERSION_26 = "15.2.0";
 
   private static final int ERROR_NO_SETUPTOOLS = 3;
+  private static final int ERROR_NO_DISTUTILS = 3;
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
@@ -102,6 +103,20 @@ public class PyPackageManagerImpl extends PyPackageManager {
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
       installManagement(PyPackageUtil.PIP + "-" + (py26 ? PIP_VERSION_26 : PIP_VERSION));
     }
+  }
+
+  @Override
+  public boolean hasDistutils() throws ExecutionException {
+    try {
+      getHelperResult(PACKAGING_TOOL, Collections.singletonList("check_distutils"), false, false, null);
+    }
+    catch (PyExecutionException e) {
+      if (e.getExitCode() == ERROR_NO_DISTUTILS) {
+        return false;
+      }
+      throw e;
+    }
+    return true;
   }
 
   @Override
