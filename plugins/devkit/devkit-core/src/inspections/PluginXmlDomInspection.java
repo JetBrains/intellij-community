@@ -23,6 +23,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -181,17 +182,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     if (!hasRealPluginId(ideaPlugin)) return;
 
-    if (!DomUtil.hasXml(ideaPlugin.getVersion())) {
+    boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
+
+    if (isNotIdeaProject && !DomUtil.hasXml(ideaPlugin.getVersion())) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.version.must.be.specified"),
-                           new AddDomElementQuickFix<>(ideaPlugin.getVersion()));
+                           new AddMissingMainTag("Add <version>", ideaPlugin.getVersion(), ""));
     }
     checkMaxLength(ideaPlugin.getVersion(), 64, holder);
 
 
-    if (PsiUtil.isIdeaProject(module.getProject())) return;
-    if (!DomUtil.hasXml(ideaPlugin.getVendor())) {
+    if (isNotIdeaProject && !DomUtil.hasXml(ideaPlugin.getVendor())) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.vendor.must.be.specified"),
-                           new AddDomElementQuickFix<>(ideaPlugin.getVendor()));
+                           new AddMissingMainTag("Add <vendor>", ideaPlugin.getVendor(), ""));
     }
   }
 
@@ -213,7 +215,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     if (!DomUtil.hasXml(vendor)) {
       holder.createProblem(DomUtil.getFileElement(ideaPlugin),
                            DevKitBundle.message("inspections.plugin.xml.plugin.should.have.jetbrains.vendor"),
-                           new SpecifyJetBrainsAsVendorQuickFix());
+                           new AddMissingMainTag("Specify JetBrains as vendor", vendor, PluginManagerMain.JETBRAINS_VENDOR));
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
@@ -691,12 +693,28 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static class SpecifyJetBrainsAsVendorQuickFix implements LocalQuickFix {
+  private static class AddMissingMainTag implements LocalQuickFix {
+
+    @NotNull
+    private final String myFamilyName;
+
+    @NotNull
+    private final String myTagName;
+
+    @Nullable
+    private final String myTagValue;
+
+    private AddMissingMainTag(@NotNull String familyName, @NotNull GenericDomValue domValue, @Nullable String tagValue) {
+      myFamilyName = familyName;
+      myTagName = domValue.getXmlElementName();
+      myTagValue = tagValue;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Specify JetBrains as vendor";
+      return myFamilyName;
     }
 
     @Override
@@ -707,12 +725,19 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
         IdeaPlugin root = fileElement.getRootElement();
         XmlTag after = getLastSubTag(root, root.getId(), root.getDescription(), root.getVersion(), root.getName());
         XmlTag rootTag = root.getXmlTag();
-        XmlTag vendorTag = rootTag.createChildTag("vendor", rootTag.getNamespace(), PluginManagerMain.JETBRAINS_VENDOR, false);
+        XmlTag missingTag = rootTag.createChildTag(myTagName, rootTag.getNamespace(), myTagValue, false);
+
+        XmlTag addedTag;
         if (after == null) {
-          rootTag.addSubTag(vendorTag, true);
+          addedTag = rootTag.addSubTag(missingTag, true);
         }
         else {
-          rootTag.addAfter(vendorTag, after);
+          addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
+        }
+
+        if (StringUtil.isEmpty(myTagValue)) {
+          int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
+          NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
         }
       }
     }

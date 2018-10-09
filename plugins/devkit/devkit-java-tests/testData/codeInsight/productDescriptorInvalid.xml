@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>test</id>
   <vendor>JetBrains</vendor>
-  <version>1.0</version>
+  <<error descr="Value must not be empty">version</error>/>
 
   <product-descriptor code="<error descr="Value exceeds maximum length 15">0123456789012345</error>"
                       release-date="<error descr="Date must be in YYYYMMDD format">99991399</error>"
