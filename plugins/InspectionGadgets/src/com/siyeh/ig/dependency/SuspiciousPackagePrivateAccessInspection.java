@@ -115,7 +115,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         }
         else if (target.hasModifier(JvmModifier.PROTECTED) && receiver != null
                  && !(receiver instanceof UThisExpression) && !(receiver instanceof USuperExpression) && !canAccessProtectedMember(receiver, sourceNode, target)) {
-          checkPackageLocalAccess(sourceNode, target, "protected and used not from a subclass here");
+          checkPackageLocalAccess(sourceNode, target, "protected and used not through a subclass here");
         }
       }
 
