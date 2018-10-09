@@ -94,7 +94,7 @@ public class TerminalView {
     });
 
     myToolWindow.setToHideOnEmptyContent(true);
-    TerminalArrangementState state = TerminalArrangementManager.getInstance(myProject).getArrangementState();
+    TerminalArrangementState state = Registry.get("terminal.persistant.tabs").asBoolean() ? TerminalArrangementManager.getInstance(myProject).getArrangementState() : null;
     List<TerminalTabState> states = state != null ? state.myTabStates : null;
     if (ContainerUtil.isEmpty(states)) {
       newTab(null);
