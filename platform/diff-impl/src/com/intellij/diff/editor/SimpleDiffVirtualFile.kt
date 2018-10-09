@@ -11,8 +11,8 @@ class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile(
   override fun getName(): String = request.title ?: super.getName()
 
   override fun createProcessorAsync(project: Project): Builder {
-    return object : Builder {
-      override fun build(): DiffRequestProcessor = MyDiffRequestProcessor(project, request)
+    return Builder.create {
+      MyDiffRequestProcessor(project, request)
     }
   }
 
