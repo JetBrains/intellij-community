@@ -314,7 +314,7 @@ public class StaticImportInspection extends BaseInspection {
 
     private boolean shouldReportImportStatement(PsiImportStaticStatement importStatement) {
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
-      if (importReference == null) {
+      if (importReference == null || importReference.multiResolve(false).length == 0) {
         return false;
       }
       PsiClass targetClass = importStatement.resolveTargetClass();

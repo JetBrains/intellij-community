@@ -32,4 +32,9 @@ public class StaticImportInspectionTest extends LightCodeInsightFixtureTestCase 
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
+  public void testReportNothingOnUnresolvedImport() {
+    myFixture.enableInspections(new StaticImportInspection());
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
 }
