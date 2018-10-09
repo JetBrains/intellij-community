@@ -236,7 +236,7 @@ def is_callable(x):
 
 
 def sorted_no_case(p_array):
-    """Sort an array case insensitevely, returns a sorted copy"""
+    """Sort an array case insensitively, returns a sorted copy"""
     p_array = list(p_array)
     p_array = sorted(p_array, key=lambda x: x.upper())
     return p_array
