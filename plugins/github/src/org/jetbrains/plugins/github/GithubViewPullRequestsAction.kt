@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -40,7 +41,7 @@ class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull 
     val toolWindowManager = project.service<GithubPullRequestsToolWindowManager>()
     if (toolWindowManager.showPullRequestsTabIfExists(repository, remote, remoteUrl, account)) return
 
-    object : Task.Backgroundable(project, "Loading GitHub Repository Information", true) {
+    object : Task.Backgroundable(project, "Loading GitHub Repository Information", true, PerformInBackgroundOption.DEAF) {
       lateinit var repoDetails: GithubRepoDetailed
 
       override fun run(indicator: ProgressIndicator) {
