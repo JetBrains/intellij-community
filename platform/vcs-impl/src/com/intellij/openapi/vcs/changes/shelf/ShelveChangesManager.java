@@ -37,7 +37,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
@@ -65,6 +64,7 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameF
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class ShelveChangesManager implements JDOMExternalizable, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
@@ -192,8 +192,8 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   private void filterNonValidShelvedChangeLists() {
-    final List<ShelvedChangeList> allSchemes = ContainerUtil.newArrayList(mySchemeManager.getAllSchemes());
-    ContainerUtil.process(allSchemes, shelvedChangeList -> {
+    final List<ShelvedChangeList> allSchemes = newArrayList(mySchemeManager.getAllSchemes());
+    process(allSchemes, shelvedChangeList -> {
       if (!shelvedChangeList.isValid()) {
         mySchemeManager.removeScheme(shelvedChangeList);
       }
@@ -318,7 +318,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
    */
   @NotNull
   public Collection<String> checkAndMigrateOldPatchResourcesToNewSchemeStorage() {
-    Collection<String> nonMigratedPaths = ContainerUtil.newArrayList();
+    Collection<String> nonMigratedPaths = newArrayList();
     for (ShelvedChangeList list : mySchemeManager.getAllSchemes()) {
       File newPatchDir = new File(getShelfResourcesDirectory(), list.getName());
       // it should be enough for migration to check if resource directory exists. If any bugs appeared add isAncestor checks for each path
@@ -333,7 +333,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   private static Collection<String> migrateResourcesTo(@NotNull ShelvedChangeList list,
                                                        @NotNull File targetDirectory,
                                                        boolean deleteOld) {
-    Collection<String> nonMigratedPaths = ContainerUtil.newArrayList();
+    Collection<String> nonMigratedPaths = newArrayList();
     //try to copy/move .patch file
     File patchFile = new File(list.PATH);
     if (patchFile.exists()) {
@@ -388,7 +388,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   @NotNull
   private List<ShelvedChangeList> getRecycled(final boolean recycled) {
-    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled()));
+    return newUnmodifiableList(filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled()));
   }
 
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback)
@@ -728,7 +728,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   public void cleanUnshelved(final boolean onlyMarkedToDelete, long timeBefore) {
     final Date limitDate = new Date(timeBefore);
-    final List<ShelvedChangeList> toDelete = ContainerUtil.filter(mySchemeManager.getAllSchemes(), list -> (list.isRecycled()) &&
+    final List<ShelvedChangeList> toDelete = filter(mySchemeManager.getAllSchemes(), list -> (list.isRecycled()) &&
                                                                                                            list.DATE.before(limitDate) &&
                                                                                                            (!onlyMarkedToDelete ||
                                                                                                             list.isMarkedToDelete()));
@@ -737,7 +737,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   @CalledInAwt
   public void shelveSilentlyUnderProgress(@NotNull List<Change> changes) {
-    final List<ShelvedChangeList> result = ContainerUtil.newArrayList();
+    final List<ShelvedChangeList> result = newArrayList();
     final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> result.addAll(shelveChangesInSeparatedLists(changes)),
       VcsBundle.getString("shelve.changes.progress.title"), true, myProject);
@@ -757,9 +757,9 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   @NotNull
   public List<ShelvedChangeList> shelveChangesInSeparatedLists(@NotNull Collection<Change> changes) {
-    List<String> failedChangeLists = ContainerUtil.newArrayList();
-    List<ShelvedChangeList> result = ContainerUtil.newArrayList();
-    List<Change> shelvedChanges = ContainerUtil.newArrayList();
+    List<String> failedChangeLists = newArrayList();
+    List<ShelvedChangeList> result = newArrayList();
+    List<Change> shelvedChanges = newArrayList();
 
     List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
     for (LocalChangeList list : changeLists) {
@@ -824,9 +824,9 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       public void run(@NotNull ProgressIndicator indicator) {
         for (ShelvedChangeList changeList : selectedChangeLists) {
           List<ShelvedChange> changesForChangelist =
-            ContainerUtil.newArrayList(ContainerUtil.intersection(changeList.getChanges(myProject), selectedChanges));
+            newArrayList(intersection(changeList.getChanges(myProject), selectedChanges));
           List<ShelvedBinaryFile> binariesForChangelist =
-            ContainerUtil.newArrayList(ContainerUtil.intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
+            newArrayList(intersection(changeList.getBinaryFiles(), selectedBinaryChanges));
           boolean shouldUnshelveAllList = changesForChangelist.isEmpty() && binariesForChangelist.isEmpty();
           unshelveChangeList(changeList, shouldUnshelveAllList ? null : changesForChangelist,
                              shouldUnshelveAllList ? null : binariesForChangelist,
