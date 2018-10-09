@@ -9,8 +9,8 @@
     "*": {
       "background": "#000000",
       "foreground": "#FFFFFF",
-      "selectionBackground": "#1AEBFF",
-      "selectionForeground": "#000000",
+      "selectionBackground": "#3333FF",
+      "selectionForeground": "#FFFFFF",
 
       "disabledBackground": "#33210C",
       "inactiveBackground": "#33210C",
@@ -65,9 +65,9 @@
 
     "EditorTabs": {
       "active": {
-        "foreground": "#000000",
-        "background": "#1AEBFF",
-        "underlineColor": "#1AEBFF"
+        "foreground": "#FFFFFF",
+        "background": "#3333FF",
+        "underlineColor": "#3333FF"
       },
       "inactive.maskColor": "#000000FF",
       "borderColor": "#FFFFFF"
@@ -86,7 +86,10 @@
     },
 
     "link": {
-      "foreground": "#D2F53C"
+      "foreground": "#D2F53C",
+      "hover.foreground": "#D2F53C",
+      "pressed.foreground": "#D2F53C",
+      "visited.foreground": "#D2F53C"
     },
 
     "Menu": {
@@ -140,7 +143,13 @@
       "separatorColor": "#FFFFFF",
       "separator.foreground": "#FFFFFF",
       "Header.activeBackground": "#000080",
-      "Header.inactiveBackground": "#000080"
+      "Header.inactiveBackground": "#000080",
+      "Advertiser.background": "000080"
+    },
+
+    "PopupMenu": {
+      "borderWidth": 1,
+      "borderInsets": "4,1,4,1"
     },
 
     "ProgressBar": {
@@ -157,12 +166,15 @@
     "RadioButton.darcula.selectionDisabledColor": "#FF0000",
 
     "SearchEverywhere": {
-      "Tab.selected": {
-        "background": "#1AEBFF",
-        "foreground": "#000000"
+      "Tab.active": {
+        "background": "#3333FF",
+        "foreground": "#FFFFFF"
       },
-
-      "SearchField.Border.color": "#FFFFFF"
+      "SearchField": {
+        "borderColor": "#FFFFFF",
+        "grayForeground": "#E0861F"
+      },
+      "Advertiser.background": "000080"
     },
 
     "SidePanel.background": "#000000",
@@ -188,19 +200,18 @@
           "background": "#000000"
         }
       },
-
       "Button": {
-        "hoverBackground": "#0000FF",
-        "selectedBackground": "#1AEBFF",
-        "selectedForeground": "#000000"
+        "hoverBackground": "#3333FF",
+        "selectedBackground": "#3333FF",
+        "selectedForeground": "#FFFFFF"
       }
     },
 
     "WelcomeScreen": {
       "background": "#000000",
       "Projects.background": "#000000",
-      "Projects.selectionBackground": "#1AEBFF",
-      "Projects.selectionInactiveBackground": "#1AEBFF",
+      "Projects.selectionBackground": "#3333FF",
+      "Projects.selectionInactiveBackground": "#3333FF",
       "separatorColor": "#FFFFFF"
     },
 
