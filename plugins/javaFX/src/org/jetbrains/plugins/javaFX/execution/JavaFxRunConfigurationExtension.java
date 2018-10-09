@@ -59,7 +59,8 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
             params.getModulePath().add(javaFxBase);
             params.getModulePath().add(javafxGraphics);
             params.getVMParametersList().addParametersString("--add-modules " + JAVAFX_BASE + "," + JAVAFX_GRAPHICS);
-            params.getVMParametersList().addParametersString("--add-exports " + JAVAFX_GRAPHICS + "/com.sun.javafx.application=ALL-UNNAMED");
+            params.getVMParametersList().addParametersString("--add-reads " + JAVAFX_BASE + "=ALL-UNNAMED");
+            params.getVMParametersList().addParametersString("--add-reads " + JAVAFX_GRAPHICS + "=ALL-UNNAMED");
           }
         }
       }
