@@ -469,9 +469,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
   public CloudGitApplication findApplication4Repository() throws ServerRuntimeException {
     final List<String> repositoryUrls = new ArrayList<>();
     for (GitRemote remote : getRepository().getRemotes()) {
-      for (String url : remote.getUrls()) {
-        repositoryUrls.add(url);
-      }
+      repositoryUrls.addAll(remote.getUrls());
     }
 
     return getAgentTaskExecutor().execute(() -> getDeployment().findApplication4Repository(ArrayUtil.toStringArray(repositoryUrls)));

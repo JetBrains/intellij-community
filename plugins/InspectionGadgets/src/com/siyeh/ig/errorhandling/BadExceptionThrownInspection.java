@@ -52,9 +52,7 @@ public class BadExceptionThrownInspection extends BaseInspection {
       exceptions.clear();
       final List<String> strings =
         StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
+      exceptions.addAll(strings);
       exceptionsString = "";
     }
   }

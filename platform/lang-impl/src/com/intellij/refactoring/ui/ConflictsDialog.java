@@ -71,11 +71,8 @@ public class ConflictsDialog extends DialogWrapper{
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
     myCanShowConflictsInView = canShowConflictsInView;
-    final LinkedHashSet<String> conflicts = new LinkedHashSet<>();
 
-    for (String conflict : conflictDescriptions.values()) {
-      conflicts.add(conflict);
-    }
+    final LinkedHashSet<String> conflicts = new LinkedHashSet<>(conflictDescriptions.values());
     myConflictDescriptions = ArrayUtil.toStringArray(conflicts);
     myElementConflictDescription = conflictDescriptions;
     setTitle(RefactoringBundle.message("problems.detected.title"));

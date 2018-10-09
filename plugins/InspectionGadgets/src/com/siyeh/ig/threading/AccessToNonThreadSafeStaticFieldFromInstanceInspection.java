@@ -50,9 +50,7 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends
     if (!this.nonThreadSafeTypes.isEmpty()) {
       this.nonThreadSafeClasses.clear();
       final List<String> strings = StringUtil.split(this.nonThreadSafeTypes, ",");
-      for (String string : strings) {
-        this.nonThreadSafeClasses.add(string);
-      }
+      this.nonThreadSafeClasses.addAll(strings);
       this.nonThreadSafeTypes = "";
     }
   }
