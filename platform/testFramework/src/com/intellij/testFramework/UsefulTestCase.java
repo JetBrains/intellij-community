@@ -31,6 +31,8 @@ import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.PeekableIterator;
+import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
+import org.junit.ComparisonFailure;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -559,9 +562,20 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
-    ArrayList<T> copy = new ArrayList<>(collection);
-    copy.retainAll(expected);
-    assertOrderedEquals(toString(collection), copy, expected);
+    PeekableIterator<T> expectedIt = new PeekableIteratorWrapper<>(expected.iterator());
+    PeekableIterator<T> actualIt = new PeekableIteratorWrapper<>(collection.iterator());
+
+    while (actualIt.hasNext() && expectedIt.hasNext()) {
+      T expectedElem = expectedIt.peek();
+      T actualElem = actualIt.peek();
+      if (expectedElem.equals(actualElem)) {
+        expectedIt.next();
+      }
+      actualIt.next();
+    }
+    if (expectedIt.hasNext()) {
+      throw new ComparisonFailure("", toString(expected), toString(collection));
+    }
   }
 
   @SafeVarargs
