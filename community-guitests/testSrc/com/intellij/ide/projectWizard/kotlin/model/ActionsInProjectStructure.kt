@@ -4,9 +4,9 @@ package com.intellij.ide.projectWizard.kotlin.model
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.jTree
 import com.intellij.testGuiFramework.impl.selectWithKeyboard
-import com.intellij.testGuiFramework.util.logError
 import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.*
+import org.fest.swing.exception.ComponentLookupException
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
 // executed and after
@@ -18,8 +18,9 @@ fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStruct
         logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
         (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
       }
-      catch (e: Exception) {
-        guiTestCase.logError("Kotlin facet for module `${path.joinToString(" -> ")}` not found")
+      catch (e: ComponentLookupException) {
+        val errorMessage = "Kotlin facet for module `${path.joinToString(" -> ")}` not found"
+        throw IllegalStateException(errorMessage, e as Throwable)
       }
     }
   }
