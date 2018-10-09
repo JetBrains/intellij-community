@@ -1052,6 +1052,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       ensureIndexesUpToDate(getProject());
       ((StartupManagerImpl)StartupManagerEx.getInstanceEx(getProject())).runPostStartupActivities();
       CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
+
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      if (policy != null) {
+        policy.setUp(getProject(), getTestRootDisposable(), getTestDataPath());
+      }
     });
 
     for (Module module : ModuleManager.getInstance(getProject()).getModules()) {
@@ -1251,6 +1256,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         setupEditorForInjectedLanguage();
       }
 
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      if (policy != null) {
+        policy.testFileConfigured(getFile());
+      }
+
       return null;
     });
 
@@ -1435,6 +1445,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                            boolean stripTrailingSpaces,
                            @NotNull SelectionAndCaretMarkupLoader loader,
                            @NotNull String actualText) {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      policy.beforeCheckResult(getFile());
+    }
     assertInitialized();
     Project project = getProject();
     Editor editor = getEditor();
