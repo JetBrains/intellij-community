@@ -45,6 +45,7 @@ Var control_fields
 Var max_fields
 Var silentMode
 Var pathEnvVar
+Var requiredDiskSpace
 
 ; position of controls for Installation Options dialog
 var launcherShortcut
@@ -533,59 +534,6 @@ Function .onInstSuccess
 FunctionEnd
 
 
-Function .onInit
-  SetRegView 32
-  !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
-  Call getInstallationOptionsPositions
-  IfSilent silent_mode uac_elevate
-silent_mode:
-  IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
-silent_config:
-  Call silentConfigReader
-  Goto validate_install_dir
-custom_silent_config:
-  Call customSilentConfigReader
-validate_install_dir:
-  Call silentInstallDirValidate
-  Call OnDirectoryPageLeave
-set_reg_key:
-  StrCpy $baseRegKey "HKCU"
-  StrCmp $silentMode "admin" uac_elevate done
-uac_elevate:
-  !insertmacro UAC_RunElevated
-  StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
-  StrCmp 0 $0 0 uac_err ; Error?
-  StrCmp 1 $1 0 uac_success ;Are we the real deal or just the wrapper?
-  Quit
-uac_err:
-  Abort
-uac_elevation_aborted:
-  IfSilent done set_install_dir
-set_install_dir:
-  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-  goto done
-uac_success:
-  StrCmp 1 $3 uac_admin ;Admin?
-  StrCmp 3 $1 0 uac_elevation_aborted ;Try again?
-  goto uac_elevate
-uac_admin:
-  IfSilent uac_all_users set_install_dir_admin_mode
-set_install_dir_admin_mode:
-  ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-  ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-  ${EndIf}
-uac_all_users:
-  SetShellVarContext all
-  StrCpy $baseRegKey "HKLM"
-done:
-  SetOutPath $INSTDIR
-  Call CreateLog
-;  !insertmacro MUI_LANGDLL_DISPLAY
-FunctionEnd
-
-
 function silentInstallDirValidate
 ; use current user path as install dir if installation run in user mode
   push $0
@@ -641,7 +589,7 @@ update_PATH:
   ClearErrors
   ${ConfigRead} "$R1" "updatePATH=" $R3
   IfErrors download_jre32
-  ${LogText} "  update PATH env var"
+  ${LogText} "  update PATH env var: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
@@ -1267,6 +1215,122 @@ skip_regeneration_shared_archive_for_java_64:
   ${LogText} "reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
+
+
+Function .onInit
+  SetRegView 32
+  Call CreateLog
+  !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
+  Call getInstallationOptionsPositions
+  IfSilent silent_mode uac_elevate
+silent_mode:
+  Call checkAvailableRequiredDiskSpace
+  IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
+silent_config:
+  Call silentConfigReader
+  Goto validate_install_dir
+custom_silent_config:
+  Call customSilentConfigReader
+validate_install_dir:
+  Call silentInstallDirValidate
+  Call OnDirectoryPageLeave
+set_reg_key:
+  StrCpy $baseRegKey "HKCU"
+  StrCmp $silentMode "admin" uac_elevate done
+uac_elevate:
+  !insertmacro UAC_RunElevated
+  StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
+  StrCmp 0 $0 0 uac_err ; Error?
+  StrCmp 1 $1 0 uac_success ;Are we the real deal or just the wrapper?
+  Quit
+uac_err:
+  Abort
+uac_elevation_aborted:
+  IfSilent done set_install_dir
+set_install_dir:
+  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  goto done
+uac_success:
+  StrCmp 1 $3 uac_admin ;Admin?
+  StrCmp 3 $1 0 uac_elevation_aborted ;Try again?
+  goto uac_elevate
+uac_admin:
+  IfSilent uac_all_users set_install_dir_admin_mode
+set_install_dir_admin_mode:
+  ${If} ${RunningX64}
+    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  ${Else}
+    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  ${EndIf}
+uac_all_users:
+  SetShellVarContext all
+  StrCpy $baseRegKey "HKLM"
+done:
+  ${LogText} "installation dir: $INSTDIR"
+;  !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+
+Function checkAvailableRequiredDiskSpace
+  SectionGetSize ${CopyIdeaFiles} $requiredDiskSpace
+  ${LogText} "Space required: $requiredDiskSpace KB"
+  Push $INSTDIR
+  Call GetParent
+  Pop $9
+  Call FreeDiskSpace
+  ${LogText} "Space available: $1 KB"
+
+; required free space
+  StrCpy $2 $requiredDiskSpace
+; compare the space required and the space available
+  System::Int64Op $1 > $2
+  Pop $3
+
+  IntCmp $3 1 done
+    MessageBox MB_OK "Error: Not enough disk space!"
+    ${LogText} "Error: Not enough disk space!"
+    Abort
+done:
+FunctionEnd
+
+
+Function FreeDiskSpace
+; $9 contains parent dir for installation
+  System::Call 'Kernel32::GetDiskFreeSpaceEx(t "$9", *l.r1, *l.r2, *l.r3)i.r0'
+  ${If} $0 <> 0
+    MessageBox MB_OK " FreeBytesAvailable=$1 $\n TotalNumberOfBytes=$2 $\n TotalNumberOfFreeBytes=$3"
+; convert byte values into KB
+    System::Int64Op $1 / 1024
+    Pop $1
+    MessageBox MB_OK "FreeSpace $1"
+    ${LogText} "FreeSpace $1"
+  ${Else}
+    ${LogText} "An error occurred during calculation disk space $0"
+  ${EndIf}
+FunctionEnd
+
+
+Function GetParent
+  Exch $R0
+  Push $R1
+  Push $R2
+  Push $R3
+  StrCpy $R1 0
+  StrLen $R2 $R0
+loop:
+  IntOp $R1 $R1 + 1
+  IntCmp $R1 $R2 get 0 get
+  StrCpy $R3 $R0 1 -$R1
+  StrCmp $R3 "\" get
+  Goto loop
+
+get:
+  StrCpy $R0 $R0 -$R1
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd
 
 ;------------------------------------------------------------------------------
 ; custom uninstall functions

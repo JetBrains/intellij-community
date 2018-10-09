@@ -21,8 +21,7 @@ var logFile
     IfErrors done
     FileOpen $R2 $logFile w
    ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
-    FileWrite $R2 "--- $0/$1/$2($3) $4:$5:$6 --- $\r"
-    FileWrite $R2 "Install Dir: $INSTDIR $\r"
+    FileWrite $R2 "--- $0.$1.$2($3) $4:$5:$6 --- $\r"
     FileClose $R2
 done:
     Pop $6
@@ -46,7 +45,6 @@ done:
   Push $R2
   FileOpen $R2 $logFile a
   FileSeek $R2 0 END
-;  FileWrite $R2 "$\r$\n" ;a new line
   FileWrite $R2 "${INPUT_TEXT} $\r"
   FileClose $R2
   Pop $R2
