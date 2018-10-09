@@ -585,6 +585,9 @@ public class ShelvedChangesViewManager implements Disposable {
         final String movedMessage = myMoveRenameInfo.get(Couple.of(binaryFile.BEFORE_PATH, binaryFile.AFTER_PATH));
         renderFileName(path, binaryFile.getFileStatus(), movedMessage);
       }
+      else if (nodeValue != null) {
+        myIssueLinkRenderer.appendTextWithLinks(nodeValue.toString());
+      }
     }
 
     private void renderFileName(String path, final FileStatus fileStatus, final String movedMessage) {
