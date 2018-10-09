@@ -231,26 +231,12 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
       if (initializer != null && elementToReplace != null) {
-        CommentTracker declTracker = new CommentTracker();
-        declTracker.markUnchanged(initializer);
-        String declText = context.getDeclarationText(initializer);
-        PsiElement declaration = declTracker.replaceAndRestoreComments(elementToReplace, declText);
-
-        CommentTracker varTracker = new CommentTracker();
-        varTracker.delete(context.myVariable);
-        PsiElement anchor = findCommentAnchor(declaration);
-        varTracker.insertCommentsBefore(anchor);
+        CommentTracker tracker = new CommentTracker();
+        tracker.markUnchanged(initializer);
+        String text = context.getDeclarationText(initializer);
+        tracker.delete(context.myVariable);
+        tracker.replaceAndRestoreComments(elementToReplace, text);
       }
-    }
-
-    @NotNull
-    public static PsiElement findCommentAnchor(@NotNull PsiElement anchor) {
-      for (PsiElement element = skipWhitespacesBackward(anchor);
-           element instanceof PsiComment;
-           element = skipWhitespacesBackward(element)) {
-        anchor = element;
-      }
-      return anchor;
     }
   }
 
