@@ -388,7 +388,8 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   @NotNull
   private List<ShelvedChangeList> getRecycled(final boolean recycled) {
-    return newUnmodifiableList(filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled()));
+    return newUnmodifiableList(
+      filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled() && !list.isDeleted()));
   }
 
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback)
@@ -685,7 +686,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
           recycleChangeList(changeList);
         }
         else {
-          saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext);
+          saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext, false);
         }
       }
     });
@@ -890,26 +891,30 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                                   final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
-    if (changeList.isRecycled()) {
+                                   final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext, boolean delete) {
+    if ((delete && changeList.isDeleted()) || (!delete && changeList.isRecycled())) {
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
     }
     else {
-      saveRemainingAndRecycleOthers(changeList, remainingPatches, remainingBinaries, commitContext);
+      saveRemainingAndRecycleOthers(changeList, remainingPatches, remainingBinaries, commitContext, delete);
     }
     notifyStateChanged();
   }
 
   private void saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext) {
+                                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext, boolean delete) {
 
     try {
       ShelvedChangeList listCopy = createChangelistCopy(changeList);
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
       filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
-      listCopy.updateDate();
-      listCopy.setRecycled(true);
+      if (delete) {
+        deleteChangeList(listCopy);
+      }
+      else {
+        recycleChangeList(listCopy);
+      }
       saveListAsScheme(listCopy);
     }
     catch (IOException e) {
@@ -958,6 +963,10 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   @NotNull
   public List<ShelvedChangeList> getRecycledShelvedChangeLists() {
     return getRecycled(true);
+  }
+
+  public List<ShelvedChangeList> getDeletedLists() {
+    return newUnmodifiableList(filter(mySchemeManager.getAllSchemes(), ShelvedChangeList::isDeleted));
   }
 
   public void clearRecycled() {
@@ -1028,8 +1037,14 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   public void deleteChangeList(@NotNull final ShelvedChangeList changeList) {
-    deleteListImpl(changeList);
-    mySchemeManager.removeScheme(changeList);
+    if (changeList.isDeleted()) {
+      deleteListImpl(changeList);
+      mySchemeManager.removeScheme(changeList);
+    }
+    else {
+      changeList.setDeleted(true);
+      changeList.updateDate();
+    }
     notifyStateChanged();
   }
 

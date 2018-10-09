@@ -103,6 +103,8 @@ public class ShelvedChangesViewManager implements Disposable {
     DataKey.create("ShelveChangesManager.ShelvedChangeListData");
   public static final DataKey<List<ShelvedChangeList>> SHELVED_RECYCLED_CHANGELIST_KEY =
     DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
+  public static final DataKey<List<ShelvedChangeList>> SHELVED_DELETED_CHANGELIST_KEY =
+    DataKey.create("ShelveChangesManager.ShelvedDeletedChangeListData");
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
@@ -277,6 +279,13 @@ public class ShelvedChangesViewManager implements Disposable {
     myMoveRenameInfo.clear();
 
     changeLists.forEach(changeList -> model.insertNodeInto(createShelvedListNode(changeList), myRoot, myRoot.getChildCount()));
+
+    DefaultMutableTreeNode recentlyDeleted = new DefaultMutableTreeNode("Recently Deleted");
+    List<ShelvedChangeList> deleted = new ArrayList<>(myShelveChangesManager.getDeletedLists());
+    deleted.sort(ChangelistComparator.getInstance());
+    deleted.forEach(d -> recentlyDeleted.add(createShelvedListNode(d)));
+    model.insertNodeInto(recentlyDeleted, myRoot, myRoot.getChildCount());
+
     return model;
   }
 
@@ -375,10 +384,13 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        return nullize(newArrayList(getSelectedLists(l -> !l.isRecycled())));
+        return newArrayList(getSelectedLists(l -> !l.isRecycled() && !l.isDeleted()));
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        return nullize(newArrayList(getSelectedLists(l -> l.isRecycled())));
+        return newArrayList(getSelectedLists(l -> l.isRecycled() && !l.isDeleted()));
+      }
+      else if (SHELVED_DELETED_CHANGELIST_KEY.is(dataId)) {
+        return newArrayList(getSelectedLists(l -> l.isDeleted()));
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
         return TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
@@ -463,6 +475,7 @@ public class ShelvedChangesViewManager implements Disposable {
     List<ShelvedChangeList> shelvedChangeLists = newArrayList();
     addAll(shelvedChangeLists, notNullize(SHELVED_CHANGELIST_KEY.getData(dataContext)));
     addAll(shelvedChangeLists, notNullize(SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext)));
+    addAll(shelvedChangeLists, notNullize(SHELVED_DELETED_CHANGELIST_KEY.getData(dataContext)));
     return shelvedChangeLists;
   }
 
@@ -535,10 +548,10 @@ public class ShelvedChangesViewManager implements Disposable {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
       Object nodeValue = node.getUserObject();
       if (nodeValue instanceof ShelvedChangeList) {
-        ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
-        if (changeListData.isRecycled()) {
+        ShelvedChangeList changeListData = (ShelvedChangeList)nodeValue;
+        if (changeListData.isRecycled() || changeListData.isDeleted()) {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-          setIcon(changeListData.isMarkedToDelete() ? DisabledToDeleteIcon : AppliedPatchIcon);
+          setIcon(changeListData.isMarkedToDelete() || changeListData.isDeleted() ? DisabledToDeleteIcon : AppliedPatchIcon);
         }
         else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);
@@ -688,7 +701,7 @@ public class ShelvedChangesViewManager implements Disposable {
         myShelveChangesManager.deleteChangeList(list);
       }
       else {
-        myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext);
+        myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext, true);
       }
 
       if (! exceptions.isEmpty()) {
