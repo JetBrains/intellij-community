@@ -13,12 +13,9 @@ fun logger(category: String): Logger = Logger.getInstance(category)
 /**
  * Get logger instance to be used in Kotlin package methods. Usage:
  * ```
- * private val LOG: Logger get() = logger(::LOG)  // define at top level of the file containing the function
+ * private val LOG: Logger = logger(::LOG) // define at top level of the file containing the function
  * ```
- * In Kotlin 1.1 even simpler declaration will be possible:
- * ```
- * private val LOG: Logger = logger(::LOG)
- * ```
+
  * Notice explicit type declaration which can't be skipped in this case.
  */
 fun logger(field: KProperty<Logger>): Logger = Logger.getInstance(field.javaGetter!!.declaringClass)
