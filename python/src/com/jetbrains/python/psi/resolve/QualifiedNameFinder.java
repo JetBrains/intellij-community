@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.jetbrains.python.codeInsight.typing.PyPEP561.convertStubToRuntimePackageName;
+import static com.jetbrains.python.codeInsight.typing.PyStubPackages.convertStubToRuntimePackageName;
 
 /**
  * @author yole
