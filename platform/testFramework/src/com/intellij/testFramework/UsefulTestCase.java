@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -114,8 +115,14 @@ public abstract class UsefulTestCase extends TestCase {
     super.setUp();
 
     if (shouldContainTempFiles()) {
-      String testName =  FileUtil.sanitizeFileName(getTestName(true));
-      if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      String testName = null;
+      if (policy != null) {
+        testName = policy.getPerTestTempDirName();
+      }
+      if (testName == null) {
+        testName = FileUtil.sanitizeFileName(getTestName(true));
+      }
       testName = new File(testName).getName(); // in case the test name contains file separators
       myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
@@ -322,10 +329,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    EdtTestUtilKt.runInEdtAndWait(() -> {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null && !policy.runInDispatchThread()) {
       runnable.run();
-      return null;
-    });
+    }
+    else {
+      EdtTestUtilKt.runInEdtAndWait(() -> {
+        runnable.run();
+        return null;
+      });
+    }
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -401,6 +414,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean runInDispatchThread() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      return policy.runInDispatchThread();
+    }
     return true;
   }
 
