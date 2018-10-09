@@ -136,7 +136,6 @@ public class GradleExecutionHelper {
       if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
         settings.withArgument("--info");
       }
-      settings.withArgument("--recompile-scripts");
     }
 
     if (!settings.getArguments().isEmpty()) {
