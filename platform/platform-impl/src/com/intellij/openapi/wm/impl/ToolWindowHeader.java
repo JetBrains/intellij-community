@@ -22,9 +22,6 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import net.miginfocom.layout.AC;
-import net.miginfocom.layout.LC;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +48,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   private ActionToolbar myToolbar;
   private ActionToolbar myToolbarWest;
+  private final JPanel myWestPanel;
 
   ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<? extends ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
@@ -59,17 +57,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     myToolWindow = toolWindow;
 
-    JPanel westEndPanel = new JPanel();
-    westEndPanel.setOpaque(false);
-
-    westEndPanel.setLayout(new MigLayout(new LC().insets("0").gridGap("0", "0"),
-                                         new AC().align("left").gap("0").align("left"),
-                                         new AC()));
-
-    JPanel opaquePanel = new NonOpaquePanel() {
+    myWestPanel = new NonOpaquePanel() {
       @Override
       public void doLayout() {
-        if (getComponentCount() > 0) {
+        if (getComponentCount() == 1) {
           Rectangle r = getBounds();
 
           Insets insets = getInsets();
@@ -78,35 +69,54 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
           Dimension size = c.getPreferredSize();
           if (size.width < r.width - insets.left - insets.right) {
             c.setBounds(insets.left, insets.top, size.width, r.height - insets.top - insets.bottom);
-          } else {
+          }
+          else {
             c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
+          }
+        } else if (getComponentCount() > 1) {
+          Rectangle r = getBounds();
+
+          Component c = getComponent(0);
+
+          Dimension min = c.getMinimumSize();
+          Dimension size = c.getPreferredSize();
+
+          int width2 = getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0;
+
+          if (min.width > r.width - width2) {
+            c.setBounds(0, 0, min.width, r.height);
+          }
+          else if (size.width < r.width - width2) {
+            c.setBounds(0, 0, size.width, r.height);
+          }
+          else {
+            c.setBounds(0, 0, r.width - width2, r.height);
+          }
+
+          if (getComponentCount() > 1) {
+            getComponent(1).setBounds(c.getWidth(), 0, getComponent(1).getMinimumSize().width, r.height);
           }
         }
       }
+
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension size = super.getMinimumSize();
+        if (getComponentCount() > 0) {
+          size.width = Math.max(size.width, getComponent(0).getMinimumSize().width + (getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0));
+        }
+        return size;
+      }
     };
 
-    westEndPanel.add(opaquePanel);
 
-    add(westEndPanel, BorderLayout.CENTER);
+    add(myWestPanel, BorderLayout.CENTER);
 
-    opaquePanel.add(toolWindow.getContentUI().getTabComponent());
-    ToolWindowContentUi.initMouseListeners(opaquePanel, toolWindow.getContentUI(), true);
+    myWestPanel.add(toolWindow.getContentUI().getTabComponent());
+    ToolWindowContentUi.initMouseListeners(myWestPanel, toolWindow.getContentUI(), true);
 
-    myToolbarWest =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(myActionGroupWest),
-                                                      true);
-
-    myToolbarWest.setTargetComponent(this);
-    myToolbarWest.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    myToolbarWest.setReservePlaceAutoPopupIcon(false);
-
-    JComponent component = myToolbarWest.getComponent();
-    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
-    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
-    component.setOpaque(false);
-
-    westEndPanel.add(component);
-
+    JComponent component;
+    int padding;
 
     myToolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
@@ -122,13 +132,14 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     component.setOpaque(false);
     add(component, BorderLayout.EAST);
 
-    opaquePanel.addMouseListener(new PopupHandler() {
+    myWestPanel.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(final Component comp, final int x, final int y) {
-        toolWindow.getContentUI().showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
+        toolWindow.getContentUI()
+          .showContextMenu(comp, x, y, toolWindow.getPopupGroup(), toolWindow.getContentManager().getSelectedContent());
       }
     });
-    opaquePanel.addMouseListener(new MouseAdapter() {
+    myWestPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         toolWindow.fireActivated();
@@ -157,15 +168,15 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     setOpaque(true);
     setBorder(JBUI.CurrentTheme.ToolWindow.tabBorder());
 
-    new DoubleClickListener(){
+    new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         ToolWindowManagerImpl mgr = toolWindow.getToolWindowManager();
         mgr.setMaximized(myToolWindow, !mgr.isMaximized(myToolWindow));
         return true;
       }
-    }.installOn(opaquePanel);
-    opaquePanel.addMouseListener(new MouseAdapter() {
+    }.installOn(myWestPanel);
+    myWestPanel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseReleased(final MouseEvent e) {
         Runnable runnable =
@@ -174,6 +185,23 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
         SwingUtilities.invokeLater(runnable);
       }
     });
+  }
+
+  private void initWestToolBar(JPanel westPanel) {
+    myToolbarWest =
+      ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(myActionGroupWest),
+                                                      true);
+
+    myToolbarWest.setTargetComponent(this);
+    myToolbarWest.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myToolbarWest.setReservePlaceAutoPopupIcon(false);
+
+    JComponent component = myToolbarWest.getComponent();
+    int padding = JBUI.CurrentTheme.ToolWindow.tabVerticalPadding();
+    component.setBorder(BorderFactory.createEmptyBorder(padding, 0, padding, 0));
+    component.setOpaque(false);
+
+    westPanel.add(component);
   }
 
   @Override
@@ -188,6 +216,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   void setTabActions(AnAction[] actions) {
+    if (myToolbarWest == null) {
+      initWestToolBar(myWestPanel);
+    }
+
     myActionGroupWest.removeAll();
     myActionGroupWest.addSeparator();
     myActionGroupWest.addAll(actions);
@@ -197,16 +229,16 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     }
   }
 
-   void setAdditionalTitleActions(AnAction[] actions) {
-     myActionGroup.removeAll();
-     myActionGroup.addAll(actions);
-     if (actions.length > 0) {
-       myActionGroup.addSeparator();
-     }
-     if (myToolbar != null) {
-       myToolbar.updateActionsImmediately();
-     }
-   }
+  void setAdditionalTitleActions(AnAction[] actions) {
+    myActionGroup.removeAll();
+    myActionGroup.addAll(actions);
+    if (actions.length > 0) {
+      myActionGroup.addSeparator();
+    }
+    if (myToolbar != null) {
+      myToolbar.updateActionsImmediately();
+    }
+  }
 
   @Override
   protected Graphics getComponentGraphics(Graphics g) {
@@ -228,7 +260,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       }
 
       image = myActiveImage;
-    } else {
+    }
+    else {
       if (myImage == null || /*myImage.getHeight() != r.height ||*/ type != myImageType) {
         myImage = drawToBuffer(g2d, false, r.height, myToolWindow.getType() == ToolWindowType.FLOATING);
       }
@@ -239,7 +272,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     myImageType = myToolWindow.getType();
 
     Rectangle clipBounds = clip.getBounds();
-    for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x+=150) {
+    for (int x = clipBounds.x; x < clipBounds.x + clipBounds.width; x += 150) {
       UIUtil.drawImage(g, image, x, 0, null);
     }
   }
@@ -269,7 +302,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
   @Override
   protected void paintChildren(Graphics g) {
-    Graphics2D graphics = (Graphics2D) g.create();
+    Graphics2D graphics = (Graphics2D)g.create();
 
     UISettings.setupAntialiasing(graphics);
     super.paintChildren(graphics);

@@ -210,7 +210,7 @@ class TabContentLayout extends ContentLayout {
       selected = myUi.myManager.getContents()[0];
     }
 
-    result += selected != null ? myContent2Tabs.get(selected).getWidth() + (myTabs.size() > 1 ? calcMoreIconWidth() : 0) : 0;
+    result += selected != null ? myContent2Tabs.get(selected).getMinimumSize().width + (myTabs.size() > 1 ? calcMoreIconWidth() : 0) : 0;
 
     return result;
   }
