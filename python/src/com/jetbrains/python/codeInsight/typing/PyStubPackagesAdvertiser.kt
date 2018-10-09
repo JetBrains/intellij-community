@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl
 import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -88,14 +89,11 @@ class PyStubPackagesAdvertiser : PyInspection() {
         val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
 
-        val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs, args)
-        val ignoreQuickFix = createIgnorePackagesQuickFix(reqs, ignoredPackages)
-
         registerProblem(file,
                         "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed. " +
                         "${if (plural) "They" else "It"} contain${if (plural) "" else "s"} type hints needed for better code insight.",
-                        installQuickFix,
-                        ignoreQuickFix)
+                        createInstallStubPackagesQuickFix(reqs, args, module, sdk),
+                        createIgnorePackagesQuickFix(reqs, ignoredPackages))
       }
     }
 
@@ -147,8 +145,7 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
               when (event.description) {
                 "#yes" -> {
-                  val installQuickFix = PyInstallRequirementsFix("Install stub package" + if (plural) "s" else "", module, sdk, reqs, args)
-                  installQuickFix.applyFix(project, problemDescriptor)
+                  createInstallStubPackagesQuickFix(reqs, args, module, sdk).applyFix(project, problemDescriptor)
                 }
                 "#no" -> createIgnorePackagesQuickFix(reqs, ignoredPackages).applyFix(project, problemDescriptor)
                 "#settings" -> {
@@ -251,6 +248,52 @@ class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       return result
+    }
+
+    private fun createInstallStubPackagesQuickFix(reqs: List<PyRequirement>, args: List<String>, module: Module, sdk: Sdk): LocalQuickFix {
+      val project = module.project
+      val stubPkgNamesToInstall = reqs.mapTo(mutableSetOf()) { it.name }
+
+      val installationListener = object : PyPackageManagerUI.Listener {
+        override fun started() {
+          ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
+        }
+
+        override fun finished(exceptions: MutableList<ExecutionException>?) {
+          val status = ServiceManager.getService(project, PyStubPackagesInstallingStatus::class.java)
+
+          val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
+            .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }
+            .map { it.second }
+
+          if (stubPkgsToUninstall.isNotEmpty()) {
+            val stubPkgNamesToUninstall = stubPkgsToUninstall.mapTo(mutableSetOf()) { it.name }
+
+            val uninstallationListener = object : PyPackageManagerUI.Listener {
+              override fun started() {}
+
+              override fun finished(exceptions: MutableList<ExecutionException>?) {
+                status.unmarkAsInstalling(stubPkgNamesToUninstall)
+              }
+            }
+
+            val plural = stubPkgNamesToUninstall.size > 1
+            val content = "Suggested ${stubPkgNamesToUninstall.joinToString { "'$it'" }} " +
+                          "${if (plural) "are" else "is"} incompatible with your current environment.<br/>" +
+                          "${if (plural) "These" else "This"} stub package${if (plural) "s" else ""} will be removed."
+
+            BALLOON_NOTIFICATIONS.createNotification(content, NotificationType.WARNING).notify(project)
+            PyPackageManagerUI(project, sdk, uninstallationListener).uninstall(stubPkgsToUninstall)
+
+            stubPkgNamesToInstall.removeAll(stubPkgNamesToUninstall)
+          }
+
+          status.unmarkAsInstalling(stubPkgNamesToInstall)
+        }
+      }
+
+      val name = "Install stub package" + if (reqs.size > 1) "s" else ""
+      return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, ignoredPkgs: MutableList<String>): LocalQuickFix {

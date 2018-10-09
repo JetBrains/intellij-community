@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.ListEditForm
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElementVisitor
@@ -22,6 +24,29 @@ import com.jetbrains.python.sdk.PythonSdkType
 import javax.swing.JComponent
 
 class PyStubPackagesCompatibilityInspection : PyInspection() {
+
+  companion object {
+    fun findIncompatibleRuntimeToStubPackages(sdk: Sdk,
+                                              stubPkgsFilter: (PyPackage) -> Boolean): List<Pair<PyPackage, PyPackage>> {
+      val installedPackages = PyPackageManager.getInstance(sdk).packages ?: return emptyList()
+      if (installedPackages.isEmpty()) return emptyList()
+
+      val nameToPkg = mutableMapOf<String, PyPackage>()
+      installedPackages.forEach { nameToPkg[it.name] = it }
+
+      return installedPackages
+        .asSequence()
+        .filter { it.name.endsWith(STUBS_SUFFIX) && stubPkgsFilter(it) }
+        .mapNotNull { stubPkg -> nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)]?.let { it to stubPkg } }
+        .filter {
+          val runtimePkgName = it.first.name
+          val requirement = it.second.requirements.firstOrNull { req -> req.name == runtimePkgName } ?: return@filter false
+
+          requirement.match(listOf(it.first)) == null
+        }
+        .toList()
+    }
+  }
 
   @Suppress("MemberVisibilityCanBePrivate")
   var ignoredStubPackages: MutableList<String> = mutableListOf()
@@ -48,10 +73,13 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
       val nameToPkg = mutableMapOf<String, PyPackage>()
       installedPackages.forEach { nameToPkg[it.name] = it }
 
-      installedPackages
-        .asSequence()
-        .filter { pkg -> pkg.name.let { it.endsWith(STUBS_SUFFIX) && it !in ignoredStubPackages } }
-        .mapNotNull { stubPkg -> nameToPkg[stubPkg.name.removeSuffix(STUBS_SUFFIX)]?.let { it to stubPkg } }
+      val status = ServiceManager.getService(node.project, PyStubPackagesInstallingStatus::class.java)
+
+      findIncompatibleRuntimeToStubPackages(sdk) { stubPkg ->
+        stubPkg.name.let {
+          !status.markedAsInstalling(it) && it !in ignoredStubPackages
+        }
+      }
         .forEach { (runtimePkg, stubPkg) ->
           val runtimePkgName = runtimePkg.name
           val requirement = stubPkg.requirements.firstOrNull { it.name == runtimePkgName } ?: return@forEach
