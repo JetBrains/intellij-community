@@ -1403,7 +1403,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void mergeStacks(DfaMemoryStateImpl other) {
-    List<DfaValue> values = StreamEx.zip(myStack, other.myStack, DfaValue::union).toList();
+    List<DfaValue> values = StreamEx.zip(myStack, other.myStack, DfaValue::unite).toList();
     myStack.clear();
     values.forEach(myStack::push);
   }
@@ -1428,7 +1428,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.union(otherState.myFactMap)));
+      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
     }
   }
 

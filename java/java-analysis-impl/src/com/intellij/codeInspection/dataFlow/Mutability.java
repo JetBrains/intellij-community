@@ -69,7 +69,7 @@ public enum Mutability {
   }
 
   @NotNull
-  public Mutability union(Mutability other) {
+  public Mutability unite(Mutability other) {
     if (this == other) return this;
     if (this == MUTABLE || other == MUTABLE) return MUTABLE;
     if (this == UNKNOWN || other == UNKNOWN) return UNKNOWN;
@@ -144,7 +144,7 @@ public enum Mutability {
           PsiMethod method = ((PsiMethodCallExpression)initializer).resolveMethod();
           newMutability = method == null ? UNKNOWN : getMutability(method);
         }
-        mutability = mutability.union(newMutability);
+        mutability = mutability.unite(newMutability);
         if (!mutability.isUnmodifiable()) break;
       }
       return mutability;

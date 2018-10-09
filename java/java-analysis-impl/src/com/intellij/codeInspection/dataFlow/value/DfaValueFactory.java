@@ -277,7 +277,7 @@ public class DfaValueFactory {
       if (expressionValue == null) {
         expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
-      loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
+      loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;
     }
     return loopElement == null ? DfaUnknownValue.getInstance() : DfaUtil.boxUnbox(loopElement, targetType);

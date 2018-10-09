@@ -213,7 +213,7 @@ class StateMerger {
   List<DfaMemoryStateImpl> mergeByRanges(List<DfaMemoryStateImpl> states) {
     Map<DfaVariableValue, Set<LongRangeSet>> ranges = createRangeMap(states);
     boolean changed = false;
-    // For every variable with more than one range, try to union range info and see if some states could be merged after that
+    // For every variable with more than one range, try to unite range info and see if some states could be merged after that
     for (Map.Entry<DfaVariableValue, Set<LongRangeSet>> entry : ranges.entrySet()) {
       if (entry.getValue().size() > 1) {
         List<DfaMemoryStateImpl> updated = mergeIndependentRanges(states, entry.getKey());
@@ -259,10 +259,10 @@ class StateMerger {
           .filter(fact -> fact.myVar == var || fact.myArg == var).toSet();
       }
 
-      Record union(Record other) {
+      Record unite(Record other) {
         Set<EqualityFact> equalities = myCommonEqualities == null ? getEqualityFacts() : myCommonEqualities;
         equalities.retainAll(other.getEqualityFacts());
-        return new Record(myState, myRange.union(other.myRange), equalities);
+        return new Record(myState, myRange.unite(other.myRange), equalities);
       }
 
       DfaMemoryStateImpl getState() {
@@ -286,7 +286,7 @@ class StateMerger {
         range = LongRangeSet.fromType(var.getType());
         if (range == null) return null;
       }
-      merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);
+      merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::unite);
     }
     return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
   }
