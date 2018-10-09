@@ -37,7 +37,7 @@ internal fun GeneralCommandLine.findExecutableInPath(): String? {
     .mapNotNull { path ->
       if (SystemInfo.isWindows) {
         PathEnvironmentVariableUtil.getWindowsExecutableFileExtensions()
-          .mapNotNull { ext -> PathEnvironmentVariableUtil.findInPath("$executable.$ext", path, null)?.path }
+          .mapNotNull { ext -> PathEnvironmentVariableUtil.findInPath("$executable$ext", path, null)?.path }
           .firstOrNull()
       }
       else {
