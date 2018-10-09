@@ -57,14 +57,12 @@ import java.util.stream.Collectors;
  * @author traff
  */
 public class TerminalView {
-  private final static String TERMINAL_FEATURE = "terminal";
   public final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
 
   private ToolWindow myToolWindow;
   private final Project myProject;
   private final LocalTerminalDirectRunner myTerminalRunner;
   private TerminalDockContainer myDockContainer;
-  private int myNextTabNumber = 1;
 
   LocalTerminalDirectRunner getTerminalRunner() {
     return myTerminalRunner;
