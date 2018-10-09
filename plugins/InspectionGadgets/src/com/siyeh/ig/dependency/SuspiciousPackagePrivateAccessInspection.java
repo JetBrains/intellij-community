@@ -14,8 +14,7 @@ import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.DocumentAdapter;
@@ -38,7 +37,6 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
@@ -63,11 +61,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         PsiMethod resolve = node.resolve();
         if (resolve != null) {
           UElement sourceNode = ObjectUtils.chooseNotNull(node.getMethodIdentifier(), node.getClassReference());
-          checkAccess(Objects.requireNonNull(sourceNode), resolve, node.getReceiver(), () -> {
-            String elementKind = node.getKind() == UastCallKind.CONSTRUCTOR_CALL ? "Constructor" : "Method";
-            String method = PsiFormatUtil.formatMethod(resolve, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
-            return elementKind + " '" + method + "'";
-          });
+          checkAccess(Objects.requireNonNull(sourceNode), resolve, node.getReceiver());
         }
         UReferenceExpression classReference = node.getClassReference();
         if (resolve == null && classReference != null && node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
@@ -84,8 +78,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         PsiElement resolve = node.resolve();
         if (resolve instanceof PsiField) {
           PsiField field = (PsiField)resolve;
-          checkAccess(node.getSelector(), field, node.getReceiver(), () ->
-            "Field '" + PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY) + "'"
+          checkAccess(node.getSelector(), field, node.getReceiver()
           );
         }
         return false;
@@ -102,24 +95,21 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
 
       private void checkClassReference(UElement sourceNode, PsiClass targetClass) {
         if (targetClass != null) {
-          checkAccess(sourceNode, targetClass, null, () -> "Class '" + targetClass.getQualifiedName() + "'");
+          checkAccess(sourceNode, targetClass, null);
         }
       }
 
-      private void checkAccess(@NotNull UElement sourceNode, PsiMember target,
-                               @Nullable UExpression receiver,
-                               Supplier<String> sourceElementDescription) {
+      private void checkAccess(@NotNull UElement sourceNode, PsiMember target, @Nullable UExpression receiver) {
         if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
-          checkPackageLocalAccess(sourceNode, target, "package-private", sourceElementDescription);
+          checkPackageLocalAccess(sourceNode, target, "package-private");
         }
         else if (target.hasModifier(JvmModifier.PROTECTED) && receiver != null
                  && !(receiver instanceof UThisExpression) && !(receiver instanceof USuperExpression) && !canAccessProtectedMember(receiver, sourceNode, target)) {
-          checkPackageLocalAccess(sourceNode, target, "protected and used not from a subclass here", sourceElementDescription);
+          checkPackageLocalAccess(sourceNode, target, "protected and used not from a subclass here");
         }
       }
 
-      private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType,
-                                           Supplier<String> sourceElementDescription) {
+      private void checkPackageLocalAccess(@NotNull UElement sourceNode, PsiMember targetElement, final String accessType) {
         PsiElement sourcePsi = sourceNode.getSourcePsi();
         if (sourcePsi != null) {
           Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
@@ -127,7 +117,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
           if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
             List<IntentionAction> fixes =
               JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
-            holder.registerProblem(sourcePsi, sourceElementDescription.get() + " is " + accessType +
+            holder.registerProblem(sourcePsi, StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true))) + " is " + accessType +
                                               ", but declared in a different module '" + targetModule.getName() + "'",
                                    IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile()));
           }
