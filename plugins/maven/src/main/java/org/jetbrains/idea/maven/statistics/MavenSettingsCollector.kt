@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.getBooleanUsage
 import com.intellij.internal.statistic.utils.getEnumUsage
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenSettingsCollector : ProjectUsagesCollector() {
@@ -40,6 +41,12 @@ class MavenSettingsCollector : ProjectUsagesCollector() {
     usages.add(getBooleanUsage("lookForNested", importingSettings.isLookForNested))
     usages.add(getBooleanUsage("useMavenOutput", importingSettings.isUseMavenOutput))
     usages.add(UsageDescriptor("updateFoldersOnImportPhase." + importingSettings.updateFoldersOnImportPhase))
+
+    val runnerSettings = MavenRunner.getInstance(project).settings
+    usages.add(getBooleanUsage("delegateBuildRun", runnerSettings.isDelegateBuildToMaven));
+    usages.add(getBooleanUsage("passParentEnv", runnerSettings.isPassParentEnv));
+    usages.add(getBooleanUsage("runMavenInBackground", runnerSettings.isRunMavenInBackground));
+    usages.add(getBooleanUsage("skipTests", runnerSettings.isSkipTests));
     return usages
   }
 }
