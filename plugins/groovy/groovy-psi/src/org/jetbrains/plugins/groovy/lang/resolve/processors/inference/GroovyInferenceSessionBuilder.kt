@@ -126,7 +126,7 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
       with(gparent) {
         val resolveResult = advancedResolve()
         if (resolveResult is GroovyMethodResult) {
-          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getPartialSubstitutor(), null,
+          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getPartialSubstitutor(), 
                                                 buildArguments(referenceElement!!), call)
           return methodCandidate.argumentMapping[Argument(null, call)]?.second
         }
