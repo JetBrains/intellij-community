@@ -35,7 +35,8 @@ public final class TreeModelListenerList implements TreeModelListener {
    * @param listener a listener to add
    */
   public void add(@NotNull TreeModelListener listener) {
-    myListeners.add(listener);
+    // in this weird swing world it's customary to fire listeners in the reverse order of their addition
+    myListeners.add(0, listener);
   }
 
   /**
