@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -114,11 +115,15 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     InspectionToolWrapper[] toolWrappers = getInspectionTools(psiElement, manager);
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
-        final String shortName = InspectionElementsMerger.getMergedToolName(iterator.next().trim());
+        String shortName = iterator.next().trim();
+        String mergedToolName = InspectionElementsMerger.getMergedToolName(shortName);
         for (InspectionToolWrapper toolWrapper : toolWrappers) {
+          String toolWrapperShortName = toolWrapper.getShortName();
+          String alternativeID = toolWrapper.getTool().getAlternativeID();
           if (toolWrapper instanceof LocalInspectionToolWrapper &&
               (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(shortName) ||
-               shortName.equals(((LocalInspectionToolWrapper)toolWrapper).getTool().getAlternativeID()))) {
+               shortName.equals(alternativeID) ||
+               toolWrapperShortName.equals(mergedToolName))) {
             if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
               iterator.remove();
               break;
@@ -127,7 +132,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
               suppressedTools.put(toolWrapper, shortName);
             }
           }
-          else if (toolWrapper.getShortName().equals(shortName)) {
+          else if (toolWrapperShortName.equals(shortName) || toolWrapperShortName.equals(mergedToolName) || shortName.equals(alternativeID)) {
             //ignore global unused as it won't be checked anyway
             if (toolWrapper instanceof LocalInspectionToolWrapper ||
                 toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
@@ -228,7 +233,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     if (idsString != null && !idsString.isEmpty()) {
       List<String> ids = new ArrayList<>();
       StringUtil.tokenize(idsString, "[, ]").forEach(ids::add);
-      boolean isSuppressAll = ids.contains(SuppressionUtil.ALL) || ids.contains(SuppressionUtil.ALL.toLowerCase());
+      boolean isSuppressAll = ids.stream().anyMatch(id -> id.equalsIgnoreCase(SuppressionUtil.ALL));
       if (ignoreAll && isSuppressAll) {
         return false;
       }
@@ -298,11 +303,6 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
     return false;
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   protected GlobalInspectionContextBase createContext(PsiFile file) {
     final InspectionManager inspectionManagerEx = InspectionManager.getInstance(file.getProject());
     return (GlobalInspectionContextBase)inspectionManagerEx.createNewGlobalContext(false);
@@ -350,9 +350,11 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
                 return;
               }
             }
-            holder.registerProblem(element, mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL),
+            TextRange range = mySuppressor.getHighlightingRange(element, SuppressionUtil.ALL);
+            String allSuppression = element.getText().substring(range.getStartOffset(), range.getEndOffset());
+            holder.registerProblem(element, range,
                                    InspectionsBundle.message("inspection.redundant.suppression.description"),
-                                   mySuppressor.createRemoveRedundantSuppressionFix(SuppressionUtil.ALL));
+                                   mySuppressor.createRemoveRedundantSuppressionFix(allSuppression));
             return;
           }
           Collection<String> suppressIds = scopes.get(element);

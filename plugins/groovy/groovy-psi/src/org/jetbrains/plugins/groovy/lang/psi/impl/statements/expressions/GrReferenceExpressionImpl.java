@@ -3,8 +3,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -14,8 +12,9 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.profiling.ResolveProfiler;
+import gnu.trove.THashMap;
+import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -24,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -45,7 +45,10 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
+import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
@@ -59,12 +62,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     super(node);
   }
 
-  private final NotNullLazyValue<GrReferenceExpressionReference> myFakeGetterReference = AtomicNotNullLazyValue.createValue(
-    () -> new GrReferenceExpressionReference(this, true)
+  private final Lazy<GroovyReference> myRValueReference = lazy(
+    () -> isRValue(this) ? new GrReferenceExpressionReference(this, true) : null
   );
 
-  private final NotNullLazyValue<GrReferenceExpressionReference> myFakeReference = AtomicNotNullLazyValue.createValue(
-    () -> new GrReferenceExpressionReference(this, false)
+  private final Lazy<GroovyReference> myLValueReference = lazy(
+    () -> isLValue(this) ? new GrReferenceExpressionReference(this, false) : null
   );
 
   @NotNull
@@ -467,6 +470,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return false;
   }
 
+  @Nullable
+  @Override
+  public GroovyReference getRValueReference() {
+    return myRValueReference.getValue();
+  }
+
+  @Nullable
+  @Override
+  public GroovyReference getLValueReference() {
+    return myLValueReference.getValue();
+  }
+
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     GroovyResolveResult[] results = multiResolve(false);
@@ -485,7 +500,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
       if (element instanceof PsiMethod && target instanceof PsiMethod) {
         PsiMethod[] superMethods = ((PsiMethod)target).findSuperMethods(false);
-        //noinspection SuspiciousMethodCalls
         if (Arrays.asList(superMethods).contains(element)) {
           return true;
         }
@@ -571,15 +585,30 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @NotNull
     @Override
     public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
-      Collection<? extends GroovyResolveResult> regularResults = ref.multiResolve(incomplete, false);
-      if (PsiUtil.isLValueOfOperatorAssignment(ref)) {
-        Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
-        result.addAll(ref.multiResolve(incomplete, true));
-        result.addAll(regularResults);
-        return result;
+      final GroovyReference rValueRef = ref.myRValueReference.getValue();
+      final GroovyReference lValueRef = ref.myLValueReference.getValue();
+      if (rValueRef != null && lValueRef != null) {
+        // merge results from both references
+        final Map<PsiElement, GroovyResolveResult> results = new THashMap<>();
+        for (GroovyResolveResult result : rValueRef.resolve(incomplete)) {
+          results.putIfAbsent(result.getElement(), result);
+        }
+        for (GroovyResolveResult result : lValueRef.resolve(incomplete)) {
+          results.putIfAbsent(result.getElement(), result);
+        }
+        return new SmartList<>(results.values());
+      }
+      else if (rValueRef != null) {
+        // r-value only
+        return new SmartList<>(rValueRef.resolve(incomplete));
+      }
+      else if (lValueRef != null) {
+        // l-value only
+        return new SmartList<>(lValueRef.resolve(incomplete));
       }
       else {
-        return new SmartList<>(regularResults);
+        LOG.error("Reference expression has no references");
+        return Collections.emptyList();
       }
     }
   };
@@ -591,8 +620,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  public Collection<? extends GroovyResolveResult> multiResolve(boolean incomplete, boolean forceRValue) {
-    return (forceRValue ? myFakeGetterReference : myFakeReference).getValue().resolve(incomplete);
+  public Collection<? extends GroovyResolveResult> multiResolve(boolean incomplete, boolean rValue) {
+    GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
+    return ref == null ? Collections.emptyList() : ref.resolve(incomplete);
   }
 
   @Override

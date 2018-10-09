@@ -4,10 +4,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
-import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
-import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.codeInsight.highlighting.*;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
@@ -35,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.ELEMENT_UNDER_CARET_STRUCTURAL;
+
 /**
  * @author yole
  */
@@ -45,6 +44,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
   private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
   private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myCodeBlockMarkerRanges = Collections.synchronizedList(new ArrayList<>());
   private final int myCaretOffset;
   private final ProperTextRange myVisibleRange;
 
@@ -74,6 +74,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       myWriteAccessRanges.addAll(writeUsages);
       if (!highlightUsagesHandler.highlightReferences()) return;
     }
+
+    collectCodeBlockMarkerRanges();
 
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
     PsiElement myTarget;
@@ -114,6 +116,25 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
         }
       }
 
+    }
+  }
+
+  /**
+   * Collects code block markers ranges to highlight. E.g. if/elsif/else. Collected ranges will be highlighted the same way as braces
+   */
+  private void collectCodeBlockMarkerRanges() {
+    PsiElement contextElement = myFile.findElementAt(
+      TargetElementUtil.adjustOffset(myFile, myEditor.getDocument(), myEditor.getCaretModel().getOffset()));
+    if (contextElement == null) {
+      return;
+    }
+
+    for (CodeBlockSupportHandler handler : CodeBlockSupportHandler.EP.allForLanguage(contextElement.getLanguage())) {
+      List<TextRange> rangesToHighlight = handler.getCodeBlockMarkerRanges(contextElement);
+      if (!rangesToHighlight.isEmpty()) {
+        myCodeBlockMarkerRanges.addAll(rangesToHighlight);
+        return;
+      }
     }
   }
 
@@ -200,7 +221,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private List<HighlightInfo> getHighlights() {
-    if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty()) {
+    if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty() && myCodeBlockMarkerRanges.isEmpty()) {
       return Collections.emptyList();
     }
     Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<>();
@@ -208,13 +229,16 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
       existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset())));
     }
 
-    List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size());
+    List<HighlightInfo> result = new ArrayList<>(myReadAccessRanges.size() + myWriteAccessRanges.size() + myCodeBlockMarkerRanges.size());
     for (TextRange range: myReadAccessRanges) {
       ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_READ, existingMarkupTooltips));
     }
     for (TextRange range: myWriteAccessRanges) {
       ContainerUtil.addIfNotNull(result, createHighlightInfo(range, HighlightInfoType.ELEMENT_UNDER_CARET_WRITE, existingMarkupTooltips));
     }
+    myCodeBlockMarkerRanges.forEach(
+      it -> ContainerUtil.addIfNotNull(result, createHighlightInfo(it, ELEMENT_UNDER_CARET_STRUCTURAL, existingMarkupTooltips)));
+
     return result;
   }
 

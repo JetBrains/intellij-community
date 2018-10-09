@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author yole
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class AbstractVcsTestCase {
   protected boolean myTraceClient;
   protected Project myProject;

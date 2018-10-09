@@ -1169,6 +1169,7 @@
       <option name="GUTTER_BACKGROUND" value="313335" />
       <option name="INDENT_GUIDE" value="373737" />
       <option name="LINE_NUMBERS_COLOR" value="606366" />
+      <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="a4a3a3" />
       <option name="METHOD_SEPARATORS_COLOR" value="4d4d4d" />
       <option name="NOTIFICATION_BACKGROUND" value="1d3857" />
       <option name="READONLY_FRAGMENT_BACKGROUND" value="" />

@@ -42,11 +42,11 @@ import static com.intellij.util.ui.EmptyIcon.ICON_16;
  * @author Vladislav.Soroka
  */
 public class ExecutionNode extends CachingSimpleNode {
-  private static final Icon NODE_ICON_OK = AllIcons.Process.State.GreenOK;
-  private static final Icon NODE_ICON_ERROR = AllIcons.General.Error;
+  private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
+  private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
   private static final Icon NODE_ICON_WARNING = AllIcons.General.Warning;
   private static final Icon NODE_ICON_INFO = AllIcons.General.Information;
-  private static final Icon NODE_ICON_SKIPPED = AllIcons.Process.State.YellowStr;
+  private static final Icon NODE_ICON_SKIPPED = AllIcons.RunConfigurations.TestIgnored;
   private static final Icon NODE_ICON_STATISTICS = ICON_16;
   private static final Icon NODE_ICON_SIMPLE = ICON_16;
   private static final Icon NODE_ICON_DEFAULT = ICON_16;

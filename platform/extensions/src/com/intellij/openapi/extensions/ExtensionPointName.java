@@ -24,33 +24,42 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
    */
   @NotNull
   public T[] getExtensions() {
-    return getExtensions(null);
+    return getPoint(null).getExtensions();
   }
 
   @NotNull
   public List<T> getExtensionList() {
-    return getExtensionList(null);
+    return getPoint(null).getExtensionList();
   }
 
   @NotNull
   public Stream<T> extensions() {
-    return extensions(null);
+    return getPoint(null).extensions();
   }
 
   public boolean hasAnyExtensions() {
     return getPoint(null).hasAnyExtensions();
   }
 
+  /**
+   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   */
   @NotNull
   public List<T> getExtensionList(@Nullable AreaInstance areaInstance) {
     return getPoint(areaInstance).getExtensionList();
   }
 
+  /**
+   * Consider using {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
+   */
   @NotNull
   public T[] getExtensions(@Nullable AreaInstance areaInstance) {
     return getPoint(areaInstance).getExtensions();
   }
 
+  /**
+   * Consider using {@link ProjectExtensionPointName#extensions(AreaInstance)}
+   */
   @NotNull
   public Stream<T> extensions(@Nullable AreaInstance areaInstance) {
     return getPoint(areaInstance).extensions();
@@ -64,5 +73,14 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName {
   @Nullable
   public <V extends T> V findExtension(@NotNull Class<V> instanceOf) {
     return ContainerUtil.findInstance(getExtensionList(), instanceOf);
+  }
+
+  @NotNull
+  public <V extends T> V findExtensionOrFail(@NotNull Class<V> instanceOf) {
+    V result = findExtension(instanceOf);
+    if (result == null) {
+      throw new IllegalArgumentException("could not find extension implementation " + instanceOf);
+    }
+    return result;
   }
 }

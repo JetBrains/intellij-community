@@ -47,7 +47,6 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
 public abstract class AntDomProject extends AntDomNamedElement implements PropertiesProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomProject");

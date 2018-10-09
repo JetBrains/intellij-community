@@ -153,3 +153,36 @@ class Ex<T extends S, S extends IOException> {
     catch (IOException ignored) {}
   }
 }
+class Weight {
+
+  private static void methodA() throws ExceptionA {
+    try {
+      methodB();
+    } catch (ExceptionA e) {
+      throw e;
+    } catch (ExceptionC e) {
+    } catch (ExceptionB e) {
+      System.out.println("asdf");
+    } catch (<warning descr="'catch' of 'Exception' is too broad, masking exception 'RuntimeException'">Exception</warning> t) {
+      System.out.println("throwable");
+    }
+
+  }
+
+  private static void methodB() throws ExceptionA, ExceptionB {
+    try {
+      methodIO();
+    } catch (<warning descr="'catch' of 'IOException' is too broad, masking exception 'MyIOException'">IOException</warning> e) {
+      System.out.println();
+    }
+  }
+
+  private static void methodIO() throws MyIOException, ExceptionA, ExceptionB {
+    throw new MyIOException();
+  }
+
+  static class ExceptionA extends Exception {}
+  static class ExceptionB extends Exception {}
+  static class ExceptionC extends ExceptionB {}
+  static class MyIOException extends IOException {}
+}

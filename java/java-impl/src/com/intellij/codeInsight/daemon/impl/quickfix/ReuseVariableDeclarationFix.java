@@ -79,7 +79,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     }
 
     PsiUtil.setModifierProperty(refVariable, PsiModifier.FINAL, false);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(myVariable.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
     final PsiElement statement = factory.createStatementFromText(myVariable.getName() + " = " + initializer.getText() + ";", null);
     myVariable.getParent().replace(statement);
   }

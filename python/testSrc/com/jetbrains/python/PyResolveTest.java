@@ -532,6 +532,10 @@ public class PyResolveTest extends PyResolveTestCase {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> assertResolvesTo(PyTargetExpression.class, "module_level_variable1"));
   }
 
+  public void testEpyDocTypeReferenceForInstanceAttributeInClassLevelDocstring() {
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> assertResolvesTo(PyTargetExpression.class, "attr"));
+  }
+
   // PY-7541
   public void testLoopToUpperReassignment() {
     final PsiReference ref = findReferenceByMarker();

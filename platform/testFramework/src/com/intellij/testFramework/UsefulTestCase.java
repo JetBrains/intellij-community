@@ -28,10 +28,8 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -117,8 +115,14 @@ public abstract class UsefulTestCase extends TestCase {
     super.setUp();
 
     if (shouldContainTempFiles()) {
-      String testName =  FileUtil.sanitizeFileName(getTestName(true));
-      if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      String testName = null;
+      if (policy != null) {
+        testName = policy.getPerTestTempDirName();
+      }
+      if (testName == null) {
+        testName = FileUtil.sanitizeFileName(getTestName(true));
+      }
       testName = new File(testName).getName(); // in case the test name contains file separators
       myTempDir = new File(ORIGINAL_TEMP_DIR, TEMP_DIR_MARKER + testName).getPath();
       FileUtil.resetCanonicalTempPathCache(myTempDir);
@@ -270,16 +274,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyle.getDefaultSettings();
+  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
+    return CodeStyle.getSettings(project);
   }
 
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
-    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCommonSettings(language);
   }
 
-  protected final <T extends CustomCodeStyleSettings> CustomCodeStyleSettings getCustomSettings(@NotNull Class<T> settingsClass) {
-    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
+  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCustomSettings(settingsClass);
   }
 
   @NotNull
@@ -325,10 +329,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    EdtTestUtilKt.runInEdtAndWait(() -> {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null && !policy.runInDispatchThread()) {
       runnable.run();
-      return null;
-    });
+    }
+    else {
+      EdtTestUtilKt.runInEdtAndWait(() -> {
+        runnable.run();
+        return null;
+      });
+    }
   }
 
   protected void defaultRunBare() throws Throwable {
@@ -404,6 +414,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean runInDispatchThread() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      return policy.runInDispatchThread();
+    }
     return true;
   }
 
@@ -768,7 +782,20 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             @NotNull Producer<String> messageProducer) {
+    assertSameLinesWithFile(filePath, actualText, true, messageProducer);
+  }
+
   public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
+    assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
+  }
+
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             boolean trimBeforeComparing,
+                                             @Nullable Producer<String> messageProducer) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -788,7 +815,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Comparing.equal(expected, actual)) {
-      throw new FileComparisonFailure(null, expected, actual, filePath);
+      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.produce(), expected, actual, filePath);
     }
   }
 

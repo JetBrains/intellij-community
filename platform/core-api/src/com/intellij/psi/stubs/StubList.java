@@ -36,7 +36,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
   StubList(int initialCapacity) {
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
     myJoinedChildrenList = new MostlyUShortIntList(initialCapacity);
-    myJoinedChildrenList.add(0); // indices in this list should be non-zero 
+    myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
   IStubElementType<?, ?> getStubType(int id) {
@@ -150,6 +150,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     return new AbstractList<StubBase<?>>() {
       @Override
       public StubBase<?> get(int index) {
+        if (index < 0 || index >= count) throw new IndexOutOfBoundsException("index=" + index + ", size=" + count);
         return StubList.this.get(idList.get(start + index));
       }
 
@@ -300,7 +301,7 @@ abstract class StubList extends AbstractList<StubBase<?>> {
     }
 
   }
-  
+
 }
 
 class MaterialStubList extends StubList {

@@ -162,7 +162,6 @@ public class JavacMain {
         }
       }
 
-      //noinspection IOResourceOpenedButNotSafelyClosed
       final LineOutputWriter out = new LineOutputWriter() {
         @Override
         protected void lineAvailable(String line) {

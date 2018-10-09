@@ -143,7 +143,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         myForm.getEditContextButton().addActionListener(new ActionListener() {
 
             @Override
-            @SuppressWarnings({"unchecked"})
             public void actionPerformed(ActionEvent e) {
                 final HistoryElement selectedItem = myModel.getSelectedItem();
 
@@ -303,7 +302,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         return document;
     }
 
-    @SuppressWarnings({ "unchecked" })
     public boolean show(XmlElement contextElement) {
         prepareShow(contextElement);
 
@@ -312,7 +310,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         return isOK();
     }
 
-    @SuppressWarnings({"unchecked"})
     private void prepareShow(XmlElement contextElement) {
 
         final NamespaceCollector.CollectedInfo collectedInfo;
@@ -359,7 +356,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
         return n;
     }
 
-    @SuppressWarnings({"unchecked"})
     protected Map<String, String> asMap(Collection<Namespace> namespaces) {
         if (namespaces == null) {
             if (myNamespaceCache != null) {
@@ -386,7 +382,6 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
       }
     }
 
-    @SuppressWarnings({"unchecked"})
     public Context getContext() {
         final HistoryElement context = myModel.getSelectedItem();
         if (context == null || context.expression == null) {

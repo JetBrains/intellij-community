@@ -80,7 +80,6 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
     return StringUtil.notNullize(myText);
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public int compareTo(@NotNull IntentionAction o) {
     if (o instanceof GutterIntentionAction) {

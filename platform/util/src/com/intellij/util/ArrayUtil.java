@@ -835,8 +835,7 @@ public class ArrayUtil extends ArrayUtilRt {
   @Contract(pure=true)
   public static <E> E[] ensureExactSize(int count, @NotNull E[] sample) {
     if (count == sample.length) return sample;
-    @SuppressWarnings("unchecked") final E[] array = createArray(sample.getClass().getComponentType(), count);
-    return array;
+    return createArray(sample.getClass().getComponentType(), count);
   }
 
   @Nullable

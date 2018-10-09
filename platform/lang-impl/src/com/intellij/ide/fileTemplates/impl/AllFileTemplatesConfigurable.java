@@ -359,12 +359,15 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   private void onTabChanged() {
     applyEditor(myCurrentTab.getSelectedTemplate());
 
+    FileTemplateTab tab = myCurrentTab;
     final int selectedIndex = myTabbedPane.getSelectedIndex();
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
     }
     ((CardLayout)myLeftPanel.getLayout()).show(myLeftPanel, myCurrentTab.getTitle());
     onListSelectionChanged();
+    // request focus to a list (or tree) later to avoid moving focus to the tabbed pane
+    if (tab != myCurrentTab) EventQueue.invokeLater(myCurrentTab.getComponent()::requestFocus);
   }
 
   private void onListSelectionChanged() {
@@ -644,7 +647,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     initLists();
   }
 
-  @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
   private void updateCache() {
     if (isSchemeModified()) {
       if (!myChangesCache.containsKey(myScheme)) {

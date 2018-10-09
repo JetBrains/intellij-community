@@ -74,7 +74,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
   }
 
   public void testAlignedMultilineParameters() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("void test123(int i, int j)", "test123asd");

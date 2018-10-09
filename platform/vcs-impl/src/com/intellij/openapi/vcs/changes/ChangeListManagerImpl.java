@@ -62,7 +62,6 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
@@ -1536,8 +1535,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
       IProjectStore store = ProjectKt.getStateStore(project);
-      return getInstanceImpl(project).myIgnoredIdeaLevel.isIgnoredFile(filePath)
-             || (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
+      return (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
              || StringsKt.equals(filePath.getPath(), store.getWorkspaceFilePath(), !SystemInfo.isFileSystemCaseSensitive)
              || isShelfDirOrInsideIt(filePath, project);
     }
@@ -1549,40 +1547,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @NotNull
     @Override
-    public Set<String> getIgnoredFilesMasks(@NotNull Project project) {
-      Set<String> masks = ContainerUtil.newHashSet();
-      masks.addAll(getProjectExcludePathsRelativeTo(project));
-      @SystemIndependent String projectBasePath = project.getBasePath();
-      if (projectBasePath != null) {
-        String relativeShelfPath =
-          FileUtil.getRelativePath(projectBasePath, ShelveChangesManager.getDefaultShelfPath(project), File.separatorChar);
-        if (relativeShelfPath != null) {
-          masks.add(relativeShelfPath);
+    public Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+      Set<String> masks = ContainerUtil.newLinkedHashSet();
+      @SystemIndependent String projectBasePath =  project.getBasePath();
+      if (projectBasePath == null) return masks;
+
+      if (FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) {
+        String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
+        if (FileUtil.isAncestor(projectBasePath, defaultShelfPath, true)) {
+          String relativeShelfPath =
+            FileUtil.getRelativePath(projectBasePath, defaultShelfPath, '/');
+          if (relativeShelfPath != null) {
+            masks.add("/" + relativeShelfPath + "/");
+          }
         }
       }
+      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
       if (ProjectKt.isDirectoryBased(project)) {
-        masks.add(DIRECTORY_STORE_FOLDER + "/workspace.xml");
+        if (workspaceFilePath != null && FileUtil.isAncestor(ignoreFileRoot.getPath(), workspaceFilePath, false)) {
+          masks.add("/" + DIRECTORY_STORE_FOLDER + "/workspace.xml");
+        }
       }
       else {
         masks.add("*." + WorkspaceFileType.DEFAULT_EXTENSION);
       }
+
       return ContainerUtil.unmodifiableOrEmptySet(masks);
-    }
-
-    @NotNull
-    private static Set<String> getProjectExcludePathsRelativeTo(@NotNull Project project) {
-      Set<String> paths = ContainerUtil.newHashSet();
-      @SystemIndependent String basePath = project.getBasePath();
-      assert basePath != null : "Doesn't support default projects";
-
-      for (Module module : ModuleManager.getInstance(project).getModules()) {
-        VirtualFile[] roots = ModuleRootManager.getInstance(module).getExcludeRoots();
-        paths.addAll(Arrays.stream(roots)
-                       .filter((root) -> FileUtil.isAncestor(basePath, root.getPath(), true))
-                       .map((root) -> FileUtil.getRelativePath(basePath, root.getPath(), File.separatorChar))
-                       .collect(Collectors.toSet()));
-      }
-      return paths;
     }
 
     @NotNull

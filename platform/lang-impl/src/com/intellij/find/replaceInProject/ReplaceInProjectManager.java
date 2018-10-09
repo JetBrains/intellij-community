@@ -223,8 +223,12 @@ public class ReplaceInProjectManager {
         public void usageViewCreated(@NotNull UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
-          usageView.setReRunActivity(
-            () -> searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation));
+          usageView.setRerunAction(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation);
+            }
+          });
         }
 
         @Override

@@ -20,7 +20,7 @@ public class LighthouseRepositoryEditor extends BaseRepositoryEditor<LighthouseR
 
   public LighthouseRepositoryEditor(final Project project,
                                     final LighthouseRepository repository,
-                                    Consumer<LighthouseRepository> changeListener) {
+                                    Consumer<? super LighthouseRepository> changeListener) {
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);

@@ -639,7 +639,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
           }
         }
 
-        //noinspection unchecked
         if (element instanceof PsiCompiledElement) {
           return Pair.create(visibleVars, Collections.emptySet());
         }

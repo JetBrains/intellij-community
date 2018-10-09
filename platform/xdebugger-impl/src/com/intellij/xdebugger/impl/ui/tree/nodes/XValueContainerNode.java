@@ -227,7 +227,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     }
   }
 
-  @SuppressWarnings("SuspiciousMethodCalls")
   protected int removeChildNode(List children, XDebuggerTreeNode node) {
     int index = children.indexOf(node);
     if (index != -1) {

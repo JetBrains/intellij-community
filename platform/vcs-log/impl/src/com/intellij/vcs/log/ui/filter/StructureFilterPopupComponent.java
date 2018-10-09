@@ -49,8 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 30;

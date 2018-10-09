@@ -571,7 +571,7 @@ public abstract class GroovyRefactoringUtil {
     }
     GrStatement result = blockStatement.getBlock().addStatementBefore(toAdd, null);
     if (result instanceof GrReturnStatement) {
-      //noinspection ConstantConditions,unchecked
+      // noinspection unchecked
       statement = (Type)((GrReturnStatement)result).getReturnValue();
     }
     else {

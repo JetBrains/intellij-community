@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
 
-abstract class GithubDataLoadingComponent<T> : Wrapper() {
+internal abstract class GithubDataLoadingComponent<T> : Wrapper() {
   private var updateFuture: CompletableFuture<Unit>? = null
 
   /**

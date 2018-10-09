@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -41,10 +40,6 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
       }
     }
     return null;
-  }
-
-  @Override
-  public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
   }
 
   @Override
@@ -73,7 +68,7 @@ public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor 
 
               final Editor editor = PsiUtilBase.findEditor(elt);
               assert editor != null;
-              final Color c = ColorChooser.chooseColor(editor.getComponent(), "Choose Color", color, true);
+              final Color c = ColorChooser.chooseColor(editor.getProject(), editor.getComponent(), "Choose Color", color, true);
               if (c != null) {
                 WriteAction.run(() -> colorProvider.setColorTo(elt, c));
               }

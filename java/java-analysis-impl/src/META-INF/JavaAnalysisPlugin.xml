@@ -178,6 +178,7 @@
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousArrayMethodCall" bundle="messages.InspectionsBundle"
                      key="inspection.suspicious.array.method.call.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
@@ -205,7 +206,7 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.InspectionsBundle" key="unused.import.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant 'throws' clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"

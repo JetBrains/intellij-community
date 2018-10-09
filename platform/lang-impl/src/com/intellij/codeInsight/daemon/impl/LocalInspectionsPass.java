@@ -105,7 +105,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @NotNull
   private PsiFile getFile() {
-    //noinspection ConstantConditions
     return myFile;
   }
 
@@ -161,13 +160,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void addDescriptorsFromInjectedResults(@NotNull InspectionManager iManager, @NotNull GlobalInspectionContextImpl context) {
-    InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       PsiFile file = entry.getKey();
       if (file == getFile()) continue; // not injected
-      DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument(file);
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
         LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
@@ -175,22 +170,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
           if (SuppressionUtil.inspectionResultSuppressed(psiElement, toolWrapper.getTool())) continue;
-          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorBase)descriptor).getTextRange());
-          for (TextRange editable : editables) {
-            TextRange hostRange = documentRange.injectedToHost(editable);
-            QuickFix[] fixes = descriptor.getFixes();
-            LocalQuickFix[] localFixes = null;
-            if (fixes != null) {
-              localFixes = new LocalQuickFix[fixes.length];
-              for (int k = 0; k < fixes.length; k++) {
-                QuickFix fix = fixes[k];
-                localFixes[k] = (LocalQuickFix)fix;
-              }
-            }
-            ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(getFile(), hostRange, descriptor.getDescriptionTemplate(),
-                                                                                   descriptor.getHighlightType(), true, localFixes);
-            addDescriptors(toolWrapper, patchedDescriptor, context);
-          }
+
+          addDescriptors(toolWrapper, descriptor, context);
         }
       }
     }
@@ -236,6 +217,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionToolWrapper toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
       if (suppressor instanceof RedundantSuppressionDetector) {
+        if (toolWrappers.stream().anyMatch(LocalInspectionToolWrapper::runForWholeFile)) {
+          return;
+        }
         Set<String> activeTools = toolWrappers.stream().filter(tool -> !tool.isUnfair()).map(tool -> tool.getID()).collect(Collectors.toSet());
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);

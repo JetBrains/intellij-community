@@ -3,7 +3,6 @@ package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -19,7 +18,10 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +92,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) return null;
 
@@ -104,7 +105,6 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  @SuppressWarnings("Duplicates")
   public static PsiElement findCommonParent(@NotNull PsiElement... elements) {
     if (elements.length == 0) return null;
 
@@ -123,13 +123,6 @@ public class PsiTreeUtil {
     if (element1 == element2) return element1;
     PsiFile file1 = element1.getContainingFile();
     PsiFile file2 = element2.getContainingFile();
-    if (file1 != null && file2 != null) {
-      InjectedLanguageManager ilm = InjectedLanguageManager.getInstance(file1.getProject());
-      if (ilm.isInjectedFragment(file1) != ilm.isInjectedFragment(file2)) {
-        // injected and non-injected files have no common ancestor
-        return null;
-      }
-    }
 
     PsiElement topLevel = file1 == file2 ? file1 : null;
 
@@ -1053,12 +1046,14 @@ public class PsiTreeUtil {
     return nextLeaf(parent);
   }
 
+  @NotNull
   public static PsiElement lastChild(@NotNull PsiElement element) {
     PsiElement lastChild = element.getLastChild();
     if (lastChild != null) return lastChild(lastChild);
     return element;
   }
 
+  @NotNull
   public static PsiElement firstChild(@NotNull final PsiElement element) {
     PsiElement child = element.getFirstChild();
     if (child != null) return firstChild(child);

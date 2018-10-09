@@ -25,7 +25,7 @@ public interface SEResultsEqualityProvider {
   }
 
   @NotNull
-  static SEResultsEqualityProvider composite(@NotNull Collection<SEResultsEqualityProvider> providers) {
+  static SEResultsEqualityProvider composite(@NotNull Collection<? extends SEResultsEqualityProvider> providers) {
     return new SEResultsEqualityProvider() {
       @NotNull
       @Override

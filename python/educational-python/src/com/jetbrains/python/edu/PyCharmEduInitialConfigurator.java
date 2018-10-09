@@ -126,7 +126,6 @@ public class PyCharmEduInitialConfigurator {
   }
 
   /**
-   * @noinspection UnusedParameters
    */
   public PyCharmEduInitialConfigurator(MessageBus bus,
                                        CodeInsightSettings codeInsightSettings,

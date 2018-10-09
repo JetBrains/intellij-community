@@ -12,8 +12,10 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,8 +42,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -52,8 +58,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
 
-  protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
-  protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
+  private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
+  private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
@@ -205,14 +211,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull final Consumer<Element> problemSink,
                             @NotNull final Predicate<? super RefEntity> excludedEntities,
                             @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
         if (!excludedEntities.test(elem)) {
-          exportResults(parentNode, elem, excludedDescriptors);
+          exportResults(problemSink, elem, excludedDescriptors);
         }
       }
     });
@@ -258,30 +264,31 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
-    final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
-    exportResults(descriptions, refElement, parentNode, d -> false);
-    final List<Element> list = parentNode.getChildren();
+    final File file = ExportHTMLAction.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
+    boolean exists = file.exists();
+    FileUtil.createParentDirs(file);
+    try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
 
-    @NonNls final String ext = ".xml";
-    final String fileName = myContext.getOutputPath() + File.separator + myToolWrapper.getShortName() + ext;
-    try {
-      FileUtil.createDirectory(new File(myContext.getOutputPath()));
-      final File file = new File(fileName);
-      final StringWriter writer = new StringWriter();
-      if (!file.exists()) {
-        writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE + "=\"")
-          .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
-      }
-      for (Element element : list) {
-        JbXmlOutputter.collapseMacrosAndWrite(element, getContext().getProject(), writer);
+      XMLStreamWriter xmlWriter = XMLOutputFactory.newInstance().createXMLStreamWriter(writer);
+      if (!exists) {
+        xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+        xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
+        xmlWriter.writeCharacters("\n");
+        xmlWriter.close();
       }
 
-      try (PrintWriter printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), CharsetToolkit.UTF8_CHARSET)))) {
-        printWriter.append("\n");
-        printWriter.append(writer.toString());
-      }
+      exportResults(descriptions, refElement, p -> {
+        try {
+          JbXmlOutputter.collapseMacrosAndWrite(p, getContext().getProject(), writer);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }, d -> false);
+
+      writer.append("\n");
     }
-    catch (IOException e) {
+    catch (XMLStreamException | IOException e) {
       LOG.error(e);
     }
   }
@@ -326,29 +333,30 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull Consumer<Element> problemSink,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
     if (descriptions != null) {
-      exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
+      exportResults(descriptions, refEntity, problemSink, isDescriptorExcluded);
     }
   }
 
   private void exportResults(@NotNull final CommonProblemDescriptor[] descriptors,
                              @NotNull RefEntity refEntity,
-                             @NotNull Element parentNode,
+                             @NotNull Consumer<Element> problemSink,
                              @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (isDescriptorExcluded.test(descriptor)) continue;
       int line = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getLineNumber() : -1;
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, line);
+      Element element = refEntity.getRefManager().export(refEntity, line);
       if (element == null) return;
       exportResult(refEntity, descriptor, element);
+      problemSink.accept(element);
     }
   }
 
-  protected void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
+  private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
     final PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
     @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
@@ -512,7 +520,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     };
   }
 
-  public static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
+  private static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
       @NotNull
       @Override
@@ -531,6 +539,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     StreamEx.of(descriptors).select(ProblemDescriptorBase.class).forEach(d -> {
       VirtualFile file = d.getContainingFile();
       if (file != null) {
+        if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
         LOG.assertTrue(file.equals(entityFile), "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
       }
     });

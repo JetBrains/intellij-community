@@ -44,7 +44,7 @@ public class InspectionTestUtil {
   private InspectionTestUtil() {
   }
 
-  protected static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
+  public static void compareWithExpected(Document expectedDoc, Document doc, boolean checkRange) throws Exception {
     List<Element> expectedProblems = new ArrayList<>(expectedDoc.getRootElement().getChildren("problem"));
     List<Element> reportedProblems = new ArrayList<>(doc.getRootElement().getChildren("problem"));
 
@@ -150,7 +150,7 @@ public class InspectionTestUtil {
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
       presentation.updateContent();  //e.g. dead code need check for reachables
-      presentation.exportResults(root, x -> false, x -> false);
+      presentation.exportResults(p -> root.addContent(p), x -> false, x -> false);
     }
 
     try {

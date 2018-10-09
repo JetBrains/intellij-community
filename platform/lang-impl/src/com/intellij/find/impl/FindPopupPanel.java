@@ -169,11 +169,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         {
           init();
           getContentPane().add(new JLabel(), BorderLayout.SOUTH);//remove hardcoded southSection
+          getRootPane().setDefaultButton(null);
         }
 
         @Override
         protected void doOKAction() {
           processCtrlEnter();
+        }
+
+        @Override
+        protected void dispose() {
+          saveSettings();
+          super.dispose();
         }
 
         @NotNull
@@ -197,7 +204,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         protected String getDimensionServiceKey() {
           return SERVICE_KEY;
         }
-
       };
       myDialog.setUndecorated(true);
 
@@ -859,6 +865,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
       @Override
+      public Component getFirstComponent(Container aContainer) {
+        return mySearchComponent;
+      }
+
+      @Override
       public Component getComponentAfter(Container container, Component c) {
         return c == myResultsPreviewTable ? mySearchComponent : super.getComponentAfter(container, c);
       }
@@ -885,7 +896,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private void closeImmediately() {
     if (canBeClosedImmediately() && myDialog != null && myDialog.isVisible()) {
       myIsPinned.set(false);
-      myDialog.getWindow().setVisible(false);
       myDialog.doCancelAction();
     }
   }

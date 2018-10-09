@@ -9,7 +9,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import java.awt.BorderLayout
 
-class GithubPullRequestDetailsComponent(project: Project) : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
+internal class GithubPullRequestDetailsComponent(project: Project) : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
   private val detailsPanel = GithubPullRequestDetailsPanel(project)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 

@@ -198,7 +198,7 @@ public class GuessManagerImpl extends GuessManager {
 
     for (PsiClass derivedClass : processor.getCollection()) {
       if (derivedClass instanceof PsiAnonymousClass) continue;
-      PsiType derivedType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(derivedClass);
+      PsiType derivedType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(derivedClass);
       set.add(derivedType);
     }
   }
@@ -583,7 +583,7 @@ public class GuessManagerImpl extends GuessManager {
           constraint = myInitial;
         }
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
+          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
           if (myConstraint == null) {
             myConstraint = TypeConstraint.empty();
             return;

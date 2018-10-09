@@ -120,6 +120,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide"), EditorColors.INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide.selected"), EditorColors.SELECTED_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number.on.caret.row"), EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline"), EditorColors.TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline.selected"), EditorColors.SELECTED_TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.separator.above"), EditorColors.SEPARATOR_ABOVE_COLOR, ColorDescriptor.Kind.FOREGROUND),

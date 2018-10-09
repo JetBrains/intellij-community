@@ -34,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
@@ -48,8 +48,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final List<Content> myContents = new ArrayList<>();
   private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<>();
 
-  private final Comparator<Content> myContentComparator =
-    (o1, o2) -> getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
+  private final Comparator<Content> myContentComparator = Comparator.comparing(o -> getCellFor(o).getPlaceInGrid());
 
   private final ViewContextEx myViewContext;
 
@@ -237,7 +236,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
       }
 
       if (getParent() instanceof JComponent) {
-        ((JComponent)getParent()).revalidate();
+        getParent().revalidate();
         getParent().repaint();
       }
 
@@ -361,13 +360,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   }
 
   public List<Content> getAttachedContents() {
-    ArrayList<Content> result = new ArrayList<>();
-
-    for (Content each : getContents()) {
-      result.add(each);
-    }
-
-    return result;
+    return new ArrayList<>(getContents());
   }
 
   @Override

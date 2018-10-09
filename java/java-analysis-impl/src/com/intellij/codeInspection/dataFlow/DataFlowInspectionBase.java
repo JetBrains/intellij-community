@@ -700,7 +700,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           if (!current.isDefaultCase()) {
             holder.registerProblem(current,
                                    InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
-                                   new DeleteSwitchLabelFix((PsiSwitchLabelStatement)psiAnchor));
+                                   new DeleteSwitchLabelFix(current));
           }
         }
       }

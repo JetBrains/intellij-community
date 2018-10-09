@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -11,6 +10,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -390,43 +390,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
     }, tooltip.getDismissDelay());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
     return JBColor.link();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
     Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
     return new JBColor(Gray._160, new Color(91, 93, 95));
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
   }
@@ -644,6 +644,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComp
         return factory;
       }
     };
+    String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+    if (editorFontName != null) {
+      String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
+      kit.getStyleSheet().addRule("pre {" + style + "}");
+      text = text.replace("<code>", "<code style='" + style + "'>");
+    }
     pane.setEditorKit(kit);
     pane.setText(text);
 

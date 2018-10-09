@@ -80,7 +80,8 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         if (emailNamePart != null) {
           users.addAll(getUsers(emailNamePart));
         }
-      } else {
+      }
+      else {
         LOG.warn("Can not resolve user name for root " + root);
       }
     }

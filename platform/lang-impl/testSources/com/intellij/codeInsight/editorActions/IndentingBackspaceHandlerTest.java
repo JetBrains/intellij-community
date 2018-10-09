@@ -24,7 +24,6 @@ import org.junit.runner.RunWith;
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/lang-impl/testData/editor/indentingBackspace/")
 public class IndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {

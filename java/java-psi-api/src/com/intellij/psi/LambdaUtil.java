@@ -1032,8 +1032,7 @@ public class LambdaUtil {
   }
 
   private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
-    PsiExpression expr = JavaPsiFacade.getInstance(context.getProject())
-                                      .getElementFactory()
+    PsiExpression expr = JavaPsiFacade.getElementFactory(context.getProject())
                                       .createExpressionFromText(exprText, context);
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
     return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);

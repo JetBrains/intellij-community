@@ -392,7 +392,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
     private static PsiExpression createExpression(final PsiManager psiManager, @NonNls String text) {
       try {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(text, null);
+        return JavaPsiFacade.getElementFactory(psiManager.getProject()).createExpressionFromText(text, null);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

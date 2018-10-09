@@ -162,6 +162,8 @@ public class ProblemDescriptorUtil {
         return HighlightInfoType.INFO;
       case WEAK_WARNING:
         return HighlightInfoType.WEAK_WARNING;
+      case WARNING:
+        return HighlightInfoType.WARNING;
       case ERROR:
         return HighlightInfoType.WRONG_REF;
       case GENERIC_ERROR:

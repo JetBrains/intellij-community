@@ -41,7 +41,6 @@ public class AutoBoxingInspection extends BaseInspection {
   public boolean ignoreAddedToCollection = false;
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls static final Map<String, String> s_boxingClasses = new HashMap<>(8);
 

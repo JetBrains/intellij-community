@@ -607,12 +607,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void cleanUpTempVariables() {
-    List<DfaVariableValue> values = ContainerUtil.filter(myVariableStates.keySet(), ControlFlowAnalyzer::isTempVariable);
-    values.forEach(this::flushVariable);
-  }
-
-  @Override
   public boolean castTopOfStack(@NotNull DfaPsiType type) {
     DfaValue value = unwrap(peek());
 
@@ -1125,7 +1119,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   @Nullable
-  @SuppressWarnings("unchecked")
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -1201,7 +1194,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaConstValue) {
       Object constant = ((DfaConstValue)value).getValue();
       if (Double.valueOf(-0.0).equals(constant)) {
-        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE, null);
+        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE);
       }
     }
     return value;
@@ -1410,7 +1403,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void mergeStacks(DfaMemoryStateImpl other) {
-    List<DfaValue> values = StreamEx.zip(myStack, other.myStack, DfaValue::union).toList();
+    List<DfaValue> values = StreamEx.zip(myStack, other.myStack, DfaValue::unite).toList();
     myStack.clear();
     values.forEach(myStack::push);
   }
@@ -1435,7 +1428,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue var : vars) {
       DfaVariableState state = getVariableState(var);
       DfaVariableState otherState = other.getVariableState(var);
-      setVariableState(var, state.withFacts(state.myFactMap.union(otherState.myFactMap)));
+      setVariableState(var, state.withFacts(state.myFactMap.unite(otherState.myFactMap)));
     }
   }
 

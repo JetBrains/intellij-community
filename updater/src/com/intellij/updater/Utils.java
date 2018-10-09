@@ -81,7 +81,6 @@ public class Utils {
     }
   }
 
-  @SuppressWarnings("BusyWait")
   private static void tryDelete(Path path) throws IOException {
     for (int i = 0; i < 10; i++) {
       try {

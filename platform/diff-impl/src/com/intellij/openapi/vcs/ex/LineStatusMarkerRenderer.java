@@ -255,27 +255,39 @@ public abstract class LineStatusMarkerRenderer {
     List<ChangesBlock> blocks = createMerger(editor).run(ranges, bounds);
     if (blocks.isEmpty()) return null;
 
+    int visibleLineCount = ((EditorImpl)editor).getVisibleLineCount();
+    boolean lastLineSelected = lineNum == visibleLineCount - 1;
+
     ChangesBlock lineBlock = null;
     for (ChangesBlock block : blocks) {
-      for (ChangedLines lines : block.changes) {
-        int dec = lines.line1 < lines.line2 ? 1 : 0;
-        if (lines.line1 <= lineNum && lines.line2 - dec >= lineNum) {
-          lineBlock = block;
-          break;
-        }
+      ChangedLines firstChange = block.changes.get(0);
+      ChangedLines lastChange = block.changes.get(block.changes.size() - 1);
+
+      int line1 = firstChange.line1;
+      int line2 = lastChange.line2;
+
+      int endLine = line1 == line2 ? line2 + 1 : line2;
+      if (line1 <= lineNum && endLine > lineNum) {
+        lineBlock = block;
+        break;
       }
-      if (lineBlock != null) break;
+      if (lastLineSelected && line2 == visibleLineCount) {
+        // special handling for deletion at the end of file
+        lineBlock = block;
+        break;
+      }
+      if (line1 > lineNum) break;
     }
 
     if (lineBlock == null) return null;
 
-    int startLine = lineBlock.changes.get(0).line1;
-    int endLine = lineBlock.changes.get(lineBlock.changes.size() - 1).line2;
+    List<ChangedLines> changes = lineBlock.changes;
+    int startLine = changes.get(0).line1;
+    int endLine = changes.get(changes.size() - 1).line2;
 
-    EditorImpl editorEx = (EditorImpl)editor;
     IntPair area = getGutterArea(editor);
-    int y = editorEx.visualLineToY(startLine);
-    int endY = editorEx.visualLineToY(endLine);
+    int y = editor.visualLineToY(startLine);
+    int endY = editor.visualLineToY(endLine);
     return new Rectangle(area.val1, y, area.val2 - area.val1, endY - y);
   }
 

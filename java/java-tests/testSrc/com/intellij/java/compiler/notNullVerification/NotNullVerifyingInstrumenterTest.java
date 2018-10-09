@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -133,7 +134,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), NullPointerException.class);
       assertEquals("Argument 1 for @NotNull parameter of CustomExceptionType.foo must not be null", e.getCause().getMessage());
     }
@@ -141,6 +141,12 @@ public class NotNullVerifyingInstrumenterTest {
 
   @Test
   public void testEnumConstructorSecondParam() throws Exception {
+    Class testClass = prepareTest();
+    assertNotNull(testClass.getField("Value").get(null));
+  }
+
+  @Test
+  public void testGroovyEnum() throws Exception {
     Class testClass = prepareTest();
     assertNotNull(testClass.getField("Value").get(null));
   }
@@ -158,6 +164,12 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   @Test
+  public void testGroovyInnerClass() throws Exception {
+    Class aClass = prepareTest();
+    assertNotNull(aClass.newInstance());
+  }
+
+  @Test
   public void testSkipBridgeMethods() throws Exception {
     Class<?> testClass = prepareTest();
     try {
@@ -165,7 +177,6 @@ public class NotNullVerifyingInstrumenterTest {
       fail();
     }
     catch (InvocationTargetException e) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       assertInstanceOf(e.getCause(), IllegalArgumentException.class);
       String trace = ExceptionUtil.getThrowableText(e.getCause());
       assertEquals("Exception should happen in real, non-bridge method: " + trace,
@@ -273,47 +284,48 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
-    String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
-    String javaPath = (base + baseClassName) + ".java";
+    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification";
+    String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File classesDir = tempDir.newFolder("output");
 
-    try {
-      List<String> cmdLine = ContainerUtil.newArrayList("-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath());
-      if (withDebugInfo) {
-        cmdLine.add("-g");
-      }
-      cmdLine.add(javaPath);
+    List<String> cmdLine = ContainerUtil.newArrayList("-d", classesDir.getAbsolutePath(), "-classpath", testDir + "/annotations.jar");
+    if (withDebugInfo) cmdLine.add("-g");
+
+    File testFile = new File(testDir, testName + ".java");
+    if (testFile.exists()) {
+      cmdLine.add(testFile.getPath());
       com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
-
-      Class mainClass = null;
-      File[] files = classesDir.listFiles();
-      assertNotNull(files);
-      Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-      boolean modified = false;
-      MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      for (File file: files) {
-        String fileName = file.getName();
-        byte[] content = FileUtil.loadFileBytes(file);
-
-        FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
-
-        byte[] instrumented = writer.toByteArray();
-        String className = FileUtil.getNameWithoutExtension(fileName);
-        Class aClass = classLoader.doDefineClass(className, instrumented);
-        if (className.equals(baseClassName)) {
-          mainClass = aClass;
-        }
+    }
+    else {
+      testFile = new File(testDir, testName + ".groovy");
+      if (testFile.exists()) {
+        cmdLine.add(testFile.getPath());
+        org.codehaus.groovy.tools.FileSystemCompiler.main(ArrayUtil.toStringArray(cmdLine));
       }
-      assertTrue("Class file not instrumented!", modified);
-      assertNotNull("Class " + baseClassName + " not found!", mainClass);
-      return mainClass;
+      else {
+        throw new FileNotFoundException("No test source for " + testName);
+      }
     }
-    finally {
-      FileUtil.delete(classesDir);
+
+    File[] files = classesDir.listFiles();
+    assertNotNull(files);
+    Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    boolean modified = false;
+    MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
+    Class mainClass = null;
+    for (File file: files) {
+      FailSafeClassReader reader = new FailSafeClassReader(FileUtil.loadFileBytes(file));
+      ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+      modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnotations);
+      String className = FileUtil.getNameWithoutExtension(file.getName());
+      Class aClass = classLoader.doDefineClass(className, writer.toByteArray());
+      if (className.equals(testName)) {
+        mainClass = aClass;
+      }
     }
+    assertTrue("Class file not instrumented!", modified);
+    assertNotNull("Class " + testName + " not found!", mainClass);
+    return mainClass;
   }
 
   private static class MyClassLoader extends ClassLoader {

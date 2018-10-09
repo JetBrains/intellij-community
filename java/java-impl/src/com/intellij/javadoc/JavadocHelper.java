@@ -67,7 +67,6 @@ public class JavadocHelper {
    * @param editor    target editor
    * @param project   target project
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public void navigate(@NotNull LogicalPosition position, @NotNull Editor editor, @NotNull final Project project) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
@@ -92,7 +91,6 @@ public class JavadocHelper {
    * @param anchor   descriptor for the target parameter
    * @return         logical position that points to the desired parameter description start location
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
                                                            @NotNull Collection<? extends JavadocParameterInfo> data,
@@ -130,7 +128,6 @@ public class JavadocHelper {
    * @return              pair like (javadoc info for the line identified by the given offset; list of javadoc parameter infos for
    *                      adjacent lines if any
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
     List<JavadocParameterInfo> result = new ArrayList<>();

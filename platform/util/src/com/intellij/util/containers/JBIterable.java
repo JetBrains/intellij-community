@@ -290,13 +290,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   @Nullable
   private Collection<E> asCollection() {
-    //noinspection CastConflictsWithInstanceof
     return content instanceof Collection ? (Collection<E>)content : null;
   }
 
   @Nullable
   private Iterable<E> asIterable() {
-    //noinspection CastConflictsWithInstanceof
     return content instanceof Iterable ? (Iterable<E>)content : null;
   }
 

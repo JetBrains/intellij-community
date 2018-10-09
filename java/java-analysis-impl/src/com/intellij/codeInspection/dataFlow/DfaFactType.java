@@ -67,7 +67,7 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    DfaNullability unionFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
+    DfaNullability uniteFacts(@NotNull DfaNullability left, @NotNull DfaNullability right) {
       return left == right ? left : DfaNullability.FLUSHED;
     }
 
@@ -113,8 +113,8 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @NotNull
     @Override
-    Mutability unionFacts(@NotNull Mutability left, @NotNull Mutability right) {
-      return left.union(right);
+    Mutability uniteFacts(@NotNull Mutability left, @NotNull Mutability right) {
+      return left.unite(right);
     }
 
     @NotNull
@@ -179,8 +179,8 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    LongRangeSet unionFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
-      return left.union(right);
+    LongRangeSet uniteFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
+      return left.unite(right);
     }
 
     @Nullable
@@ -228,8 +228,8 @@ public abstract class DfaFactType<T> extends Key<T> {
 
     @Nullable
     @Override
-    TypeConstraint unionFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
-      return left.union(right);
+    TypeConstraint uniteFacts(@NotNull TypeConstraint left, @NotNull TypeConstraint right) {
+      return left.unite(right);
     }
 
     @NotNull
@@ -304,7 +304,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    * @return union fact (null means that the fact can have any value)
    */
   @Nullable
-  T unionFacts(@NotNull T left, @NotNull T right) {
+  T uniteFacts(@NotNull T left, @NotNull T right) {
     return left.equals(right) ? left : null;
   }
 

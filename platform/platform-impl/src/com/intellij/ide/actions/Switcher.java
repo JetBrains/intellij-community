@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -61,8 +62,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -72,11 +73,11 @@ import static javax.swing.KeyStroke.getKeyStroke;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
-  private static final Color BORDER_COLOR = Gray._135;
-  private static final Color SEPARATOR_COLOR = new JBColor(BORDER_COLOR.brighter(), Gray._75);
+  private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
+
   @NonNls private static final String SWITCHER_FEATURE_ID = "switcher";
   private static final Color ON_MOUSE_OVER_BG_COLOR = new JBColor(new Color(231, 242, 249), new Color(77, 80, 84));
   private static int CTRL_KEY;
@@ -298,7 +299,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy", "ConstantConditions"})
+    @SuppressWarnings({"ConstantConditions"})
     SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
@@ -315,16 +316,14 @@ public class Switcher extends AnAction implements DumbAware {
       final Font font = pathLabel.getFont();
       pathLabel.setFont(font.deriveFont(Math.max(10f, font.getSize() - 4f)));
 
-      descriptions = new JPanel(new BorderLayout()) {
-        @Override
-        protected void paintComponent(@NotNull Graphics g) {
-          super.paintComponent(g);
-          g.setColor(UIUtil.isUnderDarcula() ? SEPARATOR_COLOR : BORDER_COLOR);
-          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
-        }
-      };
+      descriptions = new JPanel(new BorderLayout());
 
-      descriptions.setBorder(JBUI.Borders.empty(1, 4));
+      pathLabel.setBorder(JBUI.CurrentTheme.Advertiser.border());
+      pathLabel.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+      pathLabel.setBackground(JBUI.CurrentTheme.Advertiser.background());
+      pathLabel.setOpaque(true);
+
+      descriptions.setBorder(new CustomLineBorder(JBUI.CurrentTheme.Advertiser.borderColor(), JBUI.insetsTop(1)));
       descriptions.add(pathLabel, BorderLayout.CENTER);
       twManager = ToolWindowManager.getInstance(project);
       DefaultListModel twModel = new DefaultListModel();
@@ -385,14 +384,9 @@ public class Switcher extends AnAction implements DumbAware {
         }
       });
 
-      separator = new JPanel() {
-        @Override
-        protected void paintComponent(@NotNull Graphics g) {
-          super.paintComponent(g);
-          g.setColor(SEPARATOR_COLOR);
-          UIUtil.drawLine(g, 0, 0, 0, getHeight());
-        }
-      };
+      separator = new JPanel();
+      separator.setBorder(new CustomLineBorder(SEPARATOR_COLOR, JBUI.insetsLeft(1)));
+      separator.setPreferredSize(JBUI.size(9, 10));
       separator.setBackground(toolWindows.getBackground());
 
       int selectionIndex = -1;

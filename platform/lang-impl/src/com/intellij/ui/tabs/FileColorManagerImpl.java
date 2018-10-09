@@ -104,7 +104,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   @Override
-  @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
     Color color = ourDefaultColors.get(name);
@@ -130,13 +129,11 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     return getState(false);
   }
 
-  @SuppressWarnings({"AutoUnboxing"})
   void loadState(Element state, final boolean shared) {
     myModel.load(state, shared);
   }
 
   @Override
-  @SuppressWarnings({"MethodMayBeStatic"})
   public Collection<String> getColorNames() {
     List<String> sorted = ContainerUtil.newArrayList(ourDefaultColors.keySet());
     Collections.sort(sorted);
@@ -144,7 +141,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   }
 
   @Override
-  @SuppressWarnings({"AutoUnboxing"})
   public void loadState(@NotNull Element state) {
     initProjectLevelConfigurations();
     loadState(state, false);

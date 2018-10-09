@@ -78,7 +78,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final Project project = myReferenceExpression.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiFile targetFile = targetClass.getContainingFile();
 

@@ -356,8 +356,7 @@ idea.fatal.error.notification=disabled
       logFreeDiskSpace("before downloading JREs")
       String[] args = [
         'setupJbre', "-Dintellij.build.target.os=$buildContext.options.targetOS",
-        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion",
-        "-Dintellij.build.bundled.jre.prefix=$buildContext.options.bundledJrePrefix"
+        "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
       ]
       if (buildContext.options.bundledJreBuild != null) {
         args += "-Dintellij.build.bundled.jre.build=$buildContext.options.bundledJreBuild"

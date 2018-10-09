@@ -260,9 +260,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         first.getAnnotationList().replace(factory.createModifierList(allSkippedAnnotations));
       }
 
-      for (GrImportStatement anImport : unresolvedOnDemandImports) {
-        explicated.add(anImport);
-      }
+      explicated.addAll(unresolvedOnDemandImports);
 
       return explicated.toArray(GrImportStatement.EMPTY_ARRAY);
     }

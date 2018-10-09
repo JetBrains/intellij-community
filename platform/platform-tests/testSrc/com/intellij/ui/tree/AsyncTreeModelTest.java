@@ -425,7 +425,6 @@ public final class AsyncTreeModelTest {
       assert !SwingUtilities.isEventDispatchThread() : "test should be started on the main thread";
       long time = System.currentTimeMillis();
       runOnSwingThread(() -> {
-        //noinspection UndesirableClassUsage
         tree = new JTree(createModelForTree(model));
         runOnSwingThreadWhenProcessingDone(() -> consumer.accept(this));
       });
@@ -449,7 +448,6 @@ public final class AsyncTreeModelTest {
     }
 
     void done() {
-      //noinspection unchecked
       promise.setResult(null);
     }
 

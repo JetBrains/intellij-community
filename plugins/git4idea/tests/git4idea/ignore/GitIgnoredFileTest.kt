@@ -4,10 +4,12 @@ package git4idea.ignore
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
+import com.intellij.util.containers.PeekableIteratorWrapper
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitPlatformTest
 import git4idea.test.createRepository
+import org.junit.Assert
 import java.io.File
 
 const val OUT = "out"
@@ -20,7 +22,7 @@ class GitIgnoredFileTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
     createRepository(project, projectPath)
-    GitUtil.generateGitignoreFileIfNeeded(project)
+    GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
   }
 
   override fun setUpModule() {
@@ -45,17 +47,45 @@ class GitIgnoredFileTest : GitPlatformTest() {
     val projectCharset = EncodingProjectManager.getInstance(project).defaultCharset
     val gitIgnoreExpectedContentList = """
         # Default ignored files
+        /.shelf/
         *.iws
-        .shelf
-        $OUT
-        $EXCLUDED
-        $EXCLUDED_CHILD_DIR
+
+        # Project exclude paths
+        /$EXCLUDED/
+        /$EXCLUDED_CHILD_DIR/
+        /$OUT/
     """.trimIndent().lines()
     val gitIgnoreFile = File("$projectPath/$GITIGNORE")
     assertTrue(gitIgnoreFile.exists())
     val generatedGitIgnoreContent = gitIgnoreFile.readText(projectCharset)
     assertFalse("Generated ignore file is empty", generatedGitIgnoreContent.isBlank())
-    assertContainsElements(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+    assertFalse("Generated ignore file content should be system-independent", generatedGitIgnoreContent.contains('\\'))
+    assertIncludesAllOrdered(generatedGitIgnoreContent.lines(), gitIgnoreExpectedContentList)
+  }
+
+  private fun assertIncludesAllOrdered(actualList: List<String>, expectedList: List<String>) {
+    val expectedIt = PeekableIteratorWrapper(expectedList.iterator())
+    val actualIt = PeekableIteratorWrapper(actualList.iterator())
+
+    while (actualIt.hasNext() && expectedIt.hasNext()) {
+      val expected = expectedIt.peek()
+      val actual = actualIt.peek()
+      if (expected == actual) {
+        expectedIt.next()
+        actualIt.next()
+      }
+      else {
+        actualIt.next()
+      }
+    }
+
+    if(expectedIt.hasNext()){
+      Assert.fail("""
+         Expected: $expectedList
+         Actual: $actualList
+         Not included in the same order.
+      """.trimIndent())
+    }
   }
 
   private fun VirtualFile.findOrCreateDir(dirName: String) = this.findChild(dirName) ?: createChildDirectory(this, dirName)

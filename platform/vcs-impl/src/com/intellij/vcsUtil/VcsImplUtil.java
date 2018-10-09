@@ -55,14 +55,16 @@ public class VcsImplUtil {
     return Registry.is("vcs.non.modal.commit");
   }
 
-  public static boolean generateIgnoreFileIfNeeded(@NotNull Project project, @NotNull AbstractVcs vcs) {
+  public static boolean generateIgnoreFileIfNeeded(@NotNull Project project,
+                                                   @NotNull AbstractVcs vcs,
+                                                   @NotNull VirtualFile ignoreFileRoot) {
     IgnoredFileGenerator ignoredFileGenerator = ServiceManager.getService(project, IgnoredFileGenerator.class);
     if (ignoredFileGenerator == null) {
       LOG.debug("Cannot find ignore file ignoredFileGenerator for " + vcs.getName() + " VCS");
       return false;
     }
     try {
-      return ignoredFileGenerator.generateFile(vcs);
+      return ignoredFileGenerator.generateFile(ignoreFileRoot, vcs);
     }
     catch (IOException e) {
       LOG.warn(e);

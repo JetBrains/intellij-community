@@ -1049,7 +1049,7 @@ public class GitUtil {
     return findRealRepositoryDir(rootDir, pathToDir) != null;
   }
 
-  public static void generateGitignoreFileIfNeeded(@NotNull Project project){
-    VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project));
+  public static void generateGitignoreFileIfNeeded(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+    VcsImplUtil.generateIgnoreFileIfNeeded(project, GitVcs.getInstance(project), ignoreFileRoot);
   }
 }

@@ -60,7 +60,7 @@ public class GitPushRepoResult {
 
   @NotNull
   public static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
-                                             @NotNull List<GitPushNativeResult> tagResults,
+                                             @NotNull List<? extends GitPushNativeResult> tagResults,
                                              int commits,
                                              @NotNull GitLocalBranch source,
                                              @NotNull GitRemoteBranch target) {

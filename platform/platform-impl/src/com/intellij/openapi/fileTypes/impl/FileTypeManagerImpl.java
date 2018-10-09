@@ -250,7 +250,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     });
 
-    //noinspection SpellCheckingInspection
     myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
     // this should be done BEFORE reading state

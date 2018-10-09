@@ -114,7 +114,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
     myManager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     myCodeStyleManager = CodeStyleManager.getInstance(myProject);
     myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
@@ -1026,8 +1026,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private void inlineParmOrThisVariable(PsiLocalVariable variable, boolean strictlyFinal) throws IncorrectOperationException {
     PsiReference firstRef = ReferencesSearch.search(variable).findFirst();
 
+    PsiExpression initializer = variable.getInitializer();
     if (firstRef == null) {
-      variable.getParent().delete(); //Q: side effects?
+      if (initializer != null && SideEffectChecker.mayHaveSideEffects(initializer)) {
+        RemoveUnusedVariableUtil.replaceElementWithExpression(initializer, PsiElementFactory.SERVICE.getInstance(myProject), variable);
+      }
+      else {
+        variable.getParent().delete();
+      }
       return;
     }
 
@@ -1043,7 +1049,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    PsiExpression initializer = variable.getInitializer();
     boolean shouldBeFinal = variable.hasModifierProperty(PsiModifier.FINAL) && strictlyFinal;
     if (canInlineParmOrThisVariable(initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting)) {
       if (shouldBeFinal) {
@@ -1060,7 +1065,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
       final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
       if (RefactoringChangeUtil.getThisClass(ref) != varThisClass) {
-        initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
+        initializer = JavaPsiFacade.getElementFactory(myManager.getProject()).createExpressionFromText(varThisClass.getName() + ".this", variable);
       }
     }
 
@@ -1153,7 +1158,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
     else if (initializer instanceof PsiCallExpression) {
-      if (accessCount > 1) return false;
+      if (accessCount != 1) return false;//don't allow deleting probable side effects or multiply those side effects
       if (initializer instanceof PsiNewExpression) {
         final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
         if (arrayInitializer != null) {

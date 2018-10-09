@@ -1559,12 +1559,16 @@ public class JBUI {
     public static class ToolWindow {
       @NotNull
       public static Color tabSelectedBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
       }
 
       @NotNull
       public static Color tabSelectedActiveBackground() {
-        return JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+        return Registry.is("toolwindow.active.tab.use.contrast.background")
+               ? Registry.getColor("toolwindow.active.tab.contrast.background.color", JBColor.GRAY)
+               : JBColor.namedColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
       @NotNull
@@ -1795,6 +1799,26 @@ public class JBUI {
 
       public static Color advertiserBackground()  {
         return JBColor.namedColor("SearchEverywhere.Advertiser.background", 0xf2f2f2);
+      }
+    }
+
+    public static class Advertiser {
+      private static final JBInsets DEFAULT_AD_INSETS = insets(1, 5);
+
+      public static Color foreground() {
+        return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
+      }
+
+      public static Color background() {
+        return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
+      }
+
+      public static Border border() {
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+      }
+
+      public static Color borderColor() {
+        return JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
       }
     }
 

@@ -42,7 +42,7 @@ public class InstallPluginInfo {
       closeStatusBarIndicator();
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, success);
+      myPluginModel.finishInstall(myDescriptor, success, true);
     }
   }
 

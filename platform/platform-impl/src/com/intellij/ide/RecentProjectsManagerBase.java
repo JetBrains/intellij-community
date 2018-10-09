@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -391,16 +391,15 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   protected static Icon getSmallApplicationIcon() {
     if (ourSmallAppIcon == null) {
       try {
-        Icon appIcon = IconLoader.findIcon(ApplicationInfoEx.getInstanceEx().getIconUrl());
+        Icon appIcon = ProductIcons.getInstance().getProductIcon();
 
-        if (appIcon != null) {
-          if (appIcon.getIconWidth() == JBUI.pixScale(16) && appIcon.getIconHeight() == JBUI.pixScale(16)) {
-            ourSmallAppIcon = appIcon;
-          } else {
-            BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
-            image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
-            ourSmallAppIcon = toRetinaAwareIcon(image);
-          }
+        if (appIcon.getIconWidth() == JBUI.pixScale(16) && appIcon.getIconHeight() == JBUI.pixScale(16)) {
+          ourSmallAppIcon = appIcon;
+        }
+        else {
+          BufferedImage image = ImageUtil.toBufferedImage(IconUtil.toImage(appIcon));
+          image = Scalr.resize(image, Scalr.Method.ULTRA_QUALITY, UIUtil.isRetina() ? 32 : (int)JBUI.pixScale(16));
+          ourSmallAppIcon = toRetinaAwareIcon(image);
         }
       }
       catch (Exception e) {//
@@ -488,9 +487,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
         actions.add(new ProjectGroupActionGroup(group, children));
         if (group.isExpanded()) {
-          for (AnAction child : children) {
-            actions.add(child);
-          }
+          actions.addAll(children);
         }
       }
     }

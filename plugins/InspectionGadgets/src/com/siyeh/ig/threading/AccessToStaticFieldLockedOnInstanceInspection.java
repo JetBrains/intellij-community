@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -31,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 
 public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspection {
 
@@ -83,6 +86,14 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
       final PsiField lockedField = (PsiField)target;
       if (!lockedField.hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isConstant(lockedField)) {
         return;
+      }
+      if (lockedField.hasModifierProperty(PsiModifier.FINAL)) {
+        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(lockedField.getType());
+        final ConcurrencyAnnotationsManager annotationsManager = ConcurrencyAnnotationsManager.getInstance(expression.getProject());
+        final List<String> list = annotationsManager.getThreadSafeList();
+        if (AnnotationUtil.findAnnotation(aClass, list) != null) {
+          return;
+        }
       }
       final PsiClass containingClass = lockedField.getContainingClass();
       if (!PsiTreeUtil.isAncestor(containingClass, expression, false)) {

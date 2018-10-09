@@ -21,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * @since 12.0
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)

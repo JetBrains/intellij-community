@@ -41,7 +41,6 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");

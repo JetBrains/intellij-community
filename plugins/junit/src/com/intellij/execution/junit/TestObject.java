@@ -342,7 +342,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       @NotNull
       @Override
       protected BaseOutputReader.Options readerOptions() {
-        return BaseOutputReader.Options.BLOCKING;
+        return BaseOutputReader.Options.forMostlySilentProcess();
       }
     };
     ProcessTerminatedListener.attach(processHandler);

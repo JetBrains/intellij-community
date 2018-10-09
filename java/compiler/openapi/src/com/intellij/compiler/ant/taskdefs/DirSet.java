@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NonNls;
 public class DirSet extends Tag{
 
   public DirSet(@NonNls final String dir) {
-    //noinspection HardCodedStringLiteral
     super("dirset", Couple.of("dir", dir));
   }
 }

@@ -225,7 +225,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   private static Comment[] parseComments(Element notes) {
     if (notes == null) return Comment.EMPTY_ARRAY;
     final List<Comment> result = new ArrayList<>();
-    //noinspection unchecked
     for (Element note : (List<Element>)notes.getChildren("note")) {
       final String text = note.getChildText("text");
       if (text == null) continue;

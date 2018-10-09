@@ -398,7 +398,6 @@ class AssociationsEditor {
 
     @Override
     protected String getContainerText(PsiFile psiElement, String string) {
-      //noinspection ConstantConditions
       return "(" + psiElement.getVirtualFile().getParent().getPresentableUrl() + ")";
     }
 

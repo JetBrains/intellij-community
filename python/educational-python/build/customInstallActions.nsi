@@ -48,15 +48,18 @@ FunctionEnd
 
 Function customSilentConfigReader
   Call customPreInstallActions
+  ${LogText} "silent installation, options"
 
   ${GetParameters} $R0
   ClearErrors
 
   ${GetOptions} $R0 /CONFIG= $R1
   IfErrors no_silent_config
+  ${LogText} "  config file: $R1"
 
   ${ConfigRead} "$R1" "mode=" $R0
   IfErrors no_silent_config
+  ${LogText} "  mode: $R0"
   StrCpy $silentMode "user"
   IfErrors run_in_user_mode
   StrCpy $silentMode $R0
@@ -66,12 +69,14 @@ run_in_user_mode:
   ClearErrors
   ${ConfigRead} "$R1" "launcher32=" $R3
   IfErrors launcher_64
+  ${LogText} "  shortcut for launcher32: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
   IfErrors update_PATH
+  ${LogText} "  shortcut for launcher64: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
 
@@ -79,6 +84,7 @@ update_PATH:
   ClearErrors
   ${ConfigRead} "$R1" "updatePATH=" $R3
   IfErrors download_jre32
+  ${LogText} "  update PATH env var: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
@@ -86,6 +92,7 @@ download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors download_python2
+  ${LogText} "  download jre32: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
@@ -95,6 +102,7 @@ download_python2:
   ClearErrors
   ${ConfigRead} "$R1" "python2=" $R3
   IfErrors download_python3
+  ${LogText} "  download python2: $R3"
   StrCmp $R3 "1" 0 download_python3
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "State" $R3
 
@@ -102,6 +110,7 @@ download_python3:
   ClearErrors
   ${ConfigRead} "$R1" "python3=" $R3
   IfErrors associations
+  ${LogText} "  download python3: $R3"
   StrCmp $R3 "1" 0 associations
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "State" $R3
 
@@ -119,6 +128,7 @@ loop:
   IntOp $R0 $R0 + 1
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+  ${LogText} "  association: $0, state: $R3"
   goto loop
 
 update_settings:
@@ -177,15 +187,21 @@ verefy_python_launcher:
 get_python:
   StrCmp $internetConnection "No" skip_python_download
   CreateDirectory "$INSTDIR\python"
+  ${LogText} "download python_$R8"
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
   ${If} $0 == "OK"
+    ${LogText} "install python_$R8"
     ExecDos::exec /NOUNLOAD /ASYNC '$R7"$INSTDIR\python\python_$R8" $R9'
   ${Else}
+    ${LogText} "The python_$R8 download is failed: $0"
     MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0" /SD IDOK
   ${EndIf}
 python_exists:
-skip_python_download:  
+  Goto done
+skip_python_download:
+  ${LogText} "no internet connection"
+done:
 FunctionEnd
 
 Function customPostInstallActions
@@ -233,6 +249,7 @@ FunctionEnd
 
 Function searchPython
 ; $R2 - version of python
+  ${LogText} "search a Python version"
   StrCpy $0 "HKCU"
   StrCpy $1 "Software\Python\PythonCore\$R2\InstallPath"
   StrCpy $2 ""

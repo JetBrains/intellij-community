@@ -2,7 +2,9 @@
 
 package com.intellij.openapi.options.binding;
 
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,6 +48,40 @@ public abstract class ValueAccessor<V> {
         from.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
           protected void textChanged(@NotNull DocumentEvent e) {
+            listener.run();
+          }
+        });
+      }
+    };
+  }
+
+  public static ControlValueAccessor editorTextFieldAccessor(final EditorTextField from) {
+    return new ControlValueAccessor<String>() {
+      @Override
+      public String getValue() {
+        return from.getText();
+      }
+
+      @Override
+      public void setValue(String value) {
+        from.setText(value);
+      }
+
+      @Override
+      public Class<String> getType() {
+        return String.class;
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return from.isEnabled();
+      }
+
+      @Override
+      public void addChangeListener(final Runnable listener) {
+        from.getDocument().addDocumentListener(new DocumentListener() {
+          @Override
+          public void documentChanged(@NotNull com.intellij.openapi.editor.event.DocumentEvent event) {
             listener.run();
           }
         });

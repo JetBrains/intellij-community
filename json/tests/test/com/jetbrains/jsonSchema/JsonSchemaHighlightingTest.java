@@ -1009,4 +1009,37 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                 "  \"startTime\": <warning descr=\"Type is not allowed. Expected one of: number, string.\">null</warning>\n" +
                 "}");
   }
+
+  public void testReferenceById() throws Exception {
+    doTest("{\n" +
+           "  \"type\": \"object\",\n" +
+           "\n" +
+           "  \"properties\": {\n" +
+           "    \"a\": {\n" +
+           "      \"$id\": \"#aa\",\n" +
+           "      \"type\": \"object\"\n" +
+           "    }\n" +
+           "  },\n" +
+           "  \"patternProperties\": {\n" +
+           "    \"aa\": {\n" +
+           "      \"type\": \"object\"\n" +
+           "    },\n" +
+           "    \"bb\": {\n" +
+           "      \"$ref\": \"#aa\"\n" +
+           "    }\n" +
+           "  }\n" +
+           "}", "{\n" +
+                "  \"aa\": {\n" +
+                "    \"type\": \"string\"\n" +
+                "  },\n" +
+                "  \"bb\": <warning>578</warning>\n" +
+                "}\n" +
+                "\n");
+  }
+
+  public void testComplicatedConditions() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions_schema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
+    doTest(schemaText, inputText);
+  }
 }

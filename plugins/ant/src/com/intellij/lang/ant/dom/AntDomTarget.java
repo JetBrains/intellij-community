@@ -22,7 +22,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomTarget extends AntDomNamedElement{
 
   @Attribute("if")

@@ -47,7 +47,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
   public static final String DESCRIPTION_START = "Push of current branch ";
 
   private final Project myProject;
-  private final Collection<GitRepository> myRepositories;
+  private final Collection<? extends GitRepository> myRepositories;
   private final boolean myRebaseOverMergeProblemDetected;
   private final JCheckBox myUpdateAllRoots;
   private final RebaseAction myRebaseAction;
@@ -55,7 +55,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
   private final JCheckBox myAutoUpdateInFuture;
 
   protected GitRejectedPushUpdateDialog(@NotNull Project project,
-                                        @NotNull Collection<GitRepository> repositories,
+                                        @NotNull Collection<? extends GitRepository> repositories,
                                         @NotNull PushUpdateSettings initialSettings,
                                         boolean rebaseOverMergeProblemDetected) {
     super(project);

@@ -24,8 +24,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -393,7 +393,7 @@ public class LaterInvocator {
   private static final AtomicBoolean FLUSHER_SCHEDULED = new AtomicBoolean(false);
 
   private static class FlushQueue implements Runnable {
-    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private RunnableInfo myLastInfo;
+    private RunnableInfo myLastInfo;
 
     @Override
     public void run() {

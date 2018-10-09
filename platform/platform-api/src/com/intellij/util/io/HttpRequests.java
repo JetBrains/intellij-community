@@ -406,7 +406,6 @@ public final class HttpRequests {
         if (indicator != null) {
           int contentLength = getConnection().getContentLength();
           if (contentLength > 0) {
-            //noinspection IOResourceOpenedButNotSafelyClosed
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
         }

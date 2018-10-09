@@ -31,7 +31,6 @@ import java.io.IOException;
  * @author Vladislav.Soroka
  * @since 6/30/2014
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test

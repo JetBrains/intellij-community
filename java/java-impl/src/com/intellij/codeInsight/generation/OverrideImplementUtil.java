@@ -199,7 +199,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       result.getModifierList().setModifierProperty(PsiModifier.SYNCHRONIZED, true);
     }
 
-    final PsiCodeBlock body = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createCodeBlockFromText("{}", null);
+    final PsiCodeBlock body = JavaPsiFacade.getElementFactory(method.getProject()).createCodeBlockFromText("{}", null);
     PsiCodeBlock oldBody = result.getBody();
     if (oldBody != null) {
       oldBody.replace(body);
@@ -365,7 +365,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     JavaTemplateUtil.setClassAndMethodNameProperties(properties, targetClass, result);
 
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
-    if (factory == null) factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
+    if (factory == null) factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
     @NonNls String methodText;
 
     try {
@@ -514,7 +514,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
       int offset = editor.getCaretModel().getOffset();
       PsiElement brace = aClass.getLBrace();
       if (brace == null) {
-        PsiClass psiClass = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createClass("X");
+        PsiClass psiClass = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass("X");
         brace = aClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), aClass.getLastChild());
         LOG.assertTrue(brace != null, aClass.getLastChild());
       }

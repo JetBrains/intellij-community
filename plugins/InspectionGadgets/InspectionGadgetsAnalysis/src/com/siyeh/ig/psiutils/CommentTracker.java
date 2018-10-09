@@ -208,6 +208,7 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    List<PsiElement> suffix = grabSuffixComments(element);
     PsiElement result = replace(element, replacement);
     PsiElement anchor = PsiTreeUtil
       .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
@@ -221,8 +222,42 @@ public final class CommentTracker {
       anchor = anchor.getParent();
     }
     if (anchor == null) anchor = result;
+    restoreSuffixComments(result, suffix);
     insertCommentsBefore(anchor);
     return result;
+  }
+
+  @NotNull
+  private List<PsiElement> grabSuffixComments(@NotNull PsiElement element) {
+    if (!(element instanceof PsiStatement)) {
+      return Collections.emptyList();
+    }
+    List<PsiElement> suffix = new ArrayList<>();
+    PsiElement lastChild = element.getLastChild();
+    boolean hasComment = false;
+    while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
+      hasComment |= lastChild instanceof PsiComment;
+      if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
+        suffix.add(markUnchanged(lastChild).copy());
+      }
+      lastChild = lastChild.getPrevSibling();
+    }
+    return hasComment ? suffix : Collections.emptyList();
+  }
+
+  private static void restoreSuffixComments(PsiElement target, List<PsiElement> suffix) {
+    if (!suffix.isEmpty()) {
+      PsiElement lastChild = target.getLastChild();
+      if (lastChild instanceof PsiComment && JavaTokenType.END_OF_LINE_COMMENT.equals(((PsiComment)lastChild).getTokenType())) {
+        PsiElement nextSibling = target.getNextSibling();
+        if (nextSibling instanceof PsiWhiteSpace) {
+          target.add(nextSibling);
+        } else {
+          target.add(PsiParserFacade.SERVICE.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
+        }
+      }
+      StreamEx.ofReversed(suffix).forEach(target::add);
+    }
   }
 
   /**

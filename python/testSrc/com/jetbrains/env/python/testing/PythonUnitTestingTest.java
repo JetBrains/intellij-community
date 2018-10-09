@@ -612,7 +612,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
                                       "....(i=8)(-)\n" +
                                       "....(i=9)(+)\n";
         final String tree = runner.getFormattedTestTree();
-        assertEquals("Bad tree:" + tree, expectedResult, tree);
+        assertEquals("Bad tree:" + tree + ". \nStdout:" + stdout + "\n. Stderr: " + stderr, expectedResult, tree);
       }
     });
   }

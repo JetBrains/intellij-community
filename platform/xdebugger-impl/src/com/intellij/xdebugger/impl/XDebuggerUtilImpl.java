@@ -260,7 +260,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             for (XLineBreakpointType.XLineBreakpointVariant variant : variants) {
               TextRange range = variant.getHighlightRange();
               if (range != null && range.contains(caretOffset)) {
-                //noinspection ConstantConditions
                 if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
                   defaultVariant = variant;
                 }

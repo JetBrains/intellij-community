@@ -306,17 +306,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
           return;
         }
 
-        ApplicationManager.getApplication().runReadAction(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.rebuildCache();
-          }
-        }
-        );
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.updateTree();
-          }
-        }, ModalityState.NON_MODAL);
+        refresh();
       }, IdeBundle.message("progress.looking.for.todos"), false, myProject));
     }
   }

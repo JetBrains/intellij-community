@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 /**
  * @author Maxim.Medvedev
  */
-@SuppressWarnings({"MethodMayBeStatic"})
 public class GdkMethodDslProvider implements GdslMembersProvider {
 
   public void category(String className, GdslMembersHolderConsumer consumer) {

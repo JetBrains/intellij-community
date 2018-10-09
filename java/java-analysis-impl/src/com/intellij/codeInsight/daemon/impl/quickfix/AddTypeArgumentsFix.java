@@ -96,7 +96,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
             mappings[i] = GenericsUtil.eliminateWildcards(substitution, false);
           }
 
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+          final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
           PsiMethodCallExpression copy = (PsiMethodCallExpression)expression.copy();
           final PsiReferenceExpression methodExpression = copy.getMethodExpression();
           final PsiReferenceParameterList parameterList = methodExpression.getParameterList();

@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -614,6 +615,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         myPointers.clear();
         myPointers.putAll(shelvedPointers);
       }
+    }
+  }
+
+  synchronized Collection<VirtualFilePointer> dumpPointers() {
+    Collection<VirtualFilePointer> result = new THashSet<>();
+    for (FilePointerPartNode node : myPointers.values()) {
+      dumpPointersTo(node, result);
+    }
+    return result;
+  }
+
+  private static void dumpPointersTo(FilePointerPartNode node, Collection<? super VirtualFilePointer> result) {
+    node.addAllPointersTo(result);
+    for (FilePointerPartNode child : node.children) {
+      dumpPointersTo(child, result);
     }
   }
 }

@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -226,7 +226,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return info;
   }
 
-  public void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success) {
+  public void finishInstall(@NotNull IdeaPluginDescriptor descriptor, boolean success, boolean showErrors) {
     InstallPluginInfo info = finishInstall(descriptor);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -281,7 +281,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     info.indicator.cancel();
 
-    if (!success) {
+    if (!success && showErrors) {
       Messages.showErrorDialog("Plugin " + descriptor.getName() + " download or installing failed",
                                IdeBundle.message("action.download.and.install.plugin"));
     }
@@ -440,6 +440,23 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     for (PluginsGroup group : myEnabledGroups) {
       group.titleWithEnabled(this);
     }
+  }
+
+  public boolean showUninstallDialog(@NotNull List<CellPluginComponent> selection) {
+    int size = selection.size();
+    return showUninstallDialog(size == 1 ? selection.get(0).myPlugin.getName() : null, size);
+  }
+
+  public boolean showUninstallDialog(@Nullable String singleName, int count) {
+    String message;
+    if (singleName == null) {
+      message = IdeBundle.message("prompt.uninstall.several.plugins", count);
+    }
+    else {
+      message = IdeBundle.message("prompt.uninstall.plugin", singleName);
+    }
+
+    return Messages.showYesNoDialog(message, IdeBundle.message("title.plugin.uninstall"), Messages.getQuestionIcon()) == Messages.YES;
   }
 
   public void doUninstall(@NotNull Component uiParent, @NotNull IdeaPluginDescriptor descriptor, @Nullable Runnable update) {

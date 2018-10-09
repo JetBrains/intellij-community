@@ -44,7 +44,6 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     SETTING, ACTION
   }
 
-  @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   private static class AllScopeHolder {
     @NotNull
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";

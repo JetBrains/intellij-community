@@ -354,7 +354,7 @@ public class RefactoringUtil {
   }
 
   public static PsiType getTypeByExpressionWithExpectedType(PsiExpression expr) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     PsiType typeByExpression = getTypeByExpression(expr, factory);
     PsiType type = typeByExpression;
     final boolean isFunctionalType = LambdaUtil.notInferredType(type);
@@ -377,7 +377,7 @@ public class RefactoringUtil {
   }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     PsiType type = getTypeByExpression(expr, factory);
     if (LambdaUtil.notInferredType(type)) {
       type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
@@ -569,7 +569,7 @@ public class RefactoringUtil {
     final String prefix = suggestedNames.length > 0 ? suggestedNames[0] : "var";
     final String id = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(prefix, context, true);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(expr.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
 
     if (expr instanceof PsiParenthesizedExpression) {
       PsiExpression expr1 = ((PsiParenthesizedExpression)expr).getExpression();
@@ -648,7 +648,7 @@ public class RefactoringUtil {
       return initializer;
     }
     LOG.assertTrue(initializerType instanceof PsiArrayType);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(initializer.getProject());
     PsiNewExpression result =
       (PsiNewExpression)factory.createExpressionFromText("new " + initializerType.getPresentableText() + "{}", null);
     result = (PsiNewExpression)CodeStyleManager.getInstance(initializer.getProject()).reformat(result);
@@ -893,7 +893,7 @@ public class RefactoringUtil {
                                                     PsiElement finalAnchorStatement,
                                                     boolean replaceBody)
     throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(container.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(container.getProject());
     if(isLoopOrIf(container)) {
       PsiStatement loopBody = getLoopBody(container, finalAnchorStatement);
       PsiStatement loopBodyCopy = loopBody != null ? (PsiStatement) loopBody.copy() : null;
@@ -1199,7 +1199,7 @@ public class RefactoringUtil {
   }
 
   private static PsiDocTag createParamTag(PsiParameter parameter) {
-    return JavaPsiFacade.getInstance(parameter.getProject()).getElementFactory().createParamTag(parameter.getName(), "");
+    return JavaPsiFacade.getElementFactory(parameter.getProject()).createParamTag(parameter.getName(), "");
   }
 
   public static PsiDirectory createPackageDirectoryInSourceRoot(PackageWrapper aPackage, final VirtualFile sourceRoot)
@@ -1344,7 +1344,7 @@ public class RefactoringUtil {
 
     Arrays.sort(typeParameters, Comparator.comparingInt(tp -> tp.getTextRange().getStartOffset()));
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(elements[0].getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(elements[0].getProject());
     try {
       final PsiClass aClass = elementFactory.createClassFromText("class A {}", null);
       PsiTypeParameterList list = aClass.getTypeParameterList();

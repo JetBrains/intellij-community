@@ -151,7 +151,6 @@ public class ClassPath {
       synchronized (myUrls) {
         if (myUrls.empty()) {
           if (myCanUseCache) {
-            myCache.nameSymbolsLoaded();
             myAllUrlsWereProcessed = true;
           }
           return null;
@@ -252,11 +251,9 @@ public class ClassPath {
       }
       
       if (lastOne) {
-        myCache.nameSymbolsLoaded();
         myAllUrlsWereProcessed = true;
       }
       myLastLoaderProcessed.incrementAndGet();
-      //assert myLastLoaderProcessed.get() == myLoaders.size();
     }
     myLoaders.add(loader);
     myLoadersMap.put(url, loader);

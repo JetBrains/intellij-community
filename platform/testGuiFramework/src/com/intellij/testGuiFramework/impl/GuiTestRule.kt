@@ -287,8 +287,8 @@ class GuiTestRule(private val projectsFolder: File) : TestRule {
     }
   }
 
-  fun findWelcomeFrame(): WelcomeFrameFixture {
-    return WelcomeFrameFixture.find(robot())
+  fun findWelcomeFrame(timeout: org.fest.swing.timing.Timeout = Timeouts.minutes05): WelcomeFrameFixture {
+    return WelcomeFrameFixture.find(robot(), timeout)
   }
 
   fun findNewProjectWizard(): NewProjectWizardFixture {

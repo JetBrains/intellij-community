@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -61,6 +62,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
+        MavenActionsUsagesCollector.trigger(event.getProject(), this, event);
         ProgramRunnerUtil.executeConfiguration(mySettings, myExecutor);
       }
     }

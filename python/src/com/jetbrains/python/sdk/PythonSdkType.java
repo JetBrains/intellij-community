@@ -76,8 +76,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -493,7 +495,6 @@ public final class PythonSdkType extends SdkType {
       notificationMessage = e.getMessage() + "\n<a href=\"#\">Launch vagrant and refresh skeletons</a>";
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
       notificationListener =
         (notification, event) -> {
@@ -661,7 +662,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findSdkByPath(List<Sdk> sdkList, @Nullable String path) {
+  public static Sdk findSdkByPath(List<? extends Sdk> sdkList, @Nullable String path) {
     if (path != null) {
       for (Sdk sdk : sdkList) {
         if (sdk != null && FileUtil.pathsEqual(path, sdk.getHomePath())) {
@@ -762,7 +763,7 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static Sdk findPython2Sdk(@NotNull List<Sdk> sdks) {
+  public static Sdk findPython2Sdk(@NotNull List<? extends Sdk> sdks) {
     for (Sdk sdk : ContainerUtil.sorted(sdks, PreferredSdkComparator.INSTANCE)) {
       if (getLanguageLevelForSdk(sdk).isPython2()) {
         return sdk;

@@ -101,7 +101,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
       int enteredCount = enteredExpressions.length;
       if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1) &&
-          (!virtualComma || enteredCount > currentMethodParameterCount)) {
+          (!virtualComma || !currentMethod.isVarArgs() && enteredCount > currentMethodParameterCount)) {
         // when parameter list has been edited, but popup wasn't updated for some reason
         return;
       }
@@ -168,7 +168,10 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   }
 
   private static String getParameterKey(PsiMethod method, int parameterIndex) {
-    PsiParameter parameter = method.getParameterList().getParameters()[parameterIndex];
-    return parameter.getName() + ":" + parameter.getType().getCanonicalText();
+    int parameterCount = method.getParameterList().getParametersCount();
+    int mainIndex = method.isVarArgs() && parameterIndex >= parameterCount ? parameterCount - 1 : parameterIndex;
+    int subIndex = parameterIndex - mainIndex;
+    PsiParameter parameter = method.getParameterList().getParameters()[mainIndex];
+    return parameter.getName() + ":" + parameter.getType().getCanonicalText() + (subIndex == 0 ? "" : (":" + subIndex));
   }
 }

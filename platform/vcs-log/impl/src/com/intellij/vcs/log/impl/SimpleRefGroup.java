@@ -24,8 +24,8 @@ import com.intellij.vcs.log.VcsRefType;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class SimpleRefGroup implements RefGroup {
   @NotNull private final String myName;

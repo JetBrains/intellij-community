@@ -43,7 +43,6 @@ public class CustomLoadingExtensionPointBean extends AbstractExtensionPointBean 
                                    (myPluginDescriptor == null ? "<not available>" : myPluginDescriptor.getPluginId()) + ". " +
                                    "Check if 'implementationClass' attribute is specified");
       }
-      //noinspection unchecked
       return instantiate(findClass(implementationClass), picoContainer, true);
     }
   }

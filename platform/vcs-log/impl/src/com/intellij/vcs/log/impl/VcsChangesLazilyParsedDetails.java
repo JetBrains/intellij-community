@@ -266,9 +266,9 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
   public static class ParsedChanges implements Changes {
     @NotNull private final Collection<Change> myMergedChanges;
-    @NotNull private final List<Collection<Change>> myChanges;
+    @NotNull private final List<? extends Collection<Change>> myChanges;
 
-    ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<Collection<Change>> changes) {
+    ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<? extends Collection<Change>> changes) {
       myMergedChanges = mergedChanges;
       myChanges = changes;
     }

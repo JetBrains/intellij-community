@@ -65,7 +65,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myRefManager = manager;
     final Project project = manager.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     myAppMainPattern = factory.createMethodFromText("void main(String[] args);", null);
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);

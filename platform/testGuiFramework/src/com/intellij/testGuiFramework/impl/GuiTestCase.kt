@@ -15,10 +15,7 @@ import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
-import com.intellij.testGuiFramework.util.Clipboard
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.ScreenshotTaker
-import com.intellij.testGuiFramework.util.Shortcut
+import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.AbstractComponentFixture
@@ -90,8 +87,8 @@ open class GuiTestCase {
    * Context function: finds welcome frame and creates WelcomeFrameFixture instance as receiver object. Code block after it call methods on
    * the receiver object (WelcomeFrameFixture instance).
    */
-  open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func(guiTestRule.findWelcomeFrame())
+  open fun welcomeFrame(timeout: Timeout = Timeouts.minutes05, body: WelcomeFrameFixture.() -> Unit) {
+    body(guiTestRule.findWelcomeFrame(timeout))
   }
 
   /**
@@ -112,10 +109,16 @@ open class GuiTestCase {
    */
   fun dialog(title: String? = null,
              ignoreCaseTitle: Boolean = false,
+             predicate: FinderPredicate = Predicate.equality,
              timeout: Timeout = Timeouts.defaultTimeout,
              needToKeepDialog: Boolean = false,
              func: JDialogFixture.() -> Unit) {
-    val dialog = dialog(title, ignoreCaseTitle, timeout)
+    val dialog = dialog(
+      title = title,
+      ignoreCaseTitle = ignoreCaseTitle,
+      predicate = predicate,
+      timeout = timeout
+    )
     func(dialog)
     if (!needToKeepDialog) dialog.waitTillGone()
   }
@@ -322,7 +325,7 @@ open class GuiTestCase {
   /**
    * Finds JDialog with a specific title (if title is null showing dialog should be only one) and returns created JDialogFixture
    */
-  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
+  fun dialog(title: String? = null, ignoreCaseTitle: Boolean, predicate: FinderPredicate = Predicate.equality, timeout: Timeout = Timeouts.defaultTimeout): JDialogFixture {
     if (title == null) {
       val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { true }
       return JDialogFixture(robot(), jDialog)
@@ -331,7 +334,7 @@ open class GuiTestCase {
       try {
         val dialog = GuiTestUtilKt.withPauseWhenNull(timeout = timeout) {
           val allMatchedDialogs = robot().finder().findAll(typeMatcher(JDialog::class.java) {
-            if (ignoreCaseTitle) it.title.toLowerCase() == title.toLowerCase() else it.title == title
+            if (ignoreCaseTitle) predicate(it.title.toLowerCase(), title.toLowerCase()) else predicate(it.title, title)
           }).filter { it.isShowing && it.isEnabled && it.isVisible }
           if (allMatchedDialogs.size > 1) throw Exception(
             "Found more than one (${allMatchedDialogs.size}) dialogs matched title \"$title\"")
@@ -394,20 +397,36 @@ open class GuiTestCase {
     return fixture.rowCount()
   }
 
-  fun waitForPanelToDisappear(panelTitle: String, timeout: Timeout = Timeouts.minutes05) {
-    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
-      override fun test(): Boolean {
-        try {
-          robot().finder().find(guiTestRule.findIdeFrame().target()) {
-            it is JLabel && it.text == panelTitle
+  /**
+   * Wait for panel with specified title disappearing
+   * @param panelTitle title of investigated panel
+   * @param timeoutToAppear timeout to wait when the panel appears
+   * @param timeoutToDisappear timeout to wait when the panel disappears (after it has appeared)
+   * @throws ComponentLookupException if the panel hasn't appeared after [timeoutToAppear] finishing
+   * @throws WaitTimedOutError if the panel appears, but cannot disappear after [timeoutToDisappear] finishing
+   * */
+  fun waitForPanelToDisappear(
+    panelTitle: String,
+    timeoutToAppear: Timeout = Timeouts.minutes05,
+    timeoutToDisappear: Timeout = Timeouts.minutes05) {
+    try {
+      Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+        override fun test(): Boolean {
+          try {
+            robot().finder().find(guiTestRule.findIdeFrame().target()) {
+              it is JLabel && it.text == panelTitle
+            }
           }
+          catch (cle: ComponentLookupException) {
+            return false
+          }
+          return true
         }
-        catch (cle: ComponentLookupException) {
-          return false
-        }
-        return true
-      }
-    }, timeout)
+      }, timeoutToAppear)
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Panel `$panelTitle` hasn't appear")
+    }
 
     Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
       override fun test(): Boolean {
@@ -421,7 +440,7 @@ open class GuiTestCase {
         }
         return false
       }
-    }, timeout)
+    }, timeoutToDisappear)
 
   }
 

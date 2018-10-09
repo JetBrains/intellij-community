@@ -44,6 +44,7 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testMethodReferences() { doTest(false, true); }
   public void testUsedMethodsByMethodReferences() { enableInspectionTool(new UnusedDeclarationInspection()); doTest(true, true); }
   public void testUncheckedWarningForPolyConditional() { enableInspectionTool(new UncheckedWarningLocalInspection()); doTest(true, true); }
+  public void testUncheckedWarningOnQualifierWithTypeParameterType() { enableInspectionTool(new UncheckedWarningLocalInspection()); doTest(true, true); }
   public void testLambdaExpressions() { doTest(false, true); }
   public void testUnsupportedFeatures() { doTest(false, false); }
   public void testModulesNotSupported() { doTest(false, false); }

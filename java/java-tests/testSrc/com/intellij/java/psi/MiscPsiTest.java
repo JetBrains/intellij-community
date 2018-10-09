@@ -235,7 +235,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
     final PsiClass aClass;
     try {
-      aClass = JavaPsiFacade.getInstance(getProject()).getElementFactory().createEnum("E");
+      aClass = JavaPsiFacade.getElementFactory(getProject()).createEnum("E");
     }
     finally {
       LanguageLevelProjectExtension.getInstance(facade.getProject()).setLanguageLevel(prevLanguageLevel);

@@ -682,7 +682,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertType(HighlightInfoType infoType) {
     if (infoType == HighlightInfoType.ERROR || infoType == HighlightInfoType.WRONG_REF) return ProblemHighlightType.ERROR;
-    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+    if (infoType == HighlightInfoType.WARNING) return ProblemHighlightType.WARNING;
     if (infoType == HighlightInfoType.INFORMATION) return ProblemHighlightType.INFORMATION;
     return ProblemHighlightType.WEAK_WARNING;
   }
@@ -690,7 +690,7 @@ public class HighlightInfo implements Segment {
   @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(HighlightSeverity severity) {
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
-           severity == HighlightSeverity.WARNING ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING :
+           severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
            severity == HighlightSeverity.WEAK_WARNING ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.INFORMATION;
   }

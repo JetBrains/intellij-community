@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -37,8 +36,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -231,7 +230,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     repaint();
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void fireItemSelected(@Nullable final T item, final int modifiers) {
     if (item != null) {
       for (BreadcrumbsItemListener listener : myListeners) {

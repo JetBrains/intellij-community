@@ -22,7 +22,6 @@ import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -53,6 +52,7 @@ import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 
 import java.util.*;
 
@@ -123,6 +123,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
     @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
+      MavenActionsUsagesCollector.trigger(project, "IntroducePropertyAction");
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
       Pair<XmlElement, TextRange> elementAndRange = getSelectedElementAndTextRange(editor, file);

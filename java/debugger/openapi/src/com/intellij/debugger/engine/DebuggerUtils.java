@@ -393,7 +393,7 @@ public abstract class DebuggerUtils {
 
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getElementFactory(project).createTypeFromText(className, null);
       }
       if (project.isDefault()) {
         return null;

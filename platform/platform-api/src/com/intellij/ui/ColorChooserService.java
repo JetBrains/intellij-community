@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,14 @@ public abstract class ColorChooserService {
     return ServiceManager.getService(ColorChooserService.class);
   }
 
+  /**
+   * @deprecated this overload does not work with headless implementation, use one with the Project instead
+   */
+  @Deprecated
   @Nullable
   public abstract Color showDialog(Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
+                                   List<ColorPickerListener> listeners, boolean opacityInPercent);
+  @Nullable
+  public abstract Color showDialog(Project project, Component parent, @Nls(capitalization = Nls.Capitalization.Title) String caption, Color preselectedColor, boolean enableOpacity,
                                    List<ColorPickerListener> listeners, boolean opacityInPercent);
 }

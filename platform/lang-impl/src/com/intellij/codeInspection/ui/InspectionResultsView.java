@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -66,8 +65,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -101,7 +100,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
@@ -303,7 +301,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     add(westPanel, BorderLayout.WEST);
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private JComponent createRightActionsToolbar() {
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
@@ -631,37 +628,39 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    updateTree(() -> ReadAction.run(() -> {
-      if (!isDisposed()) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        synchronized (myTreeStructureUpdateLock) {
-          final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
-          final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
-          if (presentation.getToolNode() == null) {
-            presentation.updateContent();
-            addTool(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
-                    uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
-            return;
-          }
-          final InspectionNode toolNode = presentation.getToolNode();
-          LOG.assertTrue(toolNode != null);
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
-          problems.put(refElement, descriptors);
-          final Map<String, Set<RefEntity>> contents = new HashMap<>();
-          final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-          Set<RefEntity> content = contents.computeIfAbsent(groupName, __ -> new HashSet<>());
-          content.add(refElement);
+    updateTree(() -> {
+      synchronized (myTreeStructureUpdateLock) {
+        ReadAction.run(() -> {
+          if (!isDisposed()) {
+            ApplicationManager.getApplication().assertReadAccessAllowed();
+            final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
+            final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
+            if (presentation.getToolNode() == null) {
+              presentation.updateContent();
+              addTool(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
+                      uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
+              return;
+            }
+            final InspectionNode toolNode = presentation.getToolNode();
+            LOG.assertTrue(toolNode != null);
+            final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>(1);
+            problems.put(refElement, descriptors);
+            final Map<String, Set<RefEntity>> contents = new HashMap<>();
+            final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
+            Set<RefEntity> content = contents.computeIfAbsent(groupName, __ -> new HashSet<>());
+            content.add(refElement);
 
-          getProvider().appendToolNodeContent(myGlobalInspectionContext,
-                                              toolNode,
-                                              (InspectionTreeNode)toolNode.getParent(),
-                                              uiOptions.SHOW_STRUCTURE,
-                                              true,
-                                              contents,
-                                              problems::get);
-        }
+            getProvider().appendToolNodeContent(myGlobalInspectionContext,
+                                                toolNode,
+                                                (InspectionTreeNode)toolNode.getParent(),
+                                                uiOptions.SHOW_STRUCTURE,
+                                                true,
+                                                contents,
+                                                problems::get);
+          }
+        });
       }
-    }));
+    });
   }
 
   public void update() {

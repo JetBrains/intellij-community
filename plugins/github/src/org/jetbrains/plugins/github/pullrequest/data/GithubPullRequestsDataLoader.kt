@@ -23,25 +23,28 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
+import java.util.concurrent.CompletionException
 
-//TODO: cancel loading in removed providers
-class GithubPullRequestsDataLoader(private val project: Project,
-                                   private val progressManager: ProgressManager,
-                                   private val git: Git,
-                                   private val requestExecutor: GithubApiRequestExecutor,
-                                   private val repository: GitRepository,
-                                   private val remote: GitRemote) : Disposable {
+internal class GithubPullRequestsDataLoader(private val project: Project,
+                                            private val progressManager: ProgressManager,
+                                            private val git: Git,
+                                            private val requestExecutor: GithubApiRequestExecutor,
+                                            private val repository: GitRepository,
+                                            private val remote: GitRemote) : Disposable {
 
-  private val progressIndicator = NonReusableEmptyProgressIndicator()
+  private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
-    .removalListener<Long, DataProvider> { invalidationEventDispatcher.multicaster.providerChanged(it.key) }
+    .removalListener<Long, DataTask> {
+      it.value.cancel()
+      invalidationEventDispatcher.multicaster.providerChanged(it.key)
+    }
     .maximumSize(5)
-    .build<Long, DataProvider>()
+    .build<Long, DataTask>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(ProviderChangedListener::class.java)
 
@@ -60,10 +63,13 @@ class GithubPullRequestsDataLoader(private val project: Project,
   }
 
   @CalledInAwt
-  fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): DataProvider {
+  fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): GithubPullRequestDataProvider {
+    if (isDisposed) throw IllegalStateException("Already disposed")
+
     return cache.get(githubSearchedIssue.number) {
-      val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url)
-      progressManager.runProcessWithProgressAsynchronously(task, progressIndicator)
+      val indicator = NonReusableEmptyProgressIndicator()
+      val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url, indicator)
+      progressManager.runProcessWithProgressAsynchronously(task, indicator)
       task
     }
   }
@@ -71,8 +77,8 @@ class GithubPullRequestsDataLoader(private val project: Project,
   fun addProviderChangesListener(listener: ProviderChangedListener, disposable: Disposable) =
     invalidationEventDispatcher.addListener(listener, disposable)
 
-  private inner class DataTask(private val url: String)
-    : Task.Backgroundable(project, "Load Pull Request Data", true), DataProvider {
+  private inner class DataTask(private val url: String, private val progressIndicator: ProgressIndicator)
+    : Task.Backgroundable(project, "Load Pull Request Data", true), GithubPullRequestDataProvider {
 
     override val detailsRequest = CompletableFuture<GithubPullRequestDetailedWithHtml>()
     override val branchFetchRequest = CompletableFuture<Couple<String>>()
@@ -121,15 +127,13 @@ class GithubPullRequestsDataLoader(private val project: Project,
     @Throws(ProcessCanceledException::class)
     private fun <T> getOrHandle(future: CompletableFuture<T>): T {
       try {
-        return future.get()
+        return future.join()
       }
       catch (e: CancellationException) {
         throw ProcessCanceledException(e)
       }
-      catch (e: InterruptedException) {
-        throw ProcessCanceledException(e)
-      }
-      catch (e: ExecutionException) {
+      catch (e: CompletionException) {
+        if (GithubAsyncUtil.isCancellation(e)) throw ProcessCanceledException(e)
         throw e.cause ?: e
       }
     }
@@ -138,17 +142,15 @@ class GithubPullRequestsDataLoader(private val project: Project,
       val result = git.getObjectType(repository, commitHash)
       return result.success() && result.outputAsJoinedString == "commit"
     }
+
+    internal fun cancel() {
+      progressIndicator.cancel()
+    }
   }
 
   override fun dispose() {
-    progressIndicator.cancel()
-  }
-
-  interface DataProvider {
-    val detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
-    val branchFetchRequest: CompletableFuture<Couple<String>>
-    val logCommitsRequest: CompletableFuture<List<GitCommit>>
-    val changesRequest: CompletableFuture<List<Change>>
+    invalidateAllData()
+    isDisposed = true
   }
 
   interface ProviderChangedListener : EventListener {

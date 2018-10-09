@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -874,22 +875,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private static void printFailingSteps(List<Pair<RangeMarker, TextRange>> adds,
                                         List<Pair<RangeMarker, TextRange>> dels,
                                         List<Trinity<Integer, Integer, Integer>> edits) {
-    String s = "adds: ";
+    StringBuilder s = new StringBuilder("adds: ");
     for (Pair<RangeMarker, TextRange> c : adds) {
       TextRange t = c.second;
-      s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+      s.append(t.getStartOffset()).append(",").append(t.getEndOffset()).append(", ");
     }
 
-    s += "\nedits: ";
+    s.append("\nedits: ");
     for (Trinity<Integer, Integer, Integer> edit : edits) {
-      s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+      s.append(edit.first).append(",").append(edit.second).append(",").append(edit.third).append(",  ");
     }
-    s += "\ndels: ";
+    s.append("\ndels: ");
 
     for (Pair<RangeMarker, TextRange> c : dels) {
       int index = adds.indexOf(c);
       assertSame(c, adds.get(index));
-      s += index + ", ";
+      s.append(index).append(", ");
     }
     System.err.println(s);
   }
@@ -1374,7 +1375,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     String newText = "0123blah";
     WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)()->{
-      vf.setBinaryContent(newText.getBytes("utf-8"));
+      vf.setBinaryContent(newText.getBytes(StandardCharsets.UTF_8));
       return null;
     });
 

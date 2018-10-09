@@ -232,7 +232,6 @@ public class ImplementationViewComponent extends JPanel {
         setIcon(getIconForFile(file));
         final VirtualFile vFile = file.getVirtualFile();
         setForeground(FileStatusManager.getInstance(project).getStatus(vFile).getColor());
-        //noinspection ConstantConditions
         setText(value.getPresentableName(vFile));
       }
     });

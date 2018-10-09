@@ -47,7 +47,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
     askAndEditRevision(svnList.getNumber(), svnList.getComment(), svnList.getLocation(), project, listener, false);
   }
 
-  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<String> listener, final boolean fromVersionControl) {
+  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<? super String> listener, final boolean fromVersionControl) {
     final SvnEditCommitMessageDialog dialog = new SvnEditCommitMessageDialog(project, number, oldComment);
     dialog.show();
     if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
@@ -93,7 +93,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
     private final String myNewMessage;
     private final SvnRepositoryLocation myLocation;
     private final long myNumber;
-    private final Consumer<String> myListener;
+    private final Consumer<? super String> myListener;
     private final boolean myFromVersionControl;
     private VcsException myException;
     private final SvnVcs myVcs;
@@ -102,7 +102,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
                     final String newMessage,
                     final SvnRepositoryLocation location,
                     final long number,
-                    Consumer<String> listener,
+                    Consumer<? super String> listener,
                     boolean fromVersionControl) {
       super(project, "Edit Revision Comment");
       myNewMessage = newMessage;

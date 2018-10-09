@@ -15,9 +15,15 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
+import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NullableComputable;
@@ -463,7 +469,7 @@ public class ExpectedTypesProvider {
         myResult.add(createInfoImpl(arrayType, arrayType));
 
         PsiManager manager = statement.getManager();
-        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiClass iterableClass =
           JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.Iterable", statement.getResolveScope());
         if (iterableClass != null && iterableClass.getTypeParameters().length == 1 && !PsiType.NULL.equals(type)) {
@@ -483,7 +489,7 @@ public class ExpectedTypesProvider {
       }
 
       PsiManager manager = statement.getManager();
-      PsiClassType enumType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
+      PsiClassType enumType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Enum", statement.getResolveScope());
       myResult.add(createInfoImpl(enumType, enumType));
     }
 
@@ -503,7 +509,7 @@ public class ExpectedTypesProvider {
 
     @Override
     public void visitSynchronizedStatement(@NotNull PsiSynchronizedStatement statement) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(statement.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
       PsiType objectType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, myExpr.getResolveScope());
       myResult.add(createInfoImpl(objectType, objectType));
     }
@@ -906,7 +912,7 @@ public class ExpectedTypesProvider {
     public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
       if (statement.getException() == myExpr) {
         PsiManager manager = statement.getManager();
-        PsiType throwableType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
+        PsiType throwableType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Throwable", myExpr.getResolveScope());
         PsiElement container = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
         PsiType[] throwsTypes = PsiType.EMPTY_ARRAY;
         if (container instanceof PsiMethod) {
@@ -920,7 +926,7 @@ public class ExpectedTypesProvider {
         }
 
         if (throwsTypes.length == 0) {
-          final PsiClassType exceptionType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
+          final PsiClassType exceptionType = JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName("java.lang.Exception", myExpr.getResolveScope());
           throwsTypes = new PsiClassType[]{exceptionType};
         }
 
@@ -953,6 +959,10 @@ public class ExpectedTypesProvider {
                                                                      @Nullable PsiMethod targetMethod) {
       if (allCandidates.length == 0) {
         return ExpectedTypeInfo.EMPTY_ARRAY;
+      }
+
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        allCandidates = selectCandidateChosenOnCompletion(argumentList.getParent(), allCandidates);
       }
 
       PsiMethod toExclude = JavaPsiConstructorUtil.isConstructorCall(argumentList.getParent())
@@ -1040,6 +1050,22 @@ public class ExpectedTypesProvider {
     }
 
     @NotNull
+    private static CandidateInfo[] selectCandidateChosenOnCompletion(@Nullable PsiElement call, @NotNull CandidateInfo[] candidates) {
+      if (call instanceof PsiCall) {
+        PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+        if (originalCall != null) {
+          PsiMethod method = CompletionMemory.getChosenMethod(originalCall);
+          if (method != null) {
+            for (CandidateInfo candidate : candidates) {
+              if (CompletionUtil.getOriginalOrSelf(candidate.getElement()) == method) return new CandidateInfo[]{candidate};
+            }
+          }
+        }
+      }
+      return candidates;
+    }
+
+    @NotNull
     private static TailType getMethodArgumentTailType(@NotNull final PsiExpression argument,
                                                       final int index,
                                                       @NotNull final PsiMethod method,
@@ -1057,7 +1083,26 @@ public class ExpectedTypesProvider {
         if (returnType != null) returnType = substitutor.substitute(returnType);
         return getFinalCallParameterTailType(call, returnType, method);
       }
+      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+        PsiCall completedOuterCall = getCompletedOuterCall(argument);
+        if (completedOuterCall != null) return new CommaTailTypeWithSyncHintUpdate(completedOuterCall);
+      }
       return TailType.COMMA;
+    }
+
+    @Nullable
+    private static PsiCall getCompletedOuterCall(@NotNull PsiExpression argument) {
+      PsiElement expressionList = argument.getParent();
+      if (expressionList instanceof PsiExpressionList) {
+        PsiElement call = expressionList.getParent();
+        if (call instanceof PsiCall) {
+          PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
+          if (originalCall != null && JavaMethodCallElement.isCompletionMode(originalCall)) {
+            return originalCall;
+          }
+        }
+      }
+      return null;
     }
 
     private static void inferMethodCallArgumentTypes(@NotNull final PsiExpression argument,
@@ -1286,4 +1331,37 @@ public class ExpectedTypesProvider {
     return TailTypes.CALL_RPARENTH;
   }
 
+  private static class CommaTailTypeWithSyncHintUpdate extends TailType {
+    private final PsiCall myOriginalCall;
+
+    private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}
+
+    @Override
+    public boolean isApplicable(@NotNull InsertionContext context) {
+      return TailType.COMMA.isApplicable(context);
+    }
+
+    @Override
+    public int processTail(Editor editor, int tailOffset) {
+      int result = TailType.COMMA.processTail(editor, tailOffset);
+      if (myOriginalCall.isValid()) {
+        PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
+        if (myOriginalCall.isValid()) ParameterHintsPass.syncUpdate(myOriginalCall, editor);
+      }
+      return result;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CommaTailTypeWithSyncHintUpdate update = (CommaTailTypeWithSyncHintUpdate)o;
+      return myOriginalCall.equals(update.myOriginalCall);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myOriginalCall);
+    }
+  }
 }

@@ -50,6 +50,7 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
 import java.awt.Point
+import java.io.Serializable
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -114,6 +115,13 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val itemKotlinMppExperimental = "Kotlin (Multiplatform - Experimental)"
     const val itemKotlinMppLibrary = "Kotlin (Multiplatform Library)"
     const val itemKotlinMppClientServer = "Kotlin (JS Client/JVM Server)"
+    const val itemKotlinMppMobileAndroidIos = "Kotlin (Mobile Android/iOS)"
+    const val itemKotlinMppMobileSharedLibrary = "Kotlin (Mobile Shared Library)"
+    const val itemKotlinJvm = "Kotlin/JVM"
+    const val itemKotlinJs = "Kotlin/JS"
+    const val itemKotlinNative = "Kotlin/Native"
+    const val itemGradleKotlinJvm = "Kotlin (Java)"
+    const val itemGradleKotlinJs = "Kotlin (JavaScript)"
   }
 
   enum class Groups(private val title: String) {
@@ -169,7 +177,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  class LibraryOrFramework(vararg val mainPath: String) {
+  class LibraryOrFramework(vararg val mainPath: String) : Serializable{
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
@@ -195,7 +203,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
 
 fun NewProjectDialogModel.connectDialog(): JDialogFixture =
-  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true, Timeouts.defaultTimeout)
+  testCase.dialog(NewProjectDialogModel.Constants.newProjectTitle, true)
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 
@@ -587,27 +595,38 @@ fun NewProjectDialogModel.selectSdk(sdk: String) {
   }
 }
 
-fun NewProjectDialogModel.checkDownloadingDialog(){
-  GuiTestUtilKt.waitUntil("Wait when downloading dialog disappears"){
-    val dialog = try{
-      guiTestCase.dialog(title = null, timeout = Timeouts.noTimeout, ignoreCaseTitle = true)
+fun NewProjectDialogModel.checkDownloadingDialog(attempts: Int = 0) {
+  val maxAttempts = 3
+  if(attempts >= maxAttempts) throw Exception("Cannot wait for downloading finishing")
+  val progressDownloadingDialog = "Downloading"
+  GuiTestUtilKt.waitProgressDialogUntilGone(
+    GuiRobotHolder.robot,
+    progressTitle = progressDownloadingDialog,
+    predicate = Predicate.startWith
+  )
+  val dialog = try {
+    guiTestCase.dialog(
+      title = progressDownloadingDialog,
+      timeout = Timeouts.noTimeout,
+      ignoreCaseTitle = true,
+      predicate = Predicate.startWith
+    )
+  }
+  catch (e: ComponentLookupException) {
+    null
+  }
+  catch (e: WaitTimedOutError) {
+    null
+  }
+  if (dialog != null) {
+    println("Found dialog: ${dialog.target().title}")
+    try {
+      dialog.button("Try again", timeout = Timeouts.noTimeout).click()
+      println("button try again was found and clicked")
     }
-    catch (e: ComponentLookupException){
-      null
+    catch (ignore: ComponentLookupException) {
+      // do nothing if no "Try again" button is found
     }
-    catch (e: WaitTimedOutError){
-      null
-    }
-    if(dialog != null){
-      println("Found dialog: ${dialog.target().title}")
-      try{
-        dialog.button("Try again", timeout = Timeouts.noTimeout).click()
-        println("button try again was found and clicked")
-      }
-      catch (ignore: ComponentLookupException){
-        // do nothing if no "Try again" button is found
-      }
-    }
-    dialog != null
+    checkDownloadingDialog(attempts + 1)
   }
 }

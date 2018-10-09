@@ -39,7 +39,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   extends BaseInspection {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Map<String, String> s_conversionMap =
     new HashMap<>(7);
@@ -150,7 +149,6 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
     /**
-     * @noinspection StaticCollection
      */
     @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
 

@@ -154,7 +154,7 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
-  @Nullable private Runnable myRerunActivity;
+  @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
   private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
@@ -1031,7 +1031,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   public void select() {
     // can be null during ctr execution
-    //noinspection ConstantConditions
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }
@@ -1087,11 +1086,11 @@ public class UsageViewImpl implements UsageViewEx {
   @SuppressWarnings("WeakerAccess") // used in rider
   protected UsageView doReRun() {
     myChangesDetected = false;
-    if (myRerunActivity == null) {
+    if (myRerunAction == null) {
       return com.intellij.usages.UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
-    myRerunActivity.run();
+    myRerunAction.actionPerformed(null);
     return this;
   }
 
@@ -1397,6 +1396,7 @@ public class UsageViewImpl implements UsageViewEx {
     synchronized (lock) {
       isDisposed = true;
       cancelCurrentSearch();
+      myRerunAction = null;
       if (myTree != null) {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
@@ -1467,8 +1467,8 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void setReRunActivity(@NotNull Runnable runnable) {
-    myRerunActivity = runnable;
+  public void setRerunAction(@NotNull Action rerunAction) {
+    myRerunAction = rerunAction;
   }
 
   @Override
@@ -1543,6 +1543,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   public boolean canPerformReRun() {
+    if (myRerunAction != null && myRerunAction.isEnabled()) return allTargetsAreValid();
     try {
       return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.create() != null;
     }

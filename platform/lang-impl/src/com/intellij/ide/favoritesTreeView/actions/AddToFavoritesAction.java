@@ -130,7 +130,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
                                            Module moduleContext,
                                            Object object,
                                            boolean inProjectView,
-                                           ViewSettings favoritesConfig) {
+                                           @NotNull ViewSettings favoritesConfig) {
     if (project == null) return Collections.emptyList();
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (FavoriteNodeProvider provider : FavoriteNodeProvider.EP_NAME.getExtensions(project)) {
@@ -230,7 +230,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static void addPsiElementNode(PsiElement psiElement,
                                         final Project project,
                                         final ArrayList<? super AbstractTreeNode> result,
-                                        final ViewSettings favoritesConfig) {
+                                        @NotNull ViewSettings favoritesConfig) {
 
     Class<? extends AbstractTreeNode> klass = getPsiElementNodeClass(psiElement);
     if (klass == null) {

@@ -21,7 +21,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
@@ -200,50 +199,77 @@ public class PyImportOptimizer implements ImportOptimizer {
         }
         else if (statement instanceof PyFromImportStatement) {
           final PyFromImportStatement fromImport = (PyFromImportStatement)statement;
-          final String source = getNormalizedFromImportSource(fromImport);
-          final List<PyImportElement> newStatementElements = new ArrayList<>();
-          boolean forceParentheses = false;
 
+          if (fromImport.isStarImport()) {
+            myNewImportToLineComments.putValues(fromImport, myOldImportToLineComments.get(fromImport));
+            result.add(fromImport);
+            continue;
+          }
+
+          final String source = getNormalizedFromImportSource(fromImport);
+          final PyImportElement[] importedFromNames = fromImport.getImportElements();
+          
+          final List<PyImportElement> newFromImportNames = new ArrayList<>();
           final Comparator<PyImportElement> fromNamesComparator = getFromNamesComparator();
           // We can neither sort, nor combine star imports
-          if (!fromImport.isStarImport()) {
-            final Collection<PyFromImportStatement> sameSourceImports = myOldFromImportBySources.get(source);
-            if (sameSourceImports.isEmpty()) {
-              continue;
-            }
 
-            forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
+          final Collection<PyFromImportStatement> sameSourceImports = myOldFromImportBySources.get(source);
+          if (sameSourceImports.isEmpty()) {
+            continue;
+          }
 
-            // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
-            if (myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1) {
-              for (PyFromImportStatement sameSourceImport : sameSourceImports) {
-                ContainerUtil.addAll(newStatementElements, sameSourceImport.getImportElements());
-              }
-              // Remember that we have checked imports with this source already 
-              myOldFromImportBySources.remove(source);
+          // Keep existing parentheses if we only re-order names inside the import
+          boolean forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
+          
+          // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
+          final boolean shouldJoinImports = myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1;
+          final boolean shouldSplitImport = myPySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS && importedFromNames.length > 1;
+          
+          if (shouldJoinImports) {
+            for (PyFromImportStatement sameSourceImport : sameSourceImports) {
+              ContainerUtil.addAll(newFromImportNames, sameSourceImport.getImportElements());
             }
-            else if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-              final List<PyImportElement> originalElements = Arrays.asList(fromImport.getImportElements());
-              if (!Ordering.from(fromNamesComparator).isOrdered(originalElements)) {
-                ContainerUtil.addAll(newStatementElements, originalElements);
-              }
+            // Remember that we have checked imports with this source already 
+            myOldFromImportBySources.remove(source);
+          }
+          else if (!shouldSplitImport && myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
+            if (!Ordering.from(fromNamesComparator).isOrdered(Arrays.asList(importedFromNames))) {
+              ContainerUtil.addAll(newFromImportNames, importedFromNames);
             }
           }
 
-          if (!newStatementElements.isEmpty()) {
+          final boolean shouldGenerateNewFromImport = !newFromImportNames.isEmpty();
+          if (shouldGenerateNewFromImport) {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-              Collections.sort(newStatementElements, fromNamesComparator);
+              Collections.sort(newFromImportNames, fromNamesComparator);
             }
-            String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            String importedNames = StringUtil.join(newFromImportNames, ImportSorter::getNormalizedImportElementText, ", ");
             if (forceParentheses) {
               importedNames = "(" + importedNames + ")";
             }
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
-            ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
+            ContainerUtil.map2LinkedSet(newFromImportNames, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
               myNewImportToLineComments.putValues(combinedImport, myOldImportToLineComments.get(affected));
               myNewImportToInnerComments.putValues(combinedImport, myOldImportToInnerComments.get(affected));
             });
             result.add(combinedImport);
+          }
+          else if (shouldSplitImport) {
+            final List<PyFromImportStatement> newFromImports = ContainerUtil.map(importedFromNames, importElem -> {
+              final String name = Objects.toString(importElem.getImportedQName(), "");
+              final String alias = importElem.getAsName();
+              return generator.createFromImportStatement(langLevel, source, name, alias);
+            });
+            PyFromImportStatement topmostImport;
+            if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
+              topmostImport = Collections.min(newFromImports, AddImportHelper.getSameGroupImportsComparator(myFile));
+            }
+            else {
+              topmostImport = newFromImports.get(0);
+            }
+            myNewImportToLineComments.putValues(topmostImport, myOldImportToLineComments.get(fromImport));
+            myNewImportToInnerComments.putValues(topmostImport, myOldImportToInnerComments.get(fromImport));
+            result.addAll(newFromImports);
           }
           else {
             myNewImportToLineComments.putValues(fromImport, myOldImportToLineComments.get(fromImport));
