@@ -99,7 +99,7 @@ class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContextImpl context, String zipsLocation) {
     BuildMessages messages = context.messages
 
-    String serverUrl = System.getProperty("intellij.compile.archive.url")
+    String serverUrl = System.getProperty("intellij.build.compiled.classes.server.url")
     if (StringUtil.isEmptyOrSpaces(serverUrl)) {
       messages.warning("Compile Parts archive server url is not defined. \n" +
                        "Will not upload to remote server. Please set 'intellij.compile.archive.url' system property.")
