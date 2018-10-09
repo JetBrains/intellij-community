@@ -4,6 +4,19 @@
             <sequence>
                 <!-- deprecated element -->
                 <element name="deprecated"/>
+                <element name="deprecatedByDoc">
+                    <annotation>
+                        <documentation>Some doc</documentation>
+                        <documentation>deprecated</documentation>
+                    </annotation>
+                </element>
+                <element name="deprecatedByCdata">
+                    <annotation>
+                        <documentation>
+                            <![CDATA[deprecated]]>
+                        </documentation>
+                    </annotation>
+                </element>
             </sequence>
             <!-- DEPRECATED attribute -->
             <attribute name="deprecated"/>

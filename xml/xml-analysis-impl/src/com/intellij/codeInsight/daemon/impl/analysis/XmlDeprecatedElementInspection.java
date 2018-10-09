@@ -9,10 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.meta.PsiMetaData;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlChildRole;
-import com.intellij.psi.xml.XmlComment;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -59,10 +56,23 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
   private static boolean checkDeprecated(@Nullable PsiMetaData metaData, Pattern pattern) {
     if (metaData == null) return false;
     PsiElement declaration = metaData.getDeclaration();
-    if (declaration == null) return false;
+    if (!(declaration instanceof XmlTag)) return false;
     XmlComment comment = XmlUtil.findPreviousComment(declaration);
-    if (comment == null) return false;
-    return pattern.matcher(comment.getCommentText()).matches();
+    if (comment != null && pattern.matcher(comment.getCommentText().trim()).matches()) return true;
+    return checkTag(((XmlTag)declaration).findFirstSubTag("annotation"), pattern);
+  }
+
+  private static boolean checkTag(XmlTag tag, Pattern pattern) {
+    if (tag == null) return false;
+    if ("documentation".equals(tag.getLocalName())) {
+      String text = tag.getValue().getTrimmedText();
+      return pattern.matcher(text).matches();
+    }
+    for (XmlTag subTag : tag.getSubTags()) {
+      if (checkTag(subTag, pattern))
+        return true;
+    }
+    return false;
   }
 
   public static class OptionsPanel {
