@@ -81,7 +81,7 @@ public class UnshelvePatchDefaultExecutor extends ApplyPatchDefaultExecutor {
                                                   ContainerUtil.mapNotNull(patches, patch -> patch instanceof ShelvedBinaryFilePatch
                                                                                              ? ((ShelvedBinaryFilePatch)patch)
                                                                                                .getShelvedBinaryFile()
-                                                                                             : null), commitContext);
+                                                                                             : null), commitContext, false);
       }
     }
     catch (Exception e) {
