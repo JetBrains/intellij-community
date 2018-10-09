@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.execution;
 
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.openapi.project.Project;
@@ -13,6 +15,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -37,13 +40,13 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
   public <T extends RunConfigurationBase> void updateJavaParameters(T configuration,
                                                                     JavaParameters params,
                                                                     RunnerSettings runnerSettings) {
-    ApplicationConfiguration  applicationConfiguration = (ApplicationConfiguration )configuration;
-    String runClass = applicationConfiguration.getRunClass();
+    if (!(configuration instanceof ModuleRunProfile) || !(configuration instanceof CommonJavaRunConfigurationParameters)) return;
+    String runClass = ((CommonJavaRunConfigurationParameters)configuration).getRunClass();
     if (runClass != null) {
       Project project = configuration.getProject();
-      GlobalSearchScope searchScope = applicationConfiguration.getSearchScope();
-      PsiClass aClass = applicationConfiguration.getMainClass();
-      if (aClass != null && InheritanceUtil.isInheritor(aClass, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION) && searchScope != null) {
+      GlobalSearchScope searchScope = ((ModuleRunProfile)configuration).getSearchScope();
+      PsiClass aClass = searchScope != null ? JavaPsiFacade.getInstance(project).findClass(runClass, searchScope) : null;
+      if (aClass != null && InheritanceUtil.isInheritor(aClass, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION)) {
         JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(aClass);
         if (sdkVersion != null &&
             sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) &&
@@ -76,6 +79,6 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
 
   @Override
   public boolean isApplicableFor(@NotNull RunConfigurationBase<?> configuration) {
-    return configuration instanceof ApplicationConfiguration;
+    return false;
   }
 }
