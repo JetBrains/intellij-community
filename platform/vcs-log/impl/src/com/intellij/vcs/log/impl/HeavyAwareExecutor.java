@@ -181,7 +181,7 @@ public class HeavyAwareExecutor implements Disposable {
   }
 
   private static class ExecutingHeavyOrPowerSaveListener implements PowerSaveMode.Listener {
-    @NotNull private final AtomicReference<List<FutureRunnable>> myTasksToRun = new AtomicReference<>(ContainerUtil.newArrayList());
+    @NotNull private final AtomicReference<List<Runnable>> myTasksToRun = new AtomicReference<>(ContainerUtil.newArrayList());
     private final int myDelayMs;
 
     ExecutingHeavyOrPowerSaveListener(@NotNull Project project, int delayMs, @NotNull Disposable parent) {
@@ -189,11 +189,24 @@ public class HeavyAwareExecutor implements Disposable {
       project.getMessageBus().connect(parent).subscribe(PowerSaveMode.TOPIC, this);
     }
 
+    @NotNull
     public <T> ListenableFuture<ListenableFuture<T>> addTask(@NotNull Computable<ListenableFuture<T>> task) {
-      FutureRunnable<T, ListenableFuture<T>> runnable = new FutureRunnable<>(task);
-      myTasksToRun.getAndUpdate(tasks -> ContainerUtil.concat(tasks, Collections.singletonList(runnable)));
+      SettableFuture<ListenableFuture<T>> future = SettableFuture.create();
+      myTasksToRun.getAndUpdate(tasks -> ContainerUtil.concat(tasks, Collections.singletonList(wrap(task, future))));
       tryRun();
-      return runnable.getFuture();
+      return future;
+    }
+
+    @NotNull
+    private static <T> Runnable wrap(@NotNull Computable<ListenableFuture<T>> task, @NotNull SettableFuture<ListenableFuture<T>> future) {
+      return () -> {
+        try {
+          future.set(task.compute());
+        }
+        catch (Throwable t) {
+          future.setException(t);
+        }
+      };
     }
 
     @Override
@@ -205,7 +218,7 @@ public class HeavyAwareExecutor implements Disposable {
       if (!PowerSaveMode.isEnabled()) {
         HeavyProcessLatch.INSTANCE.executeOutOfHeavyProcess(() -> JobScheduler.getScheduler().schedule(() -> {
           if (!HeavyProcessLatch.INSTANCE.isRunning() && !PowerSaveMode.isEnabled()) {
-            List<FutureRunnable> tasks = myTasksToRun.getAndSet(ContainerUtil.newArrayList());
+            List<Runnable> tasks = myTasksToRun.getAndSet(ContainerUtil.newArrayList());
             tasks.forEach(Runnable::run);
           }
           else {
@@ -213,31 +226,6 @@ public class HeavyAwareExecutor implements Disposable {
           }
         }, myDelayMs, TimeUnit.MILLISECONDS));
       }
-    }
-  }
-
-  private static class FutureRunnable<T, F extends Future<T>> implements Runnable {
-    @NotNull private final SettableFuture<F> myFuture;
-    @NotNull private final Computable<F> myComputable;
-
-    private FutureRunnable(@NotNull Computable<F> computable) {
-      myComputable = computable;
-      myFuture = SettableFuture.create();
-    }
-
-    @Override
-    public void run() {
-      try {
-        myFuture.set(myComputable.compute());
-      }
-      catch (Throwable t) {
-        myFuture.setException(t);
-      }
-    }
-
-    @NotNull
-    public ListenableFuture<F> getFuture() {
-      return myFuture;
     }
   }
 }
