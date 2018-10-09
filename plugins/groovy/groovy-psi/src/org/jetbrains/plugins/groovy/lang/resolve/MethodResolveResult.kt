@@ -22,12 +22,10 @@ class MethodResolveResult(
   }
 
   private val methodCandidate by lazy {
-    val qualifierConstraint = buildQualifier(ref, state)
     val argumentConstraints = buildArguments(ref)
-
     if (method is GrGdkMethod) {
       val arguments = mutableListOf<Argument>().apply {
-        add(0, qualifierConstraint)
+        add(0, buildQualifier(ref, state))
         addAll(argumentConstraints)
       }
       MethodCandidate(method.staticMethod, siteSubstitutor, arguments, ref)
