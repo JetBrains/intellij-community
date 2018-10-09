@@ -429,7 +429,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
       }
       else if (elementType == XmlElementType.XML_ENTITY_REF) {
-        buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
+        buffer.append(getEntityValue((XmlEntityRef)child));
       }
       else {
         appendChildToDisplayValue(buffer, child);
@@ -454,6 +454,17 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     final VolatileState volatileState = new VolatileState(buffer.toString(), gapDisplayStarts, gapPhysicalStarts, valueTextRange);
     myVolatileState = volatileState;
     return volatileState;
+  }
+
+  private static String getEntityValue(final XmlEntityRef entityRef) {
+    final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
+    if (decl != null) {
+      final XmlAttributeValue valueElement = decl.getValueElement();
+      if (valueElement != null) {
+        return valueElement.getValue();
+      }
+    }
+    return entityRef.getText();
   }
 
   private static class VolatileState {
