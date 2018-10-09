@@ -7,7 +7,7 @@ import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
-import com.intellij.lang.jvm.actions.MemberRequest;
+import com.intellij.lang.jvm.actions.MemberRequestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
@@ -23,7 +23,9 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +36,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -124,7 +126,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
           Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
           if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
             List<IntentionAction> fixes =
-              JvmElementActionFactories.createModifierActions(targetElement, new MemberRequest.Modifier(JvmModifier.PUBLIC, true));
+              JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
             holder.registerProblem(sourcePsi, sourceElementDescription.get() + " is " + accessType +
                                               ", but declared in a different module '" + targetModule.getName() + "'",
                                    IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile()));
