@@ -99,8 +99,10 @@ public class ShelvedChangesViewManager implements Disposable {
   private final MergingUpdateQueue myUpdateQueue;
   private final VcsConfiguration myVcsConfiguration;
 
-  public static final DataKey<ShelvedChangeList[]> SHELVED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedChangeListData");
-  public static final DataKey<ShelvedChangeList[]> SHELVED_RECYCLED_CHANGELIST_KEY = DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
+  public static final DataKey<List<ShelvedChangeList>> SHELVED_CHANGELIST_KEY =
+    DataKey.create("ShelveChangesManager.ShelvedChangeListData");
+  public static final DataKey<List<ShelvedChangeList>> SHELVED_RECYCLED_CHANGELIST_KEY =
+    DataKey.create("ShelveChangesManager.ShelvedRecycledChangeListData");
   public static final DataKey<List<ShelvedChange>> SHELVED_CHANGE_KEY = DataKey.create("ShelveChangesManager.ShelvedChange");
   public static final DataKey<List<ShelvedBinaryFile>> SHELVED_BINARY_FILE_KEY = DataKey.create("ShelveChangesManager.ShelvedBinaryFile");
   private static final Object ROOT_NODE_VALUE = new Object();
@@ -372,18 +374,10 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        final Set<ShelvedChangeList> changeLists = getSelectedLists(l -> !l.isRecycled());
-
-        if (changeLists.size() > 0) {
-          return changeLists.toArray(new ShelvedChangeList[0]);
-        }
+        return nullize(newArrayList(getSelectedLists(l -> !l.isRecycled())));
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        final Set<ShelvedChangeList> changeLists = getSelectedLists(l -> l.isRecycled());
-
-        if (changeLists.size() > 0) {
-          return changeLists.toArray(new ShelvedChangeList[0]);
-        }
+        return nullize(newArrayList(getSelectedLists(l -> l.isRecycled())));
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
         return TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class);
@@ -465,16 +459,9 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @NotNull
   public static List<ShelvedChangeList> getShelvedLists(@NotNull final DataContext dataContext) {
-    final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
-    final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
-    if (shelved == null && recycled == null) return Collections.emptyList();
     List<ShelvedChangeList> shelvedChangeLists = newArrayList();
-    if (shelved != null) {
-      addAll(shelvedChangeLists, shelved);
-    }
-    if (recycled != null) {
-      addAll(shelvedChangeLists, recycled);
-    }
+    addAll(shelvedChangeLists, notNullize(SHELVED_CHANGELIST_KEY.getData(dataContext)));
+    addAll(shelvedChangeLists, notNullize(SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext)));
     return shelvedChangeLists;
   }
 
