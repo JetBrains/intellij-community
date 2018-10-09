@@ -5,10 +5,8 @@ class C {
         bar();
         // comment A
         /*comment B*/
-        /*comment 2*/
-        /*comment 3*/
         //comment 4
-        int n = 1; // comment C
+        int /*comment 2*/ n /*comment 3*/ = 1; // comment C
     }
     void bar(){}
 }

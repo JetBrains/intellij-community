@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -231,11 +232,22 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
       if (initializer != null && elementToReplace != null) {
-        CommentTracker tracker = new CommentTracker();
-        tracker.markUnchanged(initializer);
-        String text = context.getDeclarationText(initializer);
-        tracker.delete(context.myVariable);
-        tracker.replaceAndRestoreComments(elementToReplace, text);
+        // Don't normalize the original declaration: it may declare many variables
+        PsiElement declCopy = context.myVariable.getParent().copy();
+        PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(
+          declCopy.getChildren(), e -> e instanceof PsiLocalVariable && context.myName.equals(((PsiLocalVariable)e).getName()));
+
+        if (varCopy != null) {
+          varCopy.setInitializer(initializer);
+          varCopy.normalizeDeclaration();
+          String text = varCopy.getText();
+
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(initializer);
+          tracker.markUnchanged(context.myVariable);
+          tracker.delete(context.myVariable);
+          tracker.replaceAndRestoreComments(elementToReplace, text);
+        }
       }
     }
   }
@@ -252,19 +264,6 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       myName = name;
       myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType()) ||
                    findNextAssignment(myAssignment.getParent(), myVariable) != null;
-    }
-
-    @NotNull
-    private String getDeclarationText(@NotNull PsiExpression initializer) {
-      StringJoiner joiner = new StringJoiner(" ");
-      if (myVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        joiner.add(PsiKeyword.FINAL + ' ');
-      }
-      for (PsiAnnotation annotation : myVariable.getAnnotations()) {
-        joiner.add(annotation.getText() + ' ');
-      }
-      joiner.add(myVariable.getTypeElement().getText() + ' ' + myName + '=' + initializer.getText() + ';');
-      return joiner.toString();
     }
   }
 }
