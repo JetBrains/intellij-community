@@ -433,7 +433,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         }
 
         val id = value?.uniqueID
-        LOG.assertTrue(idToSettings.contains(id))
+        if (id != null && !idToSettings.containsKey(id)) {
+          LOG.error("$id must be added before selecting")
+        }
         selectedConfigurationId = id
       }
 
