@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.lang.*;
+import com.intellij.lang.ASTFactory;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -208,21 +208,7 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
-    List<PsiElement> suffix = new ArrayList<>();
-    if (element instanceof PsiStatement) {
-      PsiElement lastChild = element.getLastChild();
-      boolean hasComment = false;
-      while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
-        hasComment |= lastChild instanceof PsiComment;
-        if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
-          suffix.add(markUnchanged(lastChild).copy());
-        }
-        lastChild = lastChild.getPrevSibling();
-      }
-      if (!hasComment) {
-        suffix.clear();
-      }
-    }
+    List<PsiElement> suffix = grabSuffixComments(element);
     PsiElement result = replace(element, replacement);
     PsiElement anchor = PsiTreeUtil
       .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
@@ -236,26 +222,42 @@ public final class CommentTracker {
       anchor = anchor.getParent();
     }
     if (anchor == null) anchor = result;
-    if (!suffix.isEmpty()) {
-      Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(result.getLanguage());
-      if (commenter instanceof CodeDocumentationAwareCommenter) {
-        IElementType lineCommentTokenType = ((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType();
-        if (lineCommentTokenType != null) {
-          PsiElement lastChild = result.getLastChild();
-          if (lastChild instanceof PsiComment && lineCommentTokenType.equals(((PsiComment)lastChild).getTokenType())) {
-            PsiElement nextSibling = result.getNextSibling();
-            if (nextSibling instanceof PsiWhiteSpace) {
-              result.add(nextSibling);
-            } else {
-              result.add(ASTFactory.whitespace("\n").getPsi());
-            }
-          }
-        }
-      }
-      StreamEx.ofReversed(suffix).forEach(result::add);
-    }
+    restoreSuffixComments(result, suffix);
     insertCommentsBefore(anchor);
     return result;
+  }
+
+  @NotNull
+  private List<PsiElement> grabSuffixComments(@NotNull PsiElement element) {
+    if (!(element instanceof PsiStatement)) {
+      return Collections.emptyList();
+    }
+    List<PsiElement> suffix = new ArrayList<>();
+    PsiElement lastChild = element.getLastChild();
+    boolean hasComment = false;
+    while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
+      hasComment |= lastChild instanceof PsiComment;
+      if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
+        suffix.add(markUnchanged(lastChild).copy());
+      }
+      lastChild = lastChild.getPrevSibling();
+    }
+    return hasComment ? suffix : Collections.emptyList();
+  }
+
+  private static void restoreSuffixComments(PsiElement target, List<PsiElement> suffix) {
+    if (!suffix.isEmpty()) {
+      PsiElement lastChild = target.getLastChild();
+      if (lastChild instanceof PsiComment && JavaTokenType.END_OF_LINE_COMMENT.equals(((PsiComment)lastChild).getTokenType())) {
+        PsiElement nextSibling = target.getNextSibling();
+        if (nextSibling instanceof PsiWhiteSpace) {
+          target.add(nextSibling);
+        } else {
+          target.add(PsiParserFacade.SERVICE.getInstance(target.getProject()).createWhiteSpaceFromText("\n"));
+        }
+      }
+      StreamEx.ofReversed(suffix).forEach(target::add);
+    }
   }
 
   /**
