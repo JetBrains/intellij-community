@@ -204,7 +204,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       double k = 1 / (Math.pow(normalizedFontScale, 2) + 1) + 0.5;
       fontScale *= k;
     }
-    if (!UIUtil.isJreHiDPIEnabled()) fontScale = (int)fontScale;
+    if (!UIUtil.isJreHiDPIEnabled()) fontScale = Math.max(1, Math.round(fontScale));
     return Math.max(fontMetricsThickness, fontScale);
   }
 
