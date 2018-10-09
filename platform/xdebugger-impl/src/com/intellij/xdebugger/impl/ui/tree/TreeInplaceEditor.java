@@ -74,9 +74,7 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     final JTree tree = getTree();
     tree.repaint();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(tree, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(tree, true));
   }
 
   protected void onHidden() {
@@ -116,9 +114,8 @@ public abstract class TreeInplaceEditor implements AWTEventListener {
 
     inplaceEditorComponent.validate();
     inplaceEditorComponent.paintImmediately(0,0,inplaceEditorComponent.getWidth(),inplaceEditorComponent.getHeight());
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+      () -> IdeFocusManager.getGlobalInstance().requestFocus(getPreferredFocusedComponent(), true));
 
     final ComponentAdapter componentListener = new ComponentAdapter() {
       @Override

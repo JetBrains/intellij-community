@@ -98,7 +98,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
       LocalAttachInfo attachInfo = getAttachInfo(project, info, dataHolder.getUserData(ADDRESS_MAP_KEY));
       assert attachInfo != null;
-      String res = "";
+      String res;
       String executable = info.getExecutableDisplayName();
       if ("java".equals(executable)) {
         if (!StringUtil.isEmpty(attachInfo.myClass)) {

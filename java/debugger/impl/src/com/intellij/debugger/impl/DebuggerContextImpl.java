@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public final class DebuggerContextImpl implements DebuggerContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerContextImpl");
 
-  public static final DebuggerContextImpl EMPTY_CONTEXT = createDebuggerContext((DebuggerSession)null, null, null, null);
+  public static final DebuggerContextImpl EMPTY_CONTEXT = createDebuggerContext(null, null, null, null);
 
   private boolean myInitialized;
 

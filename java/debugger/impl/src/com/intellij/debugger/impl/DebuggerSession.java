@@ -72,7 +72,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private volatile boolean myIsEvaluating;
   private volatile int myIgnoreFiltersFrameCountThreshold = 0;
 
-  private DebuggerSessionState myState = null;
+  private DebuggerSessionState myState;
 
   private final String mySessionName;
   private final DebugProcessImpl myDebugProcess;

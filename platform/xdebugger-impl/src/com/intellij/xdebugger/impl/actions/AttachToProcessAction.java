@@ -96,7 +96,7 @@ public class AttachToProcessAction extends AnAction {
               String debuggerName = ((AttachToProcessItem)item).getSelectedDebugger().getDebuggerDisplayName();
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
 
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.popup.title", debuggerName));
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.popup.title", debuggerName));
             }
 
             if (item instanceof AttachHostItem) {
@@ -104,7 +104,7 @@ public class AttachToProcessAction extends AnAction {
               String attachHostName = hostItem.getText(project);
               attachHostName = StringUtil.shortenTextWithEllipsis(attachHostName, 50, 0);
 
-              ((ListPopupImpl)popup).setCaption(XDebuggerBundle.message("xdebugger.attach.host.popup.title", attachHostName));
+              popup.setCaption(XDebuggerBundle.message("xdebugger.attach.host.popup.title", attachHostName));
             }
           };
           popup.addListSelectionListener(listener);
