@@ -238,7 +238,9 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
   @NotNull
   @Override
   protected AbstractTreeUpdater createTreeUpdater(@NotNull final AbstractTreeBuilder treeBuilder) {
-    return new AbstractTreeUpdater(treeBuilder);
+    return new AbstractTreeUpdater(treeBuilder) {
+      // unique class to simplify search through the logs
+    };
   }
 
   @Override

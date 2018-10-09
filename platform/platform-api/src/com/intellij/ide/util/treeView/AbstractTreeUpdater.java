@@ -334,7 +334,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   @NonNls
   @Override
   public synchronized String toString() {
-    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue + "] " + " nodeQueue=" + myNodeQueue;
+    return "AbstractTreeUpdater updateCount=" + myUpdateCount + " queue=[" + myUpdateQueue + "] " + " nodeQueue=" + myNodeQueue + " builder=" + myTreeBuilder;
   }
 
   public void flush() {
