@@ -171,6 +171,14 @@
         enabledByDefault="true"
         level="ERROR"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigEmptyHeaderInspection"/>
+    <localInspection
+        language="EditorConfig"
+        shortName="EditorConfigPartialOverride"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.header.partially.overridden.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPartialOverrideInspection"/>
 
     <!-- Pattern inspections -->
     <localInspection
@@ -240,15 +248,6 @@
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigOptionRedundancyInspection"/>
-    <localInspection
-        language="EditorConfig"
-        shortName="EditorConfigSuspiciousLineBreak"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.option.suspicious.line.break.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSuspiciousLineBreakInspection"/>
 
     <!-- Key inspections -->
     <localInspection
@@ -260,33 +259,6 @@
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigKeyCorrectnessInspection"/>
-    <localInspection
-        language="EditorConfig"
-        shortName="EditorConfigDanglingKey"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.dangling.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingKeyInspection"/>
-    <localInspection
-        language="EditorConfig"
-        shortName="EditorConfigDanglingDot"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.dangling-dot.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingDotInspection"/>
-    <localInspection
-        language="EditorConfig"
-        shortName="EditorConfigMultipleDots"
-        bundle="org.editorconfig.language.messages.EditorConfigBundle"
-        key="inspection.key.multiple-dots.name"
-        groupKey="editorconfig.inspection.group"
-        enabledByDefault="true"
-        level="ERROR"
-        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigMultipleDotsInspection"/>
 
     <!-- Value inspections -->
     <localInspection

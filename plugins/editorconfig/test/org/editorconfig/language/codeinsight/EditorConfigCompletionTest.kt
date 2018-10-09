@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.EditorConfigRegistry
-import org.editorconfig.language.assert
 import org.editorconfig.language.assertIterableEquals
 
 class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
@@ -59,13 +58,13 @@ class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   fun doTest(vararg required: String) = with(myFixture) {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
-    required.all(completeBasic().map(LookupElement::getLookupString)::contains).assert
+    assertTrue(required.all(completeBasic().map(LookupElement::getLookupString)::contains))
   }
 
   private fun doInverseTest(vararg forbidden: String) = with(myFixture) {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
-    forbidden.none(completeBasic().map(LookupElement::getLookupString)::contains).assert
+    assertTrue(forbidden.none(completeBasic().map(LookupElement::getLookupString)::contains))
   }
 
   private fun doExactTest(vararg expected: String) = with(myFixture) {

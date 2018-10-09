@@ -1,2 +1,0 @@
-[*]
-dotnet_naming_style.my_style.applicable_kinds = property
