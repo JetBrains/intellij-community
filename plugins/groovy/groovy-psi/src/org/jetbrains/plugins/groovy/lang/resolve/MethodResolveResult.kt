@@ -30,10 +30,10 @@ class MethodResolveResult(
         add(0, qualifierConstraint)
         addAll(argumentConstraints)
       }
-      MethodCandidate(method.staticMethod, siteSubstitutor, null, arguments, ref)
+      MethodCandidate(method.staticMethod, siteSubstitutor, arguments, ref)
     }
     else {
-      MethodCandidate(method, siteSubstitutor, qualifierConstraint, argumentConstraints, ref)
+      MethodCandidate(method, siteSubstitutor, argumentConstraints, ref)
     }
   }
 

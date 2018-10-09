@@ -17,7 +17,6 @@ import java.util.*
 
 class MethodCandidate(val method: PsiMethod,
                       val siteSubstitutor: PsiSubstitutor,
-                      val qualifier: Argument?,
                       val arguments: List<Argument>,
                       val context: GroovyPsiElement) {
 
