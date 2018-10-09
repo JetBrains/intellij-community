@@ -432,7 +432,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           return
         }
 
-        selectedConfigurationId = value?.uniqueID
+        val id = value?.uniqueID
+        LOG.assertTrue(idToSettings.contains(id))
+        selectedConfigurationId = id
       }
 
       eventPublisher.runConfigurationSelected()
