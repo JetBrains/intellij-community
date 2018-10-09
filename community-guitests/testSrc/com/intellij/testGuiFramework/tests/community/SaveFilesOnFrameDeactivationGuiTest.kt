@@ -8,9 +8,10 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
-import com.intellij.testGuiFramework.util.Key
-import com.intellij.testGuiFramework.util.Key.A
-import com.intellij.testGuiFramework.util.Key.TAB
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isUnix
+import com.intellij.testGuiFramework.launcher.system.SystemInfo.isWin
+import com.intellij.testGuiFramework.util.Key.*
 import com.intellij.testGuiFramework.util.Modifier.*
 import com.intellij.testGuiFramework.util.plus
 import org.fest.swing.exception.WaitTimedOutError
@@ -90,14 +91,14 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
     val fileSystemText = waitFileToBeSynced(textToWrite, filePath)
     dialog(if (SystemInfo.isMac()) "Preferences" else "Settings") {
-     button("Cancel").click()
+      button("Cancel").click()
     }
     ideFrame.closeProject(false)
     assertEquals(originalTextFromEditor, fileSystemText)
   }
 
   private fun openSettings() {
-    shortcut(CONTROL + ALT + Key.S, META + Key.COMMA)
+    shortcut(CONTROL + ALT + S, META + COMMA)
   }
 
   private fun getCurrentEditorFilePath(ideFrame2: IdeFrameFixture) =
@@ -144,7 +145,8 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
         textFromFile = File(filePath).readText()
         textInEditor == textFromFile
       }
-    } catch(e: WaitTimedOutError) {
+    }
+    catch (e: WaitTimedOutError) {
       System.err.println(e.message)
     }
     return textFromFile
@@ -152,7 +154,11 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
 
   private fun IdeFrameFixture.switchFrameTo() {
     if (this.target().isActive) return
-    shortcut(ALT + TAB, META + TAB)
+    when {
+      isWin() -> shortcut(ALT + TAB)
+      isMac() -> shortcut(META + BACK_QUOTE)
+      isUnix() -> shortcut(ALT + BACK_QUOTE)
+    }
     GuiTestUtilKt.waitUntil("IdeFrame[${this.projectPath}] will be activated", Timeouts.seconds02) { this.target().isActive }
   }
 
