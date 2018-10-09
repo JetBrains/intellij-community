@@ -21,5 +21,6 @@ public class AccessingPackagePrivateMembers {
 
     aClass.publicMethod();
     aClass.<warning descr="Method PublicClass.packagePrivateMethod() is package-private, but declared in a different module 'dep'">packagePrivateMethod</warning>();
+    Runnable r = aClass::<warning descr="Method PublicClass.packagePrivateMethod() is package-private, but declared in a different module 'dep'">packagePrivateMethod</warning>;
   }
 }
