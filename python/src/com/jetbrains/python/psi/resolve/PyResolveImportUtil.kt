@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
+import com.jetbrains.python.codeInsight.typing.filterTopPriorityResults
 import com.jetbrains.python.codeInsight.typing.resolveModuleAtStubPackage
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil
 import com.jetbrains.python.facet.PythonPathContributingFacet
@@ -91,7 +92,7 @@ private fun resolveQualifiedName(name: QualifiedName,
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
-  val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
+  val results = if (name.componentCount > 0) filterTopPriorityResults(pythonResults, context.module) + foreignResults else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -107,7 +108,7 @@ private fun resolveModuleFromRoots(name: QualifiedName, context: PyQualifiedName
   val head = name.removeTail(name.componentCount - 1)
   val nameNoHead = name.removeHead(1)
   return nameNoHead.components.fold(resultsFromRoots(head, context)) { results, component ->
-    findFirstResults(results, context.module)
+    filterTopPriorityResults(results, context.module)
       .asSequence()
       .filterIsInstance<PsiFileSystemItem>()
       .flatMap { resolveModuleAt(QualifiedName.fromComponents(component), it, context).asSequence() }
@@ -225,40 +226,6 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
   }
   val absoluteName = containingName.append(name)
   return resultsFromRoots(absoluteName, context.copyWithRelative(-1).copyWithRoots())
-}
-
-/**
- * Filters the results according to their import priority in sys.path.
- */
-private fun findFirstResults(results: List<PsiElement>, module: Module?) =
-    if (results.all(::isNamespacePackage))
-      results
-    else {
-      val result = results.firstOrNull { !isNamespacePackage(it) }
-      val stubFile = results.firstOrNull { it is PyiFile || PyUtil.turnDirIntoInit(it) is PyiFile }
-
-      val resultVFile = (result as? PsiFileSystemItem)?.virtualFile
-      val stubVFile = (stubFile as? PsiFileSystemItem)?.virtualFile
-
-      if (stubFile == null ||
-          module != null &&
-          stubVFile != null && PyTypeShed.isInside(stubVFile) &&
-          resultVFile != null && ModuleUtilCore.moduleContainsFile(module, resultVFile, false)) {
-        listOfNotNull(result)
-      }
-      else {
-        listOfNotNull(stubFile)
-      }
-    }
-
-private fun isNamespacePackage(element: PsiElement): Boolean {
-  if (element is PsiDirectory) {
-    val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
-    if (!level.isPython2) {
-      return PyUtil.turnDirIntoInit(element) == null
-    }
-  }
-  return false
 }
 
 private fun resolveWithRelativeLevel(name: QualifiedName, context : PyQualifiedNameResolveContext): List<PsiElement> {
