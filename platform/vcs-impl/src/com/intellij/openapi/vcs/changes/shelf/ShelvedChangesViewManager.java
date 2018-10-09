@@ -53,7 +53,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -469,12 +468,12 @@ public class ShelvedChangesViewManager implements Disposable {
     final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
     final ShelvedChangeList[] recycled = SHELVED_RECYCLED_CHANGELIST_KEY.getData(dataContext);
     if (shelved == null && recycled == null) return Collections.emptyList();
-    List<ShelvedChangeList> shelvedChangeLists = ContainerUtil.newArrayList();
+    List<ShelvedChangeList> shelvedChangeLists = newArrayList();
     if (shelved != null) {
-      ContainerUtil.addAll(shelvedChangeLists, shelved);
+      addAll(shelvedChangeLists, shelved);
     }
     if (recycled != null) {
-      ContainerUtil.addAll(shelvedChangeLists, recycled);
+      addAll(shelvedChangeLists, recycled);
     }
     return shelvedChangeLists;
   }
