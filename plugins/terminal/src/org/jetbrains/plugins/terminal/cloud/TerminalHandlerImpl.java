@@ -17,8 +17,8 @@ package org.jetbrains.plugins.terminal.cloud;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.impl.runtime.log.TerminalHandlerBase;
+import com.jediterm.terminal.ui.TerminalWidget;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.terminal.JBTabbedTerminalWidget;
 
 import javax.swing.*;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ import java.io.OutputStream;
 
 public class TerminalHandlerImpl extends TerminalHandlerBase {
 
-  private final JBTabbedTerminalWidget myTerminalWidget;
+  private final TerminalWidget myTerminalWidget;
 
   public TerminalHandlerImpl(@NotNull String presentableName,
                              @NotNull Project project,
@@ -48,6 +48,6 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
 
   @Override
   public JComponent getPreferredFocusableComponent() {
-    return (JComponent)myTerminalWidget.getFocusableComponent();
+    return myTerminalWidget.getPreferredFocusableComponent();
   }
 }

@@ -19,13 +19,14 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.ui.AbstractTabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalSession;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +42,16 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class.getName());
   @NotNull
   protected final Project myProject;
+  private JBTerminalSystemSettingsProvider mySettingsProvider;
+
+  public JBTerminalSystemSettingsProvider getSettingsProvider() {
+    return mySettingsProvider;
+  }
 
   public AbstractTerminalRunner(@NotNull Project project) {
     myProject = project;
+    mySettingsProvider = new JBTerminalSystemSettingsProvider();
+    Disposer.register(project, mySettingsProvider);
   }
 
   public void run() {
@@ -80,9 +88,8 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   protected abstract ProcessHandler createProcessHandler(T process);
 
   @NotNull
-  public JBTabbedTerminalWidget createTerminalWidget(@NotNull Disposable parent) {
-    final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(myProject, provider, widget -> openSessionInDirectory(widget.getFirst(), widget.getSecond()), parent);
+  public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent) {
+    JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
     openSessionForFile(terminalWidget, TerminalView.getInstance(myProject).getFileToOpen());
     return terminalWidget;
   }
@@ -109,7 +116,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
 
     final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTabbedTerminalWidget widget = new JBTabbedTerminalWidget(myProject, provider, w -> openSessionInDirectory(w.getFirst(), w.getSecond()), contentDescriptor);
+    JBTerminalWidget widget = new JBTerminalWidget(myProject, provider, contentDescriptor);
 
     createAndStartSession(widget, createTtyConnector(process));
 
@@ -120,15 +127,12 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     processHandler.startNotify();
   }
 
-  public void openSession(@NotNull JBTabbedTerminalWidget terminal) {
+  public void openSession(@NotNull JBTerminalWidget terminal) {
     openSessionInDirectory(terminal, null);
   }
 
-  public static void createAndStartSession(@NotNull JBTabbedTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
+  public static void createAndStartSession(@NotNull JBTerminalWidget terminal, @NotNull TtyConnector ttyConnector) {
     TerminalSession session = terminal.createTerminalSession(ttyConnector);
-
-    TerminalView.recordUsage(ttyConnector);
-
     session.start();
   }
 
@@ -158,7 +162,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   public abstract String runningTargetName();
 
-  public void openSessionForFile(@NotNull JBTabbedTerminalWidget terminalWidget, @Nullable VirtualFile file) {
+  public void openSessionForFile(@NotNull JBTerminalWidget terminalWidget, @Nullable VirtualFile file) {
     openSessionInDirectory(terminalWidget, getParentDirectoryPath(file));
   }
 
@@ -168,10 +172,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
-  public JBTabInnerTerminalWidget openSessionInDirectory(@NotNull AbstractTabbedTerminalWidget<JBTabInnerTerminalWidget> terminalWidget, @Nullable String directory) {
+  public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
+                                     @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
-
-    JBTabInnerTerminalWidget newTerminalWidget = terminalWidget.createNewTabWidget();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
@@ -180,10 +183,10 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            terminalWidget.initSession(createTtyConnector(process), newTerminalWidget);
-            newTerminalWidget.start();
-
+            terminalWidget.createTerminalSession(createTtyConnector(process));
+            terminalWidget.start();
             terminalWidget.getComponent().revalidate();
+            terminalWidget.notifyStarted();
           }
           catch (RuntimeException e) {
             showCannotOpenTerminalDialog(e);
@@ -194,8 +197,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
       }
     });
-
-    return newTerminalWidget;
   }
 
   private void showCannotOpenTerminalDialog(@NotNull Throwable e) {
