@@ -19,7 +19,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.codeInsight.typing.PyPEP561;
+import com.jetbrains.python.codeInsight.typing.PyStubPackages;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -382,12 +382,12 @@ public class ResolveImportUtil {
     final PsiDirectory subdir = dir.findSubdirectory(referencedName);
     // VFS may be case insensitive on Windows, but resolve is always case sensitive (PEP 235, PY-18958), so we check name here
     if (subdir != null && subdir.getName().equals(referencedName) && (!checkForPackage || PyUtil.isPackage(subdir, containingFile))) {
-      result.addAll(PyPEP561.replaceOrUniteWithStubPackage(containingFile, dir, subdir, withoutStubs));
+      result.addAll(PyStubPackages.replaceOrUniteWithStubPackage(containingFile, dir, subdir, withoutStubs));
     }
 
     final PsiFile module = findPyFileInDir(dir, referencedName, withoutStubs);
     if (module != null) {
-      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyPEP561.transferStubPackageMarker(dir, module)));
+      result.add(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, PyStubPackages.transferStubPackageMarker(dir, module)));
     }
 
     if (!isFileOnly) {
