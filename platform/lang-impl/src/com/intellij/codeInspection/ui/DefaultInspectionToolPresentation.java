@@ -264,8 +264,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
-    @NonNls final String ext = ".xml";
-    final File file = new File(myContext.getOutputPath(), myToolWrapper.getShortName() + ext);
+    final File file = ExportHTMLAction.getInspectionResultFile(myContext.getOutputPath(), myToolWrapper.getShortName());
     boolean exists = file.exists();
     FileUtil.createParentDirs(file);
     try (PrintWriter writer = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), CharsetToolkit.UTF8_CHARSET)))) {
