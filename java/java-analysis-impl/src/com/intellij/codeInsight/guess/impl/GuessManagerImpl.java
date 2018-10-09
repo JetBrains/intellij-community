@@ -583,7 +583,7 @@ public class GuessManagerImpl extends GuessManager {
           constraint = myInitial;
         }
         if (constraint != null) {
-          myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
+          myConstraint = myConstraint == null ? constraint : myConstraint.unite(constraint);
           if (myConstraint == null) {
             myConstraint = TypeConstraint.empty();
             return;

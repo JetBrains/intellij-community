@@ -293,7 +293,7 @@ public class DfaExpressionFactory {
       return DfaUtil.boxUnbox(value, targetType);
     }
     if (expression instanceof PsiConditionalExpression) {
-      return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression(), targetType).union(
+      return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression(), targetType).unite(
         getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getElseExpression(), targetType));
     }
     PsiType type = expression.getType();
@@ -322,7 +322,7 @@ public class DfaExpressionFactory {
     if (indexSet.isEmpty() || indexSet.max() - indexSet.min() > 100) return DfaUnknownValue.getInstance();
     return LongStreamEx.of(indexSet.stream())
                 .mapToObj(idx -> getAdvancedExpressionDfaValue(elements[(int)idx], targetType))
-                .prefix(DfaValue::union)
+                .prefix(DfaValue::unite)
                 .takeWhileInclusive(value -> value != DfaUnknownValue.getInstance())
                 .reduce((a, b) -> b)
                 .orElse(DfaUnknownValue.getInstance());
