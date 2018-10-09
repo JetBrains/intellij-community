@@ -16,6 +16,8 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -33,6 +35,8 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -41,6 +45,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author traff
@@ -85,7 +91,16 @@ public class TerminalView {
     });
 
     myToolWindow.setToHideOnEmptyContent(true);
-    newTab(null);
+    TerminalArrangementState state = TerminalArrangementManager.getInstance(myProject).getArrangementState();
+    List<TerminalTabState> states = state != null ? state.myTabStates : null;
+    if (ContainerUtil.isEmpty(states)) {
+      newTab(null);
+    }
+    else {
+      for (TerminalTabState tabState : states) {
+        createNewSession(myTerminalRunner, tabState);
+      }
+    }
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
@@ -124,19 +139,24 @@ public class TerminalView {
   }
 
 
-  public void createNewSession(final AbstractTerminalRunner terminalRunner) {
-    createNewTab(null, terminalRunner, myToolWindow);
+  public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner) {
+    createNewSession(terminalRunner, null);
+  }
+
+  public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner, @Nullable TerminalTabState tabState) {
+    createNewTab(null, terminalRunner, myToolWindow, tabState);
   }
 
   private Content newTab(@Nullable JBTerminalWidget terminalWidget) {
-    return createNewTab(terminalWidget, myTerminalRunner, myToolWindow);
+    return createNewTab(terminalWidget, myTerminalRunner, myToolWindow, null);
   }
 
   @NotNull
   private Content createNewTab(@Nullable JBTerminalWidget terminalWidget,
                                @NotNull AbstractTerminalRunner terminalRunner,
-                               @NotNull ToolWindow toolWindow) {
-    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget);
+                               @NotNull ToolWindow toolWindow,
+                               @Nullable TerminalTabState tabState) {
+    final Content content = createTerminalContent(terminalRunner, toolWindow, terminalWidget, tabState);
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     contentManager.setSelectedContent(content);
@@ -144,13 +164,17 @@ public class TerminalView {
   }
 
   private Content createTerminalContent(@NotNull AbstractTerminalRunner terminalRunner,
-                                        final @NotNull ToolWindow toolWindow,
-                                        @Nullable JBTerminalWidget terminalWidget) {
+                                        @NotNull ToolWindow toolWindow,
+                                        @Nullable JBTerminalWidget terminalWidget,
+                                        @Nullable TerminalTabState tabState) {
     TerminalToolWindowPanel panel = new TerminalToolWindowPanel(PropertiesComponent.getInstance(myProject), toolWindow);
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, TerminalOptionsProvider.Companion.getInstance().getTabName(), false);
+    String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
+                                         TerminalOptionsProvider.Companion.getInstance().getTabName());
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, tabName, false);
     if (terminalWidget == null) {
-      terminalWidget = terminalRunner.createTerminalWidget(content);
+      VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
+      terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
     }
     else {
       terminalWidget.setVirtualFile(null);
@@ -166,7 +190,11 @@ public class TerminalView {
 
       @Override
       public void onTerminalStarted() {
-        content.setDisplayName(finalTerminalWidget.getSettingsProvider().tabName(finalTerminalWidget.getTtyConnector(), finalTerminalWidget.getSessionName()));
+        if (tabState == null || StringUtil.isEmpty(tabState.myTabName)) {
+          String name = finalTerminalWidget.getSettingsProvider().tabName(finalTerminalWidget.getTtyConnector(),
+                                                                          finalTerminalWidget.getSessionName());
+          content.setDisplayName(name);
+        }
       }
     });
 
@@ -185,6 +213,19 @@ public class TerminalView {
     });
 
     return content;
+  }
+
+  @Nullable
+  private VirtualFile getCurrentWorkingDir(@Nullable TerminalTabState tabState) {
+    String dir = tabState != null ? tabState.myCurrentWorkingDirectory : null;
+    VirtualFile result = null;
+    if (dir != null) {
+      result = LocalFileSystem.getInstance().findFileByPath(dir);
+    }
+    if (result == null) {
+      result = myFileToOpen;
+    }
+    return result;
   }
 
   private void removeTab(Content content, boolean keepFocus) {
@@ -225,6 +266,25 @@ public class TerminalView {
 
   public void setFileToOpen(@Nullable VirtualFile fileToOpen) {
     myFileToOpen = fileToOpen;
+  }
+
+  @NotNull
+  private static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
+    return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
+  }
+
+  @NotNull
+  TerminalArrangementState getArrangementState() {
+    TerminalArrangementState arrangementState = new TerminalArrangementState();
+    ContentManager contentManager = myToolWindow.getContentManager();
+    for (Content content : contentManager.getContents()) {
+      JBTerminalWidget widget = getWidgetByContent(content);
+      TerminalTabState tabState = new TerminalTabState();
+      tabState.myTabName = content.getTabName();
+      arrangementState.myTabStates.add(tabState);
+    }
+    arrangementState.mySelectedTabIndex = contentManager.getIndexOfContent(contentManager.getSelectedContent());
+    return arrangementState;
   }
 
   /**
