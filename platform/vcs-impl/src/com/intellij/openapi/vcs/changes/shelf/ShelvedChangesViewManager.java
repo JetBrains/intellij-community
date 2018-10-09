@@ -61,6 +61,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -75,6 +76,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
@@ -371,14 +374,14 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       if (SHELVED_CHANGELIST_KEY.is(dataId)) {
-        final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
+        final Set<ShelvedChangeList> changeLists = getSelectedLists(l -> !l.isRecycled());
 
         if (changeLists.size() > 0) {
           return changeLists.toArray(new ShelvedChangeList[0]);
         }
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
-        final Set<ShelvedChangeList> changeLists = getSelectedLists(true);
+        final Set<ShelvedChangeList> changeLists = getSelectedLists(l -> l.isRecycled());
 
         if (changeLists.size() > 0) {
           return changeLists.toArray(new ShelvedChangeList[0]);
@@ -450,24 +453,15 @@ public class ShelvedChangesViewManager implements Disposable {
       return changes;
     }
 
-    private Set<ShelvedChangeList> getSelectedLists(final boolean recycled) {
-      final TreePath[] selections = getSelectionPaths();
-      final Set<ShelvedChangeList> changeLists = new HashSet<>();
-      if (selections != null) {
-        for(TreePath path: selections) {
-          if (path.getPathCount() >= 2) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) path.getPathComponent(1);
-            if (node.getUserObject() instanceof ShelvedChangeList) {
-              final ShelvedChangeList list = (ShelvedChangeList)node.getUserObject();
-              if (((! recycled) && (! list.isRecycled())) ||
-                  (recycled && list.isRecycled())) {
-                changeLists.add(list);
-              }
-            }
-          }
-        }
-      }
-      return changeLists;
+    @NotNull
+    private Set<ShelvedChangeList> getSelectedLists(@NotNull Predicate<ShelvedChangeList> condition) {
+      TreePath[] selectionPaths = getSelectionPaths();
+      if (selectionPaths == null) return Collections.emptySet();
+      return StreamEx.of(selectionPaths)
+        .map(path -> TreeUtil.findObjectInPath(path, ShelvedChangeList.class))
+        .filter(Objects::nonNull)
+        .filter(condition)
+        .collect(Collectors.toSet());
     }
   }
 
