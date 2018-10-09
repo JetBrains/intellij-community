@@ -896,11 +896,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         log.append(msg);
         return info;
       }
-
-      @Override
-      public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-
-      }
     };
     LineMarkerProviders.INSTANCE.addExplicitExtension(JavaLanguage.INSTANCE, provider);
     Disposer.register(getTestRootDisposable(), () -> LineMarkerProviders.INSTANCE.removeExplicitExtension(JavaLanguage.INSTANCE, provider));
