@@ -17,8 +17,11 @@ class MethodResolveResult(
   state: ResolveState
 ) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
 
+  private val siteSubstitutor by lazy {
+    super.getSubstitutor().putAll(method.typeParameters, ref.typeArguments)
+  }
+
   private val methodCandidate by lazy {
-    val siteSubstitutor = state[PsiSubstitutor.KEY].putAll(method.typeParameters, ref.typeArguments)
     val qualifierConstraint = buildQualifier(ref, state)
     val argumentConstraints = buildArguments(ref)
 
@@ -36,7 +39,7 @@ class MethodResolveResult(
 
   private val applicabilitySubstitutor by lazy {
     if (ref.typeArguments.isNotEmpty()) {
-      methodCandidate.siteSubstitutor
+      siteSubstitutor
     }
     else {
       GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
@@ -45,7 +48,7 @@ class MethodResolveResult(
 
   private val fullSubstitutor by lazy {
     if (ref.typeArguments.isNotEmpty()) {
-      methodCandidate.siteSubstitutor
+      siteSubstitutor
     }
     else {
       GroovyInferenceSessionBuilder(ref, methodCandidate)
