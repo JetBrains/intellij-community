@@ -1,0 +1,81 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.javaFX.execution;
+
+import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiJavaModule;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
+
+import java.util.Collection;
+
+/**
+ * ensure that javafx modules go to the module path after jdk 11 as OracleJDK doesn't have them in distribution anymore
+ */
+public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
+
+  private static final String JAVAFX_GRAPHICS = "javafx.graphics";
+  private static final String JAVAFX_BASE = "javafx.base";
+
+  @Override
+  public <T extends RunConfigurationBase> void updateJavaParameters(T configuration,
+                                                                    JavaParameters params,
+                                                                    RunnerSettings runnerSettings) {
+    ApplicationConfiguration  applicationConfiguration = (ApplicationConfiguration )configuration;
+    String runClass = applicationConfiguration.getRunClass();
+    if (runClass != null) {
+      Project project = configuration.getProject();
+      GlobalSearchScope searchScope = applicationConfiguration.getSearchScope();
+      PsiClass aClass = applicationConfiguration.getMainClass();
+      if (aClass != null && InheritanceUtil.isInheritor(aClass, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION) && searchScope != null) {
+        JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(aClass);
+        if (sdkVersion != null &&
+            sdkVersion.isAtLeast(JavaSdkVersion.JDK_11) &&
+            params.getModulePath().isEmpty() &&
+            JavaModuleNameIndex.getInstance().get(JAVAFX_GRAPHICS, project, searchScope).stream().noneMatch(mod -> belongsToJdk(mod))) {
+
+          VirtualFile javaFxBase = getModuleJar(JAVAFX_BASE, project, searchScope);
+          VirtualFile javafxGraphics = getModuleJar(JAVAFX_GRAPHICS, project, searchScope);
+          if (javaFxBase != null && javafxGraphics != null) {
+            params.getModulePath().add(javaFxBase);
+            params.getModulePath().add(javafxGraphics);
+            params.getVMParametersList().addParametersString("--add-modules " + JAVAFX_BASE + "," + JAVAFX_GRAPHICS);
+            params.getVMParametersList().addParametersString("--add-exports " + JAVAFX_GRAPHICS + "/com.sun.javafx.application=ALL-UNNAMED");
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean belongsToJdk(PsiJavaModule mod) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(mod);
+    return file != null && 
+           ProjectRootManager.getInstance(mod.getProject()).getFileIndex().getOrderEntriesForFile(file).stream().anyMatch(e -> e instanceof JdkOrderEntry);
+  }
+
+  private static VirtualFile getModuleJar(String moduleName, Project project, GlobalSearchScope searchScope) {
+    Collection<PsiJavaModule> javaModules = JavaModuleNameIndex.getInstance().get(moduleName, project, searchScope);
+    return VfsUtilCore.getVirtualFileForJar(PsiUtilCore.getVirtualFile(ContainerUtil.getFirstItem(javaModules)));
+  }
+
+  @Override
+  public boolean isApplicableFor(@NotNull RunConfigurationBase<?> configuration) {
+    return configuration instanceof ApplicationConfiguration;
+  }
+}
