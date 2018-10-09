@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
@@ -33,14 +34,15 @@ public class GoToChangePopupBuilder {
   private static final Key<JBPopup> POPUP_KEY = Key.create("Diff.RequestChainGoToPopup");
 
   public interface Chain extends DiffRequestChain {
-    @NotNull
+    @Nullable
     AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected);
   }
 
   @NotNull
   public static AnAction create(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
     if (chain instanceof Chain) {
-      return ((Chain)chain).createGoToChangeAction(onSelected);
+      AnAction action = ((Chain)chain).createGoToChangeAction(onSelected);
+      if (action != null) return action;
     }
     return new SimpleGoToChangePopupAction(chain, onSelected);
   }

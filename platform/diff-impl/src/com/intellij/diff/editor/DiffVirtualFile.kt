@@ -24,5 +24,11 @@ abstract class DiffVirtualFile : LightVirtualFile("Diff", DiffFileType.INSTANCE,
 
   interface Builder {
     fun build(): DiffRequestProcessor
+
+    companion object {
+      fun create(action: () -> DiffRequestProcessor) = object : Builder {
+        override fun build(): DiffRequestProcessor = action()
+      }
+    }
   }
 }
