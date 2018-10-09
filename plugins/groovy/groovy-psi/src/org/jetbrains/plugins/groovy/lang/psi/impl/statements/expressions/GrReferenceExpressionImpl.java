@@ -470,6 +470,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return false;
   }
 
+  @Nullable
+  @Override
+  public GroovyReference getRValueReference() {
+    return myRValueReference.getValue();
+  }
+
+  @Nullable
+  @Override
+  public GroovyReference getLValueReference() {
+    return myLValueReference.getValue();
+  }
+
   @Override
   public boolean isReferenceTo(@NotNull PsiElement element) {
     GroovyResolveResult[] results = multiResolve(false);
