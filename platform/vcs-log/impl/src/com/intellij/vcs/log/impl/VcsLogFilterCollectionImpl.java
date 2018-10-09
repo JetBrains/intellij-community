@@ -39,7 +39,7 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   }
 
   public VcsLogFilterCollectionImpl(@NotNull Collection<? extends VcsLogFilter> filters) {
-    for (VcsLogFilter filter: filters) {
+    for (VcsLogFilter filter : filters) {
       myFilters.put(filter.getKey(), filter);
     }
   }

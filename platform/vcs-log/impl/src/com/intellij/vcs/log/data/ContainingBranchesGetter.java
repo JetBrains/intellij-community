@@ -203,10 +203,10 @@ public class ContainingBranchesGetter {
     @NotNull private final PermanentGraph<Integer> graph;
 
     Task(@NotNull VirtualFile root,
-                @NotNull Hash hash,
-                @NotNull SLRUMap<CommitId, List<String>> cache,
-                @NotNull PermanentGraph<Integer> graph,
-                @NotNull RefsModel refs) {
+         @NotNull Hash hash,
+         @NotNull SLRUMap<CommitId, List<String>> cache,
+         @NotNull PermanentGraph<Integer> graph,
+         @NotNull RefsModel refs) {
       this.root = root;
       this.hash = hash;
       this.cache = cache;

@@ -29,7 +29,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.VcsLog
 import com.intellij.vcs.log.VcsLogDataKeys
 import com.intellij.vcs.log.history.FileHistoryUtil
-import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.actions.CompareRevisionsFromLogAction
 import java.awt.event.KeyEvent

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
@@ -151,8 +152,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     @NotNull
     @Override
     public Boolean fun(Project project) {
-      return !VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project)
-                           .isEmpty();
+      VcsRoot[] roots = ProjectLevelVcsManager.getInstance(project).getAllVcsRoots();
+      return !VcsLogManager.findLogProviders(Arrays.asList(roots), project).isEmpty();
     }
   }
 }

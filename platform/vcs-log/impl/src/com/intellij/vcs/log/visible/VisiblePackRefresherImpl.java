@@ -191,7 +191,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
 
       if (!requestsToRun.isEmpty()) {
         ApplicationManager.getApplication().invokeLater(() -> {
-          for (MoreCommitsRequest request: requestsToRun) {
+          for (MoreCommitsRequest request : requestsToRun) {
             request.onLoaded.run();
           }
         });
@@ -302,11 +302,11 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     }
 
     State(@NotNull VcsLogFilterCollection filters,
-                 @NotNull PermanentGraph.SortType sortType,
-                 @NotNull CommitCountStage commitCountStage,
-                 @NotNull List<MoreCommitsRequest> requests,
-                 @NotNull VisiblePack visiblePack,
-                 boolean isValid) {
+          @NotNull PermanentGraph.SortType sortType,
+          @NotNull CommitCountStage commitCountStage,
+          @NotNull List<MoreCommitsRequest> requests,
+          @NotNull VisiblePack visiblePack,
+          boolean isValid) {
       myFilters = filters;
       mySortType = sortType;
       myCommitCount = commitCountStage;

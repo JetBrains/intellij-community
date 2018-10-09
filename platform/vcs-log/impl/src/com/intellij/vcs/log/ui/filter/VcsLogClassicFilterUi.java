@@ -40,6 +40,7 @@ import javax.swing.text.BadLocationException;
 import java.util.*;
 
 /**
+ *
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static final String VCS_LOG_TEXT_FILTER_HISTORY = "Vcs.Log.Text.Filter.History";
@@ -155,7 +156,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   @Nullable
   private static VcsLogHashFilterImpl createHashFilter(@NotNull String text) {
     List<String> hashes = ContainerUtil.newArrayList();
-    for (String word: StringUtil.split(text, " ")) {
+    for (String word : StringUtil.split(text, " ")) {
       if (!word.matches(HASH_PATTERN)) {
         return null;
       }
@@ -305,8 +306,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @NotNull private final Set<VirtualFile> myRoots;
 
     FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
-                           @NotNull Set<VirtualFile> roots,
-                           MainVcsLogUiProperties uiProperties) {
+                    @NotNull Set<VirtualFile> roots,
+                    MainVcsLogUiProperties uiProperties) {
       super("file", dataPackGetter, uiProperties);
       myRoots = roots;
     }

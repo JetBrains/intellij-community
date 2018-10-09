@@ -130,7 +130,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_HISTORY_TOOLBAR_PLACE, toolbarGroup, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
+                                                                            toolbarGroup, false);
     toolbar.setTargetComponent(myGraphTable);
     return toolbar.getComponent();
   }
