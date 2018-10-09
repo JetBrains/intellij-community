@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
+import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
@@ -37,6 +38,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -45,8 +47,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author traff
@@ -163,6 +168,12 @@ public class TerminalView {
     return content;
   }
 
+  private static String generateUniqueName(String suggestedName, List<String> tabs) {
+    final Set<String> names = Sets.newHashSet(tabs);
+
+    return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
+  }
+
   private Content createTerminalContent(@NotNull AbstractTerminalRunner terminalRunner,
                                         @NotNull ToolWindow toolWindow,
                                         @Nullable JBTerminalWidget terminalWidget,
@@ -171,6 +182,9 @@ public class TerminalView {
 
     String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
                                          TerminalOptionsProvider.Companion.getInstance().getTabName());
+
+    Content[] contents = myToolWindow.getContentManager().getContents();
+
     final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, tabName, false);
     if (terminalWidget == null) {
       VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
@@ -193,7 +207,8 @@ public class TerminalView {
         if (tabState == null || StringUtil.isEmpty(tabState.myTabName)) {
           String name = finalTerminalWidget.getSettingsProvider().tabName(finalTerminalWidget.getTtyConnector(),
                                                                           finalTerminalWidget.getSessionName());
-          content.setDisplayName(name);
+
+          content.setDisplayName(generateUniqueName(name, Arrays.stream(contents).map(c -> c.getDisplayName()).collect(Collectors.toList())));
         }
       }
     });
