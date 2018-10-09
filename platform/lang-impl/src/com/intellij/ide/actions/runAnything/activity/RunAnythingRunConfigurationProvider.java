@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationItem;
@@ -26,6 +27,12 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
   public void execute(@NotNull DataContext dataContext, @NotNull ChooseRunConfigurationPopup.ItemWrapper wrapper) {
     Executor executor = EXECUTOR_KEY.getData(dataContext);
     assert executor != null;
+
+    Object value = wrapper.getValue();
+    if (value instanceof RunnerAndConfigurationSettings &&
+        !RunManager.getInstance(fetchProject(dataContext)).hasSettings((RunnerAndConfigurationSettings)value)) {
+      RunManager.getInstance(fetchProject(dataContext)).addConfiguration((RunnerAndConfigurationSettings)value);
+    }
 
     wrapper.perform(fetchProject(dataContext), executor, dataContext);
   }
