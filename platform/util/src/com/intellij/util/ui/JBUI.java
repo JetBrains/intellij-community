@@ -1803,12 +1803,22 @@ public class JBUI {
     }
 
     public static class Advertiser {
+      private static final JBInsets DEFAULT_AD_INSETS = insets(1, 5);
+
       public static Color foreground() {
         return JBColor.namedColor("Popup.Advertiser.foreground", UIUtil.getLabelForeground());
       }
 
       public static Color background() {
         return JBColor.namedColor("Popup.Advertiser.background", UIUtil.getLabelBackground());
+      }
+
+      public static Border border() {
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+      }
+
+      public static Color borderColor() {
+        return JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
       }
     }
 
