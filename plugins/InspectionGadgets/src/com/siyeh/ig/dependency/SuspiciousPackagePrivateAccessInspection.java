@@ -93,6 +93,16 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         return false;
       }
 
+      @Override
+      public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression node) {
+        PsiElement resolve = node.resolve();
+        if (resolve instanceof PsiMember) {
+          PsiMember member = (PsiMember)resolve;
+          checkAccess(getReferenceNameElement(node), member, node.getQualifierExpression());
+        }
+        return false;
+      }
+
       private void checkClassReference(UElement sourceNode, PsiClass targetClass) {
         if (targetClass != null) {
           checkAccess(sourceNode, targetClass, null);
@@ -124,6 +134,17 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         }
       }
     }, true);
+  }
+
+  private UElement getReferenceNameElement(UCallableReferenceExpression node) {
+    PsiElement psi = node.getSourcePsi();
+    if (psi instanceof PsiReferenceExpression) {
+      PsiElement nameElement = ((PsiReferenceExpression)psi).getReferenceNameElement();
+      if (nameElement != null) {
+        return UastContextKt.toUElement(nameElement);
+      }
+    }
+    return node;
   }
 
   private static boolean canAccessProtectedMember(UExpression receiver, UElement sourceNode, PsiMember member) {
