@@ -38,7 +38,7 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
 
     CloudTerminalRunner terminalRunner = new CloudTerminalRunner(project, presentableName, process);
 
-    myTerminalWidget = terminalRunner.createTerminalWidget(project);
+    myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
   }
 
   @Override

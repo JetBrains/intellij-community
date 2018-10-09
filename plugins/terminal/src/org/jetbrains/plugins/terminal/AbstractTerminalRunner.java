@@ -88,9 +88,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   protected abstract ProcessHandler createProcessHandler(T process);
 
   @NotNull
-  public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent) {
+  public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
-    openSessionForFile(terminalWidget, TerminalView.getInstance(myProject).getFileToOpen());
+    openSessionForFile(terminalWidget, currentWorkingDirectory);
     return terminalWidget;
   }
 
