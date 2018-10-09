@@ -278,7 +278,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     DfaValue value = memState.pop();
     if (type instanceof PsiPrimitiveType) {
-      value = factory.getBoxedFactory().createUnboxed(value);
+      value = DfaUtil.boxUnbox(value, type);
     }
     pushExpressionResult(value, instruction, memState);
 
@@ -287,19 +287,31 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   protected void onInstructionProducesCCE(TypeCastInstruction instruction) {}
 
+  protected void beforeMethodCall(@NotNull PsiExpression expression,
+                                  @NotNull DfaCallArguments arguments,
+                                  @NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState memState) {
+
+  }
+
   @Override
   public DfaInstructionState[] visitMethodCall(final MethodCallInstruction instruction, final DataFlowRunner runner, final DfaMemoryState memState) {
+    DfaValueFactory factory = runner.getFactory();
+    DfaCallArguments callArguments = popCall(instruction, factory, memState);
+
+    if (callArguments.myArguments != null && instruction.getExpression() != null) {
+      beforeMethodCall(instruction.getExpression(), callArguments, runner, memState);
+    }
+
     Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    finalStates.addAll(handleKnownMethods(instruction, runner, memState));
+    finalStates.addAll(handleKnownMethods(instruction, runner, memState, callArguments));
 
     if (finalStates.isEmpty()) {
-      DfaCallArguments callArguments = popCall(instruction, runner, memState, true);
-
       Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(memState, callArguments));
-      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory());
+      DfaValue defaultResult = getMethodResultValue(instruction, callArguments.myQualifier, memState, factory);
       if (callArguments.myArguments != null) {
         for (MethodContract contract : instruction.getContracts()) {
-          currentStates = addContractResults(contract, currentStates, runner.getFactory(), finalStates, defaultResult, instruction.getExpression());
+          currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, instruction.getExpression());
           if (currentStates.size() + finalStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) {
             if (LOG.isDebugEnabled()) {
               LOG.debug("Too complex contract on " + instruction.getContext() + ", skipping contract processing");
@@ -328,56 +340,49 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @NotNull
-  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction,
+                                                  DataFlowRunner runner,
+                                                  DfaMemoryState memState,
+                                                  DfaCallArguments callArguments) {
+    if (callArguments.myArguments == null) return Collections.emptyList();
     PsiMethod method = instruction.getTargetMethod();
     if (method == null) return Collections.emptyList();
     CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
     if (handler == null) return Collections.emptyList();
-    memState = memState.createCopy();
-    DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
-    DfaValue result = callArguments.myArguments == null ? null : handler.getMethodResult(callArguments, memState, runner.getFactory());
-    if (result != null) {
-      pushExpressionResult(result, instruction, memState);
-      return Collections.singletonList(memState);
-    }
-    return Collections.emptyList();
+    DfaValue result = handler.getMethodResult(callArguments, memState, runner.getFactory());
+    if (result == null) return Collections.emptyList();
+
+    pushExpressionResult(result, instruction, memState);
+    return Collections.singletonList(memState);
   }
 
   @NotNull
-  protected DfaCallArguments popCall(MethodCallInstruction instruction,
-                                     DataFlowRunner runner,
-                                     DfaMemoryState memState,
-                                     boolean contractOnly) {
+  protected DfaCallArguments popCall(MethodCallInstruction instruction, DfaValueFactory factory, DfaMemoryState memState) {
     PsiMethod method = instruction.getTargetMethod();
     MutationSignature sig = MutationSignature.fromMethod(method);
-    DfaValue[] argValues = popCallArguments(instruction, runner, memState, contractOnly, sig);
+    DfaValue[] argValues = popCallArguments(instruction, factory, memState, sig);
     final DfaValue qualifier = popQualifier(instruction, memState, sig);
     return new DfaCallArguments(qualifier, argValues, !instruction.shouldFlushFields());
   }
 
   @Nullable
   private DfaValue[] popCallArguments(MethodCallInstruction instruction,
-                                      DataFlowRunner runner,
+                                      DfaValueFactory factory,
                                       DfaMemoryState memState,
-                                      boolean contractOnly, MutationSignature sig) {
+                                      MutationSignature sig) {
     final int argCount = instruction.getArgCount();
 
     PsiMethod method = instruction.getTargetMethod();
     boolean varargCall = instruction.isVarArgCall();
-    DfaValue[] argValues;
-    if (method == null || (contractOnly && instruction.getContracts().isEmpty())) {
-      argValues = null;
-    } else {
+    DfaValue[] argValues = null;
+    if (method != null) {
       PsiParameterList paramList = method.getParameterList();
       int paramCount = paramList.getParametersCount();
       if (paramCount == argCount || method.isVarArgs() && argCount >= paramCount - 1) {
         argValues = new DfaValue[paramCount];
         if (varargCall) {
-          argValues[paramCount - 1] =
-            runner.getFactory().createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
+          argValues[paramCount - 1] = factory.createTypeValue(paramList.getParameters()[paramCount - 1].getType(), Nullability.NOT_NULL);
         }
-      } else {
-        argValues = null;
       }
     }
 
@@ -420,7 +425,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         memState.forceVariableFact((DfaVariableValue)value, DfaFactType.MUTABILITY, Mutability.MUTABLE);
       }
     }
-    if (value instanceof DfaVariableValue && !(((DfaVariableValue)value).getVariableType() instanceof PsiArrayType)) {
+    if (value instanceof DfaVariableValue && !(value.getType() instanceof PsiArrayType)) {
       if (instruction.shouldFlushFields() || !(instruction.getResultType() instanceof PsiPrimitiveType)) {
         // For now drop locality on every qualified call except primitive returning pure calls
         // as value might escape through the return value
@@ -526,7 +531,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (methodType == MethodCallInstruction.MethodType.UNBOXING) {
-      return factory.getBoxedFactory().createUnboxed(qualifierValue);
+      return factory.getBoxedFactory().createUnboxed(qualifierValue, ObjectUtils.tryCast(type, PsiPrimitiveType.class));
     }
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {
@@ -538,7 +543,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       assert qualifierValue != null;
       if (qualifierValue instanceof DfaConstValue && type != null) {
         Object casted = TypeConversionUtil.computeCastTo(((DfaConstValue)qualifierValue).getValue(), type);
-        return factory.getConstFactory().createFromValue(casted, type, ((DfaConstValue)qualifierValue).getConstant());
+        return factory.getConstFactory().createFromValue(casted, type);
       }
       return qualifierValue;
     }
@@ -671,7 +676,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       isStringComparison(instruction.getExpression()) &&
+       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue) && isComparedByEquals(instruction.getExpression()) &&
        !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
@@ -713,11 +718,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
-  private static boolean isStringComparison(PsiExpression expression) {
+  private static boolean isComparedByEquals(PsiExpression expression) {
     if (expression instanceof PsiBinaryExpression) {
       PsiExpression left = ((PsiBinaryExpression)expression).getLOperand();
       PsiExpression right = ((PsiBinaryExpression)expression).getROperand();
-      return right != null && (TypeUtils.isJavaLangString(left.getType()) && TypeUtils.isJavaLangString(right.getType()));
+      return right != null && (DfaUtil.isComparedByEquals(left.getType()) && DfaUtil.isComparedByEquals(right.getType()));
     }
     return false;
   }

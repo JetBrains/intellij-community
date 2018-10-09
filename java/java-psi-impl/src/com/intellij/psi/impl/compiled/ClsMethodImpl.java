@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -289,7 +288,7 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;

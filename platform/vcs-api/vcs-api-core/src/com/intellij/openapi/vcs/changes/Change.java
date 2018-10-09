@@ -223,7 +223,6 @@ public class Change {
   @NonNls
   public String toString() {
     final Type type = getType();
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (type) {
       case NEW: return "A: " + myAfterRevision;
       case DELETED: return "D: " + myBeforeRevision;

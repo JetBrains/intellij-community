@@ -23,6 +23,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "INSERT",                   "EditorToggleInsertState", "UsageView.Include", "DomElementsTreeView.AddElement", "DomCollectionControl.Add", "XDebugger.NewWatch"},
     { "SUBTRACT",                 "CollapseTreeNode", "Graph.ZoomOut"},
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection", "EditorTab", "NextTemplateParameter", "ExpandLiveTemplateByTab", "BraceOrQuoteOut"},
+    { "LEFT",                     "EditorLeft", "Vcs.Log.GoToChild"},
+    { "RIGHT",                    "EditorRight", "Vcs.Log.GoToParent"},
     { "alt DOWN",                 "ShowContent", "MethodDown", "Arrangement.Rule.Match.Condition.Move.Down"},
     { "alt UP",                   "MethodUp", "Arrangement.Rule.Match.Condition.Move.Up"},
     { "alt F1",                   "SelectIn", "ProjectViewChangeView"},

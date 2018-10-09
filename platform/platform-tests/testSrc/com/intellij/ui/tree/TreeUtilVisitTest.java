@@ -5,6 +5,7 @@ package com.intellij.ui.tree;
 
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +13,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -841,6 +843,61 @@ public final class TreeUtilVisitTest {
         });
       });
     });
+  }
+
+  @Test
+  public void testMakeVisibleNonExistent() {
+    testMakeVisibleNonExistent("-Root\n" +
+                               " +1\n" +
+                               " +2\n" +
+                               " -3\n" +
+                               "  +31\n" +
+                               "  +32\n" +
+                               "  +33\n",
+                               convertArrayToVisitor("3", "NonExistent"));
+  }
+
+  @Test
+  public void testMakeVisibleNonExistentRoot() {
+    testMakeVisibleNonExistent("+Root\n", createRootVisitor("tOOr"));
+  }
+
+  private static void testMakeVisibleNonExistent(String expected, TreeVisitor visitor) {
+    testNonExistent(expected, test -> TreeUtil.promiseMakeVisible(test.getTree(), visitor));
+  }
+
+  @Test
+  public void testExpandNonExistent() {
+    testExpandNonExistent("-Root\n" +
+                          " +1\n" +
+                          " +2\n" +
+                          " -3\n" +
+                          "  +31\n" +
+                          "  +32\n" +
+                          "  +33\n",
+                          convertArrayToVisitor("3", "NonExistent"));
+  }
+
+  @Test
+  public void testExpandNonExistentRoot() {
+    testExpandNonExistent("+Root\n", createRootVisitor("t00r"));
+  }
+
+  private static void testExpandNonExistent(String expected, TreeVisitor visitor) {
+    testNonExistent(expected, test -> TreeUtil.promiseExpand(test.getTree(), visitor));
+  }
+
+  private static void testNonExistent(String expected, Function<TreeTest, Promise<TreePath>> function) {
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test -> function.apply(test)
+      .onSuccess(path -> test.invokeSafely(() -> Assert.fail("found unexpected path: " + path)))
+      .onError(error -> test.invokeSafely(() -> {
+        Assert.assertTrue(error instanceof CancellationException);
+        test.assertTree(expected, test::done);
+      })));
+  }
+
+  private static TreeVisitor createRootVisitor(@NotNull String name) {
+    return new TreeVisitor.ByTreePath<>(new TreePath(name), Object::toString);
   }
 
   private static TreeVisitor convertArrayToVisitor(@NotNull String... array) {

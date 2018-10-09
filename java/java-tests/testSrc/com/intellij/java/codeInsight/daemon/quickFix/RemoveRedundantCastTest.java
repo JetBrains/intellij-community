@@ -12,8 +12,6 @@ public class RemoveRedundantCastTest extends LightQuickFixParameterizedTestCase 
     enableInspectionTool(new RedundantCastInspection());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantCast";

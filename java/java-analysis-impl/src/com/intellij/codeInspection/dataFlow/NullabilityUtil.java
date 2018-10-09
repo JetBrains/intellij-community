@@ -4,10 +4,10 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
@@ -30,7 +30,7 @@ public class NullabilityUtil {
       return DfaNullability.NOT_NULL;
     }
     PsiModifierListOwner var = value.getPsiVariable();
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getVariableType(), var);
+    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(value.getType(), var);
     if (nullability != Nullability.UNKNOWN) {
       return DfaNullability.fromNullability(nullability);
     }
@@ -90,7 +90,7 @@ public class NullabilityUtil {
   }
 
   private static boolean isImplicitlyInitializedNotNull(PsiField field) {
-    return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
+    return ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isImplicitlyNotNullInitialized(field));
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
@@ -99,8 +99,7 @@ public class NullabilityUtil {
 
     if (!isCheapEnoughToSearch(field, name)) return false;
 
-    return ReferencesSearch
-      .search(field).forEach(
+    return ReferencesSearch.search(field).allMatch(
         reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
   }
 
@@ -174,8 +173,15 @@ public class NullabilityUtil {
       return DfaNullability.toNullability(CommonDataflow.getExpressionFact(expression, DfaFactType.NULLABILITY));
     }
     if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
+      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
+      PsiElement target = (ref).resolve();
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) {
+        PsiElement block = PsiUtil.getVariableCodeBlock((PsiVariable)target, null);
+        // Do not trust the declared nullability of local variable/parameter if it's reassigned as nullability designates
+        // only initial nullability
+        if (block == null || !HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)target, block, ref)) return Nullability.UNKNOWN;
+      }
+      return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();

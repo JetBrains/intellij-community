@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class OptionalUtil {
-  private static final String OPTIONAL_INT = "java.util.OptionalInt";
-  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
-  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
+  public static final String OPTIONAL_INT = "java.util.OptionalInt";
+  public static final String OPTIONAL_LONG = "java.util.OptionalLong";
+  public static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
 
   private static final CallMatcher OPTIONAL_OF =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);

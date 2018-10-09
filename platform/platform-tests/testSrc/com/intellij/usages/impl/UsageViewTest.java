@@ -6,6 +6,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
@@ -13,6 +14,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.BinaryFileDecompiler;
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +55,9 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
       fail("Can't start the test: leaking PsiFiles found");
     }
 
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{} //iuggjhfg");
+    @Language("JAVA")
+    String text = "public class X{} //iuggjhfg";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", text);
     Usage[] usages = new Usage[100];
     for (int i = 0; i < usages.length; i++) {
       usages[i] = createUsage(psiFile,i);
@@ -68,10 +74,12 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testUsageViewHandlesDocumentChange() {
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    @Language("JAVA")
+    String text = "public class X{ int xxx; } //comment";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", text);
     Usage usage = createUsage(psiFile, psiFile.getText().indexOf("xxx"));
 
-    UsageView usageView = createUsageView(new Usage[]{usage});
+    UsageView usageView = createUsageView(usage);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -81,10 +89,12 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     assertEquals(psiFile.getText().indexOf("xxx"), navigationOffset);
   }
   public void testTextUsageInfoHandlesDocumentChange() {
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    @Language("JAVA")
+    String text = "public class X{ int xxx; } //comment";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", text);
     UsageInfo2UsageAdapter usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(), "xxx")));
 
-    UsageView usageView = createUsageView(new Usage[]{usage});
+    UsageView usageView = createUsageView(usage);
 
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(psiFile);
@@ -101,13 +111,15 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testUsageViewCanRerunAfterTargetWasInvalidatedAndRestored() {
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{" +
-                                                           "    void foo() {\n" +
-                                                           "        bar();\n" +
-                                                           "        bar();\n" +
-                                                           "    }" +
-                                                           "    void bar() {}\n" +
-                                                           "}");
+    @Language("JAVA")
+    String fileText = "public class X{" +
+                   "    void foo() {\n" +
+                   "        bar();\n" +
+                   "        bar();\n" +
+                   "    }" +
+                   "    void bar() {}\n" +
+                   "}";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", fileText);
     Usage usage = createUsage(psiFile, psiFile.getText().indexOf("bar();"));
 
     PsiElement[] members = psiFile.getChildren()[psiFile.getChildren().length - 1].getChildren();
@@ -118,13 +130,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     FindUsagesHandler handler = usagesManager.getNewFindUsagesHandler(bar, false);
     UsageViewImpl usageView =
       (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{bar}, PsiElement.EMPTY_ARRAY, handler, handler.getFindUsagesOptions(), false);
-    ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        usageView.waitForUpdateRequestsCompletion();
-        usageView.drainQueuedUsageNodes();
-      }
-    });
+    waitForUsages(usageView);
 
     Disposer.register(myFixture.getTestRootDisposable(), usageView);
 
@@ -154,11 +160,23 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     assertEquals(2, usages.size());
   }
 
+  private void waitForUsages(UsageViewImpl usageView) {
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        usageView.waitForUpdateRequestsCompletion();
+        usageView.drainQueuedUsageNodes();
+      }
+    });
+  }
+
   public void testExcludeUsageMustExcludeChildrenAndParents() {
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    @Language("JAVA")
+    String fileText = "public class X{ int xxx; } //comment";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", fileText);
     Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
 
-    UsageViewImpl usageView = createUsageView(new Usage[]{usage});
+    UsageViewImpl usageView = createUsageView(usage);
 
     usageView.excludeUsages(new Usage[]{usage});
     UIUtil.dispatchAllInvocationEvents();
@@ -205,26 +223,23 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   @NotNull
-  private UsageViewImpl createUsageView(@NotNull Usage[] usages) {
+  private UsageViewImpl createUsageView(@NotNull Usage... usages) {
     UsageViewImpl usageView =
       (UsageViewImpl)UsageViewManager.getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY, usages, new UsageViewPresentation(), null);
     Disposer.register(myFixture.getTestRootDisposable(), usageView);
-    ProgressManager.getInstance().run(new Task.Modal(getProject(), "Waiting For Usages", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        usageView.drainQueuedUsageNodes();
-      }
-    });
+    waitForUsages(usageView);
     UIUtil.dispatchAllInvocationEvents();
 
     return usageView;
   }
 
   public void testExcludeNodeMustExcludeChildrenAndParents() {
-    PsiFile psiFile = myFixture.addFileToProject("X.java", "public class X{ int xxx; } //comment");
+    @Language("JAVA")
+    String text = "public class X{ int xxx; } //comment";
+    PsiFile psiFile = myFixture.addFileToProject("X.java", text);
     Usage usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile, psiFile.getText().indexOf("xxx"), StringUtil.indexOfSubstringEnd(psiFile.getText(),"xxx")));
 
-    UsageViewImpl usageView = createUsageView(new Usage[]{usage});
+    UsageViewImpl usageView = createUsageView(usage);
 
     Node[] usageNode = new Node[1];
     TreeUtil.traverse(usageView.getRoot(), node -> {
@@ -268,5 +283,42 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     });
 
     assertEmpty(excluded);
+  }
+
+  public void testUsageOfDecompiledOrBinaryElementMustNotRequestDecompilationDuringTreeRendering() {
+    BinaryFileDecompiler decompiler = file -> {
+      throw new IllegalStateException("oh no");
+    };
+    BinaryFileTypeDecompilers.INSTANCE.addExplicitExtension(ArchiveFileType.INSTANCE, decompiler);
+    Disposer.register(getTestRootDisposable(), ()-> BinaryFileTypeDecompilers.INSTANCE.removeExplicitExtension(ArchiveFileType.INSTANCE, decompiler));
+
+    PsiFile psiFile = myFixture.addFileToProject("X.jar", "xxx");
+    assertEquals(ArchiveFileType.INSTANCE, psiFile.getFileType());
+    assertTrue(psiFile.getFileType().isBinary());
+
+    UsageInfo2UsageAdapter usage = new UsageInfo2UsageAdapter(new UsageInfo(psiFile));
+    UsageViewImpl usageView = createUsageView(usage);
+
+    usageView.expandAll();
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertTrue(usage.isValid());
+    usage.getElement();
+    usage.canNavigateToSource();
+    usage.canNavigate();
+    usage.getUsageInfo();
+    usage.getFile();
+    usage.getMergedInfos();
+    usage.getPresentation();
+    usage.getPlainText();
+    usage.getUsageType();
+    usage.getText();
+    usage.getIcon();
+    usage.getLocation();
+    usage.getTooltipText();
+    usage.getLibraryEntry();
+    usage.getUsageInfo().getRangeInElement();
+    usage.getUsageInfo().getElement();
+    usage.getUsageInfo().getNavigationOffset();
   }
 }

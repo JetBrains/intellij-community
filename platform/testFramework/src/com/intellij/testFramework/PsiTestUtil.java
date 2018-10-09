@@ -407,7 +407,6 @@ public class PsiTestUtil {
         model.dispose();
         throw t;
       }
-      ;
       return dep;
     });
   }

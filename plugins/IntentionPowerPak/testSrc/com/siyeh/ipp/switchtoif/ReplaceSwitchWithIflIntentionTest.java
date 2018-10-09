@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ipp.switchtoif;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.psi.PsiKeyword;
 import com.siyeh.ipp.IPPTestCase;
 
 public class ReplaceSwitchWithIflIntentionTest extends IPPTestCase {
@@ -21,9 +23,13 @@ public class ReplaceSwitchWithIflIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testDefaultOnly() {
+    assertIntentionNotAvailable();
+  }
+
   @Override
   protected String getIntentionName() {
-    return "Replace 'switch' with 'if'";
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.SWITCH, PsiKeyword.IF);
   }
 
   @Override

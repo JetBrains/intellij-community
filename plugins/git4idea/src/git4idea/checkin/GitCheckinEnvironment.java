@@ -394,7 +394,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
     }
     LOG.debug(String.format("Updating index for partial changes: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     LOG.debug(String.format("Updating index for partial changes: changes: %s", partialChanges));
@@ -599,7 +599,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     List<FilePath> pathsToDelete = map(explicitMoves, move -> move.getBefore());
     LOG.debug(String.format("Updating index for explicit movements: removing: %s", pathsToDelete));
-    GitFileUtils.delete(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
+    GitFileUtils.deletePaths(myProject, repository.getRoot(), pathsToDelete, "--ignore-unmatch");
 
 
     for (Movement move : explicitMoves) {
@@ -909,7 +909,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     boolean rc = true;
     if (!added.isEmpty()) {
       try {
-        GitFileUtils.addPaths(project, root, added);
+        GitFileUtils.addPathsForce(project, root, added);
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -918,7 +918,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     if (!removed.isEmpty()) {
       try {
-        GitFileUtils.delete(project, root, removed, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached");
       }
       catch (VcsException ex) {
         exceptions.add(ex);
@@ -988,7 +988,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
       try {
         final VirtualFile root = e.getKey();
-        GitFileUtils.delete(myProject, root, e.getValue());
+        GitFileUtils.deletePaths(myProject, root, e.getValue());
         markRootDirty(root);
       }
       catch (VcsException ex) {
@@ -1176,6 +1176,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return myAmendComponent.isAmend();
     }
 
+    @Nullable
+    public String getAuthor() {
+      String author = myAuthorField.getText();
+      if (StringUtil.isEmptyOrSpaces(author)) return null;
+      return GitCommitAuthorCorrector.correct(author);
+    }
+
     @NotNull
     private String getToolTip(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       VcsUser user = getFirstItem(mapNotNull(panel.getRoots(), it -> GitUserRegistry.getInstance(project).getUser(it)));
@@ -1283,12 +1290,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      String author = myAuthorField.getText();
-      if (StringUtil.isEmptyOrSpaces(author)) {
-        myNextCommitAuthor = null;
-      }
-      else {
-        myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
+      myNextCommitAuthor = getAuthor();
+      if (myNextCommitAuthor != null) {
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
       myNextCommitAmend = isAmend();

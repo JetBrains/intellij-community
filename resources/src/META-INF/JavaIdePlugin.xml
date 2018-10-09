@@ -113,6 +113,9 @@
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
 
+    <extensionPoint name="debugger.asyncStackTraceProvider"
+                    interface="com.intellij.debugger.engine.AsyncStackTraceProvider"/>
+
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
 
@@ -285,6 +288,7 @@
     <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"/>
 
     <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
+    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
@@ -298,6 +302,7 @@
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
+    <debugger.asyncStackTraceProvider implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>

@@ -142,7 +142,6 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void writeExternal(final Element element) throws WriteExternalException {
     final TreeSet<ConfigFileInfo> sortedConfigFiles = new TreeSet<>((o1, o2) -> {
       final int id = Comparing.compare(o1.getMetaData().getId(), o2.getMetaData().getId());

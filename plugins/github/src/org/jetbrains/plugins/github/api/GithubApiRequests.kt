@@ -134,22 +134,27 @@ object GithubApiRequests {
           GithubApiPagesLoader.Request(get(server, username, repoName, issueId), ::get)
 
         @JvmStatic
+        fun pages(url: String) = GithubApiPagesLoader.Request(get(url), ::get)
+
+        @JvmStatic
         fun get(server: GithubServerPath, username: String, repoName: String, issueId: String,
                 pagination: GithubRequestPagination? = null) =
           get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix,
                      GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
-        fun get(url: String) = object : Get.JsonPage<GithubIssueComment>(url, GithubIssueComment::class.java) {
-          override val acceptMimeType: String
-            get() = GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE
-        }.withOperationName("get comments for issue")
+        fun get(url: String) = Get.jsonPage<GithubIssueComment>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+          .withOperationName("get comments for issue")
       }
     }
 
     object PullRequests : Entity("/pulls") {
       @JvmStatic
-      fun get(url: String) = Get.json<GithubPullRequest>(url).withOperationName("get pull request")
+      fun get(url: String) = Get.json<GithubPullRequestDetailed>(url).withOperationName("get pull request")
+
+      @JvmStatic
+      fun getHtml(url: String) = Get.json<GithubPullRequestDetailedWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+        .withOperationName("get pull request")
 
       @JvmStatic
       fun create(server: GithubServerPath,
@@ -158,6 +163,26 @@ object GithubApiRequests {
         Post.json<GithubPullRequestDetailed>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
                                              GithubPullRequestRequest(title, description, head, base))
           .withOperationName("create pull request in $username/$repoName")
+
+      @JvmStatic
+      fun merge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.merge))
+          .withOperationName("merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun squashMerge(pullRequest: GithubPullRequest, commitSubject: String, commitBody: String, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRequest(commitSubject, commitBody, headSha, GithubPullRequestMergeMethod.squash))
+          .withOperationName("squash and merge pull request ${pullRequest.number}")
+
+      @JvmStatic
+      fun rebaseMerge(pullRequest: GithubPullRequest, headSha: String) =
+        Put.json<Unit>(getMergeUrl(pullRequest),
+                       GithubPullRequestMergeRebaseRequest(headSha))
+          .withOperationName("rebase and merge pull request ${pullRequest.number}")
+
+      private fun getMergeUrl(pullRequest: GithubPullRequest) = pullRequest.url + "/merge"
     }
   }
 

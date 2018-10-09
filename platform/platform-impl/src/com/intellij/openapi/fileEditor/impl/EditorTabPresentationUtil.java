@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -17,7 +16,7 @@ public class EditorTabPresentationUtil {
   @NotNull
   public static String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file, @Nullable EditorWindow editorWindow) {
     List<EditorTabTitleProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabTitleProvider.EP_NAME));
+      EditorTabTitleProvider.EP_NAME.getExtensionList());
     for (EditorTabTitleProvider provider : providers) {
       String result = provider.getEditorTabTitle(project, file, editorWindow);
       if (StringUtil.isNotEmpty(result)) {
@@ -41,7 +40,7 @@ public class EditorTabPresentationUtil {
   public static Color getEditorTabBackgroundColor(@NotNull Project project, @NotNull VirtualFile file,
                                                   @Nullable EditorWindow editorWindow) {
     List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
+      EditorTabColorProvider.EP_NAME.getExtensionList());
     for (EditorTabColorProvider provider : providers) {
       Color result = provider.getEditorTabColor(project, file, editorWindow);
       if (result != null) {
@@ -54,7 +53,7 @@ public class EditorTabPresentationUtil {
   @Nullable
   public static Color getFileBackgroundColor(@NotNull Project project, @NotNull VirtualFile file) {
     List<EditorTabColorProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(
-      Extensions.getExtensions(EditorTabColorProvider.EP_NAME));
+      EditorTabColorProvider.EP_NAME.getExtensionList());
     for (EditorTabColorProvider provider : providers) {
       Color result = provider.getProjectViewColor(project, file);
       if (result != null) {

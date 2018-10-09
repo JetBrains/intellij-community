@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -25,6 +24,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +42,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.SourceFolder;
+    return PlatformIcons.SOURCE_FOLDERS_ICON;
   }
 
   @Override

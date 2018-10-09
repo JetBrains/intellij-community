@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +97,7 @@ public class HintUtil {
   }
 
   public static JComponent createQuestionLabel(String text) {
-    final Icon icon = AllIcons.General.Help_small;
+    final Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 
@@ -187,6 +188,9 @@ public class HintUtil {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);
+    label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
+    label.setBackground(JBUI.CurrentTheme.Advertiser.background());
+    label.setOpaque(true);
     label.setFont(label.getFont().deriveFont((float)(label.getFont().getSize() - 2)));
     if (bottomText != null) {
       label.setBorder(border);

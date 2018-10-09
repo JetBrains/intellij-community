@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -99,7 +98,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"),
                                                  CodeInsightColors.LINE_PARTIAL_COVERAGE),
     new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE),
-    
+
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.default"), EditorColors.BREADCRUMBS_DEFAULT),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.hovered"), EditorColors.BREADCRUMBS_HOVERED),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.current"), EditorColors.BREADCRUMBS_CURRENT),
@@ -121,6 +120,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide"), EditorColors.INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.indent.guide.selected"), EditorColors.SELECTED_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number"), EditorColors.LINE_NUMBERS_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.line.number.on.caret.row"), EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline"), EditorColors.TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tearline.selected"), EditorColors.SELECTED_TEARLINE_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.separator.above"), EditorColors.SEPARATOR_ABOVE_COLOR, ColorDescriptor.Kind.FOREGROUND),
@@ -135,7 +135,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.tooltip"), IdeTooltipManager.TOOLTIP_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
-    
+
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND)
   };
 
@@ -170,7 +170,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_error", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("runtime_error", CodeInsightColors.RUNTIME_ERROR);
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
         ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put(getHighlightDescTagName(highlightInfoType),
                                              highlightInfoType.getAttributesKey());
@@ -252,7 +252,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   private static String getCustomSeveritiesDemoText() {
     final StringBuilder buff = new StringBuilder();
 
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
        for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
          final String tag = getHighlightDescTagName(highlightInfoType);
          buff.append("  <").append(tag).append(">");

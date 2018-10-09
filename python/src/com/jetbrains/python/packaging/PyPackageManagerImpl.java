@@ -146,7 +146,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return dirName;
   }
 
-  PyPackageManagerImpl(@NotNull final Sdk sdk) {
+  protected PyPackageManagerImpl(@NotNull final Sdk sdk) {
     mySdk = sdk;
     subscribeToLocalChanges();
   }

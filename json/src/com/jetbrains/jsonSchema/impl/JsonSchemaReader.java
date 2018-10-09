@@ -410,7 +410,7 @@ public class JsonSchemaReader {
       if (element instanceof JsonArray) {
         object.setRequired(((JsonArray)element).getValueList().stream()
                              .filter(notEmptyString())
-                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toList()));
+                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toSet()));
       }
     };
   }

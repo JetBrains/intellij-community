@@ -182,20 +182,20 @@ public final class StatusInformation {
 		symNamesBuffer = null;
 	}
 
-	public List getAllExistingTags() {
+	public List<SymName> getAllExistingTags() {
 		if (tags == null) {
 			createSymNames();
 		}
 		return tags;
 	}
 
-	private void setAllExistingTags(List tags) {
+	private void setAllExistingTags(List<SymName> tags) {
 		this.tags = tags;
 	}
 
 	/** Search the symbolic names by number of revision. If not found, return null.
 	 */
-	public List getSymNamesForRevision(String revNumber) {
+	public List<SymName> getSymNamesForRevision(String revNumber) {
 		if (tags == null) {
 			createSymNames();
 		}

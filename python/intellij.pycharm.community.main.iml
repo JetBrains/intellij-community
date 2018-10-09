@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="intellij.python.terminal" />
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
   </component>
 </module>

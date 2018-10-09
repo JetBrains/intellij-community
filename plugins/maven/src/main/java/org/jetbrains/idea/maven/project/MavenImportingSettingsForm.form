@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="19" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="769" height="588"/>
+      <xy x="20" y="20" width="769" height="603"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -60,7 +60,7 @@
           <toolTipText value="Synchronize Maven project model and IDEA project model each time when pom.xml is changed  "/>
         </properties>
       </component>
-      <grid id="49dc8" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="49dc8" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="10" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="14" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -96,9 +96,17 @@
           </component>
           <hspacer id="79b58">
             <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
+          <component id="1a87b" class="com.intellij.ui.components.JBCheckBox" binding="myDownloadAnnotationsCheckBox">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Annotations"/>
+            </properties>
+          </component>
         </children>
       </grid>
       <component id="6d280" class="javax.swing.JCheckBox" binding="myKeepSourceFoldersCheckBox">

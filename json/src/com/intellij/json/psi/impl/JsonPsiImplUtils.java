@@ -218,6 +218,11 @@ public class JsonPsiImplUtils {
     return StringUtil.unescapeStringCharacters(JsonPsiUtil.stripQuotes(literal.getText()));
   }
 
+  public static boolean isPropertyName(@NotNull JsonStringLiteral literal) {
+    final PsiElement parent = literal.getParent();
+    return parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == literal;
+  }
+
   public static boolean getValue(@NotNull JsonBooleanLiteral literal) {
     return literal.textMatches("true");
   }

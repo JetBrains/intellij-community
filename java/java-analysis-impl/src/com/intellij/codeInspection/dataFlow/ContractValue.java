@@ -71,7 +71,7 @@ public abstract class ContractValue {
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
+    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type), String.valueOf(value));
   }
 
   public static ContractValue booleanValue(boolean value) {
@@ -285,11 +285,11 @@ public abstract class ContractValue {
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
-      if (left instanceof DfaConstValue && ((DfaConstValue)left).getType() instanceof PsiPrimitiveType) {
-        right = DfaUtil.boxUnbox(right, ((DfaConstValue)left).getType());
+      if (left instanceof DfaConstValue && left.getType() instanceof PsiPrimitiveType) {
+        right = DfaUtil.boxUnbox(right, left.getType());
       }
-      if (right instanceof DfaConstValue && ((DfaConstValue)right).getType() instanceof PsiPrimitiveType) {
-        left = DfaUtil.boxUnbox(left, ((DfaConstValue)right).getType());
+      if (right instanceof DfaConstValue && right.getType() instanceof PsiPrimitiveType) {
+        left = DfaUtil.boxUnbox(left, right.getType());
       }
       return factory.createCondition(left, myRelationType, right);
     }

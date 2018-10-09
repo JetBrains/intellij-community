@@ -147,6 +147,7 @@
     <completion.contributor language="YouTrack"
                             implementationClass="com.intellij.tasks.youtrack.lang.codeinsight.YouTrackCompletionContributor"/>
     <externalAnnotator language="YouTrack" implementationClass="com.intellij.tasks.youtrack.lang.YouTrackHighlightingAnnotator"/>
+    <tasks.commitPlaceholderProvider implementation="com.intellij.tasks.impl.DefaultCommitPlaceholderProvider"/>
   </extensions>
 
 </idea-plugin>

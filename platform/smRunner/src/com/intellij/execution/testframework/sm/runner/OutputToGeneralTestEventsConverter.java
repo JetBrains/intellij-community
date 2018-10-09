@@ -352,6 +352,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   public synchronized void finishTesting() {
     GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
+      setProcessor(null);
       processor.onFinishTesting();
       Disposer.dispose(processor);
     }
@@ -497,7 +498,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @Override
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
       final Map<String, String> attributes = testFailed.getAttributes();
-      LOG.assertTrue(testFailed.getFailureMessage() != null, "No failure message for: " + myTestFrameworkName);
+      LOG.assertTrue(testFailed.getFailureMessage() != null, "No failure message for: #" + myTestFrameworkName);
       final boolean testError = attributes.get(ATTR_KEY_TEST_ERROR) != null;
       TestFailedEvent testFailedEvent = new TestFailedEvent(testFailed, testError,
                                                             attributes.get(ATTR_KEY_EXPECTED_FILE_PATH),

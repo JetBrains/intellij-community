@@ -268,7 +268,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     if (physical) {
       throw new UnsupportedOperationException(getClass() + " cannot create physical PSI");
     }
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if (context == PatternTreeContext.Block) {
       final PsiCodeBlock codeBlock = elementFactory.createCodeBlockFromText("{\n" + text + "\n}", null);
       PsiElement element = codeBlock.getFirstBodyElement();
@@ -361,6 +361,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
              secondElement instanceof PsiExpressionStatement &&
              PsiTreeUtil.lastChild(secondElement) instanceof PsiErrorElement) {
       // might be generic method
+      return true;
+    }
+    else if (firstElement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)firstElement).isDefaultCase() &&
+             PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement && secondElement instanceof PsiDeclarationStatement) {
+      // possible default method
       return true;
     }
     else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
@@ -825,7 +830,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (completePattern || variableNode == null) return false;
         if (variableNode instanceof PsiLiteralExpression && ((PsiLiteralExpression)variableNode).getValue() instanceof String) return true;
         final PsiElement parent = variableNode.getParent();
-        return parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement;
+        return parent instanceof PsiJavaCodeReferenceElement;
       default: return super.isApplicableConstraint(constraintName, variableNode, completePattern, target);
     }
   }

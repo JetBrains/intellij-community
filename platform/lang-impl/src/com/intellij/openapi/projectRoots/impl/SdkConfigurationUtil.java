@@ -152,7 +152,7 @@ public class SdkConfigurationUtil {
 
       sdkType.setupSdkPaths(sdk);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warn("Error creating or configuring sdk: homeDir=[" + homeDir + "]; " +
                "sdkType=[" + sdkType + "]; " +
                "additionalData=[" + additionalData + "]; " +
@@ -207,7 +207,7 @@ public class SdkConfigurationUtil {
   }
 
   public static void configureDirectoryProjectSdk(final Project project,
-                                                  @Nullable Comparator<Sdk> preferredSdkComparator,
+                                                  @Nullable Comparator<? super Sdk> preferredSdkComparator,
                                                   final SdkType... sdkTypes) {
     Sdk existingSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (existingSdk != null && ArrayUtil.contains(existingSdk.getSdkType(), sdkTypes)) {
@@ -221,7 +221,7 @@ public class SdkConfigurationUtil {
   }
 
   @Nullable
-  public static Sdk findOrCreateSdk(@Nullable Comparator<Sdk> comparator, final SdkType... sdkTypes) {
+  public static Sdk findOrCreateSdk(@Nullable Comparator<? super Sdk> comparator, final SdkType... sdkTypes) {
     final Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     final Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
     if (sdk != null) {
@@ -272,12 +272,12 @@ public class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<Sdk> sdks) {
+  public static String createUniqueSdkName(@NotNull SdkType type, String home, final Collection<? extends Sdk> sdks) {
     return createUniqueSdkName(type.suggestSdkName(null, home), sdks);
   }
 
   @NotNull
-  public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<Sdk> sdks) {
+  public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
     final Set<String> names = new HashSet<>();
     for (Sdk jdk : sdks) {
       names.add(jdk.getName());
@@ -290,7 +290,7 @@ public class SdkConfigurationUtil {
     return newSdkName;
   }
 
-  public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<String> consumer) {
+  public static void selectSdkHome(@NotNull final SdkType sdkType, @NotNull final Consumer<? super String> consumer) {
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);

@@ -32,7 +32,7 @@ public class FileOffsetsManager {
     private final boolean myLineOffsetsAreTheSame;
 
     LineOffsets(final long modificationStamp, @NotNull final int[] originalLineOffsets, @NotNull final int[] convertedLineOffsets) {
-      assert originalLineOffsets.length > 0 && convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
+      assert convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
         : originalLineOffsets.length + " " + convertedLineOffsets.length;
 
       myFileModificationStamp = modificationStamp;

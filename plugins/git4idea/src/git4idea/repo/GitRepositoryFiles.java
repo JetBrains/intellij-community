@@ -32,11 +32,13 @@ import java.util.Collection;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
- * Stores paths to Git service files (from .git/ directory) that are used by IDEA, and provides test-methods to check if a file
+ * Stores paths to Git service files that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
  */
 public class GitRepositoryFiles {
   private static final Logger LOG = Logger.getInstance("#git4idea.repo.GitRepositoryFiles");
+
+  public static final String GITIGNORE = ".gitignore";
 
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
@@ -83,6 +85,7 @@ public class GitRepositoryFiles {
   private final String myExcludePath;
   private final String myHooksDirPath;
   private final String myShallow;
+  private final String myGitIgnorePath;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
@@ -99,6 +102,8 @@ public class GitRepositoryFiles {
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
+    VirtualFile repoDir = mainDir.getParent();
+    myGitIgnorePath = repoDir.getPath() + slash(GITIGNORE);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -354,5 +359,9 @@ public class GitRepositoryFiles {
   @NotNull
   Collection<VirtualFile> getRootDirs() {
     return ContainerUtil.newHashSet(myMainDir, myWorktreeDir);
+  }
+
+  public boolean isGitIgnore(@NotNull String filePath) {
+    return filePath.equals(myGitIgnorePath);
   }
 }

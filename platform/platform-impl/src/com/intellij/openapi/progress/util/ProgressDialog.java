@@ -65,6 +65,45 @@ class ProgressDialog implements Disposable {
     }
   };
 
+  private final Runnable myUpdateRequest = () -> update();
+
+  JPanel myPanel;
+  private JLabel myTextLabel;
+
+  private JBLabel myText2Label;
+  private JButton myCancelButton;
+
+  private JButton myBackgroundButton;
+  private JProgressBar myProgressBar;
+
+  private boolean myRepaintedFlag = true; // guarded by this
+  private TitlePanel myTitlePanel;
+  private JPanel myInnerPanel;
+  DialogWrapper myPopup;
+  private final Window myParentWindow;
+
+  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500, ModalityState.any(),this);
+  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500, ModalityState.any(),this);
+
+  ProgressDialog(@NotNull ProgressWindow progressWindow,
+                 boolean shouldShowBackground,
+                 @Nullable Component parent,
+                 @Nullable Project project,
+                 String cancelText) {
+    myProgressWindow = progressWindow;
+    if (parent != null) {
+      myParentWindow = UIUtil.getWindow(parent);
+    }
+    else {
+      Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
+      if (parentWindow == null) {
+        parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+      }
+      myParentWindow = parentWindow;
+    }
+    initDialog(shouldShowBackground, cancelText);
+  }
+
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
@@ -74,39 +113,6 @@ class ProgressDialog implements Disposable {
       fullText = "..." + fullText.substring(sep);
     }
     return fullText;
-  }
-
-  private final Runnable myUpdateRequest = () -> update();
-  JPanel myPanel;
-
-  private JLabel myTextLabel;
-  private JBLabel myText2Label;
-
-  private JButton myCancelButton;
-  private JButton myBackgroundButton;
-
-  private JProgressBar myProgressBar;
-  private boolean myRepaintedFlag = true; // guarded by this
-  private TitlePanel myTitlePanel;
-  private JPanel myInnerPanel;
-  DialogWrapper myPopup;
-  private final Window myParentWindow;
-
-  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Project project, String cancelText) {
-    myProgressWindow = progressWindow;
-    Window parentWindow = WindowManager.getInstance().suggestParentWindow(project);
-    if (parentWindow == null) {
-      parentWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
-    }
-    myParentWindow = parentWindow;
-
-    initDialog(shouldShowBackground, cancelText);
-  }
-
-  ProgressDialog(ProgressWindow progressWindow, boolean shouldShowBackground, Component parent, String cancelText) {
-    myProgressWindow = progressWindow;
-    myParentWindow = UIUtil.getWindow(parent);
-    initDialog(shouldShowBackground, cancelText);
   }
 
   private void initDialog(boolean shouldShowBackground, String cancelText) {
@@ -149,11 +155,12 @@ class ProgressDialog implements Disposable {
     UIUtil.dispose(myCancelButton);
   }
 
+  @NotNull
   JPanel getPanel() {
     return myPanel;
   }
 
-  void changeCancelButtonText(String text) {
+  void changeCancelButtonText(@NotNull String text) {
     myCancelButton.setText(text);
   }
 
@@ -180,9 +187,6 @@ class ProgressDialog implements Disposable {
     (enable ? myEnableCancelAlarm : myDisableCancelAlarm).request();
   }
 
-  private final SingleAlarm myDisableCancelAlarm = new SingleAlarm(this::setCancelButtonDisabledInEDT, 500,this);
-  private final SingleAlarm myEnableCancelAlarm = new SingleAlarm(this::setCancelButtonEnabledInEDT, 500,this);
-
   private void createCenterPanel() {
     // Cancel button (if any)
 
@@ -206,12 +210,12 @@ class ProgressDialog implements Disposable {
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false;
-        EdtExecutorService.getInstance().submit(myRepaintRunnable);
+        EdtExecutorService.getInstance().execute(myRepaintRunnable);
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          EdtExecutorService.getInstance().submit(() -> {
+          EdtExecutorService.getInstance().execute(() -> {
             if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
               myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }
@@ -289,7 +293,7 @@ class ProgressDialog implements Disposable {
       myIsCancellable = cancellable;
     }
 
-    MyDialogWrapper(Component parent, final boolean cancellable) {
+    MyDialogWrapper(@NotNull Component parent, final boolean cancellable) {
       super(parent, false);
       init();
       myIsCancellable = cancellable;

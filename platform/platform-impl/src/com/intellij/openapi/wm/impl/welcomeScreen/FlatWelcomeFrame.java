@@ -49,7 +49,6 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
@@ -134,6 +133,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     WelcomeFrame.setupCloseAction(this);
     MnemonicHelper.init(this);
     Disposer.register(ApplicationManager.getApplication(), this);
+
+    UIUtil.decorateWindowHeader(getRootPane());
   }
 
   @Override
@@ -163,11 +164,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static Color getMainBackground() {
-    return new JBColor(0xf7f7f7, 0x45474a);
+    return JBColor.namedColor("WelcomeScreen.background", new JBColor(0xf7f7f7, 0x45474a));
   }
 
   public static Color getProjectsBackground() {
-    return new JBColor(Gray.xFF, Gray.x39);
+    return JBColor.namedColor("WelcomeScreen.Projects.background", new JBColor(Gray.xFF, Gray.x39));
   }
 
   public static Color getLinkNormalColor() {
@@ -175,7 +176,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static Color getListSelectionColor(boolean hasFocus) {
-    return hasFocus ? new JBColor(0x3875d6, 0x4b6eaf) : new JBColor(Gray.xDD, Gray.x45);
+    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
+                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
   }
 
   public static Color getActionLinkSelectionColor() {
@@ -183,7 +185,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   public static JBColor getSeparatorColor() {
-    return new JBColor(Gray.xEC, new Color(72, 75, 78));
+    return JBColor.namedColor("WelcomeScreen.separatorColor", new JBColor(Gray.xEC, new Color(72, 75, 78)));
   }
 
   @Override
@@ -264,21 +266,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
-      setTransferHandler(new TransferHandler(null) {
-        @Override
-        public boolean canImport(TransferSupport support) {
-          return true;
-        }
-
-        @Override
-        public boolean importData(TransferSupport support) {
-          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
-          if (list != null && list.size() > 0) {
-            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
-          }
-          return false;
-        }
-      });
       setDropTarget(new DropTarget(this, new DropTargetAdapter() {
         @Override
         public void dragEnter(DropTargetDragEvent e) {
@@ -293,6 +280,14 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public void drop(DropTargetDropEvent e) {
           setDnd(false);
+          e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
+          List<File> list = FileCopyPasteUtil.getFileList(e.getTransferable());
+          if (list != null && list.size() > 0) {
+            MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            e.dropComplete(true);
+            return;
+          }
+          e.dropComplete(false);
         }
 
         private void setDnd(boolean dnd) {
@@ -315,15 +310,17 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       super.paint(g);
       if (inDnd) {
         Rectangle bounds = getBounds();
-        Color background = UIManager.getColor("DragAndDrop.backgroundColor");
+        Color background = JBColor.namedColor("DragAndDrop.backgroundColor", new Color(225, 235, 245));
         g.setColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 206));
         g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
-        g.setColor(UIManager.getColor("DragAndDrop.backgroundBorderColor"));
+        Color backgroundBorder = JBColor.namedColor("DragAndDrop.backgroundBorderColor", new Color(137, 178, 222));
+        g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
         g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
-        g.setColor(UIManager.getColor("DragAndDrop.foregroundColor"));
 
+        Color foreground = JBColor.namedColor("DragAndDrop.foregroundColor", Gray._120);
+        g.setColor(foreground);
         Font labelFont = UIUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
         String drop = "Drop files here to open";
@@ -539,11 +536,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
 
         @Override
-        public Accessible getAccessibleParent() {
-          if (getParent() instanceof Accessible) {
-            return (Accessible)getParent();
-          }
-          return super.getAccessibleParent();
+        public Container getDelegateParent() {
+          return getParent();
         }
 
         @Override
@@ -807,7 +801,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static JLabel createArrow(final ActionLink link) {
-    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    JLabel arrow = new JLabel(AllIcons.General.ArrowDown);
     arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     arrow.setVerticalAlignment(SwingConstants.BOTTOM);
     new ClickListener() {
@@ -1041,7 +1035,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return cancelButton;
   }
 
-  public static void installQuickSearch(JBList<AnAction> list) {
+  public static void installQuickSearch(JBList<? extends AnAction> list) {
     new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
         return o.getTemplatePresentation().getText();

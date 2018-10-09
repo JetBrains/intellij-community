@@ -21,6 +21,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -76,6 +77,9 @@ public class IteratorDeclaration {
   }
 
   public boolean isIteratorMethodCall(PsiElement candidate, String method) {
+    while (candidate instanceof PsiParenthesizedExpression) {
+      candidate = ((PsiParenthesizedExpression)candidate).getExpression();
+    }
     if (!(candidate instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)candidate;
     if (!call.getArgumentList().isEmpty()) return false;
@@ -84,24 +88,24 @@ public class IteratorDeclaration {
   }
 
   public PsiVariable getNextElementVariable(PsiStatement statement) {
+    PsiLocalVariable var = getDeclaredVariable(statement);
+    if (var == null || !isIteratorMethodCall(var.getInitializer(), "next")) return null;
+    return var;
+  }
+
+  @Nullable
+  private static PsiLocalVariable getDeclaredVariable(PsiStatement statement) {
     if (!(statement instanceof PsiDeclarationStatement)) return null;
     PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-    if (declaration.getDeclaredElements().length != 1) return null;
-    PsiElement element = declaration.getDeclaredElements()[0];
-    if (!(element instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable var = (PsiLocalVariable)element;
-    if (!isIteratorMethodCall(var.getInitializer(), "next")) return null;
-    return var;
+    PsiElement[] elements = declaration.getDeclaredElements();
+    if (elements.length != 1) return null;
+    return ObjectUtils.tryCast(elements[0], PsiLocalVariable.class);
   }
 
   @Contract("null -> null")
   private static IteratorDeclaration extract(PsiStatement statement) {
-    if (!(statement instanceof PsiDeclarationStatement)) return null;
-    PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-    if (declaration.getDeclaredElements().length != 1) return null;
-    PsiElement element = declaration.getDeclaredElements()[0];
-    if (!(element instanceof PsiLocalVariable)) return null;
-    PsiLocalVariable variable = (PsiLocalVariable)element;
+    PsiLocalVariable variable = getDeclaredVariable(statement);
+    if (variable == null) return null;
     PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
     if (!(initializer instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
@@ -138,9 +142,8 @@ public class IteratorDeclaration {
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);
     if (declaration == null || !declaration.isHasNextCall(statement.getCondition())) return null;
-    if (!ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope()).forEach(ref -> {
-      return PsiTreeUtil.isAncestor(statement, ref.getElement(), true);
-    })) {
+    if (ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope())
+      .anyMatch(ref -> !PsiTreeUtil.isAncestor(statement, ref.getElement(), true))) {
       return null;
     }
     return declaration;

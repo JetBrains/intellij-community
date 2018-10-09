@@ -584,7 +584,6 @@ public class InstrumentationClassFinder {
     private static class FileLoader extends Loader {
       private final File myRootDir;
 
-      @SuppressWarnings({"HardCodedStringLiteral"})
       FileLoader(URL url, int index) throws IOException {
         super(url, index);
         if (!FILE_PROTOCOL.equals(url.getProtocol())) {

@@ -44,10 +44,11 @@ import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
  */
 public class ProjectBytecodeAnalysis {
   /**
-   * Setting this to true will disable persistent index and disable hashing which could be really useful for debugging
+   * Setting this to {@code true} will disable persistent index and disable hashing which could be really useful for debugging
    * (if behaviour to debug does not depend on the index/externalization/etc.)
    */
   private static final boolean SKIP_INDEX = false;
+
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
   public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
@@ -90,19 +91,20 @@ public class ProjectBytecodeAnalysis {
   }
 
   @NotNull
-  public PsiAnnotation[] findInferredAnnotations(@NotNull final PsiModifierListOwner listOwner) {
+  public PsiAnnotation[] findInferredAnnotations(@NotNull PsiModifierListOwner listOwner) {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    return CachedValuesManager.getCachedValue(listOwner,
-                                              () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
+    return CachedValuesManager.getCachedValue(listOwner, () -> CachedValueProvider.Result.create(collectInferredAnnotations(listOwner), listOwner));
   }
 
   @NotNull
   private PsiAnnotation[] collectInferredAnnotations(PsiModifierListOwner listOwner) {
     PsiFile psiFile = listOwner.getContainingFile();
     VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
-    if (file != null && ClassDataIndexer.isFileExcluded(file)) return PsiAnnotation.EMPTY_ARRAY;
+    if (file != null && ClassDataIndexer.isFileExcluded(file)) {
+      return PsiAnnotation.EMPTY_ARRAY;
+    }
 
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
@@ -114,7 +116,8 @@ public class ProjectBytecodeAnalysis {
         List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
         return toPsi(primaryKey, methodAnnotations);
-      } else if (listOwner instanceof PsiParameter) {
+      }
+      else if (listOwner instanceof PsiParameter) {
         ParameterAnnotations parameterAnnotations = loadParameterAnnotations(primaryKey);
         return toPsi(parameterAnnotations);
       }
@@ -146,37 +149,27 @@ public class ProjectBytecodeAnalysis {
 
     if (contractValues != null) {
       contractPsiText = pure ? "value=" + contractValues + ",pure=true" : contractValues;
-    } else if (pure) {
+    }
+    else if (pure) {
       contractPsiText = "pure=true";
     }
 
-    PsiAnnotation psiAnnotation =
-      contractPsiText == null ? null : createContractAnnotation(contractPsiText);
+    PsiAnnotation psiAnnotation = contractPsiText == null ? null : createContractAnnotation(contractPsiText);
 
     if (notNull && psiAnnotation != null) {
-      return new PsiAnnotation[]{
-        getNotNullAnnotation(), psiAnnotation
-      };
+      return new PsiAnnotation[]{getNotNullAnnotation(), psiAnnotation};
     }
     if (nullable && psiAnnotation != null) {
-      return new PsiAnnotation[]{
-        getNullableAnnotation(), psiAnnotation
-      };
+      return new PsiAnnotation[]{getNullableAnnotation(), psiAnnotation};
     }
     if (notNull) {
-      return new PsiAnnotation[]{
-        getNotNullAnnotation()
-      };
+      return new PsiAnnotation[]{getNotNullAnnotation()};
     }
     if (nullable) {
-      return new PsiAnnotation[]{
-        getNullableAnnotation()
-      };
+      return new PsiAnnotation[]{getNullableAnnotation()};
     }
     if (psiAnnotation != null) {
-      return new PsiAnnotation[]{
-        psiAnnotation
-      };
+      return new PsiAnnotation[]{psiAnnotation};
     }
     return PsiAnnotation.EMPTY_ARRAY;
   }
@@ -190,14 +183,10 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation[] toPsi(ParameterAnnotations parameterAnnotations) {
     if (parameterAnnotations.notNull) {
-      return new PsiAnnotation[]{
-        getNotNullAnnotation()
-      };
+      return new PsiAnnotation[]{getNotNullAnnotation()};
     }
     else if (parameterAnnotations.nullable) {
-      return new PsiAnnotation[]{
-        getNullableAnnotation()
-      };
+      return new PsiAnnotation[]{getNullableAnnotation()};
     }
     return PsiAnnotation.EMPTY_ARRAY;
   }
@@ -233,7 +222,7 @@ public class ProjectBytecodeAnalysis {
       if (parent instanceof PsiParameterList) {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
-          final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
+          int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
           EKey key = BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false));
           return key == null ? null : myEquationProvider.adaptKey(key, md);
         }
@@ -382,7 +371,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   @NotNull
-  private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
+  private PsiAnnotation createAnnotationFromText(@NotNull String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
@@ -392,7 +381,7 @@ public class ProjectBytecodeAnalysis {
     BitSet alwaysNotNullParameters = new BitSet();
     if (possiblyNotNullParameters.cardinality() != 0) {
       List<EKey> keys = IntStreamEx.of(possiblyNotNullParameters).mapToObj(idx -> methodKey.withDirection(new In(idx, false))).toList();
-      final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
+      Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
       collectEquations(keys, notNullSolver);
 
       Map<EKey, Value> notNullSolutions = notNullSolver.solve();
@@ -514,16 +503,15 @@ public class ProjectBytecodeAnalysis {
       }
       return c1;
     }).nonNull().findFirst().orElse(null);
-    if(soleContract != null) {
+    if (soleContract != null) {
       contractClauses =
         Collections.singletonList(StandardMethodContract.trivialContract(soleContract.getParameterCount(), soleContract.getReturnValue()));
     }
     return contractClauses;
   }
 
-  private static StandardMethodContract contractElement(int arity,
-                                                        ParamValueBasedDirection inOut, ContractReturnValue returnValue) {
-    final ValueConstraint[] constraints = new ValueConstraint[arity];
+  private static StandardMethodContract contractElement(int arity, ParamValueBasedDirection inOut, ContractReturnValue returnValue) {
+    ValueConstraint[] constraints = new ValueConstraint[arity];
     Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
     constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
     return new StandardMethodContract(constraints, returnValue);
@@ -571,11 +559,11 @@ public class ProjectBytecodeAnalysis {
       String className = StringUtil.getShortName(internalClassName, '/');
       PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
       if (aPackage == null) {
-        PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope
-          .allScope(myProject));
-        if(psiClass != null) {
+        PsiClass psiClass = JavaPsiFacade.getInstance(myProject)
+          .findClass(StringUtil.getQualifiedName(packageName, className), GlobalSearchScope.allScope(myProject));
+        if (psiClass != null) {
           PsiModifierListOwner compiledClass = PsiUtil.preferCompiledElement(psiClass);
-          if(compiledClass instanceof ClsClassImpl) {
+          if (compiledClass instanceof ClsClassImpl) {
             return compiledClass.getContainingFile().getVirtualFile();
           }
         }
@@ -651,4 +639,4 @@ class ParameterAnnotations {
   }
 }
 
-class EquationsLimitException extends Exception {}
+class EquationsLimitException extends Exception { }

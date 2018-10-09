@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -25,24 +28,20 @@ public interface TestDiscoveryProducer {
 
   @NotNull
   MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                              @NotNull String classFQName,
-                                              @Nullable String methodName,
+                                              @NotNull List<Couple<String>> classesAndMethods,
                                               byte frameworkId);
 
   @NotNull
-  default MultiMap<String, String> getDiscoveredTests(@NotNull Project project,
-                                                      @NotNull List<Couple<String>> classesAndMethods,
-                                                      byte frameworkId) {
-    MultiMap<String, String> result = new MultiMap<>();
-    classesAndMethods.forEach(couple -> result.putAllValues(getDiscoveredTests(project, couple.first, couple.second, frameworkId)));
-    return result;
-  }
+  MultiMap<String, String> getDiscoveredTestsForFiles(@NotNull Project project,
+                                                      @NotNull List<String> paths,
+                                                      byte frameworkId);
 
   boolean isRemote();
 
   static void consumeDiscoveredTests(@NotNull Project project,
                                      @NotNull List<Couple<String>> classesAndMethods,
                                      byte frameworkId,
+                                     @NotNull List<String> filePaths,
                                      @NotNull TestProcessor processor) {
     MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
       @NotNull
@@ -52,7 +51,9 @@ public interface TestDiscoveryProducer {
       }
     };
     for (TestDiscoveryProducer producer : EP.getExtensions()) {
-      for (Map.Entry<String, Collection<String>> entry : producer.getDiscoveredTests(project, classesAndMethods, frameworkId).entrySet()) {
+      for (Map.Entry<String, Collection<String>> entry : ContainerUtil.concat(
+        producer.getDiscoveredTests(project, classesAndMethods, frameworkId).entrySet(),
+        producer.getDiscoveredTestsForFiles(project, filePaths, frameworkId).entrySet())) {
         String className = entry.getKey();
         for (String methodRawName : entry.getValue()) {
           if (!visitedTests.get(className).contains(methodRawName)) {
@@ -61,6 +62,18 @@ public interface TestDiscoveryProducer {
             if (!processor.process(className, couple.first, couple.second)) return;
           }
         }
+      }
+    }
+  }
+
+  @NotNull
+  List<String> getAffectedFilePaths(@NotNull Project project, @NotNull List<String> testFqns, byte frameworkId) throws IOException;
+
+  // testFqn - className.methodName
+  static void consumeAffectedPaths(@NotNull Project project, @NotNull List<String> testFqns, @NotNull Consumer<? super String> pathsConsumer, byte frameworkId) throws IOException {
+    for (TestDiscoveryProducer extension : EP.getExtensions()) {
+      for (String path : extension.getAffectedFilePaths(project, testFqns, frameworkId)) {
+        pathsConsumer.consume(path);
       }
     }
   }

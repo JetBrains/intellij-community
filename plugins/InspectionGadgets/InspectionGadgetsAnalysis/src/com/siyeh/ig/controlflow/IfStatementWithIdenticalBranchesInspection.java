@@ -241,8 +241,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       CommentTracker ct = new CommentTracker();
       if (!tryCleanUpHead(ifStatement, thenElse.myHeadUnitsOfThen, factory, thenElse.mySubstitutionTable, ct)) return true;
       cleanUpTail(ifStatement, thenElse.myTailStatementsOfThen, ct);
-      boolean elseToDelete = ControlFlowUtils.unwrapBlock(elseBranch).length == 0;
-      boolean thenToDelete = ControlFlowUtils.unwrapBlock(thenBranch).length == 0;
+      boolean elseToDelete = ControlFlowUtils.unwrapBlock(ifStatement.getElseBranch()).length == 0;
+      boolean thenToDelete = ControlFlowUtils.unwrapBlock(ifStatement.getThenBranch()).length == 0;
       ct.insertCommentsBefore(ifStatement);
       if (thenToDelete && elseToDelete) {
         ifStatement.delete();
@@ -353,7 +353,13 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         int thenLength = thenStatements.length;
         int elseLength = elseStatements.length;
         for (int i = 0; i < tailStatements.size(); i++) {
-          thenStatements[thenLength - 1 - i].delete();
+          PsiStatement thenStatement = thenStatements[thenLength - 1 - i];
+          // handling situation, when there is no braces around then branch
+          if (thenStatements.length == 1 && thenStatement.getParent() == ifStatement) {
+            thenStatement.replace(JavaPsiFacade.getElementFactory(thenStatement.getProject()).createCodeBlock());
+          } else {
+            thenStatement.delete();
+          }
           ct.delete(elseStatements[elseLength - 1 - i]);
         }
       }
@@ -896,11 +902,15 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private static boolean isSimilarHeadStatements(@NotNull PsiStatement[] thenBranch) {
       if (thenBranch.length <= SIMILAR_STATEMENTS_COUNT) return false;
       PsiExpressionStatement expressionStatement = tryCast(thenBranch[0], PsiExpressionStatement.class);
+      return isSimilarStatements(thenBranch, expressionStatement);
+    }
+
+    private static boolean isSimilarStatements(@NotNull PsiStatement[] branch, PsiExpressionStatement expressionStatement) {
       if (expressionStatement == null) return false;
       PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return false;
-      for (int i = thenBranch.length - 1; i >= 0; i--) {
-        if (!isSimilarCall(thenBranch[i], call)) return false;
+      for (int i = branch.length - 1; i >= 0; i--) {
+        if (!isSimilarCall(branch[i], call)) return false;
       }
       return true;
     }
@@ -908,13 +918,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     private static boolean isSimilarTailStatements(@NotNull PsiStatement[] thenBranch) {
       if (thenBranch.length <= SIMILAR_STATEMENTS_COUNT) return false;
       PsiExpressionStatement expressionStatement = tryCast(thenBranch[thenBranch.length - 1], PsiExpressionStatement.class);
-      if (expressionStatement == null) return false;
-      PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
-      if (call == null) return false;
-      for (int i = thenBranch.length - 1; i >= 0; i--) {
-        if (!isSimilarCall(thenBranch[i], call)) return false;
-      }
-      return true;
+      return isSimilarStatements(thenBranch, expressionStatement);
     }
 
     private static boolean isSimilarCall(PsiStatement statement, PsiMethodCallExpression call) {

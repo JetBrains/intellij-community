@@ -531,7 +531,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     group.add(new StopAction());
     if (canHideWarnings()) {
       group.addSeparator();
-      group.add(new HideWarningsAction());
+      group.add(new ShowWarningsAction());
     }
 
     fillRightToolbarGroup(group);
@@ -632,20 +632,20 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     return true;
   }
 
-  private class HideWarningsAction extends ToggleAction implements DumbAware {
-    HideWarningsAction() {
-      super(IdeBundle.message("action.hide.warnings"), null, AllIcons.General.HideWarnings);
+  private class ShowWarningsAction extends ToggleAction implements DumbAware {
+    ShowWarningsAction() {
+      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
-      return isHideWarnings();
+      return !isHideWarnings();
     }
 
     @Override
-    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-      if (isHideWarnings() != flag) {
-        myConfiguration.setHideWarnings(flag);
+    public void setSelected(@NotNull AnActionEvent event, boolean showWarnings) {
+      if (showWarnings == isHideWarnings()) {
+        myConfiguration.setHideWarnings(!showWarnings);
         myBuilder.updateTree();
       }
     }

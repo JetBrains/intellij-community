@@ -33,10 +33,10 @@ YAML file
                 PsiWhiteSpace(' ')
                 YAML scalar list
                   PsiElement(scalar list)('|')
-                  PsiElement(Eol)('\n')
+                  PsiElement(block scalar EOL)('\n')
                   PsiElement(indent)('      ')
                   PsiElement(scalar list)('x = MoreObject("345\n")')
-                  PsiElement(block scalar EOL)('\n')
+          PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML sequence item
             PsiElement(-)('-')
@@ -64,6 +64,6 @@ YAML file
                 PsiWhiteSpace(' ')
                 YAML scalar list
                   PsiElement(scalar list)('|-')
-                  PsiElement(Eol)('\n')
+                  PsiElement(block scalar EOL)('\n')
                   PsiElement(indent)('      ')
                   PsiElement(scalar list)('foo = bar')

@@ -128,7 +128,6 @@ public class FieldEvaluator implements Evaluator {
       }
 
       // expressions like 'array.length' must be treated separately
-      //noinspection HardCodedStringLiteral
       if (objRef instanceof ArrayReference && "length".equals(myFieldName)) {
         return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(((ArrayReference)objRef).length());
       }

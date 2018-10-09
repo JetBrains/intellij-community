@@ -16,9 +16,7 @@
 
 package com.intellij.usageView;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
@@ -56,9 +54,6 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
       return ((PsiFile)element).getName();
     }
 
-    Language language = element.getLanguage();
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(language);
-    assert provider != null : "Element: " + element + ", language: " + language;
-    return provider.getNodeText(element, true);
+    return LanguageFindUsages.getNodeText(element, true);
   };
 }

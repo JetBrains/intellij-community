@@ -67,8 +67,9 @@ public class ConstructionUtils {
   public static boolean isEmptyCollectionInitializer(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
-      PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList != null && argumentList.isEmpty()) {
+      PsiNewExpression newExpression = (PsiNewExpression)expression;
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList != null && argumentList.isEmpty() && newExpression.getAnonymousClass() == null) {
         PsiType type = expression.getType();
         return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
                com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);

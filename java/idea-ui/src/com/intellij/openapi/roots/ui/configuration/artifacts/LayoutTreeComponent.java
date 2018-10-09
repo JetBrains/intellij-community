@@ -623,6 +623,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
   private class LayoutTreeStructure extends SimpleTreeStructure {
     private ArtifactRootNode myRootNode;
 
+    @NotNull
     @Override
     public Object getRootElement() {
       if (myRootNode == null) {

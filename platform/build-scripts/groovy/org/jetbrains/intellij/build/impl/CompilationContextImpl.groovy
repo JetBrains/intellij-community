@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
@@ -25,6 +26,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -181,7 +183,11 @@ class CompilationContextImpl implements CompilationContext {
     def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchive != null) {
+    if (options.pathToCompiledClassesArchivesMetadata != null) {
+      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
+      outputDirectoriesToKeep.add(classesDirName)
+    }
+    else if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
@@ -249,13 +255,17 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
-
   @CompileDynamic
   private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     messages.block("Unpack compiled classes archive") {
       FileUtil.delete(new File(classesOutput))
       ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
     }
+  }
+
+  @CompileStatic
+  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -270,6 +280,14 @@ class CompilationContextImpl implements CompilationContext {
     if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with compiled project output won't be used")
       options.pathToCompiledClassesArchive = null
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
+      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with the compiled project output metadata won't be used to fetch compile output")
+      options.pathToCompiledClassesArchivesMetadata = null
     }
     if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
       messages.warning("Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
@@ -379,6 +397,11 @@ class CompilationContextImpl implements CompilationContext {
       pathToReport += "=>" + targetDirectoryPath
     }
     messages.artifactBuilt(pathToReport)
+  }
+
+  @Override
+  boolean isBundledJreModular() {
+    return options.bundledJreVersion >= 9
   }
 
   private static String toCanonicalPath(String path) {

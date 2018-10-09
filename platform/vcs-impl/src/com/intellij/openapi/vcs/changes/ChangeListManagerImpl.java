@@ -1,11 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -22,6 +24,8 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -29,6 +33,7 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption.Value;
 import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -39,6 +44,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -48,6 +54,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -56,6 +63,7 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -222,19 +230,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       listsToBeDeleted.clear();
     }
 
-    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeletedSilently, new ChangeListRemoveConfirmation() {
-      @Override
-      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return true;
-      }
-    });
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeletedSilently, toAsk -> true);
 
-    ChangeListRemoveConfirmation.processLists(myProject, false, listsToBeDeleted, new ChangeListRemoveConfirmation() {
-      @Override
-      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
-               showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
-      }
+    ChangeListRemoveConfirmation.deleteEmptyInactiveLists(myProject, listsToBeDeleted, toAsk -> {
+      return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
+             showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
     });
   }
 
@@ -1031,12 +1031,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public String editComment(@NotNull String fromName, String newComment) {
+  public String editComment(@NotNull String name, String newComment) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
-        final String oldComment = myModifier.editComment(fromName, StringUtil.notNullize(newComment));
+        final String oldComment = myModifier.editComment(name, StringUtil.notNullize(newComment));
         myChangesViewManager.scheduleRefresh();
         return oldComment;
+      }
+    });
+  }
+
+  @Override
+  public boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData) {
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        final boolean result = myModifier.editData(name, newData);
+        myChangesViewManager.scheduleRefresh();
+        return result;
       }
     });
   }
@@ -1520,9 +1531,54 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   public static class DefaultIgnoredFileProvider implements IgnoredFileProvider {
+
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
-      return getInstanceImpl(project).myIgnoredIdeaLevel.isIgnoredFile(filePath);
+      IProjectStore store = ProjectKt.getStateStore(project);
+      return (!ProjectKt.isDirectoryBased(project) && FileUtilRt.extensionEquals(filePath.getPath(), WorkspaceFileType.DEFAULT_EXTENSION))
+             || StringsKt.equals(filePath.getPath(), store.getWorkspaceFilePath(), !SystemInfo.isFileSystemCaseSensitive)
+             || isShelfDirOrInsideIt(filePath, project);
+    }
+
+    private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project){
+      String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
+      return FileUtil.isAncestor(defaultShelfPath, filePath.getPath(), false);
+    }
+
+    @NotNull
+    @Override
+    public Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
+      Set<String> masks = ContainerUtil.newLinkedHashSet();
+      @SystemIndependent String projectBasePath =  project.getBasePath();
+      if (projectBasePath == null) return masks;
+
+      if (FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) {
+        String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
+        if (FileUtil.isAncestor(projectBasePath, defaultShelfPath, true)) {
+          String relativeShelfPath =
+            FileUtil.getRelativePath(projectBasePath, defaultShelfPath, '/');
+          if (relativeShelfPath != null) {
+            masks.add("/" + relativeShelfPath + "/");
+          }
+        }
+      }
+      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
+      if (ProjectKt.isDirectoryBased(project)) {
+        if (workspaceFilePath != null && FileUtil.isAncestor(ignoreFileRoot.getPath(), workspaceFilePath, false)) {
+          masks.add("/" + DIRECTORY_STORE_FOLDER + "/workspace.xml");
+        }
+      }
+      else {
+        masks.add("*." + WorkspaceFileType.DEFAULT_EXTENSION);
+      }
+
+      return ContainerUtil.unmodifiableOrEmptySet(masks);
+    }
+
+    @NotNull
+    @Override
+    public String getMasksGroupDescription() {
+      return "Default ignored files";
     }
   }
 

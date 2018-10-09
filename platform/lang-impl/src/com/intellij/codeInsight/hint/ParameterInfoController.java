@@ -13,6 +13,7 @@ import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
@@ -145,8 +146,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     myEditorCaretListener = new CaretListener(){
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
-        syncUpdateOnCaretMove();
-        rescheduleUpdate();
+        UndoManager undoManager = UndoManager.getInstance(myProject);
+        if (!undoManager.isUndoInProgress() && !undoManager.isRedoInProgress()) {
+          syncUpdateOnCaretMove();
+          rescheduleUpdate();
+        }
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
@@ -401,16 +405,15 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
       hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
     }
-    List<Inlay> inlays = hostEditor.getInlayModel().getInlineElementsInRange(hostWhitespaceStart, hostWhitespaceEnd);
+    List<Inlay> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
+                                                                                                  hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) {
-        int inlayOffset = inlay.getOffset();
-        if (myEditor instanceof EditorWindow) {
-          if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
-          inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
-        }
-        return inlayOffset;
+      int inlayOffset = inlay.getOffset();
+      if (myEditor instanceof EditorWindow) {
+        if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+        inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
       }
+      return inlayOffset;
     }
     return offset;
   }

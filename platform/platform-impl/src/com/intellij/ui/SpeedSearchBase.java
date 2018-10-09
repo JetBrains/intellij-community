@@ -359,6 +359,35 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     selectElement(findElement(searchQuery), searchQuery);
   }
 
+  public boolean adjustSelection(int keyCode, @NotNull String searchQuery) {
+    if (isUpDownHomeEnd(keyCode)) {
+      Object element = findTargetElement(keyCode, searchQuery);
+      if (element != null) {
+        selectElement(element, searchQuery);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private Object findTargetElement(int keyCode, String searchPrefix) {
+    if (keyCode == KeyEvent.VK_UP) {
+      return findPreviousElement(searchPrefix);
+    }
+    else if (keyCode == KeyEvent.VK_DOWN) {
+      return findNextElement(searchPrefix);
+    }
+    else if (keyCode == KeyEvent.VK_HOME) {
+      return findFirstElement(searchPrefix);
+    }
+    else {
+      assert keyCode == KeyEvent.VK_END;
+      return findLastElement(searchPrefix);
+    }
+  }
+
+
   private class SearchPopup extends JPanel {
     private final SearchField mySearchField;
 
@@ -425,23 +454,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           element = findElement(s);
         }
         updateSelection(element);
-      }
-    }
-
-    @Nullable
-    private Object findTargetElement(int keyCode, String searchPrefix) {
-      if (keyCode == KeyEvent.VK_UP) {
-        return findPreviousElement(searchPrefix);
-      }
-      else if (keyCode == KeyEvent.VK_DOWN) {
-        return findNextElement(searchPrefix);
-      }
-      else if (keyCode == KeyEvent.VK_HOME) {
-        return findFirstElement(searchPrefix);
-      }
-      else {
-        assert keyCode == KeyEvent.VK_END;
-        return findLastElement(searchPrefix);
       }
     }
 

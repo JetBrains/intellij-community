@@ -111,7 +111,7 @@ abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(
 abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
   protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
-  override final fun writeScheme(): Element {
+  final override fun writeScheme(): Element {
     val dataHolder = dataHolder.get()
     @Suppress("IfThenToElvis")
     return if (dataHolder == null) writer(scheme) else dataHolder.read()

@@ -139,6 +139,12 @@ class VcsPreviewPanel implements PreviewPanel {
       public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
       }
+
+      @NotNull
+      @Override
+      public String getAccessibleName() {
+        return "VCS marker: changed line";
+      }
     });
   }
 

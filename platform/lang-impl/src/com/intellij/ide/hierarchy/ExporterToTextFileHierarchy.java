@@ -27,7 +27,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
     StringBuilder buf = new StringBuilder();
     StructureTreeModel currentBuilder = myHierarchyBrowserBase.getCurrentBuilder();
     LOG.assertTrue(currentBuilder != null);
-    appendNode(buf, currentBuilder.getRoot(), SystemProperties.getLineSeparator(), "");
+    appendNode(buf, currentBuilder.getRootImmediately(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }
 

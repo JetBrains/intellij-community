@@ -507,7 +507,7 @@ public class RemoteDebuggerClient implements Debugger {
       }
     }
 
-    static List<Variable> convert(List<RemoteDebugger.Variable> list) {
+    static List<Variable> convert(List<? extends RemoteDebugger.Variable> list) {
       final ArrayList<Variable> variables = new ArrayList<Variable>(list.size());
       for (final RemoteDebugger.Variable variable : list) {
         variables.add(new MyVariable(variable));

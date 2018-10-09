@@ -2,6 +2,7 @@
 
 package com.intellij.ide.customize
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
@@ -34,7 +35,7 @@ class WelcomeWizardHelper : BaseComponent {
     //Code style settings
     WelcomeWizardUtil.getContinuationIndent()?.let {
       Language.getRegisteredLanguages()
-        .map { CodeStyleSettingsManager.getInstance().currentSettings.getIndentOptions(it.associatedFileType) }
+        .map { CodeStyle.getDefaultSettings().getIndentOptions(it.associatedFileType) }
         .filter { it.CONTINUATION_INDENT_SIZE > WelcomeWizardUtil.getContinuationIndent() }
         .forEach { it.CONTINUATION_INDENT_SIZE = WelcomeWizardUtil.getContinuationIndent() }
     }

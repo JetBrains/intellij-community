@@ -54,7 +54,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       runManager.setSelectedConfiguration(configuration);
     }
 
-    ExecutionUtil.runConfiguration(configuration, myExecutor);
+    ExecutionUtil.doRunConfiguration(configuration, myExecutor, null, null, context.getDataContext());
   }
 
   @Override
@@ -113,7 +113,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
     ) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         long groupId = ExecutionEnvironment.getNextUnusedExecutionId();
 
         List<ConfigurationType> types = ContainerUtil.map(configurationsFromContext, context1 -> context1.getConfiguration().getType());

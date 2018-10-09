@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.projectImport;
 
@@ -44,7 +30,7 @@ import java.util.List;
 public class ImportChooserStep extends ProjectImportWizardStep {
   private static final String PREFERRED = "create.project.preferred.importer";
 
-  private final ProjectImportProvider[] myProviders;
+  private final List<ProjectImportProvider> myProviders;
   private final StepSequence mySequence;
   @Nullable
   private ProjectImportProvider myFromSourcesProvider;
@@ -54,7 +40,7 @@ public class ImportChooserStep extends ProjectImportWizardStep {
   private JBRadioButton myCreateFromSources;
   private JBRadioButton myImportFrom;
 
-  public ImportChooserStep(final ProjectImportProvider[] providers, final StepSequence sequence, final WizardContext context) {
+  public ImportChooserStep(final List<ProjectImportProvider> providers, final StepSequence sequence, final WizardContext context) {
     super(context);
     myProviders = providers;
     mySequence = sequence;
@@ -149,9 +135,8 @@ public class ImportChooserStep extends ProjectImportWizardStep {
     }
   }
 
-  private static List<ProjectImportProvider> sorted(ProjectImportProvider[] providers) {
-    List<ProjectImportProvider> result = new ArrayList<>();
-    Collections.addAll(result, providers);
+  private static List<ProjectImportProvider> sorted(List<ProjectImportProvider> providers) {
+    List<ProjectImportProvider> result = new ArrayList<>(providers);
     Collections.sort(result, (l, r) -> l.getName().compareToIgnoreCase(r.getName()));
     return result;
   }

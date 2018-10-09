@@ -20,11 +20,12 @@ import com.intellij.dupLocator.treeHash.FragmentsCollector;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.FileContent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public abstract class DuplicatesProfile {
   public static final ExtensionPointName<DuplicatesProfile> EP_NAME = ExtensionPointName.create("com.intellij.duplicates.profile");
@@ -75,16 +76,16 @@ public abstract class DuplicatesProfile {
 
   @Nullable
   public static DuplicatesProfile findProfileForLanguage(@NotNull Language language) {
-    return findProfileForLanguage(EP_NAME.getExtensions(), language);
+    return findProfileForLanguage(EP_NAME.getExtensionList(), language);
   }
 
   @NotNull
-  public static DuplicatesProfile[] getAllProfiles() {
-    return Extensions.getExtensions(EP_NAME);
+  public static List<DuplicatesProfile> getAllProfiles() {
+    return EP_NAME.getExtensionList();
   }
 
   @Nullable
-  public static DuplicatesProfile findProfileForLanguage(DuplicatesProfile[] profiles, @NotNull Language language) {
+  public static DuplicatesProfile findProfileForLanguage(List<? extends DuplicatesProfile> profiles, @NotNull Language language) {
     for (DuplicatesProfile profile : profiles) {
       if (profile.isMyLanguage(language)) {
         return profile;

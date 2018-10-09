@@ -88,7 +88,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @Nullable Language selection,
-                                           @NotNull Consumer<Language> onChosen) {
+                                           @NotNull Consumer<? super Language> onChosen) {
     return forFileLanguages(project, "Languages", selection, onChosen);
   }
 

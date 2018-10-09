@@ -49,7 +49,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     if (containingFile == null) return null;
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     PsiFile topLevelFile = manager.getTopLevelFile(containingFile);
-    if (topLevelFile instanceof PsiJavaFile) {
+    if (topLevelFile instanceof PsiJavaFile && !topLevelFile.getFileType().isBinary()) {
       PsiElement containingMethod = topLevelFile == containingFile ? psiElement : manager.getInjectionHost(containingFile);
       if (usage instanceof UsageInfo2UsageAdapter && topLevelFile == containingFile) {
         int offset = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getNavigationOffset();
@@ -180,7 +180,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (CommonDataKeys.PSI_ELEMENT == key) {
         sink.put(CommonDataKeys.PSI_ELEMENT, getMethod());

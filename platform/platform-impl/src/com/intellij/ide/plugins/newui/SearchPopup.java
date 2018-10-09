@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -12,11 +11,15 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.text.BadLocationException;
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
@@ -29,8 +32,10 @@ public class SearchPopup implements CaretListener {
   private JBPopup myPopup;
   private LightweightWindowEvent myEvent;
 
-  public CollectionListModel<Object> model;
+  public final CollectionListModel<Object> model;
   public JList<Object> list;
+
+  public int caretPosition;
 
   public SearchPopupCallback callback;
 
@@ -42,20 +47,16 @@ public class SearchPopup implements CaretListener {
     AttributeName, AttributeValue, SearchQuery
   }
 
-  public SearchPopup(@NotNull SearchTextField searchTextField, @NotNull JBPopupListener listener, @NotNull Type type) {
+  public SearchPopup(@NotNull SearchTextField searchTextField,
+                     @NotNull JBPopupListener listener,
+                     @NotNull Type type,
+                     @NotNull CollectionListModel<Object> model,
+                     int caretPosition) {
     myEditor = searchTextField.getTextEditor();
     myListener = listener;
     this.type = type;
-  }
-
-  public boolean isValid() {
-    return myPopup.isVisible() && myPopup.getContent().getParent() != null;
-  }
-
-  public void update() {
-    skipCaretEvent = true;
-    myPopup.setLocation(FileTextFieldImpl.getLocationForCaret(myEditor));
-    myPopup.pack(true, true);
+    this.model = model;
+    this.caretPosition = caretPosition;
   }
 
   public void createAndShow(@NotNull Consumer callback, @NotNull ColoredListCellRenderer renderer, boolean async) {
@@ -63,9 +64,14 @@ public class SearchPopup implements CaretListener {
       this.callback = (SearchPopupCallback)callback;
     }
 
+    Insets ipad = renderer.getIpad();
+    ipad.left = ipad.right = getXOffset();
+    renderer.setFont(myEditor.getFont());
+
+    //noinspection unchecked,deprecation
     myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list = new JBList<>(model))
       .setMovable(false).setResizable(false).setRequestFocus(false)
-      .setItemChosenCallback(callback)
+      .setItemChosenCallback(callback).setFont(myEditor.getFont())
       .setRenderer(renderer).createPopup();
     myEvent = new LightweightWindowEvent(myPopup);
 
@@ -74,6 +80,7 @@ public class SearchPopup implements CaretListener {
     myEditor.addCaretListener(this);
 
     if (async) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(this::show);
     }
     else {
@@ -81,9 +88,43 @@ public class SearchPopup implements CaretListener {
     }
   }
 
+  private static int getXOffset() {
+    return JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 5 : UIUtil.getListCellHPadding());
+  }
+
+  @NotNull
+  private Point getPopupLocation() {
+    Point location;
+    try {
+      Rectangle view = myEditor.modelToView(caretPosition);
+      location = new Point((int)view.getMaxX(), (int)view.getMaxY());
+    }
+    catch (BadLocationException ignore) {
+      location = myEditor.getCaret().getMagicCaretPosition();
+    }
+
+    SwingUtilities.convertPointToScreen(location, myEditor);
+    location.x -= getXOffset() + JBUI.scale(2);
+    location.y += 2;
+
+    return location;
+  }
+
+  public boolean isValid() {
+    return myPopup.isVisible() && myPopup.getContent().getParent() != null;
+  }
+
+  public void update() {
+    skipCaretEvent = true;
+    myPopup.setLocation(getPopupLocation());
+    myPopup.pack(true, true);
+  }
+
   private void show() {
-    list.clearSelection();
-    myPopup.showInScreenCoordinates(myEditor, FileTextFieldImpl.getLocationForCaret(myEditor));
+    if (myPopup != null) {
+      list.clearSelection();
+      myPopup.showInScreenCoordinates(myEditor, getPopupLocation());
+    }
   }
 
   public void hide() {

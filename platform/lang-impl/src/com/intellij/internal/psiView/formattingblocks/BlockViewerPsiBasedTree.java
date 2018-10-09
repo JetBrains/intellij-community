@@ -24,8 +24,11 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreePathUtil;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +42,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Set;
 
 import static com.intellij.internal.psiView.PsiViewerDialog.initTree;
 
@@ -52,8 +56,6 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   private final Project myProject;
   @NotNull
   private final PsiTreeUpdater myUpdater;
-
-  private int myIgnoreBlockTreeSelectionMarker = 0;
   @Nullable
   private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
   private AsyncTreeModel myTreeModel;
@@ -146,11 +148,11 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     blockTreeStructure.setRoot(blockNode);
     myTreeModel = new AsyncTreeModel(treeModel);
     myBlockTree.setModel(myTreeModel);
-    
+
     myBlockTree.addTreeSelectionListener(new BlockTreeSelectionListener(rootElement));
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
-    
+
     treeModel.invalidate();
   }
 
@@ -167,31 +169,37 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     return result;
   }
 
+
+  @NotNull
+  private TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
+    Function<Object, BlockTreeNode> converter = el -> el instanceof DefaultMutableTreeNode ?
+                                                      (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() :
+                                                      null;
+    Set<SimpleNode> parents = ContainerUtil.newHashSet();
+    SimpleNode parent = currentBlockNode.getParent();
+    while (parent != null) {
+      parents.add(parent);
+      parent = parent.getParent();
+    }
+    parents.add((SimpleNode)getRoot().getUserObject());
+
+    return new TreeVisitor.ByComponent<BlockTreeNode, BlockTreeNode>(currentBlockNode, converter) {
+
+      @Override
+      protected boolean contains(@NotNull BlockTreeNode pathComponent, @NotNull BlockTreeNode thisComponent) {
+        return parents.contains(pathComponent);
+      }
+    };
+  }
+
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
     if (myTreeModel == null) return;
 
     if (currentBlockNode != null) {
-      myIgnoreBlockTreeSelectionMarker++;
-      try {
-        DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), currentBlockNode);
-        if (node == null) return;
-
-        TreePath path = TreePathUtil.pathToTreeNode(node);
-        myBlockTree.setSelectionPath(path);
-      }
-      finally {
-        myIgnoreBlockTreeSelectionMarker--;
-      }
+      TreeUtil.promiseSelect(myBlockTree, createVisitor(currentBlockNode));
     }
     else {
-      myIgnoreBlockTreeSelectionMarker++;
-      try {
-        myBlockTree.getSelectionModel().clearSelection();
-      }
-      finally {
-        assert myIgnoreBlockTreeSelectionMarker > 0;
-        myIgnoreBlockTreeSelectionMarker--;
-      }
+      myBlockTree.getSelectionModel().clearSelection();
     }
   }
 
@@ -205,13 +213,16 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     @Override
     public void valueChanged(@NotNull TreeSelectionEvent e) {
-      if (myIgnoreBlockTreeSelectionMarker > 0 || myTreeModel == null) {
+      if (myTreeModel == null) {
         return;
       }
 
       TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
-      Object item = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-      
+      if (path == null) return;
+      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (component == null) return;
+      Object item = component.getUserObject();
+
       if (!(item instanceof BlockTreeNode)) return;
       BlockTreeNode descriptor = (BlockTreeNode)item;
 

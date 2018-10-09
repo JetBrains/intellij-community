@@ -32,8 +32,6 @@ public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
     }
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/bindFieldsFromParameters";

@@ -15,7 +15,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class StorageVirtualFileTracker(private val messageBus: MessageBus) {
   private val filePathToStorage: ConcurrentMap<String, TrackedStorage> = ContainerUtil.newConcurrentMap()
-  private @Volatile var hasDirectoryBasedStorages = false
+  @Volatile
+  private var hasDirectoryBasedStorages = false
 
   private val vfsListenerAdded = AtomicBoolean()
 

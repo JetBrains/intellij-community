@@ -72,6 +72,15 @@ public class StartBrowserPanel {
     return myRoot;
   }
 
+  /**
+   * @deprecated Use {@link #getNormalizedUrl()}
+   */
+  @Nullable
+  @Deprecated
+  public String getUrl() {
+    return getNormalizedUrl();
+  }
+
   @Nullable
   public String getNormalizedUrl() {
     String url = StringUtil.nullize(myUrlField.getText(), true);

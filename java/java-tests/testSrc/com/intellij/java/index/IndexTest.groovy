@@ -5,7 +5,7 @@ import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
@@ -135,13 +135,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("X"), "a.java")
 
       index.update("b.java", "y", null)
       assertDataEquals(index.getFilesByWord("y"), "b.java")
       index.update("c.java", "Y", null)
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
     }
     finally {
@@ -276,7 +274,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull findClass("Foo")
     VfsUtil.saveText(vFile, "class x {}")
     document.insertString(0, "class a {}")
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assertNotNull findClass("Foo")
   }
 
@@ -356,7 +354,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
 
     assert JavaPsiFacade.getInstance(project).findClass("Foo", scope)
 
@@ -375,7 +373,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     ((PsiJavaFile)psiFile).importList.add(elementFactory.createImportStatementOnDemand("java.io"))
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
 
     assert JavaPsiFacade.getInstance(project).findClass("pkg.Foo", scope)
 
@@ -416,7 +414,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     IdeaTestUtil.setModuleLanguageLevel(myFixture.module, LanguageLevel.JDK_1_3)
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
   
@@ -470,7 +468,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     //noinspection GroovyUnusedAssignment
     psiFile = null
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
@@ -662,7 +660,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(clazz)
     def stubTreeHash = psiFile.getStubTree().hashCode()
 
-    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    GCUtil.tryGcSoftlyReachableObjects()
     def stubTree = psiFile.getStubTree()
     assertNotNull(stubTree)
     assertEquals(stubTreeHash, stubTree.hashCode())

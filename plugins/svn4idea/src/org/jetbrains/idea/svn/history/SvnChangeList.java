@@ -65,7 +65,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   private final CommonPathSearcher myCommonPathSearcher;
   private final Set<String> myKnownAsDirectories;
 
-  public SvnChangeList(@NotNull final List<CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
+  public SvnChangeList(@NotNull final List<? extends CommittedChangeList> lists, @NotNull final SvnRepositoryLocation location) {
 
     final SvnChangeList sample = (SvnChangeList) lists.get(0);
     myVcs = sample.myVcs;
@@ -222,9 +222,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
         final FilePath source = addedChange.getAfterRevision().getFile();
         deletedChange = new ExternallyRenamedChange(myListsHolder.createDeletedItemRevision(path, true), null, path);
         ((ExternallyRenamedChange) deletedChange).setCopied(false);
-        //noinspection ConstantConditions
         //addedChange.setRenamedOrMovedTarget(deletedChange.getBeforeRevision().getFile());
-        //noinspection ConstantConditions
         ((ExternallyRenamedChange) deletedChange).setRenamedOrMovedTarget(source);
       } else {
         deletedChange = new Change(myListsHolder.createDeletedItemRevision(path, true), null);

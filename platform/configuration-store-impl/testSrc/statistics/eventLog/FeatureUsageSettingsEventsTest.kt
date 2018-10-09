@@ -24,9 +24,8 @@ class FeatureUsageSettingsEventsTest {
 
   @Test
   fun projectNameToHash() {
-    val name = "project-name"
     val printer = TestFeatureUsageSettingsEventsPrinter()
-    assertNotNull(printer.toHash(name))
+    assertNotNull(printer.toHash(projectRule.project))
   }
 
   @Test

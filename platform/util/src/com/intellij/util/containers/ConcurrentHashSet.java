@@ -31,6 +31,10 @@ import java.util.concurrent.ConcurrentMap;
 public final class ConcurrentHashSet<K> implements Set<K> {
   private final ConcurrentMap<K, Boolean> map;
 
+  /**
+   * @deprecated use {@link ContainerUtil#newConcurrentSet()} instead
+   */
+  @Deprecated
   public ConcurrentHashSet() {
     map = ContainerUtil.newConcurrentMap();
     DeprecatedMethodException.report("Use com.intellij.util.containers.ContainerUtil.newConcurrentSet() instead");

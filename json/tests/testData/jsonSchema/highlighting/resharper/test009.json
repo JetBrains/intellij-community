@@ -1,0 +1,5 @@
+{
+
+  "a": <warning descr="Type is not allowed. Expected: boolean.">5</warning>
+}
+

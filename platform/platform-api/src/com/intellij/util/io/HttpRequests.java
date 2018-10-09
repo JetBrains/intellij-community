@@ -175,14 +175,12 @@ public final class HttpRequests {
 
   @NotNull
   public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
-    return new RequestBuilderImpl(url, rawConnection -> {
-      HttpURLConnection connection = (HttpURLConnection)rawConnection;
-      connection.setRequestMethod("POST");
-      connection.setDoOutput(true);
-      if (contentType != null) {
-        connection.setRequestProperty("Content-Type", contentType);
-      }
-    });
+    return requestWithBody(url, "POST", contentType, null);
+  }
+
+  @NotNull
+  public static RequestBuilder put(@NotNull String url, @Nullable String contentType) {
+    return requestWithBody(url, "PUT", contentType, null);
   }
 
   /**
@@ -193,14 +191,23 @@ public final class HttpRequests {
    */
   @NotNull
   public static RequestBuilder patch(@NotNull String url, @Nullable String contentType) {
+    return requestWithBody(url, "POST", contentType,
+                           connection -> connection.setRequestProperty("X-HTTP-Method-Override", "PATCH"));
+  }
+
+  @NotNull
+  private static RequestBuilder requestWithBody(@NotNull String url,
+                                                @NotNull String requestMethod,
+                                                @Nullable String contentType,
+                                                @Nullable ConnectionTuner tuner) {
     return new RequestBuilderImpl(url, rawConnection -> {
       HttpURLConnection connection = (HttpURLConnection)rawConnection;
-      connection.setRequestMethod("POST");
-      connection.setRequestProperty("X-HTTP-Method-Override", "PATCH");
+      connection.setRequestMethod(requestMethod);
       connection.setDoOutput(true);
       if (contentType != null) {
         connection.setRequestProperty("Content-Type", contentType);
       }
+      if (tuner != null) tuner.tune(connection);
     });
   }
 
@@ -399,7 +406,6 @@ public final class HttpRequests {
         if (indicator != null) {
           int contentLength = getConnection().getContentLength();
           if (contentLength > 0) {
-            //noinspection IOResourceOpenedButNotSafelyClosed
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
         }
@@ -592,12 +598,12 @@ public final class HttpRequests {
 
       HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
       String method = httpURLConnection.getRequestMethod();
-      if (method.equals("POST")) {
+      if (method.equals("POST") || method.equals("PUT")) {
         return connection;
       }
 
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
-                     "'" + method + "' not supported; please use GET, HEAD, DELETE or POST");
+                     "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
       int responseCode = httpURLConnection.getResponseCode();

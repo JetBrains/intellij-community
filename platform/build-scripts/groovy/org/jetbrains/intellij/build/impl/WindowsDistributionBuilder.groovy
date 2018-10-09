@@ -16,7 +16,11 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileFilters
+import com.intellij.openapi.util.io.FileUtil
+import groovy.xml.XmlUtil
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
@@ -86,7 +90,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && buildContext.bundledJreManager.is32bitArchSupported()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -101,10 +105,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     if (customizer.buildZipArchive) {
-      buildWinZip(jreDirectoryPaths, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
+      buildWinZip(jreDirectoryPaths.findAll {it != null}, buildContext.productProperties.buildCrossPlatformDistribution ? ".win" : "", winDistPath)
     }
 
-    if (arch != null && customizer.buildZipWithBundledOracleJre) {
+    if (arch != null && customizer.buildZipWithBundledOracleJre &&
+        (arch != JvmArchitecture.x32 || buildContext.bundledJreManager.is32bitArchSupported())) {
       String oracleJrePath = buildContext.bundledJreManager.extractOracleWinJre(arch)
       if (oracleJrePath != null) {
         buildWinZip([oracleJrePath], "-oracle-win", winDistPath)
@@ -115,7 +120,10 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath)
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
+      generateProductJson(productJsonDir, jreDirectoryPath64 != null)
+      new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath64], [])
+      new WinExeInstallerBuilder(buildContext, customizer, jreDirectoryPath64).buildInstaller(winDistPath, productJsonDir)
     }
   }
 
@@ -181,6 +189,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""
       String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)
+      File icoFilesDirectory = new File(buildContext.paths.temp, "win-launcher-ico")
+      File appInfoForLauncher = generateApplicationInfoForLauncher(patchedApplicationInfo, icoFilesDirectory)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
 IDS_JDK_ENV_VAR=${envVarBaseName}_JDK$jdkEnvVarSuffix
@@ -202,7 +212,7 @@ IDS_VM_OPTIONS=$vmOptions
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
-        arg(value: patchedApplicationInfo.absolutePath)
+        arg(value: appInfoForLauncher.absolutePath)
         arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath)
         arg(value: outputPath)
@@ -219,23 +229,59 @@ IDS_VM_OPTIONS=$vmOptions
           buildContext.productProperties.brandingResourcePaths.each {
             pathelement(location: it)
           }
+          pathelement(location: icoFilesDirectory.absolutePath)
         }
       }
     }
   }
 
+  /**
+   * Generates ApplicationInfo.xml file for launcher generator which contains link to proper *.ico file.
+   * //todo[nik] pass path to ico file to LauncherGeneratorMain directly (probably after IDEA-196705 is fixed).
+   */
+  File generateApplicationInfoForLauncher(File applicationInfoFile, File icoFilesDirectory) {
+    FileUtil.createDirectory(icoFilesDirectory)
+    if (icoPath == null) {
+      return applicationInfoFile
+    }
+
+    def icoFile = new File(icoPath)
+    buildContext.ant.copy(file: icoPath, todir: icoFilesDirectory.absolutePath)
+    def root = new XmlParser().parse(applicationInfoFile)
+    def iconNode = root.icon.first()
+    iconNode.@ico = icoFile.name
+    def patchedFile = new File(buildContext.paths.temp, "win-launcher-application-info.xml")
+    patchedFile.withWriter {
+      XmlUtil.serialize(root, it)
+    }
+    return patchedFile
+  }
+
   private void buildWinZip(List<String> jreDirectoryPaths, String zipNameSuffix, String winDistPath) {
+    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths.findAll {it != null}
+      def dirs = [buildContext.paths.distAll, winDistPath] + jreDirectoryPaths
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+      def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
+      generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
+      dirs += [productJsonDir]
       buildContext.ant.zip(zipfile: targetPath) {
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
         }
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private void generateProductJson(String targetDir, boolean isJreIncluded) {
+    def launcherPath = "bin/${buildContext.productProperties.baseFileName}64.exe"
+    def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
+    def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
+    new ProductInfoGenerator(buildContext)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

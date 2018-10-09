@@ -79,7 +79,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("InnerClassMayBeStatic")
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
@@ -1062,7 +1061,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     JComponent getPreferredFocusedComponent();
 
     @Nullable
-    Object getData(@NonNls String dataId);
+    Object getData(@NotNull @NonNls String dataId);
 
     @NotNull
     DiffTool getActiveTool();
@@ -1087,7 +1086,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return null;
     }
 
@@ -1138,7 +1137,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       return null;
     }
 
@@ -1192,7 +1191,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (DiffDataKeys.DIFF_VIEWER.is(dataId)) {
         return myViewer;
       }
@@ -1263,7 +1262,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Nullable
     @Override
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (DiffDataKeys.WRAPPING_DIFF_VIEWER.is(dataId)) {
         return myWrapperViewer;
       }

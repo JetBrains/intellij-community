@@ -128,7 +128,7 @@ public class TodoTreeHelper {
           }
           // Add directories
           final PsiDirectory _dir = psiFile.getContainingDirectory();
-          if (skipDirectory(_dir)){
+          if (_dir == null || skipDirectory(_dir)){
             continue;
           }
           TodoDirNode todoDirNode = new TodoDirNode(getProject(), _dir, builder);

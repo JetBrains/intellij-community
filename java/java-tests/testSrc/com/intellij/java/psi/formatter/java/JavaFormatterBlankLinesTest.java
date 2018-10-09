@@ -501,4 +501,36 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "enum Enum {A, B, C}"
     );
   }
+
+  public void testLinesBetweenPackageAndHeader() {
+    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 0;
+    doTextTest(
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "\n" +
+      "\n" +
+      "package com.intellij.samples;",
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "package com.intellij.samples;"
+    );
+  }
+
+  public void testLinesBetweenPackageAndHeader2() {
+    getSettings().KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
+    getSettings().BLANK_LINES_BEFORE_PACKAGE = 1;
+    doTextTest(
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "package com.intellij.samples;",
+      "/*\n" +
+      " * This is a sample file.\n" +
+      " */\n" +
+      "\n" +
+      "package com.intellij.samples;"
+    );
+  }
 }

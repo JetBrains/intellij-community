@@ -107,7 +107,7 @@ public class UpdateHighlightersUtil {
                                              @NotNull Document document,
                                              int startOffset,
                                              int endOffset,
-                                             @NotNull Collection<HighlightInfo> highlights,
+                                             @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable final EditorColorsScheme colorsScheme, // if null global scheme will be used
                                              int group) {
     TextRange range = new TextRange(startOffset, endOffset);
@@ -154,7 +154,7 @@ public class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
-        if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd <= startOffset || hiStart >= endOffset)) {
+        if (!info.isFromInjection() && hiEnd < document.getTextLength() && (hiEnd != 0 && hiEnd <= startOffset || hiStart >= endOffset)) {
           return true; // injections are oblivious to restricting range
         }
         boolean toRemove = infoSet.contains(info) ||

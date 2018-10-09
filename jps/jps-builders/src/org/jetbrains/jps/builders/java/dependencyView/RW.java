@@ -60,7 +60,7 @@ public class RW {
     }
   }
 
-  public static <X> void save(final Collection<X> x, final DataExternalizer<X> e, final DataOutput out) {
+  public static <X> void save(final Collection<? extends X> x, final DataExternalizer<X> e, final DataOutput out) {
     try {
       DataInputOutputUtil.writeINT(out, x.size());
 

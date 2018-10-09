@@ -279,6 +279,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PsiFile containingFile = aClass.getContainingFile();
     PsiDirectory directory = containingFile.getContainingDirectory();
     pane.select(aClass, containingFile.getVirtualFile(), true);
+    PlatformTestUtil.waitWhileBusy(tree);
     Point viewPosition = ((JViewport)tree.getParent()).getViewPosition();
     for (int i=0;i<100;i++) {
       JavaDirectoryService.getInstance().createClass(directory, "A" + i);

@@ -35,7 +35,6 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 /**
  * @author peter
  */
-@SuppressWarnings("TestOnlyProblems")
 public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionModel myModel;

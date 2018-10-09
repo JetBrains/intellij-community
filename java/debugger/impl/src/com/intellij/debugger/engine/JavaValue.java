@@ -16,8 +16,8 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
-import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -74,7 +74,16 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
                     @NotNull EvaluationContextImpl evaluationContext,
                     NodeManagerImpl nodeManager,
                     boolean contextSet) {
-    super(valueDescriptor.calcValueName());
+    this(parent, valueDescriptor.calcValueName(), valueDescriptor, evaluationContext, nodeManager, contextSet);
+  }
+
+  protected JavaValue(JavaValue parent,
+                      String name,
+                      @NotNull ValueDescriptorImpl valueDescriptor,
+                      @NotNull EvaluationContextImpl evaluationContext,
+                      NodeManagerImpl nodeManager,
+                      boolean contextSet) {
+    super(name);
     myParent = parent;
     myValueDescriptor = valueDescriptor;
     myEvaluationContext = evaluationContext;
@@ -155,7 +164,6 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           public void labelChanged() {
             Icon nodeIcon = DebuggerTreeRenderer.getValueIcon(myValueDescriptor, myParent != null ? myParent.getDescriptor() : null);
             final String value = getValueString();
-            @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
             EvaluateException exception = myValueDescriptor.getEvaluateException();
             XValuePresentation presentation = new JavaValuePresentation(
               value, myValueDescriptor.getIdLabel(), exception != null ? exception.getMessage() : null, myValueDescriptor);

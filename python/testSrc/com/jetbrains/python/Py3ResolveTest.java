@@ -599,4 +599,59 @@ public class Py3ResolveTest extends PyResolveTestCase {
     final PsiElement element = doResolve();
     assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
   }
+
+  // PY-20783
+  public void testFStringFunctionParameter() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyParameter.class, "param");
+  }
+
+  // PY-20783
+  public void testFStringLocalVariable() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-20783
+  public void testFStringLocalVariableUnresolved() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertNull(doResolve()));
+  }
+
+  // PY-20783
+  public void testFStringNestedScopes() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionTarget() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringNestedInResultComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringComprehensionConditionPart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-21479
+  public void testFStringNestedComprehensionSourcePart() {
+    assertResolvesTo(LanguageLevel.PYTHON36, PyTargetExpression.class, "foo");
+  }
+
+  // PY-22094
+  public void testFStringInsideAssertStatement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyParameter.class, "name"));
+  }
+
+  // PY-21493
+  public void testRegexpAndFStringCombined() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyTargetExpression.class, "foo"));
+  }
 }

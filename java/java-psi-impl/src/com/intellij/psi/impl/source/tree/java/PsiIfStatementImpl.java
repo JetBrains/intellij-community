@@ -23,6 +23,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -42,7 +43,10 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
-    if (child == getElseBranch()) {
+    if (child == getThenBranch()) {
+      replaceChildInternal(child, (TreeElement)JavaPsiFacade.getElementFactory(getProject()).createStatementFromText("{}", null));
+      return;
+    } else if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {
         super.deleteChildInternal(elseKeyword);
@@ -83,7 +87,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     PsiKeyword elseElement = getElseElement();
     if (elseElement != null) elseElement.delete();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", this);
     ifStatement.getElseBranch().replace(statement);
 
@@ -91,7 +95,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   }
   @Override
   public void setThenBranch(@NotNull PsiStatement statement) throws IncorrectOperationException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
     ASTNode keyword = findChildByRole(ChildRole.IF_KEYWORD);
     LOG.assertTrue(keyword != null);
     PsiIfStatement ifStatementPattern = (PsiIfStatement)elementFactory.createStatementFromText("if (){}", this);

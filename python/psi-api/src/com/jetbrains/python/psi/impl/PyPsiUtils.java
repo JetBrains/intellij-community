@@ -250,7 +250,6 @@ public class PyPsiUtils {
     final ASTNode parentNode = elements[0].getParent().getNode();
     LOG.assertTrue(parentNode != null);
     for (PsiElement element : elements) {
-      //noinspection ConstantConditions
       parentNode.removeChild(element.getNode());
     }
   }
@@ -265,7 +264,6 @@ public class PyPsiUtils {
   }
 
   public static PyElement getStatementList(final PsiElement element) {
-    //noinspection ConstantConditions
     return element instanceof PyFile || element instanceof PyStatementList
            ? (PyElement)element
            : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
@@ -414,7 +412,6 @@ public class PyPsiUtils {
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
-        //noinspection unchecked
         result.add(child.getPsi());
       }
     }
@@ -469,7 +466,7 @@ public class PyPsiUtils {
     return result;
   }
 
-  public static void sequenceToList(List<PyExpression> result, PyExpression value) {
+  public static void sequenceToList(List<? super PyExpression> result, PyExpression value) {
     value = flattenParens(value);
     if (value instanceof PySequenceExpression) {
       result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));

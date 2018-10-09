@@ -51,8 +51,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 public class EditorsSplitters extends IdePanePanel implements UISettingsListener, Disposable {
@@ -74,6 +74,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
 
   EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
+
+    setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
+    UIManager.getDefaults().addPropertyChangeListener(e -> {
+      String propName = e.getPropertyName();
+      if ("Editor.background".equals(propName) || "Editor.foreground".equals(propName) || "Editor.shortcutForeground".equals(propName)) {
+        repaint();
+      }
+    });
+
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());

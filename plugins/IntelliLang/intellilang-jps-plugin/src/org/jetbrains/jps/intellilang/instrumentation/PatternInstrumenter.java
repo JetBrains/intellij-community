@@ -1,164 +1,160 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.intellilang.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
-import com.intellij.openapi.util.Ref;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.intellilang.model.InstrumentationException;
 import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
+import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 class PatternInstrumenter extends ClassVisitor implements Opcodes {
-  @NonNls static final String PATTERN_CACHE_NAME = "$_PATTERN_CACHE_$";
-  @NonNls static final String ASSERTIONS_DISABLED_NAME = "$assertionsDisabled";
-  @NonNls static final String JAVA_LANG_STRING = "Ljava/lang/String;";
-  @NonNls static final String JAVA_UTIL_REGEX_PATTERN = "[Ljava/util/regex/Pattern;";
+  static final String PATTERN_CACHE_NAME = "$_PATTERN_CACHE_$";
+  static final String ASSERTIONS_DISABLED_NAME = "$assertionsDisabled";
+  static final String JAVA_LANG_STRING = "Ljava/lang/String;";
+  static final String JAVA_UTIL_REGEX_PATTERN = "[Ljava/util/regex/Pattern;";
+  static final String NULL_PATTERN = "((((";
 
-  private boolean myHasAssertions;
-  private boolean myHasStaticInitializer;
-
-  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
-
-  private final String myPatternAnnotationClassName;
-  final InstrumentationType myInstrumentationType;
-  private final InstrumentationClassFinder myClassFinder;
-  private final Map<String, String> myAnnotationNameToPatternMap = new HashMap<>(); // can contain null values!
-  private final Set<String> myProcessedAnnotations = new HashSet<>(); // checked annotation classes
-
-  String myClassName;
-  private boolean myInstrumented;
-  private RuntimeException myPostponedError;
-  boolean myIsNonStaticInnerClass;
-
-  PatternInstrumenter(@NotNull String patternAnnotationClassName, ClassVisitor classvisitor,
-                             InstrumentationType instrumentation,
-                             InstrumentationClassFinder classFinder) {
-    super(Opcodes.API_VERSION, classvisitor);
-    myPatternAnnotationClassName = patternAnnotationClassName;
-
-    myInstrumentationType = instrumentation;
-    myClassFinder = classFinder;
-    // initial setup: null value means we should discover the pattern string 'inplace'
-    myAnnotationNameToPatternMap.put(patternAnnotationClassName, null);
-    myProcessedAnnotations.add(patternAnnotationClassName);
+  static final boolean NEW_ASM;
+  static {
+    try { NEW_ASM = (Integer)Opcodes.class.getField("API_VERSION").get(null) > Opcodes.ASM6; }
+    catch (Exception e) { throw new RuntimeException(e); }
   }
 
-  public boolean instrumented() {
+  private final String myPatternAnnotationClassName;
+  private final boolean myDoAssert;
+  private final InstrumentationClassFinder myClassFinder;
+  private final Map<String, String> myAnnotationPatterns = new HashMap<>();
+  private final LinkedHashSet<String> myPatterns = new LinkedHashSet<>();
+
+  private String myClassName;
+  private boolean myEnum;
+  private boolean myInner;
+  private boolean myEnclosed;
+  private boolean myHasAssertions;
+  private boolean myHasStaticInitializer;
+  private boolean myInstrumented;
+  private RuntimeException myPostponedError;
+
+  PatternInstrumenter(@NotNull String patternAnnotationClassName,
+                      ClassVisitor classvisitor,
+                      InstrumentationType instrumentation,
+                      InstrumentationClassFinder classFinder) {
+    super(Opcodes.API_VERSION, classvisitor);
+    myPatternAnnotationClassName = patternAnnotationClassName;
+    myDoAssert = instrumentation == InstrumentationType.ASSERT;
+    myClassFinder = classFinder;
+    myAnnotationPatterns.put(patternAnnotationClassName, NULL_PATTERN);
+  }
+
+  boolean instrumented() {
     return myInstrumented;
   }
 
   void markInstrumented() {
     myInstrumented = true;
-    processPostponedErrors();
+    if (myPostponedError != null) {
+      throw myPostponedError;
+    }
   }
 
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
     myClassName = name;
+    myEnum = (access & ACC_ENUM) != 0;
   }
 
   @Override
   public void visitInnerClass(String name, String outerName, String innerName, int access) {
     super.visitInnerClass(name, outerName, innerName, access);
     if (myClassName.equals(name)) {
-      myIsNonStaticInnerClass = (access & ACC_STATIC) == 0;
+      myInner = (access & ACC_STATIC) == 0;
     }
   }
 
   @Override
-  public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
+  public void visitOuterClass(String owner, String name, String desc) {
+    super.visitOuterClass(owner, name, desc);
+    myEnclosed = true;
+  }
+
+  @Override
+  public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
     if (name.equals(ASSERTIONS_DISABLED_NAME)) {
       myHasAssertions = true;
     }
-    else if (name.equals(PATTERN_CACHE_NAME)) {
-      throw new InstrumentationException("Error: Processing an already instrumented class: " + myClassName + ". Please recompile the affected class(es) or rebuild the project.");
-    }
-
     return super.visitField(access, name, desc, signature, value);
   }
 
   @Override
   public void visitEnd() {
     if (myInstrumented) {
-      addField(PATTERN_CACHE_NAME, ACC_PRIVATE + ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
-
-      if (myInstrumentationType == InstrumentationType.ASSERT) {
-        if (!myHasAssertions) {
-          addField(ASSERTIONS_DISABLED_NAME, ACC_FINAL + ACC_STATIC + ACC_SYNTHETIC, "Z");
+      for (String pattern : myPatterns) {
+        // checks patterns so we can rely on them being valid at runtime
+        try { Pattern.compile(pattern); }
+        catch (Exception e) {
+          throw new InstrumentationException("Illegal Pattern: " + pattern, e);
         }
       }
 
+      addField(PATTERN_CACHE_NAME, ACC_PRIVATE | ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, JAVA_UTIL_REGEX_PATTERN);
+
+      if (myDoAssert && !myHasAssertions) {
+        addField(ASSERTIONS_DISABLED_NAME, ACC_FINAL | ACC_STATIC | ACC_SYNTHETIC, "Z");
+      }
+
       if (!myHasStaticInitializer) {
-        createStaticInitializer();
+        MethodVisitor mv = cv.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+        mv.visitCode();
+
+        patchStaticInitializer(mv);
+
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
       }
     }
 
     super.visitEnd();
   }
 
-  private void addField(String name, int modifiers, String type) {
-    final FieldVisitor fv = cv.visitField(modifiers, name, type, null, null);
-    fv.visitEnd();
-  }
-
-  private void createStaticInitializer() {
-    final MethodVisitor mv = cv.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
-    mv.visitCode();
-
-    patchStaticInitializer(mv);
-
-    mv.visitInsn(RETURN);
-    mv.visitMaxs(0, 0);
-    mv.visitEnd();
+  private void addField(String name, int access, String desc) {
+    cv.visitField(access, name, desc, null, null).visitEnd();
   }
 
   private void patchStaticInitializer(MethodVisitor mv) {
-    if (!myHasAssertions && myInstrumentationType == InstrumentationType.ASSERT) {
-      initAssertions(mv);
+    if (myDoAssert && !myHasAssertions) {
+      mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
+      mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
+      Label l0 = new Label();
+      mv.visitJumpInsn(IFNE, l0);
+      mv.visitInsn(ICONST_1);
+      Label l1 = new Label();
+      mv.visitJumpInsn(GOTO, l1);
+      mv.visitLabel(l0);
+      mv.visitInsn(ICONST_0);
+      mv.visitLabel(l1);
+      mv.visitFieldInsn(PUTSTATIC, myClassName, ASSERTIONS_DISABLED_NAME, "Z");
     }
 
-    initPatterns(mv);
-  }
-
-  // verify pattern and add compiled pattern to static cache
-  private void initPatterns(MethodVisitor mv) {
     mv.visitIntInsn(BIPUSH, myPatterns.size());
     mv.visitTypeInsn(ANEWARRAY, "java/util/regex/Pattern");
     mv.visitFieldInsn(PUTSTATIC, myClassName, PATTERN_CACHE_NAME, JAVA_UTIL_REGEX_PATTERN);
 
     int i = 0;
     for (String pattern : myPatterns) {
-      // check the pattern so we can rely on the pattern being valid at runtime
-      try {
-        Pattern.compile(pattern);
-      }
-      catch (Exception e) {
-        throw new InstrumentationException("Illegal Pattern: " + pattern, e);
-      }
-
       mv.visitFieldInsn(GETSTATIC, myClassName, PATTERN_CACHE_NAME, JAVA_UTIL_REGEX_PATTERN);
       mv.visitIntInsn(BIPUSH, i++);
       mv.visitLdcInsn(pattern);
@@ -167,29 +163,13 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
     }
   }
 
-  // add assert startup code
-  private void initAssertions(MethodVisitor mv) {
-    mv.visitLdcInsn(Type.getType("L" + myClassName + ";"));
-    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "desiredAssertionStatus", "()Z", false);
-    Label l0 = new Label();
-    mv.visitJumpInsn(IFNE, l0);
-    mv.visitInsn(ICONST_1);
-    Label l1 = new Label();
-    mv.visitJumpInsn(GOTO, l1);
-    mv.visitLabel(l0);
-    mv.visitInsn(ICONST_0);
-    mv.visitLabel(l1);
-    mv.visitFieldInsn(PUTSTATIC, myClassName, ASSERTIONS_DISABLED_NAME, "Z");
-  }
-
   @Override
-  public MethodVisitor visitMethod(final int access, final String name, String desc, String signature, String[] exceptions) {
-    final MethodVisitor methodvisitor = cv.visitMethod(access, name, desc, signature, exceptions);
+  public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+    MethodVisitor methodvisitor = cv.visitMethod(access, name, desc, signature, exceptions);
+    boolean isStatic = (access & ACC_STATIC) != 0;
 
-    // patch static initializer
-    if ((access & ACC_STATIC) != 0 && name.equals("<clinit>")) {
+    if (isStatic && name.equals("<clinit>")) {
       myHasStaticInitializer = true;
-
       return new ErrorPostponingMethodVisitor(this, name, methodvisitor) {
         @Override
         public void visitCode() {
@@ -199,130 +179,97 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
       };
     }
 
-    final Type[] argTypes = Type.getArgumentTypes(desc);
-    final Type returnType = Type.getReturnType(desc);
-
-    // don't dig through the whole method if there's nothing to do in it
-    if (isStringType(returnType)) {
-      return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, access, name);
-    }
-    else {
-      for (Type type : argTypes) {
-        if (isStringType(type)) {
-          return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, access, name);
-        }
+    if ((access & Opcodes.ACC_BRIDGE) == 0) {
+      Type[] argTypes = Type.getArgumentTypes(desc);
+      Type returnType = Type.getReturnType(desc);
+      if (isCandidate(argTypes, returnType)) {
+        int offset = !"<init>".equals(name) ? 0 : NEW_ASM
+          ? (myEnum ? -2 : myInner ? -1 : 0)
+          : (myEnclosed && myInner && signature != null ? Math.max(0, argTypes.length - countSignatureParameters(signature) - 1) : 0);
+        return new InstrumentationAdapter(this, methodvisitor, argTypes, returnType, myClassName, name, myDoAssert, isStatic, offset);
       }
     }
 
     return new ErrorPostponingMethodVisitor(this, name, methodvisitor);
   }
 
-  private static boolean isStringType(Type type) {
+  private static boolean isCandidate(Type[] argTypes, Type returnType) {
+    if (isStringType(returnType)) {
+      return true;
+    }
+    for (Type argType : argTypes) {
+      if (isStringType(argType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static boolean isStringType(Type type) {
     return type.getSort() == Type.OBJECT && type.getDescriptor().equals(JAVA_LANG_STRING);
   }
 
-  public int addPattern(String s) {
-    if (myPatterns.add(s)) {
-      return myPatterns.size() - 1;
+  private static int countSignatureParameters(String signature) {
+    int[] count = {0};
+    if (signature != null) {
+      new SignatureReader(signature).accept(new SignatureVisitor(Opcodes.API_VERSION) {
+        @Override
+        public SignatureVisitor visitParameterType() {
+          count[0]++;
+          return super.visitParameterType();
+        }
+      });
     }
-    return Arrays.asList(myPatterns.toArray()).indexOf(s);
+    return count[0];
   }
 
-  public boolean acceptAnnotation(String annotationClassName) {
-    if (annotationClassName == null) {
-      // unfortunately sometimes ASM may return null values
-      return false;
-    }
-    processAnnotation(annotationClassName);
-    return myAnnotationNameToPatternMap.containsKey(annotationClassName);
+  int addPattern(String s) {
+    return myPatterns.add(s) ? myPatterns.size() - 1 : Arrays.asList(myPatterns.toArray()).indexOf(s);
   }
 
   /**
-   * @return pattern string for 'alias' annotations, as specified in the 'base' annotation,
-   *         otherwise null, (for the  'base' annotation class name null is returned as well)
+   * Returns a pattern string for meta-annotations, a {@link #NULL_PATTERN} for the pattern annotation,
+   * or {@code null} for unrelated annotations.
    */
-  @Nullable
-  public String getAnnotationPattern(String annotationClassName) {
-    processAnnotation(annotationClassName);
-    return myAnnotationNameToPatternMap.get(annotationClassName);
-  }
+  @Nullable String getAnnotationPattern(String annotationClassName) {
+    if (!myAnnotationPatterns.containsKey(annotationClassName)) {
+      myAnnotationPatterns.put(annotationClassName, null);
 
-  private void processAnnotation(String annotationClassName) {
-    if (!myProcessedAnnotations.add(annotationClassName)) {
-      return;
-    }
-    try {
-      final InputStream is = myClassFinder.getClassBytesAsStream(annotationClassName);
-      if (is != null) {
-        try {
-          final Ref<String> patternString = new Ref<>(null);
-          // dig into annotation class and check if it is annotated with pattern annotation.
-          // if yes, load the pattern string from the pattern annotation and associate it with this annotation
-          final ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
+      try (InputStream is = myClassFinder.getClassBytesAsStream(annotationClassName)) {
+        if (is != null) {
+          new ClassReader(is).accept(new ClassVisitor(Opcodes.API_VERSION) {
             @Override
             public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-              if (patternString.get() != null || !myPatternAnnotationClassName.equals(Type.getType(desc).getClassName())) {
-                return null; // already found or is not pattern annotation
-              }
-              // dig into pattern annotation in order to discover the pattern string
-              return new AnnotationVisitor(Opcodes.API_VERSION) {
+              boolean matches = myPatternAnnotationClassName.equals(Type.getType(desc).getClassName());
+              return !matches ? null : new AnnotationVisitor(Opcodes.API_VERSION) {
                 @Override
-                public void visit(@NonNls String name, Object value) {
+                public void visit(String name, Object value) {
                   if ("value".equals(name) && value instanceof String) {
-                    patternString.set((String)value);
+                    myAnnotationPatterns.put(annotationClassName, (String)value);
                   }
                 }
               };
             }
-          };
-          new ClassReader(is).accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-          final String pattern = patternString.get();
-          if (pattern != null) {
-            myAnnotationNameToPatternMap.put(annotationClassName, pattern);
-          }
-        }
-        finally {
-          is.close();
+          }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
         }
       }
+      catch (IOException e) {
+        Logger.getInstance(PatternInstrumenter.class).info("failed to read " + annotationClassName, e);
+      }
     }
-    catch (IOException ignored) {
-      // todo
-    }
+
+    return myAnnotationPatterns.get(annotationClassName);
   }
 
-  void registerError(String methodName, String operationName, Throwable e) {
+  void registerError(String methodName, @SuppressWarnings("SameParameterValue") String op, Throwable e) {
     if (myPostponedError == null) {
-      // throw the first error that occurred
-      Throwable err = e.getCause();
-      if (err == null) {
-        err = e;
-      }
-      final StringBuilder message = new StringBuilder();
-      message.append("Operation '").append(operationName).append("' failed for ").append(myClassName).append(".").append(methodName).append("(): ");
-
-      final String errMessage = err.getMessage();
-      if (errMessage != null) {
-        message.append(errMessage);
-      }
-
-      final ByteArrayOutputStream out = new ByteArrayOutputStream();
-      err.printStackTrace(new PrintStream(out));
-      message.append('\n').append(out.toString());
-
-      myPostponedError = new RuntimeException(message.toString(), err);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      e.printStackTrace(new PrintStream(out));
+      String message = "Operation '" + op + "' failed for " + myClassName + '.' + methodName + "(): " + e.getMessage() + '\n' + out;
+      myPostponedError = new RuntimeException(message, e);
     }
     if (myInstrumented) {
-      processPostponedErrors();
+      throw myPostponedError;
     }
   }
-
-  private void processPostponedErrors() {
-    final RuntimeException error = myPostponedError;
-    if (error != null) {
-      throw error;
-    }
-  }
-
 }

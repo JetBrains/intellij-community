@@ -7,6 +7,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -448,8 +450,14 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element, () ->
-      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+    PsiModifierListOwner realElement;
+    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
+      realElement = (PsiModifierListOwner)element.getNavigationElement();
+    } else {
+      realElement = element;
+    }
+    return CachedValuesManager.getCachedValue(realElement, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -759,7 +767,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), LanguageSlicing.getProvider(argument).createRootUsage(argument, params));
 
-    Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
+    Collection<? extends AbstractTreeNode> children = ProgressManager.getInstance().runProcess(() -> rootNode.getChildren().iterator().next().getChildren(), new ProgressIndicatorBase());
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
       PsiElement element = usage != null ? usage.getElement() : null;

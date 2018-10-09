@@ -26,7 +26,7 @@ import org.jdom.Element
 import java.awt.event.MouseEvent
 
 open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>, private val defaultKeymapManager: DefaultKeymap) : KeymapImpl(dataHolder) {
-  override final var canModify: Boolean
+  final override var canModify: Boolean
     get() = false
     set(value) {
       // ignore

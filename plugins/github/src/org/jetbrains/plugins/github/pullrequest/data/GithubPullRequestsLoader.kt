@@ -2,41 +2,31 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.EventDispatcher
+import com.intellij.openapi.util.Computable
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.api.search.GithubIssueSearchType
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchQuery
-import java.util.*
+import java.util.concurrent.CompletableFuture
 
-class GithubPullRequestsLoader(progressManager: ProgressManager,
-                               private val requestExecutorHolder: GithubApiRequestExecutorManager.ManagedHolder,
-                               private val serverPath: GithubServerPath,
-                               private val repoPath: GithubFullPath)
-  : SingleWorkerProcessExecutor(progressManager, "GitHub PR loading breaker"), GithubApiRequestExecutorManager.ExecutorChangeListener {
-
-  private var query: String = buildQuery(null)
-  private var nextPageRequest: GithubApiRequest<GithubResponsePage<GithubSearchedIssue>>? = createInitialRequest()
-
-  private val stateEventDispatcher = EventDispatcher.create(PullRequestsLoadingListener::class.java)
-
-  init {
-    requestExecutorHolder.addListener(this, this)
-  }
-
-  private fun createInitialRequest() = GithubApiRequests.Search.Issues.get(serverPath, query)
+internal class GithubPullRequestsLoader(private val progressManager: ProgressManager,
+                                        private val requestExecutor: GithubApiRequestExecutor,
+                                        private val serverPath: GithubServerPath,
+                                        private val repoPath: GithubFullPath) : Disposable {
+  private var initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(null))
+  private var lastFuture = CompletableFuture.completedFuture(GithubResponsePage.empty<GithubSearchedIssue>(initialRequest.url))
 
   @CalledInAwt
   fun setSearchQuery(searchQuery: GithubPullRequestSearchQuery?) {
-    query = buildQuery(searchQuery)
+    initialRequest = GithubApiRequests.Search.Issues.get(serverPath, buildQuery(searchQuery))
   }
 
   private fun buildQuery(searchQuery: GithubPullRequestSearchQuery?): String {
@@ -48,54 +38,23 @@ class GithubPullRequestsLoader(progressManager: ProgressManager,
   }
 
   @CalledInAwt
-  fun requestLoadMore() {
-    val requestExecutor = requestExecutorHolder.executor
-    submit { indicator -> loadMore(requestExecutor, indicator) }
-  }
-
-  @CalledInBackground
-  private fun loadMore(requestExecutor: GithubApiRequestExecutor, progressIndicator: ProgressIndicator) {
-    try {
-      val request = nextPageRequest
-      if (request == null) {
-        runInEdt {
-          if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.moreDataLoaded(emptyList(), false)
-        }
-        return
-      }
-      val loadedPage = requestExecutor.execute(progressIndicator, request)
-      nextPageRequest = loadedPage.nextLink?.let { GithubApiRequests.Search.Issues.get(it) }
-      runInEdt {
-        if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.moreDataLoaded(loadedPage.items, loadedPage.nextLink != null)
-      }
+  fun requestLoadMore(indicator: ProgressIndicator): CompletableFuture<GithubResponsePage<GithubSearchedIssue>> {
+    lastFuture = lastFuture.thenApplyAsync {
+      it.nextLink?.let { url ->
+        progressManager.runProcess(Computable { requestExecutor.execute(indicator, GithubApiRequests.Search.Issues.get(url)) }, indicator)
+      } ?: GithubResponsePage.empty()
     }
-    catch (pce: ProcessCanceledException) {
-      //ignore
-    }
-    catch (error: Throwable) {
-      runInEdt { if (!progressIndicator.isCanceled) stateEventDispatcher.multicaster.loadingErrorOccurred(error) }
-    }
-  }
-
-  override fun executorChanged() {
-    reset()
+    return lastFuture
   }
 
   @CalledInAwt
   fun reset() {
-    cancelCurrentTasks()
-    submit {
-      nextPageRequest = createInitialRequest()
-      runInEdt { stateEventDispatcher.multicaster.loaderReset() }
+    lastFuture = lastFuture.handle { _, _ ->
+      GithubResponsePage.empty<GithubSearchedIssue>(initialRequest.url)
     }
   }
 
-  fun addLoadingListener(listener: PullRequestsLoadingListener, disposable: Disposable) = stateEventDispatcher.addListener(listener,
-                                                                                                                           disposable)
-
-  interface PullRequestsLoadingListener : EventListener {
-    fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {}
-    fun loadingErrorOccurred(error: Throwable) {}
-    fun loaderReset() {}
+  override fun dispose() {
+    reset()
   }
 }

@@ -78,7 +78,6 @@ public class JDOMUtil {
     return Collections.emptyList();
   }
 
-  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LoggerHolder {
     private static final Logger ourLogger = Logger.getInstance("#com.intellij.openapi.util.JDOMUtil");
   }
@@ -173,8 +172,7 @@ public class JDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2, ignoreEmptyAttrValues);
   }
 
-  @SuppressWarnings("DuplicateDetector")
-  private static boolean isAttributesEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2, boolean ignoreEmptyAttrValues) {
+  private static boolean isAttributesEqual(@NotNull List<? extends Attribute> l1, @NotNull List<? extends Attribute> l2, boolean ignoreEmptyAttrValues) {
     if (ignoreEmptyAttrValues) {
       l1 = ContainerUtil.filter(l1, NOT_EMPTY_VALUE_CONDITION);
       l2 = ContainerUtil.filter(l2, NOT_EMPTY_VALUE_CONDITION);
@@ -270,6 +268,7 @@ public class JDOMUtil {
    * <p>
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
+  @Deprecated
   @NotNull
   public static Document loadDocument(@NotNull InputStream stream) throws JDOMException, IOException {
     return loadDocumentUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
@@ -303,6 +302,7 @@ public class JDOMUtil {
    *
    * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public static Document loadDocument(@NotNull URL url) throws JDOMException, IOException {

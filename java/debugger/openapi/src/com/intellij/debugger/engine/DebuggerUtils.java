@@ -393,7 +393,7 @@ public abstract class DebuggerUtils {
 
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(project).getElementFactory().createTypeFromText(className, null);
+        return JavaPsiFacade.getElementFactory(project).createTypeFromText(className, null);
       }
       if (project.isDefault()) {
         return null;
@@ -493,7 +493,9 @@ public abstract class DebuggerUtils {
     if (typeComponent == null) {
       return false;
     }
-    return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
+    SyntheticTypeComponentProvider[] extensions = SyntheticTypeComponentProvider.EP_NAME.getExtensions();
+    return Arrays.stream(extensions).noneMatch(provider -> provider.isNotSynthetic(typeComponent)) &&
+           Arrays.stream(extensions).anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {

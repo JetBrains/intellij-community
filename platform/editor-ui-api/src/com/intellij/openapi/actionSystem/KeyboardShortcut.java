@@ -47,6 +47,7 @@ public final class KeyboardShortcut extends Shortcut {
     return mySecondKeyStroke;
   }
 
+  @Override
   public int hashCode() {
     int hashCode = myFirstKeyStroke.hashCode();
     if (mySecondKeyStroke != null) {
@@ -55,6 +56,7 @@ public final class KeyboardShortcut extends Shortcut {
     return hashCode;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof KeyboardShortcut)) {
       return false;

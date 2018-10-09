@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -670,48 +671,6 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     delete(mm, 0);
   }
 
-  public void _testRandomAddRemove() {
-    int N = 100;
-
-    for (int ti=0; ;ti++) {
-      if (ti%10000 ==0) System.out.println(ti);
-      DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
-
-      Random gen = new Random();
-      List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
-      List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
-
-
-      try {
-        for (int i = 0; i < 30; i++) {
-          int x = gen.nextInt(N);
-          int y = x + gen.nextInt(N - x);
-          if (gen.nextBoolean()) {
-            x = 0;
-            y = document.getTextLength();
-          }
-          RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
-          adds.add(Pair.create(r, TextRange.create(r)));
-        }
-        List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
-        while (!candidates.isEmpty()) {
-          int size = candidates.size();
-          int x = gen.nextInt(size);
-          Pair<RangeMarker, TextRange> c = candidates.remove(x);
-          RangeMarkerEx r = (RangeMarkerEx)c.first;
-          assertEquals(size-1, candidates.size());
-          dels.add(c);
-          r.dispose();
-        }
-      }
-      catch (AssertionError e) {
-        printFailingSteps(adds, dels, Collections.emptyList());
-        throw e;
-      }
-    }
-
-  }
-
   private static void edit(DocumentEx document, int... offsets) {
     for (int i = 0; i < offsets.length; i+=3) {
       int offset = offsets[i];
@@ -916,22 +875,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private static void printFailingSteps(List<Pair<RangeMarker, TextRange>> adds,
                                         List<Pair<RangeMarker, TextRange>> dels,
                                         List<Trinity<Integer, Integer, Integer>> edits) {
-    String s = "adds: ";
+    StringBuilder s = new StringBuilder("adds: ");
     for (Pair<RangeMarker, TextRange> c : adds) {
       TextRange t = c.second;
-      s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+      s.append(t.getStartOffset()).append(",").append(t.getEndOffset()).append(", ");
     }
 
-    s += "\nedits: ";
+    s.append("\nedits: ");
     for (Trinity<Integer, Integer, Integer> edit : edits) {
-      s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+      s.append(edit.first).append(",").append(edit.second).append(",").append(edit.third).append(",  ");
     }
-    s += "\ndels: ";
+    s.append("\ndels: ");
 
     for (Pair<RangeMarker, TextRange> c : dels) {
       int index = adds.indexOf(c);
       assertSame(c, adds.get(index));
-      s += index + ", ";
+      s.append(index).append(", ");
     }
     System.err.println(s);
   }
@@ -1398,7 +1357,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = null;
 
     while (ref.get() != null) {
-      GCUtil.tryForceGC();
+      GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
     }
   }
@@ -1416,7 +1375,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     String newText = "0123blah";
     WriteCommandAction.runWriteCommandAction(getProject(), (ThrowableComputable<Object, IOException>)()->{
-      vf.setBinaryContent(newText.getBytes("utf-8"));
+      vf.setBinaryContent(newText.getBytes(StandardCharsets.UTF_8));
       return null;
     });
 
@@ -1442,7 +1401,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     persistentMarker[0] = null;
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
-      GCUtil.tryForceGC();
+      GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
     }
 

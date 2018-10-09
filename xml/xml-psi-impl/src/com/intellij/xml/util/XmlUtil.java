@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -14,7 +14,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -656,7 +655,7 @@ public class XmlUtil {
     final XmlTag tag = document.getRootTag();
     if (tag == null) return null;
 
-    @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
+    @NotNull final List<XmlFileNSInfoProvider> nsProviders = XmlFileNSInfoProvider.EP_NAME.getExtensionList();
     if (file != null) {
 
       NextProvider:
@@ -900,7 +899,7 @@ public class XmlUtil {
   /**
    * @return true if enumeration is exhaustive
    */
-  public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
+  public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
@@ -917,6 +916,21 @@ public class XmlUtil {
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
+        XmlAttribute attribute = tag.getAttribute("memberTypes");
+        if (attribute != null && attribute.getValueElement() != null) {
+          for (PsiReference reference : attribute.getValueElement().getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof XmlTag) {
+              processEnumerationValues((XmlTag)resolve, tagProcessor);
+            }
+          }
+        }
+      }
+      else if (localName.equals("extension")) {
+        XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
+        if (base != null) {
+          return processEnumerationValues(base, tagProcessor);
+        }
       }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
@@ -1397,6 +1411,26 @@ public class XmlUtil {
     final XmlNSDescriptor nsDescriptor = xmlTag.getNSDescriptor(xmlTag.getNamespace(), false);
     final XmlElementDescriptor descriptor = nsDescriptor != null ? nsDescriptor.getElementDescriptor(xmlTag) : null;
     return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);
+  }
+
+  @Nullable
+  public static PsiElement findPreviousComment(final PsiElement element) {
+    PsiElement curElement = element;
+
+    while(curElement!=null && !(curElement instanceof XmlComment)) {
+      curElement = curElement.getPrevSibling();
+      if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
+        continue;
+      }
+      if (!(curElement instanceof PsiWhiteSpace) &&
+          !(curElement instanceof XmlProlog) &&
+          !(curElement instanceof XmlComment)
+         ) {
+        curElement = null; // finding comment fails, we found another similar declaration
+        break;
+      }
+    }
+    return curElement;
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {

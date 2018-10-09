@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.performance
 
-import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
@@ -105,7 +103,7 @@ class TypingLatencyReportDialog(
 
   private fun createThreadDumpBrowser(): JComponent {
     val builder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
-    builder.filters(*Extensions.getExtensions<Filter>(AnalyzeStacktraceUtil.EP_NAME, project))
+    builder.filters(AnalyzeStacktraceUtil.EP_NAME.getExtensions(project))
     consoleView = builder.console
     Disposer.register(disposable, consoleView)
 

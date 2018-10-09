@@ -716,7 +716,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           final Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
           final PsiClass aClass = Pair.getSecond(imported);
           if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
-            //noinspection ConditionalExpressionWithIdenticalBranches
             description = imported.first == null
                           ? JavaErrorMessages.message("single.import.class.conflict", refName)
                           : imported.first.equals(ref)
@@ -729,7 +728,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           final Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
           final PsiField field = Pair.getSecond(imported);
           if (field != null && !manager.areElementsEquivalent(field, element)) {
-            //noinspection ConditionalExpressionWithIdenticalBranches
             description = imported.first.equals(ref)
                           ? JavaErrorMessages.message("field.is.ambiguous.in.single.static.import", refName)
                           : JavaErrorMessages.message("field.is.already.defined.in.single.static.import", refName);

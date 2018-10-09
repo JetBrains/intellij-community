@@ -166,7 +166,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
   private static final class Mapper implements BiFunction<VirtualFile, Object, FileNode> {
     private final HashMap<VirtualFile, FileNode> map = new HashMap<>();
 
-    Mapper(@NotNull List<FileNode> list) {
+    Mapper(@NotNull List<? extends FileNode> list) {
       list.forEach(node -> map.put(node.file, node));
     }
 
@@ -251,7 +251,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return list;
     }
 
-    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<VirtualFile, AreaInstance> consumer) {
+    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<? super VirtualFile, ? super AreaInstance> consumer) {
       VirtualFile ancestor = ProjectFileNode.findBaseDir(project);
       if (ancestor != null && project == ProjectFileNode.findArea(ancestor, project)) {
         consumer.accept(ancestor, project);

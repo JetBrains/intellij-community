@@ -89,8 +89,8 @@ public class InheritanceUtil {
         return true;
       }
     }
-    return !ClassInheritorsSearch.search(aClass).forEach(
-      inheritor -> inheritor.isInterface() || inheritor.isAnnotationType() || inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
+    return ClassInheritorsSearch.search(aClass).anyMatch(
+      inheritor -> !inheritor.isInterface() && !inheritor.isAnnotationType() && !inheritor.hasModifierProperty(PsiModifier.ABSTRACT));
   }
 
   public static boolean hasOneInheritor(final PsiClass aClass) {

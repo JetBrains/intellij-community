@@ -54,14 +54,14 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
 
   @Nullable
-  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName,
-                                            final boolean isNewFile) throws IOException {
+  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
+    throws IOException {
     VirtualFile file = null;
     if (beforeName != null) {
-      file = findFileToPatchByName(context, beforeName, isNewFile);
+      file = findFileToPatchByName(context, beforeName);
     }
     if (file == null) {
-      file = findFileToPatchByName(context, afterName, isNewFile);
+      file = findFileToPatchByName(context, afterName);
     }
     else if (context.isAllowRename() && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
@@ -108,10 +108,9 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   }
 
   @Nullable
-  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName,
-                                                   boolean isNewFile) {
+  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
     String[] pathNameComponents = fileName.split("/");
-    int lastComponentToFind = isNewFile ? pathNameComponents.length-1 : pathNameComponents.length;
+    int lastComponentToFind = pathNameComponents.length;
     return findFileToPatchByComponents(context, pathNameComponents, lastComponentToFind);
   }
 

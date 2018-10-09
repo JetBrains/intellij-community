@@ -496,7 +496,6 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
   }
 
   private static Node node(Configurable configurable) {
-    @SuppressWarnings("unchecked")
     SearchableConfigurable sc = (SearchableConfigurable)configurable;
     if (configurable instanceof Configurable.Composite) {
       Configurable.Composite composite = (Configurable.Composite)configurable;

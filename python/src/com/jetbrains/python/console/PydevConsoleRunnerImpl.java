@@ -113,7 +113,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
-  private final Consumer<String> myRerunAction;
+  private final Consumer<? super String> myRerunAction;
   @NotNull private final Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -136,7 +136,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
+                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
     myTitle = title;
@@ -154,7 +154,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
+                                @NotNull Consumer<? super String> rerunAction, String... statementsToExecute) {
     this(project, sdk, consoleType, consoleType.getTitle(), workingDir, environmentVariables, settingsProvider, rerunAction,
          statementsToExecute);
   }
@@ -418,7 +418,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public static int getRemotePortFromProcess(@NotNull Process process) throws ExecutionException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
+    Scanner s = new Scanner(process.getInputStream());
     return readInt(s, process);
   }
 

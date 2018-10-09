@@ -28,7 +28,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SyntaxTraverser;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -151,10 +150,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();
 
-    List<Inlay> inlays = myEditor.getInlayModel()
-      .getInlineElementsInRange(elementStart + 1, elementEnd - 1);
-
-    return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
+    return manager.getParameterHintsInRange(myEditor, elementStart + 1, elementEnd - 1);
   }
 
   /**

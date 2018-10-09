@@ -25,6 +25,11 @@ import com.intellij.util.Function;
  */
 @Deprecated
 public abstract class ConcurrentWeakFactoryMap<K,V> extends ConcurrentFactoryMap<K,V> {
+  /**
+   * Use {@link ConcurrentFactoryMap#createWeakMap(Function)} instead
+   * TODO to remove in IDEA 2018
+   */
+  @Deprecated
   public ConcurrentWeakFactoryMap() {
     DeprecatedMethodException.report("Use com.intellij.util.containers.ConcurrentFactoryMap.createWeakMap instead");
   }

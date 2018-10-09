@@ -67,14 +67,14 @@ public class AddCustomLibraryDialog extends DialogWrapper {
 
   public static AddCustomLibraryDialog createDialog(@NotNull CustomLibraryDescription description,
                                                     final @NotNull Module module,
-                                                    final ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    final ParameterizedRunnable<? super ModifiableRootModel> beforeLibraryAdded) {
     return createDialog(description, LibrariesContainerFactory.createContainer(module), module, null, beforeLibraryAdded);
   }
 
   public static AddCustomLibraryDialog createDialog(CustomLibraryDescription description,
                                                     final @NotNull LibrariesContainer librariesContainer, final @NotNull Module module,
                                                     final @Nullable ModifiableRootModel modifiableRootModel,
-                                                    @Nullable ParameterizedRunnable<ModifiableRootModel> beforeLibraryAdded) {
+                                                    @Nullable ParameterizedRunnable<? super ModifiableRootModel> beforeLibraryAdded) {
     return new AddCustomLibraryDialog(description, librariesContainer, module, modifiableRootModel, beforeLibraryAdded);
   }
 

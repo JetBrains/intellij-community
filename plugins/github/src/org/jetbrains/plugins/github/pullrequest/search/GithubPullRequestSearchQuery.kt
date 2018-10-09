@@ -4,11 +4,10 @@ package org.jetbrains.plugins.github.pullrequest.search
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.search.GithubIssueSearchSort
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
-import org.jetbrains.plugins.github.exceptions.GithubParseException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
+internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
   fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
     for (term in terms) {
       when (term) {
@@ -27,7 +26,6 @@ class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
   companion object {
     private val DATE_FORMAT = SimpleDateFormat("yyyy-MM-dd")
 
-    @Throws(GithubParseException::class)
     fun parseFromString(string: String): GithubPullRequestSearchQuery {
       val result = mutableListOf<Term<*>>()
       val terms = string.split(' ')
@@ -97,12 +95,11 @@ class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
 
         companion object {
           inline fun <reified T : kotlin.Enum<T>> from(name: QualifierName, value: String): Term<*> {
-            try {
-              return Qualifier.Enum(name, enumValueOf<T>(value))
+            return try {
+              Qualifier.Enum(name, enumValueOf<T>(value))
             }
             catch (e: IllegalArgumentException) {
-              throw GithubParseException(
-                "Can't parse $name from $value. Should be one of [${enumValues<T>().joinToString { it.name }}]", e)
+              Qualifier.Simple(name, value)
             }
           }
         }
@@ -111,24 +108,18 @@ class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
       sealed class Date(name: QualifierName, value: java.util.Date) : Qualifier<java.util.Date>(name, value) {
         protected fun formatDate(): String = DATE_FORMAT.format(this.value)
 
-        companion object {
-          private fun getDate(name: QualifierName, value: String): java.util.Date {
-            try {
-              return DATE_FORMAT.parse(value)
-            }
-            catch (e: ParseException) {
-              throw GithubParseException("Could not parse date for $name from $value. Should match the pattern ${DATE_FORMAT.toPattern()}",
-                                         e)
-            }
-          }
-        }
-
         class Before(name: QualifierName, value: java.util.Date) : Date(name, value) {
           override val apiValue = "<${formatDate()}"
 
           companion object {
             fun from(name: QualifierName, value: String): Term<*> {
-              return Qualifier.Date.Before(name, Date.getDate(name, value))
+              val date = try {
+                DATE_FORMAT.parse(value)
+              }
+              catch (e: ParseException) {
+                return Qualifier.Simple(name, value)
+              }
+              return Qualifier.Date.Before(name, date)
             }
           }
         }
@@ -138,7 +129,12 @@ class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
 
           companion object {
             fun from(name: QualifierName, value: String): Term<*> {
-              return Qualifier.Date.After(name, Date.getDate(name, value))
+              return try {
+                Qualifier.Date.After(name, DATE_FORMAT.parse(value))
+              }
+              catch (e: ParseException) {
+                Qualifier.Simple(name, value)
+              }
             }
           }
         }

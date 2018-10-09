@@ -102,9 +102,9 @@ public class RecentProjectsTest extends PlatformTestCase {
     RecentProjectsManagerBase.State state = ((RecentProjectsManagerBase)RecentProjectsManager.getInstance()).getState();
     List<String> projects = state.recentPaths.stream()
       .map(s -> new File(s).getName().replace("idea_test_", ""))
-      .filter(s -> recentProjects.contains(s))
+      .filter(recentProjects::contains)
       .collect(Collectors.toList());
-    Assert.assertEquals(Arrays.toString(recents), Arrays.toString(projects.toArray()));
+    Assert.assertEquals(recentProjects, projects);
   }
 
   private static void checkGroups(String... groups) {
@@ -112,7 +112,7 @@ public class RecentProjectsTest extends PlatformTestCase {
       .filter(a -> a instanceof ProjectGroupActionGroup)
       .map(a -> ((ProjectGroupActionGroup)a).getGroup().getName())
       .collect(Collectors.toList());
-    Assert.assertEquals(Arrays.toString(groups), Arrays.toString(recentGroups.toArray()));
+    Assert.assertEquals(Arrays.asList(groups), recentGroups);
   }
 
   private String createAndOpenProject(String name) throws IOException, JDOMException {

@@ -73,8 +73,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -174,7 +174,7 @@ public abstract class PluginManagerMain implements Disposable {
     JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
-    mySortLabel.setIcon(AllIcons.General.SplitDown);
+    mySortLabel.setIcon(AllIcons.General.ArrowDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
     myTablePanel.add(header, BorderLayout.NORTH);
@@ -413,7 +413,7 @@ public abstract class PluginManagerMain implements Disposable {
    */
   @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<PluginId> allPlugins,
+                                        List<? extends PluginId> allPlugins,
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
@@ -424,7 +424,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> allPlugins,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
@@ -638,7 +638,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<PluginNode> list) {
+                                                                 List<? extends PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {

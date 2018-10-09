@@ -165,7 +165,7 @@ public class LightTreeUtil {
     return null;
   }
 
-  private static LighterASTNode findChildAtOffset(final int offset, List<LighterASTNode> children) {
+  private static LighterASTNode findChildAtOffset(final int offset, List<? extends LighterASTNode> children) {
     return ContainerUtil.find(children, node -> containsOffset(node, offset));
   }
 

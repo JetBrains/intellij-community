@@ -89,6 +89,10 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
+          if (Registry.is("ide.completion.show.live.templates.on.top")) {
+            ensureTemplatesShown(templatesShown, templates, finalResult);
+          }
+
           result.runRemainingContributors(parameters, completionResult -> {
             finalResult.passResult(completionResult);
             if (completionResult.isStartMatch()) {
@@ -138,7 +142,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return false;
   }
 
-  @SuppressWarnings("MethodMayBeStatic") //for Kotlin
+  //for Kotlin
   protected boolean showAllTemplates() {
     return shouldShowAllTemplates();
   }
@@ -173,7 +177,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   @Nullable
   public static TemplateImpl findFullMatchedApplicableTemplate(@NotNull Editor editor,
                                                                int offset,
-                                                               @NotNull Collection<TemplateImpl> availableTemplates) {
+                                                               @NotNull Collection<? extends TemplateImpl> availableTemplates) {
     Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, true, false);
     if (templates.size() == 1) {
       TemplateImpl template = ContainerUtil.getFirstItem(templates.keySet());

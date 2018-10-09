@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -192,7 +191,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static boolean isVetoed(PsiElement element) {
     if (element == null || element instanceof SyntheticElement) return true;
-    for(Condition<PsiElement> condition: Extensions.getExtensions(VETO_RENAME_CONDITION_EP)) {
+    for(Condition<PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {
       if (condition.value(element)) return true;
     }
     return false;

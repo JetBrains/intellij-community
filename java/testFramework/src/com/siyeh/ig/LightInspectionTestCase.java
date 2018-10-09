@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTestCase {
 
+  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/plugins/InspectionGadgets/test/";
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -136,7 +138,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     assertNotNull("File-based tests should either return an inspection or override this method", inspection);
     final String className = inspection.getClass().getName();
     final String[] words = className.split("\\.");
-    final StringBuilder basePath = new StringBuilder("/plugins/InspectionGadgets/test/");
+    final StringBuilder basePath = new StringBuilder(INSPECTION_GADGETS_TEST_DATA_PATH);
     final int lastWordIndex = words.length - 1;
     for (int i = 0; i < lastWordIndex; i++) {
       String word = words[i];

@@ -32,7 +32,7 @@ private class SuggestDashboardNotification(
   private val types: Set<ConfigurationType>
 ) : Notification(
   suggestRunDashboardId,
-  AllIcons.General.Run,
+  AllIcons.RunConfigurations.TestState.Run,
   "Use Run Dashboard?",
   null,
   "Run Dashboard is convenient for viewing results of multiple run configuration at once. " +

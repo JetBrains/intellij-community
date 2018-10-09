@@ -39,7 +39,6 @@ import java.util.Set;
  *   </ul>
  * </ul>
  * @author Eugene Zhuravlev
- * @noinspection UnusedParameters
  */
 public abstract class AnnotationsChangeTracker {
 
@@ -57,7 +56,7 @@ public abstract class AnnotationsChangeTracker {
      * If present in the returned result set, the subclasses of the annotated class will be affected.
      * If returned for an annotated field/method, the subclasses of the class containing this field/method will be affected.
      */
-    SUBCLASSES;
+    SUBCLASSES
   }
 
   /**

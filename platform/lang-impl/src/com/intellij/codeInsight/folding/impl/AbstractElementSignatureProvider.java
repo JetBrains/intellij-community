@@ -77,7 +77,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   /**
    * @return -1, if {@code parent} has too many children and calculating child index would be too slow
    */
-  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<T> hisClass) {
+  protected static <T extends PsiNamedElement> int getChildIndex(T element, PsiElement parent, String name, Class<? extends T> hisClass) {
     PsiFile file = parent.getContainingFile();
     Set<PsiElement> cache = file == null ? null :
       CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(ContainerUtil.createWeakSet(), file));

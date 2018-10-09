@@ -22,7 +22,7 @@ import java.util.Collections;
  * @author oleg
  */
 public class YAMLStructureViewFactory implements PsiStructureViewFactory {
-  static final Icon ALIAS_ICON = AllIcons.Nodes.ExpandNode;
+  static final Icon ALIAS_ICON = AllIcons.Nodes.TreeRightArrow;
 
   @Override
   @Nullable
@@ -61,7 +61,7 @@ public class YAMLStructureViewFactory implements PsiStructureViewFactory {
   }
 
   @NotNull
-  static Collection<StructureViewTreeElement> createChildrenViewTreeElements(@Nullable YAMLPsiElement element, String path) {
+  static Collection<StructureViewTreeElement> createChildrenViewTreeElements(@Nullable YAMLPsiElement element, @Nullable String path) {
     if (element == null) {
       return Collections.emptyList();
     }
@@ -69,11 +69,13 @@ public class YAMLStructureViewFactory implements PsiStructureViewFactory {
     element.accept(new YamlPsiElementVisitor() {
       @Override
       public void visitSequence(@NotNull YAMLSequence sequence) {
-        result.set(ContainerUtil.map(sequence.getItems(), i -> new YAMLStructureViewSequenceItem(i, path)));
+        result.set(ContainerUtil.map(sequence.getItems(), i -> path == null ? new YAMLStructureViewSequenceItemOriginal(i)
+                                                                            : new YAMLStructureViewSequenceItemDuplicated(i, path)));
       }
       @Override
       public void visitMapping(@NotNull YAMLMapping mapping) {
-        result.set(ContainerUtil.map(mapping.getKeyValues(), kv -> new YAMLStructureViewKeyValue(kv, path)));
+        result.set(ContainerUtil.map(mapping.getKeyValues(), kv -> path == null ? new YAMLStructureViewKeyValueOriginal(kv)
+                                                                                : new YAMLStructureViewKeyValueDuplicated(kv, path)));
       }
     });
     return result.get();

@@ -60,7 +60,10 @@ public class ProgramParametersConfigurator {
   public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
       expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Insert Macros", ()
-        -> MacrosDialog.show(expandableTextField, macro -> !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro))));
+        -> MacrosDialog.show(expandableTextField, macro -> {
+        if (macro instanceof PromptMacro) return true;
+        return !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro);
+      })));
     }
   }
 
@@ -68,9 +71,9 @@ public class ProgramParametersConfigurator {
     if (path != null && Registry.is("allow.macros.for.run.configurations")) {
         Collection<Macro> macros = MacroManager.getInstance().getMacros();
         for (Macro macro: macros) {
+          if (!path.contains("$" + macro.getName() + "$")) continue;
           String value = StringUtil.notNullize(
-            macro instanceof PromptingMacro || macro instanceof EditorMacro
-            ? null :
+            macro instanceof PromptMacro ? ((PromptMacro)macro).promptUser():
             macro.preview(), "");
           if (StringUtil.containsWhitespaces(value)) {
             value = "\"" + value + "\"";
@@ -92,7 +95,7 @@ public class ProgramParametersConfigurator {
       }
     }
     workingDirectory = expandPath(workingDirectory, module, project);
-    if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
+    if (!FileUtil.isAbsolutePlatformIndependent(workingDirectory) && defaultWorkingDir != null) {
       if (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
         return defaultWorkingDir;
       }

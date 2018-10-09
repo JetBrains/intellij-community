@@ -16,6 +16,8 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDate
 
@@ -279,9 +281,15 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      String zipRoot = "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      String zipRoot = getZipRoot(buildContext, customizer)
+      String suffix = buildContext.bundledJreManager.jreSuffix()
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
+
+      def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
+      generateProductJson(buildContext, productJsonDir, null)
+      allPaths += [productJsonDir]
+
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
@@ -321,9 +329,22 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
       return targetPath
     }
   }
+
+  static String getZipRoot(BuildContext buildContext, MacDistributionCustomizer customizer) {
+    "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
+  }
+
+  static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
+    String executable = buildContext.productProperties.baseFileName
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", "../bin", null,
+                                                               "../MacOS/${executable}", javaExecutablePath,
+                                                               "../bin/${executable}.vmoptions", OsFamily.MACOS)
+  }
+
 
   private static String submapToXml(Map<String, String> properties, List<String> keys) {
 // generate properties description for Info.plist

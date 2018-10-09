@@ -55,7 +55,7 @@ public class FileStorageCoreUtil {
 
       if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
         if (filter == null) {
-          filter = new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensions());
+          filter = new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
         }
 
         ((TrackingPathMacroSubstitutor)pathMacroSubstitutor)

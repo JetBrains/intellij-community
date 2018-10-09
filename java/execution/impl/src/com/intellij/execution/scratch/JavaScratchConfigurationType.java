@@ -8,8 +8,8 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +17,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class JavaScratchConfigurationType extends ConfigurationTypeBase {
   public JavaScratchConfigurationType() {
-    super("Java Scratch", "Java Scratch", "Configuration for java scratch files", LazyUtil.create(() -> LayeredIcon.create(AllIcons.RunConfigurations.Application, AllIcons.Actions.Scratch)));
+    super("Java Scratch", "Java Scratch", "Configuration for java scratch files",
+          NotNullLazyValue.createValue(() -> LayeredIcon.create(AllIcons.RunConfigurations.Application, AllIcons.Actions.Scratch)));
     addFactory(new ConfigurationFactory(this) {
       @Override
       public boolean isApplicable(@NotNull Project project) {
@@ -42,7 +43,7 @@ public final class JavaScratchConfigurationType extends ConfigurationTypeBase {
     return "reference.dialogs.rundebug.Java Scratch";
   }
 
-  /** @noinspection MethodOverridesStaticMethodOfSuperclass*/
+  /** */
   @NotNull
   public static JavaScratchConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JavaScratchConfigurationType.class);

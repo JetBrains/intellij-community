@@ -31,14 +31,8 @@ public class OptimizedPluginBean {
   @Tag("id")
   public String id;
 
-  @Tag("productCode")
-  public String productCode;
-
-  @Tag("releaseDate")
-  public String releaseDate;
-
-  @Tag("releaseVersion")
-  public int releaseVersion;
+  @Property(surroundWithTag = false)
+  public ProductDescriptor productDescriptor;
 
   @Tag("description")
   public String description;

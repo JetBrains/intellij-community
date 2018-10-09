@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig;
 
 import com.intellij.application.options.CodeStyle;
@@ -33,7 +34,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
-  public static String configValueForKey(List<OutPair> outPairs, String key) {
+  public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
         String val = outPair.getVal();
@@ -49,8 +50,13 @@ public class Utils {
 
   public static void invalidConfigMessage(Project project, String configValue, String configKey, String filePath) {
     final String message = configValue != null ?
-                            "\"" + configValue + "\" is not a valid value" + (!configKey.isEmpty() ? " for " + configKey : "") + " for file " + filePath :
-                            "Failed to read .editorconfig file";
+                           "\"" +
+                           configValue +
+                           "\" is not a valid value" +
+                           (!configKey.isEmpty() ? " for " + configKey : "") +
+                           " for file " +
+                           filePath :
+                           "Failed to read .editorconfig file";
     configValue = configValue != null ? configValue : "ioError";
     EditorConfigNotifier.getInstance().error(project, configValue, message);
   }

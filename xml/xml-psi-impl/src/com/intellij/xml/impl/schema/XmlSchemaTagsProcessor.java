@@ -124,13 +124,13 @@ public abstract class XmlSchemaTagsProcessor {
   protected void tagFinished(XmlTag tag) {}
 
   @Nullable
-  private static XmlTag resolveTagReference(XmlAttribute ref) {
+  public static XmlTag resolveTagReference(@Nullable XmlAttribute ref) {
     PsiElement element = resolveReference(ref);
     return element instanceof XmlTag ? (XmlTag)element : null;
   }
 
   @Nullable
-  static PsiElement resolveReference(XmlAttribute ref) {
+  static PsiElement resolveReference(@Nullable XmlAttribute ref) {
     if (ref != null) {
       XmlAttributeValue value = ref.getValueElement();
       if (value != null) {

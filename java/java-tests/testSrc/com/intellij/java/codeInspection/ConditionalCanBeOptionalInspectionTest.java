@@ -13,10 +13,6 @@ public class ConditionalCanBeOptionalInspectionTest extends LightQuickFixParamet
     return new LocalInspectionTool[]{new ConditionalCanBeOptionalInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/conditionalCanBeOptional/";

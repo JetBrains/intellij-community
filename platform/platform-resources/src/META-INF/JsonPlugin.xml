@@ -79,7 +79,11 @@
     <localInspection language="JSON" shortName="JsonSchemaCompliance"
                      bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection"/>
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaRefReference"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.ref.refs.inspection.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection" />
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
@@ -100,6 +104,9 @@
     <statistics.applicationUsagesCollector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
+    <multiHostInjector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaRegexInjector"/>
+    <lang.lineWrapStrategy language="JSON" implementationClass="com.intellij.json.formatter.JsonLineWrapPositionStrategy"/>
+    <gotoDeclarationHandler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaGotoDeclarationHandler"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>

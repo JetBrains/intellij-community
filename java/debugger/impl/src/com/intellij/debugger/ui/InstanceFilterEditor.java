@@ -26,7 +26,6 @@ public class InstanceFilterEditor extends PatternFilterEditor {
                                                  @Override
                                                  public String getErrorText(String inputString) {
                                                    try {
-                                                     //noinspection ResultOfMethodCallIgnored
                                                      Long.parseLong(inputString);
                                                      return null;
                                                    } catch (NumberFormatException e) {

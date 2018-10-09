@@ -11,24 +11,24 @@ public class CharacterComparison
     {
         char c = 'c';
         char d = 'd';
-        if(c < d)
+        if(<warning descr="Character comparison 'c < d' in an internationalized context">c < d</warning>)
         {
             return;
         }
-        if(c > d)
+        if(<warning descr="Character comparison 'c > d' in an internationalized context">c > d</warning>)
         {
             return;
         }
-        if(c >= d)
+        if(<warning descr="Character comparison 'c >= d' in an internationalized context">c >= d</warning>)
         {
             return;
         }
-        if(c <= d)
+        if(<warning descr="Character comparison 'c <= d' in an internationalized context">c <= d</warning>)
         {
             return;
         }
         if (c == d) return;
-        if (c < ) return;
+        if (c <<error descr="Expression expected"> </error>) return;
         @org.jetbrains.annotations.NonNls char a = 'a';
         if (c < a) return;
     }

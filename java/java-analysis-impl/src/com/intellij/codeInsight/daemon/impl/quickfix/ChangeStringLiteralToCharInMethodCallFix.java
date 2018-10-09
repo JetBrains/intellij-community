@@ -69,7 +69,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final Object value = myLiteral.getValue();
     if (value != null && value.toString().length() == 1) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
       final PsiExpression newExpression = factory.createExpressionFromText(quote(convertedValue(), ! isString(myLiteral.getType())),
                                                                            myLiteral.getParent());
@@ -126,7 +126,7 @@ public class ChangeStringLiteralToCharInMethodCallFix implements IntentionAction
     }
   }
 
-  private static void processLiterals(@NotNull final Set<PsiLiteralExpression> literals,
+  private static void processLiterals(@NotNull final Set<? extends PsiLiteralExpression> literals,
                                       @NotNull final PsiCall call,
                                       @NotNull final HighlightInfo info) {
     for (PsiLiteralExpression literal : literals) {

@@ -26,10 +26,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,13 +43,13 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
    * Actions to be performed at commit.
    */
   private final ArrayList<Runnable> myRunnables = new ArrayList<>();
-  private final List<RefactoringElementListenerProvider> myListenerProviders;
+  private final List<? extends RefactoringElementListenerProvider> myListenerProviders;
   private final Project myProject;
   private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<>();
   private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<>();
 
   public RefactoringTransactionImpl(Project project,
-                                    List<RefactoringElementListenerProvider> listenerProviders) {
+                                    List<? extends RefactoringElementListenerProvider> listenerProviders) {
     myListenerProviders = listenerProviders;
     myProject = project;
   }

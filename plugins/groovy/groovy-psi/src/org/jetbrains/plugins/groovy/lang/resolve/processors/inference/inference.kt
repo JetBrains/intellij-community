@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtil.extractIterableTypeParameter
 import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -14,9 +14,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getQualifierType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import java.util.*
 
 fun getTopLevelType(expression: GrExpression): PsiType? {
@@ -39,6 +41,26 @@ fun getTopLevelType(expression: GrExpression): PsiType? {
 
 fun getTopLevelTypeCached(expression: GrExpression): PsiType? {
   return GroovyPsiManager.getInstance(expression.project).getTopLevelType(expression)
+}
+
+fun buildQualifier(ref: GrReferenceExpression, state: ResolveState): Argument {
+  val qualifierExpression = ref.qualifierExpression
+  val spreadState = state[SpreadState.SPREAD_STATE]
+  if (qualifierExpression != null && spreadState == null) {
+    return Argument(null, qualifierExpression)
+  }
+
+  val resolvedThis = state[ClassHint.THIS_TYPE]
+  if (resolvedThis != null) {
+    return Argument(resolvedThis, null)
+  }
+
+  val type = getQualifierType(ref)
+  when {
+    spreadState == null -> return Argument(type, null)
+    type == null -> return Argument(null, null)
+    else -> return Argument(extractIterableTypeParameter(type, false), null)
+  }
 }
 
 fun buildArguments(place: PsiElement): List<Argument> {
@@ -78,4 +100,11 @@ fun buildTopLevelArgumentTypes(place: PsiElement): Array<PsiType?> {
       }
     }
   }.toTypedArray()
+}
+
+fun PsiSubstitutor.putAll(parameters: Array<out PsiTypeParameter>, arguments: Array<out PsiType>): PsiSubstitutor {
+  if (arguments.size != parameters.size) return this
+  return parameters.zip(arguments).fold(this) { acc, (param, arg) ->
+    acc.put(param, arg)
+  }
 }

@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -99,7 +98,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
         }
       }
       else if (problemParent != null) {
-        for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+        for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
           List<String> params = extension.getFunctionParametersFromUsage(problemElement);
           if (params != null) {
             for (String param : params) {

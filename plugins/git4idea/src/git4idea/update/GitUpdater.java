@@ -144,8 +144,11 @@ public abstract class GitUpdater {
   public GitUpdateResult update() throws VcsException {
     markStart(myRoot);
     try {
-      return doUpdate();
-    } finally {
+      GitUpdateResult result = doUpdate();
+      myRepository.update();
+      return result;
+    }
+    finally {
       markEnd(myRoot);
     }
   }

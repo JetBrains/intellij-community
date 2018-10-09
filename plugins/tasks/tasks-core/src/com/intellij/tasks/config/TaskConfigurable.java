@@ -15,6 +15,9 @@
  */
 package com.intellij.tasks.config;
 
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -22,11 +25,13 @@ import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nls;
@@ -61,13 +66,13 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   private JCheckBox mySaveContextOnCommit;
 
   @BindControl("changelistNameFormat")
-  private JTextField myChangelistNameFormat;
+  private EditorTextField myChangelistNameFormat;
 
   private JBCheckBox myAlwaysDisplayTaskCombo;
   private JTextField myConnectionTimeout;
 
   @BindControl("branchNameFormat")
-  private JTextField myBranchNameFormat;
+  private EditorTextField myBranchNameFormat;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -113,6 +118,12 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   @Override
   public void apply() throws ConfigurationException {
+    if (myChangelistNameFormat.getText().trim().isEmpty()) {
+      throw new ConfigurationException("Change list name format should not be empty");
+    }
+    if (myBranchNameFormat.getText().trim().isEmpty()) {
+      throw new ConfigurationException("Branch name format should not be empty");
+    }
     boolean oldUpdateEnabled = getConfig().updateEnabled;
     super.apply();
     TaskManager manager = TaskManager.getManager(myProject);
@@ -175,5 +186,15 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
       myConfigurables = new Configurable[] { new TaskRepositoriesConfigurable(myProject) };
     }
     return myConfigurables;
+  }
+
+  private void createUIComponents() {
+    FileType fileType = FileTypeManager.getInstance().findFileTypeByName("VTL");
+    if (fileType == null) {
+      fileType = PlainTextFileType.INSTANCE;
+    }
+    Project project = ProjectManager.getInstance().getDefaultProject();
+    myBranchNameFormat = new EditorTextField(project, fileType);
+    myChangelistNameFormat = new EditorTextField(project, fileType);
   }
 }

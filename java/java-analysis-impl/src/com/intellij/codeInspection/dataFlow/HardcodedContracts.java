@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
@@ -63,18 +62,16 @@ public class HardcodedContracts {
   interface ContractProvider {
     List<MethodContract> getContracts(PsiMethodCallExpression call, int paramCount);
 
-    static ContractProvider single(Supplier<? extends MethodContract> supplier) {
-      return (call, paramCount) -> Collections.singletonList(supplier.get());
+    static ContractProvider of(MethodContract contract) {
+      return (call, paramCount) -> Collections.singletonList(contract);
     }
 
-    static ContractProvider list(Supplier<? extends List<MethodContract>> supplier) {
-      return (call, paramCount) -> supplier.get();
+    static ContractProvider of(MethodContract... contracts) {
+      return (call, paramCount) -> Arrays.asList(contracts);
     }
   }
 
   private static final CallMapper<ContractProvider> HARDCODED_CONTRACTS = new CallMapper<ContractProvider>()
-    .register(staticCall("java.lang.System", "exit").parameterCount(1),
-              ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[0], fail())))
     .register(anyOf(staticCall("com.google.common.base.Preconditions", "checkNotNull"),
                     staticCall(JAVA_UTIL_OBJECTS, "requireNonNull")),
               (call, cnt) -> cnt > 0 ? failIfNull(0, cnt, true) : null)
@@ -86,36 +83,36 @@ public class HardcodedContracts {
                 return Collections.singletonList(new StandardMethodContract(constraints, fail()));
               })
     .register(instanceCall(JAVA_LANG_STRING, "charAt", "codePointAt").parameterCount(1),
-              ContractProvider.list(() -> Arrays.asList(nonnegativeArgumentContract(0),
-                                                        specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH))))
+              ContractProvider.of(nonnegativeArgumentContract(0),
+                                  specialFieldRangeContract(0, RelationType.LT, SpecialField.STRING_LENGTH)))
     .register(anyOf(instanceCall(JAVA_LANG_STRING, "substring", "subSequence").parameterCount(2),
                     instanceCall(JAVA_LANG_STRING, "substring").parameterCount(1)),
               (call, cnt) -> getSubstringContracts(cnt == 2))
     .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
-              ContractProvider.list(SpecialField.STRING_LENGTH::getEmptyContracts))
+              ContractProvider.of(SpecialField.STRING_LENGTH.getEmptyContracts()))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "isEmpty").parameterCount(0),
-              ContractProvider.list(SpecialField.COLLECTION_SIZE::getEmptyContracts))
+              ContractProvider.of(SpecialField.COLLECTION_SIZE.getEmptyContracts()))
     .register(instanceCall(JAVA_UTIL_MAP, "isEmpty").parameterCount(0),
-              ContractProvider.list(SpecialField.MAP_SIZE::getEmptyContracts))
+              ContractProvider.of(SpecialField.MAP_SIZE.getEmptyContracts()))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
-              ContractProvider.list(SpecialField.STRING_LENGTH::getEqualsContracts))
+              ContractProvider.of(SpecialField.STRING_LENGTH.getEqualsContracts()))
     .register(anyOf(instanceCall(JAVA_UTIL_SET, "equals").parameterTypes(JAVA_LANG_OBJECT),
                     instanceCall(JAVA_UTIL_LIST, "equals").parameterTypes(JAVA_LANG_OBJECT)),
-              ContractProvider.list(SpecialField.COLLECTION_SIZE::getEqualsContracts))
+              ContractProvider.of(SpecialField.COLLECTION_SIZE.getEqualsContracts()))
     .register(instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT),
-              ContractProvider.list(SpecialField.MAP_SIZE::getEqualsContracts))
+              ContractProvider.of(SpecialField.MAP_SIZE.getEqualsContracts()))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
-              ContractProvider.single(() -> singleConditionContract(
+              ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
     .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
-              ContractProvider.single(() -> singleConditionContract(
+              ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
-              ContractProvider.list(() -> Arrays.asList(nonnegativeArgumentContract(0),
-                                                        specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE))))
+              ContractProvider.of(nonnegativeArgumentContract(0),
+                                  specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE)))
     .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
-              ContractProvider.single(() -> singleConditionContract(
+              ContractProvider.of(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))
     // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
@@ -123,7 +120,7 @@ public class HardcodedContracts {
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
-              ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
+              ContractProvider.of(new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
     .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
               (call, paramCount) -> Arrays.asList(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
@@ -139,15 +136,24 @@ public class HardcodedContracts {
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
               (call, paramCount) -> mathMinMax(false))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
-              ContractProvider.list(() -> Arrays.asList(
+              ContractProvider.of(
                 singleConditionContract(
                   ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), RelationType.EQ,
                   ContractValue.zero(), returnTrue()),
                 singleConditionContract(
                   ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
-                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse()))))
+                  ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())))
     .register(instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT),
-              (call, paramCount) -> equalsContracts(call));
+              (call, paramCount) -> equalsContracts(call))
+    .register(anyOf(
+      staticCall(JAVA_UTIL_OBJECTS, "equals").parameterCount(2),
+      staticCall("com.google.common.base.Objects", "equal").parameterCount(2)),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.argument(0), DfaRelationValue.RelationType.EQ, ContractValue.argument(1),
+                                        returnTrue()),
+                new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
+                new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
+              ));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -190,11 +196,14 @@ public class HardcodedContracts {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
-      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
+      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) && paramCount == 0 || "orElseThrow".equals(methodName)) {
         return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
       }
-      else if ("isPresent".equals(methodName)) {
+      else if ("isPresent".equals(methodName) && paramCount == 0) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
+      }
+      else if ("isEmpty".equals(methodName) && paramCount == 0) {
+        return Arrays.asList(optionalAbsentContract(returnTrue()), trivialContract(returnFalse()));
       }
     }
     else if (MethodUtils.isEquals(method)) {
@@ -238,8 +247,7 @@ public class HardcodedContracts {
 
   private static List<MethodContract> equalsContracts(PsiMethodCallExpression call) {
     PsiExpression qualifier = call == null ? null : call.getMethodExpression().getQualifierExpression();
-    if (qualifier != null && (knownAsEqualByReference(qualifier.getType()) ||
-                              TypeUtils.isJavaLangString(qualifier.getType()))) {
+    if (qualifier != null && (knownAsEqualByReference(qualifier.getType()) || DfaUtil.isComparedByEquals(qualifier.getType()))) {
       return Arrays.asList(
         singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnTrue()),
         trivialContract(returnFalse())

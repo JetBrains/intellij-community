@@ -39,7 +39,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
@@ -146,13 +145,13 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
                             @NotNull IdeModifiableModelsProvider modelsProvider) {
 
     // do not remove 'invalid' module dependencies on unloaded modules
-    List<? extends ExportableOrderEntry> filteredList = toRemove.stream().filter(o -> {
+    List<? extends ExportableOrderEntry> filteredList = ContainerUtil.filter(toRemove, o -> {
       if (o instanceof ModuleOrderEntry) {
         String moduleName = ((ModuleOrderEntry)o).getModuleName();
         return ModuleManager.getInstance(module.getProject()).getUnloadedModuleDescription(moduleName) == null;
       }
       return true;
-    }).collect(Collectors.toList());
+    });
     super.removeData(filteredList, module, modelsProvider);
   }
 }

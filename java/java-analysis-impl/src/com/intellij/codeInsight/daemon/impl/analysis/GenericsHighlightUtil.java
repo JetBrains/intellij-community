@@ -314,14 +314,14 @@ public class GenericsHighlightUtil {
       String description = JavaErrorMessages.message("interface.expected");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       PsiClassType type =
-        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMoveBoundClassToFrontFix(aClass, type), null);
     }
     else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
       final String description = JavaErrorMessages.message("type.parameter.cannot.be.followed.by.other.bounds");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
       PsiClassType type =
-        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(extendFrom, resolveResult.getSubstitutor());
+        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false), null);
     }
     return errorResult;
@@ -689,7 +689,11 @@ public class GenericsHighlightUtil {
                                "generics.methods.have.same.erasure.hide" :
                                "generics.methods.have.same.erasure.override";
     String description = JavaErrorMessages.message(key, HighlightMethodUtil.createClashMethodMessage(method, superMethod, !sameClass));
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    HighlightInfo info =
+      HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSameErasureButDifferentMethodsFix(method, superMethod));
+
+    return info;
   }
 
   static HighlightInfo checkTypeParameterInstantiation(@NotNull PsiNewExpression expression) {
@@ -1092,7 +1096,7 @@ public class GenericsHighlightUtil {
         return;
       }
     }
-    PsiClassType type = JavaPsiFacade.getInstance(holder.getProject()).getElementFactory().createType(containingClass);
+    PsiClassType type = JavaPsiFacade.getElementFactory(holder.getProject()).createType(containingClass);
 
     HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder, javaSdkVersion);
   }
@@ -1245,7 +1249,7 @@ public class GenericsHighlightUtil {
           if (InheritanceUtil.isInheritorOrSelf((PsiClass)resolved, throwableClass, true)) {
             String message = JavaErrorMessages.message("generic.extend.exception");
             HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
-            PsiClassType classType = JavaPsiFacade.getInstance(klass.getProject()).getElementFactory().createType((PsiClass)resolved);
+            PsiClassType classType = JavaPsiFacade.getElementFactory(klass.getProject()).createType((PsiClass)resolved);
             QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createExtendsListFix(klass, classType, false));
             return info;
           }

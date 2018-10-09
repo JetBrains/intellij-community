@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.application.options.CodeStyle;
@@ -20,7 +6,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -111,7 +96,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
     ProgressManager.getInstance().run(task);
   }
 
-  public void reportResult(@NotNull final String htmlReport, 
+  public void reportResult(@NotNull final String htmlReport,
                            @NotNull final ValuesExtractionResult calculatedValues,
                            @NotNull final Project project,
                            @NotNull final CodeStyleSettings cloneSettings,
@@ -121,7 +106,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       final Balloon balloon = JBPopupFactory
         .getInstance()
         .createHtmlTextBalloonBuilder(
-          "<html>Formatting Options were extracted for " + file.getName()  
+          "<html>Formatting Options were extracted for " + file.getName()
           + (!htmlReport.isEmpty() ? ("<br/>" + htmlReport) : "")
           + "<br/><a href=\"apply\">Apply</a> <a href=\"details\">Details...</a></html>",
           MessageType.INFO,
@@ -133,11 +118,9 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                 ExtractedSettingsDialog myDialog = null;
                 if (!apply) {
                   final List<Value> values = calculatedValues.getValues();
-                  final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(
-                    LanguageCodeStyleSettingsProvider.EP_NAME);
                   Language language = file.getLanguage();
                   CodeStyleSettingsNameProvider nameProvider = new CodeStyleSettingsNameProvider();
-                  for (final LanguageCodeStyleSettingsProvider provider : providers) {
+                  for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
                     Language target = provider.getLanguage();
                     if (target.equals(language)) {
                       //this is our language

@@ -249,7 +249,7 @@ public class PyConsoleUtil {
 
     @Nullable
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return myConsoleView.getEditor();
       }

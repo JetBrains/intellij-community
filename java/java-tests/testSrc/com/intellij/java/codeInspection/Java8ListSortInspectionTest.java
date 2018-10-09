@@ -27,10 +27,6 @@ public class Java8ListSortInspectionTest extends LightQuickFixParameterizedTestC
     return new LocalInspectionTool[]{new Java8ListSortInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/java8ListSort";

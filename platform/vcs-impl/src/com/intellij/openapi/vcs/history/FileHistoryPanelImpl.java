@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +14,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +34,6 @@ import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.dualView.CellWrapper;
 import com.intellij.ui.dualView.DualView;
 import com.intellij.ui.dualView.DualViewColumnInfo;
@@ -73,12 +72,14 @@ import static java.util.Comparator.reverseOrder;
 /**
  * author: lesya
  */
-public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
+public class FileHistoryPanelImpl extends JPanel implements DataProvider, Disposable, EditorColorsListener, CopyProvider {
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
   private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
 
   public static final DataKey<VcsFileRevision> PREVIOUS_REVISION_FOR_DIFF = DataKey.create("PREVIOUS_VCS_FILE_REVISION_FOR_DIFF");
+
+  private final String myHelpId;
 
   @NotNull private final AbstractVcs myVcs;
   private final VcsHistoryProvider myProvider;
@@ -103,10 +104,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                               @NotNull FilePath filePath,
                               @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
-    this(vcs, filePath, null, session, provider, contentManager, refresherI, isStaticEmbedded);
+    this(vcs, filePath, null, session, provider, refresherI, isStaticEmbedded);
   }
 
   public FileHistoryPanelImpl(@NotNull AbstractVcs vcs,
@@ -114,11 +114,11 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                               @Nullable VcsRevisionNumber startingRevision,
                               @NotNull VcsHistorySession session,
                               VcsHistoryProvider provider,
-                              ContentManager contentManager,
                               @NotNull FileHistoryRefresherI refresherI,
                               final boolean isStaticEmbedded) {
-    super(contentManager, provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history",
-          !isStaticEmbedded);
+    super(new BorderLayout());
+    myHelpId = provider.getHelpId() != null ? provider.getHelpId() : "reference.versionControl.toolwindow.history";
+
     myIsStaticAndEmbedded = false;
     myVcs = vcs;
     myProvider = provider;
@@ -157,7 +157,19 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
-    init();
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup(null, false);
+    fillActionGroup(false, toolbarGroup);
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.FILEHISTORY_VIEW_TOOLBAR, toolbarGroup,
+                                                                            isStaticEmbedded);
+    JComponent centerPanel = createCenterPanel();
+    toolbar.setTargetComponent(centerPanel);
+    for (AnAction action : toolbarGroup.getChildren(null)) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), centerPanel);
+    }
+
+    add(centerPanel, BorderLayout.CENTER);
+    add(toolbar.getComponent(), isStaticEmbedded ? BorderLayout.NORTH : BorderLayout.WEST);
 
     chooseView();
 
@@ -203,11 +215,16 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
    * Checks if the given historyPanel shows the history for given path and revision number.
    */
   static boolean sameHistories(@NotNull FileHistoryPanelImpl historyPanel,
-                               @NotNull FilePath path,
-                               @Nullable VcsRevisionNumber startingRevisionNumber) {
-    String existingRevision = historyPanel.myStartingRevision == null ? null : historyPanel.myStartingRevision.asString();
-    String newRevision = startingRevisionNumber == null ? null : startingRevisionNumber.asString();
-    return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
+                               @NotNull FilePath filePath2,
+                               @Nullable VcsRevisionNumber startingRevision2) {
+    return sameHistories(historyPanel.myFilePath, historyPanel.myStartingRevision, filePath2, startingRevision2);
+  }
+
+  public static boolean sameHistories(@NotNull FilePath filePath1, @Nullable VcsRevisionNumber startingRevision1,
+                                      @NotNull FilePath filePath2, @Nullable VcsRevisionNumber startingRevision2) {
+    String existingRevision = startingRevision1 == null ? null : startingRevision1.asString();
+    String newRevision = startingRevision2 == null ? null : startingRevision2.asString();
+    return filePath1.equals(filePath2) && Comparing.equal(existingRevision, newRevision);
   }
 
   @NotNull
@@ -279,17 +296,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
       myDualView.setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    else if (VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision).isLocked()) {
+    else if (VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision)
+      .isLocked()) {
       myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
     }
     else {
       myDualView.setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
     }
-  }
-
-  @Override
-  protected void addActionsTo(DefaultActionGroup group) {
-    fillActionGroup(false, group);
   }
 
   private void setupDualView(@NotNull DefaultActionGroup group) {
@@ -326,7 +339,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
   }
 
-  @Override
   @NotNull
   protected JComponent createCenterPanel() {
     mySplitter = new OnePixelSplitter(true, "vcs.history.splitter.proportion", 0.6f);
@@ -464,9 +476,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
       return myRefresherI;
     }
-    else {
-      return super.getData(dataId);
+    else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return myHelpId;
     }
+    return null;
   }
 
   @Nullable
@@ -533,7 +546,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     myDualView.setZipByHeight(isStaticAndEmbedded);
     myDualView.getFlatView().updateColumnSizes();
     if (myIsStaticAndEmbedded) {
-      disableClose();
       myDualView.getFlatView().getTableHeader().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       myDualView.getTreeView().getTableHeader().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
       myDualView.getFlatView().setBorder(null);

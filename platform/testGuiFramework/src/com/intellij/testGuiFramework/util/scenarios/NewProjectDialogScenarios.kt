@@ -24,24 +24,6 @@ fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
   }
 }
 
-fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String,
-                                                                  libs: LibrariesSet = emptySet(),
-                                                                  template: String = "") {
-  with(testCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJavaEnterpriseProject(projectPath, libs, template)
-  }
-}
-
-fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, libs: LibrariesSet = emptySet()) {
-  with(testCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createJBossProject(projectPath, libs)
-  }
-}
-
 /**
  * Creates a new project from a specified group (ultimate only)
  * Supported only simple groups with 2 pages - first with framework selection and last with specifying project location
@@ -73,22 +55,5 @@ fun NewProjectDialogScenarios.createMavenProjectScenario(projectPath: String, ma
     fileSystemUtils.assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
     newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
-  }
-}
-
-fun NewProjectDialogScenarios.createAndCheckAppServer(serverKind: String, serverPath: String, expectedServerName: String) {
-  with(testCase) {
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createAppServer(serverKind, serverPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.checkAppServerExists(expectedServerName)
-  }
-}
-
-fun NewProjectDialogScenarios.createSpringProjectScenario(projectPath: String, createSpringConfig: Boolean, libs: LibrariesSet = emptySet()) {
-  with(testCase) {
-    fileSystemUtils.assertProjectPathExists(projectPath)
-    welcomePageDialogModel.createNewProject()
-    newProjectDialogModel.createSpringProject(projectPath, createSpringConfig, libs)
   }
 }

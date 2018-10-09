@@ -75,7 +75,7 @@ public abstract class PrattBuilder {
 
   public abstract void advance();
 
-  public abstract void error(String errorText);
+  public abstract void error(@NotNull String errorText);
 
   public boolean isEof() {
     return isToken(null);

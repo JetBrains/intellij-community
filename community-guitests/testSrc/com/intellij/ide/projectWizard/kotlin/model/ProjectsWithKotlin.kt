@@ -79,14 +79,14 @@ fun KotlinGuiTestCase.createMavenProject(
  * Creates a KOtlin project with a specified framework
  * @param projectPath full path where the new project should be created
  * last item in the path is considered as a new project name
- * @param kotlinKind kind of Kotlin project JVM or JS
+ * @param project properties of the created project
  */
 fun KotlinGuiTestCase.createKotlinProject(
   projectPath: String,
-  kotlinKind: KotlinKind) {
+  project: ProjectProperties) {
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinProject(projectPath, kotlinLibs.getValue(kotlinKind).kotlinProject.frameworkName)
+  newProjectDialogModel.createKotlinProject(projectPath, project.frameworkName)
 }
 
 /**
@@ -97,7 +97,7 @@ fun KotlinGuiTestCase.createKotlinProject(
  * */
 fun KotlinGuiTestCase.configureKotlinJvm(libInPlugin: Boolean) {
   ideFrame {
-    waitAMoment(3000)
+    waitAMoment()
     logTestStep("Open 'Configure Kotlin in Project' dialog")
     invokeMainMenu("ConfigureKotlinInProject")
     dialog("Create Kotlin Java Runtime Library") {
@@ -265,14 +265,13 @@ fun KotlinGuiTestCase.configureKotlinJsFromMaven(
  * Checks that an appropriate Kotlin library is created with a certain set of jar files
  * what are expected to be taken from the project folder
  * @param projectPath full path to the project
- * @param kotlinKind kotlin kind (JVM or JS)
+ * @param expectedLibName expected name of library shown in the Project Structure
  * */
 fun ProjectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
   projectPath: String,
-  kotlinKind: KotlinKind) {
+  expectedLibName: String) {
   val expectedJars = getKotlinLibInProject(projectPath)
     .map { projectPath + File.separator + "lib" + File.separator + it }
-  val expectedLibName = kotlinLibs[kotlinKind]!!.kotlinProject.libName!!
   openProjectStructureAndCheck {
     projectStructureDialogModel.checkLibrariesFromIDEA(
       expectedLibName,
@@ -285,15 +284,15 @@ fun ProjectStructureDialogScenarios.checkKotlinLibsInStructureFromProject(
  * Opens Project Structure dialog and Library tab
  * Checks that an appropriate Kotlin library is created with a certain set of jar files
  * what are expected to be taken from the plugin
- * @param kotlinKind kotlin kind (JVM or JS)
+ * @param project tested project properties
+ * @param kotlinVersion tested kotlin version (used for searching correct set of jars)
  * */
 fun ProjectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
-  kotlinKind: KotlinKind,
+  project: ProjectProperties,
   kotlinVersion: String) {
-  val expectedLibName = kotlinLibs[kotlinKind]!!.kotlinProject.libName!!
+  val expectedLibName = project.libName!!
   val configPath = PathManager.getConfigPath().normalizeSeparator()
-  val expectedJars = kotlinLibs[kotlinKind]!!
-    .kotlinProject
+  val expectedJars = project
     .jars
     .getJars(kotlinVersion)
     .map { configPath + pathKotlinInConfig + File.separator + it }
@@ -308,23 +307,19 @@ fun ProjectStructureDialogScenarios.checkKotlinLibsInStructureFromPlugin(
 /**
  * Checks that a certain set of jar files is copied to the project folder
  * @param projectPath full path to the project folder
- * @param kotlinKind kotlin kind (JVM or JS)
+ * @param expectedLibs set of expected jar files added to the project folder
  * */
 fun KotlinGuiTestCase.checkKotlinLibInProject(projectPath: String,
-                                              kotlinKind: KotlinKind,
-                                              kotlinVersion: String) {
-  val expectedLibs = kotlinLibs[kotlinKind]?.kotlinProject?.jars?.getJars(kotlinVersion) ?: return
+                                              expectedLibs: List<String>) {
   val actualLibs = getKotlinLibInProject(projectPath)
 
   expectedLibs.forEach {
     logInfo("check if expected '$it' is present")
-    //    collector.checkThat( actualLibs.contains(it), Matcher_Is(true) ) { "Expected, but absent file: $it" }
     assert(actualLibs.contains(it)) { "Expected, but absent file: $it" }
   }
 
   actualLibs.forEach {
     logInfo("check if existing '$it' is expected")
-    //    collector.checkThat( expectedLibs.contains(it), Matcher_Is(true) ) { "Unexpected file: $it" }
     assert(expectedLibs.contains(it)) { "Unexpected file: $it" }
   }
 
@@ -549,7 +544,6 @@ fun KotlinGuiTestCase.editBuildGradle(
 }
 
 fun KotlinGuiTestCase.editPomXml(kotlinVersion: String,
-                                 kotlinKind: KotlinKind,
                                  vararg projectName: String = emptyArray()) {
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the pom.xml file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
@@ -621,7 +615,7 @@ fun KotlinGuiTestCase.dialogWithoutClosing(title: String? = null,
                                            ignoreCaseTitle: Boolean = false,
                                            timeout: Timeout = defaultTimeout,
                                            func: JDialogFixture.() -> Unit) {
-  val dialog = dialog(title, ignoreCaseTitle, timeout)
+  val dialog = dialog(title, ignoreCaseTitle, timeout = timeout)
   func(dialog)
 }
 
@@ -636,21 +630,19 @@ fun KotlinGuiTestCase.saveAndCloseCurrentEditor() {
 }
 
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
-  kotlinKind: KotlinKind,
   kotlinVersion: String,
   project: ProjectProperties,
   expectedFacet: FacetStructure,
   gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   if (!isIdeFrameRun()) return
-  val extraTimeOut = 4000L
   createGradleProject(
     projectPath = projectFolder,
     gradleOptions = gradleOptions)
-  waitAMoment(extraTimeOut)
-  when (kotlinKind) {
-    KotlinKind.JVM -> configureKotlinJvmFromGradle(kotlinVersion)
-    KotlinKind.JS -> configureKotlinJsFromGradle(kotlinVersion)
-    else -> throw IllegalStateException("Cannot configure to Kotlin/Common kind.")
+  waitAMoment()
+  when {
+    project.modules.contains(TargetPlatform.JVM16) || project.modules.contains(TargetPlatform.JVM18) -> configureKotlinJvmFromGradle(kotlinVersion)
+    project.modules.contains(TargetPlatform.JavaScript) -> configureKotlinJsFromGradle(kotlinVersion)
+    else -> throw IllegalStateException("Cannot configure to Common or Native kind.")
   }
   waitAMoment()
   waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
@@ -658,7 +650,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   editSettingsGradle()
   editBuildGradle(
     kotlinVersion = kotlinVersion,
-    isKotlinDslUsed = gradleOptions.useKotlinDsl
+    isKotlinDslUsed = project.isKotlinDsl
   )
   waitAMoment()
   gradleReimport()
@@ -671,6 +663,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     projectName = gradleOptions.artifact,
     expectedFacet = expectedFacet
   )
+  waitAMoment()
 }
 
 fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
@@ -687,44 +680,24 @@ fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
     )
     projectStructureDialogModel.checkFacetInOneModule(
       expectedFacet,
-      "$projectName", "${projectName}_main", "Kotlin"
+      path = *arrayOf(projectName, "${projectName}_main", "Kotlin")
     )
     projectStructureDialogModel.checkFacetInOneModule(
       expectedFacet,
-      "$projectName", "${projectName}_test", "Kotlin"
+      path = *arrayOf(projectName, "${projectName}_test", "Kotlin")
     )
   }
 }
 
-
-fun KotlinGuiTestCase.createKotlinMPProjectDeprecated(
+fun KotlinGuiTestCase.createKotlinMPProject(
   projectPath: String,
-  moduleName: String,
-  mppProjectStructure: NewProjectDialogModel.MppProjectStructure,
-  setOfMPPModules: Set<KotlinKind>,
-  kotlinPluginVersion: String
+  templateName: String
 ) {
-  assert(setOfMPPModules.contains(KotlinKind.Common)) { "At least common MPP module should be specified" }
-  logTestStep("Create new MPP (deprecated) project with modules $setOfMPPModules")
+  logTestStep("Create new $templateName project")
   welcomePageDialogModel.createNewProject()
   newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinMPProjectDeprecated(
+  newProjectDialogModel.createKotlinMPProject(
     projectPath = projectPath,
-    moduleName = moduleName,
-    mppProjectStructure = mppProjectStructure,
-    isJvmIncluded = setOfMPPModules.contains(KotlinKind.JVM),
-    isJsIncluded = setOfMPPModules.contains(KotlinKind.JS),
-    kotlinPluginVersion = kotlinPluginVersion
-  )
-}
-
-fun KotlinGuiTestCase.createKotlinMPProjectWeb(
-  projectPath: String
-) {
-  logTestStep("Create new MPP (web) project")
-  welcomePageDialogModel.createNewProject()
-  newProjectDialogModel.assertGroupPresent(NewProjectDialogModel.Groups.Kotlin)
-  newProjectDialogModel.createKotlinMPProjectWeb(
-    projectPath = projectPath
+    templateName = templateName
   )
 }

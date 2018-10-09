@@ -39,8 +39,8 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
 
   public void testRunLineMarker() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
-    myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
-                                               "    public void test<caret>Foo() {\n" +
+    myFixture.configureByText("MainTest.java", "public class Main<caret>Test extends junit.framework.TestCase {\n" +
+                                               "    public void testFoo() {\n" +
                                                "    }\n" +
                                                "}");
     myFixture.doHighlighting();

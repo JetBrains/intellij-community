@@ -68,9 +68,7 @@ public class StreamApiMigrationInspectionTestSuite {
       return LanguageLevel.JDK_1_8;
     }
 
-    public void test() { doAllTests(); }
-
-    @Override
+      @Override
     protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) throws Exception {
       ((IntentionManagerImpl)IntentionManager.getInstance())
         .withDisabledIntentions(() -> super.doAction(actionHint, testFullPath, testName));

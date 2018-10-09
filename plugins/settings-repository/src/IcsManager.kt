@@ -65,7 +65,8 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }, settings.commitDelay)
 
-  private @Volatile var autoCommitEnabled = true
+  @Volatile
+  private var autoCommitEnabled = true
 
   @Volatile var isRepositoryActive: Boolean = false
 

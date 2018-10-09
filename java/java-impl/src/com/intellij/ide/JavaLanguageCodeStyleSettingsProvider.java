@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -39,7 +38,7 @@ import static com.intellij.application.options.JavaDocFormattingPanel.*;
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
-  public Configurable createSettingsPage(CodeStyleSettings settings, CodeStyleSettings modelSettings) {
+  public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, "Java") {
       @Override
       protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {

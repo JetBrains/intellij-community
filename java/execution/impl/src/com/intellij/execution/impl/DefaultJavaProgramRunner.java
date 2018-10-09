@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
@@ -211,7 +212,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
   }
 
-  protected static class AttachDebuggerAction extends AnAction {
+  protected static class AttachDebuggerAction extends DumbAwareAction {
     private final AtomicBoolean myEnabled = new AtomicBoolean();
     private final AtomicBoolean myAttached = new AtomicBoolean();
     private final BaseProcessHandler myProcessHandler;
@@ -239,11 +240,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       });
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myConnection == null) {
-        myConnection = e.getProject().getMessageBus().connect();
+      Project project = e.getProject();
+      if (project != null && myConnection == null) {
+        myConnection = project.getMessageBus().connect();
         myConnection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
           @Override
           public void processStarted(@NotNull XDebugProcess debugProcess) {

@@ -48,8 +48,8 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
   }
 
   @Override
-  public PsiFile getElement() {
-    return (PsiFile)super.getElement();
+  public PsiFile getPsiElement() {
+    return (PsiFile)super.getPsiElement();
   }
 
   @Override
@@ -59,7 +59,7 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
 
   @Override
   public String getExternalName() {
-    final PsiFile psiFile = getElement();
+    final PsiFile psiFile = getPsiElement();
     final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
     return virtualFile != null ? virtualFile.getUrl() : getName();
   }

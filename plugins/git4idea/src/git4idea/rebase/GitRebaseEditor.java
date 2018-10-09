@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -19,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -48,6 +49,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
 
+  private boolean myModified;
+
   protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries) {
     super(project, true);
     myProject = project;
@@ -57,6 +60,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     myTableModel = new MyTableModel(entries);
     myTableModel.addTableModelListener(e -> validateFields());
+    myTableModel.addTableModelListener(e -> myModified = true);
 
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -71,8 +75,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
-    actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()).withClickCount(1));
+    actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
 
     List<AnAction> actions = generateSelectRebaseActionActions();
     for (AnAction action : actions) {
@@ -93,6 +97,16 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   private void installSpeedSearch() {
     new TableSpeedSearch(myCommitsTable, (o, cell) -> cell.column == 0 ? null : String.valueOf(o));
+  }
+
+  @Override
+  public void doCancelAction() {
+    if (myModified) {
+      int ans = Messages.showDialog(getRootPane(), GitBundle.getString("rebase.editor.discard.modifications.message"),
+                                    "Cancel Rebase", new String[]{"Discard", "Continue Rebasing"}, 0, Messages.getQuestionIcon());
+      if (ans != Messages.YES) return;
+    }
+    super.doCancelAction();
   }
 
   @Nullable

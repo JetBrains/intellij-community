@@ -127,17 +127,18 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
+      psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
-          if ((!checkIsTest && aClass.hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass(aClass)) &&
+          if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
               !collectingProcessor.execute(aClass)) {
             return;
           }
         }
       }
       else if (psiElement instanceof PsiClass) {
-        if ((!checkIsTest && ((PsiClass)psiElement).hasModifierProperty(PsiModifier.PUBLIC) ||
+        if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
              checkIsTest && isTestClass((PsiClass)psiElement)) &&
             !collectingProcessor.execute(psiElement)) {
           return;
@@ -150,7 +151,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         if (!checkIsTest) {
           final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
           if (containingClass != null &&
-              containingClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+              isRequiredVisibility(containingClass) &&
               !collectingProcessor.execute(psiElement)) {
             return;
           }
@@ -163,6 +164,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         }
       }
     }
+  }
+
+  protected boolean isRequiredVisibility(PsiMember psiElement) {
+    return psiElement.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   protected boolean collectContextElements(DataContext dataContext,

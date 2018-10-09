@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +14,7 @@ import java.util.Collection;
  *
  * @since 12.0
  */
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "SSBasedInspection"})
+@SuppressWarnings({"SSBasedInspection"})
 public class ArrayUtilRt {
   public static final short[] EMPTY_SHORT_ARRAY = new short[0];
   public static final char[] EMPTY_CHAR_ARRAY = new char[0];
@@ -34,7 +33,7 @@ public class ArrayUtilRt {
   @Contract(pure=true)
   public static String[] toStringArray(@Nullable Collection<String> collection) {
     return collection == null || collection.isEmpty()
-           ? EMPTY_STRING_ARRAY : ContainerUtilRt.toArray(collection, new String[collection.size()]);
+           ? EMPTY_STRING_ARRAY : collection.toArray(EMPTY_STRING_ARRAY);
   }
 
   /**

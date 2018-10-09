@@ -54,7 +54,8 @@ public class TitledSeparator extends JPanel {
   }
 
   public TitledSeparator(String text, @Nullable JComponent labelFor) {
-    super();
+    mySeparator.setForeground(JBColor.namedColor("Group.separatorColor", new JBColor(Gray.xCD, Gray.x51)));
+
     setLayout(new GridBagLayout());
     add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     add(mySeparator,

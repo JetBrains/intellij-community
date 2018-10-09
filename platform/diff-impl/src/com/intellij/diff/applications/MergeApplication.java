@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
+@SuppressWarnings({"CallToPrintStackTrace"})
 public class MergeApplication extends DiffApplicationBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {

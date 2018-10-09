@@ -5,10 +5,11 @@ typealias FinderPredicate = (String, String) -> Boolean
 
 object Predicate{
   val equality: FinderPredicate = { left: String, right: String -> left == right }
+  val notEquality: FinderPredicate = { left: String, right: String -> left != right }
   val withVersion: FinderPredicate = { left: String, right: String ->
-    val pattern = Regex(",\\s+\\(.*\\)$")
+    val pattern = Regex("\\s+\\(.*\\)$")
     if (right.contains(pattern))
-      left == right.dropLast(right.length - right.indexOfLast { it == ',' })
+      left == pattern.split(right).first().trim()
     else left == right
   }
   val startWith: FinderPredicate = {left: String, right: String -> left.startsWith(right)}

@@ -27,6 +27,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
@@ -124,15 +125,8 @@ public class AbstractTreeBuilder implements Disposable {
 
 
   @NotNull
-  AbstractTreeNode createSearchingTreeNodeWrapper() {
+  static AbstractTreeNode<Object> createSearchingTreeNodeWrapper() {
     return new AbstractTreeNodeWrapper();
-  }
-
-  @NotNull
-  public final AbstractTreeBuilder setClearOnHideDelay(final long clearOnHideDelay) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.setClearOnHideDelay(clearOnHideDelay);
-    return this;
   }
 
   @Nullable
@@ -150,7 +144,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getUpdater();
   }
 
-  public final boolean addSubtreeToUpdateByElement(Object element) {
+  public final boolean addSubtreeToUpdateByElement(@NotNull Object element) {
     AbstractTreeUpdater updater = getUpdater();
     return updater != null && updater.addSubtreeToUpdateByElement(element);
   }
@@ -171,7 +165,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getRootNode();
   }
 
-  public final void setNodeDescriptorComparator(Comparator<NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.setNodeDescriptorComparator(nodeDescriptorComparator);
   }
@@ -191,7 +185,7 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.doUpdateNode(node);
   }
 
-  protected boolean validateNode(final Object child) {
+  protected boolean validateNode(@NotNull Object child) {
     AbstractTreeStructure structure = getTreeStructure();
     return structure != null && structure.isValid(child);
   }
@@ -278,7 +272,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @deprecated
    */
   @Deprecated
-  public void buildNodeForElement(Object element) {
+  public void buildNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
   }
@@ -288,7 +282,7 @@ public class AbstractTreeBuilder implements Disposable {
    */
   @Deprecated
   @Nullable
-  public DefaultMutableTreeNode getNodeForElement(Object element) {
+  public DefaultMutableTreeNode getNodeForElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.getNodeForElement(element, false);
   }
@@ -336,7 +330,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   @Nullable
-  protected Object findNodeByElement(final Object element) {
+  protected Object findNodeByElement(@NotNull Object element) {
     AbstractTreeUi ui = getUi();
     return ui == null ? null : ui.findNodeByElement(element);
   }
@@ -345,12 +339,7 @@ public class AbstractTreeBuilder implements Disposable {
     return AbstractTreeUi.isLoadingNode(node);
   }
 
-  boolean isChildrenResortingNeeded(NodeDescriptor descriptor) {
-    return true;
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  void runOnYeildingDone(Runnable onDone) {
+  void runOnYieldingDone(@NotNull Runnable onDone) {
     AbstractTreeUi ui = getUi();
     if (ui == null) return;
 
@@ -376,10 +365,6 @@ public class AbstractTreeBuilder implements Disposable {
         if (!isDisposed()) runnable.run();
       });
     }
-  }
-
-  boolean isToYieldUpdateFor(DefaultMutableTreeNode node) {
-    return true;
   }
 
   public boolean isToEnsureSelectionOnFocusGained() {
@@ -454,7 +439,7 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   @NotNull
-  public Promise<Object> revalidateElement(Object element) {
+  public Promise<Object> revalidateElement(@NotNull Object element) {
     AbstractTreeStructure structure = getTreeStructure();
     if (structure == null) {
       return Promises.rejectedPromise();
@@ -470,7 +455,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     AbstractTreeNodeWrapper() {
-      super(null, null);
+      super(null, TREE_WRAPPER_VALUE);
     }
 
     @Override
@@ -547,8 +532,8 @@ public class AbstractTreeBuilder implements Disposable {
 
   @Nullable
   public static AbstractTreeBuilder getBuilderFor(@NotNull JTree tree) {
-    final WeakReference ref = (WeakReference)tree.getClientProperty(TREE_BUILDER);
-    return (AbstractTreeBuilder)SoftReference.dereference(ref);
+    Reference<AbstractTreeBuilder> ref = (Reference)tree.getClientProperty(TREE_BUILDER);
+    return SoftReference.dereference(ref);
   }
 
   @Nullable

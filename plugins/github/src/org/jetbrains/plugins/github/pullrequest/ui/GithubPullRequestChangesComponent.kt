@@ -2,67 +2,64 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.ComponentWithEmptyText
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsChangesLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.properties.Delegates
 
-class GithubPullRequestChangesComponent(project: Project, loader: GithubPullRequestsChangesLoader)
-  : Wrapper(), Disposable, GithubPullRequestsChangesLoader.ChangesLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener {
+internal class GithubPullRequestChangesComponent(project: Project, actionManager: ActionManager)
+  : GithubDataLoadingComponent<List<Change>>(), Disposable {
+  private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
+  private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
-  private val changesBrowser = PullRequestChangesBrowserWithError(project)
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
-  private val changesLoadingPanel = JBLoadingPanel(BorderLayout(), this,
-                                                   ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
+  val diffAction = changesBrowser.diffAction
 
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
-    changesLoadingPanel.add(changesBrowser, BorderLayout.CENTER)
-    setContent(changesLoadingPanel)
+    loadingPanel.add(changesBrowser, BorderLayout.CENTER)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
+    setContent(loadingPanel)
   }
 
-  override fun processStarted() {
-    changesLoadingPanel.startLoading()
-    changesBrowser.emptyText.clear()
-    clear()
-  }
-
-  override fun processFinished() {
-    changesLoadingPanel.stopLoading()
-    if (changesBrowser.emptyText.text.isEmpty()) changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
-  }
-
-  override fun changesLoaded(changes: List<Change>) {
-    changesBrowser.changes = changes
-    changesBrowser.emptyText.text = "Pull request does not contain any changes"
-  }
-
-  override fun errorOccurred(error: Throwable) {
-    runInEdt {
-      changesBrowser.emptyText
-        .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
-        .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-    }
-  }
-
-  private fun clear() {
+  override fun reset() {
+    changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     changesBrowser.changes = emptyList()
+  }
+
+  override fun handleResult(result: List<Change>) {
+    changesBrowser.emptyText.text = "Pull request does not contain any changes"
+    changesBrowser.changes = result
+  }
+
+  override fun handleError(error: Throwable) {
+    changesBrowser.emptyText
+      .clear()
+      .appendText("Cannot load changes", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
+  }
+
+  override fun setBusy(busy: Boolean) {
+    if (busy) {
+      changesBrowser.emptyText.clear()
+      loadingPanel.startLoading()
+    }
+    else {
+      loadingPanel.stopLoading()
+    }
   }
 
   override fun dispose() {}
@@ -71,8 +68,9 @@ class GithubPullRequestChangesComponent(project: Project, loader: GithubPullRequ
     //language=HTML
     private const val DEFAULT_EMPTY_TEXT = "Select pull request to view list of changed files"
 
-    private class PullRequestChangesBrowserWithError(project: Project)
+    private class PullRequestChangesBrowserWithError(project: Project, private val actionManager: ActionManager)
       : ChangesBrowserBase(project, false, false), ComponentWithEmptyText {
+
       var changes: List<Change> by Delegates.observable(listOf()) { _, _, _ ->
         myViewer.rebuildTree()
       }
@@ -90,6 +88,13 @@ class GithubPullRequestChangesComponent(project: Project, loader: GithubPullRequ
       override fun getEmptyText() = myViewer.emptyText
 
       override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
+
+      override fun createToolbarActions(): List<AnAction> {
+        return super.createToolbarActions() +
+               listOf(Separator(), actionManager.getAction(ChangesTree.GROUP_BY_ACTION_GROUP),
+                      Separator(), actionManager.getAction("Github.PullRequest.Preview.Show.Details"))
+
+      }
     }
   }
 }

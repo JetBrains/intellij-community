@@ -103,7 +103,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   public void optimizeImports(@NotNull PsiFile file) throws IncorrectOperationException {
     CheckUtil.checkWritable(file);
-    if (file instanceof PsiJavaFile) {
+    if (file instanceof PsiJavaFile && CodeStyle.isFormattingEnabled(file)) {
       PsiImportList newList = prepareOptimizeImportsResult((PsiJavaFile)file);
       if (newList != null) {
         final PsiImportList importList = ((PsiJavaFile)file).getImportList();
@@ -220,14 +220,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                @Nullable final PsiExpression expr,
                                                @Nullable PsiType type,
                                                final boolean correctKeywords) {
-    LinkedHashSet<String> names = new LinkedHashSet<>();
 
     if (expr != null && type == null) {
       type = expr.getType();
     }
 
+    Set<String> names = new LinkedHashSet<>();
     if (propertyName != null) {
-      String[] namesByName = getSuggestionsByName(propertyName, kind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      String[] namesByName = ArrayUtil.toStringArray(getSuggestionsByName(propertyName, kind, correctKeywords));
       sortVariableNameSuggestions(namesByName, kind, propertyName, null);
       ContainerUtil.addAll(names, namesByName);
     }
@@ -235,7 +235,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final NamesByExprInfo namesByExpr;
     if (expr != null) {
       namesByExpr = suggestVariableNameByExpression(expr, kind);
-      String[] suggestions = getSuggestionsByNames(namesByExpr.names, kind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+      String[] suggestions = ArrayUtil.toStringArray(getSuggestionsByNames(namesByExpr.names, kind, correctKeywords));
       if (namesByExpr.propertyName != null) {
         sortVariableNameSuggestions(suggestions, kind, namesByExpr.propertyName, null);
       }
@@ -315,7 +315,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   private String[] suggestVariableNameByType(@NotNull PsiType type, @NotNull final VariableKind variableKind, final boolean correctKeywords, boolean skipIndices) {
     Collection<String> byTypeNames = doSuggestNamesByType(type, variableKind, skipIndices);
-    return getSuggestionsByNames(byTypeNames, variableKind, correctKeywords).toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    return ArrayUtil.toStringArray(getSuggestionsByNames(byTypeNames, variableKind, correctKeywords));
   }
 
   @NotNull
@@ -577,7 +577,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             final PsiElement call = exprList.getParent();
             if (call instanceof PsiNewExpression) {
               return true;
-            } else if (call instanceof PsiMethodCallExpression) {
+            }
+            if (call instanceof PsiMethodCallExpression) {
               //TODO: exclude or not getA().getB("name").getC(); or getA(getB("name").getC()); It works fine for now in the most cases
               return true;
             }
@@ -601,7 +602,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr, @Nullable VariableKind variableKind, boolean useAllMethodNames) {
+  private NamesByExprInfo suggestVariableNameByExpressionOnly(@NotNull PsiExpression expr,
+                                                              @Nullable VariableKind variableKind,
+                                                              boolean useAllMethodNames) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
       String methodName = methodExpr.getReferenceName();
@@ -651,7 +654,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
     else if (expr instanceof PsiArrayAccessExpression) {
-      NamesByExprInfo info = suggestVariableNameByExpressionOnly(((PsiArrayAccessExpression)expr).getArrayExpression(), variableKind, useAllMethodNames);
+      NamesByExprInfo info =
+        suggestVariableNameByExpressionOnly(((PsiArrayAccessExpression)expr).getArrayExpression(), variableKind, useAllMethodNames);
 
       String singular = info.propertyName == null ? null : StringUtil.unpluralize(info.propertyName);
       if (singular != null) {
@@ -668,22 +672,26 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           return new NamesByExprInfo(null, constantValueToConstantName(names));
         }
       }
-    } else if (expr instanceof PsiParenthesizedExpression) {
+    }
+    else if (expr instanceof PsiParenthesizedExpression) {
       final PsiExpression expression = ((PsiParenthesizedExpression)expr).getExpression();
       if (expression != null) {
         return suggestVariableNameByExpressionOnly(expression, variableKind, useAllMethodNames);
       }
-    } else if (expr instanceof PsiTypeCastExpression) {
+    }
+    else if (expr instanceof PsiTypeCastExpression) {
       final PsiExpression operand = ((PsiTypeCastExpression)expr).getOperand();
       if (operand != null) {
         return suggestVariableNameByExpressionOnly(operand, variableKind, useAllMethodNames);
       }
-    } else if (expr instanceof PsiLiteralExpression) {
+    }
+    else if (expr instanceof PsiLiteralExpression) {
       final String text = StringUtil.unquoteString(expr.getText());
       if (isIdentifier(text)) {
         return new NamesByExprInfo(text);
       }
-    } else if (expr instanceof PsiFunctionalExpression && variableKind != null) {
+    }
+    else if (expr instanceof PsiFunctionalExpression && variableKind != null) {
       final PsiType functionalInterfaceType = ((PsiFunctionalExpression)expr).getFunctionalInterfaceType();
       if (functionalInterfaceType != null) {
         return new NamesByExprInfo(null, doSuggestNamesByType(functionalInterfaceType, variableKind, false));
@@ -1037,16 +1045,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     PsiVariable existingVariable = helper.resolveAccessibleReferencedVariable(name, place);
     if (existingVariable == null) return false;
 
-    if (allowShadowing && existingVariable instanceof PsiField && PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) != null) {
-      return false;
-    }
-
-    return true;
+    return !allowShadowing ||
+           !(existingVariable instanceof PsiField) ||
+           PsiTreeUtil.getNonStrictParentOfType(place, PsiMethod.class) == null;
   }
 
-  public static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
-                                                         @NotNull final String name,
-                                                         @NotNull Predicate<? super PsiVariable> canBeReused) {
+  private static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
+                                                          @NotNull final String name,
+                                                          @NotNull Predicate<? super PsiVariable> canBeReused) {
     PsiElement run = scope;
     while (run != null) {
       class CancelException extends RuntimeException {
@@ -1179,23 +1185,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final String propertyName = ContainerUtil.getFirstItem(semanticNames);
     addNamesFromStatistics(suggestions, kind, propertyName, type);
 
-    String[] namesArray = suggestions.toArray(ArrayUtil.EMPTY_STRING_ARRAY);
+    String[] namesArray = ArrayUtil.toStringArray(suggestions);
     sortVariableNameSuggestions(namesArray, kind, propertyName, type);
-    if (type == null) {
-      return new SuggestedNameInfo(namesArray) {
-        @Override
-        public void nameChosen(String name) {}
-      };
-    }
-    else {
-      return new SuggestedNameInfo(namesArray) {
-        @Override
-        public void nameChosen(String name) {
-          if (!type.isValid()) return;
-          JavaStatisticsManager.incVariableNameUseCount(name, kind, propertyName, type);
-        }
-      };
-    }
+    return new SuggestedNameInfo(namesArray) {
+      @Override
+      public void nameChosen(String name) {
+        if (type == null || !type.isValid()) return;
+        JavaStatisticsManager.incVariableNameUseCount(name, kind, propertyName, type);
+      }
+    };
   }
 
   @Nullable

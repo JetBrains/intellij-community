@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -15,7 +14,6 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
@@ -43,8 +41,6 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   private final Alarm myVcsChangeAlarm;
   private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
-
-  private final List<AnAction> myToolWindowTitleActions = new ArrayList<>();
 
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
@@ -78,8 +74,6 @@ public class ChangesViewContentManager implements ChangesViewContentI {
       contentManager.setSelectedContent(contentManager.getContent(0));
     }
     myInitializationWaiter.countDown();
-
-    ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
   private void loadExtensionTabs() {
@@ -135,8 +129,8 @@ public class ChangesViewContentManager implements ChangesViewContentI {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
     if (toolWindow != null) {
       boolean available = isAvailable();
-      if (!available) {
-        toolWindow.setShowStripeButton(available);
+      if (available && !toolWindow.isAvailable()) {
+        toolWindow.setShowStripeButton(true);
       }
       toolWindow.setAvailable(available, null);
     }
@@ -160,13 +154,6 @@ public class ChangesViewContentManager implements ChangesViewContentI {
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewContentManager";
-  }
-
-  public void addToolWindowTitleAction(@NotNull AnAction action) {
-    myToolWindowTitleActions.add(action);
-
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    if (toolWindow != null) ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
   @Override

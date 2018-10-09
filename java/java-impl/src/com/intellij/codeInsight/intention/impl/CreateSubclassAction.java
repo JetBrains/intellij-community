@@ -253,7 +253,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
                                     final PsiClass psiClass,
                                     final PsiClass targetClass,
                                     final boolean includeClassName) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiJavaCodeReferenceElement ref = elementFactory.createClassReferenceElement(psiClass);
     try {
       if (psiClass.isInterface()) {

@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.util.StopWatch;
 import git4idea.GitLocalBranch;
-import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
@@ -23,6 +22,8 @@ import java.util.Collection;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
@@ -134,15 +135,6 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return currentBranch == null ? null : currentBranch.getName();
   }
 
-  @Nullable
-  @Override
-  public String getCurrentRemoteBranchName() {
-    GitLocalBranch localBranch = getCurrentBranch();
-    if (localBranch == null) return null;
-    GitRemoteBranch remoteBranch = localBranch.findTrackedBranch(this);
-    return remoteBranch != null ? remoteBranch.getName() : null;
-  }
-
   @NotNull
   @Override
   public GitVcs getVcs() {
@@ -217,8 +209,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo, isShallow);
+    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), newLinkedHashSet(remotes),
+                           newHashMap(state.getLocalBranches()), newHashMap(state.getRemoteBranches()), newLinkedHashSet(trackInfos),
+                           submodules, hooksInfo, isShallow);
   }
 
   @NotNull

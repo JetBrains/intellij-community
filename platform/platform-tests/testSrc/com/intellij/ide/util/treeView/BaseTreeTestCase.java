@@ -192,7 +192,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
 
     @Override
-    protected boolean validateNode(Object child) {
+    protected boolean validateNode(@NotNull Object child) {
       return myValidator != null ? myValidator.isValid(child) : super.validateNode(child);
     }
 
@@ -238,7 +238,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       }
 
       @Override
-      protected void runOnYieldingDone(Runnable onDone) {
+      protected void runOnYieldingDone(@NotNull Runnable onDone) {
         SwingUtilities.invokeLater(onDone);
       }
     };
@@ -253,7 +253,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   abstract class BaseStructure extends AbstractTreeStructure {
 
     @Override
-    public boolean isToBuildChildrenInBackground(Object element) {
+    public boolean isToBuildChildrenInBackground(@NotNull Object element) {
       return myBgStructureBuilding && !myForegroundLoadingNodes.contains(element);
     }
 
@@ -268,15 +268,16 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
     @NotNull
     @Override
-    public final NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+    public final NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       return doCreateDescriptor(element, parentDescriptor);
     }
 
     @NotNull
     public abstract NodeDescriptor doCreateDescriptor(Object element, NodeDescriptor parentDescriptor);
 
+    @NotNull
     @Override
-    public final Object[] getChildElements(Object element) {
+    public final Object[] getChildElements(@NotNull Object element) {
       return _getChildElements(element, true);
     }
 

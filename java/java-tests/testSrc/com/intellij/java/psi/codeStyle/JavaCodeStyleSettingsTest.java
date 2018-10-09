@@ -21,7 +21,10 @@ import com.intellij.ide.codeStyleSettings.CodeStyleTestCase;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 
@@ -48,6 +51,9 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     assertEquals("On demand packages do not match", original.getPackagesToUseImportOnDemand(), copy.getPackagesToUseImportOnDemand());
     assertEquals("Field type-to-name maps don not match", original.FIELD_TYPE_TO_NAME, copy.FIELD_TYPE_TO_NAME);
     assertEquals("Static field type-to-name maps don not match", original.STATIC_FIELD_TYPE_TO_NAME, copy.STATIC_FIELD_TYPE_TO_NAME);
+
+    copy.setRepeatAnnotations(Arrays.asList("anno1"));
+    assertNotSame("Changed repeated annotations should reflect the equality relation", original, copy);
   }
 
   public void testSettingsCloneNotReferencingOriginal() throws IllegalAccessException {

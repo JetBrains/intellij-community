@@ -583,7 +583,7 @@ public class SvnStatusHandler extends DefaultHandler {
       }
 
       final String revision = attributes.getValue("revision");
-      if (!StringUtil.isEmptyOrSpaces(revision)) {
+      if (!StringUtil.isEmptyOrSpaces(revision) && !Revision.UNDEFINED.toString().equals(revision)) {
         try {
           final long number = Long.parseLong(revision);
           status.setRevision(Revision.of(number));

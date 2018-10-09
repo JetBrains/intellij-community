@@ -63,7 +63,7 @@ public class XmlSurroundDescriptor implements SurroundDescriptor {
 
   @Override
   @NotNull public Surrounder[] getSurrounders() {
-    return new Surrounder[0]; //everything is in live templates now
+    return Surrounder.EMPTY_ARRAY; //everything is in live templates now
   }
 
   @Override

@@ -387,7 +387,7 @@ public class TextChangesStorage {
     int startChangeIndex = getChangeIndex(start);
     int endChangeIndex = getChangeIndex(end);
     
-    boolean substringAffectedByChanges = startChangeIndex >= 0 || endChangeIndex >= 0 || startChangeIndex != endChangeIndex;
+    boolean substringAffectedByChanges = startChangeIndex != endChangeIndex || startChangeIndex >= 0;
     int clientShift = 0;
     int originalStart = 0;
     if (startChangeIndex < 0) {

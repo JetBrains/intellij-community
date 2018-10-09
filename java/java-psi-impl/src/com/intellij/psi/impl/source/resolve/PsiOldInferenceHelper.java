@@ -162,7 +162,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
   }
 
   private static Pair<PsiType, ConstraintType> getFailedInferenceConstraint(@NotNull PsiTypeParameter typeParameter) {
-    return new Pair<>(JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter),
+    return new Pair<>(JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(typeParameter),
                       ConstraintType.EQUALS);
   }
 
@@ -281,7 +281,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
       }
 
       if (substitution == null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
         return factory.createRawSubstitutor(partialSubstitutor, typeParameters);
       }
       if (substitution != PsiType.NULL) {
@@ -476,7 +476,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     PsiClass argClass = (PsiClass)argResult.getElement();
     if (argClass == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
     PsiType patternType = factory.createType(typeParam);
     if (isContraVariantPosition) {
       PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());

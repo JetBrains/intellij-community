@@ -620,9 +620,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   protected static boolean requireIndexRebuild(@Nullable Throwable exception) {
-    return exception instanceof PersistentEnumeratorBase.CorruptedException ||
-           exception instanceof StorageException ||
-           exception instanceof IOException;
+    return exception instanceof StorageException || exception instanceof IOException;
   }
 
   protected enum IndexCloseReason {

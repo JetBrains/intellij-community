@@ -39,6 +39,10 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     };
   }
 
+  public void clearBuffer() {
+    myBuffer.clear();
+  }
+
   @Override
   public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
     myBuffer.addEvent(new Event(Event.ADD, list));
@@ -106,6 +110,10 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
       });
       myQueue.clear();
       consumer.accept(added, removed);
+    }
+
+    public void clear() {
+      myQueue.clear();
     }
   }
 

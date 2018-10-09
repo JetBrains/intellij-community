@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -50,20 +49,23 @@ public interface OverrideImplementsAnnotationsHandler {
     Project project = target.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
-    for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(EP_NAME)) {
+    for (OverrideImplementsAnnotationsHandler each : EP_NAME.getExtensionList()) {
       for (String annotation : each.getAnnotations(target.getContainingFile())) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
 
         int flags = CHECK_EXTERNAL | CHECK_TYPE;
         if (AnnotationUtil.isAnnotated(source, annotation, flags) && !AnnotationUtil.isAnnotated(target, annotation, flags)) {
-          PsiModifierList modifierList = target.getModifierList();
-          assert modifierList != null : target;
-          PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(source, annotation);
-          PsiNameValuePair[] valuePairs = srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() 
-                                                                : PsiNameValuePair.EMPTY_ARRAY;
-          AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
+          each.transferToTarget(annotation, source, target);
         }
       }
     }
+  }
+
+  default void transferToTarget(String annotation, PsiModifierListOwner source, PsiModifierListOwner target) {
+    PsiModifierList modifierList = target.getModifierList();
+    assert modifierList != null : target;
+    PsiAnnotation srcAnnotation = AnnotationUtil.findAnnotation(source, annotation);
+    PsiNameValuePair[] valuePairs = srcAnnotation != null ? srcAnnotation.getParameterList().getAttributes() : PsiNameValuePair.EMPTY_ARRAY;
+    AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
   }
 }

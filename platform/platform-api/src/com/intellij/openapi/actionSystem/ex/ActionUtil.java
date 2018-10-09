@@ -116,7 +116,7 @@ public class ActionUtil {
     final boolean isSlow = ud.averageUpdateDurationMs > 10;// empiric val: 10 ms
     final long startTimeNs = System.nanoTime();
     final long relaxMs = Math.min(ud.averageUpdateDurationMs*100, 10000); // empiric vals: min 1 sec, max 10 sec
-    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs)/1000000l < relaxMs)) {
+    if (isSlow && ud.lastUpdateEvent != null && (forceUseCached || (startTimeNs - ud.lastUpdateTimeNs) / 1000000L < relaxMs)) {
       // System.out.println("use cached presentation for action '" + String.valueOf(action) + "', averageUpdateDuration=" + ud.averageUpdateDurationMs + " ms, " + (startTimeNs - ud.lastUpdateTimeNs)/1000000l + " ms elapsed from last update");
       event.getPresentation().copyFrom(ud.lastUpdateEvent.getPresentation());
       return;
@@ -130,7 +130,7 @@ public class ActionUtil {
 
     final float smoothAlpha = isSlow ? 0.8f : 0.3f;
     final float smoothCoAlpha = 1 - smoothAlpha;
-    final long spentMs = (finishUpdateNs - startTimeNs)/1000000l;
+    final long spentMs = (finishUpdateNs - startTimeNs) / 1000000L;
 
     ud.averageUpdateDurationMs = Math.round(spentMs*smoothAlpha + ud.averageUpdateDurationMs*smoothCoAlpha);
   }
@@ -161,7 +161,7 @@ public class ActionUtil {
 
     String description = presentation.getText() + " action update (" + action.getClass() + ")";
     if (insidePerformDumbAwareUpdate++ == 0) {
-      ActionPauses.STAT.started(description);
+      ActionPauses.STAT.started();
     }
     try {
       if (beforeActionPerformed) {

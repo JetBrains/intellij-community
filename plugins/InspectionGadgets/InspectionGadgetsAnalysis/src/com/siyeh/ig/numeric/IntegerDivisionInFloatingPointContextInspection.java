@@ -30,7 +30,6 @@ import java.util.Set;
 public class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls
   private static final Set<String> s_integralTypes = new HashSet<>(10);

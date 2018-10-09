@@ -16,6 +16,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
+import com.intellij.codeInsight.intention.impl.SameErasureButDifferentMethodsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
@@ -925,5 +926,11 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
         return Priority.NORMAL;
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createSameErasureButDifferentMethodsFix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    return new SameErasureButDifferentMethodsFix(method, superMethod);
   }
 }

@@ -4,6 +4,7 @@ package com.intellij.util;
 /**
  * @deprecated Please use {@link java.util.function.Supplier}
  */
+@Deprecated
 public interface Producer<T> {
 
   T produce();

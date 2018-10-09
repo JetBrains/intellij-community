@@ -40,7 +40,7 @@ import java.util.Iterator;
 
 public class ModuleToDoNode extends BaseToDoNode<Module> {
 
-  public ModuleToDoNode(Project project, Module value, TodoTreeBuilder builder) {
+  public ModuleToDoNode(Project project, @NotNull Module value, TodoTreeBuilder builder) {
     super(project, value, builder);
   }
 

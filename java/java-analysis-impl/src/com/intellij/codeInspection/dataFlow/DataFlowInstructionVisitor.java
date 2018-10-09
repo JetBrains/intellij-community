@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,18 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
+  private final Map<PsiReferenceExpression, Boolean> mySameArguments = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
+
+  private static final CallMatcher USELESS_SAME_ARGUMENTS = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "min", "max").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "min", "max").parameterCount(2),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "replace").parameterCount(2)
+  );
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -49,16 +60,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         }
       } else {
         DfaValue value = memState.peek();
-        // Reporting of floating zero is skipped, because this produces false-positives on the code like
-        // if(x == -0.0) x = 0.0;
-        if (value instanceof DfaVariableValue || (value instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)value).getValue()))) {
-          DfaMemoryState copy = memState.createCopy();
-          copy.pop();
-          DfaValue target = copy.peek();
-          boolean sameValue =
-            !isAssignmentToDefaultValueInConstructor(instruction, runner, target) &&
-            !copy.applyCondition(runner.getFactory().createCondition(value, DfaRelationValue.RelationType.NE, target));
-          mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
+        DfaValue target = memState.getStackValue(1);
+        if (target != null && memState.areEqual(value, target) &&
+            !(value instanceof DfaConstValue && isFloatingZero(((DfaConstValue)value).getValue())) &&
+            !isAssignmentToDefaultValueInConstructor(instruction, runner, target)) {
+          mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
         }
         else {
           mySameValueAssigned.put(left, Boolean.FALSE);
@@ -87,13 +93,15 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     if (!(dest instanceof DfaConstValue)) return false;
     Object value = ((DfaConstValue)dest).getValue();
 
-    PsiType type = var.getVariableType();
+    PsiType type = var.getType();
     boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) || Long.valueOf(0L).equals(value) && PsiType.INT.equals(type);
     if (!isDefaultValue) return false;
     PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
     return method != null && method.isConstructor();
   }
 
+  // Reporting of floating zero is skipped, because this produces false-positives on the code like
+  // if(x == -0.0) x = 0.0;
   private static boolean isFloatingZero(Object value) {
     if (value instanceof Double) {
       return ((Double)value).doubleValue() == 0.0;
@@ -106,6 +114,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   StreamEx<PsiExpression> sameValueAssignments() {
     return StreamEx.ofKeys(mySameValueAssigned, Boolean::booleanValue);
+  }
+
+  StreamEx<PsiReferenceExpression> pointlessSameArguments() {
+    return StreamEx.ofKeys(mySameArguments, Boolean::booleanValue);
   }
 
   @Override
@@ -169,6 +181,17 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {
       reportConstantExpressionValue(value, memState, expression);
+    }
+  }
+
+  @Override
+  protected void beforeMethodCall(@NotNull PsiExpression expression,
+                                  @NotNull DfaCallArguments arguments,
+                                  @NotNull DataFlowRunner runner,
+                                  @NotNull DfaMemoryState memState) {
+    PsiReferenceExpression reference = USELESS_SAME_ARGUMENTS.getReferenceIfMatched(expression);
+    if (reference != null) {
+      mySameArguments.merge(reference, memState.areEqual(arguments.myArguments[0], arguments.myArguments[1]), Boolean::logicalAnd);
     }
   }
 

@@ -11,7 +11,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,8 +34,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
       String stringText = expression.getText();
-      int prefixLength = PyStringLiteralExpressionImpl
-        .getPrefixLength(stringText);
+      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       String prefix = stringText.substring(0, prefixLength);
       String content = stringText.substring(prefixLength);
       if (content.startsWith("'''") ) {

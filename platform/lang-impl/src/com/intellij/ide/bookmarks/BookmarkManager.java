@@ -42,7 +42,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class BookmarkManager implements PersistentStateComponent<Element> {
@@ -159,7 +158,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   @NotNull
   public List<Bookmark> getValidBookmarks() {
-    List<Bookmark> answer = myBookmarks.values().stream().filter(b -> b.isValid()).collect(Collectors.toList());
+    List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {
       Collections.sort(answer);
     }

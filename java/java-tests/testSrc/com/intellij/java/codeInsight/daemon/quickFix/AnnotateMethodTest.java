@@ -15,13 +15,13 @@
  */
 package com.intellij.java.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotateMethodTest extends LightQuickFixTestCase {
+public class AnnotateMethodTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/annotateMethod";
@@ -32,8 +32,6 @@ public class AnnotateMethodTest extends LightQuickFixTestCase {
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new NullableStuffInspection()};
   }
-
-  public void test() { doAllTests(); }
 
   @Override
   protected LanguageLevel getLanguageLevel() {

@@ -26,6 +26,7 @@ import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.UserNameRegex;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
@@ -33,6 +34,8 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.history.GitLogUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.repo.GitSubmodule;
+import git4idea.repo.GitSubmoduleKt;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -518,7 +521,7 @@ public class GitLogProvider implements VcsLogProvider {
   }
 
   public static void appendTextFilterParameters(@Nullable String text, boolean regexp, boolean caseSensitive,
-                                                @NotNull List<String> filterParameters) {
+                                                @NotNull List<? super String> filterParameters) {
     if (text != null) {
       filterParameters.add(prepareParameter("grep", text));
     }
@@ -556,6 +559,22 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsLogDiffHandler getDiffHandler() {
     return new GitLogDiffHandler(myProject);
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+    if (file != null && file.isDirectory()) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(file);
+      if (repository != null) {
+        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+        if (submodule != null) {
+          return submodule.getParent().getRoot();
+        }
+      }
+    }
+    return VcsUtil.getVcsRootFor(project, path);
   }
 
   @SuppressWarnings("unchecked")

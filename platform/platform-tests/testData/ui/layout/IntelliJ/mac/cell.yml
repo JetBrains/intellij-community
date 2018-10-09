@@ -14,19 +14,20 @@ layoutConstraints:
   - {horizontal: true, unit: 0, value: 0.0}
 rowConstraints:
   constraints:
-  - align: {horizontal: false, unit: -1, value: 0.0}
+  - align: &id004 {horizontal: false, unit: -1, value: 0.0}
     gapAfter:
       max: &id003 {horizontal: true, value: 6.0}
       min: *id003
       preferred: *id003
-  - {}
-  count: 2
+  - align: *id004
+  - align: *id004
+  count: 3
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id004 {horizontal: true, value: 6.0}
-      min: *id004
-      preferred: *id004
+      max: &id005 {horizontal: true, value: 6.0}
+      min: *id005
+      preferred: *id005
     grow: 0.0
   - {}
   count: 2
@@ -37,8 +38,8 @@ componentConstrains:
   Use File -> Settings Repository... to configure:
     horizontal:
       gapBefore:
-        min: &id005 {horizontal: true, value: 5.0}
-        preferred: *id005
+        min: &id006 {horizontal: true, value: 5.0}
+        preferred: *id006
     skip: 1
     spanX: 2097051
     wrap: true

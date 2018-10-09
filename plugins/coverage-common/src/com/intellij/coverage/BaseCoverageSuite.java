@@ -1,9 +1,9 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
@@ -94,7 +94,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   public static CoverageRunner readRunnerAttribute(Element element) {
     final String runner = element.getAttributeValue(COVERAGE_RUNNER);
     if (runner != null) {
-      for (CoverageRunner coverageRunner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
+      for (CoverageRunner coverageRunner : CoverageRunner.EP_NAME.getExtensionList()) {
         if (Comparing.strEqual(coverageRunner.getId(), runner)) {
           return coverageRunner;
         }

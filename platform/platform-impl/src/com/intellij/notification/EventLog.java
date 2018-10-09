@@ -201,7 +201,7 @@ public class EventLog {
     return StringUtil.replace(text, "\n", "\n" + indent);
   }
 
-  private static boolean isLongLine(@NotNull List<AnAction> actions) {
+  private static boolean isLongLine(@NotNull List<? extends AnAction> actions) {
     int size = actions.size();
     if (size > 3) {
       return true;
@@ -258,7 +258,7 @@ public class EventLog {
 
   private static String getStatusText(DocumentImpl logDoc,
                                       AtomicBoolean showMore,
-                                      List<RangeMarker> lineSeparators,
+                                      List<? extends RangeMarker> lineSeparators,
                                       String indent,
                                       boolean hasHtml) {
     DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
@@ -353,7 +353,7 @@ public class EventLog {
     return ArrayUtil.indexOf(tags, tag) != -1;
   }
 
-  private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<RangeMarker> lineSeparators) {
+  private static void insertNewLineSubstitutors(Document document, AtomicBoolean showMore, List<? extends RangeMarker> lineSeparators) {
     for (RangeMarker marker : lineSeparators) {
       if (!marker.isValid()) {
         showMore.set(true);
@@ -384,7 +384,7 @@ public class EventLog {
     }
   }
 
-  private static void removeJavaNewLines(Document document, List<RangeMarker> lineSeparators, String indent, boolean hasHtml) {
+  private static void removeJavaNewLines(Document document, List<? super RangeMarker> lineSeparators, String indent, boolean hasHtml) {
     CharSequence text = document.getCharsSequence();
     int i = 0;
     while (true) {

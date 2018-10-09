@@ -17,7 +17,7 @@ public class TooltipUtil {
 
   public static HyperlinkLabel createTooltip(final String message) {
     final HyperlinkLabel link = new HyperlinkLabel("");
-    link.setIcon(AllIcons.General.Help_small);
+    link.setIcon(AllIcons.General.ContextHelp);
     link.setUseIconAsLink(true);
     link.setIconTextGap(0);
     link.addHyperlinkListener(new HyperlinkAdapter() {

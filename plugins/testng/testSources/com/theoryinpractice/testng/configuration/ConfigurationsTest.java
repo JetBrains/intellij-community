@@ -144,7 +144,7 @@ public class ConfigurationsTest {
     final Project project = myProjectFixture.getProject();
     final PsiClass psiClass = findTestClass(project);
     final TestNGConfiguration configuration = createConfiguration(project);
-    final TestNGConfigurationType type = (TestNGConfigurationType)configuration.getFactory().getType();
+    final TestNGConfigurationType type = TestNGConfigurationType.getInstance();
 
     //class config
     configuration.beClassConfiguration(psiClass);

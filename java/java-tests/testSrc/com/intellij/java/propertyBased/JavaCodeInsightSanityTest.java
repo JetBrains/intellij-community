@@ -5,6 +5,7 @@ import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PsiEnumConstantImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -61,7 +62,9 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   public void testPreserveComments() {
     boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
+      javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
       enableAlmostAllInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),

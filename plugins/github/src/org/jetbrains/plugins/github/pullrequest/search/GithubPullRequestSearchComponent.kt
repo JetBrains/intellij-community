@@ -11,43 +11,22 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
-import com.intellij.openapi.ui.popup.BalloonBuilder
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.components.JBLabel
 import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.search.GithubIssueSearchSort
-import java.awt.Graphics
-import java.awt.Point
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
-import javax.swing.BorderFactory
-import javax.swing.JLabel
 import javax.swing.KeyStroke
-import javax.swing.UIManager
-import javax.swing.border.EmptyBorder
 
-class GithubPullRequestSearchComponent(project: Project,
-                                       private val autoPopupController: AutoPopupController,
-                                       private val popupFactory: JBPopupFactory,
-                                       private val model: GithubPullRequestSearchModel) : Wrapper() {
+internal class GithubPullRequestSearchComponent(project: Project,
+                                                private val autoPopupController: AutoPopupController,
+                                                private val model: GithubPullRequestSearchModel) : BorderLayoutPanel() {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
-    private val ICON = AllIcons.Actions.Find
-    private val ICON_RIGHT_MARGIN = JBUI.scale(4)
-
-    private var errorBalloonBuilder: BalloonBuilder? = null
-
-    init {
-      addFocusListener(object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent?) = showErrorBalloon()
-      })
-    }
 
     override fun processKeyBinding(ks: KeyStroke?, e: KeyEvent?, condition: Int, pressed: Boolean): Boolean {
       if (e?.keyCode == KeyEvent.VK_ENTER && pressed) {
@@ -64,40 +43,7 @@ class GithubPullRequestSearchComponent(project: Project,
     }
 
     override fun setupBorder(editor: EditorEx) {
-      super.setupBorder(editor)
-      editor.setBorder(BorderFactory.createCompoundBorder(editor.scrollPane.border,
-                                                          EmptyBorder(0, ICON.iconWidth + ICON_RIGHT_MARGIN, 0, 0)))
-    }
-
-    override fun paint(g: Graphics?) {
-      super.paint(g)
-      val editor = editor as EditorEx
-      val leftInset = editor.scrollPane.border.getBorderInsets(editor.scrollPane).left
-      val xStart = leftInset - ICON.iconWidth - ICON_RIGHT_MARGIN
-      ICON.paintIcon(this, g, xStart, (size.height - ICON.iconHeight) / 2)
-    }
-
-    fun setError(error: String?) {
-      if (error == null) {
-        putClientProperty("JComponent.outline", null)
-        repaint()
-        errorBalloonBuilder = null
-      }
-      else {
-        putClientProperty("JComponent.outline", "error")
-        repaint()
-        errorBalloonBuilder = popupFactory.createBalloonBuilder(JLabel(error))
-          .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-          .setBorderColor(JBUI.CurrentTheme.Validator.errorBorderColor())
-          .setFillColor(JBUI.CurrentTheme.Validator.errorBackgroundColor())
-          .setAnimationCycle(100)
-          .setRequestFocus(false)
-        showErrorBalloon()
-      }
-    }
-
-    private fun showErrorBalloon() {
-      errorBalloonBuilder?.createBalloon()?.show(RelativePoint(this, Point(width / 2, height)), Balloon.Position.below)
+      editor.setBorder(JBUI.Borders.empty(6, 5))
     }
   }
 
@@ -109,18 +55,16 @@ class GithubPullRequestSearchComponent(project: Project,
     }
 
   init {
-    setContent(searchField)
-    border = JBUI.Borders.empty(2)
+    val icon = JBLabel(AllIcons.Actions.Find).apply {
+      border = JBUI.Borders.emptyLeft(5)
+    }
+    addToLeft(icon)
+    addToCenter(searchField)
+    UIUtil.setBackgroundRecursively(this, UIUtil.getTextFieldBackground())
   }
 
   private fun updateQuery() {
-    try {
-      searchField.setError(null)
-      model.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
-    }
-    catch (e: Exception) {
-      searchField.setError(e.message)
-    }
+    model.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
   }
 
   private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {

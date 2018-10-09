@@ -27,6 +27,15 @@ public class InstallButton extends ColorButton {
 
   protected void setTextAndSize() {
     setText("Install");
-    PluginManagerConfigurableNew.setWidth72(this);
+    setWidth72(this);
+  }
+
+  @Override
+  public void setEnabled(boolean enabled) {
+    super.setEnabled(enabled);
+    if (!enabled) {
+      setText("Installed");
+      setWidth(this, 80);
+    }
   }
 }

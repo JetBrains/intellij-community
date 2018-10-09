@@ -139,7 +139,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
     return files;
   }
 
-  private static void refreshAndEnsureFilesValid(@NotNull List<VirtualFile> files) throws Exception {
+  private static void refreshAndEnsureFilesValid(@NotNull List<? extends VirtualFile> files) throws Exception {
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
 
     for (VirtualFile file : files) {
@@ -180,7 +180,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
   }
 
   @Nullable
-  protected static Project guessProject(@NotNull List<VirtualFile> files) {
+  protected static Project guessProject(@NotNull List<? extends VirtualFile> files) {
     Set<Project> projects = new HashSet<>();
     for (VirtualFile file : files) {
       projects.addAll(ProjectLocator.getInstance().getProjectsForFile(file));

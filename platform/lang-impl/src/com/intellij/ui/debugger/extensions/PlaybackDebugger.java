@@ -303,7 +303,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class RunOnFameActivationAction extends AnAction {
 
     private RunOnFameActivationAction() {
-      super("Run On Frame Activation", "", AllIcons.General.Run);
+      super("Run On Frame Activation", "", AllIcons.RunConfigurations.TestState.Run);
     }
 
     @Override

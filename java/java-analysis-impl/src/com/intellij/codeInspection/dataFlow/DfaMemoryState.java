@@ -45,6 +45,14 @@ public interface DfaMemoryState {
   @NotNull DfaValue peek();
 
   /**
+   * Reads a value from the stack at given offset from the top without popping it
+   * @param offset value from the stack (0 = top of stack, 1 = the next one, etc.)
+   * @return stack value; null if stack does not deep enough
+   * @throws IndexOutOfBoundsException if offset is negative
+   */
+  @Nullable DfaValue getStackValue(int offset);
+
+  /**
    * Pushes given value to the stack
    * @param value to push
    */
@@ -64,6 +72,15 @@ public interface DfaMemoryState {
   boolean castTopOfStack(@NotNull DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
+
+  /**
+   * Returns true if given two values are known to be equal
+   *
+   * @param value1 first value to check
+   * @param value2 second value to check
+   * @return true if they are equal; false if not equal or not known
+   */
+  boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2);
 
   boolean applyContractCondition(DfaValue dfaCond);
 
@@ -144,6 +161,4 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   boolean isEmptyStack();
-
-  void cleanUpTempVariables();
 }

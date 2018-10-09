@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -132,7 +131,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     List<XBreakpointHandler> breakpointHandlers = new ArrayList<>();
     breakpointHandlers.add(new PyLineBreakpointHandler(this));
     breakpointHandlers.add(new PyExceptionBreakpointHandler(this));
-    for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
+    for (PyBreakpointHandlerFactory factory : PyBreakpointHandlerFactory.EP_NAME.getExtensionList()) {
       breakpointHandlers.add(factory.createBreakpointHandler(this));
     }
     myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
@@ -662,7 +661,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           String t = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
-            for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
+            for (XBreakpointType breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
                   ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
                 t = breakpointType.getId();

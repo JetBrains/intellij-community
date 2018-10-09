@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -11,15 +12,19 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -52,10 +57,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     Project project = initEvent.getProject();
+    Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     List<SearchEverywhereContributor> serviceContributors = Arrays.asList(
-      new TopHitSEContributor(project, initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+      new TopHitSEContributor(project, contextComponent,
                               s -> mySearchEverywhereUI.getSearchField().setText(s)),
-      new RecentFilesSEContributor(project)
+      new RecentFilesSEContributor(project, GotoActionBase.getPsiContext(initEvent)),
+      new RunConfigurationsSEContributor(project, contextComponent, () ->  mySearchEverywhereUI.getSearchField().getText())
     );
 
     List<SearchEverywhereContributor> contributors = new ArrayList<>();
@@ -136,17 +143,38 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   private void calcPositionAndShow(Project project, JBPopup balloon) {
     Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY, project);
 
+    //for first show and short mode popup should be shifted to the top screen half
+    if (savedLocation == null && mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
+      Window window = project != null
+                      ? WindowManager.getInstance().suggestParentWindow(project)
+                      : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      Component parent = UIUtil.findUltimateParent(window);
+
+      if (parent != null) {
+        JComponent content = balloon.getContent();
+        Dimension balloonSize = content.getPreferredSize();
+
+        Point screenPoint = new Point((parent.getSize().width - balloonSize.width) / 2, parent.getHeight() / 4 - balloonSize.height / 2);
+        SwingUtilities.convertPointToScreen(screenPoint, parent);
+
+        Rectangle screenRectangle = ScreenUtil.getScreenRectangle(screenPoint);
+        Insets insets = content.getInsets();
+        int bottomEdge = screenPoint.y + mySearchEverywhereUI.getExpandedSize().height + insets.bottom + insets.top;
+        int shift = bottomEdge - (int) screenRectangle.getMaxY();
+        if (shift > 0) {
+          screenPoint.y = Integer.max(screenPoint.y - shift, screenRectangle.y);
+        }
+
+        RelativePoint showPoint = new RelativePoint(screenPoint);
+        balloon.show(showPoint);
+        return;
+      }
+    }
+
     if (project != null) {
       balloon.showCenteredInCurrentWindow(project);
     } else {
       balloon.showInFocusCenter();
-    }
-
-    //for first show and short mode popup should be shifted to the top screen half
-    if (savedLocation == null && mySearchEverywhereUI.getViewType() == SearchEverywhereUI.ViewType.SHORT) {
-      Point location = balloon.getLocationOnScreen();
-      location.y /= 2;
-      balloon.setLocation(location);
     }
   }
 

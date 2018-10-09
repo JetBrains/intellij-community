@@ -39,7 +39,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class MethodCallUtils {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 

@@ -211,8 +211,10 @@ public class StubViewerPsiBasedTree implements ViewerPsiBasedTree {
       (treeNode) -> treeNode instanceof DefaultMutableTreeNode &&
                     ((StubTreeNode)((DefaultMutableTreeNode)treeNode).getUserObject()).getStub() == stubElement
     );
-    TreePath path = TreePathUtil.pathToTreeNode(node);
-    myStubTree.getSelectionModel().setSelectionPath(path);
+    if (node != null) {
+      TreePath path = TreePathUtil.pathToTreeNode(node);
+      myStubTree.getSelectionModel().setSelectionPath(path);
+    }
   }
 
   private class StubTreeSelectionListener implements TreeSelectionListener {

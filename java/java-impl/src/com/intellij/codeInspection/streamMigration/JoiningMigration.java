@@ -26,7 +26,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
@@ -190,8 +189,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           return PsiTreeUtil.getParentOfType(lambda, PsiMember.class, PsiLambdaExpression.class) == loopBound;
         };
       }
-      return ReferencesSearch.search(variable).forEach((Processor<PsiReference>)reference -> referenceBoundPredicate.test(reference)) &&
-             FinalUtils.canBeFinal(variable);
+      return ReferencesSearch.search(variable).allMatch(referenceBoundPredicate) && FinalUtils.canBeFinal(variable);
     }
 
     String generateTerminal(CommentTracker ct) {
@@ -742,7 +740,7 @@ List<PsiExpression> builderStrInitializers = null;
        * @return list of declaration statements or null if error
        */
       @Nullable("when failed to get declaration of any var")
-      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<PsiLocalVariable> variables) {
+      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<? extends PsiLocalVariable> variables) {
         List<PsiDeclarationStatement> list = new ArrayList<>();
         for (PsiLocalVariable var : variables) {
           PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);

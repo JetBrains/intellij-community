@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +35,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -45,8 +43,8 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRA
 
 public class CommitPanel extends JBPanel {
   public static final int SIDE_BORDER = 14;
-  private static final int INTERNAL_BORDER = 10;
-  private static final int EXTERNAL_BORDER = 14;
+  public static final int INTERNAL_BORDER = 10;
+  public static final int EXTERNAL_BORDER = 14;
   private static final int ROOT_ICON_SIZE = 13;
   private static final int ROOT_GAP = 4;
 
@@ -59,12 +57,12 @@ public class CommitPanel extends JBPanel {
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final Consumer<CommitId> myNavigate;
+  @NotNull private final Consumer<? super CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
   @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<CommitId> navigate) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<? super CommitId> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
     myNavigate = navigate;
@@ -113,8 +111,8 @@ public class CommitPanel extends JBPanel {
 
   public void setRefs(@NotNull Collection<VcsRef> refs) {
     List<VcsRef> references = sortRefs(refs);
-    myBranchesPanel.setReferences(references.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList()));
-    myTagsPanel.setReferences(references.stream().filter(ref -> !ref.getType().isBranch()).collect(Collectors.toList()));
+    myBranchesPanel.setReferences(ContainerUtil.filter(references, ref -> ref.getType().isBranch()));
+    myTagsPanel.setReferences(ContainerUtil.filter(references, ref -> !ref.getType().isBranch()));
     if (myTagsPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
       myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));

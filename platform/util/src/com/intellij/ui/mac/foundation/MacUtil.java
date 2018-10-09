@@ -107,7 +107,7 @@ public class MacUtil {
   public static boolean isFullKeyboardAccessEnabled() {
     if (!SystemInfo.isMacOSSnowLeopard) return false;
     final AtomicBoolean result = new AtomicBoolean();
-    Foundation.executeOnMainThread(true, true, new Runnable() {
+    executeOnMainThread(true, true, new Runnable() {
       @Override
       public void run() {
           result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1);
@@ -178,20 +178,32 @@ public class MacUtil {
     return windowTitle;
   }
 
-  public static Object wakeUpNeo(final String reason) {
+  @SuppressWarnings("unused")
+  private static class NSActivityOptions {
+    // Used for activities that require the computer to not idle sleep. This is included in NSActivityUserInitiated.
+    private static final long idleSystemSleepDisabled = 1L << 20;
+
+    // App is performing a user-requested action.
+    private static final long userInitiated = 0x00FFFFFFL | idleSystemSleepDisabled;
+    private static final long userInitiatedAllowingIdleSystemSleep = userInitiated & ~idleSystemSleepDisabled;
+
+    // Used for activities that require the highest amount of timer and I/O precision available. Very few applications should need to use this constant.
+    private static final long latencyCritical = 0xFF00000000L;
+  }
+
+  public static Object wakeUpNeo(@NotNull final String reason) {
     // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
     // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
     if (SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap")) {
-      final Ref<Object> result = Ref.create();
+      final Ref<ID> result = Ref.create();
       executeOnMainThread(false, true, new Runnable() {
         @Override
         public void run() {
           ID processInfo = invoke("NSProcessInfo", "processInfo");
-          ID activity = invoke(processInfo, "beginActivityWithOptions:reason:",
-                               (0x00FFFFFFL & ~(1L << 20))  /* NSActivityUserInitiatedAllowingIdleSystemSleep */ |
-                               0xFF00000000L /* NSActivityLatencyCritical */,
-                               nsString(reason));
-          cfRetain(activity);
+          ID activity = invoke(invoke(processInfo, "beginActivityWithOptions:reason:",
+                                      NSActivityOptions.userInitiatedAllowingIdleSystemSleep,
+                                      // TODO: Do we need NSActivityOptions.latencyCritical? This is not an audio app.
+                                      nsString(reason)), "retain");
           result.set(activity);
         }
       });
@@ -200,13 +212,14 @@ public class MacUtil {
     return null;
   }
 
-  public static void matrixHasYou(@NotNull final Object activity) {
+  public static void matrixHasYou(@NotNull Object activityToken) {
+    final ID activity = (ID)activityToken;
     executeOnMainThread(false, false, new Runnable() {
       @Override
       public void run() {
         ID processInfo = invoke("NSProcessInfo", "processInfo");
         invoke(processInfo, "endActivity:", activity);
-        cfRelease((ID)activity);
+        invoke(activity, "release");
       }
     });
   }

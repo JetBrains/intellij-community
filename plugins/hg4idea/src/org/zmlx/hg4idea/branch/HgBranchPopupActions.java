@@ -57,7 +57,10 @@ import org.zmlx.hg4idea.ui.HgBookmarkDialog;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
@@ -234,7 +237,7 @@ public class HgBranchPopupActions {
   public static class HgShowUnnamedHeadsForCurrentBranchAction extends ActionGroup implements DumbAware {
     @NotNull final HgRepository myRepository;
     @NotNull final String myCurrentBranchName;
-    @NotNull Collection<Hash> myHeads = new HashSet<>();
+    @NotNull Collection<Hash> myHeads;
 
     public HgShowUnnamedHeadsForCurrentBranchAction(@NotNull HgRepository repository) {
       super(null, true);
@@ -268,7 +271,7 @@ public class HgBranchPopupActions {
         branchHeadActions
           .add(new HgCommonBranchActions(myRepository.getProject(), Collections.singletonList(myRepository), hash.toShortString()));
       }
-      return ContainerUtil.toArray(branchHeadActions, new AnAction[branchHeadActions.size()]);
+      return branchHeadActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
     @Override
@@ -276,7 +279,7 @@ public class HgBranchPopupActions {
       if (myRepository.isFresh() || myHeads.isEmpty()) {
         e.getPresentation().setEnabledAndVisible(false);
       }
-      else if (!Repository.State.NORMAL.equals(myRepository.getState())) {
+      else if (myRepository.getState() != Repository.State.NORMAL) {
         e.getPresentation().setEnabled(false);
       }
     }
@@ -291,7 +294,7 @@ public class HgBranchPopupActions {
   public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
@@ -338,7 +341,7 @@ public class HgBranchPopupActions {
 
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 

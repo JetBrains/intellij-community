@@ -219,7 +219,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   private JPanel createToggleBar(OnePixelSplitter splitter) {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(AllIcons.General.SplitDown);
+    final JLabel label = new JLabel(AllIcons.General.ArrowDown);
     panel.setBackground(IpnbEditorUtil.getBackground());
     label.setBackground(IpnbEditorUtil.getBackground());
     panel.add(label, BorderLayout.CENTER);
@@ -381,7 +381,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return getText(from, myCodeSourcePanel.getEditor().getDocument().getTextLength());
   }
 
-  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   @Override
   protected Object clone() {
     return new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)myCell.clone());

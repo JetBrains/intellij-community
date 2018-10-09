@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationEditor;
@@ -70,11 +71,9 @@ public class TestClassBrowser extends BrowseModuleValueActionListener
 
   protected GlobalSearchScope getSearchScope(Module[] modules) {
     if (modules == null || modules.length == 0) return null;
-    GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesScope(modules[0]);
-    for (int i = 1; i < modules.length; i++) {
-      scope.uniteWith(GlobalSearchScope.moduleWithDependenciesScope(modules[i]));
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+    return GlobalSearchScope.union(scopes);
   }
 
   private void init(TreeClassChooser chooser) {

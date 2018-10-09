@@ -12,11 +12,8 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
@@ -24,24 +21,29 @@ import java.util.Set;
 @State(name = "ActionsCollector", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String DEFAULT_ID = "third.party.plugin.action";
-  private final Set<String> myJBActions = new THashSet<>();
 
   @Override
-  public void record(@Nullable String actionId, @NotNull Class context) {
+  public void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place) {
     if (actionId == null) return;
 
     State state = getState();
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-    if (!myJBActions.contains(key)) {
-      key = isDevelopedByJetBrains(context) ? key : DEFAULT_ID;
-      myJBActions.add(key);
-    }
+    key = isDevelopedByJetBrains(context) ? key : DEFAULT_ID;
+
     FeatureUsageLogger.INSTANCE.log("actions", key);
-    final Integer count = state.myValues.get(key);
+    Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);
+    if (isContextMenu) {
+      count = state.myContextMenuValues.get(key);
+      value = count == null ? 1 : count + 1;
+      if (place != null) {
+        key = "[" + place + "] " + key;
+      }
+      state.myContextMenuValues.put(key, value);
+    }
   }
 
   private static boolean isDevelopedByJetBrains(@NotNull Class aClass) {

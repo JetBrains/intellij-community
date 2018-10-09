@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
@@ -114,10 +115,10 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     @NotNull
     public String getName() {
       if (myUseIsEmpty) {
-        return InspectionGadgetsBundle.message("string.equals.empty.string.isempty.quickfix");
+        return CommonQuickFixBundle.message("fix.replace.with.x", "isEmpty()");
       }
       else {
-        return InspectionGadgetsBundle.message("string.equals.empty.string.quickfix");
+        return CommonQuickFixBundle.message("fix.replace.with.x", "length()==0");
       }
     }
 

@@ -27,6 +27,7 @@ public interface GlobalOptions {
   String LOG_DIR_OPTION = "jps.log.dir";
   String FALLBACK_JDK_HOME = "jps.fallback.jdk.home";
   String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
+  String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.

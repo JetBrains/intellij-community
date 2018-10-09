@@ -32,6 +32,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  */
 public class ClasspathCache {
+  static final int NUMBER_OF_ACCESSES_FOR_LAZY_CACHING = 1000;
   private final IntObjectHashMap myResourcePackagesCache = new IntObjectHashMap();
   private final IntObjectHashMap myClassPackagesCache = new IntObjectHashMap();
 

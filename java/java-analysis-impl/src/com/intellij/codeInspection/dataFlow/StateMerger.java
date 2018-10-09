@@ -35,7 +35,6 @@ import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
  * @author peter
  */
 class StateMerger {
-  public static final int MAX_RANGE_STATES = 100;
   private static final int COMPLEXITY_LIMIT = 250000;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
@@ -224,8 +223,7 @@ class StateMerger {
         }
       }
     }
-    if (changed) return states;
-    return dropExcessRangeInfo(states, ranges.keySet());
+    return changed ? states : null;
   }
 
   @NotNull
@@ -269,7 +267,7 @@ class StateMerger {
 
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
-          myState.removeEquivalenceRelations(var);
+          myState.removeEquivalenceForVariableAndWrappers(var);
           myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
@@ -285,23 +283,12 @@ class StateMerger {
       DfaVariableState variableState = state.getVariableState(var);
       LongRangeSet range = variableState.getFact(RANGE);
       if (range == null) {
-        range = LongRangeSet.fromType(var.getVariableType());
+        range = LongRangeSet.fromType(var.getType());
         if (range == null) return null;
       }
       merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);
     }
     return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
-  }
-
-  @Nullable
-  private static List<DfaMemoryStateImpl> dropExcessRangeInfo(List<DfaMemoryStateImpl> states, Set<DfaVariableValue> rangeVariables) {
-    if (states.size() <= MAX_RANGE_STATES || rangeVariables.isEmpty()) return null;
-    // If there are too many states, try to drop range information from some variable
-    DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
-    for (DfaMemoryStateImpl state : states) {
-      state.dropFact(lastVar, RANGE);
-    }
-    return new ArrayList<>(new HashSet<>(states));
   }
 
   @NotNull
@@ -523,7 +510,7 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      state.removeEquivalenceRelations(myVar);
+      state.removeEquivalenceForVariableAndWrappers(myVar);
     }
   }
 

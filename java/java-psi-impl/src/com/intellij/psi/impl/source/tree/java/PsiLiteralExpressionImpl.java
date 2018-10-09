@@ -32,7 +32,7 @@ public class PsiLiteralExpressionImpl
 
   public static final TokenSet INTEGER_LITERALS = TokenSet.create(JavaTokenType.INTEGER_LITERAL, JavaTokenType.LONG_LITERAL);
   public static final TokenSet REAL_LITERALS = TokenSet.create(JavaTokenType.FLOAT_LITERAL, JavaTokenType.DOUBLE_LITERAL);
-  public static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
+  private static final TokenSet NUMERIC_LITERALS = TokenSet.orSet(INTEGER_LITERALS, REAL_LITERALS);
 
   public PsiLiteralExpressionImpl(@NotNull PsiLiteralStub stub) {
     super(stub, JavaStubElementTypes.LITERAL_EXPRESSION);
@@ -134,18 +134,15 @@ public class PsiLiteralExpressionImpl
       return PsiLiteralUtil.parseDouble(text);
     }
     if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (StringUtil.endsWithChar(text, '\'')) {
-        if (textLength == 1) return null;
-        text = text.substring(1, textLength - 1);
+      if (textLength == 1 || !StringUtil.endsWithChar(text, '\'')) {
+        return null;
       }
-      else {
-        text = text.substring(1, textLength);
-      }
+      text = text.substring(1, textLength - 1);
       StringBuilder chars = new StringBuilder();
       boolean success = parseStringCharacters(text, chars, null);
       if (!success) return null;
       if (chars.length() != 1) return null;
-      return Character.valueOf(chars.charAt(0));
+      return chars.charAt(0);
     }
 
     return null;
@@ -203,7 +200,9 @@ public class PsiLiteralExpressionImpl
   @Override
   public boolean isValidHost() {
     IElementType elementType = getLiteralElementType();
-    return elementType == JavaTokenType.STRING_LITERAL || elementType == JavaTokenType.RAW_STRING_LITERAL;
+    return elementType == JavaTokenType.STRING_LITERAL
+           || elementType == JavaTokenType.RAW_STRING_LITERAL
+           || elementType == JavaTokenType.CHARACTER_LITERAL;
   }
 
   @Override

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.THashMap;
@@ -151,7 +152,6 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     shutdown(false);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Override
   @NotNull
   protected synchronized MavenServer create() throws RemoteException {
@@ -363,7 +363,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
       protected OSProcessHandler startProcess() throws ExecutionException {
         SimpleJavaParameters params = createJavaParameters();
         GeneralCommandLine commandLine = params.toCommandLine();
-        OSProcessHandler processHandler = new OSProcessHandler(commandLine);
+        OSProcessHandler processHandler = new OSProcessHandler(commandLine) {
+          @NotNull
+          @Override
+          protected BaseOutputReader.Options readerOptions() {
+            return BaseOutputReader.Options.forMostlySilentProcess();
+          }
+        };
         processHandler.setShouldDestroyProcessRecursively(false);
         return processHandler;
       }

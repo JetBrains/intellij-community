@@ -9,6 +9,10 @@ import gnu.trove.TByteArrayList;
  */
 @Deprecated
 public class ByteArrayList extends TByteArrayList {
+  /**
+   * @deprecated use {@link TByteArrayList instead}
+   */
+  @Deprecated
   public ByteArrayList() {
     DeprecatedMethodException.report("Use gnu.trove.TByteArrayList instead");
   }

@@ -34,7 +34,7 @@ abstract class GenericProgramRunner<Settings : RunnerSettings> : BaseProgramRunn
 }
 
 abstract class AsyncProgramRunner<Settings : RunnerSettings> : BaseProgramRunner<Settings>() {
-  override final fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+  final override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
     startRunProfile(environment, state, callback, runProfileStarter { execute(environment, state) })
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.references;
 
 import com.google.common.collect.Lists;
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -56,8 +55,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   @Override
   public TextRange getRangeInElement() {
     final ASTNode nameElement = myElement.getNameElement();
-    final TextRange range = nameElement != null ? nameElement.getTextRange() : myElement.getNode().getTextRange();
-    return range.shiftRight(-myElement.getNode().getStartOffset());
+    return nameElement != null ? nameElement.getPsi().getTextRangeInParent() : TextRange.from(0, myElement.getTextLength());
   }
 
   @NotNull
@@ -82,7 +80,6 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   // it is *not* final so that it can be changed in debug time. if set to false, caching is off
-  @SuppressWarnings("FieldCanBeLocal")
   private static final boolean USE_CACHE = true;
 
   /**
@@ -378,7 +375,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedExpression element) {
-    return ContainerUtil.exists(Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME),
+    return ContainerUtil.exists(PyReferenceResolveProvider.EP_NAME.getExtensionList(),
                                 provider -> provider.allowsForwardOutgoingReferencesInClass(element));
   }
 
@@ -401,8 +398,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final ResolveResultList results = new ResolveResultList();
     final TypeEvalContext context = myContext.getTypeEvalContext();
 
-    Arrays
-      .stream(Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME))
+    PyReferenceResolveProvider.EP_NAME.getExtensionList().stream()
       .filter(PyOverridingReferenceResolveProvider.class::isInstance)
       .map(provider -> provider.resolveName(myElement, context))
       .forEach(results::addAll);
@@ -414,7 +410,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   private ResolveResultList resolveByReferenceResolveProviders() {
     final ResolveResultList results = new ResolveResultList();
     final TypeEvalContext context = myContext.getTypeEvalContext();
-    for (PyReferenceResolveProvider provider : Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME)) {
+    for (PyReferenceResolveProvider provider : PyReferenceResolveProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof PyOverridingReferenceResolveProvider) {
         continue;
       }

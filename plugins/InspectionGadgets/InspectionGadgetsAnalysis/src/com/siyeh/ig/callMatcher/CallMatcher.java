@@ -134,6 +134,23 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
+  /**
+   * Matches given expression if its a call or a method reference returning a corresponding PsiReferenceExpression if match is successful.
+   *
+   * @param expression expression to match
+   * @return PsiReferenceExpression if match is successful, null otherwise
+   */
+  @Nullable
+  default PsiReferenceExpression getReferenceIfMatched(PsiExpression expression) {
+    if (expression instanceof PsiMethodReferenceExpression && methodReferenceMatches((PsiMethodReferenceExpression)expression)) {
+      return (PsiReferenceExpression)expression;
+    }
+    if (expression instanceof PsiMethodCallExpression && test((PsiMethodCallExpression)expression)) {
+      return ((PsiMethodCallExpression)expression).getMethodExpression();
+    }
+    return null;
+  }
+
   class Simple implements CallMatcher {
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
@@ -206,13 +223,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (!myNames.contains(name)) return false;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (myParameters != null && myParameters.length > 0) {
-        if (args.length < myParameters.length) return false;
+        if (args.length < myParameters.length - 1) return false;
       }
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
       PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() > args.length ||
-          (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
+      int count = parameterList.getParametersCount();
+      if (count > args.length + 1 || (!MethodCallUtils.isVarArgCall(call) && count != args.length)) {
         return false;
       }
       return methodMatches(method);

@@ -28,8 +28,8 @@ public class ConfigurationSelectionUtil {
   // todo merge with ChooseRunConfigurationPopup 
   public static ListPopup createPopup(@NotNull Project project,
                                       @NotNull RunManagerImpl runManager,
-                                      @NotNull List<RunConfiguration> configurations,
-                                      @NotNull BiConsumer<List<RunConfiguration>, ExecutionTarget> onSelected) {
+                                      @NotNull List<? extends RunConfiguration> configurations,
+                                      @NotNull BiConsumer<? super List<RunConfiguration>, ? super ExecutionTarget> onSelected) {
     return JBPopupFactory.getInstance().createListPopup(new MultiSelectionListPopupStep<RunConfiguration>(null, configurations) {
       @Nullable
       @Override

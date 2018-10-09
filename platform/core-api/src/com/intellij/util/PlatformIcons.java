@@ -55,7 +55,7 @@ public interface PlatformIcons {
   Icon PROJECT_ICON = AllIcons.Toolwindows.ToolWindowProject;
   Icon UI_FORM_ICON = AllIcons.FileTypes.UiForm;
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
-  Icon SMALL_VCS_CONFIGURABLE = AllIcons.General.SmallConfigurableVcs;
+  Icon SMALL_VCS_CONFIGURABLE = AllIcons.Actions.ShowAsTree;
   Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
   Icon ADD_ICON = IconUtil.getAddIcon();
   Icon DELETE_ICON = IconUtil.getRemoveIcon();
@@ -75,7 +75,7 @@ public interface PlatformIcons {
 
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
-  Icon EDIT_IN_SECTION_ICON = AllIcons.General.EditItemInSection;
+  Icon EDIT_IN_SECTION_ICON = AllIcons.Actions.Edit;
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;
 
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
@@ -93,7 +93,7 @@ public interface PlatformIcons {
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
-  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ComboArrow;
+  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ArrowDown;
 
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;

@@ -30,6 +30,8 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   @NotNull
   public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
 
+  public abstract boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData);
+
   /**
    * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)
    *                  4ex: This flag disables automatic empty changelist deletion.

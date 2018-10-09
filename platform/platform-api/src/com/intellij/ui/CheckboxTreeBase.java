@@ -17,9 +17,12 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
@@ -204,6 +207,26 @@ public class CheckboxTreeBase extends Tree {
       }
 
       return result == null ? State.NOT_SELECTED : result;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleContextDelegate(super.getAccessibleContext()) {
+          @Override
+          protected Container getDelegateParent() {
+            return getParent();
+          }
+
+          @Override
+          public String getAccessibleName() {
+            return AccessibleContextUtil.combineAccessibleStrings(
+              myTextRenderer.getAccessibleContext().getAccessibleName(),
+              myCheckbox.isSelected() ? "checked" : "not checked");
+          }
+        };
+      }
+      return accessibleContext;
     }
 
     /**

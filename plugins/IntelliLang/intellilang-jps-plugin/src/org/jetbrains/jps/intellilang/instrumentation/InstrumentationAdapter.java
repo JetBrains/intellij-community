@@ -1,137 +1,122 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.intellilang.instrumentation;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
-  @NonNls
-  private static final String RETURN_VALUE_NAME = "$returnvalue$";
+import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.NEW_ASM;
+import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.isStringType;
 
-  private final Type[] myArgTypes;
-  private final Type myReturnType;
-  private final int myAccess;
-  private final String myMethodName;
+class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
+  @SuppressWarnings("SpellCheckingInspection") private static final String RETURN_VALUE_NAME = "$returnvalue$";
 
   private final PatternInstrumenter myInstrumenter;
+  private final Type[] myArgTypes;
+  private final Type myReturnType;
+  private final String myClassName;
+  private final String myMethodName;
+  private final boolean myDoAssert;
+  private final boolean myIsStatic;
+  private int myParamAnnotationOffset;
 
   private final List<PatternValue> myParameterPatterns = new ArrayList<>();
   private PatternValue myMethodPattern;
-
-  private Label myAssertLabel;
+  private Label myCheckReturnLabel;
 
   InstrumentationAdapter(PatternInstrumenter instrumenter,
-                                MethodVisitor methodvisitor,
-                                Type[] argTypes,
-                                Type returnType,
-                                int access,
-                                String name) {
-    super(Opcodes.API_VERSION, methodvisitor);
+                         MethodVisitor mv,
+                         Type[] argTypes,
+                         Type returnType,
+                         String className,
+                         String methodName,
+                         boolean doAssert,
+                         boolean isStatic,
+                         int paramAnnotationOffset) {
+    super(Opcodes.API_VERSION, mv);
     myInstrumenter = instrumenter;
+    myDoAssert = doAssert;
     myArgTypes = argTypes;
     myReturnType = returnType;
-    myAccess = access;
-    myMethodName = name;
+    myClassName = className;
+    myMethodName = methodName;
+    myIsStatic = isStatic;
+    myParamAnnotationOffset = paramAnnotationOffset;
+  }
+
+  @Override
+  public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
+    if (myParamAnnotationOffset != 0 && parameterCount == myArgTypes.length) {
+      myParamAnnotationOffset = 0;
+    }
+    super.visitAnnotableParameterCount(parameterCount, visible);
   }
 
   @Override
   public AnnotationVisitor visitParameterAnnotation(int parameter, String desc, boolean visible) {
-    final AnnotationVisitor annotationvisitor = mv.visitParameterAnnotation(parameter, desc, visible);
+    AnnotationVisitor av = mv.visitParameterAnnotation(parameter, desc, visible);
 
-    if (myArgTypes[parameter].getSort() == Type.OBJECT) {
-      final String annotationClassName = Type.getType(desc).getClassName();
-      if (myInstrumenter.acceptAnnotation(annotationClassName)) {
-        @Nullable final String patternString = myInstrumenter.getAnnotationPattern(annotationClassName);
-        final String[] strings = annotationClassName.split("\\.");
-        final PatternValue patternValue = new PatternValue(parameter, strings[strings.length - 1], patternString);
+    if (NEW_ASM ? isStringType(myArgTypes[parameter - myParamAnnotationOffset]) : parameter >= myParamAnnotationOffset && isStringType(myArgTypes[parameter])) {
+      String annotationClassName = Type.getType(desc).getClassName();
+      String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
+      if (pattern != null) {
+        String shortName = annotationClassName.substring(annotationClassName.lastIndexOf('.') + 1);
+        PatternValue patternValue = new PatternValue(parameter - myParamAnnotationOffset, shortName, pattern);
         myParameterPatterns.add(patternValue);
-
-        // dig into the annotation and get the "value" element if pattern isn't present yet
-        return patternString == null ? new MyAnnotationVisitor(annotationvisitor, patternValue) : annotationvisitor;
+        if (pattern == PatternInstrumenter.NULL_PATTERN) {
+          return new MyAnnotationVisitor(av, patternValue);
+        }
       }
     }
-    return annotationvisitor;
+
+    return av;
   }
 
   @Override
   public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
-    final AnnotationVisitor annotationvisitor = mv.visitAnnotation(desc, visible);
+    AnnotationVisitor av = mv.visitAnnotation(desc, visible);
 
-    if (myReturnType.getSort() == Type.OBJECT) {
-      final String annotationClassName = Type.getType(desc).getClassName();
-      if (myInstrumenter.acceptAnnotation(annotationClassName)) {
-        @Nullable final String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
-        final String[] strings = annotationClassName.split("\\.");
-        myMethodPattern = new PatternValue(-1, strings[strings.length - 1], pattern);
-
-        return pattern == null ? new MyAnnotationVisitor(annotationvisitor, myMethodPattern) : annotationvisitor;
+    if (isStringType(myReturnType)) {
+      String annotationClassName = Type.getType(desc).getClassName();
+      String pattern = myInstrumenter.getAnnotationPattern(annotationClassName);
+      if (pattern != null) {
+        String shortName = annotationClassName.substring(annotationClassName.lastIndexOf('.') + 1);
+        myMethodPattern = new PatternValue(-1, shortName, pattern);
+        if (pattern == PatternInstrumenter.NULL_PATTERN) {
+          return new MyAnnotationVisitor(av, myMethodPattern);
+        }
       }
     }
-    return annotationvisitor;
+
+    return av;
   }
 
   @Override
   public void visitCode() {
     for (PatternValue parameter : myParameterPatterns) {
-      int j;
-      if ((myAccess & Opcodes.ACC_STATIC) == 0) {
-        // special case: ctor of non-static inner classes (see IDEA-10889)
-        if ("<init>".equals(myMethodName)) {
-          // ACC_INTERFACE is (ab-)used to tunnel the information about the non-static inner class
-          j = (myInstrumenter.myIsNonStaticInnerClass) ? 1 + myArgTypes[0].getSize() // skip first (synthetic) "Outer.this" parameter
-              : 1;
-        }
-        else {
-          j = 1;
-        }
-      }
-      else {
-        j = 0;
-      }
+      int var = myIsStatic ? 0 : 1;
+      for (int l = 0; l < parameter.parameterIndex; l++) var += myArgTypes[l].getSize();
 
-      for (int l = 0; l < parameter.index; l++) {
-        j += myArgTypes[l].getSize();
-      }
-
-      final Label checked = new Label();
-
-      addPatternTest(parameter.patternIndex, checked, j);
-
-      addPatternAssertion(MessageFormat.format("Argument {0} for @{1} parameter of {2}.{3} does not match pattern {4}", parameter.index,
-                                               parameter.annotation, myInstrumenter.myClassName, myMethodName, parameter.pattern), false);
-
+      Label checked = new Label();
+      addPatternTest(parameter.patternIndex, checked, var);
+      String message = MessageFormat.format("Argument {0} for @{1} parameter of {2}.{3} does not match pattern {4}",
+                                            parameter.parameterIndex, parameter.annotation, myClassName, myMethodName, parameter.pattern);
+      addPatternAssertion(message, false);
       mv.visitLabel(checked);
     }
 
     if (myMethodPattern != null) {
-      myAssertLabel = new Label();
+      myCheckReturnLabel = new Label();
     }
   }
 
   @Override
   public void visitInsn(int opcode) {
-    if (opcode == Opcodes.ARETURN && myAssertLabel != null) {
-      mv.visitJumpInsn(Opcodes.GOTO, myAssertLabel);
+    if (opcode == Opcodes.ARETURN && myCheckReturnLabel != null) {
+      mv.visitJumpInsn(Opcodes.GOTO, myCheckReturnLabel);
     }
     else {
       mv.visitInsn(opcode);
@@ -141,25 +126,18 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   @Override
   public void visitMaxs(int maxStack, int maxLocals) {
     try {
-      if (myAssertLabel != null) {
-
-        // next index for synthetic variable that holds return value
-        final int var = maxLocals + 1;
-
-        mv.visitLabel(myAssertLabel);
-
+      if (myCheckReturnLabel != null) {
+        int var = maxLocals + 1; // next index for synthetic variable that holds return value
+        mv.visitLabel(myCheckReturnLabel);
         mv.visitVarInsn(Opcodes.ASTORE, var);
 
-        final Label end = new Label();
-        addPatternTest(myMethodPattern.patternIndex, end, var);
-
-        addPatternAssertion(MessageFormat.format("Return value of method {0}.{1} annotated as @{2} does not match pattern {3}",
-                                                 myInstrumenter.myClassName, myMethodName, myMethodPattern.annotation,
-                                                 myMethodPattern.pattern), true);
-
-        mv.visitLabel(end);
-        mv.visitLocalVariable(RETURN_VALUE_NAME, PatternInstrumenter.JAVA_LANG_STRING, null, myAssertLabel, end, var);
-
+        Label checked = new Label();
+        addPatternTest(myMethodPattern.patternIndex, checked, var);
+        String message = MessageFormat.format("Return value of method {0}.{1} annotated as @{2} does not match pattern {3}",
+                                              myClassName, myMethodName, myMethodPattern.annotation, myMethodPattern.pattern);
+        addPatternAssertion(message, true);
+        mv.visitLabel(checked);
+        mv.visitLocalVariable(RETURN_VALUE_NAME, PatternInstrumenter.JAVA_LANG_STRING, null, myCheckReturnLabel, checked, var);
         mv.visitVarInsn(Opcodes.ALOAD, var);
         mv.visitInsn(Opcodes.ARETURN);
       }
@@ -171,18 +149,16 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private void addPatternTest(int patternIndex, Label label, int varIndex) {
-    if (myInstrumenter.myInstrumentationType == InstrumentationType.ASSERT) {
-      mv.visitFieldInsn(Opcodes.GETSTATIC, myInstrumenter.myClassName, PatternInstrumenter.ASSERTIONS_DISABLED_NAME, "Z");
+    if (myDoAssert) {
+      mv.visitFieldInsn(Opcodes.GETSTATIC, myClassName, PatternInstrumenter.ASSERTIONS_DISABLED_NAME, "Z");
       mv.visitJumpInsn(Opcodes.IFNE, label);
     }
 
     mv.visitVarInsn(Opcodes.ALOAD, varIndex);
     mv.visitJumpInsn(Opcodes.IFNULL, label);
 
-    mv.visitFieldInsn(GETSTATIC, myInstrumenter.myClassName, PatternInstrumenter.PATTERN_CACHE_NAME,
-                      "[Ljava/util/regex/Pattern;");
+    mv.visitFieldInsn(GETSTATIC, myClassName, PatternInstrumenter.PATTERN_CACHE_NAME, "[Ljava/util/regex/Pattern;");
     mv.visitIntInsn(BIPUSH, patternIndex);
     mv.visitInsn(AALOAD);
     mv.visitVarInsn(ALOAD, varIndex);
@@ -194,21 +170,19 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
 
   // TODO: add actual value to assertion message
   private void addPatternAssertion(String message, boolean isMethod) {
-    if (myInstrumenter.myInstrumentationType == InstrumentationType.ASSERT) {
+    if (myDoAssert) {
       addThrow("java/lang/AssertionError", "(Ljava/lang/Object;)V", message);
     }
-    else if (myInstrumenter.myInstrumentationType == InstrumentationType.EXCEPTION) {
-      if (isMethod) {
-        addThrow("java/lang/IllegalStateException", "(Ljava/lang/String;)V", message);
-      }
-      else {
-        addThrow("java/lang/IllegalArgumentException", "(Ljava/lang/String;)V", message);
-      }
+    else if (isMethod) {
+      addThrow("java/lang/IllegalStateException", "(Ljava/lang/String;)V", message);
+    }
+    else {
+      addThrow("java/lang/IllegalArgumentException", "(Ljava/lang/String;)V", message);
     }
     myInstrumenter.markInstrumented();
   }
 
-  private void addThrow(@NonNls String throwableClass, @NonNls String ctorSignature, String message) {
+  private void addThrow(String throwableClass, String ctorSignature, String message) {
     mv.visitTypeInsn(Opcodes.NEW, throwableClass);
     mv.visitInsn(Opcodes.DUP);
     mv.visitLdcInsn(message);
@@ -217,54 +191,34 @@ class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
   }
 
   private static class MyAnnotationVisitor extends AnnotationVisitor {
-    private final AnnotationVisitor av;
     private final PatternValue myPatternValue;
 
     MyAnnotationVisitor(AnnotationVisitor annotationvisitor, PatternValue v) {
-      super(Opcodes.API_VERSION);
-      av = annotationvisitor;
+      super(Opcodes.API_VERSION, annotationvisitor);
       myPatternValue = v;
     }
 
     @Override
-    public void visit(@NonNls String name, Object value) {
+    public void visit(String name, Object value) {
       av.visit(name, value);
       if ("value".equals(name) && value instanceof String) {
         myPatternValue.set((String)value);
       }
     }
-
-    @Override
-    public void visitEnum(String name, String desc, String value) {
-      av.visitEnum(name, desc, value);
-    }
-
-    @Override
-    public AnnotationVisitor visitAnnotation(String name, String desc) {
-      return av.visitAnnotation(name, desc);
-    }
-
-    @Override
-    public AnnotationVisitor visitArray(String name) {
-      return av.visitArray(name);
-    }
-
-    @Override
-    public void visitEnd() {
-      av.visitEnd();
-    }
   }
 
-  class PatternValue {
-    final int index;
+  private class PatternValue {
+    final int parameterIndex;
     final String annotation;
-    String pattern;
-    int patternIndex;
+    String pattern = null;
+    int patternIndex = -1;
 
-    PatternValue(int index, String annotation, String pattern) {
-      this.index = index;
+    PatternValue(int parameterIndex, String annotation, String pattern) {
+      this.parameterIndex = parameterIndex;
       this.annotation = annotation;
-      if (pattern != null) set(pattern);
+      if (pattern != PatternInstrumenter.NULL_PATTERN) {
+        set(pattern);
+      }
     }
 
     void set(String s) {

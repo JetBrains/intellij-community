@@ -103,18 +103,17 @@ public abstract class CellPluginComponent extends JPanel {
       }
     };
 
-    myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
+    PluginManagerConfigurableNew.installTiny(myDescription);
     myDescription.setEditable(false);
     myDescription.setFocusable(false);
     myDescription.setOpaque(false);
     myDescription.setBorder(null);
+    myDescription.setCaret(EmptyCaret.INSTANCE);
+
+    myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
     myDescription.setText(XmlStringUtil.wrapInHtml(description));
 
-    if (myDescription.getCaret() != null) {
-      myDescription.setCaretPosition(0);
-    }
-
-    parent.add(PluginManagerConfigurableNew.installTiny(myDescription));
+    parent.add(myDescription);
   }
 
   @NotNull
@@ -143,8 +142,12 @@ public abstract class CellPluginComponent extends JPanel {
       }
     }
 
-    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNew.MAIN_BG_COLOR : HOVER_COLOR);
+    updateColors(type);
     repaint();
+  }
+
+  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+    updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE ? PluginManagerConfigurableNew.MAIN_BG_COLOR : HOVER_COLOR);
   }
 
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {

@@ -1,12 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -23,7 +26,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    return findSchemaAndGenerateDoc(element, originalElement, true);
+    return findSchemaAndGenerateDoc(element, originalElement, true, null);
   }
 
   @Nullable
@@ -35,12 +38,21 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    return findSchemaAndGenerateDoc(element, originalElement, false);
+    String forcedPropName = null;
+    if (element instanceof FakeDocElement) {
+      forcedPropName = ((FakeDocElement)element).myAltName;
+      element = ((FakeDocElement)element).myContextElement;
+    }
+    return findSchemaAndGenerateDoc(element, originalElement, false, forcedPropName);
   }
 
   @Nullable
-  public static String findSchemaAndGenerateDoc(PsiElement element, @Nullable PsiElement originalElement, final boolean preferShort) {
-    element = ObjectUtils.coalesce(originalElement, element);
+  public static String findSchemaAndGenerateDoc(PsiElement element,
+                                                @Nullable PsiElement originalElement,
+                                                final boolean preferShort,
+                                                @Nullable String forcedPropName) {
+    if (element instanceof FakeDocElement) return null;
+    element = isWhitespaceOrComment(originalElement) ? element : ObjectUtils.coalesce(originalElement, element);
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
@@ -49,12 +61,18 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
     if (rootSchema == null) return null;
 
-    return generateDoc(element, rootSchema, preferShort);
+    return generateDoc(element, rootSchema, preferShort, forcedPropName);
+  }
+
+  private static boolean isWhitespaceOrComment(@Nullable PsiElement originalElement) {
+    return originalElement instanceof PsiWhiteSpace || originalElement instanceof PsiComment;
   }
 
   @Nullable
   public static String generateDoc(@NotNull final PsiElement element,
-                                   @NotNull final JsonSchemaObject rootSchema, final boolean preferShort) {
+                                   @NotNull final JsonSchemaObject rootSchema,
+                                   final boolean preferShort,
+                                   @Nullable String forcedPropName) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
@@ -62,6 +80,21 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (checkable == null) return null;
     final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
     if (position == null) return null;
+    if (forcedPropName != null) {
+      if (position.isEmpty()) {
+        if (isWhitespaceOrComment(element)) {
+          position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+        }
+        else {
+          return null;
+        }
+      }
+      else {
+        final JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
+        if (lastStep.getName() == null) return null;
+        position.set(position.size() - 1, JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
+      }
+    }
     final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 
     String htmlDescription = null;
@@ -100,7 +133,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       type = ": " + schemaType;
     }
 
-    htmlDescription = "<b>" + name + "</b>" + type + apiInfo + "<br/><br/>" + htmlDescription;
+    htmlDescription = DocumentationMarkup.DEFINITION_START + name  + type + apiInfo + DocumentationMarkup.DEFINITION_END +
+                      DocumentationMarkup.CONTENT_START + htmlDescription + DocumentationMarkup.CONTENT_END;
     return htmlDescription;
   }
 
@@ -146,6 +180,9 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
+      return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
+    }
     return null;
   }
 
@@ -153,5 +190,26 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     return null;
+  }
+
+  private static class FakeDocElement extends FakePsiElement {
+    private final PsiElement myContextElement;
+    private final String myAltName;
+
+    private FakeDocElement(PsiElement context, String name) {
+      myContextElement = context;
+      myAltName = name;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return myContextElement;
+    }
+
+    @NotNull
+    @Override
+    public TextRange getTextRangeInParent() {
+      return myContextElement.getTextRange().shiftLeft(myContextElement.getTextOffset());
+    }
   }
 }

@@ -42,7 +42,7 @@ final class EditorsMessageParser extends AbstractMessageParser {
 
 	private final IEventSender eventManager;
 	private final ICvsFileSystem cvsFileSystem;
-	private final Set fileSet = new HashSet();
+	private final Set<File> fileSet = new HashSet<>();
 
 	private transient EditorsFileInfoContainer editorsFileInfo;
 
@@ -116,11 +116,10 @@ final class EditorsMessageParser extends AbstractMessageParser {
 			editorsFileInfo = null;
 		}
 
-		for (Iterator it = fileSet.iterator(); it.hasNext();) {
-			final File file = (File)it.next();
+		for (final File file : fileSet) {
 			fireFileInfoEvent(new EditorsFileInfoContainer(file), false);
-			it.remove();
 		}
+		fileSet.clear();
 	}
 
 	// Utils ==================================================================

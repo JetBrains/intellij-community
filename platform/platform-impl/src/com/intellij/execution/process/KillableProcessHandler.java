@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jvnet.winp.WinProcess;
@@ -166,8 +167,8 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
         try {
           return new WinProcess(myProcess).sendCtrlC();
         }
-        catch (Exception e) {
-          LOG.warn("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
+        catch (Error e) {
+          LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
         }
       }
     }
@@ -179,12 +180,17 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @Override
   public boolean canKillProcess() {
-    return processCanBeKilledByOS(getProcess());
+    return processCanBeKilledByOS(getProcess()) || getProcess() instanceof RemoteProcess;
   }
 
   @Override
   public void killProcess() {
-    // execute 'kill -SIGKILL <pid>' on Unix
-    killProcessTree(getProcess());
+    if (processCanBeKilledByOS(getProcess())) {
+      // execute 'kill -SIGKILL <pid>' on Unix
+      killProcessTree(getProcess());
+    }
+    else if (getProcess() instanceof RemoteProcess) {
+      ((RemoteProcess)getProcess()).killProcessTree();
+    }
   }
 }

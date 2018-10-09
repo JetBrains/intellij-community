@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class TraceUtil {
   private static final String THREE_DOTS = "...";
 
-  public static List<TraceElement> sortedByTime(@NotNull Collection<TraceElement> values) {
+  public static List<TraceElement> sortedByTime(@NotNull Collection<? extends TraceElement> values) {
     return values.stream().sorted(Comparator.comparing(TraceElement::getTime)).collect(Collectors.toList());
   }
 

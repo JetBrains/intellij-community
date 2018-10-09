@@ -1,0 +1,14 @@
+{
+    "type": "object",
+    "properties": {
+      "a": {
+        "type": "string"
+      }      
+    },   
+    "dependencies" : {
+      "a": ["b", "c", "d"]
+    }    
+    "additionalProperties": {
+      "type": "string"
+    }
+}

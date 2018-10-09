@@ -267,7 +267,6 @@ class JsonSchemaAnnotatorChecker {
     final JsonObjectValueAdapter object = value.getAsObject();
     if (object == null) return;
 
-    //noinspection ConstantConditions
     final List<JsonPropertyAdapter> propertyList = object.getPropertyList();
     final Set<String> set = new HashSet<>();
     for (JsonPropertyAdapter property : propertyList) {
@@ -294,7 +293,7 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (object.shouldCheckIntegralRequirements()) {
-      final List<String> required = schema.getRequired();
+      final Set<String> required = schema.getRequired();
       if (required != null) {
         HashSet<String> requiredNames = ContainerUtil.newHashSet(required);
         requiredNames.removeAll(set);
@@ -916,7 +915,6 @@ class JsonSchemaAnnotatorChecker {
   private JsonSchemaObject processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf) {
     final List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers = ContainerUtil.newArrayList();
     final List<JsonSchemaObject> candidateErroneousSchemas = ContainerUtil.newArrayList();
-    boolean wasTypeError = false;
     final List<JsonSchemaObject> correct = new SmartList<>();
     for (JsonSchemaObject object : oneOf) {
       // skip it if something JS awaited, we do not process it currently
@@ -930,10 +928,9 @@ class JsonSchemaAnnotatorChecker {
         candidateErroneousSchemas.clear();
         correct.add(object);
       }
-      else if (!wasTypeError || !checker.isHadTypeError()) {
+      else {
         candidateErroneousCheckers.add(checker);
         candidateErroneousSchemas.add(object);
-        wasTypeError = checker.isHadTypeError();
       }
     }
     if (correct.size() == 1) return correct.get(0);
@@ -1017,10 +1014,8 @@ class JsonSchemaAnnotatorChecker {
         return object;
       }
       // maybe we still find the correct schema - continue to iterate
-      if (!checker.isHadTypeError()) {
-        candidateErroneousCheckers.add(checker);
-        candidateErroneousSchemas.add(object);
-      }
+      candidateErroneousCheckers.add(checker);
+      candidateErroneousSchemas.add(object);
     }
 
     return showErrorsAndGetLeastErroneous(candidateErroneousCheckers, candidateErroneousSchemas, false);
@@ -1038,6 +1033,7 @@ class JsonSchemaAnnotatorChecker {
                                                           @NotNull List<JsonSchemaObject> candidateErroneousSchemas,
                                                           boolean isOneOf) {
     JsonSchemaObject current = null;
+    JsonSchemaObject currentWithMinAverage = null;
     Optional<AverageFailureAmount> minAverage = candidateErroneousCheckers.stream()
                                                                           .map(c -> getAverageFailureAmount(c))
                                                                           .min(Comparator.comparingInt(c -> c.ordinal()));
@@ -1045,17 +1041,27 @@ class JsonSchemaAnnotatorChecker {
 
     int minErrorCount = candidateErroneousCheckers.stream().map(c -> c.getErrors().size()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
 
+    MultiMap<PsiElement, JsonValidationError> errorsWithMinAverage = MultiMap.create();
     MultiMap<PsiElement, JsonValidationError> allErrors = MultiMap.create();
     for (int i = 0; i < candidateErroneousCheckers.size(); i++) {
       JsonSchemaAnnotatorChecker checker = candidateErroneousCheckers.get(i);
-      if (checker.getErrors().size() > minErrorCount) continue;
-      if (getAverageFailureAmount(checker).ordinal() <= min) {
-        current = candidateErroneousSchemas.get(i);
+      final boolean isMoreThanMinErrors = checker.getErrors().size() > minErrorCount;
+      final boolean isMoreThanAverage = getAverageFailureAmount(checker).ordinal() > min;
+      if (!isMoreThanMinErrors) {
+        if (isMoreThanAverage) {
+          currentWithMinAverage = candidateErroneousSchemas.get(i);
+        }
+        else {
+          current = candidateErroneousSchemas.get(i);
+        }
+
         for (Map.Entry<PsiElement, JsonValidationError> entry: checker.getErrors().entrySet()) {
-          allErrors.putValue(entry.getKey(), entry.getValue());
+          (isMoreThanAverage ? errorsWithMinAverage : allErrors).putValue(entry.getKey(), entry.getValue());
         }
       }
     }
+
+    if (allErrors.isEmpty()) allErrors = errorsWithMinAverage;
 
     for (Map.Entry<PsiElement, Collection<JsonValidationError>> entry : allErrors.entrySet()) {
       Collection<JsonValidationError> value = entry.getValue();
@@ -1076,10 +1082,12 @@ class JsonSchemaAnnotatorChecker {
     }
 
     if (current == null) {
+      current = currentWithMinAverage;
+    }
+    if (current == null) {
       current = ContainerUtil.getLastItem(candidateErroneousSchemas);
     }
 
-    //noinspection ConstantConditions
     return current;
   }
 
@@ -1112,6 +1120,18 @@ class JsonSchemaAnnotatorChecker {
                                      isOneOf ? JsonValidationError.FixableIssueKind.MissingOneOfProperty : JsonValidationError.FixableIssueKind.MissingAnyOfProperty,
                                      new JsonValidationError.MissingOneOfPropsIssueData(errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData()).collect(
                                        Collectors.toList())), errors.iterator().next().getPriority());
+    }
+
+    if (commonIssueKind == JsonValidationError.FixableIssueKind.ProhibitedType) {
+      final Set<JsonSchemaType> allTypes = errors.stream().map(e -> (JsonValidationError.TypeMismatchIssueData)e.getIssueData())
+        .flatMap(d -> Arrays.stream(d.expectedTypes)).collect(Collectors.toSet());
+
+      if (allTypes.size() == 1) return errors.iterator().next();
+
+      String commonTypeMessage = "Type is not allowed. Expected one of: " + allTypes.stream().map(t -> t.getDescription()).sorted().collect(Collectors.joining(", ")) + ".";
+      return new JsonValidationError(commonTypeMessage, JsonValidationError.FixableIssueKind.TypeMismatch,
+                                     new JsonValidationError.TypeMismatchIssueData(ContainerUtil.toArray(allTypes, JsonSchemaType[]::new)),
+                                     errors.iterator().next().getPriority());
     }
 
     return null;

@@ -18,7 +18,6 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -149,7 +148,7 @@ public class InstanceVariableUninitializedUseInspection extends BaseInspection {
         return;
       }
       for (ImplicitUsageProvider provider :
-        Extensions.getExtensions(ImplicitUsageProvider.EP_NAME)) {
+        ImplicitUsageProvider.EP_NAME.getExtensionList()) {
         if (provider.isImplicitWrite(field)) {
           return;
         }

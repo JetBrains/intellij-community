@@ -3,12 +3,14 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class AssertWithSideEffectsInspectionTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/assert_with_side_effects";
+    return LightInspectionTestCase.INSPECTION_GADGETS_TEST_DATA_PATH +
+           "com/siyeh/igtest/bugs/assert_with_side_effects";
   }
 
   @NotNull

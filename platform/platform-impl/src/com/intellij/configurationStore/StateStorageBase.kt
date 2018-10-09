@@ -32,7 +32,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
 
   protected abstract fun hasState(storageData: T, componentName: String): Boolean
 
-  override final fun hasState(componentName: String, reloadData: Boolean): Boolean {
+  final override fun hasState(componentName: String, reloadData: Boolean): Boolean {
     return hasState(getStorageData(reloadData), componentName)
   }
 

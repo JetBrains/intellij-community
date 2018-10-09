@@ -49,13 +49,12 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
   
-  @NotNull private final Condition<Integer> myWideSelectionCondition;
+  @NotNull private final Condition<? super Integer> myWideSelectionCondition;
   private final boolean myWideSelection;
   private boolean myOldRepaintAllRowValue;
   private boolean myForceDontPaintLines = false;
   private final boolean mySkinny = false;
 
-  @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
     this(true, Conditions.<Integer>alwaysTrue());
   }
@@ -67,7 +66,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
    * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
    *                                is given to the condition as an argument)
    */
-  public WideSelectionTreeUI(final boolean wideSelection, @NotNull Condition<Integer> wideSelectionCondition) {
+  public WideSelectionTreeUI(final boolean wideSelection, @NotNull Condition<? super Integer> wideSelectionCondition) {
     myWideSelection = wideSelection;
     myWideSelectionCondition = wideSelectionCondition;
   }

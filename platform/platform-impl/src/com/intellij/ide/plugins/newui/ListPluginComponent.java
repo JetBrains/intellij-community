@@ -86,7 +86,7 @@ public class ListPluginComponent extends CellPluginComponent {
       showProgress(false);
     }
 
-    setSelection(EventHandler.SelectionType.NONE);
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   private void createButtons(boolean update) {
@@ -99,6 +99,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
       myEnableDisableButton.setSelected(false);
       myEnableDisableButton.setEnabled(false);
+      myEnableDisableButton.setVisible(false);
 
       myUninstalled = true;
     }
@@ -151,6 +152,10 @@ public class ListPluginComponent extends CellPluginComponent {
       changeUpdateToRestart();
     }
     fullRepaint();
+  }
+
+  public void clearProgress() {
+    myIndicator = null;
   }
 
   @NotNull
@@ -211,7 +216,7 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateErrors() {
     boolean errors = myPluginModel.hasErrors(myPlugin);
-    updateIcon(errors, !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
 
     if (errors) {
       Ref<Boolean> enableAction = new Ref<>();
@@ -243,7 +248,7 @@ public class ListPluginComponent extends CellPluginComponent {
       myLastUpdated.setForeground(grayedFg);
     }
 
-    boolean enabled = MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin);
+    boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
     myName.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
 
     if (myDescription != null) {
@@ -257,9 +262,11 @@ public class ListPluginComponent extends CellPluginComponent {
 
   public void updateAfterUninstall() {
     myUninstalled = true;
+    updateColors(mySelection);
 
     myEnableDisableButton.setSelected(false);
     myEnableDisableButton.setEnabled(false);
+    myEnableDisableButton.setVisible(false);
 
     changeUpdateToRestart();
   }
@@ -336,7 +343,7 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(result.first ? "Enable" : "Disable", KeyEvent.VK_SPACE) {
+    group.add(new MyAnAction(result.first ? "Enable" : "Disable", null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myPluginModel.changeEnableDisable(result.second, result.first);
@@ -350,9 +357,12 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     group.addSeparator();
-    group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
+    group.add(new MyAnAction("Uninstall", IdeActions.ACTION_EDITOR_DELETE, EventHandler.DELETE_CODE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
+        }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(component, component.myPlugin, null);
         }
@@ -404,11 +414,14 @@ public class ListPluginComponent extends CellPluginComponent {
           myPluginModel.changeEnableDisable(result.second, result.first);
         }
       }
-      else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+      else if (keyCode == EventHandler.DELETE_CODE) {
         for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
+        }
+        if (!myPluginModel.showUninstallDialog(selection)) {
+          return;
         }
         for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(this, component.myPlugin, null);
@@ -465,9 +478,16 @@ public class ListPluginComponent extends CellPluginComponent {
   }
 
   private abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nullable String text, int keyCode) {
+    MyAnAction(@Nullable String text, @Nullable String actionId, int keyCode) {
       super(text);
-      setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0)));
+      ShortcutSet shortcutSet = null;
+      if (actionId != null) {
+        shortcutSet = EventHandler.getShortcuts(actionId);
+      }
+      if (shortcutSet == null) {
+        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
+      }
+      setShortcutSet(shortcutSet);
     }
   }
 }

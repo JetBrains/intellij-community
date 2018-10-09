@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.psi.PsiDocumentManager;
@@ -81,7 +80,7 @@ class JavaInjectedFileChangesHandler extends BaseInjectedFileChangesHandler {
     // run preformat processors
     final int hostStartOffset = myAltFullRange.getStartOffset();
     myEditor.getCaretModel().moveToOffset(hostStartOffset);
-    for (CopyPastePreProcessor preProcessor : Extensions.getExtensions(CopyPastePreProcessor.EP_NAME)) {
+    for (CopyPastePreProcessor preProcessor : CopyPastePreProcessor.EP_NAME.getExtensionList()) {
       newText = preProcessor.preprocessOnPaste(myProject, origPsiFile, myEditor, newText, null);
     }
     myOrigDocument.replaceString(hostStartOffset, myAltFullRange.getEndOffset(), newText);

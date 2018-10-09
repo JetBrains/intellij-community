@@ -168,7 +168,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   }
 
   @Override
-  protected Object findNodeByElement(Object element) {
+  protected Object findNodeByElement(@NotNull Object element) {
     final Object node = findSmartFirstLevelNodeByElement(element);
     if (node != null) return node;
     return super.findNodeByElement(element);

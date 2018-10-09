@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.json5.Json5FileType;
 import com.intellij.json.psi.JsonFile;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +41,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
       @Override
       @NotNull
       public Map<String, String> map(@NotNull FileContent inputData) {
+        final FileType fileType = inputData.getFileType();
+        if (fileType != JsonFileType.INSTANCE
+            && fileType != Json5FileType.INSTANCE) return ContainerUtil.newHashMap();
         PsiFile file = inputData.getPsiFile();
         if (!(file instanceof JsonFile)) return ContainerUtil.newHashMap();
         HashMap<String, String> map = ContainerUtil.newHashMap();

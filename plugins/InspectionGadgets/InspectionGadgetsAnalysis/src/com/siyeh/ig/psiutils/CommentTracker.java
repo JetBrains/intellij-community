@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
-import com.intellij.lang.ASTFactory;
-import com.intellij.lang.ASTNode;
+import com.intellij.lang.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -208,8 +208,24 @@ public final class CommentTracker {
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    List<PsiElement> suffix = new ArrayList<>();
+    if (element instanceof PsiStatement) {
+      PsiElement lastChild = element.getLastChild();
+      boolean hasComment = false;
+      while (lastChild instanceof PsiComment || lastChild instanceof PsiWhiteSpace) {
+        hasComment |= lastChild instanceof PsiComment;
+        if (!(lastChild instanceof PsiComment) || !(shouldIgnore((PsiComment)lastChild))) {
+          suffix.add(markUnchanged(lastChild).copy());
+        }
+        lastChild = lastChild.getPrevSibling();
+      }
+      if (!hasComment) {
+        suffix.clear();
+      }
+    }
     PsiElement result = replace(element, replacement);
-    PsiElement anchor = PsiTreeUtil.getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class);
+    PsiElement anchor = PsiTreeUtil
+      .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
     if (anchor instanceof PsiLambdaExpression && anchor != result) {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
@@ -220,6 +236,24 @@ public final class CommentTracker {
       anchor = anchor.getParent();
     }
     if (anchor == null) anchor = result;
+    if (!suffix.isEmpty()) {
+      Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(result.getLanguage());
+      if (commenter instanceof CodeDocumentationAwareCommenter) {
+        IElementType lineCommentTokenType = ((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType();
+        if (lineCommentTokenType != null) {
+          PsiElement lastChild = result.getLastChild();
+          if (lastChild instanceof PsiComment && lineCommentTokenType.equals(((PsiComment)lastChild).getTokenType())) {
+            PsiElement nextSibling = result.getNextSibling();
+            if (nextSibling instanceof PsiWhiteSpace) {
+              result.add(nextSibling);
+            } else {
+              result.add(ASTFactory.whitespace("\n").getPsi());
+            }
+          }
+        }
+      }
+      StreamEx.ofReversed(suffix).forEach(result::add);
+    }
     insertCommentsBefore(anchor);
     return result;
   }
@@ -339,7 +373,16 @@ public final class CommentTracker {
     grabComments(element);
   }
 
-  private void grabComments(PsiElement element) {
+  /**
+   * Grab the comments from given element which should be restored. Normally you don't need to call this method.
+   * It should be called only if element is about to be deleted by other code which is not CommentTracker-aware.
+   *
+   * <p>Calling this method repeatedly has no effect. It's also safe to call this method, then delete element using
+   * other methods from this class like {@link #delete(PsiElement)}.
+   *
+   * @param element element to grab the comments from.
+   */
+  public void grabComments(PsiElement element) {
     checkState();
     for (PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
       if (!shouldIgnore(comment)) {

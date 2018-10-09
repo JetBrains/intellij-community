@@ -11,7 +11,6 @@ import java.awt.*;
 
 //TODO remove the class
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCellRenderer {
   protected Icon myLeafIcon;
   protected Color myTextBackground;

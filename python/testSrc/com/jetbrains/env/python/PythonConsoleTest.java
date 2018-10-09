@@ -2,6 +2,7 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -17,6 +18,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author traff
  */
+@Staging
 public class PythonConsoleTest extends PyEnvTestCase {
   @Test
   public void testConsolePrint() {
@@ -92,6 +94,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
 
   @Test
+  @Staging
   public void testVariablesView() {
     runPythonTest(new PyConsoleTask() {
       @Override

@@ -4,6 +4,19 @@ package com.intellij.execution.configurations
 import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.*
 
+@Tag("predefined_log_file")
+class PredefinedLogFile() : BaseState() {
+  constructor(id: String, isEnabled: Boolean) : this() {
+    this.id = id
+    this.isEnabled = isEnabled
+  }
+
+  @get:Attribute
+  var id by string()
+  @get:Attribute("enabled")
+  var isEnabled by property(false)
+}
+
 open class RunConfigurationOptions : BaseState() {
   @Tag("output_file")
   class OutputFileOptions : BaseState() {
@@ -12,19 +25,29 @@ open class RunConfigurationOptions : BaseState() {
     @get:Attribute("is_save")
     var isSaveOutput by property(false)
   }
-
+  
   // we use object instead of 2 fields because XML serializer cannot reuse tag for several fields
   @get:Property(surroundWithTag = false)
   var fileOutput by property(OutputFileOptions())
 
+  @get:Property(surroundWithTag = false)
+  @get:XCollection
+  var predefinedLogFiles by list<PredefinedLogFile>()
+
+  @com.intellij.configurationStore.Property(description = "Show console when a message is printed to standard output stream")
   @get:Attribute("show_console_on_std_out")
   var isShowConsoleOnStdOut by property(false)
+  @com.intellij.configurationStore.Property(description = "Show console when a message is printed to standard error stream")
   @get:Attribute("show_console_on_std_err")
   var isShowConsoleOnStdErr by property(false)
 
   @get:Property(surroundWithTag = false)
   @get:XCollection
   var logFiles by list<LogFileOptions>()
+
+  @com.intellij.configurationStore.Property(description = "Allow running in parallel")
+  @get:Transient
+  var isAllowRunningInParallel by property(false)
 }
 
 open class LocatableRunConfigurationOptions : RunConfigurationOptions() {

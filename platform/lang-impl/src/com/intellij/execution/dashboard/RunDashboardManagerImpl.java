@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -222,9 +223,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations() {
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
-    List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(settings -> myState.configurationTypes.contains(settings.getType().getId()))
-      .collect(Collectors.toList());
+    List<RunnerAndConfigurationSettings> configurations = ContainerUtil
+      .filter(RunManager.getInstance(myProject).getAllSettings(),
+              settings -> myState.configurationTypes.contains(settings.getType().getId()));
 
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
     configurations.forEach(configurationSettings -> {

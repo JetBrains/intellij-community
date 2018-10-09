@@ -53,7 +53,6 @@ public abstract class ReadConfigFilesTestCase extends UsefulTestCase {
     File baseDir = FileUtil.createTempDirectory("mavenServerConfig", null);
     FileUtil.writeToFile(new File(baseDir, relativePath), text);
     Map<String, String> result = readProperties(baseDir);
-    //noinspection MisorderedAssertEqualsArguments
     assertEquals(expected, result);
   }
 

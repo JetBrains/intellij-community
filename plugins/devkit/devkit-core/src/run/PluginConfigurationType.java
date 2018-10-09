@@ -9,8 +9,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.LazyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
 
   public PluginConfigurationType() {
     super("#org.jetbrains.idea.devkit.run.PluginConfigurationType", DevKitBundle.message("run.configuration.title"), DevKitBundle.message("run.configuration.type.description"),
-          LazyUtil.create(() -> AllIcons.Nodes.Plugin));
+          NotNullLazyValue.createValue(() -> AllIcons.Nodes.Plugin));
   }
 
   @NotNull

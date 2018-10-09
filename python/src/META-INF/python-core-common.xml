@@ -27,6 +27,7 @@
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
+    <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.psi.impl.PythonASTFactory"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
@@ -517,7 +518,6 @@
 
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
 
-    <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
@@ -633,9 +633,6 @@
     <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
-    <!-- f-strings -->
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector" id="f-strings"/>
-
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
@@ -649,6 +646,8 @@
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
     <scratch.rootType implementation="com.jetbrains.python.console.PyConsoleRootType" />
     <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
+
+    <controlFlowProvider implementation="com.jetbrains.python.codeInsight.controlflow.PyControlFlowProvider"/>
 
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
@@ -711,6 +710,7 @@
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">

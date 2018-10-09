@@ -40,6 +40,7 @@ public interface ActionToolbar {
   /**
    * @return component which represents the tool bar on UI
    */
+  @NotNull
   JComponent getComponent();
 
   /**

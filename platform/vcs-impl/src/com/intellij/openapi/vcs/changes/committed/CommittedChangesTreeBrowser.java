@@ -288,7 +288,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
    * <b>NB:</b> changes must be given in the time-ascending order, i.e the first change in the list should be the oldest one.
    */
   @NotNull
-  public static List<Change> zipChanges(@NotNull List<Change> changes) {
+  public static List<Change> zipChanges(@NotNull List<? extends Change> changes) {
     // TODO: further improvements needed
     // We may want to process collisions more consistent
 
@@ -416,7 +416,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[0]));
@@ -540,7 +540,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (key.equals(PlatformDataKeys.COPY_PROVIDER)) {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }

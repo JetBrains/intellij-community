@@ -14,7 +14,7 @@ public class FastSparseSetFactory<E> {
 
   private int lastMask;
 
-  public FastSparseSetFactory(Collection<E> set) {
+  public FastSparseSetFactory(Collection<? extends E> set) {
 
     int block = -1;
     int mask = -1;

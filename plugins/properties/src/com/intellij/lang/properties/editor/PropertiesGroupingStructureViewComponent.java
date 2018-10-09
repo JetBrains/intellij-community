@@ -29,7 +29,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
   }
 
   @Override
-  protected void addGroupByActions(DefaultActionGroup result) {
+  protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new ChangeGroupSeparatorAction());
     if (getTreeModel() instanceof ResourceBundleStructureViewModel) {
@@ -67,10 +67,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
       myPredefinedSeparators.add("/");
-      String currentSeparator = getCurrentSeparator();
-      if (!myPredefinedSeparators.contains(currentSeparator)) {
-        myPredefinedSeparators.add(currentSeparator);
-      }
+      myPredefinedSeparators.add(getCurrentSeparator());
       refillActionGroup();
     }
 

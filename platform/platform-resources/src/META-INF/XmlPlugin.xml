@@ -438,6 +438,10 @@
                      bundle="messages.XmlBundle" key="xml.inspections.default.attribute.value"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueInspection"/>
+    <localInspection language="XML" enabledByDefault="true" level="WARNING"
+                     bundle="messages.XmlBundle" key="xml.inspections.deprecated"
+                     groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
+                     implementationClass="com.intellij.codeInsight.daemon.impl.analysis.XmlDeprecatedElementInspection"/>
 
     <localInspection language="XML" shortName="CheckEmptyScriptTag" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="html.inspections.check.empty.tag"
@@ -571,6 +575,9 @@
     <todoIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlTodoIndexer"/>
     <todoIndexer filetype="HTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.HtmlTodoIndexer"/>
     <todoIndexer filetype="XHTML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XHtmlTodoIndexer"/>
+
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.HtmlIndexPatternBuilder" order="after xml"/>
+    <indexPatternBuilder implementation="com.intellij.psi.impl.cache.impl.idCache.XmlIndexPatternBuilder" id="xml"/>
 
     <elementSignatureProvider implementation="com.intellij.codeInsight.folding.impl.XmlElementSignatureProvider"/>
 

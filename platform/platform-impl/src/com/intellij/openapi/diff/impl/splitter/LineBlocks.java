@@ -165,7 +165,7 @@ public class LineBlocks {
     return LinearTransformation.oneToOne(location, leftInterval.getStart(), rightInterval);
   }
 
-  public static LineBlocks fromLineFragments(List<LineFragment> lines) {
+  public static LineBlocks fromLineFragments(List<? extends LineFragment> lines) {
     ArrayList<LineBlock> filtered = new ArrayList<>();
     for (LineFragment fragment : lines) {
       if (fragment.getType() != null) filtered.add(fragment);
@@ -193,7 +193,7 @@ public class LineBlocks {
   }
 
   @NotNull
-  public static LineBlocks fromChanges(@NotNull List<Change> changes) {
+  public static LineBlocks fromChanges(@NotNull List<? extends Change> changes) {
     // changes may come mixed, need to sort them to get correct intervals
     Collections.sort(changes, ChangeList.CHANGE_ORDER);
 

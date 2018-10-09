@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -76,14 +75,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
 
         if (fileInRoots(file)) {
-          PsiClass[] classes = ReadAction.compute(() -> {
-            try {
-              return classOwner.getClasses();
-            }
-            catch (IndexNotReadyException e) {
-              return PsiClass.EMPTY_ARRAY;
-            }
-          });
+          PsiClass[] classes = ReadAction.compute(classOwner::getClasses);
           if (classes.length == 1 && isClassForTreeNode(file, classes[0])) {
             result.add(new ClassTreeNode(myProject, classes[0], settings1));
           } else {
@@ -167,7 +159,7 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   }
 
   private static class PsiClassOwnerTreeNode extends PsiFileNode {
-    PsiClassOwnerTreeNode(PsiClassOwner classOwner, ViewSettings settings) {
+    PsiClassOwnerTreeNode(@NotNull PsiClassOwner classOwner, ViewSettings settings) {
       super(classOwner.getProject(), classOwner, settings);
     }
 

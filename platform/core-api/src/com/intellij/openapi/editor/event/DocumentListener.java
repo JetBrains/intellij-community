@@ -13,7 +13,6 @@ import java.util.EventListener;
  * @see com.intellij.openapi.editor.Document#addDocumentListener(DocumentListener)
  * @see EditorEventMulticaster#addDocumentListener(DocumentListener)
  */
-@SuppressWarnings("JavadocReference")
 public interface DocumentListener extends EventListener{
   DocumentListener[] EMPTY_ARRAY = new DocumentListener[0];
   ArrayFactory<DocumentListener> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new DocumentListener[count];

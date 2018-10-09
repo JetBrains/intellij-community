@@ -18,6 +18,7 @@ package com.intellij.formatting.contextConfiguration;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,13 +30,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +47,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
-public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
+public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
   private static final String ID = "configure.code.style.on.selected.fragment";
 
@@ -66,32 +70,52 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    Language language = file.getLanguage();
-    return editor.getSelectionModel().hasSelection() && file.isWritable() && hasSettingsToShow(language);
+    return editor.getSelectionModel().hasSelection() && file.isWritable() && hasSettingsToShow(editor, file);
   }
-  
-  private static boolean hasSettingsToShow(Language language) {
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
-    if (provider == null) {
-      return false;
+
+  private static boolean hasSettingsToShow(Editor editor, PsiFile file) {
+    LanguageCodeStyleSettingsProvider provider = getProviderForContext(editor, file);
+    return provider != null &&
+           CodeFragmentCodeStyleSettingsPanel.hasOptionsToShow(provider);
+  }
+
+  @Nullable
+  private static LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
+    Language language = PsiUtilBase.getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), file.getProject());
+    return language != null ? guessSettingsProviderForLanguage(language) : null;
+  }
+
+  @Nullable
+  private static LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
+    LanguageCodeStyleSettingsProvider exactMatch = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (exactMatch != null) {
+      return exactMatch;
     }
-    return CodeFragmentCodeStyleSettingsPanel.hasOptionsToShow(provider);
+    LanguageCodeStyleSettingsProvider guessed = null;
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+      if (language.isKindOf(provider.getLanguage())
+          && (guessed == null || provider.getLanguage().isKindOf(guessed.getLanguage()))) {
+        guessed = provider;
+      }
+    }
+    return guessed;
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
-    CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
-    CodeStyleSettings settings = CodeStyle.getSettings(file);
-    new FragmentCodeStyleSettingsDialog(editor, textFormatter, file.getLanguage(), settings, settingsToShow).show();
-  }
+    LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
+    assert settingsProvider != null;
 
-  private static CodeStyleSettingsToShow calculateAffectingSettings(@NotNull Editor editor, @NotNull PsiFile file) {
-    SelectionModel model = editor.getSelectionModel();
-    int start = model.getSelectionStart();
-    int end = model.getSelectionEnd();
-    CodeStyleSettingsCodeFragmentFilter settingsProvider = new CodeStyleSettingsCodeFragmentFilter(file, new TextRange(start, end));
-    return CodeFragmentCodeStyleSettingsPanel.calcSettingNamesToShow(settingsProvider);
+    //reformat before calculating settings to show 
+    //to avoid considering that arbitrary first setting affects formatting for this fragment
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    textFormatter.reformatSelectedText(settings);
+
+    CodeStyleSettingsToShow settingsToShow = new CodeStyleSettingsCodeFragmentFilter(file, textFormatter.getSelectedRange(), settingsProvider)
+      .getFieldNamesAffectingCodeFragment(SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS);
+
+    new FragmentCodeStyleSettingsDialog(editor, textFormatter, settingsProvider, settings, settingsToShow).show();
   }
 
   @Override
@@ -108,14 +132,14 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
 
     FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
-                                           @NotNull SelectedTextFormatter selectedTextFormatter,
-                                           @NotNull Language language,
-                                           CodeStyleSettings settings,
-                                           CodeStyleSettingsToShow settingsToShow) {
+                                    @NotNull SelectedTextFormatter selectedTextFormatter,
+                                    @NotNull LanguageCodeStyleSettingsProvider settingsProvider,
+                                    CodeStyleSettings settings,
+                                    CodeStyleSettingsToShow settingsToShow) {
       super(editor.getContentComponent(), true);
       mySettings = settings;
       mySelectedTextFormatter = selectedTextFormatter;
-      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, language, selectedTextFormatter);
+      myTabbedLanguagePanel = new CodeFragmentCodeStyleSettingsPanel(settings, settingsToShow, settingsProvider, selectedTextFormatter);
 
       myOKAction = new ApplyToSettings();
       myOKAction.setEnabled(false);
@@ -129,7 +153,8 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
-      setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
+      String languageName = ObjectUtils.coalesce(settingsProvider.getLanguageName(), settingsProvider.getLanguage().getDisplayName());
+      setTitle(StringUtil.capitalizeWords(title, true) + ": " + languageName);
 
       setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
 

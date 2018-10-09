@@ -22,10 +22,6 @@ public class WrapWithMutableCollectionFixTest extends LightQuickFixParameterized
     return LightCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/wrapWithMutable";

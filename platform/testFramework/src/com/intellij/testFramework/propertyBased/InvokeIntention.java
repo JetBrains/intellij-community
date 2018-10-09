@@ -17,6 +17,8 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -29,13 +31,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -86,7 +87,11 @@ public class InvokeIntention extends ActionOnFile {
     assert editor != null;
 
     boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
-    boolean hasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+    List<HighlightInfo> errors = highlightErrors(project, editor);
+    boolean hasErrors = !errors.isEmpty() || containsErrorElements;
+
+    String treesBefore = getFile().getViewProvider().getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
+      Collectors.joining("\n\n"));
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;
@@ -110,14 +115,22 @@ public class InvokeIntention extends ActionOnFile {
     String textBefore = changedDocument == null ? null : changedDocument.getText();
     Long stampBefore = changedDocument == null ? null : changedDocument.getModificationStamp();
 
-    Disposable disposable = Disposer.newDisposable();
-    if (containsErrorElements) {
-      Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
-      Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
-    }
-
     Runnable r = () -> CodeInsightTestFixtureImpl.invokeIntention(intention, file, editor, intention.getText());
+
+    Disposable disposable = Disposer.newDisposable();
     try {
+      if (containsErrorElements) {
+        Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, disposable);
+        Disposer.register(disposable, this::restoreAfterPotentialPsiTextInconsistency);
+      }
+
+      Pair<PsiFile, Editor> pair = ShowIntentionActionsHandler.chooseFileForAction(file, editor, intention);
+      if (pair != null && pair.second instanceof EditorWindow) {
+        // intentions too often break wildly when invoked inside injection :(
+        // todo remove return when IDEA-187613, IDEA-187427, IDEA-194969 are fixed
+        return;
+      }
+
       if (changedDocument != null) {
         MadTestingUtil.restrictChangesToDocument(changedDocument, r);
       } else {
@@ -134,6 +147,13 @@ public class InvokeIntention extends ActionOnFile {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
                      "it should return false from 'startInWriteAction'";
         }
+        message += "\n  Debug info: " + treesBefore + "\n\nafter:" +
+                   file.getViewProvider().getAllFiles().stream().map(
+                     f ->
+                       DebugUtil.psiToString(f, false) +
+                       "\n\n" +
+                       SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).toList()
+                   ).collect(Collectors.joining("\n\n"));
         throw new AssertionError(message);
       }
 

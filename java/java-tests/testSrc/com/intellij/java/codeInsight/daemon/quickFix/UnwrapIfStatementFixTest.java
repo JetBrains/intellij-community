@@ -28,10 +28,6 @@ public class UnwrapIfStatementFixTest extends LightQuickFixParameterizedTestCase
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/unwrapIfStatement";

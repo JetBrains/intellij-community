@@ -21,22 +21,14 @@ BEGIN {
     c=0;
 }
 
-objc$target:AWTWindow_Panel:-initWithDelegate*:entry {
+objc$target:AWTWindow:-initWithPlatformWindow*:entry {
     c++;
     a[arg0] = 1;
+    printf(": %d", c);
 }
 
-objc$target:AWTWindow_Panel:-dealloc:entry {
+objc$target:AWTWindow:-dealloc:entry {
     c -= a[arg0];
     a[arg0] = 0;
-}
-
-END /c > 0/ {
-    printf("AWTWindow_Panel leaks: %d", c);
-    exit(9);
-}
-
-END /c == 0/ {
-    printf("AWTWindow_Panel leaks: %d", c);
-    exit(0);
+    printf(": %d", c);
 }

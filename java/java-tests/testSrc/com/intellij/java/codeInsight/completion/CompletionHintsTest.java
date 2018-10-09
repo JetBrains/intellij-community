@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
@@ -42,7 +41,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  public void testBasicScenarioWithHintsDisabledForMethod() throws Exception {
+  public void testBasicScenarioWithHintsDisabledForMethod() {
+    disableVirtualComma();
+
     // check hints appearance on completion
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
@@ -77,7 +78,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") }<caret> }");
   }
 
-  public void testBasicScenarioWithHintsEnabledForMethod() throws Exception {
+  public void testBasicScenarioWithHintsEnabledForMethod() {
+    disableVirtualComma();
+
     // check hints appearance on completion
     configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
@@ -111,7 +114,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) }<caret> }");
   }
 
-  public void testWithHintsEnabledForNonLiterals() throws Exception {
+  public void testWithHintsEnabledForNonLiterals() {
+    disableVirtualComma();
+
     Option option = JavaInlayParameterHintsProvider.Companion.getInstance().isShowForParamsWithSameType();
     boolean savedValue = option.get();
     try {
@@ -130,6 +135,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testSwitchingOverloads() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint)");
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
@@ -140,6 +147,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testSwitchingOverloadsWithParameterFilled() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { Character.to<caret> } }");
     complete("toChars(int codePoint)");
     type("123");
@@ -149,7 +158,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { Character.toChars(<Hint text=\"codePoint:\"/>123, <HINT text=\"dst:\"/><caret>, <Hint text=\"dstIndex:\"/>) } }");
   }
 
-  public void testSwitchingOverloadsForMethodWithDisabledHints() throws Exception {
+  public void testSwitchingOverloadsForMethodWithDisabledHints() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                   "  int some(int from, int to) { return 0; }\n" +
                   "  int some(int from, int to, int other) { return 0; }\n" +
@@ -178,6 +189,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testNoHintsForMethodReference() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                   "  interface I { void i(int p); }\n" +
                   "  void referenced(int a) {}\n" +
@@ -193,7 +206,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testNestedCompletion() throws Exception {
+  public void testNestedCompletion() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
@@ -204,7 +219,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
   }
 
-  public void testTabWithNestedCompletion() throws Exception {
+  public void testTabWithNestedCompletion() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
@@ -227,12 +244,16 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testNoHintsForMethodWithOneParameterFromBlackList() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
   }
 
-  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectly() throws Exception {
+  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectly() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>) } }");
@@ -241,7 +262,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(<caret> ) } }");
   }
 
-  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectlyWithNoOverloads() throws Exception {
+  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectlyWithNoOverloads() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
     checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
@@ -250,16 +273,20 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { Character.forDigit(<caret> ) } }");
   }
 
-  public void testCaretIsToTheRightOfHintAfterSmartInnerCompletion() throws Exception {
+  public void testCaretIsToTheRightOfHintAfterSmartInnerCompletion() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     type("new String().trim");
-    myFixture.complete(CompletionType.SMART);
+    completeSmart();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>new String().trim(), <HINT text=\"value:\"/><caret>) } }");
   }
 
-  public void testNoHintsDuplicationWhenTypingToTheLeftOfHint() throws Exception {
+  public void testNoHintsDuplicationWhenTypingToTheLeftOfHint() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
     waitForAllAsyncStuff();
@@ -273,7 +300,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }<caret>");
   }
 
-  public void testIntroduceVariableIntention() throws Exception {
+  public void testIntroduceVariableIntention() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                                                      "    void m() {\n" +
                                                      "        Character.for<caret>\n" +
@@ -292,7 +321,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                 "}");
   }
 
-  public void testIntroduceVariableIntentionInIfWithoutBraces() throws Exception {
+  public void testIntroduceVariableIntentionInIfWithoutBraces() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                                                      "    void m() {\n" +
                                                      "        if (true) Character.for<caret>\n" +
@@ -313,7 +344,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                 "}");
   }
 
-  public void testPrevParameterFromOutside() throws Exception {
+  public void testPrevParameterFromOutside() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     next();
@@ -323,7 +356,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
   }
 
-  public void testPrevParameterFromOutsideWhenParametersAreNotEmpty() throws Exception {
+  public void testPrevParameterFromOutsideWhenParametersAreNotEmpty() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     type("\"a");
@@ -335,9 +370,11 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/>\"b\"<caret>) } }");
   }
 
-  public void testVararg() throws Exception {
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+  public void testVararg() {
+    disableVirtualComma();
+
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     type("\"a");
     next();
@@ -354,7 +391,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><Hint text=\",args:\"/>) } }");
   }
 
-  public void testVarargWithNoMandatoryArguments() throws Exception {
+  public void testVarargWithNoMandatoryArguments() {
+    disableVirtualComma();
+
     configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
     complete();
     waitForAllAsyncStuff();
@@ -379,7 +418,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>int...</b></html>");
   }
 
-  public void testVarargWithTwoMandatoryArguments() throws Exception {
+  public void testVarargWithTwoMandatoryArguments() {
+    disableVirtualComma();
+
     configureJava("class C { int vararg(int a, int b, int... args){ return 0; } void m() { varar<caret> } }");
     complete();
     checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\",args:\"/>) } }");
@@ -402,7 +443,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret><Hint text=\",args:\"/>) } }");
   }
 
-  public void testVarargHintsDontSwitchPlaces() throws Exception {
+  public void testVarargHintsDontSwitchPlaces() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { java.util.Collections.add<caret> } }");
     complete();
     checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><Hint text=\",elements:\"/>) } }");
@@ -416,7 +459,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><Hint text=\",elements:\"/>) } }");
   }
 
-  public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
+  public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
@@ -427,7 +472,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays(" <caret>class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
   }
 
-  public void testHintsDontDisappearOnUnfinishedInputForMethodWithOneParameter() throws Exception {
+  public void testHintsDontDisappearOnUnfinishedInputForMethodWithOneParameter() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.clear<caret> } }");
     complete();
     checkResultWithInlays("class C { void m() { System.clearProperty(<HINT text=\"key:\"/><caret>) } }");
@@ -436,7 +483,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("<caret>class C { void m() { System.clearProperty(<hint text=\"key:\"/>) } }");
   }
 
-  public void testSeveralParametersCompletion() throws Exception {
+  public void testSeveralParametersCompletion() {
+    disableVirtualComma();
+
     configureJava("class P {\n" +
                   "    void method(int a, int b) {}\n" +
                   "}\n" +
@@ -466,7 +515,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testCompletionHintsAreShownEvenWhenStaticHintsAreDisabled() throws Exception {
+  public void testCompletionHintsAreShownEvenWhenStaticHintsAreDisabled() {
+    disableVirtualComma();
+
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     boolean oldValue = settings.isShowParameterNameHints();
     try {
@@ -510,6 +561,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
   
   public void testLargeNumberOfParameters() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                   "    void mmm(int a, int b, int c, int d, int e, int f) {}\n" +
                   "    void m2() { mm<caret> }\n" +
@@ -521,7 +574,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
   
-  public void testNestedContextIsNotDisposedOnTabbingOutToOuterContext() throws Exception {
+  public void testNestedContextIsNotDisposedOnTabbingOutToOuterContext() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
@@ -540,7 +595,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
   }
 
-  public void testHintPopupContentsForMethodWithOverloads() throws Exception {
+  public void testHintPopupContentsForMethodWithOverloads() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -557,7 +614,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                       "[<html>@NotNull String key, <b>String def</b></html>]");
   }
 
-  public void testHintPopupContentsForMethodWithoutOverloads() throws Exception {
+  public void testHintPopupContentsForMethodWithoutOverloads() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
@@ -572,7 +631,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html>@NotNull String key, <b>String value</b></html>");
   }
 
-  public void testUpInEditor() throws Exception {
+  public void testUpInEditor() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -582,13 +643,15 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>@NotNull String key</b></html>\n" +
                       "-\n" +
                       "[<html><b>@NotNull String key</b>, String def</html>]");
-    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+    up();
     waitForAllAsyncStuff();
     checkResultWithInlays("<caret>class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
     checkHintContents(null);
   }
 
-  public void testDownInEditor() throws Exception {
+  public void testDownInEditor() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -604,7 +667,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents(null);
   }
 
-  public void testPopupAfterCaretMovesOutsideOfParenthesis() throws Exception {
+  public void testPopupAfterCaretMovesOutsideOfParenthesis() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -616,14 +681,18 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents(null);
   }
 
-  public void testNoLineUnderPopupText() throws Exception {
+  public void testNoLineUnderPopupText() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
   }
 
-  public void testSwitchIsPossibleForManuallyEnteredUnmatchedMethodCall() throws Exception {
+  public void testSwitchIsPossibleForManuallyEnteredUnmatchedMethodCall() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                   "  void a(int p, int q) {}\n" +
                   "  void a(int p, int q, int r) {}\n" +
@@ -648,7 +717,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testShortHintIsShownAfterFullHint() throws Exception {
+  public void testShortHintIsShownAfterFullHint() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
@@ -663,7 +734,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
   }
 
-  public void testAutopopupIsShownWithCompletionHintsDisabled() throws Exception {
+  public void testAutopopupIsShownWithCompletionHintsDisabled() {
+    disableVirtualComma();
+
     CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
@@ -675,6 +748,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testFullPopupIsHiddenOnTyping() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     showParameterInfo();
@@ -683,6 +758,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testFullPopupIsHiddenOnTypingAfterOverloadSwitch() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getProperty(\"a\"<caret>) } }");
     showParameterInfo();
     methodOverloadDown();
@@ -690,7 +767,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents(null);
   }
 
-  public void testNextParameterWorksWhenTabCompletionDoesntChangeAnything() throws Exception {
+  public void testNextParameterWorksWhenTabCompletionDoesntChangeAnything() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     type("local");
@@ -701,7 +780,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<Hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
   }
 
-  public void testGenericType() throws Exception {
+  public void testGenericType() {
+    disableVirtualComma();
+
     configureJava("class C { void abcd(Class<?> c) {} void m() { abc<caret> } }");
     complete();
     waitForAllAsyncStuff();
@@ -709,6 +790,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testCompletionBetweenVarargHints() {
+    disableVirtualComma();
+
     configureJava("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { varar<caret> } }");
     complete();
     checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><Hint text=\",b:\"/>); } }");
@@ -717,7 +800,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><Hint text=\",b:\"/>); } }");
   }
 
-  public void testEnteringSpaceBetweenVarargHints() throws Exception {
+  public void testEnteringSpaceBetweenVarargHints() {
+    disableVirtualComma();
+
     configureJava("class C { void vararg(Object a, int... b) {} void m() { varar<caret> } }");
     complete();
     checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><Hint text=\",b:\"/>); } }");
@@ -726,7 +811,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><Hint text=\",b:\"/>); } }");
   }
 
-  public void testNoTooltipForInvalidParameter() throws Exception {
+  public void testNoTooltipForInvalidParameter() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     type("\"a");
@@ -736,7 +823,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents(null);
   }
 
-  public void testIncorrectTooltipIsNotShownForInnerContext() throws Exception {
+  public void testIncorrectTooltipIsNotShownForInnerContext() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     type("new String(\"");
@@ -744,7 +833,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents(null);
   }
 
-  public void testOverloadsWithOneAndNoParameters() throws Exception {
+  public void testOverloadsWithOneAndNoParameters() {
+    disableVirtualComma();
+
     configureJava("class C { void method() {} void method(int a) {} void m() { m<caret> } }");
     complete("method(int a)");
     checkResultWithInlays("class C { void method() {} void method(int a) {} void m() { method(<HINT text=\"a:\"/><caret>); } }");
@@ -754,6 +845,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testCodeFragment() {
+    disableVirtualComma();
+
     PsiExpressionCodeFragment fragment =
       JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
     myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
@@ -762,7 +855,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                                                           // Later we might make it work correctly for code fragments.
   }
 
-  public void testVarargWithNoMandatoryArgumentsDoesNotKeepHintOnCaretOut() throws Exception {
+  public void testVarargWithNoMandatoryArgumentsDoesNotKeepHintOnCaretOut() {
+    disableVirtualComma();
+
     configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
     complete();
     checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/><caret>) } }");
@@ -771,15 +866,19 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("<caret>class C { int vararg(int... args){ return 0; } void m() { vararg() } }");
   }
 
-  public void testNoLinksInParameterJavadoc() throws Exception {
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+  public void testNoLinksInParameterJavadoc() {
+    disableVirtualComma();
+
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
   }
 
-  public void testBasicScenarioForConstructor() throws Exception {
+  public void testBasicScenarioForConstructor() {
+    disableVirtualComma();
+
     // check hints appearance on completion
     configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
     complete("C(int a, int b)");
@@ -813,7 +912,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2) } <caret>}");
   }
 
-  public void testEnumValueOf() throws Exception {
+  public void testEnumValueOf() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { Thread.State.<caret> } }");
     complete("valueOf(String name)");
     checkResultWithInlays("class C { void m() { Thread.State.valueOf(<HINT text=\"name:\"/><caret>) } }");
@@ -821,7 +922,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>String</b></html>");
   }
 
-  public void testBrokenPsiCall() throws Exception {
+  public void testBrokenPsiCall() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
@@ -833,7 +936,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
   }
 
-  public void testKeepHintsLonger() throws Exception {
+  public void testKeepHintsLonger() {
+    disableVirtualComma();
+
     RegistryValue setting = Registry.get("editor.keep.completion.hints.longer");
     boolean oldValue = setting.asBoolean();
     try {
@@ -864,7 +969,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  public void testKeepHintsEvenLonger() throws Exception {
+  public void testKeepHintsEvenLonger() {
+    disableVirtualComma();
+
     RegistryValue setting = Registry.get("editor.keep.completion.hints.even.longer");
     boolean oldValue = setting.asBoolean();
     try {
@@ -901,7 +1008,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  public void testOverloadWithNoParameters() throws Exception {
+  public void testOverloadWithNoParameters() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.out.pr<caret> } }");
     complete("println(long x)");
     waitForAllAsyncStuff();
@@ -909,6 +1018,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testSecondCtrlPShowsHints() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setProperty(\"a\", \"<caret>b\"); } }");
     showParameterInfo();
     showParameterInfo();
@@ -916,6 +1027,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testQuickDocForOverloadSelectedOnCompletion() throws Exception {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     checkResult("class C { void m() { System.getProperty(<caret>) } }");
@@ -923,7 +1036,17 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     assertTrue(doc.contains("<code>null</code> if there is no property with that key"));
   }
 
-  public void testHighlightingOfHintsOnMultipleLines() throws Exception {
+  public void testQuickDocForConstructorOverloadSelectedOnCompletion() throws Exception {
+    configureJava("class C { void m() { new Strin<caret> } }");
+    complete("String(byte[] bytes, String charsetName)");
+    checkResultWithInlays("class C { void m() { new String(<HINT text=\"bytes:\"/><caret><Hint text=\",charsetName:\"/>) } }");
+    String doc = JavaExternalDocumentationTest.getDocumentationText(getEditor());
+    assertTrue(doc.contains("If the named charset is not supported"));
+  }
+
+  public void testHighlightingOfHintsOnMultipleLines() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     next();
@@ -934,6 +1057,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testGlobalStaticMethodCompletion() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { arraycop<caret> } }");
     complete();
     complete();
@@ -944,7 +1069,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("import static java.lang.System.arraycopy;\n\nclass C { void m() { arraycopy(<HINT text=\"src:\"/><caret>, <Hint text=\"srcPos:\"/>, <Hint text=\"dest:\"/>, <Hint text=\"destPos:\"/>, <Hint text=\"length:\"/>); } }");
   }
 
-  public void testParameterHintsLimit() throws Exception {
+  public void testParameterHintsLimit() {
+    disableVirtualComma();
+
     setParameterHintsLimit(2);
     configureJava("class C {\n" +
                   "    int mmm(int a, int b, int c) { return 0; }\n" +
@@ -993,7 +1120,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testParameterHintsLimitWithTyping() throws Exception {
+  public void testParameterHintsLimitWithTyping() {
+    disableVirtualComma();
+
     setParameterHintsLimit(2);
     configureJava("class C {\n" +
                   "    int mmm(int a, int b, int c) { return 0; }\n" +
@@ -1045,7 +1174,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testParameterHintsLimitMoreParameters() throws Exception {
+  public void testParameterHintsLimitMoreParameters() {
+    disableVirtualComma();
+
     setParameterHintsLimit(2);
     configureJava("class C {\n" +
                   "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
@@ -1086,11 +1217,13 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testVarargWithLimit() throws Exception {
+  public void testVarargWithLimit() {
+    disableVirtualComma();
+
     setParameterHintsLimit(1);
 
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     type("\"a");
     next();
@@ -1107,7 +1240,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><Hint text=\",args:\"/>) } }");
   }
 
-  public void testBlacklistedHintsDoNotAppearWithCompletionHintsDisabled() throws Exception {
+  public void testBlacklistedHintsDoNotAppearWithCompletionHintsDisabled() {
+    disableVirtualComma();
+
     CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = false;
     configureJava("class C { \n" +
                   "  void something() {}\n" +
@@ -1134,9 +1269,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testVirtualCommaBasicCase() throws Exception {
-    enableVirtualComma();
-
+  public void testVirtualCommaBasicCase() {
     configureJava("class C { int mmm(short a, int b, long c){ return 0; } void m() { mm<caret> } }");
     complete();
     waitForAllAsyncStuff();
@@ -1171,9 +1304,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>short</b></html>");
   }
 
-  public void testVirtualCommaEmptyParams() throws Exception {
-    enableVirtualComma();
-
+  public void testVirtualCommaEmptyParams() {
     configureJava("class C { int mmm(short a, int b, long c){ return 0; } void m() { mm<caret> } }");
     complete();
     waitForAllAsyncStuff();
@@ -1205,8 +1336,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>short</b></html>");
   }
 
-  public void testVirtualCommaWithLimit() throws Exception {
-    enableVirtualComma();
+  public void testVirtualCommaWithLimit() {
     setParameterHintsLimit(2);
 
     configureJava("class C {\n" +
@@ -1248,8 +1378,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testVirtualCommaWithLimitEmptyParams() throws Exception {
-    enableVirtualComma();
+  public void testVirtualCommaWithLimitEmptyParams() {
     setParameterHintsLimit(2);
 
     configureJava("class C {\n" +
@@ -1311,9 +1440,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testVirtualCommaWithOverload() throws Exception {
-    enableVirtualComma();
-
+  public void testVirtualCommaWithOverload() {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
@@ -1329,9 +1456,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>\"a\", <hint text=\"def:\"/>\"b\")<caret> } }");
   }
 
-  public void testVirtualCommaWithManyParams() throws Exception {
-    enableVirtualComma();
-
+  public void testVirtualCommaWithManyParams() {
     configureJava("class C {\n" +
                   "    int mmm(int a, int b, int c, int d) { return 0; }\n" +
                   "    void m2() { mm<caret> }\n" +
@@ -1372,8 +1497,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testCaretMovementOverVirtualComma() {
-    enableVirtualComma();
-
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
@@ -1383,14 +1506,14 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testHintsAreNotShownInImproperContext() {
+    disableVirtualComma();
+
     configureJava("class C { void m() { int a = Math.ma<caret>5; } }");
     complete("max(int a, int b)");
     checkResultWithInlays("class C { void m() { int a = Math.max(<caret>)5; } }");
   }
 
-  public void testConstructorInvocationInsideMethodInvocation() throws Exception {
-    enableVirtualComma();
-
+  public void testConstructorInvocationInsideMethodInvocation() {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key)");
     checkResultWithInlays("class C { void m() { System.getProperty(<caret>) } }");
@@ -1403,9 +1526,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkResultWithInlays("class C { void m() { System.getProperty(new String(<Hint text=\"bytes:\"/>null, <HINT text=\"charsetName:\"/><caret>)) } }");
   }
 
-  public void testFieldAccessInsideMethodInvocation() throws Exception {
-    enableVirtualComma();
-
+  public void testFieldAccessInsideMethodInvocation() {
     configureJava("class C {\n" +
                   "  int x;\n" +
                   "  void some(int a, int b) {}\n" +
@@ -1433,13 +1554,15 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testParameterPopupAfterManuallyRenamingOneOverload() throws Exception {
+  public void testParameterPopupAfterManuallyRenamingOneOverload() {
+    disableVirtualComma();
+
     configureJava("class C {\n" +
                   "  void some(int a) {}\n" +
                   "  void some(int a, int b) {}\n" +
-                  "  void other() { som<caret> }\n" +
+                  "  void other() { s<caret> }\n" +
                   "}");
-    complete();
+    complete("some(int a)");
     checkResultWithInlays("class C {\n" +
                           "  void some(int a) {}\n" +
                           "  void some(int a, int b) {}\n" +
@@ -1458,6 +1581,98 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
     showParameterInfo();
     checkHintContents("<html><b>int a</b></html>");
+  }
+
+  public void testOverloadSwitchToMoreParametersWithVirtualComma() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key)");
+    showParameterInfo();
+    methodOverloadDown();
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
+  }
+
+  public void testOverloadSwitchToLessParametersWithVirtualComma() {
+    configureJava("class C { void m() { Character.to<caret> } }");
+    complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    showParameterInfo();
+    methodOverloadUp();
+    checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>) } }");
+  }
+
+  public void testHintsDontDisappearOnIncompleteCallWithVirtualComma() {
+    configureJava("class C { void m() { System.getPro<caret> } }");
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret><Hint text=\",def:\"/>) } }");
+    home();
+    type(' ');
+    waitForAllAsyncStuff();
+    checkResultWithInlays(" <caret>class C { void m() { System.getProperty(<hint text=\"key:\"/><hint text=\",def:\"/>) } }");
+  }
+
+  public void testCodeFragmentWithVirtualComma() {
+    PsiExpressionCodeFragment fragment =
+      JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
+    myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
+    complete("getProperty(String key, String def)");
+    checkResultWithInlays("System.getProperty(<caret>)"); // At the moment, we assure that neither hints, nor comma appear.
+                                                          // Later we might make it work correctly for code fragments.
+  }
+
+  public void testAutoCompletionOfOverloadedMethod() {
+    configureJava("class C {\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void some(int c, int d, int e) {}" +
+                  "  void m() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void some(int c, int d, int e) {}" +
+                          "  void m() { some(<caret>); }\n" +
+                          "}");
+    waitForAllAsyncStuff();
+    checkHintContents("[<html><b>int a</b>, int b</html>]\n" +
+                      "-\n" +
+                      "<html><b>int c</b>, int d, int e</html>");
+  }
+
+  public void testUndoRedoAfterOverloadSwitch() {
+    configureJava("class C { void some(int a) {} void some(int a, int b) {} void m() { s<caret> } }");
+    complete("some(int a)");
+    type('1');
+    showParameterInfo();
+    methodOverloadDown();
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
+    EditorTestUtil.testUndoInEditor(getEditor(), () -> {
+      myFixture.performEditorAction(IdeActions.ACTION_UNDO);
+      waitForAllAsyncStuff();
+      myFixture.performEditorAction(IdeActions.ACTION_REDO);
+      waitForAllAsyncStuff();
+    });
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int b) {} void m() { some(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret>); } }");
+  }
+
+  public void testCommaAfterSmartCompletionOfOverloadedMethodParameter() {
+    configureJava("class C { int codePoint = 123; void m() { Character.to<caret> } }");
+    complete("toChars(int codePoint, char[] dst, int dstIndex)");
+    type("codePoin");
+    completeSmart("codePoint");
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<HINT text=\"codePoint:\"/>codePoint, <hint text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
+  }
+
+  public void testOverloadSwitchingForVarargMethod() {
+    configureJava("class C { void some(int a) {} void some(int a, int... b) {} void m() { s<caret> } }");
+    complete("some(int a, int... b)");
+    type('1');
+    next();
+    type('2');
+    next();
+    type('3');
+    showParameterInfo();
+    methodOverloadUp();
+    checkResultWithInlays("class C { void some(int a) {} void some(int a, int... b) {} void m() { some(<HINT text=\"a:\"/>1<caret>); } }");
   }
 
   private void checkResultWithInlays(String text) {
@@ -1482,6 +1697,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void up() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+  }
+
+  private void methodOverloadUp() {
+    myFixture.performEditorAction(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
   }
 
   private void methodOverloadDown() {
@@ -1519,10 +1738,10 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
   }
 
-  private void enableVirtualComma() {
+  private void disableVirtualComma() {
     RegistryValue registryValue = Registry.get("editor.completion.hints.virtual.comma");
     boolean storedValue = registryValue.asBoolean();
-    registryValue.setValue(true);
+    registryValue.setValue(false);
     Disposer.register(getTestRootDisposable(), () -> registryValue.setValue(storedValue));
   }
 }

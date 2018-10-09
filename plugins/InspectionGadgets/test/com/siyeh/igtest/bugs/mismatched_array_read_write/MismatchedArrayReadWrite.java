@@ -84,6 +84,12 @@ public class MismatchedArrayReadWrite {
             allResults[row] = new int[9];
         }
     }
+
+    void fillSecondArg(int[][] data) {
+      int[] arr = new int[3];
+      arr[0] = 0;
+      Arrays.fill(data, arr);
+    }
 }
 class Test{
     public void bar(){

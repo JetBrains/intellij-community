@@ -28,7 +28,8 @@ abstract class ScriptBase(override val type: Script.Type,
   override val line: Int = Math.max(line, 0)
 
   @SuppressWarnings("UnusedDeclaration")
-  private @Volatile var source: Promise<String>? = null
+  @Volatile
+  private var source: Promise<String>? = null
 
   override var sourceMap: SourceMap? = null
 

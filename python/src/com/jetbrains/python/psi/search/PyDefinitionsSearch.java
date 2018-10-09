@@ -20,19 +20,13 @@ public class PyDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
     if (queryParameters instanceof PyClass) {
       final Query<PyClass> query = PyClassInheritorsSearch.search((PyClass)queryParameters, true);
-      return query.forEach(pyClass -> {
-        return consumer.process(pyClass);
-      });
+      return query.forEach(consumer);
     }
     else if (queryParameters instanceof PyFunction) {
       final Query<PyFunction> query =
         ReadAction.compute(() -> PyOverridingMethodsSearch.search((PyFunction)queryParameters, true));
 
-      return query.forEach(
-        pyFunction -> {
-          return consumer.process(pyFunction);
-        }
-      );
+      return query.forEach(consumer);
     }
     else if (queryParameters instanceof PyTargetExpression) {  // PY-237
       final PsiElement parent = ReadAction.compute(() -> queryParameters.getParent());

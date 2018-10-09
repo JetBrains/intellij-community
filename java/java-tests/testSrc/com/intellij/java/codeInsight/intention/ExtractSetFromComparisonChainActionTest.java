@@ -19,9 +19,6 @@ import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.pom.java.LanguageLevel;
 
 public class ExtractSetFromComparisonChainActionTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @Override
   protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_8;

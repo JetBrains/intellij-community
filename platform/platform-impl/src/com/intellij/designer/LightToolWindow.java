@@ -383,18 +383,7 @@ public class LightToolWindow extends JPanel {
     HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.message("tool.window.hide.action.name"));
-      if (myAnchor == ToolWindowAnchor.LEFT) {
-        presentation.setIcon(AllIcons.General.HideLeftPart);
-        presentation.setHoveredIcon(AllIcons.General.HideLeftPartHover);
-      }
-      else if (myAnchor == ToolWindowAnchor.RIGHT) {
-        presentation.setIcon(AllIcons.General.HideRightPart);
-        presentation.setHoveredIcon(AllIcons.General.HideRightPartHover);
-      }
-      else if (myAnchor == ToolWindowAnchor.BOTTOM) {
-        presentation.setIcon(AllIcons.General.HideDownPart);
-        presentation.setHoveredIcon(AllIcons.General.HideDownPartHover);
-      }
+      presentation.setIcon(AllIcons.General.HideToolWindow);
     }
 
     @Override

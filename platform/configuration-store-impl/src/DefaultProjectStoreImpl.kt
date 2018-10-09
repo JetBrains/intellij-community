@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 import java.io.Writer
 import java.nio.file.Path
@@ -14,7 +13,10 @@ import java.nio.file.Paths
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
 private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
-  override public fun loadLocalData(): Element? {
+  override val isUseVfsForWrite: Boolean
+    get() = false
+
+  public override fun loadLocalData(): Element? {
     val element = super.loadLocalData() ?: return null
     try {
       return element.getChild("component").getChild("defaultProject")
@@ -49,16 +51,18 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
+
+  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
   init {
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+
 
   override val storageManager: StateStorageManager = object : StateStorageManager {
     override val componentManager: ComponentManager?

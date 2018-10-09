@@ -209,7 +209,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return method;
   }
 
-  public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
+  public static void doCreate(PsiClass targetClass, PsiMethod method, List<? extends Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
     doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
   }
@@ -237,7 +237,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+      new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor)
         .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();

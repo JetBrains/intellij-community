@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
+  private static final boolean CUSTOM_JAVAC_FILE_MANAGER = Boolean.valueOf(System.getProperty("jps.custom.javac.file.manager", "false")).booleanValue();
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
@@ -38,12 +39,12 @@ public class JavacMain {
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
 
   public static boolean compile(Collection<String> options,
-                                final Collection<File> sources,
-                                Collection<File> classpath,
+                                final Collection<? extends File> sources,
+                                Collection<? extends File> classpath,
                                 Collection<File> platformClasspath,
-                                Collection<File> modulePath,
-                                Collection<File> upgradeModulePath,
-                                Collection<File> sourcePath,
+                                Collection<? extends File> modulePath,
+                                Collection<? extends File> upgradeModulePath,
+                                Collection<? extends File> sourcePath,
                                 Map<File, Set<File>> outputDirToRoots,
                                 final DiagnosticOutputConsumer diagnosticConsumer,
                                 final OutputFileConsumer outputSink,
@@ -63,7 +64,9 @@ public class JavacMain {
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final boolean javacBefore9 = isJavacBefore9(compilingTool);
-    final JavacFileManager fileManager = new JavacFileManager(
+    final JpsJavacFileManager fileManager = CUSTOM_JAVAC_FILE_MANAGER ? new JavacFileManager2(
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, false), JavaSourceTransformer.getTransformers()
+    ) : new JavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, javacBefore9), JavaSourceTransformer.getTransformers()
     );
 
@@ -159,7 +162,6 @@ public class JavacMain {
         }
       }
 
-      //noinspection IOResourceOpenedButNotSafelyClosed
       final LineOutputWriter out = new LineOutputWriter() {
         @Override
         protected void lineAvailable(String line) {
@@ -225,7 +227,7 @@ public class JavacMain {
     return false;
   }
 
-  private static void setModulePath(JavacFileManager fileManager, String option, Collection<File> path) throws IOException {
+  private static void setModulePath(JpsJavacFileManager fileManager, String option, Collection<? extends File> path) throws IOException {
     JavaFileManager.Location location = StandardLocation.locationFor(option);
     if (location != null) { // if this option is supported
       fileManager.setLocation(location, path);
@@ -235,19 +237,37 @@ public class JavacMain {
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
   // do not delegate to corresponding methods of FileManager's base implementation
   // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-  private static StandardJavaFileManager wrapWithCallDispatcher(final JavacFileManager fileManager) {
+  private static StandardJavaFileManager wrapWithCallDispatcher(final JpsJavacFileManager fileManager) {
     //return fileManager;
     return (StandardJavaFileManager)Proxy.newProxyInstance(fileManager.getClass().getClassLoader(), new Class[]{StandardJavaFileManager.class}, new InvocationHandler() {
+      private final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         try {
-          return method.invoke(fileManager.getApiCallHandler(method), args);
+          return method.invoke(getApiCallHandler(method), args);
         }
         catch (InvocationTargetException e) {
           final Throwable cause = e.getCause();
           throw cause != null? cause : e;
         }
       }
+
+      private JavaFileManager getApiCallHandler(Method method) {
+        Boolean isImplemented = ourImplStatus.get(method);
+        if (isImplemented == null) {
+          try {
+            // important: look for implemented methods in the actual class
+            fileManager.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
+            isImplemented = Boolean.TRUE;
+          }
+          catch (NoSuchMethodException e) {
+            isImplemented = Boolean.FALSE;
+          }
+          ourImplStatus.put(method, isImplemented);
+        }
+        return isImplemented? fileManager : fileManager.getStdManager();
+      }
+
     });
   }
 
@@ -380,7 +400,7 @@ public class JavacMain {
     }
   }
 
-  private static class ContextImpl implements JavacFileManager.Context {
+  private static class ContextImpl implements JpsJavacFileManager.Context {
     private final StandardJavaFileManager myStdManager;
     @Nullable
     private final Method myCacheClearMethod;
@@ -445,6 +465,7 @@ public class JavacMain {
       return myCanceledStatus.isCanceled();
     }
 
+    @NotNull
     @Override
     public StandardJavaFileManager getStandardFileManager() {
       return myStdManager;

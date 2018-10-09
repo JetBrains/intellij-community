@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
 
 import javax.swing.*;
 import java.util.Set;
@@ -56,7 +57,7 @@ public class ClassWithTooManyTransitiveDependentsInspection
       return null;
     }
     final RefClass refClass = (RefClass)refEntity;
-    final PsiClass aClass = refClass.getElement();
+    final UClass aClass = refClass.getUastElement();
     if (ClassUtils.isInnerClass(aClass)) {
       return null;
     }

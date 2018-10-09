@@ -11,6 +11,8 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.util.List;
 
+import static com.intellij.openapi.util.IconLoader.getDisabledIcon;
+import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -115,6 +117,42 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.FS.Step_16,
       AllIcons.Process.FS.Step_17,
       AllIcons.Process.FS.Step_18);
+  }
+
+  @ApiStatus.Experimental
+  public static class Blinking extends AnimatedIcon {
+    public Blinking(@NotNull Icon icon) {
+      this(1000, icon);
+    }
+
+    public Blinking(int delay, @NotNull Icon icon) {
+      super(
+        new Frame() {
+          @NotNull
+          @Override
+          public Icon getIcon() {
+            return icon;
+          }
+
+          @Override
+          public int getDelay() {
+            return delay;
+          }
+        },
+        new Frame() {
+          @NotNull
+          @Override
+          public Icon getIcon() {
+            return notNull(getDisabledIcon(icon), icon);
+          }
+
+          @Override
+          public int getDelay() {
+            return delay;
+          }
+        }
+      );
+    }
   }
 
 

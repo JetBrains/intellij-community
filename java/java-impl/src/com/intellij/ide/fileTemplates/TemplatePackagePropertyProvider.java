@@ -2,6 +2,7 @@
 package com.intellij.ide.fileTemplates;
 
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Properties;
 
@@ -10,7 +11,7 @@ import java.util.Properties;
  */
 public class TemplatePackagePropertyProvider implements DefaultTemplatePropertiesProvider {
   @Override
-  public void fillProperties(final PsiDirectory directory, final Properties props) {
+  public void fillProperties(@NotNull final PsiDirectory directory, @NotNull final Properties props) {
     JavaTemplateUtil.setPackageNameAttribute(props, directory);
   }
 }

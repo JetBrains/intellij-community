@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
+// Copyright 2000-2018 JetBrains s.r.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -38,6 +39,8 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
+ * NB: Supposed to be used for annotations used in libraries and frameworks only, external annotations are not considered.
+ *
  * @since 2016.3
  */
 public class MetaAnnotationUtil {
@@ -77,7 +80,8 @@ public class MetaAnnotationUtil {
   }
 
   public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) ==
+        null) {
       return Collections.emptySet();
     }
 
@@ -85,8 +89,8 @@ public class MetaAnnotationUtil {
     if (name == null) return Collections.emptySet();
 
     Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
-
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
+      ProgressManager.checkCanceled();
       if (processorResult.isAnnotationType()) {
         result.add(processorResult);
       }
@@ -125,8 +129,10 @@ public class MetaAnnotationUtil {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       Set<VirtualFile> allAnnotationFiles = new HashSet<>();
-      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project).findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
+      for (PsiClass javaLangAnnotation : JavaPsiFacade.getInstance(project)
+        .findClasses(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope)) {
         DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
+          ProgressManager.checkCanceled();
           ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
           return true;
         });
@@ -198,7 +204,7 @@ public class MetaAnnotationUtil {
 
   @Nullable
   private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<? super PsiClass> visited) {
-    PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, annotation);
+    PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, true, annotation);
     if (directAnnotation != null) {
       return directAnnotation;
     }
@@ -217,7 +223,8 @@ public class MetaAnnotationUtil {
   }
 
   @NotNull
-  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
+  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
+                                                          @NotNull Collection<String> annotations) {
     Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
     Stream<PsiClass> lazyResolvedAnnotations =

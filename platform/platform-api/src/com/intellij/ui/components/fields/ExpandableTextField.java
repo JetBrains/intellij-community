@@ -41,7 +41,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
    *
    * @see ParametersListUtil
    */
-  public ExpandableTextField(@NotNull Function<String, List<String>> parser, @NotNull Function<List<String>, String> joiner) {
+  public ExpandableTextField(@NotNull Function<? super String, ? extends List<String>> parser, @NotNull Function<? super List<String>, String> joiner) {
     Function<? super String, String> onShow = text -> StringUtil.join(parser.fun(text), "\n");
     Function<? super String, String> onHide = text -> joiner.fun(asList(StringUtil.splitByLines(text)));
     support = new ExpandableSupport<JTextComponent>(this, onShow, onHide) {

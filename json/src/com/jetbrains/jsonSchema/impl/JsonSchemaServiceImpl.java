@@ -103,7 +103,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = findBuiltInSchemaByReference(reference);
-    return optional.orElseGet(() -> JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference)));
+    return optional.orElseGet(() -> {
+      if (reference.startsWith("#")) return referent;
+      return JsonFileResolver.resolveSchemaByReference(referent, JsonSchemaService.normalizeId(reference));
+    });
   }
 
   private Optional<VirtualFile> findBuiltInSchemaByReference(@NotNull String reference) {
@@ -282,7 +285,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
     VirtualFile schemaFile = provider.getSchemaFile();
-    if (schemaFile == null) return false;
+    if (!(schemaFile instanceof HttpVirtualFile)) return false;
     String url = schemaFile.getUrl();
     return url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
   }

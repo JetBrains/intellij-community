@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 public class TestProjectTreeStructure extends AbstractProjectTreeStructure implements Disposable, ProjectViewSettings {
@@ -23,7 +24,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   private boolean myFlattenModules;
   protected boolean myShowLibraryContents = true;
 
-  public TestProjectTreeStructure(Project project, Disposable parentDisposable) {
+  public TestProjectTreeStructure(@NotNull Project project, Disposable parentDisposable) {
     super(project);
     Disposer.register(parentDisposable, this);
   }

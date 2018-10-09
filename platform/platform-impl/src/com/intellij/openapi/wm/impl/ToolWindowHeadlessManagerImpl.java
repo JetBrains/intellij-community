@@ -29,10 +29,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@SuppressWarnings("ConstantConditions")
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;

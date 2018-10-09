@@ -34,7 +34,7 @@ public class AppliedTextPatch {
 
   public enum HunkStatus {ALREADY_APPLIED, EXACTLY_APPLIED, NOT_APPLIED}
 
-  public static AppliedTextPatch create(@NotNull List<AppliedSplitPatchHunk> splitPatchHunkList) {
+  public static AppliedTextPatch create(@NotNull List<? extends AppliedSplitPatchHunk> splitPatchHunkList) {
     List<AppliedSplitPatchHunk> hunks = new ArrayList<>(splitPatchHunkList);
 
     // ensure, that `appliedTo` ranges do not overlap

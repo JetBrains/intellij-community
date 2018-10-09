@@ -61,6 +61,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       if (selected) {
         setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
       }
+      else {
+        setBackground(null);
+      }
     }
     else if (selected) {
       setPaintFocusBorder(true);

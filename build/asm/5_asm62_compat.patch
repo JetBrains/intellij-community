@@ -1,0 +1,162 @@
+Index: org/objectweb/asm/MethodVisitor
+===================================================================
+--- org/objectweb/asm/MethodVisitor.java
++++ org/objectweb/asm/MethodVisitor.java
+@@ -189,6 +189,9 @@
+         return null;
+     }
+
++    //[JB: ASM 6.1+ compatibility stub]
++    public void visitAnnotableParameterCount(final int parameterCount, final boolean visible) { }
++
+     /**
+      * Visits an annotation of a parameter this method.
+      *
+Index: org/objectweb/asm/tree/analysis/Analyzer.java
+===================================================================
+--- org/objectweb/asm/tree/analysis/Analyzer.java
++++ org/objectweb/asm/tree/analysis/Analyzer.java
+@@ -158,21 +158,26 @@
+         // initializes the data structures for the control flow analysis
+         Frame<V> current = newFrame(m.maxLocals, m.maxStack);
+         Frame<V> handler = newFrame(m.maxLocals, m.maxStack);
+-        current.setReturn(interpreter.newValue(Type.getReturnType(m.desc)));
++        current.setReturn(interpreter.newReturnTypeValue(Type.getReturnType(m.desc)));
+         Type[] args = Type.getArgumentTypes(m.desc);
+         int local = 0;
+-        if ((m.access & ACC_STATIC) == 0) {
++        boolean isInstanceMethod = (m.access & ACC_STATIC) == 0;
++        if (isInstanceMethod) {
+             Type ctype = Type.getObjectType(owner);
+-            current.setLocal(local++, interpreter.newValue(ctype));
++            current.setLocal(local, interpreter.newParameterValue(true, local, ctype));
++            local++;
+         }
+         for (int i = 0; i < args.length; ++i) {
+-            current.setLocal(local++, interpreter.newValue(args[i]));
++            current.setLocal(local, interpreter.newParameterValue(isInstanceMethod, local, args[i]));
++            local++;
+             if (args[i].getSize() == 2) {
+-                current.setLocal(local++, interpreter.newValue(null));
++                current.setLocal(local, interpreter.newEmptyValue(local));
++                local++;
+             }
+         }
+         while (local < m.maxLocals) {
+-            current.setLocal(local++, interpreter.newValue(null));
++            current.setLocal(local, interpreter.newEmptyValue(local));
++            local++;
+         }
+         merge(0, current, null);
+
+@@ -285,7 +290,7 @@
+                         if (newControlFlowExceptionEdge(insn, tcb)) {
+                             handler.init(f);
+                             handler.clearStack();
+-                            handler.push(interpreter.newValue(type));
++                            handler.push(interpreter.newExceptionValue(tcb, handler, type));
+                             merge(jump, handler, subroutine);
+                         }
+                     }
+Index: org/objectweb/asm/tree/analysis/Frame.java
+===================================================================
+--- org/objectweb/asm/tree/analysis/Frame.java
++++ org/objectweb/asm/tree/analysis/Frame.java
+@@ -298,12 +298,12 @@
+             var = ((VarInsnNode) insn).var;
+             setLocal(var, value1);
+             if (value1.getSize() == 2) {
+-                setLocal(var + 1, interpreter.newValue(null));
++                setLocal(var + 1, interpreter.newEmptyValue(var + 1));
+             }
+             if (var > 0) {
+                 Value local = getLocal(var - 1);
+                 if (local != null && local.getSize() == 2) {
+-                    setLocal(var - 1, interpreter.newValue(null));
++                    setLocal(var - 1, interpreter.newEmptyValue(var - 1));
+                 }
+             }
+             break;
+Index: org/objectweb/asm/tree/analysis/Interpreter.java
+===================================================================
+--- org/objectweb/asm/tree/analysis/Interpreter.java
++++ org/objectweb/asm/tree/analysis/Interpreter.java
+@@ -33,6 +33,7 @@
+
+ import org.objectweb.asm.Type;
+ import org.objectweb.asm.tree.AbstractInsnNode;
++import org.objectweb.asm.tree.TryCatchBlockNode;
+
+ /**
+  * A semantic bytecode interpreter. More precisely, this interpreter only
+@@ -71,6 +72,70 @@
+     public abstract V newValue(Type type);
+
+     /**
++     * Creates a new value that represents the given parameter type. This method is called to
++     * initialize the value of a local corresponding to a method parameter in a frame.
++     *
++     * <p>By default, calls <code>newValue(type)</code>.
++     *
++     * @param isInstanceMethod <tt>true</tt> if the method is non-static.
++     * @param local the local variable index.
++     * @param type a primitive or reference type.
++     * @return a value that represents the given type. The size of the returned value must be equal to
++     *     the size of the given type.
++     */
++    public V newParameterValue(final boolean isInstanceMethod, final int local, final Type type) {
++        return newValue(type);
++    }
++
++    /**
++     * Creates a new value that represents the given return type. This method is called to initialize
++     * the return type value of a frame.
++     *
++     * <p>By default, calls <code>newValue(type)</code>.
++     *
++     * @param type a primitive or reference type.
++     * @return a value that represents the given type. The size of the returned value must be equal to
++     *     the size of the given type.
++     */
++    public V newReturnTypeValue(final Type type) {
++        return newValue(type);
++    }
++
++    /**
++     * Creates a new uninitialized value for a local variable. This method is called to initialize the
++     * value of a local that does not correspond to a method parameter, and to reset one half of a
++     * size-2 value when the other half is assigned a size-1 value.
++     *
++     * <p>By default, calls <code>newValue(null)</code>.
++     *
++     * @param local the local variable index.
++     * @return a value representing an uninitialized value. The size of the returned value must be
++     *     equal to 1.
++     */
++    public V newEmptyValue(final int local) {
++        return newValue(null);
++    }
++
++    /**
++     * Creates a new value that represents the given exception type. This method is called to
++     * initialize the exception value on the call stack at the entry of an exception handler.
++     *
++     * <p>By default, calls <code>newValue(exceptionType)</code>.
++     *
++     * @param tryCatchBlockNode the exception handler.
++     * @param handlerFrame the exception handler frame.
++     * @param exceptionType the exception type handled by this handler.
++     * @return a value that represents the given <tt>exceptionType</tt>. The size of the returned
++     *     value must be equal to 1.
++     */
++    public V newExceptionValue(
++            final TryCatchBlockNode tryCatchBlockNode,
++            final Frame<V> handlerFrame,
++            final Type exceptionType) {
++        return newValue(exceptionType);
++    }
++
++    /**
+      * Interprets a bytecode instruction without arguments. This method is
+      * called for the following opcodes:
+      *

@@ -127,7 +127,7 @@ public class TypeConversionUtil {
           }
         }
         return fromTypeRank == toTypeRank ||
-               fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK && fromTypeRank < toTypeRank;
+               fromTypeRank < toTypeRank && toTypeRank <= MAX_NUMERIC_RANK;
       }
       return fromTypeRank == toTypeRank ||
              fromTypeRank <= MAX_NUMERIC_RANK && toTypeRank <= MAX_NUMERIC_RANK;
@@ -318,7 +318,7 @@ public class TypeConversionUtil {
     final PsiClass superClass = result.getElement();
     if (superClass != null) {
       final PsiSubstitutor substitutor = result.getSubstitutor().put(typeParameter, null);
-      return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(superClass, substitutor);
+      return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(superClass, substitutor);
     }
     return superType;
   }
@@ -385,11 +385,13 @@ public class TypeConversionUtil {
     return true;
   }
 
+  @Contract("null -> false")
   public static boolean isPrimitiveAndNotNull(PsiType type) {
     type = uncapture(type);
     return type instanceof PsiPrimitiveType && !isNullType(type);
   }
 
+  @Contract("null -> false")
   public static boolean isEnumType(PsiType type) {
     type = uncapture(type);
     if (type instanceof PsiClassType) {
@@ -402,24 +404,29 @@ public class TypeConversionUtil {
     return false;
   }
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean isNullType(PsiType type) {
     return PsiType.NULL.equals(type);
   }
 
+  @Contract("null -> false")
   public static boolean isFloatOrDoubleType(PsiType type) {
     return isFloatType(type) || isDoubleType(type);
   }
 
+  @Contract("null -> false")
   public static boolean isDoubleType(PsiType type) {
     type = uncapture(type);
     return PsiType.DOUBLE.equals(type) || PsiType.DOUBLE.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
+  @Contract("null -> false")
   public static boolean isFloatType(PsiType type) {
     type = uncapture(type);
     return PsiType.FLOAT.equals(type) || PsiType.FLOAT.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
+  @Contract("null -> false")
   public static boolean isLongType(PsiType type) {
     type = uncapture(type);
     return PsiType.LONG.equals(type) || PsiType.LONG.equals(PsiPrimitiveType.getUnboxedType(type));
@@ -434,6 +441,7 @@ public class TypeConversionUtil {
     return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
+  @Contract("null -> null")
   private static PsiType uncapture(PsiType type) {
     while (type instanceof PsiCapturedWildcardType) {
       type = ((PsiCapturedWildcardType)type).getUpperBound();
@@ -578,7 +586,7 @@ public class TypeConversionUtil {
         isApplicable = ltypeRank == resultTypeRank || ltype.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
       }
       else {
-        isApplicable = ltypeRank <= MAX_NUMERIC_RANK;
+        assert ltypeRank <= MAX_NUMERIC_RANK;
       }
     }
     return isApplicable;
@@ -1050,7 +1058,7 @@ public class TypeConversionUtil {
       PsiTypeParameter[] baseParams = superClassCandidate.getTypeParameters();
       PsiTypeParameter[] derivedParams = derivedClassCandidate.getTypeParameters();
       if (baseParams.length > 0 && derivedParams.length == 0) {
-        return JavaPsiFacade.getInstance(superClassCandidate.getProject()).getElementFactory().createRawSubstitutor(superClassCandidate);
+        return JavaPsiFacade.getElementFactory(superClassCandidate.getProject()).createRawSubstitutor(superClassCandidate);
       }
       return derivedSubstitutor;
     }
@@ -1208,7 +1216,7 @@ public class TypeConversionUtil {
         return typeParameterErasureInner(boundTypeParameter, visited, beforeSubstitutor);
       }
       else if (psiClass != null) {
-        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
+        return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(psiClass);
       }
     }
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());
@@ -1230,7 +1238,7 @@ public class TypeConversionUtil {
         }
       }
       else if (psiClass != null) {
-        return JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(psiClass);
+        return JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(psiClass);
       }
     }
     return PsiType.getJavaLangObject(typeParameter.getManager(), typeParameter.getResolveScope());

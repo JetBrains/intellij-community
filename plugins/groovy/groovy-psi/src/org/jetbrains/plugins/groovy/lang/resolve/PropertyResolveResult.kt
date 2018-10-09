@@ -16,8 +16,8 @@ class PropertyResolveResult(
   partialSubstitutor: PsiSubstitutor,
   substitutorComputer: SubstitutorComputer,
   argumentTypes: Array<PsiType?>?,
-  private val spreadState: SpreadState?
-) : BaseGroovyResolveResult<PsiMethod>(element, place, resolveContext) {
+  spreadState: SpreadState?
+) : BaseGroovyResolveResult<PsiMethod>(element, place, resolveContext, spreadState = spreadState) {
 
   private val fullSubstitutor by lazy {
     substitutorComputer.obtainSubstitutor(partialSubstitutor, element, resolveContext)
@@ -30,8 +30,6 @@ class PropertyResolveResult(
   }
 
   override fun isApplicable(): Boolean = applicability
-
-  override fun getSpreadState(): SpreadState? = spreadState
 
   override fun isInvokedOnProperty(): Boolean = true
 }

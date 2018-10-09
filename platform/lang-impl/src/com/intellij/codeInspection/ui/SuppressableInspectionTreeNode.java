@@ -142,7 +142,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     PsiElement element = descriptor instanceof ProblemDescriptor
                          ? ((ProblemDescriptor)descriptor).getPsiElement()
                          : refElement instanceof RefElement
-                           ? ((RefElement)refElement).getElement()
+                           ? ((RefElement)refElement).getPsiElement()
                            : null;
     return Pair.create(element, descriptor);
   }

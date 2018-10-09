@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
@@ -149,13 +150,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix", myType);
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myType, "String");
     }
 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'String'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", "String");
     }
 
     @Override

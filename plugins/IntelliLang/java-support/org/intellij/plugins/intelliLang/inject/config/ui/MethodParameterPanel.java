@@ -383,7 +383,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();
         if (!selection.isEmpty()) {

@@ -4,7 +4,11 @@ package com.intellij.psi;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.tree.IFileElementType;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A PSI element representing a file.
@@ -98,7 +102,13 @@ public interface PsiFile extends PsiFileSystemItem {
    * Invalidate any file-specific cache in this method. It is called on file content change.
    * If you override this method, you <b>must</b> call the base class implementation.
    */
-  default void clearCaches() {
+  default void clearCaches() {}
 
+  /**
+   * @return the element type of the file node, but possibly in an efficient node that doesn't instantiate the node.
+   */
+  @Nullable
+  default IFileElementType getFileElementType() {
+    return ObjectUtils.tryCast(PsiUtilCore.getElementType(getNode()), IFileElementType.class);
   }
 }

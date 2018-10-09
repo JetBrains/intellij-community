@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -68,10 +69,11 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       PsiClass[] unThrown = refMethod.getUnThrownExceptions();
       if (unThrown == null) return null;
 
-      PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-      if (psiMethod == null) return null;
-      PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
-      PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
+      PsiElement psiMethod = refMethod.getPsiElement();
+      if (!(psiMethod instanceof PsiMethod)) return null;
+      PsiReferenceList list = ((PsiMethod)psiMethod).getThrowsList();
+      PsiClassType[] throwsList = list.getReferencedTypes();
+      PsiJavaCodeReferenceElement[] throwsRefs = list.getReferenceElements();
       List<ProblemDescriptor> problems = null;
 
       final PsiManager psiManager = psiMethod.getManager();
@@ -80,7 +82,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         final String throwsClassName = throwsType.getClassName();
         final PsiJavaCodeReferenceElement throwsRef = throwsRefs[i];
         if (ExceptionUtil.isUncheckedException(throwsType)) continue;
-        if (declaredInRemotableMethod(psiMethod, throwsType)) continue;
+        if (declaredInRemotableMethod((PsiMethod)psiMethod, throwsType)) continue;
 
         for (PsiClass s : unThrown) {
           final PsiClass throwsResolvedType = throwsType.resolve();
@@ -132,12 +134,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         if (processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  processor.ignoreElement(refMethod);
-                  return true;
-                }
+              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                processor.ignoreElement(refMethod);
+                return true;
               });
             }
           });
@@ -206,7 +205,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         @Nullable final PsiMethod psiMethod;
         if (element == null) {
           LOG.assertTrue(refMethod != null);
-          psiMethod = (PsiMethod)refMethod.getElement();
+          psiMethod = ObjectUtils.tryCast(refMethod.getPsiElement(), PsiMethod.class);
         }
         else {
           psiMethod = (PsiMethod)element;
@@ -219,7 +218,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
-            final PsiType psiType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(classRef);
+            final PsiType psiType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(classRef);
             removeException(refMethod, psiType, refsToDelete, psiMethod);
           } else {
             final PsiReferenceList throwsList = psiMethod.getThrowsList();
@@ -260,8 +259,8 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         assert myProcessor != null;
 
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
-          PsiModifierListOwner method = refDerived.getElement();
-          if (method != null) {
+          PsiElement method = refDerived.getPsiElement();
+          if (method instanceof PsiMethod) {
             removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)method);
           }
         }

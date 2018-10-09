@@ -23,7 +23,7 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @Nullable PsiElement resolveContext,
                                 @Nullable SpreadState spreadState,
                                 @NotNull PsiSubstitutor partialSubstitutor,
-                                @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                                @NotNull NotNullComputable<? extends PsiSubstitutor> substitutorComputer,
                                 boolean isAccessible, boolean isStaticsOK) {
     this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, null, true, isAccessible, isStaticsOK, true);
   }
@@ -32,7 +32,7 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @Nullable PsiElement resolveContext,
                                 @Nullable SpreadState spreadState,
                                 @NotNull PsiSubstitutor partialSubstitutor,
-                                @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                                @NotNull NotNullComputable<? extends PsiSubstitutor> substitutorComputer,
                                 boolean isAccessible, boolean isStaticsOK, boolean isApplicable) {
     this(method, resolveContext, spreadState, partialSubstitutor, substitutorComputer, null, false, isAccessible, isStaticsOK, isApplicable);
   }
@@ -41,7 +41,7 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
                                 @Nullable PsiElement resolveContext,
                                 @Nullable SpreadState spreadState,
                                 @NotNull PsiSubstitutor partialSubstitutor,
-                                @NotNull NotNullComputable<PsiSubstitutor> substitutorComputer,
+                                @NotNull NotNullComputable<? extends PsiSubstitutor> substitutorComputer,
                                 @Nullable MethodCandidate candidate,
                                 boolean isInvokedOnProperty,
                                 boolean isAccessible, boolean isStaticsOk, boolean isApplicable) {
@@ -67,8 +67,8 @@ public class GroovyMethodResultImpl extends GroovyResolveResultImpl implements G
 
   @NotNull
   @Override
-  public PsiSubstitutor getSubstitutor(boolean infer) {
-    return infer ? mySubstitutorComputer.compute() : super.getSubstitutor();
+  public PsiSubstitutor getPartialSubstitutor() {
+    return super.getSubstitutor();
   }
 
   @Override

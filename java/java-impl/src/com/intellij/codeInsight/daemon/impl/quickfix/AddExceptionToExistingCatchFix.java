@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,9 +42,8 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
 
     List<PsiCatchSection> catchSections = context.myCatches;
     List<PsiClassType> unhandledExceptions = context.myExceptions;
-    List<PsiCatchSection> catches = catchSections.stream()
-                                         .filter(s -> s.getCatchType() != null && s.getParameter() != null)
-                                         .collect(Collectors.toList());
+    List<PsiCatchSection> catches =
+      ContainerUtil.filter(catchSections, s -> s.getCatchType() != null && s.getParameter() != null);
 
     setText(context.getMessage());
 

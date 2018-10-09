@@ -11,7 +11,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
+internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, @Volatile private var parent: KdbxGroup?) {
   @Volatile var name: String = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
       if (field != value) {
@@ -23,7 +23,8 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
   private val groups: MutableList<KdbxGroup>
   val entries: MutableList<KdbxEntry>
 
-  private @Volatile var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
+  @Volatile
+  private var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
 
   init {
     locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
@@ -85,7 +86,7 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
 
   fun getOrCreateGroup(name: String): KdbxGroup = getGroup(name) ?: createGroup(name)
 
-  fun createGroup(name: String): KdbxGroup {
+  private fun createGroup(name: String): KdbxGroup {
     val result = createGroup(database, this)
     result.name = name
     addGroup(result)
@@ -95,16 +96,14 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
   fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? = entries.firstOrNull(matcher)
 
   fun addEntry(entry: KdbxEntry): KdbxEntry {
-    entry.group?.let {
-      it.removeEntry(entry)
-    }
+    entry.group?.removeEntry(entry)
     entries.add(entry)
     entry.group = this
     database.isDirty = true
     return entry
   }
 
-  fun removeEntry(entry: KdbxEntry): KdbxEntry {
+  private fun removeEntry(entry: KdbxEntry): KdbxEntry {
     if (entries.remove(entry)) {
       entry.group = null
       database.isDirty = true
@@ -148,15 +147,12 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
 internal fun createGroup(db: KeePassDatabase, parent: KdbxGroup?): KdbxGroup {
   val element = Element(GROUP_ELEMENT_NAME)
   ensureElements(element, mandatoryGroupElements)
-  val result = KdbxGroup(element, db, parent)
-  return result
+  return KdbxGroup(element, db, parent)
 }
 
-private const val NOTES_ELEMENT_NAME = "Notes"
-
-private val mandatoryGroupElements: Map<String, ValueCreator> = linkedMapOf (
+private val mandatoryGroupElements: Map<Array<String>, ValueCreator> = linkedMapOf(
     UUID_ELEMENT_NAME to UuidValueCreator(),
-    NOTES_ELEMENT_NAME to ConstantValueCreator(""),
+    arrayOf("Notes") to ConstantValueCreator(""),
     ICON_ELEMENT_NAME to ConstantValueCreator("0"),
     CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
     LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),

@@ -141,6 +141,9 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       clear();
       throw new IllegalStateException("Seems you haven't called startInjecting()");
     }
+    if (!host.isValidHost()) {
+      throw new IllegalArgumentException(host + ".isValidHost() in " + host.getClass() + " returned false so you mustn't inject here.");
+    }
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(host);
     assert containingFile == myHostPsiFile : exceptionContext("Trying to inject into foreign file: "+containingFile, myLanguage,
                                                               myHostPsiFile, myHostVirtualFile, myHostDocument, placeInfos, myDocumentManagerBase);
@@ -182,8 +185,14 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       assert after >= before : "Escaper " + textEscaper + "("+textEscaper.getClass()+") must not mangle char buffer";
       if (!decodeSuccessful) {
         // if there are invalid chars, adjust the range
-        int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, info.registeredRangeInsideHost);
-        relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
+        int charsDecodedSuccessfully = outChars.length() - before;
+        int startOffsetInHost = textEscaper.getOffsetInHost(0, info.registeredRangeInsideHost);
+        assert relevantRange.containsOffset(startOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(0) = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+        int endOffsetInHost = textEscaper.getOffsetInHost(charsDecodedSuccessfully, info.registeredRangeInsideHost);
+        assert relevantRange.containsOffset(endOffsetInHost) : textEscaper.getClass() +" is inconsistent: its.getOffsetInHost(" + charsDecodedSuccessfully +
+                                                                 ") = "+startOffsetInHost+" while its relevantRange="+relevantRange;
+        ProperTextRange successfulHostRange = new ProperTextRange(startOffsetInHost, endOffsetInHost);
+        relevantRange = relevantRange.intersection(successfulHostRange);
       }
     }
     outChars.append(info.suffix);
@@ -238,7 +247,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     for (PlaceInfo info : placeInfos) {
       isAncestor |= PsiTreeUtil.isAncestor(contextElement, info.host, false);
     }
-    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "'; " +
+    assert isAncestor : exceptionContext("Context element " + contextElement.getTextRange() + ": '" + contextElement + "' (" + contextElement.getClass() + "); " +
                                          " must be the parent of at least one of injection hosts", language,
                                          hostPsiFile, hostVirtualFile, hostDocument, placeInfos, documentManager);
   }

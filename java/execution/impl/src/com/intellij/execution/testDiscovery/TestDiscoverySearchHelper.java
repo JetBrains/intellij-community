@@ -80,12 +80,12 @@ public class TestDiscoverySearchHelper {
   }
 
   private static void collectPatterns(@NotNull Project project,
-                                      @NotNull Set<String> patterns,
+                                      @NotNull Set<? super String> patterns,
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       byte frameworkId) {
     List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(classFQName, methodName));
-    TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, (c, m, p) -> {
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, Collections.emptyList(), (c, m, p) -> {
       patterns.add(c + "," + m);
       return true;
     });

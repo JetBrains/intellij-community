@@ -37,12 +37,12 @@ class TestMethodUsage implements Usage, UsageInFile, UsageInModule, PsiElementUs
   @NotNull
   private final Collection<String> myParameters;
   @NotNull
-  private final SmartPsiElementPointer<PsiMethod> myTestMethodPointer;
+  private final SmartPsiElementPointer<? extends PsiMethod> myTestMethodPointer;
   @Nullable
-  private final SmartPsiElementPointer<PsiClass> myTestClassPointer;
+  private final SmartPsiElementPointer<? extends PsiClass> myTestClassPointer;
 
-  TestMethodUsage(@NotNull SmartPsiElementPointer<PsiMethod> testMethod,
-                  @NotNull SmartPsiElementPointer<PsiClass> testClass,
+  TestMethodUsage(@NotNull SmartPsiElementPointer<? extends PsiMethod> testMethod,
+                  @NotNull SmartPsiElementPointer<? extends PsiClass> testClass,
                   @NotNull Collection<String> parameters) {
     myTestMethodPointer = testMethod;
     myTestClassPointer = parameters.isEmpty() ? null : testClass;

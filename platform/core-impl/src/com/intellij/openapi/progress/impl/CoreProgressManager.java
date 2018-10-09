@@ -38,7 +38,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   static final int CHECK_CANCELED_DELAY_MILLIS = 10;
   private final AtomicInteger myUnsafeProgressCount = new AtomicInteger(0);
 
-  public static boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
+  public static final boolean ENABLED = !"disabled".equals(System.getProperty("idea.ProcessCanceledException"));
   private static CheckCanceledHook ourCheckCanceledHook;
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
@@ -226,7 +226,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       }
     }, null);
 
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable t = exception.get();
     if (t != null) {
       ExceptionUtil.rethrowUnchecked(t);
@@ -743,7 +742,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @FunctionalInterface
-  protected interface CheckCanceledHook {
+  interface CheckCanceledHook {
     /**
      * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called, or null if a non-progressive thread performed {@link ProgressManager#checkCanceled()}
      * @return true if the hook has done anything that might take some time.

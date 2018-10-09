@@ -135,7 +135,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
            }, "Searching for branches containing the selected commit", true, data.project)
   }
 
-  private fun commitPushedToProtectedBranchError(protectedBranch: String)
+  protected fun commitPushedToProtectedBranchError(protectedBranch: String)
     = "The commit is already pushed to protected branch '$protectedBranch'"
 
   protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {

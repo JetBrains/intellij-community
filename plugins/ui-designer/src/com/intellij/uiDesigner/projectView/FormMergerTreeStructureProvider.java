@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -67,18 +66,11 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
       if (psiClass == null) continue;
       String qName = psiClass.getQualifiedName();
       if (qName == null) continue;
-      List<PsiFile> forms;
-      try {
-        forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
-      }
-      catch (ProcessCanceledException e) {
-        continue;
-      }
+      List<PsiFile> forms = FormClassIndex.findFormsBoundToClass(myProject, qName);
       Collection<BasePsiNode<? extends PsiElement>> formNodes = findFormsIn(children, forms);
       if (!formNodes.isEmpty()) {
         Collection<PsiFile> formFiles = convertToFiles(formNodes);
         Collection<BasePsiNode<? extends PsiElement>> subNodes = new ArrayList<>();
-        //noinspection unchecked
         subNodes.add((BasePsiNode<? extends PsiElement>) element);
         subNodes.addAll(formNodes);
         result.add(new FormNode(myProject, new Form(psiClass, formFiles), settings, subNodes));
@@ -90,7 +82,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataId) {
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
       for(AbstractTreeNode node: selected) {
@@ -126,7 +118,6 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     HashSet<PsiFile> psiFiles = new HashSet<>(forms);
     for (final AbstractTreeNode child : children) {
       if (child instanceof BasePsiNode) {
-        //noinspection unchecked
         BasePsiNode<? extends PsiElement> treeNode = (BasePsiNode<? extends PsiElement>)child;
         //noinspection SuspiciousMethodCalls
         if (psiFiles.contains(treeNode.getValue())) result.add(treeNode);

@@ -5,7 +5,7 @@ import com.intellij.testGuiFramework.framework.GuiTestRunner
 import com.intellij.testGuiFramework.framework.GuiTestRunnerInterface
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.ide.Ide
-import com.intellij.testGuiFramework.remote.IdeProcessControlManager
+import com.intellij.testGuiFramework.remote.IdeControl
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import org.junit.internal.runners.model.EachTestNotifier
 import org.junit.runners.model.FrameworkMethod
@@ -13,21 +13,19 @@ import org.junit.runners.model.FrameworkMethod
 
 class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : GuiTestRunner(runner) {
 
+  private val LOGGER = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestRunner")!!
+
   private val testClassNames: List<String> = runner.getTestClassesNames()
+  private var currentClass = 0
+  private var additionalJvmOptions: List<Pair<String, String>>? = null
 
-  companion object {
-    private val LOGGER = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestRunner")!!
-    private var currentClass = 0
-    var additionalJvmOptions: Array<Pair<String, String>>? = null
-  }
-
-  override fun runIde(port: Int, ide: Ide, additionalJvmOptions: Array<Pair<String, String>>) {
-    if (GuiDTTestRunner.additionalJvmOptions == null)
-      GuiDTTestRunner.additionalJvmOptions = additionalJvmOptions
+  override fun runIde(ide: Ide, additionalJvmOptions: List<Pair<String, String>>) {
+    if (this.additionalJvmOptions == null)
+      this.additionalJvmOptions = additionalJvmOptions
 
     if (currentClass < testClassNames.size) {
       LOGGER.info("" + currentClass + ". running test " + testClassNames[currentClass])
-      GuiTestLocalLauncher.runIdeWithDTraceLocally(port = port,
+      GuiTestLocalLauncher.runIdeWithDTraceLocally(port = JUnitServerHolder.getServer().getPort(),
                                                    ide = ide,
                                                    testClassName = testClassNames[currentClass],
                                                    additionalJvmOptions = additionalJvmOptions)
@@ -35,35 +33,23 @@ class GuiDTTestRunner internal constructor(runner: GuiTestRunnerInterface) : Gui
   }
 
   fun finishTest(method: FrameworkMethod) {
-
-    val server = JUnitServerHolder.getServer()
-
-    ++currentClass
-    if (currentClass < testClassNames.size) {
-      IdeProcessControlManager.killIdeProcess()
-      server.stopServer()
-
-      runIde(port = server.getPort(), ide = getIdeFromMethod(method), additionalJvmOptions = GuiDTTestRunner.additionalJvmOptions!!)
-      server.start()
+    if (++currentClass < testClassNames.size) {
+      IdeControl.restartIde(getIdeFromMethod(method), additionalJvmOptions!!, ::runIde)
     } else
-      stopServerAndKillIde(server)
+      IdeControl.closeIde()
   }
 
-  override fun processTestFinished(eachNotifier: EachTestNotifier,
-                                   testIsRunning1: Boolean): Boolean {
-    val inputStream = IdeProcessControlManager.getInputStream()
-
-    val server = JUnitServerHolder.getServer()
-    closeIde(server)
+  override fun processTestFinished(eachNotifier: EachTestNotifier) {
+    val inputStream = IdeControl.getInputStream()
+    IdeControl.closeIde()
 
     try {
       val testInstance = Class.forName(testClassNames[currentClass]).newInstance() as GuiDTTestCase
       GuiDTTestCase::checkDtraceLog.invoke(testInstance, inputStream)
     }
     catch (e: AssertionError) {
-      eachNotifier.addFailure(e)
+      eachNotifier.addFailure(e);
     }
-    eachNotifier.fireTestFinished()
-    return false
+    eachNotifier.fireTestFinished();
   }
 }

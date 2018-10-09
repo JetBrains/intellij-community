@@ -57,6 +57,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -82,8 +83,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -215,6 +216,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -780,7 +782,6 @@ public class FindManagerImpl extends FindManager {
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = stringToFind + " produced stack overflow when matching content of the file";
         LOG.info(content);
-        //noinspection SSBasedInspection
         GROUP.createNotification("Regular expression failed to match",
                                      content + " " + file.getPath(),
                                      NotificationType.ERROR,

@@ -215,9 +215,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       if (doc != null) {
         FileDocumentManager.getInstance().saveDocument(doc);
       }
+      
+      // avoid deadlock by requesting reindex later. 
+      // processError may be invoked under stub index's read action and requestReindex in EDT starts dumb mode in writeAction (IDEA-197296)
+      FileBasedIndex.getInstance().requestReindex(vFile);
     }, ModalityState.NON_MODAL);
 
-    FileBasedIndex.getInstance().requestReindex(vFile);
     return null;
   }
 

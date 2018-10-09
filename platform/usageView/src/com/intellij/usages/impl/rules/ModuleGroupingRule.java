@@ -183,7 +183,7 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (LangDataKeys.MODULE_CONTEXT == key) {
         sink.put(LangDataKeys.MODULE_CONTEXT, myModule);

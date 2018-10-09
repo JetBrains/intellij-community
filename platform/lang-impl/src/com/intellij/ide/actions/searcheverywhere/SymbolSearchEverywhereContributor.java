@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
@@ -10,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,8 +24,8 @@ import java.util.stream.Collectors;
  */
 public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor<Language> {
 
-  public SymbolSearchEverywhereContributor(Project project) {
-    super(project);
+  public SymbolSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
   }
 
   @NotNull
@@ -52,8 +54,9 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     return false;
   }
 
+  @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(Project project) {
+  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
     return new GotoSymbolModel2(project);
   }
 
@@ -61,7 +64,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     @NotNull
     @Override
     public SearchEverywhereContributor<Language> createContributor(AnActionEvent initEvent) {
-      return new SymbolSearchEverywhereContributor(initEvent.getProject());
+      return new SymbolSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable

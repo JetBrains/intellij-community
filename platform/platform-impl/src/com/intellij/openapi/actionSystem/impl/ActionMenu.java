@@ -82,6 +82,8 @@ public final class ActionMenu extends JBMenu {
     myContext = context;
   }
 
+  public AnAction getAnAction() { return myGroup.getAction(); }
+
   @Override
   public void addNotify() {
     super.addNotify();
@@ -236,7 +238,7 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  private void clearItems() {
+  public void clearItems() {
     if (SystemInfo.isMacSystemMenu && myPlace.equals(ActionPlaces.MAIN_MENU)) {
       for (Component menuComponent : getMenuComponents()) {
         if (menuComponent instanceof ActionMenu) {
@@ -258,7 +260,7 @@ public final class ActionMenu extends JBMenu {
     validate();
   }
 
-  private void fillMenu() {
+  public void fillMenu() {
     DataContext context;
     boolean mayContextBeInvalid;
 

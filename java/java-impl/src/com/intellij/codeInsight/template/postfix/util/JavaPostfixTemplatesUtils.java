@@ -121,7 +121,7 @@ public abstract class JavaPostfixTemplatesUtils {
     public PsiElement createExpression(@NotNull PsiElement context,
                                        @NotNull String prefix,
                                        @NotNull String suffix) {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
       return factory.createExpressionFromText(prefix + context.getText() + suffix, context);
     }
 

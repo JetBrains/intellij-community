@@ -315,6 +315,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="NumberEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="number.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.NumberEqualityInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="NewObjectEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.new.object.equality.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.NewObjectEqualityInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.bugs.ObjectEqualityInspectionMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ObjectEquality" bundle="com.siyeh.InspectionGadgetsBundle" key="object.comparison.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="true" level="INFORMATION"
@@ -642,7 +645,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.DuplicateConditionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumSwitchStatementWhichMissesCases" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enum.switch.statement.which.misses.cases.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="fallthrough" shortName="FallthruInSwitchStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="fallthru.in.switch.statement.display.name" groupBundle="messages.InspectionsBundle"
@@ -743,7 +746,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithConfusingDeclarationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooFewBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="switch.statement.with.too.few.branches.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.SwitchStatementWithTooFewBranchesInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SwitchStatementWithTooManyBranches" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="switch.statement.with.too.many.branches.display.name" groupBundle="messages.InspectionsBundle"
@@ -2288,8 +2291,8 @@
                      implementationClass="com.siyeh.ig.style.CallToStringConcatCanBeReplacedByOperatorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CStyleArrayDeclaration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="c.style.array.declaration.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.style.CStyleArrayDeclarationInspection"/>
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.CStyleArrayDeclarationInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ChainedEqualityComparisons" shortName="ChainedEquality" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="chained.equality.comparisons.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
@@ -2401,7 +2404,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessaryBlockStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryCallToStringValueOf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.conversion.to.string.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryCallToStringValueOfInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryToStringCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.tostring.call.display.name" groupBundle="messages.InspectionsBundle"

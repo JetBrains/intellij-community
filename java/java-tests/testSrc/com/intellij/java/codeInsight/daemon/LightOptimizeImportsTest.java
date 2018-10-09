@@ -57,6 +57,34 @@ public class LightOptimizeImportsTest extends LightCodeInsightFixtureTestCase {
                     "}\n";
     myFixture.checkResult(result);
   }
+  
+  public void testDontExpandOnDemandStaticImports() throws Exception {
+    myFixture.addClass("package p; public class A1 {" +
+                       "  public static void f() {}" +
+                       "}");
+    myFixture.addClass("package p; public class A2 extends A1 {}");
+    myFixture.addClass("package p; public class A3 extends A2 {}");
+    myFixture.addClass("package p; public class A4 extends A3 {" +
+                       "  public static void g() {}" +
+                       "}");
+    
+    
+    @Language("JAVA")
+    String text = "\n" +
+                  "import static p.A3.*;\n" +
+                  "import static p.A4.*;\n" +
+                  "public class Optimize {\n" +
+                  "  {f();g();}" +
+                  "}\n";
+    myFixture.configureByText(StdFileTypes.JAVA, text);
+    
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 0;
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+    myFixture.checkResult(text);
+  }
 
   public void testStaticImportsOrder() throws Exception {
     

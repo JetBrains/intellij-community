@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PublicField {
   public final X y = X.Y;
-  public String s = "";
+  public String <warning descr="'public' field 's'">s</warning> = "";
   @Nullable public String t = "";
   public static final String LEGAL = "legal";
 

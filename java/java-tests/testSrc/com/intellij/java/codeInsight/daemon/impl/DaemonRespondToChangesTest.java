@@ -81,7 +81,6 @@ import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
@@ -101,6 +100,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
@@ -120,7 +120,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
 /**
  * @author cdr
@@ -148,7 +147,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       Project project = getProject();
       if (project != null) {
         doPostponedFormatting(project);
-        ((ProjectManagerImpl)ProjectManagerEx.getInstanceEx()).forceCloseProject(project, false);
+        ProjectManagerEx.getInstanceEx().forceCloseProject(project, false);
       }
     }
     finally {
@@ -2106,7 +2105,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testHighlightingDoesWaitForEmbarrassinglySlowExternalAnnotatorsToFinish() {
     configureByText(JavaFileType.INSTANCE, "class X { int f() { int gg<caret> = 11; return 0;} }");
     final AtomicBoolean run = new AtomicBoolean();
-    final int SLEEP = 20000;
+    final int SLEEP = 2_000;
     ExternalAnnotator<Integer, Integer> annotator = new ExternalAnnotator<Integer, Integer>() {
       @Override
       public Integer collectInformation(@NotNull PsiFile file) {
@@ -2401,7 +2400,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      PlatformTestUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects();
       assertNull(PsiDocumentManager.getInstance(getProject()).getCachedPsiFile(document));
 
       document.insertString(0, "class X { void foo() {}}");
@@ -2488,9 +2487,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   private List<IntentionAction> findStupidFixes() {
-    return CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile())
-      .stream().filter(f->f.getFamilyName().equals(new MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()))
-      .collect(Collectors.toList());
+    return ContainerUtil.filter(CodeInsightTestFixtureImpl.getAvailableIntentions(getEditor(), getFile()), f -> f.getFamilyName()
+      .equals(new MyInspection.StupidQuickFixWhichDoesntCheckItsOwnApplicability().getFamilyName()));
   }
 
   private static class MyInspection extends LocalInspectionTool {

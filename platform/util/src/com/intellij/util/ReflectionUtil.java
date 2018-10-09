@@ -428,7 +428,6 @@ public class ReflectionUtil {
     }
 
     // error will be thrown
-    //noinspection ConstantConditions
     return null;
   }
 
@@ -505,12 +504,16 @@ public class ReflectionUtil {
   @Nullable
   public static Class getGrandCallerClass() {
     int stackFrameCount = 3;
+    return getCallerClass(stackFrameCount+1);
+  }
+
+  public static Class getCallerClass(int stackFrameCount) {
     Class callerClass = findCallerClass(stackFrameCount);
-    while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = findCallerClass(++stackFrameCount);
+    for (int depth=stackFrameCount+1; callerClass != null && callerClass.getClassLoader() == null; depth++) { // looks like a system class
+      callerClass = findCallerClass(depth);
     }
     if (callerClass == null) {
-      callerClass = findCallerClass(2);
+      callerClass = findCallerClass(stackFrameCount-1);
     }
     return callerClass;
   }

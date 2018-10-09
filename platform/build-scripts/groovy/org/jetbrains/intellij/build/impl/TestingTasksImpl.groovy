@@ -12,6 +12,9 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -45,7 +48,8 @@ class TestingTasksImpl extends TestingTasks {
 
     def compilationTasks = CompilationTasks.create(context)
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
-      JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
@@ -254,6 +258,14 @@ class TestingTasksImpl extends TestingTasks {
                                List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
+
+    if (additionalJvmOptions.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
+      def utilModule = context.findRequiredModule("intellij.platform.util")
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
+      bootstrapClasspath.addAll(utilClasspath - bootstrapClasspath)
+    }
+
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')

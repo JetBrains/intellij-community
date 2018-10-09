@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,12 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 
+  /**
+   * Writes a boolean option field. Does NOT write when the field has the default value.
+   * @param node  the xml element node the field is written to.
+   * @param property  the name of the field
+   * @param defaultValueToIgnore  the default value. When the field has this value it is NOT written.
+   */
   protected void writeBooleanOption(@NotNull Element node, @NotNull @NonNls String property, boolean defaultValueToIgnore) {
     final Boolean value = ReflectionUtil.getField(this.getClass(), this, boolean.class, property);
     assert value != null;
@@ -119,6 +125,11 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
     node.addContent(new Element("option").setAttribute("name", property).setAttribute("value", value.toString()));
   }
 
+  /**
+   * Writes fields even if they have a default value.
+   * @param node  the xml element node the fields are written to.
+   * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
+   */
   protected void defaultWriteSettings(@NotNull Element node, final String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
       @Override

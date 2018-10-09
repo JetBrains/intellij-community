@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
+import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -11,7 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -43,11 +44,12 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -61,6 +63,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -69,8 +72,8 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -80,6 +83,7 @@ import java.util.stream.Stream;
  * @author max
  */
 public class UsageViewImpl implements UsageViewEx {
+  private static final Logger LOG = Logger.getInstance(UsageViewImpl.class);
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
@@ -152,7 +156,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Runnable myRerunActivity;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final Queue<Future<?>> updateRequests = new Queue<>(10); // guarded by insertionRequests
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -314,8 +318,7 @@ public class UsageViewImpl implements UsageViewEx {
         TreeNode parent = node.getParent();
         if (parent == myRoot || !(parent instanceof GroupNode)) return;
         GroupNode parentNode = (GroupNode)parent;
-        List<Node> otherNodes =
-          parentNode.getChildren().stream().filter(n -> n.isExcluded() != almostAllChildrenExcluded).collect(Collectors.toList());
+        List<Node> otherNodes = ContainerUtil.filter(parentNode.getChildren(), n -> n.isExcluded() != almostAllChildrenExcluded);
         if (otherNodes.size() == 1 && otherNodes.get(0) == node) {
           nodes.add(parentNode);
           collectParentNodes(parentNode, almostAllChildrenExcluded, nodes);
@@ -537,7 +540,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       };
 
-      UsageContextPanel.Provider[] extensions = Extensions.getExtensions(UsageContextPanel.Provider.EP_NAME, myProject);
+      UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
       Map<String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
@@ -611,8 +614,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
-    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
-    List<UsageFilteringRule> list = new ArrayList<>(providers.length);
+    final List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
+    List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
@@ -621,8 +624,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
-    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<UsageGroupingRule> list = new ArrayList<>(providers.length);
+    final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
+    List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
     }
@@ -766,8 +769,7 @@ public class UsageViewImpl implements UsageViewEx {
       group.add(mergeDupLines);
     }
 
-    final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
-    for (UsageFilteringRuleProvider provider : providers) {
+    for (UsageFilteringRuleProvider provider : UsageFilteringRuleProvider.EP_NAME.getExtensionList()) {
       AnAction[] actions = provider.createFilteringActions(this);
       for (AnAction action : actions) {
         group.add(action);
@@ -892,8 +894,8 @@ public class UsageViewImpl implements UsageViewEx {
 
   @NotNull
   private AnAction[] createGroupingActions() {
-    final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
-    List<AnAction> list = new ArrayList<>(providers.length);
+    final List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
+    List<AnAction> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
@@ -1029,7 +1031,6 @@ public class UsageViewImpl implements UsageViewEx {
 
   public void select() {
     // can be null during ctr execution
-    //noinspection ConstantConditions
     if (myTree != null) {
       myTree.requestFocusInWindow();
     }
@@ -1111,37 +1112,25 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public void appendUsage(@NotNull Usage usage) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> doAppendUsage(usage))));
+      addUpdateRequest(() -> ReadAction.run(() -> doAppendUsage(usage)));
     }
     else {
       doAppendUsage(usage);
     }
   }
 
-  private void addUpdateRequest(@NotNull Future<?> request) {
-    synchronized (updateRequests) {
-      while (!updateRequests.isEmpty() && updateRequests.peekFirst().isDone()) {
-        updateRequests.pullFirst();
-      }
-      updateRequests.addLast(request);
-    }
+  private void addUpdateRequest(@NotNull Runnable request) {
+    updateRequests.execute(request);
   }
 
   @Override
   public void waitForUpdateRequestsCompletion() {
     assert !ApplicationManager.getApplication().isDispatchThread();
-    while (true) {
-      Future<?> request;
-      synchronized (updateRequests) {
-        request = updateRequests.isEmpty() ? null : updateRequests.pullFirst();
-      }
-      if (request == null) break;
-      try {
-        request.get();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    try {
+      ((BoundedTaskExecutor)updateRequests).waitAllTasksExecuted(10, TimeUnit.MINUTES);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 
@@ -1149,7 +1138,7 @@ public class UsageViewImpl implements UsageViewEx {
   @Override
   public CompletableFuture<?> appendUsagesInBulk(@NotNull Collection<? extends Usage> usages) {
     CompletableFuture<Object> result = new CompletableFuture<>();
-    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+    addUpdateRequest(() -> ReadAction.run(() -> {
       try {
         for (Usage usage : usages) {
           doAppendUsage(usage);
@@ -1160,7 +1149,7 @@ public class UsageViewImpl implements UsageViewEx {
         result.completeExceptionally(e);
         throw e;
       }
-    })));
+    }));
     return result;
   }
 
@@ -1281,7 +1270,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty()) return;
-    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    addUpdateRequest(() -> {
       for (Node node : toUpdate) {
         try {
           if (isDisposed()) break;
@@ -1294,7 +1283,7 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
       ApplicationManager.getApplication().invokeLater(onCompletedInEdt);
-    }));
+    });
   }
 
   private boolean runReadActionWithRetries(@NotNull Runnable r) {
@@ -1869,7 +1858,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (key == CommonDataKeys.PROJECT) {
         sink.put(CommonDataKeys.PROJECT, myProject);
       }
@@ -1911,12 +1900,14 @@ public class UsageViewImpl implements UsageViewEx {
         sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
       }
       else if (key == LangDataKeys.PSI_ELEMENT_ARRAY) {
-        sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
-          .stream()
-          .filter(u -> u instanceof PsiElementUsage)
-          .map(u -> ((PsiElementUsage)u).getElement())
-          .filter(Objects::nonNull)
-          .toArray(PsiElement.ARRAY_FACTORY::create));
+        if (ApplicationManager.getApplication().isDispatchThread()) {
+          sink.put(LangDataKeys.PSI_ELEMENT_ARRAY, getSelectedUsages()
+            .stream()
+            .filter(u -> u instanceof PsiElementUsage)
+            .map(u -> ((PsiElementUsage)u).getElement())
+            .filter(Objects::nonNull)
+            .toArray(PsiElement.ARRAY_FACTORY::create));
+        }
       }
       else {
         // can arrive here outside EDT from usage view preview.

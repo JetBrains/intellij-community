@@ -141,7 +141,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
   @Nullable
   public static ExpressionEvaluator create(@NotNull Project project,
                                            @Nullable PsiElement psiContext,
-                                           @NotNull Function<PsiElement, PsiCodeFragment> fragmentFactory)
+                                           @NotNull Function<? super PsiElement, ? extends PsiCodeFragment> fragmentFactory)
     throws EvaluateException {
     if (Registry.is("debugger.compiling.evaluator") && psiContext != null) {
       return ApplicationManager.getApplication().runReadAction((ThrowableComputable<ExpressionEvaluator, EvaluateException>)() -> {

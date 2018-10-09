@@ -13,10 +13,9 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -32,8 +31,7 @@ import java.util.List;
 /**
  * Standard base class for run configuration implementations.
  */
-public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile {
-  private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
+public abstract class RunConfigurationBase<T> extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile, ConfigurationCreationListener {
   private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
   private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
 
@@ -43,8 +41,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private String myName;
 
   private RunConfigurationOptions myOptions;
-
-  private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
 
   private List<BeforeRunTask<?>> myBeforeRunTasks = Collections.emptyList();
 
@@ -61,6 +57,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return ReflectionUtil.newInstance(getOptionsClass());
   }
 
+  @NotNull
   protected RunConfigurationOptions getOptions() {
     return myOptions;
   }
@@ -132,15 +129,17 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public RunConfiguration clone() {
-    final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myPredefinedLogFiles = new ArrayList<>(myPredefinedLogFiles);
+    //noinspection unchecked
+    RunConfigurationBase<T> result = (RunConfigurationBase<T>)super.clone();
+    result.myOptions = createOptions();
+    result.doCopyOptionsFrom(this);
+    return result;
+  }
 
-    runConfiguration.myOptions = createOptions();
-    runConfiguration.myOptions.copyFrom(myOptions);
-    copyCopyableDataTo(runConfiguration);
-
-    myBeforeRunTasks = myBeforeRunTasks.isEmpty() ? Collections.emptyList() : new SmartList<>(myBeforeRunTasks);
-    return runConfiguration;
+  void doCopyOptionsFrom(@NotNull RunConfigurationBase<T> template) {
+    myOptions.copyFrom(template.myOptions);
+    myOptions.resetModificationCount();
+    myBeforeRunTasks = ContainerUtil.copyList(template.myBeforeRunTasks);
   }
 
   @Nullable
@@ -149,22 +148,22 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   public void removeAllPredefinedLogFiles() {
-    myPredefinedLogFiles.clear();
+    getOptions().getPredefinedLogFiles().clear();
   }
 
   public void addPredefinedLogFile(@NotNull PredefinedLogFile predefinedLogFile) {
-    myPredefinedLogFiles.add(predefinedLogFile);
+    getOptions().getPredefinedLogFiles().add(predefinedLogFile);
   }
 
   @NotNull
   public List<PredefinedLogFile> getPredefinedLogFiles() {
-    return myPredefinedLogFiles;
+    return getOptions().getPredefinedLogFiles();
   }
 
   @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
     ArrayList<LogFileOptions> list = new ArrayList<>(getLogFiles());
-    for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
+    for (PredefinedLogFile predefinedLogFile : getOptions().getPredefinedLogFiles()) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {
         list.add(options);
@@ -199,25 +198,35 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   public void customizeLogConsole(LogConsole console) {
   }
 
-  public void loadState(@NotNull Element element) {
-    readExternal(element);
+  @Nullable
+  public T getState() {
+    //noinspection unchecked
+    return (T)getOptions();
+  }
+
+  public void loadState(@NotNull T state) {
+    if (state instanceof Element) {
+      myOptions = XmlSerializer.deserialize((Element)state, getOptionsClass());
+    }
+    else {
+      myOptions = (RunConfigurationOptions)state;
+    }
   }
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
-    myPredefinedLogFiles.clear();
-    for (Element fileElement : element.getChildren(PREDEFINED_LOG_FILE_ELEMENT)) {
-      final PredefinedLogFile logFile = new PredefinedLogFile();
-      logFile.readExternal(fileElement);
-      myPredefinedLogFiles.add(logFile);
-    }
+    //noinspection unchecked
+    loadState((T)element);
+  }
 
-    myOptions = XmlSerializer.deserialize(element, getOptionsClass());
+  @Override
+  public void writeExternal(@NotNull Element element) {
+    XmlSerializer.serializeObjectInto(myOptions, element);
   }
 
   @ApiStatus.Experimental
-  public void setState(@NotNull BaseState state) {
-    myOptions = (RunConfigurationOptions)state;
+  public void setOptionsFromConfigurationFile(@NotNull BaseState state) {
+    myOptions.copyFrom(state, /* isMustBeTheSameType= */false);
   }
 
   // we can break compatibility and make this method final (API is new and used only by our plugins), but let's avoid any inconvenience and mark as "final" after/prior to 2018.3 release.
@@ -245,18 +254,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @NotNull
   protected Class<? extends RunConfigurationOptions> getDefaultOptionsClass() {
     return RunConfigurationOptions.class;
-  }
-
-  @Override
-  public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    for (PredefinedLogFile child : myPredefinedLogFiles) {
-      if (child != null) {
-        Element element1 = new Element(PREDEFINED_LOG_FILE_ELEMENT);
-        child.writeExternal(element1);
-        element.addContent(element1);
-      }
-    }
-    XmlSerializer.serializeObjectInto(myOptions, element);
   }
 
   @Transient
@@ -299,16 +296,13 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return true;
   }
 
-  public boolean excludeCompileBeforeLaunchOption() {
-    return false;
-  }
-
   /**
-   * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
+   * @deprecated Use {@link RunProfileWithCompileBeforeLaunchOption#isExcludeCompileBeforeLaunchOption()}
+   * @return
    */
   @Deprecated
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
+  public boolean excludeCompileBeforeLaunchOption() {
+    return false;
   }
 
   @Override
@@ -324,13 +318,25 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     return false;
   }
 
+  @Override
+  public final boolean isAllowRunningInParallel() {
+    return getOptions().isAllowRunningInParallel();
+  }
+
+  @Override
+  public final void setAllowRunningInParallel(boolean value) {
+    getOptions().setAllowRunningInParallel(value);
+  }
+
   /**
    * Called when configuration created via UI (Add Configuration).
    * Suitable to perform some initialization tasks (in most cases it is indicator that you do something wrong, so, please override this method with care and only if really need).
    */
+  @Override
   public void onNewConfigurationCreated() {
   }
 
+  @Override
   public void onConfigurationCopied() {
   }
 }

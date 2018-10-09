@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
-import com.intellij.util.ui.tree.TreeUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +11,8 @@ import javax.swing.tree.TreeSelectionModel;
 import java.util.function.Consumer;
 
 import static com.intellij.ui.tree.TreeTestUtil.node;
+import static com.intellij.util.ui.tree.TreeUtil.promiseExpandAll;
+import static java.awt.EventQueue.isDispatchThread;
 
 public class TreeSmartSelectProviderTest {
   private final TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
@@ -712,7 +713,7 @@ public class TreeSmartSelectProviderTest {
                                node("fooo")),
                           node("zar.txt"),
                           node("zoo.txt")))))));
-    TreeUtil.expandAll(tree);
+    expandAll(tree);
     tree.setSelectionRow(10);
     Assert.assertEquals(15, tree.getRowCount());
     assertTree(tree, "-/\n" +
@@ -812,7 +813,7 @@ public class TreeSmartSelectProviderTest {
     JTree tree = new JTree(new DefaultTreeModel(root()));
     tree.getSelectionModel().setSelectionMode(selectionMode);
     tree.setRootVisible(rootVisible);
-    TreeUtil.promiseExpandAll(tree);
+    expandAll(tree);
     tree.collapseRow(normalize(tree, 5));
     tree.clearSelection();
     assertTree(tree, "-Root\n" +
@@ -829,5 +830,17 @@ public class TreeSmartSelectProviderTest {
                      "   Delta\n" +
                      "   Epsilon\n");
     consumer.accept(tree);
+  }
+
+  private static void expandAll(JTree tree) {
+    Assert.assertFalse("unexpected thread", isDispatchThread());
+    try {
+      // the following method expands nodes on EDT,
+      // so in this case we should pause the main thread
+      promiseExpandAll(tree).blockingGet(10000);
+    }
+    catch (Exception exception) {
+      throw new AssertionError(exception);
+    }
   }
 }

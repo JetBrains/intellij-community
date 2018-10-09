@@ -34,7 +34,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
       final JavaResolveResult accessClass = PsiUtil.getAccessObjectClass((PsiExpression)qualifier);
       final PsiElement element = accessClass.getElement();
       if (element instanceof PsiTypeParameter) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(placeFile.getProject()).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(placeFile.getProject());
         final PsiClassType type = factory.createType((PsiTypeParameter)element);
         final PsiType accessType = accessClass.getSubstitutor().substitute(type);
         if (accessType instanceof PsiArrayType) {

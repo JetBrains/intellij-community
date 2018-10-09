@@ -49,7 +49,13 @@ abstract class FoldRegionsTree {
     myCachedData = new CachedData();
   }
 
+  void clearCachedInlayValues() {
+    myCachedData.topFoldedInlaysHeight = null;
+  }
+
   protected abstract boolean isFoldingEnabled();
+
+  protected abstract int getBlockInlaysHeight(int startOffset, int endOffset);
 
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
@@ -151,15 +157,15 @@ abstract class FoldRegionsTree {
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
     int[] foldedLines = ArrayUtil.newIntArray(topLevelRegions.length);
-    
-    int sum = 0;
+
+    int foldedLinesSum = 0;
     for (int i = 0; i < topLevelRegions.length; i++) {
       FoldRegion region = topLevelRegions[i];
       startOffsets[i] = region.getStartOffset();
       endOffsets[i] = region.getEndOffset() - 1;
       Document document = region.getDocument();
-      sum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
-      foldedLines[i] = sum;
+      foldedLinesSum += document.getLineNumber(region.getEndOffset()) - document.getLineNumber(region.getStartOffset());
+      foldedLines[i] = foldedLinesSum;
     }
 
     CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines);
@@ -275,6 +281,7 @@ abstract class FoldRegionsTree {
     CachedData cachedData = ensureAvailableData();
     int idx = getLastTopLevelIndexBefore(cachedData, offset);
     if (idx == -1) return 0;
+    assert cachedData.topFoldedLines != null;
     return cachedData.topFoldedLines[idx];
   }
 
@@ -285,6 +292,23 @@ abstract class FoldRegionsTree {
 
     if (foldedLines == null || foldedLines.length == 0) return 0;
     return foldedLines[foldedLines.length - 1];
+  }
+
+  int getHeightOfFoldedBlockInlaysBefore(int offset) {
+    if (!isFoldingEnabled()) return 0;
+    CachedData cachedData = ensureAvailableData();
+    int idx = getLastTopLevelIndexBefore(cachedData, offset);
+    if (idx == -1) return 0;
+    cachedData.ensureInlayDataAvailable();
+    return cachedData.topFoldedInlaysHeight[idx];
+  }
+
+  int getTotalHeightOfFoldedBlockInlays() {
+    if (!isFoldingEnabled()) return 0;
+    CachedData cachedData = ensureAvailableData();
+    cachedData.ensureInlayDataAvailable();
+    int[] foldedInlaysHeight = cachedData.topFoldedInlaysHeight;
+    return foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
   }
 
   int getLastTopLevelIndexBefore(int offset) {
@@ -320,12 +344,13 @@ abstract class FoldRegionsTree {
     forEach(region -> ((FoldRegionImpl)region).resetDocumentRegionChanged());
   }
 
-  private static class CachedData {
+  private class CachedData {
     private final FoldRegion[] visibleRegions;  // all foldings outside collapsed regions
     private final FoldRegion[] topLevelRegions; // all visible regions which are collapsed
     private final int[] topStartOffsets;
     private final int[] topEndOffsets;
     private final int[] topFoldedLines;
+    private int[] topFoldedInlaysHeight;
 
     private CachedData() {
       visibleRegions = null;
@@ -333,6 +358,7 @@ abstract class FoldRegionsTree {
       topStartOffsets = null;
       topEndOffsets = null;
       topFoldedLines = null;
+      topFoldedInlaysHeight = null;
     }
 
     private CachedData(@NotNull FoldRegion[] visibleRegions,
@@ -345,10 +371,22 @@ abstract class FoldRegionsTree {
       this.topStartOffsets = topStartOffsets;
       this.topEndOffsets = topEndOffsets;
       this.topFoldedLines = topFoldedLines;
+      ensureInlayDataAvailable();
     }
 
     private boolean isAvailable() {
       return visibleRegions != null;
+    }
+
+    private void ensureInlayDataAvailable() {
+      if (topFoldedInlaysHeight == null) {
+        int count = topLevelRegions.length;
+        topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
+        int inlaysHeightSum = 0;
+        for (int i = 0; i < count; i++) {
+          topFoldedInlaysHeight[i] = (inlaysHeightSum += getBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i]));
+        }
+      }
     }
   }
 }

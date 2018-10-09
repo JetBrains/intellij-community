@@ -34,11 +34,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     initializeDialog(items, title, sort);
   }
 
-  public ChooseElementsDialog(Component parent, List<T> items, String title) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, String title) {
     this(parent, items, title, null, false);
   }
 
-  public ChooseElementsDialog(Component parent, List<T> items, String title, @Nullable String description, final boolean sort) {
+  public ChooseElementsDialog(Component parent, List<? extends T> items, String title, @Nullable String description, final boolean sort) {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);

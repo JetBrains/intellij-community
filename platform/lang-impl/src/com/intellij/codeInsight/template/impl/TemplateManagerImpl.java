@@ -23,7 +23,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.LazyUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +36,8 @@ import java.util.concurrent.ConcurrentMap;
 
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
   // called a lot of times on save/load, so, better to use ExtensionPoint instead of name
-  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP = LazyUtil.create(() -> TemplateContextType.EP_NAME.getPoint(null));
+  static final NotNullLazyValue<ExtensionPoint<TemplateContextType>> TEMPLATE_CONTEXT_EP =
+    NotNullLazyValue.createValue(() -> TemplateContextType.EP_NAME.getPoint(null));
 
   private final Project myProject;
   private boolean myTemplateTesting;
@@ -513,7 +513,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     return isApplicable(template, getApplicableContextTypes(file, offset));
   }
 
-  public static boolean isApplicable(TemplateImpl template, Set<TemplateContextType> contextTypes) {
+  public static boolean isApplicable(TemplateImpl template, Set<? extends TemplateContextType> contextTypes) {
     for (TemplateContextType type : contextTypes) {
       if (template.getTemplateContext().isEnabled(type)) {
         return true;

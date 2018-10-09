@@ -163,13 +163,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testRemoveOverridersInspiteOfUnsafeUsages() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTest("A");
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest("A"));
   }
 
   public void testLocalVariable() {
@@ -331,13 +325,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testParameterInMethodUsedInMethodReference() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_8);
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doSingleFileTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
   public void testNoConflictOnDeleteParameterWithMethodRefArg() throws Exception {
@@ -346,13 +334,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   }
 
   public void testShowConflictsButRemoveAnnotationsIfAnnotationTypeIsDeleted() throws Exception {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doSingleFileTest();
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doSingleFileTest());
   }
 
   public void testUsagesInScratch() throws Exception {

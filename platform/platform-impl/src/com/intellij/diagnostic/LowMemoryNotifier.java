@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerColl
 import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -28,9 +29,23 @@ public class LowMemoryNotifier implements Disposable {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
       @Override
       public void uiFreezeFinished(int lengthInSeconds) {
-        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze." + lengthInSeconds);
+        String lengthGrouped = groupLength(lengthInSeconds);
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.freeze",
+                                                         FUSUsageContext.create("timeSecondsGrouped", lengthGrouped));
+
         FeatureUsageLogger.INSTANCE.log("lifecycle",
                                         "ide.freeze", Collections.singletonMap("durationSeconds", lengthInSeconds));
+      }
+
+      private String groupLength(int seconds) {
+        if (seconds >= 60) {
+          return "60+";
+        }
+        if (seconds > 10) {
+          seconds -= (seconds % 10);
+          return seconds + "+";
+        }
+        return String.valueOf(seconds);
       }
     });
   }

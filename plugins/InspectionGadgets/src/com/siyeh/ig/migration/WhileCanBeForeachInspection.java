@@ -146,6 +146,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
         final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
         final PsiLocalVariable localVariable = (PsiLocalVariable)declaredElements[0];
         contentVariableName = localVariable.getName();
+        iteratorContentType = localVariable.getType();
         statementToSkip = declarationStatement;
       }
       else {
@@ -169,8 +170,7 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (!TypeConversionUtil.isAssignable(iteratorContentType, contentType)) {
         out.append("(java.lang.Iterable<").append(canonicalText).append(">)");
       }
-      out.append(collection.getText());
-      out.append(')');
+      out.append(collection.getText()).append(')');
 
       ForCanBeForeachInspection.replaceIteratorNext(body, contentVariableName, iterator, contentType, statementToSkip, out);
       final Query<PsiReference> query = ReferencesSearch.search(iterator);
@@ -285,7 +285,6 @@ public class WhileCanBeForeachInspection extends BaseInspection {
       if (ForCanBeForeachInspection.isIteratorMethodCalled(variable, body)) {
         return false;
       }
-      //noinspection SimplifiableIfStatement
       if (isIteratorHasNextCalled(variable, body)) {
         return false;
       }

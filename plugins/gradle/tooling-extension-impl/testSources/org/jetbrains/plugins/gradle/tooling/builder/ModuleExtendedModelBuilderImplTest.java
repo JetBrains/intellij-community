@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaSourceDirectory;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ExtIdeaContentRoot;
 import org.jetbrains.plugins.gradle.model.ModuleExtendedModel;
@@ -38,8 +39,11 @@ import static org.junit.Assert.*;
  */
 public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest {
 
+  private final boolean is50OrBetter;
+
   public ModuleExtendedModelBuilderImplTest(@NotNull String gradleVersion) {
     super(gradleVersion);
+    is50OrBetter = GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("5.0-SNAPSHOT")) >= 0;
   }
 
   @Test
@@ -112,11 +116,19 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
           assertEquals(ContainerUtil.newArrayList(".gradle", "build", "some-extra-exclude-folder"), excludeDirectories);
         }
         else if (module.getName().equals("withIdeaPluginCustomization2")) {
-          assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
-          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-          assertTrue(testDirectories.isEmpty());
-          assertTrue(testResourceDirectories.isEmpty());
-          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          if (is50OrBetter) {
+            assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+            assertTrue(testDirectories.isEmpty());
+            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          } else {
+            assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
+            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+            assertTrue(testDirectories.isEmpty());
+            assertTrue(testResourceDirectories.isEmpty());
+            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+          }
         }
         else if (module.getName().equals("withIdeaPluginCustomization3")) {
           assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);

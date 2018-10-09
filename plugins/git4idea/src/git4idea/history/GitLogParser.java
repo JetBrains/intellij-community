@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitFormatException;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
@@ -175,7 +176,7 @@ public class GitLogParser {
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
-    List<GitLogStatusInfo> result = myPathsParser.getResult();
+    List<VcsFileStatusInfo> result = myPathsParser.getResult();
     myPathsParser.clear();
 
     myIsInBody = true;
@@ -345,7 +346,7 @@ public class GitLogParser {
 
   private class PathsParser {
     @NotNull private final NameStatus myNameStatusOption;
-    @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
+    @NotNull private List<VcsFileStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
     PathsParser(@NotNull NameStatus nameStatusOption) {
       myNameStatusOption = nameStatusOption;
@@ -363,10 +364,11 @@ public class GitLogParser {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
         if (match.size() == 2) {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
+          myStatuses.add(new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), null));
         }
         else if (match.size() >= 3) {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
+          myStatuses
+            .add(new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(match.get(0))), match.get(1), match.get(2)));
         }
         else {
           LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
@@ -406,7 +408,7 @@ public class GitLogParser {
     }
 
     @NotNull
-    public List<GitLogStatusInfo> getResult() {
+    public List<VcsFileStatusInfo> getResult() {
       return myStatuses;
     }
 

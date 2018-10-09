@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -67,6 +68,8 @@ public class FindUIHelper implements Disposable {
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
+    } else {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
     return myUI;
   }

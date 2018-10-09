@@ -163,7 +163,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return reader;
   }
 
-  @SuppressWarnings({"NonStaticInitializer"})
   private JComponent createToolbar() {
     String customFilter = myModel.getCustomFilter();
 

@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -135,7 +136,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private static Dimension getDimension() {
-    return new Dimension(AllIcons.General.ErrorsInProgress.getIconWidth() + 2, AllIcons.General.ErrorsInProgress.getIconHeight() + 2);
+    return JBUI.size(14);
   }
 
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {

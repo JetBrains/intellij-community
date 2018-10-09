@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,8 +18,13 @@ public abstract class SearchQueryParser {
   public String searchQuery;
 
   @NotNull
-  public static List<String> split(@NotNull String name, @NotNull String query) {
+  public static List<String> split(@NotNull String name, @Nullable String query) {
     List<String> result = new ArrayList<>();
+
+    if (query == null) {
+      result.add(name);
+      return result;
+    }
 
     int length = name.length();
     int queryLength = query.length();
@@ -42,7 +48,7 @@ public abstract class SearchQueryParser {
   }
 
   @NotNull
-  private static List<String> splitQuery(@NotNull String query) {
+  protected static List<String> splitQuery(@NotNull String query) {
     List<String> words = new ArrayList<>();
 
     int length = query.length();
@@ -139,7 +145,7 @@ public abstract class SearchQueryParser {
       if ("featured".equals(sortBy)) {
         url.append("is_featured_search=true");
       }
-      else if ("updates".equals(sortBy)) {
+      else if ("updated".equals(sortBy)) {
         url.append("orderBy=update+date");
       }
       else if ("downloads".equals(sortBy)) {
@@ -174,7 +180,7 @@ public abstract class SearchQueryParser {
       if (name.equals("tag")) {
         tags.add(value);
       }
-      else if (name.equals("sort_by")) {
+      else if (name.equals("sortBy")) {
         sortBy = value;
       }
       else if (name.equals("repository")) {
@@ -185,7 +191,7 @@ public abstract class SearchQueryParser {
 
   public static class Installed extends SearchQueryParser {
     public Boolean enabled; // False == disabled
-    public Boolean bundled; // False == installed
+    public Boolean bundled; // False == custom
     public Boolean invalid;
     public Boolean needUpdate;
     public Boolean deleted;
@@ -193,17 +199,28 @@ public abstract class SearchQueryParser {
     public final boolean attributes;
 
     public Installed(@NotNull String query) {
-      parse(query);
+      for (String word : splitQuery(query)) {
+        if (word.startsWith("#")) {
+          handleAttribute(word.substring(1), "", false);
+        }
+        else if (word.startsWith("-#")) {
+          handleAttribute(word.substring(2), "", true);
+        }
+        else if (searchQuery == null) {
+          searchQuery = word;
+        }
+        else {
+          searchQuery = query;
+          break;
+        }
+      }
+
       attributes = enabled != null || bundled != null || invalid != null || needUpdate != null || deleted != null || needRestart != null;
     }
 
     @Override
     protected void handleAttribute(@NotNull String name, @NotNull String value, boolean invert) {
-      if (!name.equals("status")) {
-        return;
-      }
-
-      switch (value) {
+      switch (name) {
         case "enabled":
           enabled = !invert;
           break;
@@ -214,7 +231,7 @@ public abstract class SearchQueryParser {
         case "bundled":
           bundled = !invert;
           break;
-        case "installed":
+        case "custom":
           bundled = invert;
           break;
 

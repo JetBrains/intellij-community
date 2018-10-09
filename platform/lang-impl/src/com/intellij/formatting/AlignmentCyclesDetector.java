@@ -37,7 +37,7 @@ public class AlignmentCyclesDetector {
   public void registerOffsetResponsibleBlock(@NotNull LeafBlockWrapper block) {
     myOffsetResponsibleBlock = block;
     final WhiteSpace whitespace = block.getWhiteSpace();
-    myBeforeTotalSpaces = whitespace != null ? whitespace.getTotalSpaces() : 0;
+    myBeforeTotalSpaces = whitespace.getTotalSpaces();
   }
 
   public boolean isCycleDetected() {
@@ -54,7 +54,7 @@ public class AlignmentCyclesDetector {
     }
 
     final WhiteSpace whitespace = myOffsetResponsibleBlock.getWhiteSpace();
-    int newSpaces = whitespace != null ? whitespace.getTotalSpaces() : 0;
+    int newSpaces = whitespace.getTotalSpaces();
     boolean added = pairs.add(Pair.create(myBeforeTotalSpaces, newSpaces));
     if (added) {
       myBlockRollbacks++;

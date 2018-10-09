@@ -31,10 +31,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
@@ -42,7 +39,6 @@ import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
-import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -92,7 +88,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
     final FilePath realFilePath;
     if (revision == null) {
-      realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
+      realFilePath = VcsUtil.getLastCommitPath(myProject, currentFilePath);
     }
     else {
       realFilePath = ((VcsFileRevisionEx)revision).getPath();
@@ -100,6 +96,11 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
 
     return annotate(realFilePath, revisionNumber, file);
+  }
+
+  @Override
+  public boolean isAnnotationValid(@NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
+    return GitContentRevision.getRepositoryIfSubmodule(myProject, path) == null;
   }
 
   @NotNull

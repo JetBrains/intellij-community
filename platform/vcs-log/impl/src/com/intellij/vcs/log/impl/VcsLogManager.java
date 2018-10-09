@@ -4,7 +4,6 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -40,22 +39,22 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<Throwable> myRecreateMainLogHandler;
+  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<? extends VcsRoot> roots) {
     this(project, uiProperties, roots, true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
                        @NotNull VcsLogTabsProperties uiProperties,
-                       @NotNull Collection<VcsRoot> roots,
+                       @NotNull Collection<? extends VcsRoot> roots,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<Throwable> recreateHandler) {
+                       @Nullable Consumer<? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
@@ -141,9 +140,9 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
+  public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<? extends VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
-    VcsLogProvider[] allLogProviders = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project);
+    VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
     for (VcsRoot root: roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();

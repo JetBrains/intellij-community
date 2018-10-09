@@ -34,8 +34,6 @@ public class RedundantTypeArgsInspectionFixTest extends LightQuickFixParameteriz
     PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantTypeArgs";

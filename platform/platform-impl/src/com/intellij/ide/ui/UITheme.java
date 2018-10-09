@@ -10,7 +10,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +27,9 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.util.ui.JBUI.Borders.customLine;
+import static com.intellij.util.ui.JBUI.asUIResource;
 
 /**
  * @author Konstantin Bulenkov
@@ -65,7 +67,7 @@ public class UITheme {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     theme.providerClassLoader = provider;
-    if (!theme.icons.isEmpty()) {
+    if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
         @Override
@@ -95,13 +97,28 @@ public class UITheme {
       if (palette instanceof Map) {
         Map colors = (Map)palette;
         Map<String, String> newPalette = new HashMap<>();
+        Map<String, Integer> alphas = new HashMap<>();
         for (Object o : colors.keySet()) {
           String key = toColorString(o.toString(), theme.isDark());
           Object v = colors.get(o.toString());
           if (v instanceof String) {
             String value = (String)v;
+            String alpha = null;
+            if (value.length() == 9) {
+              alpha = value.substring(7);
+              value = value.substring(0, 7);
+            }
             if (ColorUtil.fromHex(key, null) != null && ColorUtil.fromHex(value, null) != null) {
               newPalette.put(key, value);
+              int fillTransparency = -1;
+              if (alpha != null) {
+                try {
+                  fillTransparency = Integer.parseInt(alpha, 16);
+                } catch (Exception ignore) {}
+              }
+              if (fillTransparency != -1) {
+                alphas.put(value, fillTransparency);
+              }
             }
           }
         }
@@ -114,6 +131,9 @@ public class UITheme {
               String newFill = newPalette.get(StringUtil.toLowerCase(fill));
               if (newFill != null) {
                 svg.setAttribute("fill", newFill);
+                if (alphas.get(newFill) != null) {
+                  svg.setAttribute("fill-opacity", String.valueOf((Float.valueOf(alphas.get(newFill)) / 255f)));
+                }
               }
             }
             NodeList nodes = svg.getChildNodes();
@@ -238,13 +258,13 @@ public class UITheme {
         if (ints.size() == 4) {
           return new BorderUIResource.EmptyBorderUIResource(parseInsets(value));
         } else if (ints.size() == 5) {
-          return JBUI.Borders.customLine(ColorUtil.fromHex(ints.get(4)),
+          return asUIResource(customLine(ColorUtil.fromHex(ints.get(4)),
                                          Integer.parseInt(ints.get(0)),
                                          Integer.parseInt(ints.get(1)),
                                          Integer.parseInt(ints.get(2)),
-                                         Integer.parseInt(ints.get(3)));
+                                         Integer.parseInt(ints.get(3))));
         } else if (ColorUtil.fromHex(value, null) != null) {
-          return JBUI.Borders.customLine(ColorUtil.fromHex(value), 1);
+          return asUIResource(customLine(ColorUtil.fromHex(value), 1));
         } else {
           return Class.forName(value).newInstance();
         }
@@ -289,13 +309,16 @@ public class UITheme {
 
   @SuppressWarnings("UseJBColor")
   private static Color parseColor(String value) {
-    if (value != null && value.length() == 8) {
-      final Color color = ColorUtil.fromHex(value.substring(0, 6));
-      try {
-        int alpha = Integer.parseInt(value.substring(6, 8), 16);
-        return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
-      } catch (Exception ignore){}
-      return null;
+    if (value != null) {
+      value = StringUtil.trimStart(value, "#");
+      if (value.length() == 8) {
+        final Color color = ColorUtil.fromHex(value.substring(0, 6));
+        try {
+          int alpha = Integer.parseInt(value.substring(6, 8), 16);
+          return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+        } catch (Exception ignore){}
+        return null;
+      }
     }
     return ColorUtil.fromHex(value, null);
   }

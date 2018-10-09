@@ -154,7 +154,7 @@ public class EditorModificationUtil {
   }
 
   @Nullable
-  public static Transferable getContentsToPasteToEditor(@Nullable Producer<Transferable> producer) {
+  public static Transferable getContentsToPasteToEditor(@Nullable Producer<? extends Transferable> producer) {
     if (producer == null) {
       CopyPasteManager manager = CopyPasteManager.getInstance();
       return manager.areDataFlavorsAvailable(DataFlavor.stringFlavor) ? manager.getContents() : null;

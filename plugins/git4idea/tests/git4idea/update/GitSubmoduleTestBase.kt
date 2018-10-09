@@ -35,7 +35,10 @@ abstract class GitSubmoduleTestBase : GitPlatformTest() {
     git("submodule add ${FileUtil.toSystemIndependentName(submoduleUrl.path)} ${relativePath ?: ""}")
     git("commit -m 'Added submodule lib'")
     git("push origin master")
-    return File(superProject, relativePath ?: submoduleUrl.name)
+    val submodule = File(superProject, relativePath ?: submoduleUrl.name)
+    cd(submodule)
+    setupDefaultUsername()
+    return submodule
   }
 
   protected data class RepositoryAndParent(val name: String,

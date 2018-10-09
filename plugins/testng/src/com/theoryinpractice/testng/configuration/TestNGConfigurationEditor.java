@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.browser.GroupBrowser;
 import com.theoryinpractice.testng.configuration.browser.PackageBrowser;
@@ -531,11 +532,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     @Nullable
     protected GlobalSearchScope getSearchScope(Module[] modules) {
       if (modules == null || modules.length == 0) return null;
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(modules[0]);
-      for (int i = 1; i < modules.length; i++) {
-        scope.uniteWith(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(modules[i]));
-      }
-      return scope;
+      GlobalSearchScope[] scopes =
+        ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      return GlobalSearchScope.union(scopes);
     }
 
     @Nullable

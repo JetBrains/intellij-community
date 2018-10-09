@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -12,11 +14,11 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
@@ -27,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.history.FileHistoryPanelImpl.sameHistories;
@@ -37,11 +40,11 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
   @NotNull private final VcsHistoryProvider myVcsHistoryProvider;
   @NotNull private final FilePath myPath;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
+  @NotNull private final FileHistoryRefresherI myRefresher;
   @NotNull private final LimitHistoryCheck myLimitHistoryCheck;
   @NotNull private final BufferedListConsumer<VcsFileRevision> myBuffer;
-  @NotNull private final FileHistoryPanelImpl myFileHistoryPanel;
-
-  private volatile VcsAbstractHistorySession mySession;
+  @NotNull private final FileHistoryContentPanel myContentPanel;
+  private volatile VcsAbstractHistorySession mySession = null;
 
   public FileHistorySessionPartner(@NotNull VcsHistoryProvider vcsHistoryProvider,
                                    @NotNull FilePath path,
@@ -51,15 +54,16 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
     myStartingRevisionNumber = startingRevisionNumber;
+    myRefresher = refresher;
     myLimitHistoryCheck = new LimitHistoryCheck(vcs.getProject(), path.getPath());
     myVcs = vcs;
-    myFileHistoryPanel = createFileHistoryPanel(new EmptyHistorySession(), refresher);
+    myContentPanel = new FileHistoryContentPanel();
 
     Consumer<List<VcsFileRevision>> sessionRefresher = vcsFileRevisions -> {
       // TODO: Logic should be revised to just append some revisions to history panel instead of creating and showing new history session
       mySession.getRevisionList().addAll(vcsFileRevisions);
       VcsHistorySession copy = mySession.copyWithCachedRevision();
-      ApplicationManager.getApplication().invokeAndWait(() -> myFileHistoryPanel.setHistorySession(copy));
+      ApplicationManager.getApplication().invokeAndWait(() -> myContentPanel.setHistorySession(copy));
     };
     myBuffer = new BufferedListConsumer<VcsFileRevision>(5, sessionRefresher, 1000) {
       @Override
@@ -70,8 +74,6 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
         consumerRunnable.run();
       }
     };
-
-    Disposer.register(myFileHistoryPanel, this);
   }
 
   @Nullable
@@ -79,9 +81,13 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
                                                             @NotNull FilePath path,
                                                             @Nullable VcsRevisionNumber startingRevisionNumber) {
     JComponent component = ContentUtilEx.findContentComponent(getToolWindow(project).getContentManager(), comp ->
-      comp instanceof FileHistoryPanelImpl &&
-      sameHistories((FileHistoryPanelImpl)comp, path, startingRevisionNumber));
-    return component == null ? null : VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData((DataProvider)component);
+      comp instanceof FileHistoryContentPanel &&
+      sameHistories(((FileHistoryContentPanel)comp).getPath(), ((FileHistoryContentPanel)comp).getRevision(), path,
+                    startingRevisionNumber));
+    if (component == null) return null;
+    DataProvider dataProvider = DataManagerImpl.getDataProviderEx(component);
+    if (dataProvider == null) return null;
+    return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
   }
 
   @CalledInBackground
@@ -93,13 +99,6 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
   public void acceptRevision(VcsFileRevision revision) {
     myLimitHistoryCheck.checkNumber();
     myBuffer.consumeOne(revision);
-  }
-
-  @NotNull
-  private FileHistoryPanelImpl createFileHistoryPanel(@NotNull VcsHistorySession session, @NotNull FileHistoryRefresherI refresher) {
-    ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
-    return new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider, contentManager, refresher,
-                                    false);
   }
 
   @Override
@@ -114,8 +113,8 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (mySession != null && !mySession.getRevisionList().isEmpty()) {
-        myFileHistoryPanel.setHistorySession(mySession.copyWithCachedRevision());
+      if (mySession != null) {
+        myContentPanel.setHistorySession(mySession.copyWithCachedRevision());
       }
     });
   }
@@ -142,13 +141,13 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
   public void createOrSelectContent() {
     ToolWindow toolWindow = getToolWindow(myVcs.getProject());
     ContentManager manager = toolWindow.getContentManager();
-    boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
+    boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myContentPanel, true);
     if (!selectedExistingContent) {
       String tabName = myPath.getName();
       if (myStartingRevisionNumber != null) {
         tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
       }
-      ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
+      ContentUtilEx.addTabbedContent(manager, myContentPanel, "History", tabName, true, this);
     }
     toolWindow.activate(null);
   }
@@ -161,11 +160,46 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer, Dis
         // nothing to be done, exit
         return;
       }
-      myFileHistoryPanel.finishRefresh();
+      myContentPanel.finishRefresh();
     });
   }
 
   @Override
   public void dispose() {
+  }
+
+  private class FileHistoryContentPanel extends JBPanel {
+    @Nullable private FileHistoryPanelImpl myFileHistoryPanel;
+
+    private FileHistoryContentPanel() {
+      super(new BorderLayout());
+    }
+
+    public void setHistorySession(@NotNull VcsHistorySession session) {
+      if (myFileHistoryPanel == null) {
+        myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, myStartingRevisionNumber, session, myVcsHistoryProvider,
+                                                      myRefresher, false);
+        add(myFileHistoryPanel, BorderLayout.CENTER);
+        DataManager.registerDataProvider(this, myFileHistoryPanel);
+        Disposer.register(FileHistorySessionPartner.this, myFileHistoryPanel);
+      }
+      else if (!session.getRevisionList().isEmpty()) {
+        myFileHistoryPanel.setHistorySession(session);
+      }
+    }
+
+    public void finishRefresh() {
+      if (myFileHistoryPanel != null) myFileHistoryPanel.finishRefresh();
+    }
+
+    @NotNull
+    public FilePath getPath() {
+      return myPath;
+    }
+
+    @Nullable
+    public VcsRevisionNumber getRevision() {
+      return myStartingRevisionNumber;
+    }
   }
 }

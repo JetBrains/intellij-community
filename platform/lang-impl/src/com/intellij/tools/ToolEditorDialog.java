@@ -135,8 +135,8 @@ public class ToolEditorDialog extends DialogWrapper {
   private void createUIComponents() {
     myOutputFilterField = new RawCommandLineEditor(OUTPUT_FILTERS_SPLITTER, OUTPUT_FILTERS_JOINER);
 
-    myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.SplitRight,
-                                                                     AllIcons.General.SplitDown,
+    myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.ArrowRight,
+                                                                     AllIcons.General.ArrowDown,
                                                                      "Advanced Options") {
       @Override
       protected RefreshablePanel createPanel() {

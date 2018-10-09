@@ -74,27 +74,8 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
       ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
-        SimpleColoredText text = new SimpleColoredText();
-        XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
-        final XValuePresentation presentation = value.getValuePresentation();
-        if (presentation == null) continue;
-        try {
-          if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
-            ((XValueCompactPresentation)presentation).renderValue(renderer, value);
-          }
-          else {
-            presentation.renderValue(renderer);
-          }
-          if (StringUtil.isEmpty(text.toString())) {
-            final String type = value.getValuePresentation().getType();
-            if (!StringUtil.isEmpty(type)) {
-              text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-            }
-          }
-        }
-        catch (Exception ignored) {
-          continue;
-        }
+        SimpleColoredText text = createPresentation(value);
+        if (text == null) continue;
 
         final String name = value.getName();
         if (StringUtil.isEmpty(text.toString())) {
@@ -128,6 +109,32 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return infos.size() > LINE_EXTENSIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENSIONS_MAX_COUNT) : infos;
     }
     return null;
+  }
+
+  @Nullable
+  public static SimpleColoredText createPresentation(@NotNull XValueNodeImpl value) {
+    SimpleColoredText text = new SimpleColoredText();
+    XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
+    final XValuePresentation presentation = value.getValuePresentation();
+    if (presentation == null) return null;
+    try {
+      if (presentation instanceof XValueCompactPresentation && !value.getTree().isUnderRemoteDebug()) {
+        ((XValueCompactPresentation)presentation).renderValue(renderer, value);
+      }
+      else {
+        presentation.renderValue(renderer);
+      }
+      if (StringUtil.isEmpty(text.toString())) {
+        final String type = value.getValuePresentation().getType();
+        if (!StringUtil.isEmpty(type)) {
+          text.append(type, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      }
+    }
+    catch (Exception e) {
+      return null;
+    }
+    return text;
   }
 
   private static int getCurrentBreakPointLineInFile(@Nullable XDebugSession session, VirtualFile file) {

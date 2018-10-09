@@ -5,6 +5,7 @@ import com.intellij.execution.util.ListTableWithButtons;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,6 +23,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import org.gradle.internal.impldep.org.apache.commons.lang.WordUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
  */
 public class DaemonsUi implements Disposable {
 
+  private final Project myProject;
   private final DaemonsTable myTable;
   private final RefreshAction myRefreshAction;
   private final StopAllAction myStopAllAction;
@@ -50,7 +53,8 @@ public class DaemonsUi implements Disposable {
   private boolean myShowStopped;
   private List<DaemonState> myDaemonStateList;
 
-  public DaemonsUi() {
+  public DaemonsUi(Project project) {
+    myProject = project;
     myRefreshAction = new RefreshAction();
     myStopAllAction = new StopAllAction();
     myStopSelectedAction = new StopSelectedAction();
@@ -264,6 +268,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
+      GradleActionsUsagesCollector.trigger(myProject, "refreshDaemons");
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);
       updateDaemonsList(daemonStateList);
@@ -283,6 +288,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
+      GradleActionsUsagesCollector.trigger(myProject, "stopAllDaemons");
       GradleDaemonServices.stopDaemons();
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);
@@ -304,6 +310,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
+      GradleActionsUsagesCollector.trigger(myProject, "stopSelectedDaemons");
       GradleDaemonServices.stopDaemons(myTable.getTableView().getSelectedObjects());
       List<DaemonState> daemonStateList = GradleDaemonServices.getDaemonsStatus();
       myTable.setValues(daemonStateList);

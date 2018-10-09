@@ -96,7 +96,7 @@ public class PsiBuilderAdapter implements PsiBuilder {
   }
 
   @Override
-  public void error(final String messageText) {
+  public void error(@NotNull final String messageText) {
     myDelegate.error(messageText);
   }
 

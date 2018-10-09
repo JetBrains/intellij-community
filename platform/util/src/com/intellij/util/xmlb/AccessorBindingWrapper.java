@@ -129,4 +129,9 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
       return myBinding.isBoundTo(element);
     }
   }
+
+  @Override
+  public String toString() {
+    return myBinding.toString();
+  }
 }

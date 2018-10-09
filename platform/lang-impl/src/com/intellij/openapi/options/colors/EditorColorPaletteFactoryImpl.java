@@ -100,8 +100,7 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
   private static boolean pageIsGoodForAnyLanguage(boolean filterOutRainbowNonConflictingAttrKeys,
                                                   @NotNull ColorSettingsPage page) {
     return !filterOutRainbowNonConflictingAttrKeys
-        || page instanceof DefaultLanguageColorsPage
-        || page instanceof GeneralColorsPage
-        || page instanceof RainbowColorSettingsPage;
+           || page instanceof GeneralColorsPage
+           || page instanceof RainbowColorSettingsPage;
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -189,8 +188,7 @@ public final class ErrorAnalyzer {
       final PsiFile formPsiFile = PsiManager.getInstance(module.getProject()).findFile(formFile);
       if (formPsiFile != null && rootContainer instanceof RadRootContainer) {
         final List<FormInspectionTool> formInspectionTools = new ArrayList<>();
-        final FormInspectionTool[] registeredFormInspections = Extensions.getExtensions(FormInspectionTool.EP_NAME);
-        for (FormInspectionTool formInspectionTool : registeredFormInspections) {
+        for (FormInspectionTool formInspectionTool : FormInspectionTool.EP_NAME.getExtensionList()) {
           if (formInspectionTool.isActive(formPsiFile) && !isSuppressed(rootContainer, formInspectionTool, null)) {
             formInspectionTools.add(formInspectionTool);
           }

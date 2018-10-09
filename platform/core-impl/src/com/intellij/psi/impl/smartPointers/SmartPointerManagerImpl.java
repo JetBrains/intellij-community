@@ -109,7 +109,7 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     SmartPsiElementPointerImpl cachedPointer = SoftReference.dereference(data);
     if (cachedPointer != null) {
       PsiElement cachedElement = cachedPointer.getElement();
-      if (cachedElement == null || cachedElement != element) {
+      if (cachedElement != element) {
         return null;
       }
     }

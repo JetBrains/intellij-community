@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.io.MappingFailedException;
-import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -204,8 +203,7 @@ public class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof PersistentEnumerator.CorruptedException ||
-          cause instanceof MappingFailedException ||
+      if (cause instanceof MappingFailedException ||
           cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
@@ -396,11 +394,15 @@ public class IncProjectBuilder {
   }
 
   private void sendElapsedTimeMessages(CompileContext context) {
-    for (Map.Entry<Builder, AtomicLong> entry : myElapsedTimeNanosByBuilder.entrySet()) {
-      AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
-      int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
-      context.processMessage(new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1000000));
-    }
+    myElapsedTimeNanosByBuilder.entrySet()
+      .stream()
+      .map(entry -> {
+        AtomicInteger processedSourcesRef = myNumberOfSourcesProcessedByBuilder.get(entry.getKey());
+        int processedSources = processedSourcesRef != null ? processedSourcesRef.get() : 0;
+        return new BuilderStatisticsMessage(entry.getKey().getPresentableName(), processedSources, entry.getValue().get()/1_000_000);
+      })
+      .sorted(Comparator.comparing(BuilderStatisticsMessage::getBuilderName))
+      .forEach(context::processMessage);
   }
 
   private void startTempDirectoryCleanupTask() {
@@ -602,7 +604,7 @@ public class IncProjectBuilder {
   private enum Applicability {
     NONE, PARTIAL, ALL;
 
-    static <T> Applicability calculate(Predicate<T> p, Collection<T> collection) {
+    static <T> Applicability calculate(Predicate<? super T> p, Collection<? extends T> collection) {
       int count = 0;
       int item = 0;
       for (T elem : collection) {
@@ -1018,7 +1020,6 @@ public class IncProjectBuilder {
           context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
         }
       };
-      //noinspection unchecked
       BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
       long start = System.nanoTime();
       ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);

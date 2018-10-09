@@ -54,6 +54,9 @@
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
+    <extensionPoint name="intentionMenuContributor"
+                    interface="com.intellij.codeInsight.daemon.impl.IntentionMenuContributor"/>
+
     <extensionPoint name="wordBoundaryFilter"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
@@ -293,6 +296,8 @@
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
     <extensionPoint name="searchEverywhereContributor"
                     interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
+    <extensionPoint name="searchEverywhereResultsEqualityProvider"
+                    interface="com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
 
@@ -328,6 +333,10 @@
     </extensionPoint>
 
     <extensionPoint name="highlightUsagesHandlerFactory" interface="com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactory"/>
+
+    <extensionPoint name="codeBlockSupportHandler" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.highlighting.CodeBlockSupportHandler"/>
+    </extensionPoint>
 
     <extensionPoint name="usageTargetProvider"
                     interface="com.intellij.usages.UsageTargetProvider"/>
@@ -668,6 +677,8 @@
     <extensionPoint name="usageContextPanelProvider"
                     interface="com.intellij.usages.UsageContextPanel$Provider"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="usageViewFactory"
+                    interface="com.intellij.usages.impl.UsageViewFactory"/>
 
     <extensionPoint name="treeStructureProvider"
                     interface="com.intellij.ide.projectView.TreeStructureProvider"
@@ -848,6 +859,8 @@
 
     <extensionPoint name="projectViewPane" interface="com.intellij.ide.projectView.impl.AbstractProjectViewPane" area="IDEA_PROJECT"/>
 
+    <extensionPoint name="projectViewPaneSelectionHelper" interface="com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper"/>
+
     <extensionPoint name="inlineActionHandler" interface="com.intellij.lang.refactoring.InlineActionHandler"/>
 
     <extensionPoint name="projectViewNodeDecorator" interface="com.intellij.ide.projectView.ProjectViewNodeDecorator" area="IDEA_PROJECT"/>
@@ -856,6 +869,8 @@
     <extensionPoint name="previewHintProvider" interface="com.intellij.codeInsight.preview.PreviewHintProvider"/>
 
     <extensionPoint name="testActionProvider" interface="com.intellij.execution.testframework.ToggleModelActionProvider"/>
+
+    <extensionPoint name="controlFlowProvider" interface="com.intellij.codeInsight.controlflow.ControlFlowProvider"/>
 
     <extensionPoint name="psiViewerExtension" interface="com.intellij.internal.psiView.PsiViewerExtension"/>
 
@@ -976,6 +991,8 @@
     <extensionPoint name="retypeFileAssistant" interface="com.intellij.internal.retype.RetypeFileAssistant"/>
 
     <extensionPoint name="trafficLightRendererContributor" interface="com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor"/>
+
+    <extensionPoint name="fileBreadcrumbsCollector" interface="com.intellij.xml.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>
 

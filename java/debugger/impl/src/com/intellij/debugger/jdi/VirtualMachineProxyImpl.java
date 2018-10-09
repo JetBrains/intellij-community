@@ -9,8 +9,10 @@ import com.intellij.Patches;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
@@ -55,7 +57,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     myVirtualMachine = virtualMachine;
     myDebugProcess = debugProcess;
 
-    myVersionHigher_15 = versionHigher("1.5");
+    // All versions of Dalvik/ART support at least the JDWP spec as of 1.6.
+    myVersionHigher_15 = DebuggerUtils.isAndroidVM(myVirtualMachine) || versionHigher("1.5");
     myVersionHigher_14 = myVersionHigher_15 || versionHigher("1.4");
 
     // avoid lazy-init for some properties: the following will pre-calculate values
@@ -63,20 +66,22 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification();
     canPopFrames();
 
-    try {
-      // this will cache classes inside JDI and enable faster search of classes later
-      virtualMachine.allClasses();
-    }
-    catch (VMDisconnectedException e) {
-      throw e;
-    }
-    catch (Throwable e) {
-      // catch all exceptions in order not to break vm attach process
-      // Example:
-      // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
-      //  caused by some bytecode "optimizers" which break type signatures as a side effect.
-      //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
-      LOG.info(e);
+    if (canBeModified()) { // no need to spend time here for read only sessions
+      try {
+        // this will cache classes inside JDI and enable faster search of classes later
+        virtualMachine.allClasses();
+      }
+      catch (VMDisconnectedException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        // catch all exceptions in order not to break vm attach process
+        // Example:
+        // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
+        //  caused by some bytecode "optimizers" which break type signatures as a side effect.
+        //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
+        LOG.info(e);
+      }
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
@@ -568,7 +573,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean canBeModified() {
-    return myVirtualMachine.canBeModified();
+    return !(myDebugProcess.getConnection() instanceof SAJDWPRemoteConnection) && myVirtualMachine.canBeModified();
   }
 
   @Override
@@ -602,7 +607,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       if (myVersionHigher_15) {
         //return myVirtualMachine.canGetMethodReturnValues();
         try {
-          //noinspection HardCodedStringLiteral
           final Method method = VirtualMachine.class.getDeclaredMethod("canGetMethodReturnValues");
           final Boolean rv = (Boolean)method.invoke(myVirtualMachine);
           return rv.booleanValue();

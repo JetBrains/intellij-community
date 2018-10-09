@@ -113,16 +113,20 @@ public abstract class GroovyElementVisitor {
     visitExpression(callExpression);
   }
 
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    visitCallExpression(methodCallExpression);
-  }
-
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     visitCallExpression(newExpression);
   }
 
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    visitCallExpression(call);
+  }
+
+  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
+    visitMethodCall(methodCallExpression);
+  }
+
   public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    visitStatement(applicationStatement);
+    visitMethodCall(applicationStatement);
   }
 
   public void visitArrayDeclaration(@NotNull GrArrayDeclaration arrayDeclaration) {

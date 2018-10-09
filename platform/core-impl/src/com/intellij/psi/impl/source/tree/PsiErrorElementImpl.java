@@ -25,11 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class PsiErrorElementImpl extends CompositePsiElement implements PsiErrorElement{
   private final String myErrorDescription;
 
-  public PsiErrorElementImpl(String errorDescription) {
+  public PsiErrorElementImpl(@NotNull String errorDescription) {
     super(TokenType.ERROR_ELEMENT);
     myErrorDescription = errorDescription;
   }
 
+  @NotNull
   @Override
   public String getErrorDescription() {
     return myErrorDescription;

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author peter
@@ -672,8 +673,21 @@ public static native Object choose(Object o1, Object o2);
     assert c == ['_, !null -> !null']
   }
 
+  void "test delegate to System exit"() {
+    def c = inferContracts("""
+public static void test(Object obj, int i) {
+  System.exit(0);
+}""")
+    assert c == ['_, _ -> fail']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
+  }
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8_ANNOTATED
   }
 
   private List<String> inferContracts(String method) {

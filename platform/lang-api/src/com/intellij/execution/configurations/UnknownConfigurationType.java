@@ -4,7 +4,7 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.LazyUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
 public final class UnknownConfigurationType extends SimpleConfigurationType {
@@ -14,7 +14,8 @@ public final class UnknownConfigurationType extends SimpleConfigurationType {
   private static final String NAME = "Unknown";
 
   private UnknownConfigurationType() {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), LazyUtil.create(() -> AllIcons.Actions.Help));
+    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"),
+          NotNullLazyValue.createValue(() -> AllIcons.Actions.Help));
   }
 
   @NotNull

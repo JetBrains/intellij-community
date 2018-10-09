@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -197,10 +197,9 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
         if (list == null) {
           myPanel = new JPanel();
         } else {
-          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, list);
-          // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
-          Disposer.register(myProject, dialog.getDisposable());
-          myPanel = dialog.createCenterPanel();
+          CommittedChangeListPanel panel = new CommittedChangeListPanel(myProject);
+          panel.setChangeList(list);
+          myPanel = panel;
         }
       }
       return myPanel;

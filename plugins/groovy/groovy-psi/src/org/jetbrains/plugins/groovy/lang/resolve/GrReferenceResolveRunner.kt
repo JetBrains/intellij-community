@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.*
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
@@ -112,29 +113,45 @@ fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incom
 private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementResolveResult)
 
 private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
+  val qname = qualifiedReferenceName ?: return null
+
   val facade = JavaPsiFacade.getInstance(project)
   val scope = resolveScope
 
-  fun GrReferenceExpression.resolveClass(): PsiClass? {
-    if (parent is GrMethodCall) return null
-    val name = referenceName ?: return null
-    if (name.isEmpty() || !name.first().isUpperCase()) return null
-    val qname = qualifiedReferenceName ?: return null
-    return facade.findClass(qname, scope)
-  }
-
   if (isQualified) {
-    resolveClass()?.let { return it }
+    val clazz = resolveClassFqn(facade, scope)
+    clazz?.let { return it }
   }
 
+  // We are in `сom.foo` from `com.foo.bar.Baz`.
+  // Go up and find if any parent resolves to a class => this expression is a package reference.
+  // This expression may also be a class reference, and this is handled in [resolveUnqualifiedType].
   for (parent in strictParents()) {
-    if (parent !is GrReferenceExpression) return null
-    if (parent.resolveClass() == null) continue
-    val qname = qualifiedReferenceName!!
-    return facade.findPackage(qname)
+    if (parent !is GrReferenceExpression) {
+      // next parent is not a reference expression 
+      // => next parent is not a class fully qualified name
+      // => this expression is not a package reference
+      return null
+    }
+    val clazz = parent.resolveClassFqn(facade, scope)
+    if (clazz != null) {
+      val p = facade.findPackage(qname)
+      if (isQualified && p == null) {
+        log.error("Found a class '${clazz.qualifiedName}' but not a package '$qname'")
+      }
+      return p
+    }
   }
 
   return null
+}
+
+private fun GrReferenceExpression.resolveClassFqn(facade: JavaPsiFacade, scope: GlobalSearchScope): PsiClass? {
+  if (parent is GrMethodCall) return null
+  val name = referenceName ?: return null
+  if (name.isEmpty() || !name.first().isUpperCase()) return null
+  val qname = qualifiedReferenceName ?: return null
+  return facade.findClass(qname, scope)
 }
 
 /**

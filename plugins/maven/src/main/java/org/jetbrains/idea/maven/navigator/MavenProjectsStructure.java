@@ -54,8 +54,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
@@ -133,6 +133,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
+  @NotNull
   @Override
   public RootNode getRootElement() {
     return myRoot;
@@ -146,7 +147,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   private void updateFrom(SimpleNode node) {
-    myTreeBuilder.addSubtreeToUpdateByElement(node);
+    if (node != null) {
+      myTreeBuilder.addSubtreeToUpdateByElement(node);
+    }
   }
 
   private void updateUpTo(SimpleNode node) {
@@ -707,7 +710,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                                                               boolean isSelected,
                                                               boolean cellHasFocus) {
                   Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                  MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                   XmlElement xmlElement = mavenDomProfile.getXmlElement();
                   if (xmlElement != null) {
                     setText(xmlElement.getContainingFile().getVirtualFile().getPath());

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
@@ -163,7 +162,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private @NotNull List<CodeStyleScheme> getIdeSchemes() {
-    return mySchemes.stream().filter(scheme -> !(scheme instanceof ProjectScheme)).collect(Collectors.toList());
+    return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }
 
   @SuppressWarnings("unused")
@@ -176,7 +175,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
-  public void fireSchemeChanged(CodeStyleScheme scheme) {
+  void updateScheme(CodeStyleScheme scheme) {
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    clonedSettings.copyFrom(scheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 

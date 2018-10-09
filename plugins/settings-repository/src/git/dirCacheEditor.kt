@@ -131,7 +131,7 @@ interface PathEdit {
   fun apply(entry: DirCacheEntry, repository: Repository)
 }
 
-abstract class PathEditBase(override final val path: ByteArray) : PathEdit
+abstract class PathEditBase(final override val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
   val bytes = Constants.CHARSET.encode(path).toByteArray()

@@ -1,0 +1,472 @@
+<!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<idea-plugin>
+  <id>org.editorconfig.editorconfigjetbrains</id>
+  <name>EditorConfig</name>
+  <vendor url="http://editorconfig.org">Kirill Glazyrin and Kevin Bell, JetBrains</vendor>
+
+  <description><![CDATA[
+      A JetBrains IDE plugin supporting the EditorConfig standard and EditorConfig language
+      ]]></description>
+
+  <depends>com.intellij.modules.lang</depends>
+
+  <actions>
+    <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFromTemplate"/>
+    </action>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Standard support -->
+    <applicationService
+        serviceInterface="org.editorconfig.plugincomponents.EditorConfigNotifier"
+        serviceImplementation="org.editorconfig.plugincomponents.EditorConfigNotifier"/>
+    <generalCodeStyleOptionsProvider instance="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <codeStyleSettingsProvider implementation="org.editorconfig.settings.EditorConfigConfigurable"/>
+    <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
+    <applicationService
+        serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent"
+        serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent"/>
+    <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
+
+    <!-- Language support -->
+    <fileTypeFactory implementation="org.editorconfig.language.filetype.EditorConfigFileTypeFactory"/>
+    <colorSettingsPage implementation="org.editorconfig.language.highlighting.EditorConfigColorSettingsPage"/>
+    <annotator
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.annotators.EditorConfigAnnotator"/>
+    <enterHandlerDelegate implementation="org.editorconfig.language.codeinsight.actions.EnterInEditorConfigFileHandler"/>
+    <vetoRenameCondition implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigVetoRenameCondition"/>
+    <completion.contributor
+        language="editorconfig"
+        id="EditorConfigCompletionContributor"
+        order="last"
+        implementationClass="org.editorconfig.language.codeinsight.completion.EditorConfigCompletionContributor"/>
+    <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
+    <statementUpDownMover implementation="org.editorconfig.language.codeinsight.actions.EditorConfigStatementUpDownMover"/>
+    <moveLeftRightHandler
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.actions.EditorConfigMoveElementLeftRightHandler"/>
+    <spellchecker.support
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.spellchecker.EditorConfigSpellcheckerStrategy"/>
+    <typedHandler implementation="org.editorconfig.language.codeinsight.actions.EditorConfigTypedHandlerDelegate"/>
+    <findUsagesHandlerFactory implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesHandlerFactory"/>
+    <breadcrumbsInfoProvider implementation="org.editorconfig.language.breadcrumbs.EditorConfigBreadcrumbsProvider"/>
+    <renameHandler implementation="org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler"/>
+    <elementDescriptionProvider
+        implementation="org.editorconfig.language.codeinsight.documentation.EditorConfigElementDescriptionProvider"/>
+    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileNameNotificationProvider"/>
+    <editorNotificationProvider implementation="org.editorconfig.language.messages.EditorConfigWrongFileEncodingNotificationProvider"/>
+    <fileBasedIndex implementation="org.editorconfig.language.index.EditorConfigIdentifierIndex"/>
+    <gotoSymbolContributor implementation="org.editorconfig.language.codeinsight.findusages.EditorConfigGoToSymbolContributor"/>
+    <statusBarWidgetProvider implementation="org.editorconfig.language.widget.EditorConfigStatusBarWidgetProvider"/>
+    <gotoTargetRendererProvider
+        implementation="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigGotoTargetRendererProvider"/>
+    <definitionsScopedSearch
+        implementation="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigHeaderImplementationSearch"/>
+    <definitionsScopedSearch
+        implementation="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigFlatOptionKeyImplementationSearch"/>
+    <targetElementEvaluator
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.psi.reference.EditorConfigTargetElementEvaluator"/>
+
+    <!-- Inspections -->
+    <lang.inspectionSuppressor
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.suppression.EditorConfigInspectionSuppressor"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigDeprecatedDescriptor"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.element.deprecated.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDeprecatedDescriptorInspection"/>
+
+    <!-- Root declaration inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigRootDeclarationUniqueness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.root-declaration.uniqueness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigRootDeclarationUniquenessInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigRootDeclarationCorrectness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.root-declaration.correctness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigRootDeclarationCorrectnessInspection"/>
+
+    <!-- Section inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigEmptySection"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.section.emptiness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigEmptySectionInspection"/>
+
+    <!-- Header inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigHeaderUniqueness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.section.uniqueness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigHeaderUniquenessInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigPatternEnumerationRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.pattern-enumeration.redundant.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPatternEnumerationRedundancyInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigSpaceInHeader"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.space.in.header.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSpaceInHeaderInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigNoMatchingFiles"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.no-matching-files.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNoMatchingFilesInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigNumerousWildcards"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.header.many.wildcards.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigNumerousWildcardsInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigEmptyHeader"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.header.empty.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigEmptyHeaderInspection"/>
+
+    <!-- Pattern inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigPatternRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.pattern.redundant.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPatternRedundancyInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigWildcardRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.pattern.double-asterisk-sibling.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigWildcardRedundancyInspection"/>
+
+    <!-- Charclass inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigCharClassLetterRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.charclass.duplicate.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassLetterRedundancyInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigCharClassRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.charclass.redundant.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigCharClassRedundancyInspection"/>
+
+    <!-- Option inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigShadowedOption"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.option.shadowed.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigShadowedOptionInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigShadowingOption"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.option.shadowing.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigShadowingOptionInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigOptionRedundancy"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.option.redundant.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigOptionRedundancyInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigSuspiciousLineBreak"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.option.suspicious.line.break.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigSuspiciousLineBreakInspection"/>
+
+    <!-- Key inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigKeyCorrectness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.key.correctness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigKeyCorrectnessInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigDanglingKey"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.key.dangling.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingKeyInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigDanglingDot"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.key.dangling-dot.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDanglingDotInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigMultipleDots"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.key.multiple-dots.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigMultipleDotsInspection"/>
+
+    <!-- Value inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigValueCorrectness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.value.correctness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigValueCorrectnessInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigValueUniqueness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.value.uniqueness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigValueUniquenessInspection"/>
+
+    <!-- Reference inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigReferenceCorrectness"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.reference.correctness.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigReferenceCorrectnessInspection"/>
+
+    <!-- Declaration inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigUnusedDeclaration"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.declaration.unused.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="WARNING"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigUnusedDeclarationInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigMissingRequiredDeclaration"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.declaration.missing.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigMissingRequiredDeclarationInspection"/>
+
+    <!-- Values list inspections -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigListAcceptability"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.value.list.acceptability.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigListAcceptabilityInspection"/>
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigUnexpectedComma"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.value.list.comma.unexpected.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigUnexpectedCommaInspection"/>
+
+    <!-- Values pair inspection -->
+    <localInspection
+        language="editorconfig"
+        shortName="EditorConfigPairAcceptability"
+        bundle="org.editorconfig.language.messages.EditorConfigBundle"
+        key="inspection.value.pair.acceptability.name"
+        groupKey="editorconfig.inspection.group"
+        enabledByDefault="true"
+        level="ERROR"
+        implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigPairAcceptabilityInspection"/>
+
+    <!-- Intention actions -->
+    <intentionAction>
+      <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigInvertValueIntention</className>
+      <category>EditorConfig</category>
+    </intentionAction>
+    <intentionAction>
+      <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigAddDeclarationPartIntention</className>
+      <category>EditorConfig</category>
+    </intentionAction>
+
+    <!-- Services -->
+    <applicationService
+        serviceInterface="org.editorconfig.language.services.EditorConfigOptionDescriptorManager"
+        serviceImplementation="org.editorconfig.language.services.impl.EditorConfigOptionDescriptorManagerImpl"/>
+    <projectService
+        serviceInterface="org.editorconfig.language.services.EditorConfigElementFactory"
+        serviceImplementation="org.editorconfig.language.services.impl.EditorConfigElementFactoryImpl"/>
+    <projectService
+        serviceInterface="org.editorconfig.language.services.EditorConfigFileHierarchyService"
+        serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
+  </extensions>
+
+
+  <extensions defaultExtensionNs="com.intellij.lang">
+    <syntaxHighlighterFactory
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.highlighting.EditorConfigSyntaxHighlighterFactory"/>
+    <parserDefinition
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.parser.EditorConfigParserDefinition"/>
+    <braceMatcher
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.EditorConfigBraceMatcher"/>
+    <commenter
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.EditorConfigCommenter"/>
+    <foldingBuilder
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.EditorConfigFoldingBuilder"/>
+    <formatter
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.formatting.EditorConfigFormattingModelBuilder"/>
+    <psiStructureViewFactory
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.structureview.EditorConfigStructureViewFactory"/>
+    <elementManipulator
+        forClass="org.editorconfig.language.psi.EditorConfigHeader"
+        implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
+    <elementManipulator
+        forClass="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
+        implementationClass="org.editorconfig.language.psi.EditorConfigSilentElementManipulator"/>
+    <findUsagesProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.findusages.EditorConfigFindUsagesProvider"/>
+    <documentationProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.documentation.EditorConfigDocumentationProvider"/>
+    <tokenSeparatorGenerator
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.psi.EditorConfigTokenSeparatorGenerator"/>
+  </extensions>
+
+
+  <extensions defaultExtensionNs="com.intellij.codeInsight">
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingKeyLineMarkerProvider"/>
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenKeyLineMarkerProvider"/>
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverridingHeaderFinder"/>
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigPartiallyOverriddenHeaderFinder"/>
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverridingHeaderFinder"/>
+    <lineMarkerProvider
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.linemarker.EditorConfigOverriddenHeaderFinder"/>
+    <gotoSuper
+        language="editorconfig"
+        implementationClass="org.editorconfig.language.codeinsight.actions.navigation.EditorConfigGotoSuperHandler"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="editorconfig">
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigRoslynOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
+  </extensions>
+
+
+  <extensionPoints>
+    <extensionPoint
+        qualifiedName="editorconfig.optionDescriptorProvider"
+        interface="org.editorconfig.language.extensions.EditorConfigOptionDescriptorProvider"/>
+  </extensionPoints>
+</idea-plugin>

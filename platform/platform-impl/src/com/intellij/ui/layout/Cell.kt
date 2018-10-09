@@ -83,17 +83,16 @@ abstract class Cell {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 historyProvider: (() -> List<String>)? = null,
-                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+                                fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+                                comment: String? = null): TextFieldWithHistoryWithBrowseButton {
     val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
     value?.let { component.text = it }
-    component()
+    component(comment = comment)
     return component
   }
 
   fun gearButton(vararg actions: AnAction) {
-    val label = JLabel()
-    label.icon = AllIcons.General.GearPlain
-
+    val label = JLabel(AllIcons.General.GearPlain)
     object : ClickListener() {
       override fun onClick(e: MouseEvent, clickCount: Int): Boolean {
         JBPopupFactory.getInstance()

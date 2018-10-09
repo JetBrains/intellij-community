@@ -12,11 +12,11 @@ import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEnsureReferencesAreRemoved() {
@@ -47,7 +47,8 @@ public class BatchModeInspectionTest extends LightCodeInsightFixtureTestCase {
     refManager.findAllDeclarations();
 
     RefElement refClass = refManager.getReference(aClass);
-    Collection<RefElement> fileReferences = refClass.getInReferences().stream().filter(x -> x instanceof RefFile).collect(Collectors.toList());
+    Collection<RefElement> fileReferences =
+      ContainerUtil.filter(refClass.getInReferences(), x -> x instanceof RefFile);
     RefElement referent = assertOneElement(fileReferences);
     RefFile groovyFile = assertInstanceOf(referent, RefFile.class);
     assertEquals("Bar.groovy", groovyFile.getName());

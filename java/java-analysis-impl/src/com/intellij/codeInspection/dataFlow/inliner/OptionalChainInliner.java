@@ -42,19 +42,31 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
 /**
  * An inliner which is capable to inline some Optional chains like
  * {@code Optional.of(xyz).map(lambda).filter(lambda).flatMap(lambda).orElseGet(lambda)}
- * <p>
- * TODO support primitive Optionals
  */
 public class OptionalChainInliner implements CallInliner {
+  private static final String OPTIONAL_INT = "java.util.OptionalInt";
+  private static final String OPTIONAL_LONG = "java.util.OptionalLong";
+  private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
+
   private static final CallMatcher OPTIONAL_OR_ELSE = anyOf(
     instanceCall(JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1),
+    instanceCall(OPTIONAL_INT, "orElse").parameterCount(1),
+    instanceCall(OPTIONAL_LONG, "orElse").parameterCount(1),
+    instanceCall(OPTIONAL_DOUBLE, "orElse").parameterCount(1),
     instanceCall(GUAVA_OPTIONAL, "or").parameterTypes("T"));
   private static final CallMatcher OPTIONAL_OR_NULL = instanceCall(GUAVA_OPTIONAL, "orNull").parameterCount(0);
   private static final CallMatcher OPTIONAL_OR_ELSE_GET = anyOf(
     instanceCall(JAVA_UTIL_OPTIONAL, "orElseGet").parameterCount(1),
+    instanceCall(OPTIONAL_INT, "orElseGet").parameterCount(1),
+    instanceCall(OPTIONAL_LONG, "orElseGet").parameterCount(1),
+    instanceCall(OPTIONAL_DOUBLE, "orElseGet").parameterCount(1),
     instanceCall(GUAVA_OPTIONAL, "or").parameterTypes("com.google.common.base.Supplier"));
   private static final CallMatcher OPTIONAL_OR = instanceCall(JAVA_UTIL_OPTIONAL, "or").parameterCount(1); // Java 9
-  private static final CallMatcher OPTIONAL_IF_PRESENT = instanceCall(JAVA_UTIL_OPTIONAL, "ifPresent").parameterCount(1);
+  private static final CallMatcher OPTIONAL_IF_PRESENT = anyOf(
+    instanceCall(JAVA_UTIL_OPTIONAL, "ifPresent").parameterCount(1),
+    instanceCall(OPTIONAL_INT, "ifPresent").parameterCount(1),
+    instanceCall(OPTIONAL_LONG, "ifPresent").parameterCount(1),
+    instanceCall(OPTIONAL_DOUBLE, "ifPresent").parameterCount(1));
   private static final CallMatcher OPTIONAL_FILTER = instanceCall(JAVA_UTIL_OPTIONAL, "filter").parameterCount(1);
   private static final CallMatcher OPTIONAL_MAP = instanceCall(JAVA_UTIL_OPTIONAL, "map").parameterCount(1);
   // Guava transform() throws if function returns null, so handled separately
@@ -62,9 +74,15 @@ public class OptionalChainInliner implements CallInliner {
   private static final CallMatcher OPTIONAL_FLAT_MAP = instanceCall(JAVA_UTIL_OPTIONAL, "flatMap").parameterCount(1);
   private static final CallMatcher OPTIONAL_OF = anyOf(
     staticCall(JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1),
+    staticCall(OPTIONAL_INT, "of").parameterCount(1),
+    staticCall(OPTIONAL_LONG, "of").parameterCount(1),
+    staticCall(OPTIONAL_DOUBLE, "of").parameterCount(1),
     staticCall(GUAVA_OPTIONAL, "of", "fromNullable").parameterCount(1));
   private static final CallMatcher OPTIONAL_EMPTY = anyOf(
     staticCall(JAVA_UTIL_OPTIONAL, "empty").parameterCount(0),
+    staticCall(OPTIONAL_INT, "empty").parameterCount(0),
+    staticCall(OPTIONAL_LONG, "empty").parameterCount(0),
+    staticCall(OPTIONAL_DOUBLE, "empty").parameterCount(0),
     staticCall(GUAVA_OPTIONAL, "absent").parameterCount(0));
   private static final CallMatcher GUAVA_TO_JAVA =
     instanceCall(GUAVA_OPTIONAL, "toJavaUtil").parameterCount(0);
@@ -79,6 +97,7 @@ public class OptionalChainInliner implements CallInliner {
           .boxUnbox(argument, call.getType())
           .splice(2, 0, 1, 1) // stack: .. elseValue, optValue, optValue
           .ifNotNull()
+          .boxUnbox(call, getOptionalElementType(call.getMethodExpression().getQualifierExpression(), true), call.getType())
           .swap() // stack: .. optValue, elseValue
           .end()
           .pop()
@@ -93,15 +112,19 @@ public class OptionalChainInliner implements CallInliner {
           .ifNull()
           .pop()
           .invokeFunction(0, fn)
+          .elseBranch()
+          .boxUnbox(call, getOptionalElementType(call.getMethodExpression().getQualifierExpression(), true), call.getType())
           .end()
           .resultOf(call);
       })
       .register(OPTIONAL_IF_PRESENT, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
         builder
           .evaluateFunction(fn)
           .dup()
           .ifNotNull()
+          .boxUnbox(call, getOptionalElementType(qualifier, true), getOptionalElementType(qualifier, false))
           .invokeFunction(1, fn)
           .elseBranch()
           .pop()
@@ -165,12 +188,21 @@ public class OptionalChainInliner implements CallInliner {
     return false;
   }
 
-  @Contract("null -> null")
-  private static PsiType getOptionalElementType(PsiExpression expression) {
+  @Contract("null, _ -> null")
+  private static PsiType getOptionalElementType(PsiExpression expression, boolean box) {
     if (expression == null) return null;
     PsiClassType type = ObjectUtils.tryCast(expression.getType(), PsiClassType.class);
     if (type == null) return null;
     String rawName = type.rawType().getCanonicalText();
+    if (rawName.equals(OPTIONAL_INT)) {
+      return box ? PsiType.INT.getBoxedType(expression) : PsiType.INT;
+    }
+    if (rawName.equals(OPTIONAL_LONG)) {
+      return box ? PsiType.LONG.getBoxedType(expression) : PsiType.LONG;
+    }
+    if (rawName.equals(OPTIONAL_DOUBLE)) {
+      return box ? PsiType.DOUBLE.getBoxedType(expression) : PsiType.DOUBLE;
+    }
     if (!rawName.equals(JAVA_UTIL_OPTIONAL) && !rawName.equals(GUAVA_OPTIONAL)) return null;
     PsiType[] parameters = type.getParameters();
     if (parameters.length != 1) return null;
@@ -179,7 +211,7 @@ public class OptionalChainInliner implements CallInliner {
 
   private static <T extends PsiElement> boolean pushOptionalValue(CFGBuilder builder, PsiExpression expression,
                                                                   T dereferenceContext, NullabilityProblemKind<T> problem) {
-    PsiType optionalElementType = getOptionalElementType(expression);
+    PsiType optionalElementType = getOptionalElementType(expression, true);
     if (optionalElementType == null) return false;
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression qualifierCall = (PsiMethodCallExpression)expression;
@@ -208,7 +240,7 @@ public class OptionalChainInliner implements CallInliner {
 
   private static boolean pushIntermediateOperationValue(CFGBuilder builder, PsiMethodCallExpression call) {
     if (OPTIONAL_OF.test(call)) {
-      PsiType optionalElementType = getOptionalElementType(call);
+      PsiType optionalElementType = getOptionalElementType(call, true);
       inlineOf(builder, optionalElementType, call);
       return true;
     }

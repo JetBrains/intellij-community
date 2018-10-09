@@ -31,23 +31,20 @@ import java.util.Collections;
 import java.util.List;
 
 public class PackageViewModuleGroupNode extends ModuleGroupNode {
-  public PackageViewModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    super(project, value, viewSettings);
-  }
 
-  public PackageViewModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
+  public PackageViewModuleGroupNode(final Project project, @NotNull ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @NotNull
   @Override
-  protected AbstractTreeNode createModuleNode(Module module) {
+  protected AbstractTreeNode createModuleNode(@NotNull Module module) {
     return new PackageViewModuleNode(module.getProject(), module, getSettings());
   }
 
   @NotNull
   @Override
-  protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
+  protected ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 

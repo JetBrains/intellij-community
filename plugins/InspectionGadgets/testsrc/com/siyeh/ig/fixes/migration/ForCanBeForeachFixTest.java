@@ -31,6 +31,9 @@ public class ForCanBeForeachFixTest extends IGQuickFixesTestCase {
     }
   }
   public void testRawCollection() { doTest(); }
+  public void testArrayUnboxing() { doTest(); }
+  public void testListUnboxing() { doTest(); }
+  public void testIteratorUnboxing() { doTest(); }
 
   @Override
   public void setUp() throws Exception {

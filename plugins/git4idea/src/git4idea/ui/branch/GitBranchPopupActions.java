@@ -418,7 +418,7 @@ class GitBranchPopupActions {
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
@@ -540,7 +540,7 @@ class GitBranchPopupActions {
 
     CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
-      super("Compare With...");
+      super("Compare with Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -554,6 +554,14 @@ class GitBranchPopupActions {
       GitBrancher brancher = GitBrancher.getInstance(myProject);
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
     }
   }
 

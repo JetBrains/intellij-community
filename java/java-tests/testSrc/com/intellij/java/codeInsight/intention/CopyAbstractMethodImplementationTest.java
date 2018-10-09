@@ -33,11 +33,6 @@ public class CopyAbstractMethodImplementationTest extends LightIntentionActionTe
     super.setUp();
     JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = false;
   }
-
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_6;

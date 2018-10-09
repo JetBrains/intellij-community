@@ -34,13 +34,13 @@ import java.util.stream.Collectors;
  */
 public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
   private final Project myProject;
-  private final List<RunDashboardGrouper> myGroupers;
-  private final List<RunDashboardFilter> myFilters;
+  private final List<? extends RunDashboardGrouper> myGroupers;
+  private final List<? extends RunDashboardFilter> myFilters;
   private final RunConfigurationsTreeRootNode myRootElement;
 
   public RunDashboardTreeStructure(@NotNull Project project,
-                                   @NotNull List<RunDashboardGrouper> groupers,
-                                   @NotNull List<RunDashboardFilter> filters) {
+                                   @NotNull List<? extends RunDashboardGrouper> groupers,
+                                   @NotNull List<? extends RunDashboardFilter> filters) {
     super(project);
     myProject = project;
     myGroupers = groupers;
@@ -54,6 +54,7 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     return Collections.emptyList();
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRootElement;

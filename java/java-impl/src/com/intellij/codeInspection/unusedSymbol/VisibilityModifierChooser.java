@@ -48,8 +48,8 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
                                    @NotNull Consumer<? super String> modifierChangedConsumer,
                                    @NotNull String[] modifiers) {
     myCanBeEnabled = canBeEnabled;
-    setIcon(AllIcons.General.Combo2);
-    setDisabledIcon(AllIcons.General.Combo2);
+    setIcon(AllIcons.General.ArrowDown);
+    setDisabledIcon(AllIcons.General.ArrowDown);
     setIconTextGap(0);
     setHorizontalTextPosition(SwingConstants.LEFT);
     myCurrentModifier = modifier;

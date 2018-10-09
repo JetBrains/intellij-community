@@ -73,7 +73,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull Condition<AnAction> preselectActionCondition,
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey) {
-    super(title, new DefaultActionGroup(actions, createBranchSpeedSearchActionGroup(actions)), SimpleDataContext.getProjectContext(project),
+    super(title, createBranchSpeedSearchActionGroup(actions), SimpleDataContext.getProjectContext(project),
           preselectActionCondition, true);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
@@ -212,8 +212,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   }
 
   @NotNull
-  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
-    return new DefaultActionGroup(null, createSpeedSearchActions(actionGroup, true), false);
+  private static ActionGroup createBranchSpeedSearchActionGroup(@NotNull ActionGroup actions) {
+    LightActionGroup group = new LightActionGroup();
+    group.add(actions);
+    group.addAll(createSpeedSearchActions(actions, true));
+    return group;
   }
 
   @Override

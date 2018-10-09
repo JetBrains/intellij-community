@@ -415,7 +415,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
+        builder.evaluateFunction(arg);
       }
       super.before(builder);
     }
@@ -426,13 +426,16 @@ public class StreamChainInliner implements CallInliner {
         builder.assignTo(myParameter).pop();
         buildStreamCFG(builder, myChain, myStreamSource);
       } else {
+        PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
-        builder.pop()
-               .pushUnknown()
-               .ifConditionIs(true)
-                 .doWhileUnknown()
-                   .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
-                   .chain(myNext::iteration)
+        builder.invokeFunction(1, arg, Nullability.NULLABLE)
+               .ifNotNull()
+                 .pushUnknown()
+                 .ifConditionIs(true)
+                   .doWhileUnknown()
+                     .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
+                     .chain(myNext::iteration)
+                   .end()
                  .end()
                .end();
       }

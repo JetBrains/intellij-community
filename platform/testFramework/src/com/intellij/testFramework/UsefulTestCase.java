@@ -28,10 +28,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
-import com.intellij.util.Consumer;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -270,16 +267,16 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyle.getDefaultSettings();
+  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
+    return CodeStyle.getSettings(project);
   }
 
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
-    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCommonSettings(language);
   }
 
-  protected final <T extends CustomCodeStyleSettings> CustomCodeStyleSettings getCustomSettings(@NotNull Class<T> settingsClass) {
-    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
+  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass, @NotNull Project project) {
+    return getCurrentCodeStyleSettings(project).getCustomSettings(settingsClass);
   }
 
   @NotNull
@@ -438,7 +435,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull Iterable<T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
@@ -463,7 +460,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -526,14 +523,14 @@ public abstract class UsefulTestCase extends TestCase {
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     assertSameElements(null, actual, expected);
   }
 
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
       Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
     }
@@ -544,7 +541,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
-  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     ArrayList<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
     assertOrderedEquals(toString(collection), copy, expected);
@@ -555,7 +552,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
-  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     ArrayList<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
     assertSameElements(toString(collection), copy, expected);
@@ -571,7 +568,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
-  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<T> notExpected) {
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
     ArrayList<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
     assertSameElements(collection, expected);
@@ -665,8 +662,8 @@ public abstract class UsefulTestCase extends TestCase {
     return t;
   }
 
-  public static <T> T assertOneElement(@NotNull Collection<T> collection) {
-    Iterator<T> iterator = collection.iterator();
+  public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
+    Iterator<? extends T> iterator = collection.iterator();
     String toString = toString(collection);
     Assert.assertTrue(toString, iterator.hasNext());
     T t = iterator.next();
@@ -716,7 +713,7 @@ public abstract class UsefulTestCase extends TestCase {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<T> collection) {
+  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<? extends T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
@@ -768,7 +765,20 @@ public abstract class UsefulTestCase extends TestCase {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             @NotNull Producer<String> messageProducer) {
+    assertSameLinesWithFile(filePath, actualText, true, messageProducer);
+  }
+
   public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
+    assertSameLinesWithFile(filePath, actualText, trimBeforeComparing, null);
+  }
+
+  public static void assertSameLinesWithFile(@NotNull String filePath,
+                                             @NotNull String actualText,
+                                             boolean trimBeforeComparing,
+                                             @Nullable Producer<String> messageProducer) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {
@@ -788,7 +798,7 @@ public abstract class UsefulTestCase extends TestCase {
     String expected = StringUtil.convertLineSeparators(trimBeforeComparing ? fileText.trim() : fileText);
     String actual = StringUtil.convertLineSeparators(trimBeforeComparing ? actualText.trim() : actualText);
     if (!Comparing.equal(expected, actual)) {
-      throw new FileComparisonFailure(null, expected, actual, filePath);
+      throw new FileComparisonFailure(messageProducer == null ? null : messageProducer.produce(), expected, actual, filePath);
     }
   }
 

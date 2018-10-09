@@ -28,8 +28,6 @@ public class GenerifyFileTest extends LightQuickFixAvailabilityTestCase {
     return new LocalInspectionTool[] {new UncheckedWarningLocalInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/generifyFile";

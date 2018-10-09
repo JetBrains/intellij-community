@@ -121,7 +121,6 @@ public class CommonCodeStyleSettings {
     return myForceArrangeMenuAvailable;
   }
 
-  @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
@@ -264,6 +263,11 @@ public class CommonCodeStyleSettings {
    * Keep up to this amount of blank lines in code
    */
   public int KEEP_BLANK_LINES_IN_CODE = 2;
+
+  /**
+   * Keep up to this amount of blank lines between package declaration and header
+   */
+  public int KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
 
   public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
 
@@ -860,10 +864,14 @@ public class CommonCodeStyleSettings {
   public static final int FORCE_BRACES_IF_MULTILINE = 0x01;
   public static final int FORCE_BRACES_ALWAYS = 0x03;
 
-  public int IF_BRACE_FORCE = DO_NOT_FORCE;
-  public int DOWHILE_BRACE_FORCE = DO_NOT_FORCE;
-  public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
-  public int FOR_BRACE_FORCE = DO_NOT_FORCE;
+  @MagicConstant(intValues = {DO_NOT_FORCE, FORCE_BRACES_IF_MULTILINE, FORCE_BRACES_ALWAYS})
+  public @interface ForceBraceConstant {
+  }
+
+  @ForceBraceConstant public int IF_BRACE_FORCE = DO_NOT_FORCE;
+  @ForceBraceConstant public int DOWHILE_BRACE_FORCE = DO_NOT_FORCE;
+  @ForceBraceConstant public int WHILE_BRACE_FORCE = DO_NOT_FORCE;
+  @ForceBraceConstant public int FOR_BRACE_FORCE = DO_NOT_FORCE;
 
   public boolean WRAP_LONG_LINES = false;
 

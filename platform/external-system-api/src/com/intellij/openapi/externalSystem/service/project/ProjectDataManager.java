@@ -38,7 +38,6 @@ public interface ProjectDataManager {
     return ServiceManager.getService(ProjectDataManager.class);
   }
 
-  @SuppressWarnings("unchecked")
   void importData(@NotNull Collection<DataNode<?>> nodes,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider,

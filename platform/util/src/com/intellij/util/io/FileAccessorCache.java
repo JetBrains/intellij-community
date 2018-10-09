@@ -138,12 +138,12 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   }
 
   public static final class Handle<T> extends ResourceHandle<T> {
-    private final FileAccessorCache<?, T> myOwner;
+    private final FileAccessorCache<?, ? super T> myOwner;
     @NotNull
     private final T myResource;
     private final AtomicInteger myRefCount = new AtomicInteger(1);
 
-    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, T> owner) {
+    public Handle(@NotNull T fileAccessor, @NotNull FileAccessorCache<?, ? super T> owner) {
       myResource = fileAccessor;
       myOwner = owner;
     }

@@ -69,11 +69,11 @@ public class CDataToTextIntention implements IntentionAction {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     PsiElement parent = element != null ? element.getParent() : null;
-    if (parent != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
+    if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
 
     element = file.findElementAt(offset - 1);
     parent = element != null ? element.getParent() : null;
-    if (parent != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
+    if (parent != null && parent.getNode() != null && parent.getNode().getElementType() == XmlElementType.XML_CDATA) return parent;
     return null;
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +11,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -145,7 +130,7 @@ public class ActionsTreeUtil {
     return pluginsGroup;
   }
 
-  private static Group createMainMenuGroup(Condition<AnAction> filtered) {
+  private static Group createMainMenuGroup(Condition<? super AnAction> filtered) {
     Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
@@ -185,7 +170,7 @@ public class ActionsTreeUtil {
     return false;
   }
 
-  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<AnAction> filtered) {
+  private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup, Group group, Condition<? super AnAction> filtered) {
     AnAction[] mainMenuTopGroups = getActions(actionGroup);
     for (AnAction action : mainMenuTopGroups) {
       if (!(action instanceof ActionGroup)) continue;
@@ -196,8 +181,8 @@ public class ActionsTreeUtil {
     }
   }
 
-  public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<AnAction> filtered) {
-    return createGroup(actionGroup, getName(actionGroup), null, null, ignore, filtered);
+  public static Group createGroup(ActionGroup actionGroup, boolean ignore, Condition<? super AnAction> filtered) {
+    return createGroup(actionGroup, getName(actionGroup), actionGroup.getTemplatePresentation().getIcon(), null, ignore, filtered);
   }
 
   private static String getName(AnAction action) {
@@ -230,11 +215,11 @@ public class ActionsTreeUtil {
                                   Icon icon,
                                   Icon openIcon,
                                   boolean ignore,
-                                  Condition<AnAction> filtered) {
+                                  Condition<? super AnAction> filtered) {
     return createGroup(actionGroup, groupName, icon, openIcon, ignore, filtered, true);
   }
 
-  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<AnAction> filtered,
+  public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<? super AnAction> filtered,
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
@@ -292,7 +277,7 @@ public class ActionsTreeUtil {
   @Nullable
   private static String getActionBinding(final Keymap keymap, final String id) {
     if (keymap == null) return null;
-    
+
     Keymap parent = keymap.getParent();
     String result = KeymapManagerEx.getInstanceEx().getActionBinding(id);
     if (result == null && parent != null) {
@@ -352,7 +337,7 @@ public class ActionsTreeUtil {
   }
 
   @NotNull
-  private static Group createOtherGroup(@Nullable Condition<AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
+  private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
     Set<String> result = new THashSet<>();
 
@@ -467,12 +452,12 @@ public class ActionsTreeUtil {
                                       final QuickList[] quickLists,
                                       final String filter,
                                       final boolean forceFiltering,
-                                      final Condition<AnAction> filtered) {
+                                      final Condition<? super AnAction> filtered) {
     final Condition<AnAction> wrappedFilter = wrapFilter(filtered, keymap, ActionManager.getInstance());
     Group mainGroup = new Group(KeyMapBundle.message("all.actions.group.title"), null, null);
     mainGroup.addGroup(createEditorActionsGroup(wrappedFilter));
     mainGroup.addGroup(createMainMenuGroup(wrappedFilter));
-    for (KeymapExtension extension : Extensions.getExtensions(KeymapExtension.EXTENSION_POINT_NAME)) {
+    for (KeymapExtension extension : KeymapExtension.EXTENSION_POINT_NAME.getExtensionList()) {
       final Group group = createExtensionGroup(wrappedFilter, project, extension);
       if (group != null) {
         mainGroup.addGroup(group);
@@ -554,11 +539,11 @@ public class ActionsTreeUtil {
            shortcut != null ? isActionFiltered(actionManager, keymap, shortcut) : null;
   }
 
-  public static void addAction(KeymapGroup group, AnAction action, Condition<AnAction> filtered) {
+  public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered) {
     addAction(group, action, filtered, false);
   }
 
-  public static void addAction(KeymapGroup group, AnAction action, Condition<AnAction> filtered, boolean forceNonPopup) {
+  public static void addAction(KeymapGroup group, AnAction action, Condition<? super AnAction> filtered, boolean forceNonPopup) {
     if (action instanceof ActionGroup) {
       if (forceNonPopup) {
         AnAction[] actions = getActions((ActionGroup)action);

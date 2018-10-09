@@ -639,8 +639,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    myContextManager.pack(200, 50);
-
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
@@ -662,6 +660,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myContextManager.pack(200, 50));
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
@@ -925,7 +925,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public String getChangelistName(Task task) {
     String name = task.isIssue() && myConfig.changelistNameFormat != null
-                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat, false)
+                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat)
                   : task.getSummary();
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
@@ -941,7 +941,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @NotNull
   public String constructDefaultBranchName(@NotNull Task task) {
-    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat, false) : task.getSummary();
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
   }
 
   @TestOnly
@@ -976,8 +976,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
 
-    public String changelistNameFormat = "{id} {summary}";
-    public String branchNameFormat = "{id}";
+    public String changelistNameFormat = "${id} ${summary}";
+    public String branchNameFormat = "${id}";
 
     public boolean searchClosedTasks = false;
     @Tag("servers")

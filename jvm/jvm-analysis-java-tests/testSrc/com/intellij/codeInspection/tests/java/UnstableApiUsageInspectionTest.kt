@@ -7,15 +7,17 @@ import com.intellij.testFramework.TestDataPath
 
 @TestDataPath("/testData/codeInspection/unstableApiUsage")
 class UnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
-  override fun getBasePath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
+  override fun getBasePath() = ""
+
+  override fun getTestDataPath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
 
   fun testInspection() {
-    inspection.myIgnoreInsideImports = false
+    getInspection().myIgnoreInsideImports = false
     myFixture.testHighlighting(true, false, false, "UnstableElementsTest.java")
   }
 
   fun testIgnoreImports() {
-    inspection.myIgnoreInsideImports = true
+    getInspection().myIgnoreInsideImports = true
     myFixture.testHighlighting(true, false, false, "UnstableElementsIgnoreImportsTest.java")
   }
 }

@@ -68,7 +68,7 @@ public class TooBroadCatchInspection extends BaseInspection {
     if (fix != null) {
       fixes.add(fix);
     }
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override

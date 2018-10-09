@@ -1563,6 +1563,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitTypeParameter(PsiTypeParameter psiTypeParameter) {
     final PsiTypeParameter parameter = (PsiTypeParameter)myMatchingVisitor.getElement();
     final PsiIdentifier identifier = psiTypeParameter.getNameIdentifier();
+    assert identifier != null;
     final PsiIdentifier identifier2 = parameter.getNameIdentifier();
 
     final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
@@ -1590,8 +1591,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiIdentifier identifier = clazz.getNameIdentifier();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(identifier);
 
-    if (clazz.getModifierList().getTextLength() > 0) {
-      if (!myMatchingVisitor.match(clazz.getModifierList(), clazz2.getModifierList())) {
+    final PsiModifierList modifierList = clazz.getModifierList();
+    if (modifierList != null && modifierList.getTextLength() > 0) {
+      if (!myMatchingVisitor.match(modifierList, clazz2.getModifierList())) {
         myMatchingVisitor.setResult(false);
         return;
       }

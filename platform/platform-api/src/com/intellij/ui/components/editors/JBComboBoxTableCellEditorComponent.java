@@ -72,7 +72,6 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
   private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
     private boolean myChecked;
     public Icon myEmptyIcon;

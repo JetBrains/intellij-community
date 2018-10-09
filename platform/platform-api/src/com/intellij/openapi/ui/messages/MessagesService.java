@@ -56,6 +56,9 @@ public interface MessagesService {
 
   String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator);
 
+  @Nullable
+  char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator);
+
   String showInputDialog(@Nullable Project project,
                          @Nullable Component parentComponent,
                          String message,
@@ -66,7 +69,7 @@ public interface MessagesService {
                          @Nullable TextRange selection,
                          @Nullable String comment);
 
-  String showMultilineInputDialog(Project project, String message, String title, String initialValue, Icon icon, InputValidator validator);
+  String showMultilineInputDialog(Project project, String message, String title, String initialValue, Icon icon, @Nullable InputValidator validator);
 
   Pair<String, Boolean> showInputDialogWithCheckBox(String message,
                                                     String title,

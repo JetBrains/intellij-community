@@ -17,5 +17,4 @@ public class DivideByZeroInspectionFixTest extends LightQuickFixParameterizedTes
     return "/codeInsight/daemonCodeAnalyzer/quickFix/divideByZero";
   }
 
-  public void test() {  doAllTests(); }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,23 @@ public abstract class CodeStyleFacade {
    */
   @Deprecated
   public abstract int getIndentSize(FileType fileType);
+
+  /**
+   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.
+   * If there is a suitable {@code LineIndentProvider} for the language,
+   * it will be used to calculate the spacing. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the spacing must be returned.
+   * @param language Context language
+   * @param offset   Offset in the editor after the indent in the second joining line.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return non-negative spacing between end- and start-line tokens after the join.
+   */
+  @ApiStatus.Experimental
+  public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**
    * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or

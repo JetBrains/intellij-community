@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -56,11 +57,11 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
     PsiType[] parameters = CollectionReplaceableByEnumCollectionVisitor.extractParameterType(localVariable, 2);
     if (parameters == null) return null;
     PsiType enumParameter = parameters[0];
-    String parameterListText = Arrays.stream(parameters).map(p -> p.getCanonicalText()).collect(Collectors.joining(",", "<", ">"));
+    String parameterListText = Arrays.stream(parameters).map(PsiType::getCanonicalText).collect(Collectors.joining(",", "<", ">"));
     PsiClass probablyEnum = PsiUtil.resolveClassInClassTypeOnly(enumParameter);
     if (probablyEnum == null || !probablyEnum.isEnum()) return null;
     String text = "new java.util.EnumMap" + parameterListText + "(" + enumParameter.getCanonicalText() + ".class)";
-    return new ReplaceExpressionWithTextFix(text, InspectionGadgetsBundle.message("map.replaceable.by.enum.map.fix.name"));
+    return new ReplaceExpressionWithTextFix(text, CommonQuickFixBundle.message("fix.replace.with.x", "EnumMap"));
   }
 
   private static class MapReplaceableByEnumMapVisitor extends CollectionReplaceableByEnumCollectionVisitor {

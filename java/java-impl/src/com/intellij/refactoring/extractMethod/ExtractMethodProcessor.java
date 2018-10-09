@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -158,7 +159,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     myHelpId = helpId;
 
     myManager = PsiManager.getInstance(myProject);
-    myElementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     myStyleManager = CodeStyleManager.getInstance(myProject);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
@@ -1058,7 +1059,7 @@ public class ExtractMethodProcessor implements MatchProvider {
             final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
             final PsiTypeElement castType = typeCastExpression.getCastType();
             if (castType != null && Comparing.equal(castType.getType(), paramType)) {
-              RedundantCastUtil.removeCast(typeCastExpression);
+              RemoveRedundantCastUtil.removeCast(typeCastExpression);
             }
           }
         }
@@ -1632,7 +1633,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiReferenceList throwsList = newMethod.getThrowsList();
     for (PsiClassType exception : getThrownExceptions()) {
-      throwsList.add(JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createReferenceElementByType(exception));
+      throwsList.add(JavaPsiFacade.getElementFactory(myManager.getProject()).createReferenceElementByType(exception));
     }
 
     if (myTargetClass.isInterface() && PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {

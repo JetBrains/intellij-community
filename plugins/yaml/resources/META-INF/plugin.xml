@@ -12,14 +12,17 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
 
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <stubElementTypeHolder class="org.jetbrains.yaml.YAMLElementTypes" />
+    <stubIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysStubIndex"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.formatter.YAMLEnterAtIndentHandler" order="first"/>
+    <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.formatter.YAMLCopyPasteProcessor"/>
     <lang.parserDefinition language="yaml" implementationClass="org.jetbrains.yaml.YAMLParserDefinition"/>
     <lang.commenter language="yaml" implementationClass="org.jetbrains.yaml.YAMLCommenter"/>
     <lang.syntaxHighlighterFactory language="yaml" implementationClass="org.jetbrains.yaml.YAMLSyntaxHighlighterFactory"/>
     <colorSettingsPage implementation="org.jetbrains.yaml.YAMLColorsPage"/>
     <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
-    <lang.findUsagesProvider language="yaml" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
+    <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
     <lang.foldingBuilder language="yaml" id="YAMLFoldingBuilder" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
     <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader" id="yamlFileTypeLoader"/>
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>

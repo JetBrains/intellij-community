@@ -114,9 +114,7 @@ for (;a;) <caret>print 2''')
   }
 
   void testIfWithForceBraces() {
-    def settings = getCurrentCodeStyleSettings().getCommonSettings(GroovyLanguage.INSTANCE)
-    def current = settings.IF_BRACE_FORCE
-    try {
+    def settings = getCurrentCodeStyleSettings(getProject()).getCommonSettings(GroovyLanguage.INSTANCE)
       settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
       doTest('''\
 if (a)
@@ -124,10 +122,6 @@ if (a)
 ''', '''\
 if (a) <caret>print 2
 ''')
-    }
-    finally {
-      settings.IF_BRACE_FORCE = current
-    }
 
   }
 

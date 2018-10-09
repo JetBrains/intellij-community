@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -39,7 +38,7 @@ import java.util.stream.Stream;
 public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
   private static final Key<Boolean> HONOUR_RECENT_FILES_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_HONOUR_RECENT_FILES_IN_TESTS");
-  
+
   private static final NotNullLazyKey<AtomicInteger, UserDataHolder> ACCESS_ALLOWED
     = NotNullLazyKey.create("NON_PROJECT_FILE_ACCESS", holder -> new AtomicInteger());
 
@@ -133,7 +132,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   private static boolean isProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-    for (NonProjectFileWritingAccessExtension each : Extensions.getExtensions(NonProjectFileWritingAccessExtension.EP_NAME, project)) {
+    for (NonProjectFileWritingAccessExtension each : NonProjectFileWritingAccessExtension.EP_NAME.getExtensions(project)) {
       if(each.isWritable(file)) return true;
       if(each.isNotWritable(file)) return false;
     }

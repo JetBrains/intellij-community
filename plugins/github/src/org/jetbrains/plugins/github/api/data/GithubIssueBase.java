@@ -9,6 +9,7 @@ import org.jetbrains.io.mandatory.RestModel;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 //region Base for issues api model and search issues/pr api model
 /*{
@@ -102,7 +103,7 @@ public abstract class GithubIssueBase {
   private String url;
   private String repositoryUrl;
   private String labelsUrl;
-  private String commentsUrl;
+  @Mandatory private String commentsUrl;
   private String eventsUrl;
   @Mandatory private String htmlUrl;
   private Long id;
@@ -110,10 +111,11 @@ public abstract class GithubIssueBase {
   @Mandatory private Long number;
   @Mandatory private String title;
   @Mandatory private GithubUser user;
+  @Mandatory private List<GithubIssueLabel> labels;
   @Mandatory private GithubIssueState state;
   @Mandatory private Boolean locked;
   private GithubUser assignee;
-  private List<GithubUser> assignees;
+  @Mandatory private List<GithubUser> assignees;
   //private ??? milestone;
   private Long comments;
   @Mandatory private Date createdAt;
@@ -121,6 +123,11 @@ public abstract class GithubIssueBase {
   private Date closedAt;
   private String authorAssociation;
   private String body;
+
+  @NotNull
+  public String getCommentsUrl() {
+    return commentsUrl;
+  }
 
   @NotNull
   public String getHtmlUrl() {
@@ -142,6 +149,11 @@ public abstract class GithubIssueBase {
   }
 
   @NotNull
+  public List<GithubIssueLabel> getLabels() {
+    return labels;
+  }
+
+  @NotNull
   public String getBody() {
     return StringUtil.notNullize(body);
   }
@@ -154,6 +166,11 @@ public abstract class GithubIssueBase {
   @Nullable
   public GithubUser getAssignee() {
     return assignee;
+  }
+
+  @NotNull
+  public List<GithubUser> getAssignees() {
+    return assignees;
   }
 
   @Nullable
@@ -169,5 +186,18 @@ public abstract class GithubIssueBase {
   @NotNull
   public Date getUpdatedAt() {
     return updatedAt;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof GithubIssueBase)) return false;
+    GithubIssueBase base = (GithubIssueBase)o;
+    return number.equals(base.number);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(number);
   }
 }

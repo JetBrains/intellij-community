@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.Evaluator;
@@ -26,6 +27,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FixedHashMap;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import one.util.streamex.StreamEx;
@@ -34,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -93,7 +95,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           if (frameProxy != null) {
             Map<Object, List<StackFrameItem>> stacks = process.getUserData(CAPTURED_STACKS);
             if (stacks == null) {
-              stacks = new CapturedStacksMap();
+              stacks = new FixedHashMap<>(MAX_STORED_STACKS);
               AsyncStacksUtils.putProcessUserData(CAPTURED_STACKS, Collections.synchronizedMap(stacks), process);
             }
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
@@ -118,13 +120,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   @Override
   protected void fireBreakpointChanged() {
-  }
-
-  private static class CapturedStacksMap extends LinkedHashMap<Object, List<StackFrameItem>> {
-    @Override
-    protected boolean removeEldestEntry(Map.Entry eldest) {
-      return size() > MAX_STORED_STACKS;
-    }
   }
 
   @Override
@@ -298,6 +293,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     void clearCache() {
       DebuggerManagerThreadImpl.assertIsManagerThread();
       myEvaluatorCache.clear();
+    }
+  }
+
+  public static class CaptureAsyncStackTraceProvider implements AsyncStackTraceProvider {
+    @Nullable
+    @Override
+    public List<StackFrameItem> getAsyncStackTrace(JavaStackFrame stackFrame, SuspendContextImpl suspendContext) {
+      if (AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession())) {
+        return getRelatedStack(stackFrame.getStackFrameProxy(), suspendContext);
+      }
+      return null;
     }
   }
 }

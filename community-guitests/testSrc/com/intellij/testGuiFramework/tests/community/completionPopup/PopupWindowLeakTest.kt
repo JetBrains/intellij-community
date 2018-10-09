@@ -31,21 +31,27 @@ class PopupWindowLeakTest : GuiDTTestCase() {
 
   //run on server side
   override fun checkDtraceLog(inStream: InputStream) {
+    var initWithPlatformWindowCount = 0
     val lineList = mutableListOf<String>()
     inStream.bufferedReader().useLines { lines -> lines.forEach { lineList.add(it) } }
     lineList.forEach {
-      if (it.contains("AWTWindow_Panel")) {
-        println(it)
-        val fields = it.split(":")
-        val callCount = fields[2].trim().toInt()
-        assertTrue("callCount = $callCount", callCount < MAX_ITERATION)
+      println(it)
+      if (it.contains("-initWithPlatformWindow")) {
+        ++initWithPlatformWindowCount
       }
+      else if (it.contains("-dealloc")) {
+        --initWithPlatformWindowCount
+      }
+      assertTrue(
+        "AWTWindow was not timely deallocated: initWithPlatformWindowCount=$initWithPlatformWindowCount",
+        initWithPlatformWindowCount <= MAX_ITERATION / 2)
     }
   }
 
   @Rule
   @JvmField
   val myTimeoutRule = Timeout(10, TimeUnit.MINUTES)
+
   @Test
   fun testCompletionPopupHang() {
 
@@ -62,6 +68,7 @@ class PopupWindowLeakTest : GuiDTTestCase() {
         )
         typeText("robot")
         var i = 0
+        //Thread.sleep(300000)
         while (i < MAX_ITERATION) {
           typeText(".")
           Pause.pause(500)

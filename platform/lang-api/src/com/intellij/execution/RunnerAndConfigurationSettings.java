@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * settings.
  *
  * @author anna
- * @see RunManager#createConfiguration(String, com.intellij.execution.configurations.ConfigurationFactory)
+ * @see RunManager#createConfiguration(String, ConfigurationFactory)
  */
 public interface RunnerAndConfigurationSettings {
   /**
@@ -129,10 +129,10 @@ public interface RunnerAndConfigurationSettings {
 
   /**
    * @deprecated
-   * @see ExecutionTargetManager#canRun(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.ExecutionTarget)
+   * @see ExecutionTargetManager#canRun(RunnerAndConfigurationSettings, ExecutionTarget)
    */
   @Deprecated
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
+  @SuppressWarnings({"unused"})
   default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
 
   /**
@@ -172,16 +172,20 @@ public interface RunnerAndConfigurationSettings {
   boolean isActivateToolWindowBeforeRun();
 
   /**
-   * Returns the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
+   * @deprecated Use {@link RunConfiguration#isAllowRunningInParallel()}
    */
-  boolean isSingleton();
+  @Deprecated
+  default boolean isSingleton() {
+    return !getConfiguration().isAllowRunningInParallel();
+  }
 
   /**
-   * Sets the "Single instance only" flag (meaning that only one instance of this run configuration can be run at the same time).
-   *
-   * @param singleton the "Single instance" flag.
+   * @deprecated Use {@link RunConfiguration#setAllowRunningInParallel(boolean)}}
    */
-  void setSingleton(boolean singleton);
+  @Deprecated
+  default void setSingleton(boolean value) {
+    getConfiguration().setAllowRunningInParallel(!value);
+  }
 
   /**
    * Sets the name of the folder under which the configuration is displayed in the "Run/Debug Configurations" dialog.

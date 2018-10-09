@@ -36,4 +36,10 @@ public class Main {
       Collectors.collectingAndThen(Collectors.groupingBy(String::length),
                                    m -> Collections.unmodifiableMap(m)));
   }
+
+  void incomplete(List<String> people) {
+    List<String> list1 = people.stream().collect( // comment
+                                                         Collectors.collectingAndThen(Collectors.toList()));
+  }
+
 }

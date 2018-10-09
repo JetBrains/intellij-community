@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -246,7 +247,7 @@ public class TestCaseLoader {
   }
 
   private static boolean runFirst(Class testClass) {
-    return testClass.getAnnotation(RunFirst.class) != null;
+    return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
   }
 
   private static boolean isPlatformLiteFixture(Class aClass) {
@@ -319,5 +320,18 @@ public class TestCaseLoader {
                      + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
+  }
+
+  @Nullable
+  public static <T extends Annotation> T getAnnotationInHierarchy(@NotNull Class<?> clazz, @NotNull Class<T> annotationClass) {
+    Class<?> current = clazz;
+    while (current != null) {
+      T annotation = current.getAnnotation(annotationClass);
+      if (annotation != null) {
+        return annotation;
+      }
+      current = current.getSuperclass();
+    }
+    return null;
   }
 }

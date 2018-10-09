@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
@@ -358,6 +359,8 @@ public class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("facet changed: " + facet.getName());
       }
     });
+
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, setting) -> updateStatusBar());
   }
 
   private boolean worthBothering(final Document document, Project project) {

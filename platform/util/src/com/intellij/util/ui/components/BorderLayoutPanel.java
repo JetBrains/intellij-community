@@ -103,23 +103,9 @@ public class BorderLayoutPanel extends JBPanel<BorderLayoutPanel> {
   private class MyAccessibleContextDelegate extends AccessibleContextDelegate {
     MyAccessibleContextDelegate(AccessibleContext context) {super(context);}
 
-    /**
-     * The parent should be the Swing parent of this panel, not the parent of the wrapped context,
-     * because the parent of the wrapped context is ourselves, i.e. this would result in
-     * an infinite accessible parent chain.
-     */
     @Override
-    public Accessible getAccessibleParent() {
-      if (accessibleParent != null) {
-        return accessibleParent;
-      }
-      else {
-        Container parent = getParent();
-        if (parent instanceof Accessible) {
-          return (Accessible)parent;
-        }
-      }
-      return null;
+    public Container getDelegateParent() {
+      return getParent();
     }
   }
 }

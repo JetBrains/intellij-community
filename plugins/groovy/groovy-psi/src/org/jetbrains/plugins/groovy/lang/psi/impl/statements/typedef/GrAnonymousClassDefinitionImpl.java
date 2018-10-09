@@ -60,7 +60,6 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @Nullable
   public GrArgumentList getArgumentListGroovy() {
-    //noinspection ConstantConditions
     return findChildByClass(GrArgumentList.class); //not null because of definition
   }
 

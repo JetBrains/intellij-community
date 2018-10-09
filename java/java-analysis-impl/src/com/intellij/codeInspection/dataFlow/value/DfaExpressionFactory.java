@@ -117,7 +117,7 @@ public class DfaExpressionFactory {
     if (value != null) {
       PsiType type = expression.getType();
       if (type != null) {
-        return myFactory.getConstFactory().createFromValue(value, type, null);
+        return myFactory.getConstFactory().createFromValue(value, type);
       }
     }
 
@@ -333,7 +333,7 @@ public class DfaExpressionFactory {
   public DfaValue getArrayElementValue(DfaValue array, int index) {
     if (!(array instanceof DfaVariableValue)) return null;
     DfaVariableValue arrayDfaVar = (DfaVariableValue)array;
-    PsiType type = arrayDfaVar.getVariableType();
+    PsiType type = arrayDfaVar.getType();
     if (!(type instanceof PsiArrayType)) return null;
     PsiType componentType = ((PsiArrayType)type).getComponentType();
     PsiModifierListOwner arrayPsiVar = arrayDfaVar.getPsiVariable();

@@ -33,7 +33,7 @@ import java.util.*;
 public class TestLocationDataRule implements GetDataRule {
   @Nullable
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     final Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
     if (project != null && file != null) {

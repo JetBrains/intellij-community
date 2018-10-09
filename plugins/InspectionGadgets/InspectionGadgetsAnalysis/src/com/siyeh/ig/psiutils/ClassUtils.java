@@ -17,38 +17,34 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ClassUtils {
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<String> immutableTypes = new HashSet<>(19);
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 
@@ -143,11 +139,14 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    String qualifiedName = aClass.getQualifiedName();
-    if (immutableTypes.contains(qualifiedName) || (qualifiedName != null && qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
-      return true;
-    }
+    if (isImmutableClass(aClass)) return true;
     return JCiPUtil.isImmutable(aClass, checkDocComment);
+  }
+
+  public static boolean isImmutableClass(@NotNull PsiClass aClass) {
+    String qualifiedName = aClass.getQualifiedName();
+    return qualifiedName != null && (immutableTypes.contains(qualifiedName) ||
+                                     qualifiedName.startsWith("com.google.common.collect.Immutable"));
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1,
@@ -338,10 +337,18 @@ public class ClassUtils {
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
-    final Stream<PsiField> fieldStream = Stream.concat(Arrays.stream(aClass.getFields()),
-                                                       Arrays.stream(aClass.getInnerClasses())
-                                                         .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
-                                                         .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
+    Stream<PsiField> fieldStream = Arrays.stream(aClass.getFields());
+
+    StreamEx<PsiField> enclosingClassFields =
+      StreamEx.iterate(aClass.getContainingClass(), Objects::nonNull, c -> c.getContainingClass()).filter(Objects::nonNull)
+              .flatMap(c -> Stream.of(c.getFields()));
+    fieldStream = Stream.concat(fieldStream, enclosingClassFields);
+
+    fieldStream = Stream.concat(fieldStream,
+                                Arrays.stream(aClass.getInnerClasses())
+                                      .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
+                                      .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
+
     final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
     return fields.size() == 1 ? fields.get(0) : null;
   }
@@ -351,7 +358,9 @@ public class ClassUtils {
       return false;
     }
     final PsiClass targetClass = PsiUtil.resolveClassInClassTypeOnly(field.getType());
-    return aClass.equals(targetClass);
+    PsiElement toCmp1 = aClass.isPhysical() ? aClass : aClass.getNavigationElement();
+    PsiElement toCmp2 = targetClass == null || targetClass.isPhysical() ? targetClass : targetClass.getNavigationElement();
+    return Objects.equals(toCmp1, toCmp2);
   }
 
   @NotNull
@@ -373,6 +382,7 @@ public class ClassUtils {
   }
 
   private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
+    if (field instanceof LightElement) return true;
     final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
     final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
     search.forEach(processor);

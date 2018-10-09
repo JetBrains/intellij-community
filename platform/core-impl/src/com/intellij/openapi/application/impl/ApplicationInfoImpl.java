@@ -16,6 +16,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,9 +62,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myIconUrl = "/icon.png";
   private String mySmallIconUrl = "/icon_small.png";
   private String myBigIconUrl;
+  private String mySvgIconUrl;
+  private String mySvgEapIconUrl;
   private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.png";
   private String myWelcomeScreenLogoUrl;
-  private String myEditorBackgroundImageUrl;
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
@@ -73,8 +75,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
-  private String myEAPFeedbackUrl;
-  private String myReleaseFeedbackUrl;
+  private String myYoutrackUrl;
+  private String myFeedbackUrl;
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myChannelsListUrl;
@@ -151,8 +153,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_SHOW = "show";
   private static final String WELCOME_SCREEN_ELEMENT_NAME = "welcome-screen";
   private static final String LOGO_URL_ATTR = "logo-url";
-  private static final String ELEMENT_EDITOR = "editor";
-  private static final String BACKGROUND_URL_ATTR = "background-url";
   private static final String UPDATE_URLS_ELEMENT_NAME = "update-urls";
   private static final String XML_EXTENSION = ".xml";
   private static final String ATTRIBUTE_EAP = "eap";
@@ -162,9 +162,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String PLUGINS_PAGE_ELEMENT_NAME = "plugins-page";
   private static final String ELEMENT_DOCUMENTATION = "documentation";
   private static final String ELEMENT_SUPPORT = "support";
+  private static final String ELEMENT_YOUTRACK = "youtrack";
   private static final String ELEMENT_FEEDBACK = "feedback";
-  private static final String ATTRIBUTE_RELEASE_URL = "release-url";
-  private static final String ATTRIBUTE_EAP_URL = "eap-url";
   private static final String ELEMENT_PLUGINS = "plugins";
   private static final String ATTRIBUTE_LIST_URL = "list-url";
   private static final String ATTRIBUTE_CHANNEL_LIST_URL = "channel-list-url";
@@ -366,7 +365,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     if (myProgressTailIcon == null && myProgressTailIconName != null) {
       try {
         final URL url = getClass().getResource(myProgressTailIconName);
-        @SuppressWarnings({"deprecation", "UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
+        @SuppressWarnings({"UnnecessaryFullyQualifiedName"}) final Image image = com.intellij.util.ImageLoader.loadFromUrl(url, false);
         if (image != null) {
           myProgressTailIcon = new ImageIcon(image);
         }
@@ -392,6 +391,25 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  @Nullable
+  public String getApplicationSvgIconUrl() {
+    return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
+  }
+
+  @Nullable
+  @Override
+  public File getApplicationSvgIconFile() {
+    String svgIconUrl = getApplicationSvgIconUrl();
+    if (svgIconUrl == null) return null;
+
+    URL url = getClass().getResource(svgIconUrl);
+    if (url != null && URLUtil.FILE_PROTOCOL.equals(url.getProtocol())) {
+      return URLUtil.urlToFile(url);
+    }
+    return null;
+  }
+
+  @Override
   public String getToolWindowIconUrl() {
     return myToolWindowIconUrl;
   }
@@ -405,11 +423,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getCustomizeIDEWizardStepsProvider() {
     return myCustomizeIDEWizardStepsProvider;
-  }
-
-  @Override
-  public String getEditorBackgroundImageUrl() {
-    return myEditorBackgroundImageUrl;
   }
 
   @Override
@@ -438,13 +451,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getEAPFeedbackUrl() {
-    return myEAPFeedbackUrl;
+  public String getYoutrackUrl() {
+    return myYoutrackUrl;
   }
 
   @Override
-  public String getReleaseFeedbackUrl() {
-    return myReleaseFeedbackUrl;
+  public String getFeedbackUrl() {
+    return myFeedbackUrl;
   }
 
   @Override
@@ -746,6 +759,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (toolWindowIcon != null) {
         myToolWindowIconUrl = toolWindowIcon;
       }
+      mySvgIconUrl = iconElement.getAttributeValue("svg");
+    }
+    Element iconEap = getChild(parentNode, "icon-eap");
+    if (iconEap != null) {
+      mySvgEapIconUrl = iconEap.getAttributeValue("svg");
     }
 
     Element packageElement = getChild(parentNode, ELEMENT_PACKAGE);
@@ -766,11 +784,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element wizardSteps = getChild(parentNode, CUSTOMIZE_IDE_WIZARD_STEPS);
     if (wizardSteps != null) {
       myCustomizeIDEWizardStepsProvider = wizardSteps.getAttributeValue(STEPS_PROVIDER);
-    }
-
-    Element editor = getChild(parentNode, ELEMENT_EDITOR);
-    if (editor != null) {
-      myEditorBackgroundImageUrl = editor.getAttributeValue(BACKGROUND_URL_ATTR);
     }
 
     Element helpElement = getChild(parentNode, HELP_ELEMENT_NAME);
@@ -802,10 +815,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       mySupportUrl = supportElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
+    Element youtrackElement = getChild(parentNode, ELEMENT_YOUTRACK);
+    if (youtrackElement != null) {
+      myYoutrackUrl = youtrackElement.getAttributeValue(ATTRIBUTE_URL);
+    }
+
     Element feedbackElement = getChild(parentNode, ELEMENT_FEEDBACK);
     if (feedbackElement != null) {
-      myEAPFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_EAP_URL);
-      myReleaseFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_RELEASE_URL);
+      myFeedbackUrl = feedbackElement.getAttributeValue(ATTRIBUTE_URL);
     }
 
     Element whatsnewElement = getChild(parentNode, ELEMENT_WHATSNEW);

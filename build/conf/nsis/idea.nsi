@@ -5,9 +5,12 @@ ManifestDPIAware true
 !addplugindir "${NSIS_DIR}\Plugins\x86-unicode"
 !addincludedir "${NSIS_DIR}\Include"
 
+SetCompressor lzma
+
 !include "paths.nsi"
 !include "strings.nsi"
-!include "Registry.nsi"
+!include "log.nsi"
+!include "registry.nsi"
 !include "version.nsi"
 !include WinVer.nsh
 !include x64.nsh
@@ -25,7 +28,6 @@ ManifestDPIAware true
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
 Name "${MUI_PRODUCT}"
-SetCompressor lzma
 ; http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
 RequestExecutionLevel user
 
@@ -63,6 +65,7 @@ var downloadJRE
 
 ${UnStrStr}
 ${StrStr}
+${StrLoc}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
@@ -182,8 +185,22 @@ loop:
   Goto loop
 FunctionEnd
 
-
+Function ${un}DeleteDirIfEmpty
+  FindFirst $R0 $R1 "$0\*.*"
+  strcmp $R1 "." 0 NoDelete
+   FindNext $R0 $R1
+   strcmp $R1 ".." 0 NoDelete
+    ClearErrors
+    FindNext $R0 $R1
+    IfErrors 0 NoDelete
+     FindClose $R0
+     Sleep 1000
+     RMDir "$0"
+  NoDelete:
+   FindClose $R0
+FunctionEnd
 !macroend
+
 !insertmacro INST_UNINST_SWITCH ""
 !insertmacro INST_UNINST_SWITCH "un."
 
@@ -286,6 +303,7 @@ Function OnDirectoryPageLeave
   Call instDirEmpty
   StrCmp $9 "not empty" abort skip_abort
 abort:
+  ${LogText} "installation dir is not empty: $INSTDIR"
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
   Abort
 skip_abort:
@@ -432,12 +450,17 @@ Function downloadJre
     ${If} $0 == "OK"
       untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
       StrCmp $R0 "success" remove_temp_jre
+      ${LogText} "jre32: Failed to extract"
       DetailPrint "Failed to extract jre.tar.gz"
       MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
+      Goto clean
 remove_temp_jre:
+      ${LogText} "jre32: extracted"
+clean:
       IfFileExists "$TEMP\jre.tar.gz" 0 done
       Delete "$TEMP\jre.tar.gz"
     ${Else}
+      ${LogText} "jre32: download ${LINK_TO_JRE} is failed: $0"
       MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
@@ -504,6 +527,12 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 
+Function .onInstSuccess
+  SetErrorLevel 0
+  ${LogText} "Installation has been finished successfully."
+FunctionEnd
+
+
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
@@ -513,9 +542,12 @@ silent_mode:
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
 silent_config:
   Call silentConfigReader
-  Goto set_reg_key
+  Goto validate_install_dir
 custom_silent_config:
   Call customSilentConfigReader
+validate_install_dir:
+  Call silentInstallDirValidate
+  Call OnDirectoryPageLeave
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate done
@@ -530,7 +562,7 @@ uac_err:
 uac_elevation_aborted:
   IfSilent done set_install_dir
 set_install_dir:
-  StrCpy $INSTDIR "$APPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
   goto done
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
@@ -548,21 +580,44 @@ uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
 done:
+  SetOutPath $INSTDIR
+  Call CreateLog
 ;  !insertmacro MUI_LANGDLL_DISPLAY
+FunctionEnd
+
+
+function silentInstallDirValidate
+; use current user path as install dir if installation run in user mode
+  push $0
+  ${If} $silentMode == "user"
+    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
+    StrCmp $0 "" check_if_install_dir_contains_PROGRAMFILES64 update_install_dir
+check_if_install_dir_contains_PROGRAMFILES64:
+    ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
+    StrCmp $0 "" done update_install_dir
+update_install_dir:
+    StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+  ${EndIf}
+done:
+  pop $0
+  ${LogText} "silent installation dir: $INSTDIR"
 FunctionEnd
 
 
 Function silentConfigReader
   ; read Desktop.ini
+  ${LogText} "silent installation, options"
   Call getInstallationOptionsPositions
   ${GetParameters} $R0
   ClearErrors
 
   ${GetOptions} $R0 /CONFIG= $R1
   IfErrors no_silent_config
+  ${LogText} "  config file: $R1"
 
   ${ConfigRead} "$R1" "mode=" $R0
   IfErrors no_silent_config
+  ${LogText} "  mode: $R0"
   StrCpy $silentMode "user"
   IfErrors launcher_32
   StrCpy $silentMode $R0
@@ -571,12 +626,14 @@ launcher_32:
   ClearErrors
   ${ConfigRead} "$R1" "launcher32=" $R3
   IfErrors launcher_64
+  ${LogText} "  shortcut for launcher32: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
   IfErrors update_PATH
+  ${LogText} "  shortcut for launcher64: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
 
@@ -584,6 +641,7 @@ update_PATH:
   ClearErrors
   ${ConfigRead} "$R1" "updatePATH=" $R3
   IfErrors download_jre32
+  ${LogText} "  update PATH env var"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
@@ -591,6 +649,7 @@ download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors associations
+  ${LogText} "  download jre32: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
@@ -609,6 +668,7 @@ loop:
   IntOp $R0 $R0 + 1
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+  ${LogText} "  association: $0, state: $R3"
   goto loop
 
 update_settings:
@@ -622,10 +682,11 @@ FunctionEnd
 
 Function IncorrectSilentInstallParameters
   !define msg1 "How to run installation in Silent Mode:$\r$\n"
-  !define msg2 "<installation> /S /CONFIG=<path to silent cofig> /D=<install dir>$\r$\n$\r$\n"
+  !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\r$\n$\r$\n"
   !define msg3 "Example:$\r$\n"
   !define msg4 "d:\download\Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
   MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}"
+  ${LogText} "silent installation: incorrect parameters."
   Abort
 FunctionEnd
 
@@ -642,6 +703,7 @@ check_version:
   StrCmp $3 "" Done
   IntCmpU $3 ${VER_BUILD} ask_Install_Over Done ask_Install_Over
 ask_Install_Over:
+  ${LogText} "$(current_version_already_installed)"
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
   Abort
@@ -652,6 +714,7 @@ FunctionEnd
 
 
 Function searchCurrentVersion
+  ${LogText} "check if ${MUI_PRODUCT} ${VER_BUILD} already installed"
   ; search current version of IDEA
   StrCpy $0 "HKCU"
   Call checkVersion
@@ -665,6 +728,7 @@ FunctionEnd
 Function uninstallOldVersion
   ;uninstallation mode
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
+  ${LogText} "uninstall old installation: $3"
   ${If} $9 == "1"
     ExecWait '"$3\bin\Uninstall.exe" /S'
   ${else}
@@ -680,7 +744,8 @@ saveProperties:
   Delete "$3\bin\Uninstall.exe"
   Goto complete
 fullRemove:
-  RmDir /r "$3"
+  StrCpy $0 $3
+  Call DeleteDirIfEmpty
 complete:
 FunctionEnd
 
@@ -688,8 +753,8 @@ FunctionEnd
 Function checkProductVersion
 ;$8 - count of already added fields to the dialog
 ;$3 - an old version which will be checked if the one should be added too
-StrCpy $7 $control_fields
-StrCpy $6 ""
+  StrCpy $7 $control_fields
+  StrCpy $6 ""
 loop:
   IntOp $7 $7 + 1
   ${If} $8 >= $7
@@ -734,36 +799,36 @@ get_next_key:
   goto get_installation_info
 
 next_registry_root:
-${If} $0 == "HKLM"
-  StrCpy $0 "HKCU"
-  StrCpy $4 0
-  Goto get_installation_info
-${EndIf}
+  ${If} $0 == "HKLM"
+    StrCpy $0 "HKCU"
+    StrCpy $4 0
+    Goto get_installation_info
+  ${EndIf}
 
 complete:
-!insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$8"
-${If} $8 > $control_fields
-  ;$2 used in prompt text
-  StrCpy $2 "s"
-  StrCpy $7 $control_fields
-  IntOp $7 $7 + 1
-  StrCmp $8 $7 0 +2
-    StrCpy $2 ""
-  !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
-  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
-  !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
-  ;uninstall chosen installation(s)
+  !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Settings" "NumFields" "$8"
+  ${If} $8 > $control_fields
+    ;$2 used in prompt text
+    StrCpy $2 "s"
+    StrCpy $7 $control_fields
+    IntOp $7 $7 + 1
+    StrCmp $8 $7 0 +2
+      StrCpy $2 ""
+    !insertmacro MUI_HEADER_TEXT "$(uninstall_previous_installations_title)" "$(uninstall_previous_installations)"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
+    !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
+    !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
+    ;uninstall chosen installation(s)
 
-  ;no disabled controls. StrCmp $2 "OK" loop finish
+    ;no disabled controls. StrCmp $2 "OK" loop finish
 loop:
-  !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
-  !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
-  ${If} $0 == "1"
-    Call uninstallOldVersion
-    ${EndIf}
-    IntOp $8 $8 - 1
-    StrCmp $8 $control_fields finish loop
+    !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
+    !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
+    ${If} $0 == "1"
+      Call uninstallOldVersion
+      ${EndIf}
+      IntOp $8 $8 - 1
+      StrCmp $8 $control_fields finish loop
   ${EndIf}
 finish:
 FunctionEnd
@@ -805,6 +870,8 @@ Function GUIInit
   Call searchCurrentVersion
 
 ; search old versions of IDEA installed from the user and admin.
+  ${LogText} "search if old versions of ${MUI_PRODUCT} were installed"
+
 user:
   StrCpy $4 0
   StrCpy $0 "HKCU"
@@ -821,8 +888,9 @@ admin:
 
 collect_versions:
   IntCmp ${SHOULD_SET_DEFAULT_INSTDIR} 0 end_enum_versions_hklm
-  StrCpy $3 "0"        # latest build number
-  StrCpy $0 "0"        # registry key index
+; latest build number and registry key index
+  StrCpy $3 "0"
+  StrCpy $0 "0"
 
 enum_versions_hkcu:
   EnumRegKey $1 "HKCU" "Software\${MANUFACTURER}\${MUI_PRODUCT}" $0
@@ -869,6 +937,7 @@ FunctionEnd
 
 
 Function ProductRegistration
+  ${LogText} "do registartion ${MUI_PRODUCT} ${VER_BUILD}"
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
 eapInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
@@ -884,9 +953,56 @@ createRegistration:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
+
+; add "Open with PRODUCT" action for files to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Edit with ${MUI_PRODUCT}"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+; add "Open with PRODUCT" action for folders to Windows context menu
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 ""
+  StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $2 "Icon"
+  StrCpy $3 '"$productLauncher" "%1"'
+  call OMWriteRegStr
 FunctionEnd
 
 Function ProductAssociation
+  ${LogText} "do associations ${MUI_PRODUCT} ${VER_BUILD}"
   push $0
   push $1
   push $2
@@ -945,20 +1061,34 @@ FunctionEnd
 
 
 Function getPathEnvVar
+  ClearErrors
   ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
+  ${LogText} "  PATH: HKCU ${Environment} Path $pathEnvVar"
+  IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
+  Goto done
+do_not_change_path:
+  StrCpy $pathEnvVar ""
+done:
 FunctionEnd
 
 
 Function createProductEnvVar
   WriteRegStr HKCU ${Environment} "${MUI_PRODUCT}" "$INSTDIR\bin;"
+  ${LogText} "  create product env var: ${MUI_PRODUCT} $INSTDIR\bin;"
 FunctionEnd
 
 
 Function updatePathEnvVar
+  StrCmp $pathEnvVar "" do_not_change_path 0
   ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
   StrCmp $R0 "" absent done
 absent:
   WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
+  Goto done
+do_not_change_path:
+  ${LogText} "  PATH can not be updated. The size is very big."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
 done:
 FunctionEnd
 
@@ -977,6 +1107,7 @@ Section "IDEA Files" CopyIdeaFiles
   ${Else}
      StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${EndIf}
+  ${LogText} "default launcher: $productLauncher"
   DetailPrint "productLauncher: $productLauncher"
 
   StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
@@ -988,15 +1119,18 @@ shortcuts:
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+  ${LogText} "create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
   StrCmp $R2 1 "" add_to_path
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
+  ${LogText} "create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
+    ${LogText} "update PATH env var"
     Call getPathEnvVar
     Call createProductEnvVar
     CALL updatePathEnvVar
@@ -1038,6 +1172,7 @@ done:
 
 skip_ipr:
 ; readonly section
+  ${LogText} "copy files to $INSTDIR"
   SectionIn RO
   !include "idea_win.nsh"
 
@@ -1103,10 +1238,12 @@ skip_ipr:
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
   IfFileExists $INSTDIR\jre32\bin\javaw.exe 0 java64
-  ExecWait "$INSTDIR\jre32\bin\javaw.exe -Xshare:dump"
+  ${LogText} "Regenerating the Shared Archives for java x86"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre32\bin\javaw.exe" -Xshare:dump'
 java64:
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
-  ExecWait "$INSTDIR\jre64\bin\javaw.exe -Xshare:dump"
+  ${LogText} "Regenerating the Shared Archives for java 64"
+  ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
 
 skip_regeneration_shared_archive_for_java_64:
   SetOutPath $INSTDIR\bin
@@ -1125,6 +1262,7 @@ skip_regeneration_shared_archive_for_java_64:
   ${EndIf}
 
 ; reset icon cache
+  ${LogText} "reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
 
@@ -1164,6 +1302,11 @@ Done:
 FunctionEnd
 
 
+Function un.onUninstSuccess
+  SetErrorLevel 0
+FunctionEnd
+
+
 Function un.onInit
   SetRegView 32
   Call un.getRegKey
@@ -1177,13 +1320,13 @@ required_admin_perm:
 
 uninstall_location:
   ;check if the uninstallation is running from the product location
-  IfFileExists $APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
+  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
 
 copy_uninstall:
   ;do copy for unistall.exe
-  CopyFiles "$OUTDIR\Uninstall.exe" "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-  ExecWait '"$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
-  Delete "$APPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   Quit
 
 UAC_Elevate:
@@ -1205,6 +1348,9 @@ UAC_Admin:
 UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
+
+  Call un.CreateLog
+  ${LogText} "un.onInit"
 FunctionEnd
 
 
@@ -1388,22 +1534,6 @@ done:
 FunctionEnd
 
 
-Function un.DeleteDirIfEmpty
-  FindFirst $R0 $R1 "$0\*.*"
-  strcmp $R1 "." 0 NoDelete
-   FindNext $R0 $R1
-   strcmp $R1 ".." 0 NoDelete
-    ClearErrors
-    FindNext $R0 $R1
-    IfErrors 0 NoDelete
-     FindClose $R0
-     Sleep 1000
-     RMDir "$0"
-  NoDelete:
-   FindClose $R0
-FunctionEnd
-
-
 Section "Uninstall"
   Call un.customUninstallActions
   SetRegView 32
@@ -1489,7 +1619,6 @@ skip_delete_settings:
 
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
-  Delete "$INSTDIR\jre32\bin\client\classes.jsa"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
 
   Push "Complete"
@@ -1503,6 +1632,11 @@ skip_delete_settings:
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
+  IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
+    Delete "$INSTDIR\jre32\bin\server\classes.jsa"
+    StrCpy $0 "$INSTDIR\jre32\lib\applet"
+    Call un.DeleteDirIfEmpty
+no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR"
   Call un.DeleteDirIfEmpty
@@ -1518,6 +1652,17 @@ desktop_shortcut_launcher64:
     Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
+  StrCpy $0 "HKCU"
+  StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  call un.OMDeleteRegKey
+
   StrCpy $5 "Software\${MANUFACTURER}"
   StrCmp "${ASSOCIATION}" "NoAssociation" finish_uninstall
   push "${ASSOCIATION}"

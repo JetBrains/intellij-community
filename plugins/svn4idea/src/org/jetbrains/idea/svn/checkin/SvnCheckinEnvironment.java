@@ -222,11 +222,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return scheduleUnversionedFilesForAddition(mySvnVcs, files);
   }
 
-  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files) {
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files) {
     return scheduleUnversionedFilesForAddition(vcs, files, false);
   }
 
-  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<VirtualFile> files, final boolean recursive) {
+  public static List<VcsException> scheduleUnversionedFilesForAddition(@NotNull SvnVcs vcs, List<? extends VirtualFile> files, final boolean recursive) {
     Collections.sort(files, FilePathComparator.getInstance());
 
     ProgressTracker eventHandler = new SvnProgressCanceller() {

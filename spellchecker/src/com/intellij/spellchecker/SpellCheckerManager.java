@@ -5,11 +5,11 @@ import com.google.common.collect.Maps;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -17,8 +17,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.spellchecker.dictionary.*;
 import com.intellij.spellchecker.dictionary.Dictionary;
+import com.intellij.spellchecker.dictionary.*;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.PathManager.getOptionsPath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
@@ -94,7 +93,7 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void updateBundledDictionaries(final List<String> removedDictionaries) {
-    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         boolean dictionaryShouldBeLoad = settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary);
         boolean dictionaryIsLoad = spellChecker.isDictionaryLoad(dictionary);
@@ -159,7 +158,7 @@ public class SpellCheckerManager implements Disposable {
   private void fillEngineDictionary() {
     spellChecker.reset();
     // Load bundled dictionaries from corresponding jars
-    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (settings == null || !settings.getBundledDisabledDictionariesPaths().contains(dictionary)) {
           final Class<? extends BundledDictionaryProvider> loaderClass = provider.getClass();
@@ -192,7 +191,7 @@ public class SpellCheckerManager implements Disposable {
     }
     myAppDictionary = cachedDictionaryState.getDictionary();
     spellChecker.addModifiableDictionary(myAppDictionary);
-    
+
     final ProjectDictionaryState dictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
     dictionaryState.addProjectDictListener((dict) -> restartInspections());
     myProjectDictionary = dictionaryState.getProjectDictionary();
@@ -229,21 +228,22 @@ public class SpellCheckerManager implements Disposable {
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
       if(file != null) {
-        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
-          @Override
-          public void undo() {
-            dictionary.removeFromDictionary(transformed);
-            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-            restartInspections();
-          }
+        WriteCommandAction.writeCommandAction(project)
+          .run(() -> UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
+            @Override
+            public void undo() {
+              dictionary.removeFromDictionary(transformed);
+              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
+              restartInspections();
+            }
 
-          @Override
-          public void redo() {
-            dictionary.addToDictionary(transformed);
-            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
-            restartInspections();
-          }
-        });
+            @Override
+            public void redo() {
+              dictionary.addToDictionary(transformed);
+              myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
+              restartInspections();
+            }
+          }));
       }
       dictionary.addToDictionary(transformed);
       myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
@@ -276,7 +276,7 @@ public class SpellCheckerManager implements Disposable {
   @NotNull
   public static List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<>();
-    for (BundledDictionaryProvider provider : Extensions.getExtensions(BundledDictionaryProvider.EP_NAME)) {
+    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
     return dictionaries;
@@ -318,7 +318,7 @@ public class SpellCheckerManager implements Disposable {
 
   @Nullable
   private static CustomDictionaryProvider findApplicable(@NotNull String path) {
-    return Stream.of(Extensions.getExtensions(CustomDictionaryProvider.EP_NAME))
+    return CustomDictionaryProvider.EP_NAME.getExtensionList().stream()
       .filter(dictionaryProvider -> dictionaryProvider.isApplicable(path))
       .findAny()
       .orElse(null);

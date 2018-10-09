@@ -12,6 +12,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
  */
 
 class GradleCoverageExtension: JavaCoverageEngineExtension() {
-  override fun isApplicableTo(conf: RunConfigurationBase?): Boolean =
+  override fun isApplicableTo(conf: RunConfigurationBase<*>?) =
     conf is ExternalSystemRunConfiguration && GradleConstants.SYSTEM_ID == conf.settings.externalSystemId
 }

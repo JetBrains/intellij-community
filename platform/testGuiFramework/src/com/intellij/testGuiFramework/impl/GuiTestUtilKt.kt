@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -282,20 +284,22 @@ object GuiTestUtilKt {
   }
 
   fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String,
+                                              predicate: FinderPredicate = Predicate.equality,
                                               timeoutToAppear: Timeout = Timeouts.seconds05,
                                               timeoutToGone: Timeout = Timeouts.defaultTimeout) {
-    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppear, timeoutToGone)
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, predicate, timeoutToAppear, timeoutToGone)
   }
 
   fun waitProgressDialogUntilGone(robot: Robot,
                                   progressTitle: String,
+                                  predicate: FinderPredicate = Predicate.equality,
                                   timeoutToAppear: Timeout = Timeouts.seconds30,
                                   timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     //wait dialog appearance. In a bad case we could pass dialog appearance.
     var dialog: JDialog? = null
     try {
       waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
-        dialog = findProgressDialog(robot, progressTitle)
+        dialog = findProgressDialog(robot, progressTitle, predicate)
         dialog != null
       }
     }
@@ -305,9 +309,9 @@ object GuiTestUtilKt {
     waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
   }
 
-  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
-    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
-      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
+  fun findProgressDialog(robot: Robot, progressTitle: String, predicate: FinderPredicate = Predicate.equality): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) { dialog: JDialog ->
+      findAllWithBFS(dialog, EngravedLabel::class.java).filter { it.isShowing && predicate(it.text, progressTitle) }.any()
     }).firstOrNull()
   }
 
@@ -338,10 +342,11 @@ object GuiTestUtilKt {
     return result?.first
   }
 
-  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
     action()
   }
   catch (ignore: ComponentLookupException) {
+    null
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {

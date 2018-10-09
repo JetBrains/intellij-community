@@ -15,11 +15,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
@@ -34,6 +32,7 @@ import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -112,8 +111,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     myGroupingSupport = installGroupingSupport();
 
-    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
-    setEmptyText(emptyText);
+    setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
   }
@@ -357,16 +355,21 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void selectFile(@Nullable VirtualFile toSelect) {
-    if (toSelect != null) {
-      int rowInTree = findRowContainingFile(getRoot(), toSelect);
-      if (rowInTree == -1) return;
-
-      setSelectionRow(rowInTree);
-      TreeUtil.showRowCentered(this, rowInTree, false);
-    }
+    if (toSelect == null) return;
+    selectFile(VcsUtil.getFilePath(toSelect));
   }
 
-  private int findRowContainingFile(@NotNull TreeNode root, @NotNull final VirtualFile toSelect) {
+  public void selectFile(@Nullable FilePath toSelect) {
+    if (toSelect == null) return;
+
+    int rowInTree = findRowContainingFile(getRoot(), toSelect);
+    if (rowInTree == -1) return;
+
+    setSelectionRow(rowInTree);
+    TreeUtil.showRowCentered(this, rowInTree, false);
+  }
+
+  private int findRowContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
     final Ref<Integer> row = Ref.create(-1);
     TreeUtil.traverse(root, node -> {
       if (node instanceof DefaultMutableTreeNode) {
@@ -384,18 +387,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return row.get();
   }
 
-  private static boolean matches(@NotNull Change change, @NotNull VirtualFile file) {
-    VirtualFile virtualFile = change.getVirtualFile();
-    return virtualFile != null && virtualFile.equals(file) || seemsToBeMoved(change, file);
+  private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
+    return toSelect.equals(ChangesUtil.getAfterPath(change));
   }
-
-  private static boolean seemsToBeMoved(Change change, VirtualFile toSelect) {
-    ContentRevision afterRevision = change.getAfterRevision();
-    if (afterRevision == null) return false;
-    FilePath file = afterRevision.getFile();
-    return FileUtil.pathsEqual(file.getPath(), toSelect.getPath());
-  }
-
 
   @NotNull
   private List<Object> getAllUserObjects() {
@@ -584,7 +578,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myTextRenderer.setToolTipText(null);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
-        @SuppressWarnings("unchecked")
         State state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setState(state);
 
@@ -641,7 +634,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
     TreeUtil.traverse(getRoot(), node -> {
       DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
-      //noinspection SuspiciousMethodCalls
       if (changesSet.contains(mutableNode.getUserObject())) {
         treeSelection.add(new TreePath(mutableNode.getPath()));
       }

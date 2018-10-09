@@ -11,6 +11,7 @@ import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -48,6 +49,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -62,6 +64,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  * @author yole
  */
 public class AppUIUtil {
+  private static final Logger LOG = Logger.getInstance(AppUIUtil.class);
   private static final String VENDOR_PREFIX = "jetbrains-";
   private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static boolean ourMacDocIconSet = false;
@@ -77,16 +80,13 @@ public class AppUIUtil {
     List<Image> images = ContainerUtil.newArrayListWithCapacity(3);
 
     if (SystemInfo.isUnix) {
-      String bigIconUrl = appInfo.getBigIconUrl();
-      if (bigIconUrl != null) {
-        Image bigIcon = ImageLoader.loadFromResource(bigIconUrl);
-        if (bigIcon != null) {
-          images.add(bigIcon);
-        }
+      Image svgIcon = loadApplicationIcon(window, 128, appInfo.getBigIconUrl());
+      if (svgIcon != null) {
+        images.add(svgIcon);
       }
     }
 
-    images.add(ImageLoader.loadFromResource(appInfo.getIconUrl()));
+    images.add(loadApplicationIcon(window, 32, appInfo.getIconUrl()));
     images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
 
     for (int i = 0; i < images.size(); i++) {
@@ -105,6 +105,29 @@ public class AppUIUtil {
         ourMacDocIconSet = true;
       }
     }
+  }
+
+  @Nullable
+  private static Image loadApplicationIcon(@NotNull Window window, int size, @Nullable String fallbackImageResourcePath) {
+    String svgIconUrl = ApplicationInfoImpl.getShadowInstance().getApplicationSvgIconUrl();
+    if (svgIconUrl != null) {
+      URL url = AppUIUtil.class.getResource(svgIconUrl);
+      try {
+        return
+          SVGLoader.load(url, AppUIUtil.class.getResourceAsStream(svgIconUrl), JBUI.pixScale(window) * size, JBUI.pixScale(window) * size);
+      }
+      catch (IOException e) {
+        LOG.info("Cannot load svg application icon from " + svgIconUrl, e);
+      }
+    }
+    else if (fallbackImageResourcePath != null) {
+      Image image = ImageLoader.loadFromResource(fallbackImageResourcePath);
+      if (image instanceof JBHiDPIScaledImage) {
+        return ((JBHiDPIScaledImage)image).getDelegate();
+      }
+      return image;
+    }
+    return null;
   }
 
   public static void invokeLaterIfProjectAlive(@NotNull Project project, @NotNull Runnable runnable) {
@@ -203,7 +226,8 @@ public class AppUIUtil {
   private static final int MIN_ICON_SIZE = 32;
 
   @Nullable
-  public static String findIcon(@NotNull String iconsPath) {
+  public static String findIcon() {
+    String iconsPath = PathManager.getBinPath();
     String[] childFiles = ObjectUtils.notNull(new File(iconsPath).list(), ArrayUtil.EMPTY_STRING_ARRAY);
 
     // 1. look for .svg icon
@@ -211,6 +235,11 @@ public class AppUIUtil {
       if (child.endsWith(".svg")) {
         return iconsPath + '/' + child;
       }
+    }
+
+    File svgFile = ApplicationInfoEx.getInstanceEx().getApplicationSvgIconFile();
+    if (svgFile != null) {
+      return svgFile.getAbsolutePath();
     }
 
     // 2. look for .png icon of max size
@@ -263,7 +292,6 @@ public class AppUIUtil {
         runnable.run();
       } else {
         try {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {

@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 public class RemoveNewQualifierTest extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeNewQualifier";

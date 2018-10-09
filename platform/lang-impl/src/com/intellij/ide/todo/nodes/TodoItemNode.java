@@ -35,7 +35,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
   private final List<HighlightedRegionProvider> myAdditionalLines;
 
   public TodoItemNode(Project project,
-                      SmartTodoItemPointer value,
+                      @NotNull SmartTodoItemPointer value,
                       TodoTreeBuilder builder) {
     super(project, value, builder);
     RangeMarker rangeMarker = getValue().getRangeMarker();

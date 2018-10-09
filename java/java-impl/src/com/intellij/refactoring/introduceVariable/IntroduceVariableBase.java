@@ -65,7 +65,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author dsl
@@ -159,10 +158,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
 
       if (!selectionModel.hasSelection()) {
-        final List<PsiExpression> expressions = collectExpressions(file, editor, offset)
-          .stream()
-          .filter(expression -> RefactoringUtil.getParentStatement(expression, false) != null)
-          .collect(Collectors.toList());
+        final List<PsiExpression> expressions = ContainerUtil
+          .filter(collectExpressions(file, editor, offset), expression -> RefactoringUtil.getParentStatement(expression, false) != null);
         if (expressions.isEmpty()) {
           selectionModel.selectLineAtCaret();
         } else if (!isChooserNeeded(expressions)) {
@@ -188,9 +185,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  public static boolean isChooserNeeded(List<PsiExpression> exprs) {
-    if (exprs.size() == 1) {
-      final PsiExpression expression = exprs.get(0);
+  public static boolean isChooserNeeded(List<? extends PsiExpression> expressions) {
+    if (expressions.size() == 1) {
+      final PsiExpression expression = expressions.get(0);
       return expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null;
     }
     return true;
@@ -207,7 +204,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
            isPreferStatements();
   }
 
-  public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {
+  public static int preferredSelection(PsiElement[] statementsInRange, List<? extends PsiExpression> expressions) {
     int selection;
     if (statementsInRange.length == 1 &&
         statementsInRange[0] instanceof PsiExpressionStatement &&
@@ -389,7 +386,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiLiteralExpression startLiteralExpression = PsiTreeUtil.getParentOfType(elementAtStart, PsiLiteralExpression.class);
     final PsiLiteralExpression endLiteralExpression = PsiTreeUtil.getParentOfType(file.findElementAt(endOffset), PsiLiteralExpression.class);
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     String text = null;
     PsiExpression tempExpr;
     try {
@@ -819,7 +816,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       if (containerParent instanceof PsiLambdaExpression) {
         PsiParameter[] parameters = ((PsiLambdaExpression)containerParent).getParameterList().getParameters();
-        if (Arrays.stream(parameters).anyMatch(parameter -> vars.contains(parameter))) {
+        if (Arrays.stream(parameters).anyMatch(vars::contains)) {
           break;
         }
       }
@@ -911,7 +908,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
           PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, project);
-          PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           PsiElement declaration;
           if (container instanceof PsiClass) {
             declaration = elementFactory.createField(settings.getEnteredName(), type);
@@ -1118,18 +1115,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       LOG.assertTrue(parentRange.getStartOffset() <= rangeMarker.getStartOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String beg = allText.substring(parentRange.getStartOffset(), rangeMarker.getStartOffset());
       //noinspection SSBasedInspection (suggested replacement breaks behavior)
-      if (StringUtil.stripQuotesAroundValue(beg).trim().length() == 0 && prefix == null) beg = "";
+      if (StringUtil.stripQuotesAroundValue(beg).trim().isEmpty() && prefix == null) beg = "";
 
       LOG.assertTrue(rangeMarker.getEndOffset() <= parentRange.getEndOffset(), parent + "; prefix:" + prefix + "; suffix:" + suffix);
       String end = allText.substring(rangeMarker.getEndOffset(), parentRange.getEndOffset());
       //noinspection SSBasedInspection (suggested replacement breaks behavior)
-      if (StringUtil.stripQuotesAroundValue(end).trim().length() == 0 && suffix == null) end = "";
+      if (StringUtil.stripQuotesAroundValue(end).trim().isEmpty() && suffix == null) end = "";
 
       final String start = beg + (prefix != null ? prefix : "");
       refIdx[0] = start.length();
       text = start + refText + (suffix != null ? suffix : "") + end;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     return parent instanceof PsiStatement ? factory.createStatementFromText(text, parent) :
                                             parent instanceof PsiCodeBlock ? factory.createCodeBlockFromText(text, parent)
                                                                            : factory.createExpressionFromText(text, parent);

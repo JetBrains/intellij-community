@@ -43,10 +43,6 @@ public class WhileLoopSpinsOnFieldInspectionFixTest extends LightQuickFixParamet
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igtest/threading/while_loop_spins_on_field";

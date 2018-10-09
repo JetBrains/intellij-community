@@ -123,7 +123,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
       return false;
     }
 
-    GotoActionAction.openOptionOrPerformAction(selected, "", myProject, myContextComponent);
+    GotoActionAction.openOptionOrPerformAction(selected, text, myProject, myContextComponent);
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper) selected).getAction() instanceof ToggleAction;
     return !inplaceChange;

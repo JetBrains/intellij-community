@@ -24,14 +24,14 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 abstract class PResults {
   // SoP = sum of products
-  static Set<Set<EKey>> join(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+  static Set<Set<EKey>> join(Set<? extends Set<EKey>> sop1, Set<? extends Set<EKey>> sop2) {
     Set<Set<EKey>> sop = new HashSet<>();
     sop.addAll(sop1);
     sop.addAll(sop2);
     return sop;
   }
 
-  static Set<Set<EKey>> meet(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+  static Set<Set<EKey>> meet(Set<? extends Set<EKey>> sop1, Set<? extends Set<EKey>> sop2) {
     Set<Set<EKey>> sop = new HashSet<>();
     for (Set<EKey> prod1 : sop1) {
       for (Set<EKey> prod2 : sop2) {
@@ -82,7 +82,7 @@ abstract class PResults {
       sop.add(prod);
     }
 
-    static void checkLimit(Set<Set<EKey>> sop) throws AnalyzerException {
+    static void checkLimit(Set<? extends Set<EKey>> sop) throws AnalyzerException {
       int size = sop.stream().mapToInt(Set::size).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
         throw new AnalyzerException(null, "HEquation size is too big");
@@ -97,9 +97,7 @@ abstract class PResults {
     if (Return == r2) return r1;
     if (NPE == r1) return NPE;
     if (NPE == r2) return NPE;
-    ConditionalNPE cnpe1 = (ConditionalNPE) r1;
-    ConditionalNPE cnpe2 = (ConditionalNPE) r2;
-    return new ConditionalNPE(join(cnpe1.sop, cnpe2.sop));
+    return new ConditionalNPE(join(((ConditionalNPE)r1).sop, ((ConditionalNPE)r2).sop));
   }
 
   static PResult join(PResult r1, PResult r2) throws AnalyzerException {
@@ -109,9 +107,7 @@ abstract class PResults {
     if (Return == r2) return Return;
     if (NPE == r1) return r2;
     if (NPE == r2) return r1;
-    ConditionalNPE cnpe1 = (ConditionalNPE) r1;
-    ConditionalNPE cnpe2 = (ConditionalNPE) r2;
-    return new ConditionalNPE(join(cnpe1.sop, cnpe2.sop));
+    return new ConditionalNPE(join(((ConditionalNPE) r1).sop, ((ConditionalNPE) r2).sop));
   }
 
   static PResult meet(PResult r1, PResult r2) throws AnalyzerException {
@@ -121,14 +117,12 @@ abstract class PResults {
     if (NPE == r1) return NPE;
     if (NPE == r2) return NPE;
     if (Identity == r2) return Identity;
-    ConditionalNPE cnpe1 = (ConditionalNPE) r1;
-    ConditionalNPE cnpe2 = (ConditionalNPE) r2;
-    return new ConditionalNPE(meet(cnpe1.sop, cnpe2.sop));
+    return new ConditionalNPE(meet(((ConditionalNPE) r1).sop, ((ConditionalNPE) r2).sop));
   }
-
 }
 
-interface PendingAction {}
+interface PendingAction { }
+
 class ProceedState implements PendingAction {
   final State state;
 
@@ -136,6 +130,7 @@ class ProceedState implements PendingAction {
     this.state = state;
   }
 }
+
 class MakeResult implements PendingAction {
   final State state;
   final PResult subResult;
@@ -251,11 +246,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         }
       }
     }
-    if (earlyResult != null) {
-      return mkEquation(earlyResult);
-    } else {
-      return mkEquation(results[0]);
-    }
+    return earlyResult != null ? mkEquation(earlyResult) : mkEquation(results[0]);
   }
 
   private void processState(State state) throws AnalyzerException {
@@ -355,10 +346,8 @@ class NonNullInAnalysis extends Analysis<PResult> {
         nextFrame1 = createCatchFrame(frame);
         exceptional = true;
       }
-      pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult,
-                                             exceptional)));
+      pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult, exceptional)));
     }
-
   }
 
   private int pendingTop;
@@ -457,11 +446,7 @@ class NullableInAnalysis extends Analysis<PResult> {
         }
       }
     }
-    if (earlyResult != null) {
-      return mkEquation(earlyResult);
-    } else {
-      return mkEquation(myResult);
-    }
+    return earlyResult != null ? mkEquation(earlyResult) : mkEquation(myResult);
   }
 
   private void processState(State state) throws AnalyzerException {
@@ -689,7 +674,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
         LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
         if (lambda != null) {
           int targetOpcode = lambda.getAssociatedOpcode();
-          if(targetOpcode != -1) {
+          if (targetOpcode != -1) {
             methodCall(targetOpcode, lambda.getMethod(), lambda.getLambdaMethodArguments(values, this::newValue));
           }
         }
@@ -703,7 +688,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
       subResult = NPE;
     }
 
-    if(opcode == INVOKEINTERFACE) {
+    if (opcode == INVOKEINTERFACE) {
       if (nullableAnalysis) {
         for (BasicValue value : values) {
           if (value instanceof ParamValue) {
@@ -712,7 +697,8 @@ abstract class NullityInterpreter extends BasicInterpreter {
           }
         }
       }
-    } else {
+    }
+    else {
       boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
       for (int i = 0; i < values.size(); i++) {
         BasicValue value = values.get(i);
@@ -725,7 +711,6 @@ abstract class NullityInterpreter extends BasicInterpreter {
 }
 
 class NotNullInterpreter extends NullityInterpreter {
-
   NotNullInterpreter() {
     super(false, false);
   }
@@ -737,7 +722,6 @@ class NotNullInterpreter extends NullityInterpreter {
 }
 
 class NullableInterpreter extends NullityInterpreter {
-
   NullableInterpreter() {
     super(true, true);
   }

@@ -472,7 +472,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate()) return;
+    if (myEditor.getDocument().isInEventsHandling() || myEditor.getDocument().isInBulkUpdate() ||
+        inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) return;
     if (!isSoftWrappingEnabled()) {
       myDirty = true;
       return;

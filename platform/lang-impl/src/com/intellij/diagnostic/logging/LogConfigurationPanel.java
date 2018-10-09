@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -59,7 +57,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myFilesTable.getEmptyText().setText(DiagnosticBundle.message("log.monitor.no.files"));
 
     final JTableHeader tableHeader = myFilesTable.getTableHeader();
-    @SuppressWarnings("ConstantConditions")
     final FontMetrics fontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
 
     int preferredWidth = fontMetrics.stringWidth(IS_SHOW.getName()) + 20;
@@ -215,7 +212,8 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     myUnresolvedPredefined.clear();
     final List<PredefinedLogFile> predefinedLogFiles = configuration.getPredefinedLogFiles();
     for (PredefinedLogFile predefinedLogFile : predefinedLogFiles) {
-      PredefinedLogFile logFile = new PredefinedLogFile(predefinedLogFile);
+      PredefinedLogFile logFile = new PredefinedLogFile();
+      logFile.copyFrom(predefinedLogFile);
       final LogFileOptions options = configuration.getOptionsForPredefinedLogFile(logFile);
       if (options != null) {
         myLog2Predefined.put(options, logFile);
@@ -250,7 +248,10 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
       final Boolean skipped = (Boolean)myModel.getValueAt(i, 2);
       final PredefinedLogFile predefined = myLog2Predefined.get(options);
       if (predefined != null) {
-        configuration.addPredefinedLogFile(new PredefinedLogFile(predefined.getId(), options.isEnabled()));
+        PredefinedLogFile file = new PredefinedLogFile();
+        file.setId(predefined.getId());
+        file.setEnabled(options.isEnabled());
+        configuration.addPredefinedLogFile(file);
       }
       else {
         configuration
@@ -303,7 +304,6 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
                                                        int column) {
           final Component renderer = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           setText(((LogFileOptions)value).getName());
-          //noinspection ConstantConditions
           setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
           setBorder(null);
           return renderer;

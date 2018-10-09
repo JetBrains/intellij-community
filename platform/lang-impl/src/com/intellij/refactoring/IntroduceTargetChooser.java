@@ -47,36 +47,36 @@ public class IntroduceTargetChooser {
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
-                                                        @NotNull List<T> expressions,
-                                                        @NotNull Pass<T> callback,
-                                                        @NotNull Function<T, String> renderer) {
+                                                        @NotNull List<? extends T> expressions,
+                                                        @NotNull Pass<? super T> callback,
+                                                        @NotNull Function<? super T, String> renderer) {
     showChooser(editor, expressions, callback, renderer, "Expressions");
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
-                                                        @NotNull List<T> expressions,
-                                                        @NotNull Pass<T> callback,
-                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull List<? extends T> expressions,
+                                                        @NotNull Pass<? super T> callback,
+                                                        @NotNull Function<? super T, String> renderer,
                                                         @NotNull @Nls String title) {
     showChooser(editor, expressions, callback, renderer, title, ScopeHighlighter.NATURAL_RANGER);
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
-                                                        @NotNull List<T> expressions,
-                                                        @NotNull Pass<T> callback,
-                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull List<? extends T> expressions,
+                                                        @NotNull Pass<? super T> callback,
+                                                        @NotNull Function<? super T, String> renderer,
                                                         @NotNull @Nls String title,
-                                                        @NotNull NotNullFunction<PsiElement, TextRange> ranger) {
+                                                        @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
     showChooser(editor, expressions, callback, renderer, title, -1, ranger);
   }
 
   public static <T extends PsiElement> void showChooser(@NotNull Editor editor,
-                                                        @NotNull List<T> expressions,
-                                                        @NotNull Pass<T> callback,
-                                                        @NotNull Function<T, String> renderer,
+                                                        @NotNull List<? extends T> expressions,
+                                                        @NotNull Pass<? super T> callback,
+                                                        @NotNull Function<? super T, String> renderer,
                                                         @NotNull @Nls String title,
                                                         int selection,
-                                                        @NotNull NotNullFunction<PsiElement, TextRange> ranger) {
+                                                        @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger) {
     List<MyIntroduceTarget<T>> targets = ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger, renderer));
     Pass<MyIntroduceTarget<T>> callbackWrapper = new Pass<MyIntroduceTarget<T>>() {
       @Override
@@ -89,7 +89,7 @@ public class IntroduceTargetChooser {
 
   public static <T extends IntroduceTarget> void showIntroduceTargetChooser(@NotNull Editor editor,
                                                                             @NotNull List<T> expressions,
-                                                                            @NotNull Pass<T> callback,
+                                                                            @NotNull Pass<? super T> callback,
                                                                             @NotNull @Nls String title,
                                                                             int selection) {
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));

@@ -19,6 +19,7 @@ package com.intellij.formatting;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LeafBlockWrapper extends AbstractBlockWrapper {
@@ -46,7 +47,7 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
    */
   public LeafBlockWrapper(final Block block,
                           @Nullable CompositeBlockWrapper parent,
-                          WhiteSpace whiteSpaceBefore,
+                          @NotNull WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,
@@ -55,9 +56,9 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
     this(block, parent, whiteSpaceBefore, model, options, previousTokenBlock, isReadOnly, block.getTextRange());
   }
 
-  public LeafBlockWrapper(final Block block,
+  private LeafBlockWrapper(final Block block,
                           CompositeBlockWrapper parent,
-                          WhiteSpace whiteSpaceBefore,
+                          @NotNull WhiteSpace whiteSpaceBefore,
                           FormattingDocumentModel model,
                           CommonCodeStyleSettings.IndentOptions options,
                           LeafBlockWrapper previousTokenBlock,

@@ -83,7 +83,7 @@ public class MavenDomProjectProcessorUtils {
   }
 
   public static void processParentProjects(@NotNull final MavenDomProjectModel projectDom,
-                                           @NotNull final Processor<MavenDomProjectModel> processor) {
+                                           @NotNull final Processor<? super MavenDomProjectModel> processor) {
     Set<MavenDomProjectModel> processed = new HashSet<>();
     Project project = projectDom.getManager().getProject();
     MavenDomProjectModel parent = findParent(projectDom, project);
@@ -228,12 +228,12 @@ public class MavenDomProjectProcessorUtils {
   }
 
   public static void processChildrenRecursively(@Nullable MavenDomProjectModel model,
-                                                @NotNull Processor<MavenDomProjectModel> processor) {
+                                                @NotNull Processor<? super MavenDomProjectModel> processor) {
     processChildrenRecursively(model, processor, true);
   }
 
   public static void processChildrenRecursively(@Nullable MavenDomProjectModel model,
-                                                @NotNull Processor<MavenDomProjectModel> processor,
+                                                @NotNull Processor<? super MavenDomProjectModel> processor,
                                                 boolean processCurrentModel) {
     if (model != null) {
       processChildrenRecursively(model, processor, model.getManager().getProject(), new HashSet<>(),
@@ -242,9 +242,9 @@ public class MavenDomProjectProcessorUtils {
   }
 
   public static void processChildrenRecursively(@Nullable MavenDomProjectModel model,
-                                                @NotNull Processor<MavenDomProjectModel> processor,
+                                                @NotNull Processor<? super MavenDomProjectModel> processor,
                                                 @NotNull Project project,
-                                                @NotNull Set<MavenDomProjectModel> processedModels,
+                                                @NotNull Set<? super MavenDomProjectModel> processedModels,
                                                 boolean strict) {
     if (model != null && !processedModels.contains(model)) {
       processedModels.add(model);
@@ -328,7 +328,7 @@ public class MavenDomProjectProcessorUtils {
 
 
   public static boolean processDependenciesInDependencyManagement(@NotNull MavenDomProjectModel projectDom,
-                                                                  @NotNull final Processor<MavenDomDependency> processor,
+                                                                  @NotNull final Processor<? super MavenDomDependency> processor,
                                                                   @NotNull final Project project) {
 
     Processor<MavenDomDependencies> managedDependenciesListProcessor = dependencies -> {

@@ -550,7 +550,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected String validateAndCommitData() {
     PsiManager manager = PsiManager.getInstance(myProject);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     String name = getMethodName();
     if (!PsiNameHelper.getInstance(manager.getProject()).isIdentifier(name)) {
@@ -630,7 +630,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           return RefactoringBundle.message("changeSignature.wrong.type.for.exception", typeCodeFragment.getText());
         }
 
-        PsiClassType throwable = JavaPsiFacade.getInstance(myProject).getElementFactory()
+        PsiClassType throwable = JavaPsiFacade.getElementFactory(myProject)
           .createTypeByFQClassName("java.lang.Throwable", type.getResolveScope());
         if (!throwable.isAssignableFrom(type)) {
           return RefactoringBundle.message("changeSignature.not.throwable.type", typeCodeFragment.getText());

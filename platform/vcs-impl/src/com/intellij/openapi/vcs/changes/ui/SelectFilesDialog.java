@@ -74,6 +74,21 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     return dialog;
   }
 
+  @NotNull
+  public static SelectFilesDialog init(Project project,
+                                       @NotNull List<VirtualFile> originalFiles,
+                                       @Nullable String prompt,
+                                       @Nullable VcsShowConfirmationOption confirmationOption,
+                                       boolean selectableFiles,
+                                       boolean deletableFiles,
+                                       @NotNull String okActionName,
+                                       @NotNull String cancelActionName) {
+    final SelectFilesDialog dlg = init(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
+    dlg.setOKButtonText(okActionName);
+    dlg.setCancelButtonText(cancelActionName);
+    return dlg;
+  }
+
   public Collection<VirtualFile> getSelectedFiles() {
     return myFileList.getIncludedChanges();
   }

@@ -292,12 +292,12 @@ public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
   protected void stageCompleted(Stage completedStage, Stage startingStage) {
   }
 
-  private static enum InclusionKind {
+  private enum InclusionKind {
     INCLUDE("included"), IMPORT("imported"), TOPLEVEL("toplevel");
 
     private final String myDisplayName;
 
-    private InclusionKind(String displayName) {
+    InclusionKind(String displayName) {
       myDisplayName = displayName;
     }
 

@@ -386,7 +386,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private ActionCallback onFocusLost() {
     final ActionCallback result = new ActionCallback();
-    //noinspection SSBasedInspection
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
         if (myCalcThread != null) {
@@ -465,7 +464,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     if (value instanceof OptionsTopHitProvider) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
+      SwingUtilities.invokeLater(() -> getField().setText(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
     Runnable onDone =
@@ -1241,7 +1240,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
         else if (value instanceof OptionsTopHitProvider) {
-          append("#" + ((OptionsTopHitProvider)value).getId());
+          append(SearchTopHitProvider.getTopHitAccelerator() + ((OptionsTopHitProvider)value).getId());
         }
         else {
           ItemPresentation presentation = null;
@@ -1320,7 +1319,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked", "Duplicates"})
+  @SuppressWarnings({"SSBasedInspection", "Duplicates"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
@@ -1348,7 +1347,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myList.getEmptyText().setText("Searching...");
 
           if (myList.getModel() instanceof SearchListModel) {
-            //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
               if (!myDone.isRejected()) {
@@ -1370,7 +1368,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         checkModelsUpToDate();              check();
         buildTopHit(pattern);               check();
 
-        if (!pattern.startsWith("#")) {
+        if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
           buildRecentFiles(pattern);
           check();
           runReadAction(() -> buildStructure(pattern), true);
@@ -1890,7 +1888,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       };
 
-      if (pattern.startsWith("#") && !pattern.contains(" ")) {
+      if (pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && !pattern.contains(" ")) {
         String id = pattern.substring(1);
         final HashSet<String> ids = new HashSet<>();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {

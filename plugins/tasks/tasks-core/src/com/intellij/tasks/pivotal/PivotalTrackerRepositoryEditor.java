@@ -19,8 +19,8 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
   private JBLabel myAPIKeyLabel;
 
   public PivotalTrackerRepositoryEditor(final Project project,
-                                    final PivotalTrackerRepository repository,
-                                    Consumer<PivotalTrackerRepository> changeListener) {
+                                        final PivotalTrackerRepository repository,
+                                        Consumer<? super PivotalTrackerRepository> changeListener) {
     super(project, repository, changeListener);
     myUserNameText.setVisible(false);
     myUsernameLabel.setVisible(false);

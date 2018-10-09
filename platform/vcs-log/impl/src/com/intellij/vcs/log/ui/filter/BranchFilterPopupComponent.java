@@ -89,7 +89,11 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
+    Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
+    if (myBranchFilterModel.getVisibleRoots() != null) {
+      branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
+    }
+    return ContainerUtil.map(branches, VcsRef::getName);
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
@@ -131,7 +135,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
         super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);
+        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 

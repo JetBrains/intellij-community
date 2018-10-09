@@ -59,7 +59,7 @@ public class CompletionPolicy {
       return null;
     }
 
-    if (isDeclarationName(editor, file, leaf)) return null;
+    if (isDeclarationName(editor, file, leaf, ref)) return null;
 
     if (ref != null) {
       PsiElement target = getValidResolveResult(ref);
@@ -99,12 +99,13 @@ public class CompletionPolicy {
     return ref.resolve();
   }
 
-  private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf) {
+  private static boolean isDeclarationName(Editor editor, PsiFile file, PsiElement leaf, @Nullable PsiReference ref) {
     PsiElement target = TargetElementUtil.findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     if (target != null) target = target.getNavigationElement();
     PsiFile targetFile = target != null ? target.getContainingFile() : null;
-    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() && 
-           target.getTextOffset() == leaf.getTextRange().getStartOffset();
+    return targetFile != null && targetFile.getViewProvider() == file.getViewProvider() &&
+           (target.getTextOffset() == leaf.getTextRange().getStartOffset() ||
+            ref != null && target.getTextOffset() == ref.getElement().getTextRange().getStartOffset() + ref.getRangeInElement().getStartOffset());
   }
 
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {

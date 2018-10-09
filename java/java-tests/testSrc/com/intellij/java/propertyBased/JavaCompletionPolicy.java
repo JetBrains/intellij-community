@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +45,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
   private static boolean isBuggyInjection(@NotNull PsiFile file) {
-    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
+    return Arrays.asList("XML", "HTML", "PointcutExpression", "HQL").contains(file.getLanguage().getID());
   }
 
   @Override
@@ -156,7 +157,8 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false;
       }
       if (parent instanceof PsiModifierList) {
-        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
+        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1 ||
+            HighlightUtil.checkIllegalModifierCombination((PsiKeyword)leaf, (PsiModifierList)parent) != null) {
           return false;
         }
         if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {

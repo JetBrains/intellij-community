@@ -151,7 +151,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void readExternal(@NotNull Element element) {
   }
 
-  default void writeExternal(Element element) {
+  default void writeExternal(@NotNull Element element) {
   }
 
   @NotNull
@@ -160,5 +160,12 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   default void setBeforeRunTasks(@NotNull List<BeforeRunTask<?>> value) {
+  }
+
+  default boolean isAllowRunningInParallel() {
+    return false;
+  }
+
+  default void setAllowRunningInParallel(boolean value) {
   }
 }

@@ -26,7 +26,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.get
  * @author Vladislav.Soroka
  * @since 4/2/2017
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleEnvironmentTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("3.5+")

@@ -17,10 +17,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
-import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -2187,22 +2185,6 @@ class SourceConcrete implements GenericSourceTrait<String> {}
 SourceConcrete.someOtherStatic<caret>Method()
 ''', GrTraitMethod)
     assertEquals "java.lang.String", method.returnType.canonicalText
-  }
-
-  void 'test substitutor is not computed within resolve'() {
-    def ref = configureByText('_.groovy', '''
-[1, 2, 3].with {
-  group<caret>By({2})
-}
-''', GrReferenceExpression)
-    def results = ref.multiResolve(false)
-    assert results.length > 0
-    results.each {
-      assert it instanceof GroovyMethodResultImpl
-      def computer = it.substitutorComputer
-      assert computer instanceof NotNullCachedComputableWrapper
-      assert !computer.computed
-    }
   }
 
   void 'test resolve method with class qualifier'() {

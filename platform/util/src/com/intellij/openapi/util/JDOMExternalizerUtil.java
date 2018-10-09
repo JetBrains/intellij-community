@@ -7,6 +7,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -116,7 +117,26 @@ public class JDOMExternalizerUtil {
     }
   }
 
+  @SuppressWarnings("deprecation")
+  public static void addChildren(@NotNull Element parent,
+                                 @NotNull String childElementName,
+                                 @NotNull Collection<? extends JDOMExternalizable> children) throws WriteExternalException {
+    for (JDOMExternalizable child : children) {
+      if (child != null) {
+        Element element = new Element(childElementName);
+        child.writeExternal(element);
+        parent.addContent(element);
+      }
+    }
+  }
+
   //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #readOption(Element, String)} (to be removed in IDEA 2019) */
+  @Deprecated
+  public static Element getOption(@NotNull Element parent, @NotNull String fieldName) {
+    return readOption(parent, fieldName);
+  }
+
   /** @deprecated use {@link #writeCustomField(Element, String, String)} (to be removed in IDEA 2019) */
   @Deprecated
   public static Element addElementWithValueAttribute(@NotNull Element parent, @NotNull String childTagName, @Nullable String attrValue) {

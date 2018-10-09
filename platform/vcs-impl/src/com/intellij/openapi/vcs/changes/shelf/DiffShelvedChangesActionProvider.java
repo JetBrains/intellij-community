@@ -164,16 +164,14 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
       final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
-      final boolean isNewFile = FileStatus.ADDED.equals(shelvedChange.getFileStatus());
 
       try {
-        if (isNewFile) {
+        if (FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {
           diffRequestProducers.add(new NewFileTextShelveDiffRequestProducer(project, shelvedChange, filePath,
                                                                             preloader, commitContext, withLocal));
         }
         else {
-          // isNewFile -> parent directory, !isNewFile -> file
-          VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath, isNewFile);
+          VirtualFile file = ApplyFilePatchBase.findPatchTarget(patchContext, beforePath, afterPath);
           if (file == null || !file.exists()) throw new FileNotFoundException(beforePath);
 
           diffRequestProducers.add(new TextShelveDiffRequestProducer(project, shelvedChange, filePath, file,

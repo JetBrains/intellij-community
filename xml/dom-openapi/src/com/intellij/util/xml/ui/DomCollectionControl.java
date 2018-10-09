@@ -121,7 +121,7 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
   }
 
   @Override
-  public void calcData(final DataKey key, final DataSink sink) {
+  public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
     if (DOM_COLLECTION_CONTROL.equals(key)) {
       sink.put(DOM_COLLECTION_CONTROL, this);
     }

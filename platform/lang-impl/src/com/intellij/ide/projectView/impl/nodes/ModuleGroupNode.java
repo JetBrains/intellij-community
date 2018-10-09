@@ -28,18 +28,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> implements DropTargetNode {
-  public ModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
+  public ModuleGroupNode(final Project project, @NotNull ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-   public ModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    this(project, (ModuleGroup)value, viewSettings);
   }
 
   @NotNull
-  protected abstract AbstractTreeNode createModuleNode(Module module) throws
+  protected abstract AbstractTreeNode createModuleNode(@NotNull Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
   @NotNull
-  protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
+  protected abstract ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
 
   @Override
   @NotNull

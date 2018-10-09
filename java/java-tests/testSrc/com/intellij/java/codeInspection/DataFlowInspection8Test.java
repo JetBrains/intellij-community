@@ -53,6 +53,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
 
   public void testOptionalOfNullable() { doTest(); }
+  public void testPrimitiveOptional() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
   public void testOptionalIsPresent() {
     myFixture.addClass("package org.junit;" +
@@ -241,4 +242,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupAmbiguousAnnotations("foo", myFixture);
     doTest();
   }
+  public void testObjectsEquals() { doTest(); }
+  public void testFlatMapSideEffect() { doTest(); }
 }

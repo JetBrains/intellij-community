@@ -23,6 +23,7 @@ import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -45,6 +46,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +77,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   protected final HashSet<VirtualFile> myDirtyFileSet;
 
-  protected final HashMap<VirtualFile, EditorHighlighter> myFile2Highlighter;
+  protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
   protected final PsiTodoSearchHelper mySearchHelper;
   private final JTree myTree;
@@ -100,7 +102,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFileTree = new FileTree();
     myDirtyFileSet = new HashSet<>();
 
-    myFile2Highlighter = new HashMap<>();
+    myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap(); //used from EDT and from StructureTreeModel invoker thread
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
@@ -166,18 +168,6 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final TodoTreeStructure getTodoTreeStructure() {
     return myTreeStructure;
-  }
-
-  Promise<?> performUpdate(Runnable runnable) {
-    return myModel.getInvoker().runOrInvokeLater(() -> {
-      if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-        DumbService.getInstance(myProject).runWhenSmart(() -> {
-          validateCache();
-          getTodoTreeStructure().validateCache();
-        });
-      }
-      runnable.run();
-    });
   }
 
   /**
@@ -312,6 +302,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -323,6 +314,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
       myDirtyFileSet.add(vFile);
@@ -349,26 +341,20 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   void rebuildCache(Set<? extends VirtualFile> files) {
-    Runnable runnable = () -> {
-      myFileTree.clear();
-      myDirtyFileSet.clear();
-      myFile2Highlighter.clear();
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myFileTree.clear();
+    myDirtyFileSet.clear();
+    myFile2Highlighter.clear();
 
-      for (VirtualFile virtualFile : files) {
-        myFileTree.add(virtualFile);
-      }
+    for (VirtualFile virtualFile : files) {
+      myFileTree.add(virtualFile);
+    }
 
-      getTodoTreeStructure().validateCache();
-    };
-    if (myModel != null) {
-      myModel.getInvoker().runOrInvokeLater(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    getTodoTreeStructure().validateCache();
   }
 
   private void validateCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First of all we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext();) {
@@ -377,18 +363,15 @@ public abstract class TodoTreeBuilder implements Disposable {
       if (psiFile == null || !treeStructure.accept(psiFile)) {
         if (myFileTree.contains(file)) {
           myFileTree.removeFile(file);
-          if (myFile2Highlighter.containsKey(file)) { // highlighter isn't needed any more
-            myFile2Highlighter.remove(file);
-          }
+          myFile2Highlighter.remove(file);
         }
       }
       else { // file is valid and contains T.O.D.O items
         myFileTree.removeFile(file);
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-        if (myFile2Highlighter.containsKey(file)) { // update highlighter text
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-          EditorHighlighter highlighter = myFile2Highlighter.get(file);
-          highlighter.setText(document.getCharsSequence());
+        EditorHighlighter highlighter = myFile2Highlighter.get(file);
+        if (highlighter != null) { // update highlighter text
+          highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
         }
       }
       i.remove();
@@ -452,7 +435,15 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   public final Promise<?> updateTree() {
     if (myUpdatable) {
-      return performUpdate(() -> myModel.invalidate());
+      return myModel.getInvoker().runOrInvokeLater(() -> {
+        DumbService.getInstance(myProject).runWhenSmart(() -> {
+          if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+            validateCache();
+            getTodoTreeStructure().validateCache();
+          }
+          myModel.invalidate();
+        });
+      });
     }
     return Promises.resolvedPromise();
   }
@@ -640,15 +631,13 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {
     VirtualFile file = psiFile.getVirtualFile();
-    if (myFile2Highlighter.containsKey(file)) {
-      return myFile2Highlighter.get(file);
-    }
-    else {
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
+    EditorHighlighter highlighter = myFile2Highlighter.get(file);
+    if (highlighter == null) {
+      highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
       highlighter.setText(document.getCharsSequence());
       myFile2Highlighter.put(file, highlighter);
-      return highlighter;
     }
+    return highlighter;
   }
 
   public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){

@@ -32,7 +32,7 @@ import javax.swing.*;
  */
 public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAware {
 
-  protected static final Icon ourCurrentAction = AllIcons.Diff.CurrentLine;
+  protected static final Icon ourCurrentAction = AllIcons.Actions.Forward;
   protected static final Icon ourNotCurrentAction = EmptyIcon.create(ourCurrentAction.getIconWidth(), ourCurrentAction.getIconHeight());
 
   protected String myActionPlace = ActionPlaces.UNKNOWN;

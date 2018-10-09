@@ -2,6 +2,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
+import com.intellij.ProjectTopics;
 import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.actions.DebuggerActions;
@@ -40,11 +41,13 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -72,6 +75,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
@@ -106,6 +110,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected final EventDispatcher<EvaluationListener> myEvaluationDispatcher = EventDispatcher.create(EvaluationListener.class);
 
   private final List<ProcessListener> myProcessListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final StringBuilder myTextBeforeStart = new StringBuilder();
 
   enum State {INITIAL, ATTACHED, DETACHING, DETACHED}
   protected final AtomicReference<State> myState = new AtomicReference<>(State.INITIAL);
@@ -151,12 +156,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void reloadRenderers() {
-    getManagerThread().invoke(new DebuggerCommandImpl() {
-      @Override
-      public Priority getPriority() {
-        return Priority.HIGH;
-      }
-
+    getManagerThread().invoke(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
       @Override
       protected void action() {
         myNodeRenderersMap.clear();
@@ -291,6 +291,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myPositionManager = new CompoundPositionManager(new PositionManagerImpl(this));
+    myProject.getMessageBus().connect(myDisposable).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull final ModuleRootEvent event) {
+        DumbService.getInstance(myProject).runWhenSmart(
+          () -> getManagerThread().schedule(PrioritizedTask.Priority.HIGH, () -> {
+            myPositionManager.clearCache();
+            DebuggerUIUtil.invokeLater(() -> mySession.refresh(true));
+          }));
+      }
+    });
     LOG.debug("*******************VM attached******************");
     checkVirtualMachineVersion(vm);
 
@@ -319,6 +329,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @Override
   public void printToConsole(final String text) {
+    synchronized (myProcessListeners) {
+      if (myExecutionResult == null) {
+        myTextBeforeStart.append(text);
+      }
+      else {
+        printToConsoleImpl(text);
+      }
+    }
+  }
+
+  private void printToConsoleImpl(String text) {
     myExecutionResult.getProcessHandler().notifyTextAvailable(text, ProcessOutputTypes.SYSTEM);
   }
 
@@ -389,7 +410,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   @NotNull
   private static List<ClassFilter> getActiveFilters() {
     DebuggerSettings settings = DebuggerSettings.getInstance();
-    StreamEx<ClassFilter> stream = StreamEx.of(Extensions.getExtensions(DebuggerClassFilterProvider.EP_NAME))
+    StreamEx<ClassFilter> stream = StreamEx.of(DebuggerClassFilterProvider.EP_NAME.getExtensionList())
       .flatCollection(DebuggerClassFilterProvider::getFilters);
     if (settings.TRACING_FILTERS_ENABLED) {
       stream = stream.prepend(settings.getSteppingFilters());
@@ -443,9 +464,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
 
-      if (myConnection instanceof PidRemoteConnection) {
+      if (myConnection instanceof PidRemoteConnection && !((PidRemoteConnection)myConnection).isFixedAddress()) {
         PidRemoteConnection pidRemoteConnection = (PidRemoteConnection)myConnection;
-        AttachingConnector connector = pidRemoteConnection.getConnector();
+        Connector connector = pidRemoteConnection.getConnector(this);
         String pid = pidRemoteConnection.getPid();
         if (StringUtil.isEmpty(pid)) {
           throw new CantRunException(DebuggerBundle.message("error.no.pid"));
@@ -455,12 +476,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (pidArg != null) {
           pidArg.setValue(pid);
         }
-        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-        try {
-          return connector.attach(myArguments);
+        if (connector instanceof AttachingConnector) {
+          return attachConnector((AttachingConnector)connector);
         }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
+        else {
+          return connectorListen(address, (ListeningConnector)connector);
         }
       }
       else if (myConnection.isServerMode()) {
@@ -469,58 +489,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         if (myArguments == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
         }
-
-        if (address == null) {
-          throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
-        }
-        // zero port number means the caller leaves to debugger to decide at which port to listen
-        //noinspection HardCodedStringLiteral
-        final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
-        if (portArg != null) {
-          portArg.setValue(address);
-
-          // to allow connector to listen on several auto generated addresses
-          if (address.length() == 0 || address.equals("0")) {
-            EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
-            myArguments.put(uniqueArg.name(), uniqueArg);
-          }
-        }
-        //noinspection HardCodedStringLiteral
-        final Connector.Argument timeoutArg = myArguments.get("timeout");
-        if (timeoutArg != null) {
-          timeoutArg.setValue("0"); // wait forever
-        }
-        try {
-          String listeningAddress = connector.startListening(myArguments);
-          String port = StringUtil.substringAfterLast(listeningAddress, ":");
-          if (port != null) {
-            listeningAddress = port;
-          }
-          myConnection.setAddress(listeningAddress);
-
-          myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-
-          return connector.accept(myArguments);
-        }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
-        }
-        finally {
-          if(myArguments != null) {
-            try {
-              connector.stopListening(myArguments);
-            }
-            catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
-              // ignored
-            }
-          }
-        }
+        return connectorListen(address, connector);
       }
       else { // is client mode, should attach to already running process
         AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
-          //noinspection HardCodedStringLiteral
           final Connector.Argument hostnameArg = myArguments.get("hostname");
           if (hostnameArg != null && myConnection.getHostName() != null) {
             hostnameArg.setValue(myConnection.getHostName());
@@ -528,7 +502,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (address == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.debug.attach.port"));
           }
-          //noinspection HardCodedStringLiteral
           final Connector.Argument portArg = myArguments.get("port");
           if (portArg != null) {
             portArg.setValue(address);
@@ -538,25 +511,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (address == null) {
             throw new CantRunException(DebuggerBundle.message("error.no.shmem.address"));
           }
-          //noinspection HardCodedStringLiteral
           final Connector.Argument nameArg = myArguments.get("name");
           if (nameArg != null) {
             nameArg.setValue(address);
           }
         }
-        //noinspection HardCodedStringLiteral
         final Connector.Argument timeoutArg = myArguments.get("timeout");
         if (timeoutArg != null) {
           timeoutArg.setValue("0"); // wait forever
         }
 
-        myDebugProcessDispatcher.getMulticaster().connectorIsReady();
-        try {
-          return connector.attach(myArguments);
-        }
-        catch (IllegalArgumentException e) {
-          throw new CantRunException(e.getLocalizedMessage());
-        }
+        return attachConnector(connector);
       }
     }
     catch (IOException e) {
@@ -567,6 +532,64 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
     finally {
       myArguments = null;
+    }
+  }
+
+  private VirtualMachine connectorListen(String address, ListeningConnector connector)
+    throws CantRunException, IOException, IllegalConnectorArgumentsException {
+    if (address == null) {
+      throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
+    }
+    // zero port number means the caller leaves to debugger to decide at which port to listen
+    final Connector.Argument portArg = myConnection.isUseSockets() ? myArguments.get("port") : myArguments.get("name");
+    if (portArg != null) {
+      portArg.setValue(address);
+
+      // to allow connector to listen on several auto generated addresses
+      if (address.length() == 0 || address.equals("0")) {
+        EmptyConnectorArgument uniqueArg = new EmptyConnectorArgument("argForUniqueness");
+        myArguments.put(uniqueArg.name(), uniqueArg);
+      }
+    }
+    final Connector.Argument timeoutArg = myArguments.get("timeout");
+    if (timeoutArg != null) {
+      timeoutArg.setValue("0"); // wait forever
+    }
+    try {
+      String listeningAddress = connector.startListening(myArguments);
+      String port = StringUtil.substringAfterLast(listeningAddress, ":");
+      if (port != null) {
+        listeningAddress = port;
+      }
+      myConnection.setAddress(listeningAddress);
+
+      myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+
+      return connector.accept(myArguments);
+    }
+    catch (IllegalArgumentException e) {
+      throw new CantRunException(e.getLocalizedMessage());
+    }
+    finally {
+      if(myArguments != null) {
+        try {
+          connector.stopListening(myArguments);
+        }
+        catch (IllegalArgumentException | IllegalConnectorArgumentsException ignored) {
+          // ignored
+        }
+      }
+    }
+  }
+
+  private VirtualMachine attachConnector(AttachingConnector connector)
+    throws IOException, IllegalConnectorArgumentsException, CantRunException {
+    myDebugProcessDispatcher.getMulticaster().connectorIsReady();
+    try {
+      return connector.attach(myArguments);
+    }
+    catch (IllegalArgumentException e) {
+      throw new CantRunException(e.getLocalizedMessage());
     }
   }
 
@@ -867,23 +890,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }
 
-    String message;
-    final StringBuilder buf = new StringBuilder();
-    buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+    StringBuilder buf = new StringBuilder();
     if (address != null) {
-      buf.append(" (").append(address).append(")");
+      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+      buf.append(" (").append(address).append("): ");
     }
-    buf.append(": ");
     buf.append(e.getClass().getName()).append(" ");
-    final String localizedMessage = e.getLocalizedMessage();
-    if (!StringUtil.isEmpty(localizedMessage)) {
-      buf.append('"');
-      buf.append(localizedMessage);
-      buf.append('"');
+    if (!StringUtil.isEmpty(e.getLocalizedMessage())) {
+      buf.append('"').append(e.getLocalizedMessage()).append('"');
+    }
+    if (cause != null && !StringUtil.isEmpty(cause.getLocalizedMessage())) {
+      buf.append(" (").append(cause.getLocalizedMessage()).append(')');
     }
     LOG.debug(e);
-    message = buf.toString();
-    return message;
+    return buf.toString();
   }
 
   public void dispose() {
@@ -1391,7 +1411,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return buffer.toString();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral", "SpellCheckingInspection"})
+  @SuppressWarnings({"SpellCheckingInspection"})
   public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
@@ -1527,10 +1547,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       RequestHint hint = new RequestHint(thread, suspendContext, StepRequest.STEP_OUT);
       hint.setIgnoreFilters(mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(thread);
-      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
-      if (rvWatcher != null) {
-        rvWatcher.enable(thread.getThreadReference());
-      }
+      startWatchingMethodReturn(thread);
       doStep(suspendContext, thread, myStepSize, StepRequest.STEP_OUT, hint);
       super.contextAction();
     }
@@ -1625,10 +1642,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       applyThreadFilter(stepThread);
 
-      final MethodReturnValueWatcher rvWatcher = myReturnValueWatcher;
-      if (rvWatcher != null) {
-        rvWatcher.enable(stepThread.getThreadReference());
-      }
+      startWatchingMethodReturn(stepThread);
 
       doStep(suspendContext, stepThread, myStepSize, getStepSize(), hint);
 
@@ -1922,6 +1936,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           executionResult.getProcessHandler().addProcessListener(processListener);
         }
         myProcessListeners.clear();
+        if (myTextBeforeStart.length() > 0) {
+          printToConsoleImpl(myTextBeforeStart.toString());
+          myTextBeforeStart.setLength(0);
+        }
       }
     }
     catch (ExecutionException e) {
@@ -2242,5 +2260,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public boolean isEvaluationPossible() {
     return getSuspendManager().getPausedContext() != null;
+  }
+
+  public void startWatchingMethodReturn(ThreadReferenceProxyImpl thread) {
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.enable(thread.getThreadReference());
+    }
+  }
+
+  void stopWatchingMethodReturn() {
+    if (myReturnValueWatcher != null) {
+      myReturnValueWatcher.disable();
+    }
   }
 }

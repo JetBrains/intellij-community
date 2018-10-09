@@ -3,8 +3,8 @@ package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -75,8 +75,7 @@ public class TestUniqueId extends TestObject {
 
   @Override
   public String suggestActionName() {
-    String[] ids = getConfiguration().getPersistentData().getUniqueIds();
-    return JavaExecutionUtil.getShortClassName(ids.length > 0 ? ids[0] : "<empty>");
+    return ProgramRunnerUtil.shortenName(getConfiguration().getName(), 2);
   }
 
   @Override

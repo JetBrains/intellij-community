@@ -658,7 +658,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @Override
     String generateReplacementText(@NotNull SortableList list, @NotNull PsiArrayInitializerMemberValue elementToSort) {
       StringBuilder sb = new StringBuilder();
-      list.generate(sb);
+      boolean newLineRequired = list.generate(sb);
+      if (newLineRequired) {
+        sb.append("\n");
+      }
       sb.append("}");
       return sb.toString();
     }
@@ -795,11 +798,8 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         sb.append(child.getText());
         child = child.getNextSibling();
       }
-      sortableList.generate(sb);
-
-      List<SortableEntry> entries = sortableList.myEntries;
-      SortableEntry last = entries.get(entries.size() - 1);
-      if (!last.myBeforeSeparator.isEmpty()) {
+      boolean newLineRequired = sortableList.generate(sb);
+      if (newLineRequired) {
         sb.append("\n");
       }
       sb.append(")");
@@ -904,10 +904,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         }
       }
       StringBuilder sb = new StringBuilder();
-      sortableList.generate(sb);
-      SortableEntry lastItem = ContainerUtil.getLastItem(sortableList.myEntries);
-      assert lastItem != null;
-      if (!lastItem.myBeforeSeparator.isEmpty()) {
+      if (sortableList.generate(sb)) {
         sb.append("\n");
       }
       PsiElement elementToPreserve = lastElement.getNextSibling();

@@ -400,10 +400,10 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   protected static class MyInlayRenderer implements EditorCustomElementRenderer {
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) { return 10; }
+    public int calcWidthInPixels(@NotNull Inlay inlay) { return 10; }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
       g.setColor(JBColor.CYAN);
       g.drawRect(r.x, r.y, r.width - 1, r.height - 1);
     }

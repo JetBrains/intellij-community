@@ -180,7 +180,7 @@ public class UIUtil {
   }
 
   @NotNull
-  public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
+  public static JComponent createCompleteMatchInfo(final Producer<? extends Configuration> configurationProducer) {
     return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer);
   }
 

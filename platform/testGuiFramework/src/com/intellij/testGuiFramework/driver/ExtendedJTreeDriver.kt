@@ -67,6 +67,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.scrollToPathToSelectExt(path: TreePath): Pair<Boolean, Point> {
+    robot.waitForIdle()
     val result =  GuiTestUtilKt.computeOnEdt {
       val isSelected = this.selectionCount == 1 && this.isPathSelected(path)
       Pair.of(isSelected, this.scrollToTreePathExt(path))
@@ -147,14 +148,14 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   fun expandPath(tree: JTree, treePath: TreePath) {
     // do not try to expand leaf
-    if(tree.model.isLeaf(treePath.lastPathComponent)) return
+    if (GuiTestUtilKt.computeOnEdt { tree.model.isLeaf(treePath.lastPathComponent) } != false) return
     val info = tree.scrollToMatchingPathAndGetToggleInfo(treePath)
     if (!info.first) tree.toggleCell(info.second!!, info.third)
   }
 
   fun collapsePath(tree: JTree, treePath: TreePath) {
     // do not try to collapse leaf
-    if(tree.model.isLeaf(treePath.lastPathComponent)) return
+    if (GuiTestUtilKt.computeOnEdt { tree.model.isLeaf(treePath.lastPathComponent) } != false) return
     val info = tree.scrollToMatchingPathAndGetToggleInfo(treePath)
     if (info.first) tree.toggleCell(info.second!!, info.third)
   }
@@ -237,13 +238,13 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   fun findPathToNode(tree: JTree, node: String, predicate: FinderPredicate = Predicate.equality): TreePath{
 
     fun JTree.iterateChildren(root: Any, node: String, rootPath: TreePath, predicate: FinderPredicate): TreePath?{
-      for(index in 0 until this.model.getChildCount(root)){
-        val child = this.model.getChild(root, index)
+      for (index in 0 until (GuiTestUtilKt.computeOnEdt { this.model.getChildCount(root)} ?: 0)) {
+        val child = GuiTestUtilKt.computeOnEdt { this.model.getChild(root, index) }!!
         val childPath = TreePath(arrayOf(*rootPath.path, child))
         if (predicate(child.toString(), node)){
           return childPath
         }
-        if(!this.model.isLeaf(child)) {
+        if (GuiTestUtilKt.computeOnEdt { this.model.isLeaf(child)} == false) {
           makeVisible(childPath, true)
           val found = this.iterateChildren(child, node, childPath, predicate)
           if(found != null) return found
@@ -252,7 +253,8 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       return null
     }
 
-    return tree.iterateChildren(tree.model.root, node, TreePath(tree.model.root), predicate)
+    val root = GuiTestUtilKt.computeOnEdt { tree.model.root } ?: throw IllegalStateException("root is null")
+    return tree.iterateChildren(root, node, TreePath(root), predicate)
            ?: throw LocationUnavailableException("Node `$node` not found")
   }
 

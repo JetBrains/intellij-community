@@ -41,6 +41,7 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.utils.EncodingManagerUtilKt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
@@ -63,8 +64,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.testFramework.utils.EncodingManagerUtilKt.doEncodingTest;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -128,28 +127,28 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       System.err.print("expected = ");
       for (int i=0; i<50;i++) {
         final char c = expected.charAt(i);
-        System.err.print(Integer.toHexString((int)c)+", ");
+        System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
       System.err.print("expected bytes = ");
       byte[] expectedBytes = FileUtil.loadFileBytes(new File(xml.getPath()));
       for (int i=0; i<50;i++) {
         final byte c = expectedBytes[i];
-        System.err.print(Integer.toHexString((int)c) + ", ");
+        System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
 
       System.err.print("text = ");
       for (int i=0; i<50;i++) {
         final char c = text.charAt(i);
-        System.err.print(Integer.toHexString((int)c)+", ");
+        System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
       System.err.print("text bytes = ");
       byte[] textBytes = xml.contentsToByteArray();
       for (int i=0; i<50;i++) {
         final byte c = textBytes[i];
-        System.err.print(Integer.toHexString((int)c) + ", ");
+        System.err.print(Integer.toHexString(c) + ", ");
       }
       System.err.println();
       String charsetFromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(xml.contentsToByteArray());
@@ -356,7 +355,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     FileDocumentManager.getInstance().saveAllDocuments();
     byte[] bytes = FileUtil.loadFileBytes(ioFile);
     //file on disk is still windows
-    assertTrue(Arrays.equals(text.toString().getBytes(WINDOWS_1251.name()), bytes));
+    assertArrayEquals(text.toString().getBytes(WINDOWS_1251.name()), bytes);
 
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       document.insertString(0, "x");
@@ -372,7 +371,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     //after 'save as us' file on disk changed
     bytes = FileUtil.loadFileBytes(ioFile);
-    assertTrue(Arrays.equals(text.toString().getBytes(US_ASCII.name()), bytes));
+    assertArrayEquals(text.toString().getBytes(US_ASCII.name()), bytes);
   }
 
   public void testCopyMove() throws IOException {
@@ -730,20 +729,20 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   public void testNewFileCreatedInProjectEncoding() {
-    doEncodingTest(myProject, () -> {
+    EncodingManagerUtilKt.doEncodingTest(myProject, () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
-      assertThat(file.getCharset()).isEqualTo(WINDOWS_1251);
+      assertEquals(WINDOWS_1251, file.getCharset());
     });
   }
 
   public void testNewFileCreatedInProjectEncodingEvenIfItSetToDefault() {
-    doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
+    EncodingManagerUtilKt.doEncodingTest(myProject, Charset.defaultCharset().name().equals("UTF-8") ? "windows-1251" : "UTF-8", "", () -> {
       PsiFile psiFile = createFile("x.txt", "xx");
       VirtualFile file = psiFile.getVirtualFile();
 
-      assertThat(file.getCharset()).isEqualTo(EncodingManager.getInstance().getDefaultCharset());
+      assertEquals(EncodingManager.getInstance().getDefaultCharset(), file.getCharset());
     });
   }
 
@@ -921,12 +920,12 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Document document = ObjectUtils.notNull(getDocument(file));
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-    encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+    encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
     PlatformTestUtil.startPerformanceTest("encoding re-detect requests", 10_000, ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }
-      encodingManager.waitAllTasksExecuted(10, TimeUnit.SECONDS);
+      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
     }).assertTiming();
   }
@@ -993,7 +992,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
       }
 
       EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-      encodingManager.waitAllTasksExecuted(2, TimeUnit.SECONDS);
+      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
       UIUtil.dispatchAllInvocationEvents();
 
       Thread thread = assertOneElement(detectThreads);

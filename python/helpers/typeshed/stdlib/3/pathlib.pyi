@@ -1,5 +1,3 @@
-# Stubs for pathlib (Python 3.4)
-
 from typing import Any, Generator, IO, Optional, Sequence, Tuple, Type, TypeVar, Union, List
 from types import TracebackType
 import os

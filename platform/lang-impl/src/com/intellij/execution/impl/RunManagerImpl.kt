@@ -46,8 +46,7 @@ internal const val METHOD = "method"
 private const val OPTION = "option"
 private const val RECENT = "recent_temporary"
 
-// project level
-val RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP = ProjectExtensionPointName<RunConfigurationTemplateProvider>("com.intellij.runConfigurationTemplateProvider")
+private val RUN_CONFIGURATION_TEMPLATE_PROVIDER_EP = ProjectExtensionPointName<RunConfigurationTemplateProvider>("com.intellij.runConfigurationTemplateProvider")
 
 interface RunConfigurationTemplateProvider {
   fun getRunConfigurationTemplate(factory: ConfigurationFactory, runManager: RunManagerImpl): RunnerAndConfigurationSettingsImpl?
@@ -55,7 +54,7 @@ interface RunConfigurationTemplateProvider {
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))])
-open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
+open class RunManagerImpl @JvmOverloads constructor(val project: Project, sharedStreamProvider: StreamProvider? = null) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     const val CONFIGURATION = "configuration"
     const val NAME_ATTR = "name"
@@ -144,7 +143,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   })
 
-  internal val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("configuration")
+  internal val schemeManagerIprProvider = if (project.isDirectoryBased || sharedStreamProvider != null) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
   private val templateDifferenceHelper = TemplateDifferenceHelper(this)
@@ -163,7 +162,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
                                                                                                                     isShared = true,
                                                                                                                     isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null),
                                                                                       schemeNameToFileName = OLD_NAME_CONVERTER,
-                                                                                      streamProvider = schemeManagerIprProvider)
+                                                                                      streamProvider = sharedStreamProvider ?: schemeManagerIprProvider)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -192,7 +191,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     }
   }
 
-  // separate method needed for tests
   @TestOnly
   fun initializeConfigurationTypes(factories: List<ConfigurationType>) {
     idToType.resolve(buildConfigurationTypeMap(factories))
@@ -294,9 +292,8 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   internal fun createTemplateSettings(factory: ConfigurationFactory): RunnerAndConfigurationSettingsImpl {
     val configuration = factory.createTemplateConfiguration(project, this)
-    val template = RunnerAndConfigurationSettingsImpl(this, configuration,
-                                                      isTemplate = true,
-                                                      isSingleton = factory.singletonPolicy.isSingleton)
+    configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    val template = RunnerAndConfigurationSettingsImpl(this, configuration, isTemplate = true)
     if (configuration is UnknownRunConfiguration) {
       configuration.isDoNotStore = true
     }
@@ -416,13 +413,28 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
-    get() = selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
+    get() {
+      return lock.read {
+        selectedConfigurationId?.let { idToSettings.get(it) }
+      }
+    }
     set(value) {
-      if (value?.uniqueID == selectedConfigurationId) {
-        return
+      fun isTheSame() = value?.uniqueID == selectedConfigurationId
+
+      lock.read {
+        if (isTheSame()) {
+          return
+        }
       }
 
-      selectedConfigurationId = value?.uniqueID
+      lock.write {
+        if (isTheSame()) {
+          return
+        }
+
+        selectedConfigurationId = value?.uniqueID
+      }
+
       eventPublisher.runConfigurationSelected()
     }
 
@@ -512,7 +524,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
         if (!task.isEnabled) {
           child.setAttribute("enabled", "false")
         }
-        task.serializeStateInto(child)
+        serializeStateInto(task, child)
       }
       else {
         @Suppress("DEPRECATION")
@@ -628,7 +640,6 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   private fun loadSharedRunConfigurations() {
     if (schemeManagerIprProvider == null) {
       projectSchemeManager.loadSchemes()
-      return
     }
     else {
       project.service<IprRunManagerImpl>().lastLoadedState.getAndSet(null)?.let { data ->
@@ -640,7 +651,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
 
   private fun runConfigurationFirstLoaded() {
     if (selectedConfiguration == null) {
-      selectedConfiguration = allSettings.firstOrNull { it.type !== UnknownConfigurationType.getInstance() }
+      selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
     }
   }
 
@@ -659,7 +670,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     eventPublisher.runConfigurationSelected()
   }
 
-  override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = lock.read { idToSettings.get(settings.uniqueID) == settings }
+  override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
 
   private fun findExistingConfigurationId(settings: RunnerAndConfigurationSettings): String? {
     for ((key, value) in idToSettings) {
@@ -760,7 +771,7 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
           beforeRunTask.isEnabled = true
-          beforeRunTask.deserializeAndLoadState(methodElement)
+          deserializeAndLoadState(beforeRunTask, methodElement)
         }
         else {
           @Suppress("DEPRECATION")
@@ -896,7 +907,10 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
   }
 
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? {
-    return allSettings.firstOrNull { it.configuration === configuration } ?: findConfigurationByName(configuration.name)
+    val id = RunnerAndConfigurationSettingsImpl.getUniqueIdFor(configuration)
+    lock.read {
+      return idToSettings.get(id)
+    }
   }
 
   override fun isTemplate(configuration: RunConfiguration): Boolean {
@@ -937,12 +951,8 @@ open class RunManagerImpl(val project: Project) : RunManagerEx(), PersistentStat
     fireRunConfigurationChanged(settings)
   }
 
-  override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {
-    setBeforeRunTasks(configuration, tasks)
-  }
-
   override fun setBeforeRunTasks(configuration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {
-    if (configuration is UnknownRunConfiguration) {
+    if (!configuration.type.isManaged) {
       return
     }
 
@@ -1071,7 +1081,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
-  (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+  (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {

@@ -4,10 +4,10 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -26,12 +26,12 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 
 abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: StateSplitter,
-                                         protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
+                                         protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
   protected abstract val virtualFile: VirtualFile?
 
-  override public fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
   override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
 
@@ -78,8 +78,9 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
 open class DirectoryBasedStorage(private val dir: Path,
                                  @Suppress("DEPRECATION") splitter: StateSplitter,
-                                 pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
-  private @Volatile var cachedVirtualFile: VirtualFile? = null
+                                 pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   override val virtualFile: VirtualFile?
     get() {

@@ -65,7 +65,7 @@ public class InsertConstructorCallFix implements IntentionAction, HighPriorityAc
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiStatement superCall =
-      JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText(myCall,null);
+      JavaPsiFacade.getElementFactory(myConstructor.getProject()).createStatementFromText(myCall,null);
 
     PsiCodeBlock body = myConstructor.getBody();
     PsiJavaToken lBrace = body.getLBrace();

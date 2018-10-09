@@ -5,13 +5,13 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.LazyUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import icons.AntIcons;
 import org.jetbrains.annotations.NotNull;
 
 public final class AntRunConfigurationType extends SimpleConfigurationType {
   public AntRunConfigurationType() {
-    super("AntRunConfiguration", "Ant Target", "Run Ant Target", LazyUtil.create(() -> AntIcons.Build));
+    super("AntRunConfiguration", "Ant Target", "Run Ant Target", NotNullLazyValue.createValue(() -> AntIcons.Build));
   }
 
   @Override

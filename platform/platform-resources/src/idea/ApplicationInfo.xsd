@@ -10,6 +10,7 @@
         <xs:element type="logoType" name="logo"/>
         <xs:element type="aboutType" name="about"/>
         <xs:element type="iconType" name="icon"/>
+        <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>
         <xs:element type="packageType" name="package" minOccurs="0"/>
         <xs:element type="licenseeType" name="licensee" minOccurs="0"/>
         <xs:element type="namesType" name="names"/>
@@ -24,17 +25,10 @@
         <xs:element type="helpType" name="help" minOccurs="0"/>
         <xs:element type="urlType" name="documentation" minOccurs="0"/>
         <xs:element type="urlType" name="support" minOccurs="0"/>
-        <xs:element type="feedbackType" name="feedback" minOccurs="0"/>
+        <xs:element type="urlType" name="youtrack" minOccurs="0"/>
+        <xs:element type="urlType" name="feedback" minOccurs="0"/>
         <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
-        <xs:element type="urlType" name="third-party" minOccurs="0">
-          <xs:annotation>
-            <xs:documentation>
-              Deprecated. This value isn't used anymore, because now file containing information about third-party libraries is bundled and
-              shown inside IDE.
-            </xs:documentation>
-          </xs:annotation>
-        </xs:element>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="statisticsType" name="statistics" minOccurs="0"/>
@@ -281,11 +275,62 @@
     </xs:attribute>
   </xs:complexType>
   <xs:complexType name="iconType">
-    <xs:attribute type="xs:string" name="size12"/>
-    <xs:attribute type="xs:string" name="size16"/>
-    <xs:attribute type="xs:string" name="size32"/>
-    <xs:attribute type="xs:string" name="size128"/>
-    <xs:attribute type="xs:string" name="ico"/>
+    <xs:annotation>
+      <xs:documentation>
+        Specifies paths inside a JAR file (in PRODUCT_HOME/lib directory) to image files which contain the product icon.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute type="xs:string" name="size12">
+      <xs:annotation>
+        <xs:documentation>
+          Path to a 12x12 png file with the product icon.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="size16">
+      <xs:annotation>
+        <xs:documentation>
+          Path to a 16x16 png file with the product icon.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="size32">
+      <xs:annotation>
+        <xs:documentation>
+          Path to a 32x32 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="size128" >
+      <xs:annotation>
+        <xs:documentation>
+          Path to a 128x128 png file with the product icon. <strong>Deprecated: use 'svg' attribute instead.</strong>
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="ico">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an ico file with the product icon.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="svg">
+      <xs:annotation>
+        <xs:documentation>
+          Path to an svg file with the product icon.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="iconEapType">
+    <xs:attribute type="xs:string" name="svg" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Path inside a JAR file (in PRODUCT_HOME/lib directory) to an svg file which contains the product icon for EAP version of the product.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="packageType">
     <xs:attribute type="xs:string" name="code"/>
@@ -355,10 +400,6 @@
     <xs:attribute type="xs:string" name="tips-key"/>
     <xs:attribute type="xs:boolean" name="tips-available"/>
     <xs:attribute type="xs:string" name="additional-form-data"/>
-  </xs:complexType>
-  <xs:complexType name="feedbackType">
-    <xs:attribute type="xs:string" name="eap-url"/>
-    <xs:attribute type="xs:string" name="release-url"/>
   </xs:complexType>
   <xs:complexType name="pluginsPageType">
     <xs:attribute type="xs:string" name="title" use="required"/>

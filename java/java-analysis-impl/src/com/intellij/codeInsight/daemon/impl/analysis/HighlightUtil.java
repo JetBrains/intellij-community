@@ -15,7 +15,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -609,7 +608,6 @@ public class HighlightUtil extends HighlightUtilBase {
         ((declarationScope = ((PsiParameter)variable).getDeclarationScope()) instanceof PsiCatchSection ||
          declarationScope instanceof PsiForeachStatement ||
          declarationScope instanceof PsiLambdaExpression)) {
-      @SuppressWarnings("unchecked")
       PsiElement scope = PsiTreeUtil.getParentOfType(variable, PsiFile.class, PsiMethod.class, PsiClassInitializer.class, PsiResourceList.class);
       VariablesNotProcessor proc = new VariablesNotProcessor(variable, false) {
         @Override
@@ -796,7 +794,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   @Nullable
-  static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
+  public static HighlightInfo checkIllegalModifierCombination(@NotNull PsiKeyword keyword, @NotNull PsiModifierList modifierList) {
     @PsiModifier.ModifierConstant String modifier = keyword.getText();
     String incompatible = getIncompatibleModifier(modifier, modifierList);
     if (incompatible != null) {
@@ -808,6 +806,21 @@ public class HighlightUtil extends HighlightUtilBase {
     }
 
     return null;
+  }
+
+  /**
+   * Checks if the supplied modifier list contains incompatible modifiers (e.g. public and private).
+   *
+   * @param modifierList a {@link PsiModifierList} to check
+   * @return true if the supplied modifier list contains incompatible modifiers
+   */
+  public static boolean isIllegalModifierCombination(@NotNull PsiModifierList modifierList) {
+    for (PsiElement child : modifierList.getChildren()) {
+      if (child instanceof PsiKeyword && getIncompatibleModifier(child.getText(), modifierList) != null) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Contract("null -> null")
@@ -1021,27 +1034,15 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     else if (type == JavaTokenType.CHARACTER_LITERAL) {
-      if (value != null) {
-        if (!StringUtil.endsWithChar(text, '\'')) {
-          String message = JavaErrorMessages.message("unclosed.char.literal");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-        }
-      }
-      else {
+      if (value == null) {
         if (!StringUtil.startsWithChar(text, '\'')) {
           return null;
         }
-        if (StringUtil.endsWithChar(text, '\'')) {
-          if (text.length() == 1) {
-            String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
-          }
-          text = text.substring(1, text.length() - 1);
-        }
-        else {
-          String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
+        if (!StringUtil.endsWithChar(text, '\'') || text.length() == 1) {
+          String message = JavaErrorMessages.message("unclosed.char.literal");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
+        text = text.substring(1, text.length() - 1);
 
         StringBuilder chars = new StringBuilder();
         boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
@@ -1601,7 +1602,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @NotNull
   static String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = LanguageFindUsages.INSTANCE.forLanguage(JavaLanguage.INSTANCE).getType(refElement);
+    String type = LanguageFindUsages.getType(refElement);
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorMessages.message("non.static.symbol.referenced.from.static.context", type, name);
   }
@@ -1724,7 +1725,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType type = resource.getType();
     if (type == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(resource.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(resource.getProject());
     PsiClassType autoCloseable = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, resource.getResolveScope());
     if (TypeConversionUtil.isAssignable(autoCloseable, type)) return null;
 
@@ -2608,7 +2609,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkMustBeThrowable(@NotNull PsiType type, @NotNull PsiElement context, boolean addCastIntention) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiClassType throwable = factory.createTypeByFQClassName("java.lang.Throwable", context.getResolveScope());
     if (!TypeConversionUtil.isAssignable(throwable, type)) {
       HighlightInfo highlightInfo = createIncompatibleTypeHighlightInfo(throwable, type, context.getTextRange(), 0);
@@ -2630,7 +2631,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   private static HighlightInfo checkMustBeThrowable(@NotNull PsiClass aClass, @NotNull PsiElement context) {
-    PsiClassType type = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    PsiClassType type = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
     return checkMustBeThrowable(type, context, false);
   }
 
@@ -2928,7 +2929,7 @@ public class HighlightUtil extends HighlightUtilBase {
     STATIC_INTERFACE_CALLS(LanguageLevel.JDK_1_8, "feature.static.interface.calls"),
     REFS_AS_RESOURCE(LanguageLevel.JDK_1_9, "feature.try.with.resources.refs"),
     MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
-    RAW_LITERALS(LanguageLevel.JDK_X, "feature.raw.literals");
+    RAW_LITERALS(LanguageLevel.JDK_12_PREVIEW, "feature.raw.literals");
 
     private final LanguageLevel level;
     private final String key;

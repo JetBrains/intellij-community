@@ -114,7 +114,7 @@ public class AllClassesGetter {
   public static void processJavaClasses(@NotNull final CompletionParameters parameters,
                                         @NotNull final PrefixMatcher prefixMatcher,
                                         final boolean filterByScope,
-                                        @NotNull final Consumer<PsiClass> consumer) {
+                                        @NotNull final Consumer<? super PsiClass> consumer) {
     final PsiElement context = parameters.getPosition();
     final Project project = context.getProject();
     final GlobalSearchScope scope = filterByScope ? context.getContainingFile().getResolveScope() : GlobalSearchScope.allScope(project);
@@ -125,7 +125,7 @@ public class AllClassesGetter {
   public static void processJavaClasses(@NotNull final PrefixMatcher prefixMatcher,
                                         @NotNull Project project,
                                         @NotNull GlobalSearchScope scope,
-                                        @NotNull Processor<PsiClass> processor) {
+                                        @NotNull Processor<? super PsiClass> processor) {
     final Set<String> names = new THashSet<>(10000);
     AllClassesSearchExecutor.processClassNames(project, scope, s -> {
       if (prefixMatcher.prefixMatches(s)) {

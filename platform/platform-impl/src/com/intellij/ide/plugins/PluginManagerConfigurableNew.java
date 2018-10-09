@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
@@ -29,12 +30,13 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -42,12 +44,12 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
@@ -100,8 +102,12 @@ public class PluginManagerConfigurableNew
   private final PluginSearchTextField mySearchTextField;
   private final Alarm mySearchUpdateAlarm = new Alarm();
 
+  private PluginsGroupComponentWithProgress myTrendingPanel;
   private PluginsGroupComponent myInstalledPanel;
-  private PluginsGroupComponent myUpdatesPanel;
+  private PluginsGroupComponentWithProgress myUpdatesPanel;
+
+  private Runnable myTrendingRunnable;
+  private Runnable myUpdatesRunnable;
 
   private SearchResultPanel myTrendingSearchPanel;
   private SearchResultPanel myInstalledSearchPanel;
@@ -117,6 +123,8 @@ public class PluginManagerConfigurableNew
   private Map<String, List<IdeaPluginDescriptor>> myCustomRepositoriesMap;
   private final Object myRepositoriesLock = new Object();
   private List<String> myAllTagSorted;
+
+  private boolean myIgnoreFocusFromBackButton;
 
   public PluginManagerConfigurableNew() {
     myTagBuilder = new TagBuilder() {
@@ -232,7 +240,7 @@ public class PluginManagerConfigurableNew
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (ShowSettingsUtil.getInstance().editConfigurable(panel, new PluginHostsConfigurable())) {
-          // TODO: Auto-generated method stub
+          resetTrendingAndUpdatesPanels();
         }
       }
     });
@@ -240,7 +248,7 @@ public class PluginManagerConfigurableNew
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (HttpConfigurable.editConfigurable(panel)) {
-          // TODO: Auto-generated method stub
+          resetTrendingAndUpdatesPanels();
         }
       }
     });
@@ -273,6 +281,7 @@ public class PluginManagerConfigurableNew
 
       backButton.addActionListener(event -> {
         removeDetailsPanel();
+        myIgnoreFocusFromBackButton = true;
         myCardPanel.select(myCurrentSearchPanel.isEmpty() ? currentTab : myCurrentSearchPanel.tabIndex, true);
         storeSelectionTab(currentTab);
         myTabHeaderComponent.setSelection(currentTab);
@@ -281,24 +290,38 @@ public class PluginManagerConfigurableNew
       myCardPanel.select(Pair.create(descriptor, label != null && currentTab == UPDATES_TAB), true);
       myPluginsModel.detailPanel.backTabIndex = currentTab;
 
-      myTopController.setLeftComponent(backButton);
+      NonOpaquePanel buttonPanel = new NonOpaquePanel(backButton) {
+        @Override
+        public int getBaseline(int width, int height) {
+          return backButton.getBaseline(width, height);
+        }
+      };
+      buttonPanel.setBorder(JBUI.Borders.empty(0, 3));
+      myTopController.setLeftComponent(buttonPanel);
       myTabHeaderComponent.clearSelection();
     };
 
     mySearchListener = (_0, query) -> {
       removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
+      IdeFocusManager.getGlobalInstance()
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
+      myCurrentSearchPanel.setEmpty();
       showSearchPanel(query);
     };
 
     mySearchTextField.getTextEditor().addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
+        if (myIgnoreFocusFromBackButton) {
+          myIgnoreFocusFromBackButton = false;
+          return;
+        }
         if (myCurrentSearchPanel.controller == null) {
           return;
         }
         if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
-          myCurrentSearchPanel.controller.showAttributesPopup(null);
+          myCurrentSearchPanel.controller.showAttributesPopup(null, 0);
         }
         else {
           myCurrentSearchPanel.controller.handleShowPopup();
@@ -338,6 +361,26 @@ public class PluginManagerConfigurableNew
 
     myCardPanel = new CardLayoutPanel<Object, Object, JComponent>() {
       @Override
+      public ActionCallback select(Object key, boolean now) {
+        ActionCallback callback = super.select(key, now);
+        callback.doWhenDone(() -> {
+          for (Component component : getComponents()) {
+            if (component.isVisible() && component instanceof JScrollPane) {
+              Component view = ((JScrollPane)component).getViewport().getView();
+              if (view instanceof PluginsGroupComponentWithProgress) {
+                view.setVisible(true);
+              }
+            }
+          }
+
+          panel.doLayout();
+          panel.revalidate();
+          panel.repaint();
+        });
+        return callback;
+      }
+
+      @Override
       protected Object prepare(Object key) {
         return key;
       }
@@ -364,9 +407,10 @@ public class PluginManagerConfigurableNew
           if (index == UPDATES_SEARCH_TAB) {
             return myUpdatesSearchPanel.createScrollPane();
           }
+          throw new RuntimeException("Create card unknown KEY index: " + key);
         }
 
-        //noinspection ConstantConditions,unchecked
+        //noinspection unchecked
         return createDetailsPanel((Pair<IdeaPluginDescriptor, Boolean>)key);
       }
     };
@@ -374,6 +418,7 @@ public class PluginManagerConfigurableNew
 
     myTabHeaderComponent = new TabHeaderComponent(actions, index -> {
       removeDetailsPanel();
+      myIgnoreFocusFromBackButton = false;
       myCardPanel.select(index, true);
       storeSelectionTab(index);
       updateSearchForSelectedTab(index);
@@ -382,7 +427,7 @@ public class PluginManagerConfigurableNew
       }
     });
 
-    myTabHeaderComponent.addTab("Trending");
+    myTabHeaderComponent.addTab("Marketplace");
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
@@ -396,12 +441,34 @@ public class PluginManagerConfigurableNew
     return panel;
   }
 
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    if (StringUtil.isEmpty(option) && myCurrentSearchPanel.isEmpty()) {
+      return null;
+    }
+
+    return () -> {
+      hideSearchPanel();
+
+      if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+        myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+      }
+
+      mySearchTextField.setTextIgnoreEvents(option);
+
+      if (!StringUtil.isEmpty(option)) {
+        showSearchPanel(option);
+      }
+    };
+  }
+
   private void updateSearchForSelectedTab(int index) {
     String text;
     String historyPropertyName;
     SearchResultPanel searchPanel;
     if (index == TRENDING_TAB) {
-      text = "Search trending plugins";
+      text = "Search plugins in marketplace";
       if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
         text += " and custom repositories";
       }
@@ -457,18 +524,29 @@ public class PluginManagerConfigurableNew
   }
 
   private static int getStoredSelectionTab() {
-    return PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    int value = PropertiesComponent.getInstance().getInt(SELECTION_TAB_KEY, TRENDING_TAB);
+    return value >= TRENDING_TAB && value <= UPDATES_TAB ? value : TRENDING_TAB;
   }
 
   private static void storeSelectionTab(int value) {
-    PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    if (value >= TRENDING_TAB && value <= UPDATES_TAB) {
+      PropertiesComponent.getInstance().setValue(SELECTION_TAB_KEY, value, TRENDING_TAB);
+    }
   }
 
   @Override
   public void disposeUIResources() {
     myPluginsModel.toBackground();
+
     Disposer.dispose(mySearchUpdateAlarm);
     myTrendingSearchPanel.dispose();
+
+    if (myTrendingPanel != null) {
+      myTrendingPanel.dispose();
+    }
+    if (myUpdatesPanel != null) {
+      myUpdatesPanel.dispose();
+    }
 
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
@@ -574,13 +652,11 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private JComponent createTrendingPanel() {
-    PluginsGroupComponentWithProgress panel =
-      new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
-                                            descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
-    panel.getEmptyText().setText("Trending plugins are not loaded.")
-      .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null);
+    myTrendingPanel = new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
+                                                            descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor,
+                                                                                                      myTagBuilder));
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Runnable runnable = () -> {
       List<PluginsGroup> groups = new ArrayList<>();
 
       try {
@@ -589,10 +665,10 @@ public class PluginManagerConfigurableNew
         Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
         Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sort_by:featured");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sort_by:updates");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sort_by:downloads");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sort_by:rating");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
+        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
@@ -609,20 +685,30 @@ public class PluginManagerConfigurableNew
       }
       finally {
         ApplicationManager.getApplication().invokeLater(() -> {
-          panel.stopLoading();
-          panel.dispose();
+          myTrendingPanel.stopLoading();
 
           for (PluginsGroup group : groups) {
-            panel.addGroup(group);
+            myTrendingPanel.addGroup(group);
           }
 
-          panel.doLayout();
-          panel.initialSelection();
+          myTrendingPanel.doLayout();
+          myTrendingPanel.initialSelection();
         }, ModalityState.any());
       }
-    });
+    };
 
-    return createScrollPane(panel, false);
+    myTrendingRunnable = () -> {
+      myTrendingPanel.clear();
+      myTrendingPanel.startLoading();
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    };
+
+    myTrendingPanel.getEmptyText().setText("Marketplace plugins are not loaded.")
+      .appendSecondaryText("Check the internet connection and ", StatusText.DEFAULT_ATTRIBUTES, null)
+      .appendSecondaryText("refresh", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myTrendingRunnable.run());
+
+    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    return createScrollPane(myTrendingPanel, false);
   }
 
   @NotNull
@@ -686,18 +772,16 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private JComponent createUpdatesPanel() {
-    PluginsGroupComponentWithProgress panel =
+    myUpdatesPanel =
       new PluginsGroupComponentWithProgress(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
-    panel.getEmptyText().setText("No updates available.");
-    registerCopyProvider(panel);
+    registerCopyProvider(myUpdatesPanel);
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Runnable runnable = () -> {
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        panel.stopLoading();
-        panel.dispose();
+        myUpdatesPanel.stopLoading();
 
         if (ContainerUtil.isEmpty(updates)) {
           myUpdatesTabName.setCount(0);
@@ -735,19 +819,28 @@ public class PluginManagerConfigurableNew
           }
 
           group.sortByName();
-          panel.addGroup(group);
+          myUpdatesPanel.addGroup(group);
           group.titleWithCount();
 
           myPluginsModel.setUpdateGroup(group);
         }
 
-        panel.doLayout();
-        panel.initialSelection();
+        myUpdatesPanel.doLayout();
+        myUpdatesPanel.initialSelection();
       }, ModalityState.any());
-    });
+    };
 
-    myUpdatesPanel = panel;
-    return createScrollPane(panel, false);
+    myUpdatesRunnable = () -> {
+      myUpdatesPanel.clear();
+      myUpdatesPanel.startLoading();
+      ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    };
+
+    myUpdatesPanel.getEmptyText().setText("No updates available.")
+      .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myUpdatesRunnable.run());
+
+    ApplicationManager.getApplication().executeOnPooledThread(runnable);
+    return createScrollPane(myUpdatesPanel, false);
   }
 
   private void createSearchPanels() {
@@ -760,7 +853,7 @@ public class PluginManagerConfigurableNew
         if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
           attributes.add("repository:");
         }
-        attributes.add("sort_by:");
+        attributes.add("sortBy:");
         return attributes;
       }
 
@@ -784,15 +877,15 @@ public class PluginManagerConfigurableNew
             return myAllTagSorted;
           case "repository:":
             return UpdateSettings.getInstance().getPluginHosts();
-          case "sort_by:":
-            return ContainerUtil.list("downloads", "name", "rating", "featured", "updates");
+          case "sortBy:":
+            return ContainerUtil.list("downloads", "name", "rating", "featured", "updated");
         }
         return null;
       }
 
       @Override
       protected void showPopupForQuery() {
-        String query = mySearchTextField.getText();
+        String query = mySearchTextField.getText().trim();
         if (mySearchTextField.getTextEditor().getCaretPosition() < query.length()) {
           hidePopup();
           return;
@@ -810,8 +903,7 @@ public class PluginManagerConfigurableNew
           myPopup.model.replaceAll(result);
         }
         else {
-          hidePopup();
-          createPopup(new CollectionListModel<>(result), SearchPopup.Type.SearchQuery);
+          createPopup(SearchPopup.Type.SearchQuery, new CollectionListModel<>(result), 0);
         }
 
         myPopup.data = query;
@@ -831,7 +923,7 @@ public class PluginManagerConfigurableNew
           protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
             IdeaPluginDescriptor descriptor = (IdeaPluginDescriptor)value;
 
-            String splitter = (String)myPopup.data;
+            String splitter = myPopup == null ? null : (String)myPopup.data;
             for (String partName : SearchQueryParser.split(descriptor.getName(), splitter)) {
               append(partName, partName.equalsIgnoreCase(splitter)
                                ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
@@ -892,6 +984,24 @@ public class PluginManagerConfigurableNew
         catch (Exception ignore) {
         }
         return ContainerUtil.newArrayList(result);
+      }
+
+      @Override
+      protected void handleEnter() {
+        if (!mySearchTextField.getText().isEmpty()) {
+          handleTrigger("marketplace.suggest.popup.enter");
+        }
+      }
+
+      @Override
+      protected void handlePopupListFirstSelection() {
+        handleTrigger("marketplace.suggest.popup.select");
+      }
+
+      private void handleTrigger(@NonNls String key) {
+        if (myPopup != null && myPopup.type == SearchPopup.Type.SearchQuery) {
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(key);
+        }
       }
     };
     myTrendingSearchPanel =
@@ -956,14 +1066,13 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       protected List<String> getAttributes() {
-        return ContainerUtil.list("status:");
+        return ContainerUtil.list("#disabled", "#enabled", "#bundled", "#custom", "#inactive", "#invalid", "#outdated", "#uninstalled");
       }
 
       @Nullable
       @Override
       protected List<String> getValues(@NotNull String attribute) {
-        return attribute.equals("status:") ? ContainerUtil
-          .list("disabled", "enabled", "inactive", "installed", "bundled", "invalid", "outdated", "uninstalled") : null;
+        return null;
       }
 
       @Override
@@ -1048,6 +1157,40 @@ public class PluginManagerConfigurableNew
     myPluginsModel.detailPanel = new DetailsPagePluginComponent(myPluginsModel, myTagBuilder, mySearchListener, data.first, data.second);
     mySearchTextField.setVisible(false);
     return myPluginsModel.detailPanel;
+  }
+
+  private void resetTrendingAndUpdatesPanels() {
+    synchronized (myRepositoriesLock) {
+      myAllRepositoriesList = null;
+      myAllRepositoriesMap = null;
+      myCustomRepositoriesMap = null;
+    }
+
+    if (myTrendingPanel == null && myUpdatesPanel == null) {
+      return;
+    }
+
+    int selectionTab = myTabHeaderComponent.getSelectionTab();
+    if (selectionTab == TRENDING_TAB) {
+      if (myUpdatesPanel != null) {
+        myUpdatesPanel.setVisibleRunnable(myUpdatesRunnable);
+      }
+      myTrendingRunnable.run();
+    }
+    else if (selectionTab == UPDATES_TAB) {
+      if (myTrendingPanel != null) {
+        myTrendingPanel.setVisibleRunnable(myTrendingRunnable);
+      }
+      myUpdatesRunnable.run();
+    }
+    else {
+      if (myTrendingPanel != null) {
+        myTrendingPanel.setVisibleRunnable(myTrendingRunnable);
+      }
+      if (myUpdatesPanel != null) {
+        myUpdatesPanel.setVisibleRunnable(myUpdatesRunnable);
+      }
+    }
   }
 
   @NotNull
@@ -1141,9 +1284,9 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static void loadPlugins(@NotNull List<IdeaPluginDescriptor> descriptors,
+  private static void loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
                                   @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
-                                  @NotNull Set<String> excludeDescriptors,
+                                  @NotNull Set<? super String> excludeDescriptors,
                                   @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
@@ -1243,7 +1386,7 @@ public class PluginManagerConfigurableNew
   @NotNull
   public static String getErrorMessage(@NotNull InstalledPluginsTableModel pluginsModel,
                                        @NotNull PluginDescriptor pluginDescriptor,
-                                       @NotNull Ref<Boolean> enableAction) {
+                                       @NotNull Ref<? super Boolean> enableAction) {
     String message;
 
     Set<PluginId> requiredPlugins = pluginsModel.getRequiredPlugins(pluginDescriptor.getPluginId());
@@ -1299,7 +1442,7 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = ((PluginNode)plugin).getDownloads();
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
@@ -1307,6 +1450,7 @@ public class PluginManagerConfigurableNew
         if (value > 1000) {
           return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
         }
+        return value.toString();
       }
       catch (NumberFormatException ignore) {
       }
@@ -1316,9 +1460,9 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
     long date = ((PluginNode)plugin).getDate();
-    return date > 0 ? DATE_FORMAT.format(new Date(date)) : null;
+    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
   }
 
   @Nullable
@@ -1434,21 +1578,6 @@ public class PluginManagerConfigurableNew
     Dimension size = button.getPreferredSize();
     size.width -= JBUI.scale(15);
     button.setPreferredSize(size);
-  }
-
-  public static void setWidth72(@NotNull JButton button) {
-    int width = JBUI.scale(72);
-    if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
-      width += button.getComponent(1).getPreferredSize().width;
-    }
-    else {
-      Border border = button.getBorder();
-      if (border != null) {
-        Insets insets = border.getBorderInsets(button);
-        width += insets.left + insets.right;
-      }
-    }
-    button.setPreferredSize(new Dimension(width, button.getPreferredSize().height));
   }
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {

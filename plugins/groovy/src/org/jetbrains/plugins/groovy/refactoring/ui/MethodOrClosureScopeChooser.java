@@ -66,7 +66,7 @@ public class MethodOrClosureScopeChooser {
   public static JBPopup create(List<? extends GrParameterListOwner> scopes,
                                final Editor editor,
                                final JBPopupOwner popupRef,
-                               final PairFunction<GrParameterListOwner, PsiElement, Object> callback) {
+                               final PairFunction<? super GrParameterListOwner, ? super PsiElement, Object> callback) {
     final JPanel panel = new JPanel(new BorderLayout());
     final JCheckBox superMethod = new JCheckBox(USE_SUPER_METHOD_OF, true);
     superMethod.setMnemonic('U');
@@ -159,7 +159,7 @@ public class MethodOrClosureScopeChooser {
   public static void updateView(GrParameterListOwner selectedMethod,
                                 Editor editor,
                                 TextAttributes attributes,
-                                List<RangeHighlighter> highlighters,
+                                List<? super RangeHighlighter> highlighters,
                                 JCheckBox superMethod) {
     final MarkupModel markupModel = editor.getMarkupModel();
     final TextRange textRange = selectedMethod.getTextRange();

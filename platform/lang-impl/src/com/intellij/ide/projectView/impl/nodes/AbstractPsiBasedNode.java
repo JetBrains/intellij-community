@@ -50,7 +50,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
-                                final Value value,
+                                 @NotNull Value value,
                                 final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -64,7 +64,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
-    return AstLoadingFilter.disableTreeLoading(this::doGetChildren);
+    return AstLoadingFilter.disallowTreeLoading(this::doGetChildren);
   }
 
   @NotNull
@@ -127,7 +127,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   @Override
   public void update(@NotNull final PresentationData data) {
-    AstLoadingFilter.disableTreeLoading(() -> doUpdate(data));
+    AstLoadingFilter.disallowTreeLoading(() -> doUpdate(data));
   }
 
   private void doUpdate(@NotNull PresentationData data) {

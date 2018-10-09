@@ -28,7 +28,7 @@ public class RunAnythingHelpItem extends RunAnythingItemBase {
     SimpleColoredComponent component = new SimpleColoredComponent();
 
     parseAndApplyStyleToParameters(component, myPlaceholder);
-    appendDescription(component, myDescription);
+    appendDescription(component, myDescription, isSelected);
     setupIcon(component, myIcon);
 
     return component;

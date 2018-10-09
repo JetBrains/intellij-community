@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -43,7 +42,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements,
-                                           @NotNull final PsiElementListCellRenderer<PsiElement> renderer,
+                                           @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
                                            final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
       @Override
@@ -86,7 +85,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor) {
+                                                                  @NotNull final PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
@@ -94,7 +93,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   @Nullable final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor,
+                                                                  @NotNull final PsiElementProcessor<? super T> processor,
                                                                   @Nullable final T selection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
@@ -276,7 +275,6 @@ public final class NavigationUtil {
 
     return getPsiElementPopup(elements, itemsMap, title, showContainingModules, element -> {
       if (element instanceof PsiElement) {
-        //noinspection SuspiciousMethodCalls
         itemsMap.get(element).navigate();
       }
       else {
@@ -377,7 +375,6 @@ public final class NavigationUtil {
       @Override
       public String getIndexedString(Object value) {
         if (value instanceof GotoRelatedItem) {
-          //noinspection ConstantConditions
           return ((GotoRelatedItem)value).getCustomName();
         }
         PsiElement element = (PsiElement)value;
@@ -425,7 +422,7 @@ public final class NavigationUtil {
           final SeparatorWithText sep = new SeparatorWithText() {
             @Override
             protected void paintComponent(Graphics g) {
-              g.setColor(new JBColor(Color.WHITE, UIUtil.getSeparatorColor()));
+              g.setColor(new JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
               g.fillRect(0,0,getWidth(), getHeight());
               super.paintComponent(g);
             }
@@ -476,7 +473,7 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = ContainerUtil.newLinkedHashSet();
-    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
+    for (GotoRelatedProvider provider : GotoRelatedProvider.EP_NAME.getExtensionList()) {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));

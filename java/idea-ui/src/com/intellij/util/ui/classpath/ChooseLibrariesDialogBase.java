@@ -257,6 +257,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       return myElement;
     }
 
+    @NotNull
     @Override
     public SimpleNode[] getChildren() {
       return NO_CHILDREN;
@@ -361,13 +362,15 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       myProject = project;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       return ApplicationManager.getApplication();
     }
 
+    @NotNull
     @Override
-    public Object[] getChildElements(Object element) {
+    public Object[] getChildElements(@NotNull Object element) {
       final List<Object> result = new ArrayList<>();
       collectChildren(element, result);
       final Iterator<Object> it = result.iterator();
@@ -381,7 +384,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     }
 
     @Override
-    public Object getParentElement(Object element) {
+    public Object getParentElement(@NotNull Object element) {
       if (element instanceof Application) return null;
       if (element instanceof Project) return ApplicationManager.getApplication();
       if (element instanceof Module) return ((Module)element).getProject();
@@ -392,7 +395,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
     @NotNull
     @Override
-    public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+    public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element instanceof Application) return new RootDescriptor(myProject);
       if (element instanceof Project) return new ProjectDescriptor(myProject, (Project)element);
       if (element instanceof Module) return new ModuleDescriptor(myProject, parentDescriptor, (Module)element);

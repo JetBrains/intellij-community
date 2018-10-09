@@ -32,7 +32,6 @@ public class ServerModeDebuggerTransport extends BaseDebuggerTransport {
 
   @Override
   public void waitForConnect() throws IOException {
-    //noinspection SocketOpenedButNotSafelyClosed
     myServerSocket.setSoTimeout(myConnectionTimeout);
 
     synchronized (mySocketObject) {

@@ -208,7 +208,7 @@ public class DocPreviewUtil {
     }
   }
   
-  private static boolean intersects(@NotNull List<TextRange> ranges, int start, int end) {
+  private static boolean intersects(@NotNull List<? extends TextRange> ranges, int start, int end) {
     for (TextRange range : ranges) {
       if (range.intersectsStrict(start, end)) {
         return true;
@@ -219,7 +219,6 @@ public class DocPreviewUtil {
 
   private enum State {TEXT, INSIDE_OPEN_TAG, INSIDE_CLOSE_TAG}
   
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private static int process(@NotNull String text, @NotNull Callback callback) {
     State state = State.TEXT;
     int dataStartOffset = 0;

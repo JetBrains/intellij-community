@@ -655,6 +655,16 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     );
   }
 
+  @Override
+  public Set<Class> getTargetTypes() {
+    return ContainerUtil.set(
+      ExternalProjectDependency.class,
+      ExternalLibraryDependency.class,
+      FileCollectionDependency.class,
+      UnresolvedExternalDependency.class
+    );
+  }
+
   @NotNull
   @Override
   public List<Pair<String, String>> getExtraJvmArgs() {

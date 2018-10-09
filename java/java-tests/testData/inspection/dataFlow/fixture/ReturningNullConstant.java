@@ -6,6 +6,6 @@ class BrokenAlignment {
 
   @NotNull
   public String getDefaultValue() {
-    return <warning descr="Expression 'DEFAULT' might evaluate to null but is returned by the method declared as @NotNull">DEFAULT</warning>;
+    return <warning descr="'null' is returned by the method declared as @NotNull">DEFAULT</warning>;
   }
 }

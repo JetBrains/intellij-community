@@ -34,12 +34,13 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
       if (annotation != null) {
         final PsiAnnotationMemberValue value = annotation.findAttributeValue(NAME_ATTRIBUTE);
-        LOG.assertTrue(value != null);
-        final String dataProviderName = PsiTreeUtil.isAncestor(annotation, value, false)
-                                        ? AnnotationUtil.getStringAttributeValue(annotation, NAME_ATTRIBUTE)
-                                        : method.getName();
-        if (dataProviderName != null) {
-          dataProvidersByName.putValue(dataProviderName, method);
+        if (value != null) {
+          final String dataProviderName = PsiTreeUtil.isAncestor(annotation, value, false)
+                                          ? AnnotationUtil.getStringAttributeValue(annotation, NAME_ATTRIBUTE)
+                                          : method.getName();
+          if (dataProviderName != null) {
+            dataProvidersByName.putValue(dataProviderName, method);
+          }
         }
       }
     }

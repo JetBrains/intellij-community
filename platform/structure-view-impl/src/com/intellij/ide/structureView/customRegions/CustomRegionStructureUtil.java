@@ -67,7 +67,7 @@ public class CustomRegionStructureUtil {
     return element.getTextRange();
   }
 
-  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
+  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<? extends TextRange> ranges) {
     TextRange rootRange = getTextRange(rootElement);
     Iterator<PsiElement> iterator = SyntaxTraverser.psiTraverser(rootElement)
       .filter(element -> isCustomRegionCommentCandidate(element) &&
@@ -114,7 +114,7 @@ public class CustomRegionStructureUtil {
     return null;
   }
 
-  private static boolean isInsideRanges(@NotNull PsiElement element, @NotNull Set<TextRange> ranges) {
+  private static boolean isInsideRanges(@NotNull PsiElement element, @NotNull Set<? extends TextRange> ranges) {
     for (TextRange range : ranges) {
       TextRange elementRange = element.getTextRange();
       if (range.contains(elementRange.getStartOffset()) || range.contains(elementRange.getEndOffset())) {

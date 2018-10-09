@@ -16,6 +16,7 @@
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
@@ -89,7 +90,7 @@ public class InlineUtil {
     expr = (PsiExpression)ChangeContextUtil.decodeContextInfo(expr, thisClass, thisAccessExpr);
     PsiType exprType = RefactoringUtil.getTypeByExpression(expr);
     if (exprType != null && !exprType.equals(varType)) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
       PsiMethod method = qualifyWithExplicitTypeArguments(initializer, expr, varType);
       if (method != null) {
         if (expr instanceof PsiMethodCallExpression) {
@@ -130,7 +131,7 @@ public class InlineUtil {
   private static PsiMethod qualifyWithExplicitTypeArguments(PsiExpression initializer,
                                                             PsiExpression expr,
                                                             PsiType varType) {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initializer.getProject());
     if (expr instanceof PsiCallExpression && ((PsiCallExpression)expr).getTypeArguments().length == 0) {
       final JavaResolveResult resolveResult = ((PsiCallExpression)initializer).resolveMethodGenerics();
       final PsiElement resolved = resolveResult.getElement();
@@ -171,7 +172,7 @@ public class InlineUtil {
     operand.replace(expr);
     expr = (PsiTypeCastExpression)expr.replace(cast);
     if (RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expr)) {
-      return RedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
+      return RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)expr);
     }
 
     return expr;

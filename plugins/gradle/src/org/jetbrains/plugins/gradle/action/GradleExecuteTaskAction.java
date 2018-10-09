@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsConverter;
 import org.jetbrains.plugins.gradle.service.task.ExecuteGradleTaskHistoryService;
 import org.jetbrains.plugins.gradle.service.task.GradleRunTaskDialog;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.HashMap;
@@ -68,6 +69,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    GradleActionsUsagesCollector.trigger(project, this, e);
     ExecuteGradleTaskHistoryService historyService = ExecuteGradleTaskHistoryService.getInstance(project);
     GradleRunTaskDialog dialog = new GradleRunTaskDialog(project, historyService.getHistory());
     String lastWorkingDirectory = historyService.getWorkDirectory();
@@ -130,7 +132,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     if (configuration == null) return;
 
     RunManager runManager = RunManager.getInstance(project);
-    final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByName(configuration.getName());
+    final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByTypeAndName(configuration.getType(), configuration.getName());
     if (existingConfiguration == null) {
       runManager.setTemporaryConfiguration(configuration);
     }

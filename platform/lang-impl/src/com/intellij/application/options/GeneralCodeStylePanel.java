@@ -38,7 +38,9 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.ui.*;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBCheckBox;
@@ -338,7 +340,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 

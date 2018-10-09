@@ -219,7 +219,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     final FieldConflictsResolver fieldConflictsResolver = new FieldConflictsResolver(data.getParameterName(), method.getBody());
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(data.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(data.getProject());
 
     final PsiClass superClass = data.getMethodToSearchFor().getContainingClass();
     final PsiClass containingClass = method.getContainingClass();
@@ -278,7 +278,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     if (!(usage.getElement() instanceof PsiClass) || !isJavaUsage(usage)) return true;
     PsiClass aClass = (PsiClass)usage.getElement();
     if (!(aClass instanceof PsiAnonymousClass)) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(data.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(data.getProject());
       PsiMethod constructor = factory.createMethodFromText(aClass.getName() + "(){}", aClass);
       constructor = (PsiMethod)CodeStyleManager.getInstance(data.getProject()).reformat(constructor);
       constructor = (PsiMethod)aClass.add(constructor);
@@ -298,7 +298,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
     if (!constructor.isConstructor()) return true;
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(data.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(data.getProject());
     PsiExpressionStatement superCall = (PsiExpressionStatement)factory.createStatementFromText("super();", constructor);
     superCall = (PsiExpressionStatement)CodeStyleManager.getInstance(data.getProject()).reformat(superCall);
     PsiCodeBlock body = constructor.getBody();

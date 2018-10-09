@@ -24,7 +24,7 @@ public class KeyValue<Key, Value> extends Pair<Key, Value> {
     super(key, value);
   }
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   @NotNull
   public static <Key, Value> KeyValue<Key, Value> create(final Key key, final Value value) {
     return new KeyValue<Key, Value>(key, value);

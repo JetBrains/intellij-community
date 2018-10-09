@@ -89,7 +89,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = LayeredIcon.create(myIcon, AllIcons.Nodes.PinToolWindow);
+    myLayeredIcon = LayeredIcon.create(myIcon, AllIcons.Nodes.TabPin);
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
@@ -106,7 +106,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private static class IconHolder {
     private static final Icon ourEmptyPinIcon;
     static {
-      Icon icon = AllIcons.Nodes.PinToolWindow;
+      Icon icon = AllIcons.Nodes.TabPin;
       int width = icon.getIconWidth();
       ourEmptyPinIcon = IconUtil.cropIcon(icon, new Rectangle(width / 2, 0, width - width / 2, icon.getIconHeight()));
     }

@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand;
 import com.intellij.debugger.engine.managerThread.DebuggerManagerThread;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.debugger.impl.InvokeAndWaitThread;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,6 +70,15 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     }
   }
 
+  public void invoke(PrioritizedTask.Priority priority, Runnable runnable) {
+    invoke(new DebuggerCommandImpl(priority) {
+      @Override
+      protected void action() {
+        runnable.run();
+      }
+    });
+  }
+
   @Override
   public boolean pushBack(DebuggerCommandImpl managerCommand) {
     final boolean pushed = super.pushBack(managerCommand);
@@ -76,6 +86,15 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       managerCommand.notifyCancelled();
     }
     return pushed;
+  }
+
+  public void schedule(PrioritizedTask.Priority priority, Runnable runnable) {
+    schedule(new DebuggerCommandImpl(priority) {
+      @Override
+      protected void action() {
+        runnable.run();
+      }
+    });
   }
 
   @Override

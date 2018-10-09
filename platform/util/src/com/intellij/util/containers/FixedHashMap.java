@@ -17,33 +17,23 @@ package com.intellij.util.containers;
 
 import java.util.*;
 
-public class FixedHashMap<K, V> extends java.util.HashMap<K, V> {
-  private final int mySize;
-  private final List<K> myKeys = new LinkedList<K>();
+/**
+ * {@link Map} which stores not more than {@link #maxSize} entries.
+ * On attempt to put more, the eldest element is removed.
+ */
+public class FixedHashMap<K, V> extends LinkedHashMap<K, V> {
+  private final int maxSize;
 
-  public FixedHashMap(int size) {
-    mySize = size;
+  public FixedHashMap(int maxSize) {
+    this.maxSize = maxSize;
+  }
+  public FixedHashMap(int maxSize, int initialCapacity, float loadFactor, boolean accessOrder) {
+    super(initialCapacity, loadFactor, accessOrder);
+    this.maxSize = maxSize;
   }
 
   @Override
-  public V put(K key, V value) {
-    if (!myKeys.contains(key)) {
-      if (myKeys.size() >= mySize) {
-        remove(myKeys.remove(0));
-      }
-      myKeys.add(key);
-    }
-    return super.put(key, value);
-  }
-
-  @Override
-  public V get(Object key) {
-    if (myKeys.contains(key)) {
-      int index = myKeys.indexOf(key);
-      int last = myKeys.size() - 1;
-      myKeys.set(index, myKeys.get(last));
-      myKeys.set(last, (K)key);
-    }
-    return super.get(key);
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+    return size() > maxSize;
   }
 }

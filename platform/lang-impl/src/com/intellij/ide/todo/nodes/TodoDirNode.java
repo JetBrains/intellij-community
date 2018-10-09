@@ -27,7 +27,7 @@ public final class TodoDirNode extends PsiDirectoryNode  {
 
 
   public TodoDirNode(Project project,
-                     PsiDirectory directory,
+                     @NotNull PsiDirectory directory,
                      TodoTreeBuilder builder) {
     super(project, directory, ViewSettings.DEFAULT);
     myBuilder = builder;

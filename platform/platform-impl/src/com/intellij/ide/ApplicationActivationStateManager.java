@@ -40,13 +40,13 @@ public class ApplicationActivationStateManager {
     DEACTIVATING;
 
     public boolean isInactive () {
-      return !this.equals(ACTIVE);
+      return this != ACTIVE;
     }
 
     public boolean isActive() {
-      return this.equals(ACTIVE);
+      return this == ACTIVE;
     }
-  };
+  }
 
   private static State state = State.DEACTIVATED;
 
@@ -91,7 +91,7 @@ public class ApplicationActivationStateManager {
         @Override
         public void actionPerformed(ActionEvent evt) {
 
-          if (state.equals(State.DEACTIVATING)) {
+          if (state == State.DEACTIVATING) {
 
             state = State.DEACTIVATED;
             LOG.debug("The app is in the deactivated state");

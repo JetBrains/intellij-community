@@ -150,6 +150,6 @@ public class WSLUtil {
     if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
       return null;
     }
-    return FileUtil.toSystemDependentName(wslPath.charAt(driveLetterIndex) + ":" + wslPath.substring(slashIndex));
+    return FileUtil.toSystemDependentName(Character.toUpperCase(wslPath.charAt(driveLetterIndex)) + ":" + wslPath.substring(slashIndex));
   }
 }

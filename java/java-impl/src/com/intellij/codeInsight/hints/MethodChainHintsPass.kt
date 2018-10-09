@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -89,7 +90,7 @@ class MethodChainHintsPass(
   override fun createRenderer(text: String): HintRenderer = MethodChainHintRenderer(text)
 
   private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId() = "MethodChainHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "MethodChainHintsContextMenu"
   }
 
   companion object {

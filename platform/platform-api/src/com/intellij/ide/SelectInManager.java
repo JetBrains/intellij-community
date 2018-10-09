@@ -2,7 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
@@ -51,7 +50,7 @@ public class SelectInManager  {
   private void checkLoadExtensions() {
     if (!myLoadedExtensions) {
       myLoadedExtensions = true;
-      Collections.addAll(myTargets, Extensions.getExtensions(SelectInTarget.EP_NAME, myProject));
+      Collections.addAll(myTargets, SelectInTarget.EP_NAME.getExtensions(myProject));
     }
   }
 

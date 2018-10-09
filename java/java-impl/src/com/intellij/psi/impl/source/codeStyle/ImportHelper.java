@@ -27,6 +27,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -250,25 +251,36 @@ public class ImportHelper{
         if (isStatic) {
           PsiClass aClass = onDemandElements.get(i);
           if (aClass != null) {
+
+            class AccessibilityChecker {
+              boolean checkMember(PsiMember member) {
+                if (member.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(member, file, null)) {
+                  PsiClass containingClass = member.getContainingClass();
+                  if (containingClass == null) return false;
+                  for (PsiClass superClass : InheritanceUtil.getSuperClasses(aClass)) {
+                    if (prefix.equals(superClass.getQualifiedName()) && InheritanceUtil.isInheritorOrSelf(superClass, containingClass, true)) {
+                      return false;
+                    }
+                  }
+                  return true;
+                }
+                return false;
+              }
+            }
+
             PsiField field = aClass.findFieldByName(shortName, true);
-            if (field != null && field.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(field, file, null)) {
+            if (field != null && new AccessibilityChecker().checkMember(field)) {
               namesToUseSingle.add(name);
             }
             else {
               PsiClass inner = aClass.findInnerClassByName(shortName, true);
-              if (inner != null && inner.hasModifierProperty(PsiModifier.STATIC) && resolveHelper.isAccessible(inner, file, null)) {
+              if (inner != null && new AccessibilityChecker().checkMember(inner)) {
                 namesToUseSingle.add(name);
               }
               else {
                 PsiMethod[] methods = aClass.findMethodsByName(shortName, true);
-                for (PsiMethod method : methods) {
-                  PsiClass containingClass = method.getContainingClass();
-                  if (containingClass == null) continue;
-                  if (method.hasModifierProperty(PsiModifier.STATIC) && 
-                      resolveHelper.isAccessible(method, file, null) &&
-                      !prefix.equals(containingClass.getQualifiedName())) {
-                    namesToUseSingle.add(name);
-                  }
+                if (Arrays.stream(methods).anyMatch(new AccessibilityChecker()::checkMember)) {
+                  namesToUseSingle.add(name);
                 }
               }
             }
