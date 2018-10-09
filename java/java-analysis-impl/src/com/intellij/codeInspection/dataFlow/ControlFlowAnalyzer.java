@@ -239,31 +239,25 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       rExpr.accept(this);
       addInstruction(new BinopInstruction(JavaTokenType.PLUS, null, type));
     }
-    else if (isAssignmentDivision(op) && type != null && PsiType.LONG.isAssignableFrom(type)) {
-      lExpr.accept(this);
-      generateBoxingUnboxingInstructionFor(lExpr, type);
-      rExpr.accept(this);
-      generateBoxingUnboxingInstructionFor(rExpr, type);
-      checkZeroDivisor();
-      addInstruction(new PopInstruction());
-      pushUnknown();
-    }
     else {
-      generateDefaultAssignmentBinOp(lExpr, rExpr, type);
+      IElementType sign = TypeConversionUtil.convertEQtoOperation(op);
+      PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lExpr.getType(), rExpr.getType(), sign, true);
+      lExpr.accept(this);
+      addInstruction(new DupInstruction());
+      generateBoxingUnboxingInstructionFor(lExpr, resType);
+      rExpr.accept(this);
+      generateBoxingUnboxingInstructionFor(rExpr, resType);
+      sign = substituteBinaryOperation(rExpr, sign);
+      if (isAssignmentDivision(op) && resType != null && PsiType.LONG.isAssignableFrom(resType)) {
+        checkZeroDivisor();
+      }
+      addInstruction(new BinopInstruction(sign, expression.isPhysical() ? expression : null, resType));
+      generateBoxingUnboxingInstructionFor(rExpr, resType, type);
     }
 
     addInstruction(new AssignInstruction(rExpr, myFactory.createValue(lExpr)));
 
     finishElement(expression);
-  }
-
-  private void generateDefaultAssignmentBinOp(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
-    lExpr.accept(this);
-    addInstruction(new DupInstruction());
-    generateBoxingUnboxingInstructionFor(lExpr,exprType);
-    rExpr.accept(this);
-    generateBoxingUnboxingInstructionFor(rExpr, exprType);
-    addInstruction(new BinopInstruction(null, null, exprType));
   }
 
   @Override public void visitAssertStatement(PsiAssertStatement statement) {
@@ -1386,7 +1380,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable
-  private IElementType substituteBinaryOperation(PsiPolyadicExpression expression, IElementType op) {
+  private IElementType substituteBinaryOperation(PsiExpression expression, IElementType op) {
     if (JavaTokenType.PLUS == op) {
       if (TypeUtils.isJavaLangString(expression.getType()) || isAcceptableContextForMathOperation(expression)) return op;
       return null;
@@ -1398,7 +1392,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private boolean isAcceptableContextForMathOperation(PsiExpression expression) {
     PsiElement parent = expression.getParent();
     while (parent != null && parent != myCodeFragment) {
-      if (parent instanceof PsiExpressionList ||
+      if ((parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) ||
           parent instanceof PsiArrayInitializerExpression ||
           parent instanceof PsiArrayAccessExpression) {
         return true;
