@@ -681,11 +681,13 @@ FunctionEnd
 
 
 Function IncorrectSilentInstallParameters
-  !define msg1 "How to run installation in Silent Mode:$\r$\n"
+  !define msg1 "How to run installation in silent mode:$\r$\n"
   !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\r$\n$\r$\n"
-  !define msg3 "Example:$\r$\n"
-  !define msg4 "d:\download\Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
-  MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}"
+  !define msg3 "Examples:$\r$\n"
+  !define msg4 "Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\r$\n"
+  !define msg5 "Run installation in silent mode with logging:$\r$\n"
+  !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\r$\n"
+  MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}"
   ${LogText} "silent installation: incorrect parameters."
   Abort
 FunctionEnd
