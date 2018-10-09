@@ -569,6 +569,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public void loadState(@NotNull Config config) {
+
+    config.branchNameFormat = TaskUtil.updateToVelocity(config.branchNameFormat);
+    config.changelistNameFormat = TaskUtil.updateToVelocity(config.changelistNameFormat);
+
     XmlSerializerUtil.copyBean(config, myConfig);
 
     myRepositories.clear();
