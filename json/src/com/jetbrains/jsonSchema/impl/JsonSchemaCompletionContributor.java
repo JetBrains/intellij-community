@@ -629,7 +629,8 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     boolean hasValues = !ContainerUtil.isEmpty(values);
     boolean hasDefaultValue = !StringUtil.isEmpty(defaultValue);
     boolean hasQuotes = isNumber || !walker.quotesForStringLiterals();
-    String stringToInsert = (insertColon ? ": " : " ") + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
+    final String colonWs = insertColon ? ": " : " ";
+    String stringToInsert = colonWs + (hasDefaultValue ? defaultValue : (hasQuotes ? "" : "\"\"")) + comma;
     EditorModificationUtil.insertStringAtCaret(editor, stringToInsert, false, true,
                                                insertColon ? 2 : 1);
     if (!hasQuotes || hasDefaultValue) {
@@ -641,7 +642,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       editor.getCaretModel().moveToOffset(newOffset);
     }
 
-    if (!walker.invokeEnterBeforeObjectAndArray() && !stringToInsert.equals(": ")) {
+    if (!walker.invokeEnterBeforeObjectAndArray() && !stringToInsert.equals(colonWs + comma)) {
       formatInsertedString(context, stringToInsert.length());
     }
 
