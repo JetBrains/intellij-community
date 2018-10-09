@@ -91,7 +91,7 @@ public class EditorPainter implements TextDrawingCallback {
 
     MarginPositions marginWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData, extensionData);
     paintRightMargin(g, clip, startLine, endLine, marginWidths);
-    paintCustomRenderers(g, yShift, startOffset, endOffset);
+    paintCustomRenderers(g, yShift, startOffset, endOffset, clipDetector);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
     paintLineMarkersSeparators(g, clip, yShift, myEditor.getMarkupModel(), startOffset, endOffset);
@@ -369,12 +369,17 @@ public class EditorPainter implements TextDrawingCallback {
     g.fill(new Rectangle2D.Float(x, y, width, myView.getLineHeight()));
   }
 
-  private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset) {
+  private void paintCustomRenderers(final Graphics2D g, int yShift, final int startOffset, final int endOffset, ClipDetector clipDetector) {
     g.translate(0, yShift);
     myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
       CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-      if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
-        customRenderer.paint(myEditor, highlighter, g);
+      if (customRenderer != null) {
+        int highlighterStart = highlighter.getStartOffset();
+        int highlighterEnd = highlighter.getEndOffset();
+        if (highlighterStart < endOffset && highlighterEnd > startOffset &&
+            clipDetector.rangeCanBeVisible(highlighterStart, highlighterEnd)) {
+          customRenderer.paint(myEditor, highlighter, g);
+        }
       }
       return true;
     });
