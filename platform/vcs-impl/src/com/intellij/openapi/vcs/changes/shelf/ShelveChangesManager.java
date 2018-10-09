@@ -63,6 +63,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getChangeListNameForUnshelve;
 import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChangeList;
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ShelveChangesManager implements JDOMExternalizable, ProjectComponent {
@@ -88,7 +89,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   /**
    * System independent file-path for non-default project
    *
-   * @return path to default shelf directory a.e. <Project>/.idea/shelf
+   * @return path to default shelf directory e.g. <Project>/.idea/shelf
    */
   @NotNull
   public static String getDefaultShelfPath(@NotNull Project project) {
@@ -96,6 +97,20 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       .getFilePath(chooseNotNull(ProjectKt.getProjectStoreDirectory(project.getBaseDir()), project.getBaseDir()),
                    ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH)
       .getPath();
+  }
+
+  /**
+   * System independent file-path for non-default project
+   *
+   * @return path to custom shelf directory if set. Otherwise return default shelf directory e.g. <Project>/.idea/shelf
+   */
+  @NotNull
+  public static String getShelfPath(@NotNull Project project) {
+    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
+    if (vcsConfiguration.USE_CUSTOM_SHELF_PATH) {
+      return assertNotNull(vcsConfiguration.CUSTOM_SHELF_PATH);
+    }
+    return getDefaultShelfPath(project);
   }
 
   private final Project myProject;

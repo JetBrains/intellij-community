@@ -1541,8 +1541,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     private static boolean isShelfDirOrInsideIt(@NotNull FilePath filePath, @NotNull Project project){
-      String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
-      return FileUtil.isAncestor(defaultShelfPath, filePath.getPath(), false);
+      String shelfPath = ShelveChangesManager.getShelfPath(project);
+      return FileUtil.isAncestor(shelfPath, filePath.getPath(), false);
     }
 
     @NotNull
@@ -1553,10 +1553,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (projectBasePath == null) return masks;
 
       if (FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) {
-        String defaultShelfPath = ShelveChangesManager.getDefaultShelfPath(project);
-        if (FileUtil.isAncestor(projectBasePath, defaultShelfPath, true)) {
+        String shelfPath = ShelveChangesManager.getShelfPath(project);
+        if (FileUtil.isAncestor(projectBasePath, shelfPath, true)) {
           String relativeShelfPath =
-            FileUtil.getRelativePath(projectBasePath, defaultShelfPath, '/');
+            FileUtil.getRelativePath(projectBasePath, shelfPath, '/');
           if (relativeShelfPath != null) {
             masks.add("/" + relativeShelfPath + "/");
           }
