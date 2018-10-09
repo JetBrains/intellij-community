@@ -359,23 +359,26 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull private final Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
     @NotNull private final List<String> myExtraArgs;
+    @Nullable private final PyPackageManagerUI.Listener myListener;
 
     public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied) {
-      this(name, module, sdk, unsatisfied, Collections.emptyList());
+      this(name, module, sdk, unsatisfied, Collections.emptyList(), null);
     }
 
     public PyInstallRequirementsFix(@Nullable String name,
                                     @NotNull Module module,
                                     @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied,
-                                    @NotNull List<String> extraArgs) {
+                                    @NotNull List<String> extraArgs,
+                                    @Nullable PyPackageManagerUI.Listener listener) {
       final boolean plural = unsatisfied.size() > 1;
       myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
       myExtraArgs = extraArgs;
+      myListener = listener;
     }
 
     @NotNull
@@ -443,8 +446,24 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void installRequirements(Project project, List<PyRequirement> requirements) {
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule));
-      ui.install(requirements, myExtraArgs);
+      final PyPackageManagerUI.Listener listener =
+        myListener == null
+        ? new RunningPackagingTasksListener(myModule)
+        : new RunningPackagingTasksListener(myModule) {
+          @Override
+          public void started() {
+            super.started();
+            myListener.started();
+          }
+
+          @Override
+          public void finished(List<ExecutionException> exceptions) {
+            super.finished(exceptions);
+            myListener.finished(exceptions);
+          }
+        };
+
+      new PyPackageManagerUI(project, mySdk, listener).install(requirements, myExtraArgs);
     }
   }
 
