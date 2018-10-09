@@ -18,6 +18,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
