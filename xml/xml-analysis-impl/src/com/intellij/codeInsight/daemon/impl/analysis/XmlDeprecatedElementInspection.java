@@ -14,19 +14,26 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
+import javax.swing.*;
+import java.util.regex.Pattern;
 
 public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionTool {
+
+  @Language("RegExp")
+  public String regexp = "(?i)deprecated.*";
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    Pattern pattern = Pattern.compile(regexp);
     return new XmlElementVisitor() {
       @Override
       public void visitXmlTag(XmlTag tag) {
-        if (checkDeprecated(tag.getDescriptor())) {
+        if (checkDeprecated(tag.getDescriptor(), pattern)) {
           ASTNode nameNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
           if (nameNode != null) {
             holder.registerProblem(nameNode.getPsi(), "The tag is marked as deprecated", ProblemHighlightType.LIKE_DEPRECATED);
@@ -36,19 +43,36 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
 
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
-        if (checkDeprecated(attribute.getDescriptor())) {
+        if (checkDeprecated(attribute.getDescriptor(), pattern)) {
           holder.registerProblem(attribute.getNameElement(), "The attribute is marked as deprecated", ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     };
   }
 
-  private static boolean checkDeprecated(@Nullable PsiMetaData metaData) {
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new OptionsPanel(this).myPanel;
+  }
+
+  private static boolean checkDeprecated(@Nullable PsiMetaData metaData, Pattern pattern) {
     if (metaData == null) return false;
     PsiElement declaration = metaData.getDeclaration();
     if (declaration == null) return false;
     PsiElement comment = XmlUtil.findPreviousComment(declaration);
     if (comment == null) return false;
-    return StringUtil.trimStart(comment.getText(), "<!--").toLowerCase(Locale.ENGLISH).trim().startsWith("deprecated");
+    String s = StringUtil.trimStart(comment.getText(), "<!--").trim();
+    return pattern.matcher(s).matches();
+  }
+
+  public static class OptionsPanel {
+    private JTextField myTextField;
+    private JPanel myPanel;
+
+    public OptionsPanel(XmlDeprecatedElementInspection inspection) {
+      myTextField.setText(inspection.regexp);
+      myTextField.addActionListener(e -> inspection.regexp = myTextField.getText());
+    }
   }
 }

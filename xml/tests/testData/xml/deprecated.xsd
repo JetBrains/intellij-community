@@ -2,10 +2,10 @@
     <element name="root">
         <complexType>
             <sequence>
-                <!-- deprecated -->
+                <!-- deprecated element -->
                 <element name="deprecated"/>
             </sequence>
-            <!-- deprecated -->
+            <!-- DEPRECATED attribute -->
             <attribute name="deprecated"/>
         </complexType>
     </element>
