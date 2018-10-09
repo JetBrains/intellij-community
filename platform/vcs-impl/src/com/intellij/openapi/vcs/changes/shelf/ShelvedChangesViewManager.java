@@ -701,8 +701,12 @@ public class ShelvedChangesViewManager implements Disposable {
           exceptions.add(new VcsException(e));
         }
       }
-
-      myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext);
+      if (patches.isEmpty() && oldBinaries.isEmpty()) {
+        myShelveChangesManager.deleteChangeList(list);
+      }
+      else {
+        myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext);
+      }
 
       if (! exceptions.isEmpty()) {
         String title = list.DESCRIPTION == null ? "" : list.DESCRIPTION;
