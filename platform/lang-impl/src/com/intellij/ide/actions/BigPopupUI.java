@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -25,7 +26,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,9 +35,8 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   protected JPanel suggestionsPanel;
   protected JBList<Object> myResultsList;
   protected JBPopup myHint;
-  protected Runnable searchFinishedHandler = () -> {
-  };
-  protected final List<ViewTypeListener> myViewTypeListeners = new ArrayList<>();
+  protected Runnable searchFinishedHandler = () -> { };
+  protected final List<ViewTypeListener> myViewTypeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   protected ViewType myViewType = ViewType.SHORT;
   protected JLabel myHintLabel;
 

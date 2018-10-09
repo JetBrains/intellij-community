@@ -90,7 +90,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.newSmartList();
+  private final List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final LookupPreview myPreview = new LookupPreview(this);
   // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
   private final FontPreferences myFontPreferences = new FontPreferencesImpl();

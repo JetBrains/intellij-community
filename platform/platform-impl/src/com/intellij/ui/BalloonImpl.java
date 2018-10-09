@@ -44,10 +44,8 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static com.intellij.util.ui.UIUtil.useSafely;
@@ -216,7 +214,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private int myShadowSize = Registry.intValue("ide.balloon.shadow.size");
   private ShadowBorderProvider myShadowBorderProvider;
 
-  private final CopyOnWriteArraySet<JBPopupListener> myListeners = new CopyOnWriteArraySet<>();
+  private final Collection<JBPopupListener> myListeners = new CopyOnWriteArraySet<>();
   private boolean myVisible;
   private PositionTracker<Balloon> myTracker;
   private final int myAnimationCycle;

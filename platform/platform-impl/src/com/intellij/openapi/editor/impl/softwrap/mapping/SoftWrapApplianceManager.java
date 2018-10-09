@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,7 +67,7 @@ public class SoftWrapApplianceManager implements Dumpable {
     CUSTOM
   }
 
-  private final List<SoftWrapAwareDocumentParsingListener> myListeners = new ArrayList<>();
+  private final List<SoftWrapAwareDocumentParsingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final ProcessingContext myContext = new ProcessingContext();
   private final FontTypesStorage myOffset2fontType = new FontTypesStorage();
   private final WidthsStorage myOffset2widthInPixels = new WidthsStorage();

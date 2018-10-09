@@ -22,13 +22,13 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class StatusText {
@@ -47,8 +47,8 @@ public abstract class StatusText {
   private String myText = "";
   @NotNull protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
   @NotNull private final SimpleColoredComponent mySecondaryComponent = new SimpleColoredComponent();
-  private final List<ActionListener> myClickListeners = new ArrayList<>();
-  private final List<ActionListener> mySecondaryListeners = new ArrayList<>();
+  private final List<ActionListener> myClickListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ActionListener> mySecondaryListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
   private boolean myVerticalFlow = true;

@@ -45,7 +45,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
   private WeakReference<XDebugSession> mySessionRef = null;
-  private final List<HotSwapProgressListener> myListeners = ContainerUtil.newSmartList();
+  private final List<HotSwapProgressListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public HotSwapProgressImpl(Project project) {
     super(project);

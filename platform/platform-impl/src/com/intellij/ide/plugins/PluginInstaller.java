@@ -309,30 +309,26 @@ public class PluginInstaller {
     throw new IOException("Corrupted archive (no file entries): " + zip);
   }
 
-  private static List<PluginStateListener> myStateListeners;
+  private static final List<PluginStateListener> myStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void addStateListener(@NotNull PluginStateListener listener) {
-    (myStateListeners != null ? myStateListeners : (myStateListeners = new ArrayList<>())).add(listener);
+    myStateListeners.add(listener);
   }
 
   public static void removeStateListener(@NotNull PluginStateListener listener) {
-    if (myStateListeners != null) {
-      myStateListeners.remove(listener);
-    }
+    myStateListeners.remove(listener);
   }
 
   private static void fireState(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
-    if (myStateListeners != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        for (PluginStateListener listener : myStateListeners) {
-          if (install) {
-            listener.install(descriptor);
-          }
-          else {
-            listener.uninstall(descriptor);
-          }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      for (PluginStateListener listener : myStateListeners) {
+        if (install) {
+          listener.install(descriptor);
         }
-      });
-    }
+        else {
+          listener.uninstall(descriptor);
+        }
+      }
+    });
   }
 }

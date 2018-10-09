@@ -119,10 +119,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public <T> void addListener(@NotNull AbstractProperty<T> property, @NotNull TestFrameworkPropertyListener<T> listener) {
-    List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
-    if (listeners == null) {
-      myListeners.put(property, (listeners = ContainerUtil.newArrayList()));
-    }
+    List<TestFrameworkPropertyListener> listeners =
+      myListeners.computeIfAbsent(property, __ -> ContainerUtil.createLockFreeCopyOnWriteList());
     listeners.add(listener);
   }
 
@@ -155,8 +153,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   protected <T> void onPropertyChanged(@NotNull AbstractProperty<T> property, T value) {
     List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
     if (listeners != null) {
-      for (Object o : listeners.toArray()) {
-        @SuppressWarnings("unchecked") TestFrameworkPropertyListener<T> listener = (TestFrameworkPropertyListener<T>)o;
+      for (TestFrameworkPropertyListener<T> listener : listeners) {
         listener.onChanged(value);
       }
     }
