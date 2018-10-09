@@ -109,8 +109,8 @@ public class XsltDocumentationProvider implements DocumentationProvider {
                 p = p.getPrevSibling();
             }
             if (p instanceof XmlComment) {
-                final String commentText = XmlUtil.getCommentText((XmlComment)p);
-                return commentText != null ? commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;") : null;
+                final String commentText = ((XmlComment)p).getCommentText();
+                return commentText.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
             } else {
                 return null;
             }

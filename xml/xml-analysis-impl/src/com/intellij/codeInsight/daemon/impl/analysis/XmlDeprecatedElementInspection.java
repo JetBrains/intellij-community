@@ -5,13 +5,13 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
+import com.intellij.psi.xml.XmlComment;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Language;
@@ -60,10 +60,9 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
     if (metaData == null) return false;
     PsiElement declaration = metaData.getDeclaration();
     if (declaration == null) return false;
-    PsiElement comment = XmlUtil.findPreviousComment(declaration);
+    XmlComment comment = XmlUtil.findPreviousComment(declaration);
     if (comment == null) return false;
-    String s = StringUtil.trimStart(comment.getText(), "<!--").trim();
-    return pattern.matcher(s).matches();
+    return pattern.matcher(comment.getCommentText()).matches();
   }
 
   public static class OptionsPanel {

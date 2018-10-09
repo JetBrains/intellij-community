@@ -489,19 +489,10 @@ public class XmlUtil {
     return null;
   }
 
-  @Nullable
+  @Deprecated()
+  @NotNull
   public static String getCommentText(XmlComment comment) {
-    final PsiElement firstChild = comment.getFirstChild();
-    if (firstChild != null) {
-      final PsiElement nextSibling = firstChild.getNextSibling();
-      if (nextSibling instanceof XmlToken) {
-        final XmlToken token = (XmlToken)nextSibling;
-        if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
-          return token.getText();
-        }
-      }
-    }
-    return null;
+    return comment.getCommentText();
   }
 
   @Nullable
@@ -1414,7 +1405,7 @@ public class XmlUtil {
   }
 
   @Nullable
-  public static PsiElement findPreviousComment(final PsiElement element) {
+  public static XmlComment findPreviousComment(final PsiElement element) {
     PsiElement curElement = element;
 
     while(curElement!=null && !(curElement instanceof XmlComment)) {
@@ -1430,7 +1421,7 @@ public class XmlUtil {
         break;
       }
     }
-    return curElement;
+    return (XmlComment)curElement;
   }
 
   public interface DuplicationInfoProvider<T extends PsiElement> {
