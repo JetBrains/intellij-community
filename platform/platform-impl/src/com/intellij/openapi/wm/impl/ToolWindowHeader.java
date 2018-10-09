@@ -7,10 +7,10 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.DoubleClickListener;
@@ -38,7 +38,7 @@ import java.awt.image.BufferedImage;
 public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
   @NotNull private final Producer<? extends ActionGroup> myGearProducer;
 
-  private ToolWindow myToolWindow;
+  private ToolWindowImpl myToolWindow;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
@@ -73,7 +73,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
           else {
             c.setBounds(insets.left, insets.top, r.width - insets.left - insets.right, r.height - insets.top - insets.bottom);
           }
-        } else if (getComponentCount() > 1) {
+        }
+        else if (getComponentCount() > 1) {
           Rectangle r = getBounds();
 
           Component c = getComponent(0);
@@ -103,7 +104,8 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
       public Dimension getMinimumSize() {
         Dimension size = super.getMinimumSize();
         if (getComponentCount() > 0) {
-          size.width = Math.max(size.width, getComponent(0).getMinimumSize().width + (getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0));
+          size.width = Math.max(size.width, getComponent(0).getMinimumSize().width +
+                                            (getComponentCount() > 1 ? getComponent(1).getMinimumSize().width : 0));
         }
         return size;
       }
@@ -226,6 +228,9 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     if (myToolbarWest != null) {
       myToolbarWest.updateActionsImmediately();
+
+      UIUtil.uiTraverser(myToolbarWest.getComponent()).preOrderDfsTraversal().filter(ActionButton.class).consumeEach(
+        c -> ToolWindowContentUi.initMouseListeners(c, myToolWindow.getContentUI(), false));
     }
   }
 
