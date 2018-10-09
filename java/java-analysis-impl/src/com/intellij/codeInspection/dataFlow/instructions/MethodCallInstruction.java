@@ -149,7 +149,7 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
       return EMPTY_NULLABILITY_ARRAY;
     }
 
-    int checkedCount = Math.min(myArgCount, parameters.length) - (myVarArgCall ? 1 : 0);
+    int checkedCount = Math.min(myArgCount, parameters.length - (myVarArgCall ? 1 : 0));
 
     Nullability[] nullabilities = new Nullability[myArgCount];
     for (int i = 0; i < checkedCount; i++) {
