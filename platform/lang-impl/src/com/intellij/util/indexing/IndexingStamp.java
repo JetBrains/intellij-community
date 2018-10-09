@@ -59,6 +59,8 @@ public class IndexingStamp {
 
   private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
+  private static final long ourVfsCreationStamp = FSRecords.getCreationTimestamp();
+  
   static final int INVALID_FILE_ID = 0;
 
   private IndexingStamp() {}
@@ -177,7 +179,7 @@ public class IndexingStamp {
 
         if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
             DataInputOutputUtil.readINT(in) == VERSION &&
-            DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
+            DataInputOutputUtil.readTIME(in) == ourVfsCreationStamp) {
           version = new IndexVersion(in);
           ourIndexIdToCreationStamp.put(indexName, version);
           return version;
