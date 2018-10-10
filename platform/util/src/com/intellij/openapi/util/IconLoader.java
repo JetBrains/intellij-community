@@ -27,10 +27,8 @@ import java.awt.image.RGBImageFilter;
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
@@ -194,6 +192,10 @@ public final class IconLoader {
   @SuppressWarnings("ConstantConditions")
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
+    Icon icon = findReflectiveIcon(path, aClass.getClassLoader());
+    if (icon != null) {
+      return icon;
+    }
     return findIconDeferResolve(path, null, aClass, aClass.getClassLoader(), strict);
   }
 
@@ -297,6 +299,10 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
+    Icon icon = findReflectiveIcon(path, classLoader);
+    if (icon != null) {
+      return icon;
+    }
     if (!StringUtil.startsWithChar(path, '/')) return null;
     return findIconDeferResolve(path, path.substring(1), null, classLoader, false);
   }
@@ -508,16 +514,16 @@ public final class IconLoader {
   }
 
   public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
-    /** warning: do not forget to keep {@link #copy(CachedImageIcon)} method consistent when adding/removing fields */
+    /** warning: do not forget to keep the {@link #CachedImageIcon(CachedImageIcon)} ctor consistent when adding/removing fields */
     private volatile Object myRealIcon;
     private volatile String myOriginalPath;
     @Nullable private volatile ClassLoader myClassLoader;
-    @NotNull private volatile MyUrlResolver myResolver = new MyUrlResolver(null);
+    @NotNull private volatile MyUrlResolver myResolver;
     private volatile boolean myStrict;
     private volatile boolean myDark;
     private volatile boolean myDarkOverridden;
     private volatile int numberOfPatchers = ourPatchers.size();
-    private volatile boolean myUseCacheOnLoad;
+    private final boolean myUseCacheOnLoad;
     private volatile int myClearCacheCounter = clearCacheCounter;
 
     private volatile ImageFilter[] myFilters;
@@ -534,10 +540,6 @@ public final class IconLoader {
     }
 
     private CachedImageIcon(@NotNull CachedImageIcon icon) {
-      copy(icon);
-    }
-
-    private void copy(@NotNull CachedImageIcon icon) {
       myRealIcon = null; // to be computed
       myOriginalPath = icon.myOriginalPath;
       myClassLoader = icon.myClassLoader;
@@ -801,19 +803,12 @@ public final class IconLoader {
       }
 
       /**
-       * Resolves the URL (if it's not yet resolved) and returns (possibly new) MyUrlResolver instance with the resolved URL.
+       * Resolves the URL if it's not yet resolved.
        */
       MyUrlResolver resolve() {
         if (myUrl != null) return this;
 
         String path = ObjectUtils.notNull(myOverriddenPath, myOriginalPath);
-        Icon icon = findReflectiveIcon(path, myClassLoader);
-        if (icon != null) {
-          assert icon instanceof CachedImageIcon;
-          copy((CachedImageIcon)icon); // also swaps CachedImageIcon.this.myResolver to icon.myResolver
-          return myResolver.resolve(); // return new instance ('this' goes unreferenced)
-        }
-
         URL url = findURL(path, myClassLoader);
         if (url == null && myClass != null) {
           // Some plugins use findIcon("icon.png",IconContainer.class)
