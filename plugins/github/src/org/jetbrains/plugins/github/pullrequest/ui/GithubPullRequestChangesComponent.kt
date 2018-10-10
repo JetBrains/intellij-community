@@ -83,10 +83,6 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
 
       override fun buildTreeModel() = TreeModelBuilder.buildFromChanges(myProject, grouping, changes, null)
 
-      override fun onDoubleClick() {
-        if (canShowDiff()) super.onDoubleClick()
-      }
-
       override fun getEmptyText() = myViewer.emptyText
 
       override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
