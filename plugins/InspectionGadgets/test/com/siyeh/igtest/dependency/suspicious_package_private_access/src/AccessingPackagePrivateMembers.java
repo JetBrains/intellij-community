@@ -2,6 +2,10 @@ package xxx;
 
 import static xxx.StaticMembers.*;
 
+/**
+ * @see PackagePrivateClass
+ * @see PublicClass#packagePrivateField
+ */
 public class AccessingPackagePrivateMembers {
   Object field = new <warning descr="Class xxx.PackagePrivateClass is package-private, but declared in a different module 'dep'">PackagePrivateClass</warning>();
   {
