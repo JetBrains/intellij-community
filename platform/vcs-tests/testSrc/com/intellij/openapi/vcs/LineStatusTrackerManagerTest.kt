@@ -165,7 +165,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     ranges[1].assertChangeList("Test")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 2019, month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
     createChangelist("Test")
 
@@ -183,7 +183,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 2019, month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
   fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
     createChangelist("Test")
 
@@ -788,7 +788,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test 2")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test vcs refresh - tracker created and released during update (changes moved via LST)`() {
     createChangelist("Test")
 
@@ -889,7 +889,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test vcs refresh - tracker created and released during update  (changes moved via LST, no partial changes)`() {
     createChangelist("Test")
 
@@ -982,7 +982,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test file rename - with partial changes, try release tracker during CLM refresh`() {
     createChangelist("Test")
 
