@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFixBase;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonObject;
@@ -26,7 +27,9 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
@@ -100,7 +103,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
     }
 
 
-    public void applyFix(@NotNull Editor editor) {
+    private void applyFix(@NotNull Editor editor) {
       final PsiElement currentElement = myElement.getElement();
       if (mySameNamedKeys.size() == 2) {
         final Iterator<SmartPsiElementPointer> iterator = mySameNamedKeys.iterator();
@@ -110,34 +113,19 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
         navigateTo(editor, toNavigate);
       }
       else {
-        JBPopupFactory.getInstance().createListPopup(new ListPopupStep() {
+        final List<PsiElement> allElements =
+          mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != currentElement).collect(Collectors.toList());
+        JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiElement>("Duplicates of '" + myEntryKey + "'", allElements) {
           @NotNull
           @Override
-          public List getValues() {
-            return mySameNamedKeys.stream().map(k -> k.getElement()).filter(k -> k != currentElement).collect(Collectors.toList());
-          }
-
-          @Override
-          public boolean isSelectable(Object value) {
-            return true;
-          }
-
-          @Nullable
-          @Override
-          public Icon getIconFor(Object aValue) {
-            return aValue instanceof PsiElement ? ((PsiElement)aValue).getIcon(0) : null;
+          public Icon getIconFor(PsiElement aValue) {
+            return AllIcons.Nodes.Property;
           }
 
           @NotNull
           @Override
-          public String getTextFor(Object value) {
-            return "'" + myEntryKey + "' at line #" + editor.getDocument().getLineNumber(((PsiElement)value).getTextOffset());
-          }
-
-          @Nullable
-          @Override
-          public ListSeparator getSeparatorAbove(Object value) {
-            return null;
+          public String getTextFor(PsiElement value) {
+            return "'" + myEntryKey + "' at line #" + editor.getDocument().getLineNumber(value.getTextOffset());
           }
 
           @Override
@@ -145,65 +133,22 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
             return 0;
           }
 
-          @NotNull
-          @Override
-          public String getTitle() {
-            return "Duplicates of '" + myEntryKey + "'";
-          }
-
           @Nullable
           @Override
-          public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
-            navigateTo(editor, (PsiElement)selectedValue);
+          public PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
+            navigateTo(editor, selectedValue);
             return PopupStep.FINAL_CHOICE;
-          }
-
-          @Override
-          public boolean hasSubstep(Object selectedValue) {
-            return false;
-          }
-
-          @Override
-          public void canceled() {
-          }
-
-          @Override
-          public boolean isMnemonicsNavigationEnabled() {
-            return false;
-          }
-
-          @Nullable
-          @Override
-          public MnemonicNavigationFilter getMnemonicNavigationFilter() {
-            return null;
           }
 
           @Override
           public boolean isSpeedSearchEnabled() {
             return true;
           }
-
-          @Nullable
-          @Override
-          public SpeedSearchFilter getSpeedSearchFilter() {
-            return null;
-          }
-
-          @Override
-          public boolean isAutoSelectionEnabled() {
-            return false;
-          }
-
-          @Nullable
-          @Override
-          public Runnable getFinalRunnable() {
-            return null;
-          }
         }).showInBestPositionFor(editor);
       }
     }
 
-    private static void navigateTo(@NotNull Editor editor, PsiElement toNavigate) {
+    private static void navigateTo(@NotNull Editor editor, @NotNull PsiElement toNavigate) {
       editor.getCaretModel().moveToOffset(toNavigate.getTextOffset());
       editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
