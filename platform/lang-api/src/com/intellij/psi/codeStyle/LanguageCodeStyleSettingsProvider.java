@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Base class and extension point for common code style settings for a specific language.
@@ -323,11 +324,17 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
       this.getClass().getCanonicalName() + " for language #" + getLanguage().getID() + " doesn't implement createConfigurable()");
   }
 
+  private static final AtomicReference<List<LanguageCodeStyleSettingsProvider>> ourSettingsPagesProviders = new AtomicReference<>();
 
   /**
    * @return A list of providers implementing {@link #createConfigurable(CodeStyleSettings, CodeStyleSettings)}
    */
   public static List<LanguageCodeStyleSettingsProvider> getSettingsPagesProviders() {
+    return ourSettingsPagesProviders.updateAndGet(__ -> __ != null ? __ : calcSettingPagesProviders());
+  }
+
+  @NotNull
+  protected static List<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     List<LanguageCodeStyleSettingsProvider> settingsPagesProviders = ContainerUtil.newArrayList();
     for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
       try {
