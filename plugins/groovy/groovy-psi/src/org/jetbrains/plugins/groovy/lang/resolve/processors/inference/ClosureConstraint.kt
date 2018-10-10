@@ -14,7 +14,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.sam.findSingleAbstractMethod
 import org.jetbrains.plugins.groovy.lang.sam.isSamConversionAllowed
 
-class ClosureConstraint(val closure: GrClosableBlock, val leftType: PsiType) : ConstraintFormula {
+class ClosureConstraint(private val closure: GrClosableBlock, private val leftType: PsiType) : ConstraintFormula {
+
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     if ((session as GroovyInferenceSession).skipClosureBlock || session.closureSkipList.contains(findCall(closure))) {
       //TODO:add explicit typed closure constraints
