@@ -122,26 +122,26 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
         project.putUserData(BALLOON_SHOWING, true)
 
-          BALLOON_NOTIFICATIONS
-            .createNotification(
-              "Type hints are not installed",
-              "They are needed for better code insight.<br/>" +
-              "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-              "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
-              "<a href=\"#settings\">Settings</a>",
-              NotificationType.INFORMATION
-            ) { notification, event ->
-              try {
-                val problemDescriptor = ProblemDescriptorImpl(
-                  file,
-                  file,
-                  "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
-                  LocalQuickFix.EMPTY_ARRAY,
-                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                  true,
-                  null,
-                  true
-                )
+        BALLOON_NOTIFICATIONS
+          .createNotification(
+            "Type hints are not installed",
+            "They are needed for better code insight.<br/>" +
+            "<a href=\"#yes\">Install ${if (plural) "stub packages" else reqsToString}</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
+            "<a href=\"#no\">Ignore</a>&nbsp;&nbsp;&nbsp;&nbsp;" +
+            "<a href=\"#settings\">Settings</a>",
+            NotificationType.INFORMATION
+          ) { notification, event ->
+            try {
+              val problemDescriptor = ProblemDescriptorImpl(
+                file,
+                file,
+                "Stub package${if (plural) "s" else ""} $reqsToString ${if (plural) "are" else "is"} not installed",
+                LocalQuickFix.EMPTY_ARRAY,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                true,
+                null,
+                true
+              )
 
               when (event.description) {
                 "#yes" -> {
@@ -156,9 +156,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
             }
             finally {
               notification.expire()
-              project.putUserData(BALLOON_SHOWING, false)
             }
           }
+          .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
           .notify(project)
       }
     }
