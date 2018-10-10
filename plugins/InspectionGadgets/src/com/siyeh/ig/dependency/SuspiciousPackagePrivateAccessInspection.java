@@ -21,7 +21,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -35,8 +34,8 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLocalInspectionTool {
@@ -57,39 +56,26 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new UastVisitorAdapter(new AbstractUastNonRecursiveVisitor() {
       @Override
-      public boolean visitCallExpression(@NotNull UCallExpression node) {
-        PsiMethod resolve = node.resolve();
-        if (resolve != null) {
-          UElement sourceNode = ObjectUtils.chooseNotNull(node.getMethodIdentifier(), node.getClassReference());
-          checkAccess(Objects.requireNonNull(sourceNode), resolve, node.getReceiver());
-        }
-        UReferenceExpression classReference = node.getClassReference();
-        if (resolve == null && classReference != null && node.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
-          PsiElement element = classReference.resolve();
-          if (element instanceof PsiClass) {
-            checkClassReference(classReference, (PsiClass)element);
-          }
-        }
-        return false;
-      }
-
-      @Override
       public boolean visitQualifiedReferenceExpression(@NotNull UQualifiedReferenceExpression node) {
-        PsiElement resolve = node.resolve();
-        if (resolve instanceof PsiField) {
-          PsiField field = (PsiField)resolve;
-          checkAccess(node.getSelector(), field, node.getReceiver());
+        UExpression receiver = node.getReceiver();
+        if (node.getSourcePsi() instanceof PsiMethodCallExpression) {
+          //JavaUastLanguagePlugin produces UQualifiedReferenceExpression for the both PsiMethodCallExpression and PsiReferenceExpression inside it, so we need to ignore them
+          return true;
         }
-        return false;
+        PsiElement resolved = node.resolve();
+        if (resolved instanceof PsiMember) {
+          checkAccess(node.getSelector(), (PsiMember)resolved, receiver);
+        }
+        return true;
       }
 
       @Override
-      public boolean visitTypeReferenceExpression(@NotNull UTypeReferenceExpression node) {
-        PsiType type = node.getType();
-        if (type instanceof PsiClassType) {
-          checkClassReference(node, ((PsiClassType)type).resolve());
+      public boolean visitSimpleNameReferenceExpression(@NotNull USimpleNameReferenceExpression node) {
+        PsiElement resolved = node.resolve();
+        if (resolved instanceof PsiMember) {
+          checkAccess(node, (PsiMember)resolved, null);
         }
-        return false;
+        return true;
       }
 
       @Override
@@ -102,13 +88,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
             checkAccess(sourceNode, member, node.getQualifierExpression());
           }
         }
-        return false;
-      }
-
-      private void checkClassReference(@NotNull UElement sourceNode, @Nullable PsiClass targetClass) {
-        if (targetClass != null) {
-          checkAccess(sourceNode, targetClass, null);
-        }
+        return true;
       }
 
       private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable UExpression receiver) {
