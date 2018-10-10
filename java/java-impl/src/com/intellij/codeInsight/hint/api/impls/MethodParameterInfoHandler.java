@@ -507,7 +507,9 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
       parmType = substitutor.substitute(parmType);
 
-      if (!parmType.isAssignableFrom(argType)) {
+      if (!parmType.isAssignableFrom(argType) &&
+          !(parm.getType() instanceof PsiEllipsisType && argType instanceof PsiArrayType &&
+            parmType.isAssignableFrom(((PsiArrayType)argType).getComponentType()))) {
         return false;
       }
     }

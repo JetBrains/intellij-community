@@ -427,4 +427,18 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     showParameterInfo();
     checkHintContents("<html>int i</html>");
   }
+
+  public void testVarargWithArrayArgument() {
+    configureJava("class C {\n" +
+                  "  void some(int a) {}\n" +
+                  "  void some(String... b) {}\n" +
+                  "  void m(String[] c) {\n" +
+                  "    some(c<caret>);\n" +
+                  "  }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("<html><b>int a</b></html>\n" +
+                      "-\n" +
+                      "[<html><b>String... b</b></html>]");
+  }
 }
