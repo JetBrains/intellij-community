@@ -299,6 +299,9 @@ public class XmlUtil {
       if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);
         char c = XmlTagUtil.getCharacterByEntityName(text);
+        if (c == 0) {
+          LOG.error("Unknown entity: " + text);
+        }
         return c == 0 ? ' ' : c;
       }
       text = text.substring(2, text.length() - 1);
@@ -318,10 +321,6 @@ public class XmlUtil {
       return (char)code;
     }
     catch (NumberFormatException e) {
-      return 0;
-    }
-    catch (NullPointerException e) {
-      LOG.error("Cannot parse ref: '" + text + "'", e);
       return 0;
     }
   }
