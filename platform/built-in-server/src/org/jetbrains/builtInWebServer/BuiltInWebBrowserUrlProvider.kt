@@ -48,7 +48,10 @@ fun getBuiltInServerUrls(file: VirtualFile,
   }
 
   val info = WebServerPathToFileManager.getInstance(project).getPathInfo(file) ?: return emptyList()
+  return getBuiltInServerUrls(info, project, currentAuthority, appendAccessToken)
+}
 
+fun getBuiltInServerUrls(info: PathInfo, project: Project, currentAuthority: String? = null, appendAccessToken: Boolean = true): SmartList<Url> {
   val effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().effectiveBuiltInServerPort
   val path = info.path
 
