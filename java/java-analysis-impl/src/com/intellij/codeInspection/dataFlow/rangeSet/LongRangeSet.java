@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -191,6 +192,8 @@ public abstract class LongRangeSet {
     }
     return null;
   }
+
+  public abstract LongRangeSet castTo(PsiPrimitiveType type);
 
   /**
    * Returns a range which represents all the possible values after applying {@link Math#abs(int)} or {@link Math#abs(long)}
@@ -404,6 +407,12 @@ public abstract class LongRangeSet {
     if (leftFrom == leftTo && rightFrom == rightTo) {
       return point(leftFrom & rightFrom);
     }
+    if (leftFrom == leftTo && Long.bitCount(leftFrom+1) == 1) {
+      return bitwiseMask(rightFrom, rightTo, leftFrom);
+    }
+    if (rightFrom == rightTo && Long.bitCount(rightFrom+1) == 1) {
+      return bitwiseMask(leftFrom, leftTo, rightFrom);
+    }
     ThreeState[] leftBits = bits(leftFrom, leftTo);
     ThreeState[] rightBits = bits(rightFrom, rightTo);
     ThreeState[] resultBits = new ThreeState[Long.SIZE];
@@ -419,6 +428,22 @@ public abstract class LongRangeSet {
       }
     }
     return fromBits(resultBits);
+  }
+
+  /**
+   * Returns the range after applying the mask to the input range which looks like 0..01..1 in binary
+   * @param from input range start
+   * @param to input range end
+   * @param mask mask
+   * @return range set after applying the mask
+   */
+  private static LongRangeSet bitwiseMask(long from, long to, long mask) {
+    if (to - from > mask) return range(0, mask);
+    long min = from & mask;
+    long max = to & mask;
+    assert min != max;
+    if (min < max) return range(min, max);
+    return new RangeSet(new long[] {0, max, min, mask});
   }
 
   /**
@@ -712,6 +737,14 @@ public abstract class LongRangeSet {
       return other.isEmpty();
     }
 
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (TypeConversionUtil.isIntegralNumberType(type)) {
+        return this;
+      }
+      throw new IllegalArgumentException(type.toString());
+    }
+
     @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
@@ -802,6 +835,28 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(LongRangeSet other) {
       return other.isEmpty() || equals(other);
+    }
+
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (PsiType.LONG.equals(type)) return this;
+      long newValue;
+      if (PsiType.CHAR.equals(type)) {
+        newValue = (char)myValue;
+      }
+      else if (PsiType.INT.equals(type)) {
+        newValue = (int)myValue;
+      }
+      else if (PsiType.SHORT.equals(type)) {
+        newValue = (short)myValue;
+      }
+      else if (PsiType.BYTE.equals(type)) {
+        newValue = (byte)myValue;
+      }
+      else {
+        throw new IllegalArgumentException(type.toString());
+      }
+      return newValue == myValue ? this : point(newValue);
     }
 
     @NotNull
@@ -924,10 +979,8 @@ public abstract class LongRangeSet {
         if (from <= myFrom) {
           return range(to + 1, myTo);
         }
-        if (to >= myTo) {
-          return range(myFrom, from - 1);
-        }
-        throw new InternalError("Impossible: " + this + ":" + other);
+        assert to >= myTo;
+        return range(myFrom, from - 1);
       }
       long[] ranges = ((RangeSet)other).myRanges;
       LongRangeSet result = this;
@@ -996,6 +1049,35 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(LongRangeSet other) {
       return other.isEmpty() || other.min() >= myFrom && other.max() <= myTo;
+    }
+
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      if (PsiType.LONG.equals(type)) return this;
+      if (PsiType.BYTE.equals(type)) {
+        return mask(Byte.SIZE, type);
+      }
+      if (PsiType.SHORT.equals(type)) {
+        return mask(Short.SIZE, type);
+      }
+      if (PsiType.INT.equals(type)) {
+        return mask(Integer.SIZE, type);
+      }
+      if (PsiType.CHAR.equals(type)) {
+        if (myFrom <= Character.MIN_VALUE && myTo >= Character.MAX_VALUE) return CHAR_RANGE;
+        if (myFrom >= Character.MIN_VALUE && myTo <= Character.MAX_VALUE) return this;
+        return bitwiseAnd(point(0xFFFF));
+      }
+      throw new IllegalArgumentException(type.toString());
+    }
+
+    @NotNull
+    private LongRangeSet mask(int size, PsiPrimitiveType type) {
+      long addend = 1L << (size - 1);
+      if (myFrom <= -addend && myTo >= addend - 1) return Objects.requireNonNull(fromType(type));
+      if (myFrom >= -addend && myTo <= addend - 1) return this;
+      long mask = (1L << size) - 1;
+      return plus(myFrom, myTo, addend, addend, true).bitwiseAnd(point(mask)).plus(point(-addend), true);
     }
 
     @NotNull
@@ -1231,6 +1313,15 @@ public abstract class LongRangeSet {
         if (result.isEmpty()) return true;
       }
       return false;
+    }
+
+    @Override
+    public LongRangeSet castTo(PsiPrimitiveType type) {
+      LongRangeSet result = all();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]).castTo(type));
+      }
+      return all().subtract(result);
     }
 
     @NotNull

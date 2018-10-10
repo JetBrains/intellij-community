@@ -1477,6 +1477,40 @@ public class TypeConversionUtil {
     parameter.putUserData(LOWER_BOUND, lowerBound);
   }
 
+  /**
+   * Returns true if numeric conversion (widening or narrowing) does not lose the information.
+   * This differs slightly from {@link #isAssignable(PsiType, PsiType)} result as some assignable types
+   * still may lose the information. E.g. {@code double doubleVar = longVar} may lose round the long value.
+   *
+   * @param target target type
+   * @param source source type
+   * @return true if numeric conversion (widening or narrowing) does not lose the information.
+   */
+  public static boolean isSafeConversion(PsiType target, PsiType source) {
+    /*  From \ To  byte short char int long float double
+     *  byte        +    +    -    +    +    +    +
+     *  short       -    +    -    +    +    +    +
+     *  char        -    -    +    +    +    +    +
+     *  int         -    -    -    +    +    -    +
+     *  long        -    -    -    -    +    -    -
+     *  float       -    -    -    -    -    +    +
+     *  double      -    -    -    -    -    -    +
+     */
+    if (target == null || source == null) return false;
+    if (target.equals(source)) return true;
+
+    int sourceRank = TYPE_TO_RANK_MAP.get(source);
+    int targetRank = TYPE_TO_RANK_MAP.get(target);
+    if (sourceRank == 0 || sourceRank > MAX_NUMERIC_RANK ||
+        targetRank == 0 || targetRank > MAX_NUMERIC_RANK ||
+        !IS_ASSIGNABLE_BIT_SET[sourceRank-1][targetRank-1]) {
+      return false;
+    }
+    if (PsiType.INT.equals(source) && PsiType.FLOAT.equals(target)) return false;
+    if (PsiType.LONG.equals(source) && isFloatOrDoubleType(target)) return false;
+    return true;
+  }
+
   @FunctionalInterface
   private interface Caster {
     @NotNull

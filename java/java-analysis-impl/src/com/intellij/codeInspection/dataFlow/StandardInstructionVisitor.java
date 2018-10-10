@@ -541,11 +541,20 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (methodType == MethodCallInstruction.MethodType.CAST) {
       assert qualifierValue != null;
-      if (qualifierValue instanceof DfaConstValue && type != null) {
-        Object casted = TypeConversionUtil.computeCastTo(((DfaConstValue)qualifierValue).getValue(), type);
+      if (qualifierValue instanceof DfaVariableValue && TypeConversionUtil.isSafeConversion(type, qualifierValue.getType())) {
+        return qualifierValue;
+      }
+      DfaConstValue constValue = state.getConstantValue(qualifierValue);
+      if (constValue != null && type != null) {
+        Object casted = TypeConversionUtil.computeCastTo(constValue.getValue(), type);
         return factory.getConstFactory().createFromValue(casted, type);
       }
-      return qualifierValue;
+      if (type instanceof PsiPrimitiveType && TypeConversionUtil.isIntegralNumberType(type)) {
+        LongRangeSet range = state.getValueFact(qualifierValue, DfaFactType.RANGE);
+        if (range == null) range = LongRangeSet.all();
+        return factory.getFactValue(DfaFactType.RANGE, range.castTo((PsiPrimitiveType)type));
+      }
+      return DfaUnknownValue.getInstance();
     }
 
     if (type != null && !(type instanceof PsiPrimitiveType)) {

@@ -31,7 +31,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -1977,23 +1976,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (operand != null) {
       operand.accept(this);
-      generateBoxingUnboxingInstructionFor(operand, castExpression.getType());
+      generateBoxingUnboxingInstructionFor(castExpression, operand.getType(), castExpression.getType());
     }
     else {
       addInstruction(new PushInstruction(myFactory.createTypeValue(castExpression.getType(), Nullability.UNKNOWN), null));
     }
 
     final PsiTypeElement typeElement = castExpression.getCastType();
-    if (typeElement != null && operand != null && operand.getType() != null) {
-      if (typeElement.getType() instanceof PsiPrimitiveType &&
-          !UnnecessaryExplicitNumericCastInspection.isUnnecessaryPrimitiveNumericCast(castExpression)) {
-        if (!typeElement.getType().equals(PsiPrimitiveType.getUnboxedType(operand.getType()))) {
-          addInstruction(new PopInstruction());
-          pushUnknown();
-        }
-      } else {
-        addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
-      }
+    if (typeElement != null && operand != null && operand.getType() != null && !(typeElement.getType() instanceof PsiPrimitiveType)) {
+      addInstruction(new TypeCastInstruction(castExpression, operand, typeElement.getType()));
     }
     finishElement(castExpression);
   }
