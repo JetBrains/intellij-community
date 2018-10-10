@@ -85,6 +85,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
 
   @BindControl("branchNameFormat")
   private EditorTextField myBranchNameFormat;
+  private JCheckBox myLowerCase;
 
   private final Project myProject;
   private Configurable[] myConfigurables;
@@ -126,6 +127,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     enableCachePanel();
     myAlwaysDisplayTaskCombo.setSelected(TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO);
     myConnectionTimeout.setText(Integer.toString(TaskSettings.getInstance().CONNECTION_TIMEOUT));
+    myLowerCase.setSelected(TaskSettings.getInstance().LOWER_CASE_BRANCH);
   }
 
   @Override
@@ -146,6 +148,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     int oldConnectionTimeout = TaskSettings.getInstance().CONNECTION_TIMEOUT;
     Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
     TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
+    TaskSettings.getInstance().LOWER_CASE_BRANCH = myLowerCase.isSelected();
 
     if (connectionTimeout != oldConnectionTimeout) {
       for (TaskRepository repository : manager.getAllRepositories()) {
@@ -160,7 +163,8 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
   public boolean isModified() {
     return super.isModified() ||
            TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO != myAlwaysDisplayTaskCombo.isSelected() ||
-      TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText());
+           TaskSettings.getInstance().CONNECTION_TIMEOUT != Integer.valueOf(myConnectionTimeout.getText()) ||
+           TaskSettings.getInstance().LOWER_CASE_BRANCH != myLowerCase.isSelected();
   }
 
   @Override
