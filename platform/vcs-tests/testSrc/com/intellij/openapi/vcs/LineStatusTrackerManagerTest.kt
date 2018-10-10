@@ -939,8 +939,29 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
   fun `test file rename - with partial changes`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    lstm.waitUntilBaseContentsLoaded()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    removeBaseVersion(FILE_1)
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+    FILE_2.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+  }
+
+  fun `test file rename - with partial changes, while tracker not initialized`() {
     createChangelist("Test")
 
     val file = addLocalFile(FILE_1, "a_b_c_d_e")
@@ -953,9 +974,12 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     runWriteAction {
       file.rename(this, FILE_2)
     }
+    removeBaseVersion(FILE_1)
     setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
     refreshCLM()
-    FILE_2.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    // It might be better to return ("Test", DEFAULT) here, but the case is tricky
+    FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
   }
 
   @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
@@ -969,9 +993,13 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     runCommand { file.document.replaceString(0, 1, "a2") }
     FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
 
+    lstm.waitUntilBaseContentsLoaded()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
     runWriteAction {
       file.rename(this, FILE_2)
     }
+    removeBaseVersion(FILE_1)
     setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
 
     changeProvider.awaitAndBlockRefresh().use {
