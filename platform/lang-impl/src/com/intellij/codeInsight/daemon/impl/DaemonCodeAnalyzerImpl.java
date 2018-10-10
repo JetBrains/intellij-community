@@ -159,7 +159,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
+  public static List<HighlightInfo> getHighlights(@NotNull Document document, @Nullable HighlightSeverity minSeverity, @NotNull Project project) {
     List<HighlightInfo> infos = new ArrayList<>();
     processHighlights(document, project, minSeverity, 0, document.getTextLength(), Processors.cancelableCollectProcessor(infos));
     return infos;
@@ -287,12 +287,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                       @NotNull Document document,
-                                       @NotNull List<? extends TextEditor> textEditors,
-                                       @NotNull int[] toIgnore,
-                                       boolean canChangeDocument,
-                                       @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
+  public void runPasses(@NotNull PsiFile file,
+                        @NotNull Document document,
+                        @NotNull List<? extends TextEditor> textEditors,
+                        @NotNull int[] toIgnore,
+                        boolean canChangeDocument,
+                        @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -384,8 +384,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
-
-      return getHighlights(document, null, project);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);

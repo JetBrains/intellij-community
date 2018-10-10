@@ -216,7 +216,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       try {
         settings.AUTOREPARSE_DELAY = 0;
         List<HighlightInfo> infos = new ArrayList<>();
-        EdtTestUtil.runInEdtAndWait(() -> infos.addAll( codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null)));
+        EdtTestUtil.runInEdtAndWait(() -> {
+          codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
+          IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+          if (policy != null) {
+            policy.waitForHighlighting(project, editor);
+          }
+          infos.addAll(DaemonCodeAnalyzerImpl.getHighlights(editor.getDocument(), null, project));
+        });
         infos.addAll(DaemonCodeAnalyzerEx.getInstanceEx(project).getFileLevelHighlights(project, file));
         return infos;
       }
@@ -227,8 +234,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           throw e;
         }
 
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        UIUtil.dispatchAllInvocationEvents();
+        EdtTestUtil.runInEdtAndWait(() -> {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+          UIUtil.dispatchAllInvocationEvents();
+        });
         exception = e;
       }
       finally {
@@ -254,6 +263,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
+    IdeaTestExecutionPolicy current = IdeaTestExecutionPolicy.current();
+    if (current != null) {
+      current.waitForHighlighting(file.getProject(), editor);
+    }
     ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file);
 
     List<IntentionAction> result = new ArrayList<>();
@@ -564,7 +577,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public List<IntentionAction> getAvailableIntentions() {
     doHighlighting();
-    return getAvailableIntentions(getHostEditor(), getHostFileAtCaret());
+    return ReadAction.compute(() -> getAvailableIntentions(getHostEditor(), getHostFileAtCaret()));
   }
 
   @NotNull
@@ -608,7 +621,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void launchAction(@NotNull final IntentionAction action) {
-    invokeIntention(action, getHostFileAtCaret(), getHostEditor(), action.getText());
+    EdtTestUtil.runInEdtAndWait(() -> invokeIntention(action, getHostFileAtCaret(), getHostEditor(), action.getText()));
   }
 
   @Override

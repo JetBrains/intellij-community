@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.analysis.AnalysisScope
@@ -13,6 +13,7 @@ import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.mapSmart
@@ -103,6 +104,8 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     profile.enableTool(shortName, project)
   }
   Disposer.register(disposable, Disposable { profile.setToolEnabled(shortName, false) })
+
+  IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
 }
 
 inline fun <T> runInInitMode(runnable: () -> T): T {

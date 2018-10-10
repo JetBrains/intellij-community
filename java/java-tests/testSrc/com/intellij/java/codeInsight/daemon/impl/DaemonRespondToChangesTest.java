@@ -1959,7 +1959,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     TextEditor textEditor1 = new PsiAwareTextEditorProvider().getTextEditor(editor1);
     TextEditor textEditor2 = new PsiAwareTextEditorProvider().getTextEditor(editor2);
 
-    List<HighlightInfo> errors = myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), Arrays.asList(textEditor1,textEditor2), new int[0], false, null);
+    myDaemonCodeAnalyzer.runPasses(myFile, editor1.getDocument(), Arrays.asList(textEditor1,textEditor2), new int[0], false, null);
+    List<HighlightInfo> errors = DaemonCodeAnalyzerImpl.getHighlights(editor1.getDocument(), null, myProject);
     assertEmpty(errors);
 
     assertEquals(collected, ContainerUtil.newHashSet(editor1, editor2));
@@ -2088,9 +2089,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         getEditor().getCaretModel().moveToOffset(0);
       }
     };
-    final List<HighlightInfo> errors = filter(
-      di.runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtil.EMPTY_INT_ARRAY, false,
-                   callbackWhileWaiting), HighlightSeverity.ERROR);
+    di.runPasses(getFile(), getEditor().getDocument(), Collections.singletonList(textEditor), ArrayUtil.EMPTY_INT_ARRAY, false,
+                 callbackWhileWaiting);
+    final List<HighlightInfo> errors = filter(DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), null, myProject), HighlightSeverity.ERROR);
 
     assertEquals(1, errors.size());
     assertEquals("Incompatible types. Found: 'java.lang.String', required: 'int'", errors.get(0).getDescription());
