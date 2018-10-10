@@ -144,7 +144,12 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
       return JDOMUtil.loadDocument(file);
     }
     catch (IOException | JDOMException e) {
-      throw new AssertionError(e);
+      String content = null;
+      try {
+        content = FileUtil.loadFile(file);
+      }
+      catch (IOException ignored) {}
+      throw new AssertionError("cannot parse: " + content, e);
     }
   }
 
