@@ -12,7 +12,10 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import org.apache.http.HttpStatus
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpHead
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.log4j.AppenderSkeleton
 import org.apache.log4j.Level
@@ -339,31 +342,55 @@ class CompilationPartsUtil {
       String prefix = metadata.prefix
       String serverUrl = metadata.serverUrl
 
-      initLog4J(messages)
+      if (!toDownload.isEmpty()) {
+        initLog4J(messages)
 
-      def httpClient = HttpClientBuilder.create()
-        .setUserAgent('Parts Downloader')
-        .setMaxConnTotal(20)
-        .setMaxConnPerRoute(10)
-        .build()
+        def httpClient = HttpClientBuilder.create()
+          .setUserAgent('Parts Downloader')
+          .setMaxConnTotal(20)
+          .setMaxConnPerRoute(10)
+          .build()
 
-      toDownload.each { ctx ->
-        executor.submit {
-          FileUtil.ensureExists(ctx.jar.parentFile)
-          def get = new HttpGet("$serverUrl/$prefix/${ctx.name}/${ctx.jar.name}")
-          def response = httpClient.execute(get)
-          assert response.getStatusLine().getStatusCode() == 200
-          def bis = new BufferedInputStream(response.getEntity().getContent())
-          def bos = new BufferedOutputStream(new FileOutputStream(ctx.jar))
-          FileUtil.copy(bis, bos)
-          StreamUtil.closeStream(bis)
-          StreamUtil.closeStream(bos)
+        String urlWithPrefix = "$serverUrl/$prefix/".toString()
+
+        // First let's check for initial redirect (mirror selection)
+        messages.block("Mirror selection") {
+          def head = new HttpHead(urlWithPrefix)
+          head.setConfig(RequestConfig.custom().setRedirectsEnabled(false).build())
+          def response = httpClient.execute(head)
+          int statusCode = response.getStatusLine().getStatusCode()
+          def locationHeader = response.getFirstHeader("location")
+          if ((statusCode == HttpStatus.SC_MOVED_TEMPORARILY ||
+               statusCode == HttpStatus.SC_MOVED_PERMANENTLY ||
+               statusCode == HttpStatus.SC_TEMPORARY_REDIRECT ||
+               statusCode == HttpStatus.SC_SEE_OTHER)
+            && locationHeader != null) {
+            urlWithPrefix = locationHeader.getValue()
+          }
           StreamUtil.closeStream(response)
         }
-      }
-      executor.waitForAllComplete(messages)
 
-      StreamUtil.closeStream(httpClient)
+        toDownload.each { ctx ->
+          executor.submit {
+            FileUtil.ensureExists(ctx.jar.parentFile)
+            def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.name}")
+            def response = httpClient.execute(get)
+            assert response.getStatusLine().getStatusCode() == 200
+            def bis = new BufferedInputStream(response.getEntity().getContent())
+            def bos = new BufferedOutputStream(new FileOutputStream(ctx.jar))
+            FileUtil.copy(bis, bos)
+            StreamUtil.closeStream(bis)
+            StreamUtil.closeStream(bos)
+            StreamUtil.closeStream(response)
+          }
+        }
+        executor.waitForAllComplete(messages)
+
+        StreamUtil.closeStream(httpClient)
+
+        deinitLog4J()
+      }
+
       messages.reportStatisticValue('compile-parts:download:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
 
@@ -426,7 +453,6 @@ class CompilationPartsUtil {
 
     executor.reportErrors(messages)
 
-    deinitLog4J()
   }
 
   private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
