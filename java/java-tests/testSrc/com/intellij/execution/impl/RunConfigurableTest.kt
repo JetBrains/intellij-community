@@ -22,6 +22,7 @@ import org.junit.Test
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
+import kotlin.test.assertFalse
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             FOLDER, //1
@@ -189,8 +190,9 @@ internal class RunConfigurableTest {
   @Test
   fun sort() {
     doExpand()
+    assertFalse(model.canDrop(2, 0, ABOVE))
     assertThat(configurable.isModified).isFalse()
-    model.drop(2, 0, ABOVE)
+    model.drop(2, 14, ABOVE)
     assertThat(configurable.isModified).isTrue()
     configurable.apply()
     assertThat(configurable.runManager.allSettings.map { it.name }).containsExactly("Renamer",
