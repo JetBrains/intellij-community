@@ -1448,17 +1448,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (myManager == null) {
-        StringBuilder uiPath = new StringBuilder();
-        Component component = myToolBar.getComponent();
-        while (component != null) {
-          uiPath.append(component.getClass().getName()).append("\n");
-          component = component.getParent();
-        }
-        LOG.error("Updating on a disposed component at \n" + uiPath.toString());
-        return;
-      }
-      if (myOnToolbar && myManager.myToolWindow != null) {
+      if (myManager == null || myOnToolbar && myManager.myToolWindow != null) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }
@@ -1562,7 +1552,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (myManager.myToolWindow != null) {
+      if (myManager == null || myManager.myToolWindow != null) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }
