@@ -781,17 +781,17 @@ public final class IconLoader {
      */
     private class MyUrlResolver {
       @Nullable private final Class myClass;
-      @Nullable private final String myOverridenPath;
+      @Nullable private final String myOverriddenPath;
       @Nullable private volatile URL myUrl;
 
       MyUrlResolver(@Nullable URL url) {
         myClass = null;
-        myOverridenPath = null;
+        myOverriddenPath = null;
         myUrl = url;
       }
 
       MyUrlResolver(@Nullable String path, @Nullable Class clazz) {
-        myOverridenPath = path;
+        myOverriddenPath = path;
         myClass = clazz;
         if (!Registry.is("ide.icons.deferUrlResolve")) resolve();
       }
@@ -800,15 +800,18 @@ public final class IconLoader {
         return myUrl != null;
       }
 
+      /**
+       * Resolves the URL (if it's not yet resolved) and returns (possibly new) MyUrlResolver instance with the resolved URL.
+       */
       MyUrlResolver resolve() {
         if (myUrl != null) return this;
 
-        String path = ObjectUtils.notNull(myOverridenPath, myOriginalPath);
+        String path = ObjectUtils.notNull(myOverriddenPath, myOriginalPath);
         Icon icon = findReflectiveIcon(path, myClassLoader);
         if (icon != null) {
           assert icon instanceof CachedImageIcon;
-          copy((CachedImageIcon)icon);
-          return myResolver.resolve(); // resolve in the copied icon's resolver
+          copy((CachedImageIcon)icon); // also swaps CachedImageIcon.this.myResolver to icon.myResolver
+          return myResolver.resolve(); // return new instance ('this' goes unreferenced)
         }
 
         URL url = findURL(path, myClassLoader);
@@ -819,11 +822,7 @@ public final class IconLoader {
         if (url == null && myStrict) {
           throw new RuntimeException("Can't find icon in '" + myOriginalPath + "' near " + myClassLoader);
         }
-        //noinspection SynchronizeOnThis
-        synchronized (this) {
-          // sync write only to exclude any potential deadlocks
-          if (myUrl == null) myUrl = url;
-        }
+        myUrl = url;
         return this;
       }
 
