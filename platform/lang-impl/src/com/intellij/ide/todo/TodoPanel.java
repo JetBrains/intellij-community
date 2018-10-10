@@ -322,6 +322,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     myTodoTreeBuilder.rebuildCache();
   }
 
+  void rebuildCache(@NotNull Set<VirtualFile> files) {
+    myTodoTreeBuilder.rebuildCache(files);
+  }
+
   /**
    * Immediately updates tree.
    */

@@ -340,7 +340,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(Set<? extends VirtualFile> files) {
+  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
