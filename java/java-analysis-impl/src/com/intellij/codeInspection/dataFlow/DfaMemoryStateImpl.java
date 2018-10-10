@@ -238,7 +238,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
       // Like Object x = "foo" or Object x = 5;
       TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
-      setVariableState(var, new DfaVariableState(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
+      setVariableState(var, createVariableState(var).withFacts(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
     }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE) : state);
