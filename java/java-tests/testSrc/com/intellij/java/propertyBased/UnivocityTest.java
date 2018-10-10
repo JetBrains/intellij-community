@@ -70,11 +70,12 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
   }
 
   public void testRandomActivity() {
+    Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PropertyChecker.customized()
       .withIterationCount(30).checkScenarios(() -> env ->
       MadTestingUtil.changeAndRevert(myProject, () ->
         env.executeCommands(Generator.constant(env1 -> {
-          PsiJavaFile file = env1.generateValue(psiJavaFiles(), "Working with %s");
+          PsiJavaFile file = env1.generateValue(javaFiles, "Working with %s");
           Generator<MadTestingAction> mutations = Generator.sampledFrom(new DeleteRange(file),
                                                                         new AddNullArgument(file),
                                                                         new DeleteForeachInitializers(file),
