@@ -40,7 +40,7 @@ public class PyRunLineMarkerContributor extends RunLineMarkerContributor {
       final AnAction[] actions = ExecutorAction.getActions();
       Function<PsiElement, String> tooltipProvider =
         psiElement -> StringUtil.join(ContainerUtil.mapNotNull(actions, action -> getText(action, psiElement)), "\n");
-      return new Info(AllIcons.Actions.Execute, tooltipProvider, actions);
+      return new Info(AllIcons.RunConfigurations.TestState.Run, tooltipProvider, actions);
     }
     return null;
   }
