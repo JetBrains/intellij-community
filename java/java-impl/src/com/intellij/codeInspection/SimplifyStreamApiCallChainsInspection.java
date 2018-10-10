@@ -759,7 +759,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       LOG.assertTrue(classReference != null);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(classReference);
       if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, null)) {
-        PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(classReference.getParameterList());
       }
       CodeStyleManager.getInstance(project).reformat(newExpression);
     }

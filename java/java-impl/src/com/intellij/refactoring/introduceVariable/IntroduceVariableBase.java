@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
@@ -1071,7 +1072,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
                                                     (PsiNewExpression)tryToDetectDiamondNewExpr,
                                                     expectedType)) {
-          final PsiElement paramList = PsiDiamondTypeUtil
+          final PsiElement paramList = RemoveRedundantTypeArgumentsUtil
             .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
           return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
         }

@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -159,7 +158,7 @@ public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspection
       String replacement = StreamEx.of(keyMapper, valueMapper, merger, mapSupplier).nonNull()
         .joining(",", CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + myMethodName + "(", ")");
       PsiElement result = ct.replaceAndRestoreComments(call, replacement);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
       result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
