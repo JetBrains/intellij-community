@@ -62,6 +62,8 @@ fun createGlobalContextForTool(scope: AnalysisScope,
   }
 }
 
+private val myToolField = ReflectionUtil.findField(InspectionToolWrapper::class.java, InspectionProfileEntry::class.java, "myTool")
+
 private fun clearAllToolsIn(profile: InspectionProfileImpl) {
   if (!profile.wasInitialized()) {
     return
@@ -71,7 +73,7 @@ private fun clearAllToolsIn(profile: InspectionProfileImpl) {
     val wrapper = state.tool
     if (wrapper.extension != null) {
       // make it not initialized
-      ReflectionUtil.resetField(wrapper, InspectionProfileEntry::class.java, "myTool")
+      ReflectionUtil.resetField(wrapper, myToolField)
     }
   }
 }
