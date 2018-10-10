@@ -89,10 +89,18 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     }
   };
 
+  /**
+   * @deprecated use {@link #AsyncTreeModel(TreeModel, Disposable)} instead
+   */
+  @Deprecated
   public AsyncTreeModel(@NotNull TreeModel model) {
     this(model, true);
   }
 
+  /**
+   * @deprecated use {@link #AsyncTreeModel(TreeModel, boolean, Disposable)} instead
+   */
+  @Deprecated
   public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode) {
     if (model instanceof Disposable) {
       Disposer.register(this, (Disposable)model);

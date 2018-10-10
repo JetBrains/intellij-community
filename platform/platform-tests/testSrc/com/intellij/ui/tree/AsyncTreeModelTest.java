@@ -416,7 +416,7 @@ public final class AsyncTreeModelTest {
       this.model = model;
     }
 
-    protected TreeModel createModelForTree(TreeModel model) {
+    protected TreeModel createModelForTree(TreeModel model, Disposable disposable) {
       return model;
     }
 
@@ -424,8 +424,10 @@ public final class AsyncTreeModelTest {
       if (PRINT) System.out.println("start " + toString());
       assert !SwingUtilities.isEventDispatchThread() : "test should be started on the main thread";
       long time = System.currentTimeMillis();
+      Disposable disposable = Disposer.newDisposable();
+
       runOnSwingThread(() -> {
-        tree = new JTree(createModelForTree(model));
+        tree = new JTree(createModelForTree(model, disposable));
         runOnSwingThreadWhenProcessingDone(() -> consumer.accept(this));
       });
       try {
@@ -440,8 +442,7 @@ public final class AsyncTreeModelTest {
         throw exception;
       }
       finally {
-        TreeModel model = tree.getModel();
-        if (model instanceof Disposable) Disposer.dispose((Disposable)model);
+        Disposer.dispose(disposable);
         printTime("done in ", time);
         if (PRINT) System.out.println();
       }
@@ -558,8 +559,8 @@ public final class AsyncTreeModelTest {
     }
 
     @Override
-    protected TreeModel createModelForTree(TreeModel model) {
-      return new AsyncTreeModel(model, showLoadingNode);
+    protected TreeModel createModelForTree(TreeModel model, Disposable disposable) {
+      return new AsyncTreeModel(model, showLoadingNode, disposable);
     }
 
     @Override

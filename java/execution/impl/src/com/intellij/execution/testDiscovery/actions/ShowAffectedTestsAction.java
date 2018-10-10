@@ -21,7 +21,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.lang.Language;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
@@ -325,9 +324,7 @@ public class ShowAffectedTestsAction extends AnAction {
     ref.set(popup);
 
     TreeModel model = tree.getModel();
-    if (model instanceof Disposable) {
-      Disposer.register(popup, (Disposable)model);
-    }
+    Disposer.register(popup, tree);
 
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override

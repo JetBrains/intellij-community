@@ -100,7 +100,7 @@ public class MigrationPanel extends JPanel implements Disposable {
     TypeMigrationTreeStructure structure = new TypeMigrationTreeStructure(project);
     structure.setRoots(currentRoot);
     StructureTreeModel model = new StructureTreeModel(structure, AlphaComparator.INSTANCE);
-    myRootsTree.setModel(new AsyncTreeModel(model));
+    myRootsTree.setModel(new AsyncTreeModel(model, this));
 
     initTree(myRootsTree);
     myRootsTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
@@ -141,7 +141,6 @@ public class MigrationPanel extends JPanel implements Disposable {
 
     model.invalidate();
 
-    Disposer.register(this, model);
   }
 
   private void selectionChanged() {

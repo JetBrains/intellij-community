@@ -12,6 +12,7 @@ import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -59,6 +60,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   @Nullable
   private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
   private AsyncTreeModel myTreeModel;
+  private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
   public BlockViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
     myProject = project;
@@ -110,8 +112,9 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void resetBlockTree() {
     myBlockTree.removeAll();
     if (myTreeModel != null) {
-      Disposer.dispose(myTreeModel);
+      Disposer.dispose(myTreeModelDisposable);
       myTreeModel = null;
+      myTreeModelDisposable = Disposer.newDisposable();
     }
     myPsiToBlockMap = null;
     ViewerPsiBasedTree.removeListenerOfClass(myBlockTree, BlockTreeSelectionListener.class);
@@ -146,7 +149,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
 
     blockTreeStructure.setRoot(blockNode);
-    myTreeModel = new AsyncTreeModel(treeModel);
+    myTreeModel = new AsyncTreeModel(treeModel, myTreeModelDisposable);
     myBlockTree.setModel(myTreeModel);
 
     myBlockTree.addTreeSelectionListener(new BlockTreeSelectionListener(rootElement));

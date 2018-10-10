@@ -14,6 +14,7 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,7 +69,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   @Deprecated
   protected String myCurrentViewType;
 
-  private static class Sheet {
+  private static class Sheet implements Disposable {
     private AsyncTreeModel myAsyncTreeModel;
     private StructureTreeModel myStructureTreeModel;
     private final JTree myTree;
@@ -79,6 +80,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       myTree = tree;
       myScope = scope;
       myOccurenceNavigator = occurenceNavigator;
+    }
+
+    @Override
+    public void dispose() {
+      myAsyncTreeModel = null;
+      myStructureTreeModel = null;
     }
   }
 
@@ -347,7 +354,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         }
         Comparator<NodeDescriptor> comparator = getComparator();
         StructureTreeModel myModel = comparator == null ? new StructureTreeModel(structure) : new StructureTreeModel(structure, comparator);
-        AsyncTreeModel atm = new AsyncTreeModel(myModel);
+        AsyncTreeModel atm = new AsyncTreeModel(myModel, sheet);
         tree.setModel(atm);
 
         sheet.myStructureTreeModel = myModel;
@@ -525,14 +532,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   private static void disposeSheet(@NotNull Sheet sheet) {
-    if (sheet.myAsyncTreeModel != null) {
-      Disposer.dispose(sheet.myAsyncTreeModel);
-      sheet.myAsyncTreeModel = null;
-    }
-    if (sheet.myStructureTreeModel != null) {
-      Disposer.dispose(sheet.myStructureTreeModel);
-      sheet.myStructureTreeModel = null;
-    }
+    Disposer.dispose(sheet);
   }
 
   protected void doRefresh(boolean currentBuilderOnly) {
