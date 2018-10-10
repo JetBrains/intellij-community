@@ -202,6 +202,7 @@ internal class RunConfigurableTest {
                                                                                     "Periods",
                                                                                     "C148E_Porcelain",
                                                                                     "ErrAndOut",
+                                                                                    "CodeGenerator",
                                                                                     "All in titled",
                                                                                     "All in titled2",
                                                                                     "All in titled3",
@@ -210,19 +211,22 @@ internal class RunConfigurableTest {
     assertThat(configurable.isModified).isFalse()
     model.drop(4, 8, BELOW)
     configurable.apply()
-    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
-                                                                                     "AuTest",
-                                                                                     "Simples",
-                                                                                     "UI",
-                                                                                     "OutAndErr",
-                                                                                     "C148C_TersePrincess",
-                                                                                     "Periods",
-                                                                                     "C148E_Porcelain",
-                                                                                     "ErrAndOut",
-                                                                                     "All in titled",
-                                                                                     "All in titled2",
-                                                                                     "All in titled3",
-                                                                                     "All in titled4",
-                                                                                     "All in titled5"))
+    assertThat(configurable.runManager.allSettings.joinToString("\n") { "[${it.type.displayName}] [${it.folderName ?: ""}] ${it.name}" }).isEqualTo("""
+      [Application] [1] Renamer
+      [Application] [1] UI
+      [Application] [1] Simples
+      [Application] [1] OutAndErr
+      [Application] [1] C148C_TersePrincess
+      [Application] [2] AuTest
+      [Application] [2] Periods
+      [Application] [3] C148E_Porcelain
+      [Application] [3] ErrAndOut
+      [Application] [] CodeGenerator
+      [JUnit] [4] All in titled
+      [JUnit] [4] All in titled2
+      [JUnit] [5] All in titled3
+      [JUnit] [5] All in titled4
+      [JUnit] [] All in titled5
+    """.trimIndent())
   }
 }
