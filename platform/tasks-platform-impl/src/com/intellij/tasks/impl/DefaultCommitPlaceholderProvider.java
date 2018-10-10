@@ -13,7 +13,7 @@ public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvid
   @NotNull
   @Override
   public String[] getPlaceholders(TaskRepository repository) {
-    return new String[] { "id", "number", "summary", "project"};
+    return new String[] { "id", "number", "summary", "project", "taskType"};
   }
 
   @Nullable
@@ -27,6 +27,8 @@ public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvid
       return task.getSummary();
     if ("project".equals(placeholder))
       return StringUtil.notNullize(task.getProject());
+    if ("taskType".equals(placeholder))
+      return task.getType().name();
     throw new IllegalArgumentException(placeholder);
   }
 
