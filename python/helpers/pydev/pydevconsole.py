@@ -331,7 +331,7 @@ def get_ipython_hidden_vars():
     else:
         try:
             ipython_shell = get_ipython()
-            from _pydev_bundle.pydev_ipython_console import get_ipython_hidden_vars
+            from _pydev_bundle.pydev_ipython_console_011 import get_ipython_hidden_vars
             return get_ipython_hidden_vars(ipython_shell)
         except:
             pass
