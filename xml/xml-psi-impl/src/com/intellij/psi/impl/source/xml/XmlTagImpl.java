@@ -66,16 +66,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("xmlTag");
   private static final Key<ParameterizedCachedValue<XmlTag[], XmlTagImpl>> SUBTAGS_KEY = Key.create("subtags");
   private static final ParameterizedCachedValueProvider<XmlTag[],XmlTagImpl> CACHED_VALUE_PROVIDER =
-    new ParameterizedCachedValueProvider<XmlTag[], XmlTagImpl>() {
-      @Override
-      public Result<XmlTag[]> compute(XmlTagImpl tag) {
-        final List<XmlTag> result = new ArrayList<>();
-
-        tag.fillSubTags(result);
-
-        XmlTag[] tags = result.toArray(EMPTY);
-        return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
-      }
+    tag -> {
+      List<XmlTag> result = new ArrayList<>();
+      tag.fillSubTags(result);
+      XmlTag[] tags = result.toArray(EMPTY);
+      return Result.create(tags, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, tag);
     };
   private static final Comparator<TextRange> RANGE_COMPARATOR = Comparator.comparingInt(TextRange::getStartOffset);
   private final int myHC = ourHC++;
