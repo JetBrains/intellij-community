@@ -757,15 +757,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     if (myView != null) {
       return ActionCallback.DONE;
     }
-    final Application app = ApplicationManager.getApplication();
-    final Runnable createView = () -> {
+    return ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+      if (getCurrentScope() == null) return;
       InspectionResultsView view = getView();
       if (view == null) {
         view = new InspectionResultsView(this, createContentProvider());
         addView(view);
       }
-    };
-    return app.getInvokator().invokeLater(createView);
+    }, x -> getCurrentScope() == null);
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
