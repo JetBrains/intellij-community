@@ -92,6 +92,6 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   @Override
   public boolean isEnabledByDefault() {
-    return DaemonCodeAnalyzerSettings.getInstance().SHOW_SMALL_ICONS_IN_GUTTER;
+    return DaemonCodeAnalyzerSettings.getInstance().isShowSmallIconsInGutter();
   }
 }

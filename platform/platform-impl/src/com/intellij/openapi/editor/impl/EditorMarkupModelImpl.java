@@ -111,7 +111,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     super(editor.getDocument());
     myEditor = editor;
     myEditorFragmentRenderer = new EditorFragmentRenderer();
-    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+    setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
   }
 
   private int offsetToLine(int offset, @NotNull Document document) {
@@ -465,7 +465,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
              : super.getPreferredSize();
     }
   }
-  
+
   private boolean transparent() {
     return !myEditor.shouldScrollBarBeOpaque();
   }
@@ -530,7 +530,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (!uiSettings.getShowEditorToolTip()) {
         hideMyEditorPreviewHint();
       }
-      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
+      setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
       repaintTrafficTooltip();
       repaintTrafficLightIcon();
       repaintVerticalScrollBar();
@@ -584,7 +584,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       bounds.width = Math.min(bounds.width, getMaxMacThumbWidth());
       int b2 =  bounds.width / 2;
       bounds.x = getThinGap() + getMinMarkHeight() + getErrorIconWidth() / 2 - b2;
-      
+
       return bounds;
     }
 
@@ -592,7 +592,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     protected int getThickness() {
       return getErrorIconWidth() + getThinGap() + getMinMarkHeight();
     }
-    
+
     @Override
     protected void paintTrack(@NotNull Graphics g, @NotNull JComponent c, @NotNull Rectangle trackBounds) {
       if (myEditor.isDisposed()) return;

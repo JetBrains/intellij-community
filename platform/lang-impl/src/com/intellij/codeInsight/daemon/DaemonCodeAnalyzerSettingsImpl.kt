@@ -20,11 +20,11 @@ open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), Persis
 
   public override fun clone(): DaemonCodeAnalyzerSettingsImpl {
     val settings = DaemonCodeAnalyzerSettingsImpl()
-    settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY
+    settings.autoReparseDelay = autoReparseDelay
     settings.myShowAddImportHints = myShowAddImportHints
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS
     settings.NO_AUTO_IMPORT_PATTERN = NO_AUTO_IMPORT_PATTERN
-    settings.SHOW_SMALL_ICONS_IN_GUTTER = SHOW_SMALL_ICONS_IN_GUTTER
+    settings.isShowSmallIconsInGutter = isShowSmallIconsInGutter
     return settings
   }
 

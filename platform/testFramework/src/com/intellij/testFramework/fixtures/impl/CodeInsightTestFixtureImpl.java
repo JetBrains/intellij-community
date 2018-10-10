@@ -212,9 +212,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     ProcessCanceledException exception = null;
     int retries = 1000;
     for (int i = 0; i < retries; i++) {
-      int oldDelay = settings.AUTOREPARSE_DELAY;
+      int oldDelay = settings.getAutoReparseDelay();
       try {
-        settings.AUTOREPARSE_DELAY = 0;
+        settings.setAutoReparseDelay(0);
         List<HighlightInfo> infos = new ArrayList<>();
         EdtTestUtil.runInEdtAndWait(() -> {
           codeAnalyzer.runPasses(file, editor.getDocument(), Collections.singletonList(textEditor), toIgnore, canChangeDocument, null);
@@ -241,7 +241,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         exception = e;
       }
       finally {
-        settings.AUTOREPARSE_DELAY = oldDelay;
+        settings.setAutoReparseDelay(oldDelay);
       }
     }
     throw new AssertionError("Unable to highlight after " + retries + " retries", exception);

@@ -965,8 +965,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + "QuickFixes.java");
 
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    boolean old = settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
-    settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = true;
+    boolean old = settings.isNextErrorActionGoesToErrorsFirst();
+    settings.setNextErrorActionGoesToErrorsFirst(true);
 
     try {
       Collection<HighlightInfo> errors = highlightErrors();
@@ -1003,7 +1003,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       assertEmpty(errors);
     }
     finally {
-      settings.NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = old;
+      settings.setNextErrorActionGoesToErrorsFirst(old);
     }
   }
 
@@ -2231,13 +2231,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static void executeWithoutReparseDelay(@NotNull Runnable task) {
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    int oldDelay = settings.AUTOREPARSE_DELAY;
-    settings.AUTOREPARSE_DELAY = 0;
+    int oldDelay = settings.getAutoReparseDelay();
+    settings.setAutoReparseDelay(0);
     try {
       task.run();
     }
     finally {
-      settings.AUTOREPARSE_DELAY = oldDelay;
+      settings.setAutoReparseDelay(oldDelay);
     }
   }
 
