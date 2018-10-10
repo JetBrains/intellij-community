@@ -460,7 +460,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         LocalQuickFix[] fix = createNPEFixes(element, fieldAccess, holder.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY);
         holder.registerProblem(element, problem.getMessage(expressions), fix);
       });
-      NullabilityProblemKind.unboxingNullable.ifMyProblem(problem, element -> holder.registerProblem(element, problem.getMessage(expressions)));
+      NullabilityProblemKind.unboxingNullable.ifMyProblem(problem, element -> {
+        if (element instanceof PsiTypeCastExpression && ((PsiTypeCastExpression)element).getType() instanceof PsiPrimitiveType) {
+          element = Objects.requireNonNull(((PsiTypeCastExpression)element).getOperand());
+        }
+        holder.registerProblem(element, problem.getMessage(expressions));
+      });
       NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(problem, expr -> holder.registerProblem(expr, problem.getMessage(expressions)));
       NullabilityProblemKind.assigningToNotNull.ifMyProblem(problem, expr -> reportNullabilityProblem(holder, problem, expr, expressions));
       NullabilityProblemKind.storingToNotNullArray.ifMyProblem(problem, expr -> reportNullabilityProblem(holder, problem, expr, expressions));
