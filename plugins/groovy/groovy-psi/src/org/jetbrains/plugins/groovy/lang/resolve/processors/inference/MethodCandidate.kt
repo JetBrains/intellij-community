@@ -37,26 +37,29 @@ class MethodCandidate(val method: PsiMethod,
     return PsiUtil.isApplicable(erasedArguments, method, substitutor, context, true)
   }
 
-  private val typeComputer: (Argument) -> PsiType? = { it ->
-    val type = if (it.expression != null) getTopLevelTypeCached(it.expression) else it.type
+  private val typeComputer: (Argument) -> PsiType? = ::computeType
 
+  private fun computeType(argument: Argument): PsiType? {
+    val type = if (argument.expression != null) getTopLevelTypeCached(argument.expression) else argument.type
 
-    if (type is GrMapType) {
+    return if (type is GrMapType) {
       TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, context)
     } else {
       type ?: TypesUtil.getJavaLangObject(context)
     }
   }
 
-  private val completionTypeComputer: (Argument) -> PsiType? = { it ->
-    if (it.expression != null) {
-      var type = getTopLevelTypeCached(it.expression)
-      if (it.expression is GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
+  private val completionTypeComputer: (Argument) -> PsiType? = ::computeCompletionType
+
+  private fun computeCompletionType(argument: Argument): PsiType? {
+    return if (argument.expression != null) {
+      var type = getTopLevelTypeCached(argument.expression)
+      if (argument.expression is GrNewExpression && com.intellij.psi.util.PsiUtil.resolveClassInType(type) == null) {
         type = null
       }
       type
     }
-    else it.type
+    else argument.type
   }
 
   fun completionMapArguments(): Map<Argument, Pair<PsiParameter, PsiType?>> {
