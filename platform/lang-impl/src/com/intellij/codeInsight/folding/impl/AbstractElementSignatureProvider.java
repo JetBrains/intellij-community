@@ -108,7 +108,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   }
 
   @Nullable
-  static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
+  protected static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
                                                               String name,
                                                               int index,
                                                               @NotNull Class<T> hisClass)
