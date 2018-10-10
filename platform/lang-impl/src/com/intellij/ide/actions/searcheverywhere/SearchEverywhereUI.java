@@ -74,6 +74,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 200;
+  public static final int MINIMAL_SUGGESTIONS_LIST_HEIGHT= 100;
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -133,6 +134,15 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         }
       }
     });
+  }
+
+  @Override
+  public Dimension getMinimumSize() {
+    Dimension size = super.getMinimumSize();
+    if (getViewType() == ViewType.FULL) {
+      size.height += MINIMAL_SUGGESTIONS_LIST_HEIGHT;
+    }
+    return size;
   }
 
   @Override
