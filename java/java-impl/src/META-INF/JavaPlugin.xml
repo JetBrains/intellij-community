@@ -925,7 +925,7 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedReturnValue.UnusedReturnValue"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
+    <globalInspection groupPath="Java" language="UAST" shortName="SameParameterValue" bundle="messages.InspectionsBundle" key="inspection.same.parameter.display.name"
                       groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="unused" displayName="Unused declaration" groupBundle="messages.InspectionsBundle"
