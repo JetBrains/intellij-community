@@ -4,12 +4,12 @@ package com.intellij.codeInsight.daemon
 import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 import com.intellij.codeInspection.ex.DEFAULT_PROFILE_NAME
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.XmlSerializer
+import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
 
 @State(name = "DaemonCodeAnalyzerSettings", storages = [Storage("editor.codeinsight.xml")])
@@ -29,7 +29,8 @@ open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), Persis
   }
 
   override fun getState(): Element? {
-    val element = XmlSerializer.serialize(this, SkipDefaultsSerializationFilter())
+    val element = Element("state")
+    serializeObjectInto(this, element)
     val profile = ApplicationInspectionProfileManager.getInstanceImpl().rootProfileName
     if (DEFAULT_PROFILE_NAME != profile) {
       element.setAttribute("profile", profile)
@@ -38,7 +39,7 @@ open class DaemonCodeAnalyzerSettingsImpl : DaemonCodeAnalyzerSettings(), Persis
   }
 
   override fun loadState(state: Element) {
-    XmlSerializer.deserializeInto(this, state)
+    deserializeInto(this, state)
     val profileManager = ApplicationInspectionProfileManager.getInstanceImpl()
     profileManager.converter.storeEditorHighlightingProfile(state, InspectionProfileImpl(InspectionProfileConvertor.OLD_HIGHTLIGHTING_SETTINGS_PROFILE))
     profileManager.setRootProfile(state.getAttributeValue("profile") ?: "Default")
