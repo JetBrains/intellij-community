@@ -164,7 +164,9 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       familyName.equals("Extract If Condition") ||
       // Cutting the message at different points is possible like
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
-      familyName.equals("Simplify boolean expression");
+      familyName.equals("Simplify boolean expression") ||
+      //may break catches with explicit exceptions
+      familyName.equals("Replace Exceptions in Throws Clause with Single More General Exception");
   }
 
   @NotNull
