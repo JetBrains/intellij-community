@@ -191,7 +191,7 @@ public class MacUtil {
     private static final long latencyCritical = 0xFF00000000L;
   }
 
-  public static Object wakeUpNeo(@NotNull final String reason) {
+  public static Object wakeUpNeo(@NotNull final Object reason) {
     // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
     // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
     if (SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap")) {
@@ -203,7 +203,7 @@ public class MacUtil {
           ID activity = invoke(invoke(processInfo, "beginActivityWithOptions:reason:",
                                       NSActivityOptions.userInitiatedAllowingIdleSystemSleep,
                                       // TODO: Do we need NSActivityOptions.latencyCritical? This is not an audio app.
-                                      nsString(reason)), "retain");
+                                      nsString(reason.toString())), "retain");
           result.set(activity);
         }
       });
