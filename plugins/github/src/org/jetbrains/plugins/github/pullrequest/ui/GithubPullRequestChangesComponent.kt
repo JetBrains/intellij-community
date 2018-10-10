@@ -10,13 +10,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.CustomChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.ui.ComponentWithEmptyText
+import com.intellij.xml.util.XmlStringUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import git4idea.GitCommit
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
@@ -114,8 +118,27 @@ internal class GithubPullRequestChangesComponent(project: Project,
     override fun dispose() {}
   }
 
-  private data class CommitTag(val commit: GitCommit) {
-    override fun toString(): String = commit.subject
+  private data class CommitTag(val commit: GitCommit) : CustomChangesBrowserNode.Provider {
+    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+
+      renderer.append(commit.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      renderer.append(" by ${commit.author.name} on ${DateFormatUtil.formatDate(commit.authorTime)}",
+                      SimpleTextAttributes.GRAYED_ATTRIBUTES)
+
+      val tooltip = "commit ${commit.id.asString()}\n" +
+                    "Author: ${commit.author.name}\n" +
+                    "Date: ${DateFormatUtil.formatDateTime(commit.authorTime)}\n\n" +
+                    commit.fullMessage
+      renderer.toolTipText = XmlStringUtil.escapeString(tooltip)
+    }
+
+    override fun getTextPresentation(): String {
+      return commit.subject
+    }
+
+    override fun getUserObject(): Any {
+      return commit
+    }
   }
 
   class ToggleZipCommitsAction : ToggleAction("Commit"), DumbAware {
