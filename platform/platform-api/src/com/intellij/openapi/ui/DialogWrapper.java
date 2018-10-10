@@ -2071,6 +2071,8 @@ public abstract class DialogWrapper {
     }.start();
   }
 
+  private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
     private final List<String> errors = new ArrayList<>();
@@ -2111,7 +2113,7 @@ public abstract class DialogWrapper {
     private void appendError(String text) {
       errors.add(text);
       myLabel.setBounds(0, 0, 0, 0);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'>");
+      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
       errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
       sb.append("</font></html>");
       myLabel.setText(sb.toString());
