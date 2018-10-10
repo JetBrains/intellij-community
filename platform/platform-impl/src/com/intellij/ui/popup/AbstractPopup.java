@@ -1677,7 +1677,7 @@ public class AbstractPopup implements JBPopup {
         final Window window = getPopupWindow();
         if (window != null) {
           myRestoreWindowSize = window.getSize();
-          window.setVisible(true);
+          window.setVisible(false);
         }
       }
     }
