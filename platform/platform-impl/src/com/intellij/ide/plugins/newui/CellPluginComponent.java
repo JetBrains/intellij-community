@@ -23,7 +23,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.text.View;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -129,21 +128,26 @@ public abstract class CellPluginComponent extends JPanel {
     mySelection = type;
 
     if (scrollAndFocus) {
-      JComponent parent = (JComponent)getParent();
-      if (parent != null) {
-        Rectangle bounds = getBounds();
-        if (!parent.getVisibleRect().contains(bounds)) {
-          parent.scrollRectToVisible(bounds);
-        }
-
-        if (type == EventHandler.SelectionType.SELECTION) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
-        }
+      scrollToVisible();
+      if (getParent() != null && type == EventHandler.SelectionType.SELECTION) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(this, true));
       }
     }
 
     updateColors(type);
     repaint();
+  }
+
+  public void scrollToVisible() {
+    JComponent parent = (JComponent)getParent();
+    if (parent == null) {
+      return;
+    }
+
+    Rectangle bounds = getBounds();
+    if (!parent.getVisibleRect().contains(bounds)) {
+      parent.scrollRectToVisible(bounds);
+    }
   }
 
   protected void updateColors(@NotNull EventHandler.SelectionType type) {
@@ -185,18 +189,14 @@ public abstract class CellPluginComponent extends JPanel {
       }
     };
     myIconLabel.addMouseListener(myHoverNameListener);
+
+    eventHandler.addAll(this);
   }
 
   public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
   }
 
   public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
-  }
-
-  @NotNull
-  public static CellPluginComponent get(@NotNull ComponentEvent event) {
-    //noinspection ConstantConditions
-    return UIUtil.getParentOfType(CellPluginComponent.class, event.getComponent());
   }
 
   public void close() {

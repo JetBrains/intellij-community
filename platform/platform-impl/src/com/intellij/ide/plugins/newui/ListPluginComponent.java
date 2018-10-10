@@ -93,9 +93,7 @@ public class ListPluginComponent extends CellPluginComponent {
     myEnableDisableButton.setOpaque(false);
 
     if (myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
 
       myEnableDisableButton.setSelected(false);
       myEnableDisableButton.setEnabled(false);
@@ -108,13 +106,10 @@ public class ListPluginComponent extends CellPluginComponent {
       PluginId id = myPlugin.getPluginId();
 
       if (pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
-        myRestartButton = new RestartButton(myPluginModel);
-        myRestartButton.setFocusable(false);
-        myBaselinePanel.addButtonComponent(myRestartButton);
+        myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       }
       else if (update) {
         myUpdateButton = new UpdateButton();
-        myUpdateButton.setFocusable(false);
         myUpdateButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, false));
         myBaselinePanel.addButtonComponent(myUpdateButton);
       }
@@ -233,7 +228,6 @@ public class ListPluginComponent extends CellPluginComponent {
                            @NotNull LinkListener<String> searchListener,
                            @NotNull EventHandler eventHandler) {
     super.setListeners(listener, searchListener, eventHandler);
-    eventHandler.addAll(this);
     myBaselinePanel.setListeners(eventHandler);
   }
 
@@ -280,9 +274,7 @@ public class ListPluginComponent extends CellPluginComponent {
       layout = true;
     }
     if (myRestartButton == null) {
-      myRestartButton = new RestartButton(myPluginModel);
-      myRestartButton.setFocusable(false);
-      myBaselinePanel.addButtonComponent(myRestartButton);
+      myBaselinePanel.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
       layout = true;
     }
 

@@ -127,13 +127,10 @@ public class GridCellPluginComponent extends CellPluginComponent {
 
   private void addInstallButton() {
     if (InstalledPluginsState.getInstance().wasInstalled(myPlugin.getPluginId())) {
-      RestartButton restartButton = new RestartButton(myPluginModel);
-      restartButton.setFocusable(false);
-      add(myLastComponent = restartButton);
+      add(myLastComponent = new RestartButton(myPluginModel));
       return;
     }
 
-    myInstallButton.setFocusable(false);
     myInstallButton.addActionListener(e -> myPluginModel.installOrUpdatePlugin(myPlugin, true));
     myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
     add(myLastComponent = myInstallButton);
@@ -167,9 +164,7 @@ public class GridCellPluginComponent extends CellPluginComponent {
     myIndicator = null;
     JComponent lastComponent = myLastComponent;
     if (success) {
-      RestartButton restartButton = new RestartButton(myPluginModel);
-      restartButton.setFocusable(false);
-      add(myLastComponent = restartButton);
+      add(myLastComponent = new RestartButton(myPluginModel));
     }
     else {
       myLastComponent = myInstallButton;

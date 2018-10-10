@@ -88,21 +88,11 @@ public class TabHeaderComponent extends JComponent {
   }
 
   private void addTabSelectionAction(@NotNull String actionId, @NotNull Runnable callback) {
-    AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action == null) {
-      return;
-    }
-
-    AnAction localAction = new AnAction() {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (isShowing() && !myTabs.isEmpty()) {
-          callback.run();
-        }
+    EventHandler.addGlobalAction(this, actionId, () -> {
+      if (!myTabs.isEmpty()) {
+        callback.run();
       }
-    };
-    localAction.copyShortcutFrom(action);
-    localAction.registerCustomShortcutSet(getRootPane(), null);
+    });
   }
 
   @NotNull

@@ -3,7 +3,6 @@ package com.intellij.ide.plugins;
 
 import com.google.gson.stream.JsonToken;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -200,6 +199,13 @@ public class PluginManagerConfigurableNew
       protected void onFieldCleared() {
         hideSearchPanel();
       }
+
+      @Override
+      protected void showCompletionPopup() {
+        if (myCurrentSearchPanel.controller != null && !myCurrentSearchPanel.controller.isPopupShow()) {
+          showSearchPopup();
+        }
+      }
     };
     mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
 
@@ -232,7 +238,19 @@ public class PluginManagerConfigurableNew
   @Nullable
   @Override
   public JComponent createComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public void addNotify() {
+        super.addNotify();
+        EventHandler.addGlobalAction(mySearchTextField, new CustomShortcutSet(KeyStroke.getKeyStroke("meta alt F")), () -> {
+          IdeFocusManager.getGlobalInstance()
+            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
+          if (myCurrentSearchPanel.controller != null) {
+            showSearchPopup();
+          }
+        });
+      }
+    };
     panel.setMinimumSize(new JBDimension(580, 380));
 
     DefaultActionGroup actions = new DefaultActionGroup();
@@ -274,11 +292,9 @@ public class PluginManagerConfigurableNew
 
       assert myPluginsModel.detailPanel == null;
 
-      JButton backButton = new JButton("Plugins");
-      configureBackButton(backButton);
-
       int currentTab = detailBackTabIndex == -1 ? myTabHeaderComponent.getSelectionTab() : detailBackTabIndex;
 
+      JButton backButton = new BackButton();
       backButton.addActionListener(event -> {
         removeDetailsPanel();
         myIgnoreFocusFromBackButton = true;
@@ -317,14 +333,8 @@ public class PluginManagerConfigurableNew
           myIgnoreFocusFromBackButton = false;
           return;
         }
-        if (myCurrentSearchPanel.controller == null) {
-          return;
-        }
-        if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
-          myCurrentSearchPanel.controller.showAttributesPopup(null, 0);
-        }
-        else {
-          myCurrentSearchPanel.controller.handleShowPopup();
+        if (myCurrentSearchPanel.controller != null) {
+          showSearchPopup();
         }
       }
 
@@ -439,6 +449,15 @@ public class PluginManagerConfigurableNew
     updateSearchForSelectedTab(selectionTab);
 
     return panel;
+  }
+
+  private void showSearchPopup() {
+    if (StringUtil.isEmptyOrSpaces(mySearchTextField.getText())) {
+      myCurrentSearchPanel.controller.showAttributesPopup(null, 0);
+    }
+    else {
+      myCurrentSearchPanel.controller.handleShowPopup();
+    }
   }
 
   @Nullable
@@ -652,9 +671,9 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private JComponent createTrendingPanel() {
-    myTrendingPanel = new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
-                                                            descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor,
-                                                                                                      myTagBuilder));
+    myTrendingPanel =
+      new PluginsGroupComponentWithProgress(new PluginsGridLayout(), new ScrollEventHandler(), myNameListener, mySearchListener,
+                                            descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
 
     Runnable runnable = () -> {
       List<PluginsGroup> groups = new ArrayList<>();
@@ -1555,31 +1574,6 @@ public class PluginManagerConfigurableNew
 
   public static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
-  private static void configureBackButton(@NotNull JButton button) {
-    button.setIcon(new Icon() {
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        AllIcons.Actions.Back.paintIcon(c, g, x + JBUI.scale(7), y);
-      }
-
-      @Override
-      public int getIconWidth() {
-        return AllIcons.Actions.Back.getIconWidth() + JBUI.scale(7);
-      }
-
-      @Override
-      public int getIconHeight() {
-        return AllIcons.Actions.Back.getIconHeight();
-      }
-    });
-
-    button.setHorizontalAlignment(SwingConstants.LEFT);
-
-    Dimension size = button.getPreferredSize();
-    size.width -= JBUI.scale(15);
-    button.setPreferredSize(size);
-  }
-
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
   }
@@ -1600,7 +1594,7 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private PluginsGroupComponent createSearchPanelComponentWithProgress() {
-    return new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
+    return new PluginsGroupComponentWithProgress(new PluginsGridLayout(), new ScrollEventHandler(), myNameListener, mySearchListener,
                                                  descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
   }
 }
