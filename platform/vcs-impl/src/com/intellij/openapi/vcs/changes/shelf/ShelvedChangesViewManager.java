@@ -59,6 +59,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
@@ -676,37 +677,27 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void removeChangesFromChangeList(@NotNull Project project,
-                                             @NotNull ShelvedChangeList list,
-                                             @NotNull List<ShelvedChange> changes,
-                                             @NotNull List<ShelvedBinaryFile> binaryFiles) {
-      final ArrayList<ShelvedBinaryFile> oldBinaries = new ArrayList<>(list.getBinaryFiles());
-      final ArrayList<ShelvedChange> oldChanges = new ArrayList<>(list.getChanges(project));
-
-      oldBinaries.removeAll(binaryFiles);
-      oldChanges.removeAll(changes);
+                                                          @NotNull ShelvedChangeList list,
+                                                          @NotNull List<ShelvedChange> changes,
+                                                          @NotNull List<ShelvedBinaryFile> binaryFiles) {
+      final ArrayList<ShelvedBinaryFile> remainingBinaries = new ArrayList<>(list.getBinaryFiles());
+      remainingBinaries.removeAll(binaryFiles);
 
       final CommitContext commitContext = new CommitContext();
-      final List<FilePatch> patches = new ArrayList<>();
-      final List<VcsException> exceptions = new ArrayList<>();
-      for (ShelvedChange change : oldChanges) {
-        try {
-          patches.add(change.loadFilePatch(myProject, commitContext));
-        }
-        catch (IOException | PatchSyntaxException e) {
-          exceptions.add(new VcsException(e));
-        }
+      final List<FilePatch> remainingPatches = new ArrayList<>();
+      try {
+        ShelveChangesManager.loadTextPatches(myProject, list, changes, remainingPatches, commitContext);
       }
-      if (patches.isEmpty() && oldBinaries.isEmpty()) {
+      catch (IOException | PatchSyntaxException e) {
+        LOG.info(e);
+        VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
+        return;
+      }
+      if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
         myShelveChangesManager.deleteChangeList(list);
       }
       else {
-        myShelveChangesManager.saveRemainingPatches(list, patches, oldBinaries, commitContext, true);
-      }
-
-      if (! exceptions.isEmpty()) {
-        String title = list.DESCRIPTION == null ? "" : list.DESCRIPTION;
-        title = title.substring(0, Math.min(10, title.length()));
-        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, "Deleting files from '" + title + "'");
+        myShelveChangesManager.saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
       }
     }
 
