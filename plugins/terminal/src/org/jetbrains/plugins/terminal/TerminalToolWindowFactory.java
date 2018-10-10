@@ -30,6 +30,6 @@ public class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     TerminalView terminalView = TerminalView.getInstance(project);
-    terminalView.initTerminal(toolWindow);
+    terminalView.initTerminal(toolWindow, TerminalArrangementManager.getInstance(project).getArrangementState());
   }
 }
