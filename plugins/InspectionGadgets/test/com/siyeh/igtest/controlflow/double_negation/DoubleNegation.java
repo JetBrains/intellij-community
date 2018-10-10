@@ -31,3 +31,8 @@ public class DoubleNegation {
     boolean r = <warning descr="Double negation in '!(a != null)'">!(a != null)</warning> || !(b != Double.NaN != false);
   }
 }
+class InvalidCode {
+  void test(Object obj) {
+    if (obj != null && obj !=<error descr="Expression expected">)</error><EOLError descr="Statement expected"></EOLError>
+  }
+}
