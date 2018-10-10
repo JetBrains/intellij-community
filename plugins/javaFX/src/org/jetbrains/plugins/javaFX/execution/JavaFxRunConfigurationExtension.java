@@ -3,11 +3,11 @@ package org.jetbrains.plugins.javaFX.execution;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.RunConfigurationExtension;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -41,9 +41,12 @@ public class JavaFxRunConfigurationExtension extends RunConfigurationExtension {
                                                                     JavaParameters params,
                                                                     RunnerSettings runnerSettings) {
     if (!(configuration instanceof ModuleRunProfile) || !(configuration instanceof CommonJavaRunConfigurationParameters)) return;
+
+    Project project = configuration.getProject();
+    if (DumbService.isDumb(project)) return;
+
     String runClass = ((CommonJavaRunConfigurationParameters)configuration).getRunClass();
     if (runClass != null) {
-      Project project = configuration.getProject();
       GlobalSearchScope searchScope = ((ModuleRunProfile)configuration).getSearchScope();
       PsiClass aClass = searchScope != null ? JavaPsiFacade.getInstance(project).findClass(runClass, searchScope) : null;
       if (aClass != null && InheritanceUtil.isInheritor(aClass, JavaFxCommonNames.JAVAFX_APPLICATION_APPLICATION)) {
