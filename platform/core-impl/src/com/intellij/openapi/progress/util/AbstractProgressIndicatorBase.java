@@ -86,7 +86,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   private void startSystemActivity() {
-    myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
+    myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(this) : null;
   }
 
   synchronized void stopSystemActivity() {
