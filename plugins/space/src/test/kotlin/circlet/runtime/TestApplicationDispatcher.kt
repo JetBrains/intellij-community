@@ -13,7 +13,7 @@ class TestApplicationDispatcher : TestCase() {
     private val dispatcher: ApplicationDispatcher
 
     init {
-        ApplicationManager.setApplication(TestApplication(), {})
+        ApplicationManager.setApplication(TestApplication()) {}
         dispatcher = ApplicationDispatcher(application)
     }
 
