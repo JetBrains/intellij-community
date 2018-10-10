@@ -535,7 +535,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (methodType == MethodCallInstruction.MethodType.BOXING) {
-      DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue);
+      DfaValue boxed = factory.getBoxedFactory().createBoxed(qualifierValue, type);
       return boxed == null ? factory.createTypeValue(type, Nullability.NOT_NULL) : boxed;
     }
 
