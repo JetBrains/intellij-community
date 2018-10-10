@@ -951,12 +951,9 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     return listCopy;
   }
 
-  public void restoreList(@NotNull final ShelvedChangeList changeList) {
-    ShelvedChangeList list = mySchemeManager.findSchemeByName(changeList.getName());
-    if (list != null) {
-      list.setRecycled(false);
-      list.updateDate();
-    }
+  public void restoreList(@NotNull final ShelvedChangeList shelvedChangeList, @NotNull Date restoreDate) {
+    shelvedChangeList.setDeleted(false);
+    shelvedChangeList.DATE = restoreDate;
     notifyStateChanged();
   }
 
