@@ -327,7 +327,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     try {
       ourUpdatingTitle = true;
 
-      frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+      if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
+        frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+      }
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
