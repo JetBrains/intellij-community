@@ -705,19 +705,19 @@ class NetCommandFactory:
 
                 abs_path_real_path_and_base = get_abs_path_real_path_and_base_from_frame(curr_frame)
 
-                myFile = abs_path_real_path_and_base[0]
+                my_file = abs_path_real_path_and_base[0]
 
-                if is_real_file(myFile):
+                if is_real_file(my_file):
                     # if filename is Jupyter cell id
-                    myFile = norm_file_to_client(abs_path_real_path_and_base[0])
+                    my_file = norm_file_to_client(abs_path_real_path_and_base[0])
 
-                if file_system_encoding.lower() != "utf-8" and hasattr(myFile, "decode"):
-                    # myFile is a byte string encoded using the file system encoding
+                if file_system_encoding.lower() != "utf-8" and hasattr(my_file, "decode"):
+                    # my_file is a byte string encoded using the file system encoding
                     # convert it to utf8
-                    myFile = myFile.decode(file_system_encoding).encode("utf-8")
+                    my_file = my_file.decode(file_system_encoding).encode("utf-8")
 
-                #print "file is ", myFile
-                #myFile = inspect.getsourcefile(curr_frame) or inspect.getfile(frame)
+                #print "file is ", my_file
+                #my_file = inspect.getsourcefile(curr_frame) or inspect.getfile(frame)
 
                 myLine = str(curr_frame.f_lineno)
                 #print "line is ", myLine
@@ -727,7 +727,7 @@ class NetCommandFactory:
 
                 variables = ''
                 append('<frame id="%s" name="%s" ' % (my_id , make_valid_xml_value(my_name)))
-                append('file="%s" line="%s">' % (quote(myFile, '/>_= \t'), myLine))
+                append('file="%s" line="%s">' % (quote(my_file, '/>_= \t'), myLine))
                 append(variables)
                 append("</frame>")
                 curr_frame = curr_frame.f_back
