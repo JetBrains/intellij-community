@@ -26,7 +26,6 @@ import com.intellij.semantic.SemService;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Function;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.impl.DomFileElementImpl;
@@ -118,7 +117,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
 
       int N = 8;
       final CountDownLatch reads = new CountDownLatch(N);
-      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""), (Function<String, Thread>)s -> new Thread("dom concurrency") {
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""), s -> new Thread("dom concurrency") {
         @Override
         public void run() {
           try {
@@ -240,6 +239,4 @@ public class DomConcurrencyStressTest extends DomTestCase {
       registrar.registerCustomChildrenExtension(MyAllCustomElement.class);
     }
   }
-
-
 }
