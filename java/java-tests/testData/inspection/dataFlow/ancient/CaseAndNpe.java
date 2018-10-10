@@ -68,7 +68,7 @@ public class aaa {
       a = 4;
     }
 
-    if (<warning descr="Condition 'a != null' is always 'true'">a != null</warning> && a instanceof aaa) {
+    if (<warning descr="Condition 'a != null && a instanceof aaa' is always 'false'"><warning descr="Condition 'a != null' is always 'true'">a != null</warning> && <warning descr="Condition 'a instanceof aaa' is always 'false' when reached">a instanceof aaa</warning></warning>) {
       if (<warning descr="Condition is always true">true</warning>) {
         //a = new aaa();
       }

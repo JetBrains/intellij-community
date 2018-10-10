@@ -235,6 +235,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaFactMapValue) {
       setVariableState(var, state.withFacts(((DfaFactMapValue)value).getFacts()));
     }
+    else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
+      // Like Object x = "foo" or Object x = 5;
+      TypeConstraint typeConstraint = TypeConstraint.empty().withInstanceofValue(myFactory.createDfaType(value.getType()));
+      setVariableState(var, new DfaVariableState(getFactMap(value).with(DfaFactType.TYPE_CONSTRAINT, typeConstraint)));
+    }
     else {
       setVariableState(var, isNull(value) ? state.withFact(DfaFactType.NULLABILITY, DfaNullability.NULLABLE) : state);
       DfaRelationValue dfaEqual = myFactory.getRelationFactory().createRelation(var, RelationType.EQ, value);
@@ -761,7 +766,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaValue dfaTrue = myFactory.getConstFactory().getTrue();
       if (dfaVar.getSource() == SpecialField.UNBOX) {
         dfaVar = dfaVar.getQualifier();
-        dfaTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue);
+        dfaTrue = myFactory.getBoxedFactory().createBoxed(dfaTrue, null);
       }
       return applyRelationCondition(myFactory.getRelationFactory().createRelation(dfaVar, RelationType.EQ, dfaTrue));
     }
@@ -1162,7 +1167,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return DfaFactMap.fromDfaValue(value);
   }
 
-  void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {
+  void setVariableState(@NotNull DfaVariableValue dfaVar, @NotNull DfaVariableState state) {
     dfaVar = canonicalize(dfaVar);
     if (state.equals(getDefaultState(dfaVar))) {
       myVariableStates.remove(dfaVar);
@@ -1188,8 +1193,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }
-    if (value instanceof DfaBoxedValue && ((DfaBoxedValue)value).getWrappedValue() instanceof DfaVariableValue) {
-      return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalize(((DfaBoxedValue)value).getWrappedValue())));
+    if (value instanceof DfaBoxedValue) {
+      DfaBoxedValue boxedValue = (DfaBoxedValue)value;
+      if (boxedValue.getWrappedValue() instanceof DfaVariableValue) {
+        DfaValue canonicalized = canonicalize(boxedValue.getWrappedValue());
+        return Objects.requireNonNull(myFactory.getBoxedFactory().createBoxed(canonicalized, boxedValue.getType()));
+      }
     }
     if (value instanceof DfaConstValue) {
       Object constant = ((DfaConstValue)value).getValue();
