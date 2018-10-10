@@ -654,14 +654,9 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     try {
       textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
     }
-    catch (IOException e) {
+    catch (IOException | PatchSyntaxException e) {
       LOG.info(e);
       PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage());
-      return;
-    }
-    catch (PatchSyntaxException e) {
-      PatchApplier.showError(myProject, "Cannot load patch(es): " + e.getMessage());
-      LOG.info(e);
       return;
     }
 
