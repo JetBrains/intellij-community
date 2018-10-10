@@ -23,7 +23,6 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 
     // we must use base language because we serve file - not part of file, but the whole file
     // handlebars, for example, contains HTML and HBS psi trees, so, regardless of context, we should not handle such file
-    val viewProvider = request.file.viewProvider
     return request.isPhysicalFile() && isFileOfMyLanguage(request.file)
   }
 
@@ -41,9 +40,9 @@ open class BuiltInWebBrowserUrlProvider : WebBrowserUrlProvider(), DumbAware {
 
 @JvmOverloads
 fun getBuiltInServerUrls(file: VirtualFile,
-                                       project: Project,
-                                       currentAuthority: String?,
-                                       appendAccessToken: Boolean = true): List<Url> {
+                         project: Project,
+                         currentAuthority: String?,
+                         appendAccessToken: Boolean = true): List<Url> {
   if (currentAuthority != null && !compareAuthority(currentAuthority)) {
     return emptyList()
   }
