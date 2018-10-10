@@ -142,7 +142,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         elseBranch = Objects.requireNonNull(ifStatement.getElseBranch()).replace(elseBranch);
 
         if (emptyBlock(((PsiBlockStatement)elseBranch).getCodeBlock())) {
-          ifStatement.getElseBranch().delete();
+          new CommentTracker().deleteAndRestoreComments(ifStatement.getElseBranch());
         }
       }
     }
