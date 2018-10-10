@@ -22,7 +22,7 @@ import com.jetbrains.python.psi.impl.ResolveResultList
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.pyi.PyiFile
 
-private const val STUBS_SUFFIX = "-stubs"
+internal const val STUBS_SUFFIX = "-stubs"
 private val STUB_PACKAGE_KEY = Key<Boolean>("PY_STUB_PACKAGE")
 private val INLINE_PACKAGE_KEY = Key<Boolean>("PY_INLINE_PACKAGE")
 

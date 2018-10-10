@@ -433,6 +433,7 @@
     <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" displayName="Protocol definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
     <localInspection language="Python" shortName="PyTypeHintsInspection" suppressId="PyTypeHints" displayName="Type hints definitions and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeHintsInspection"/>
     <localInspection language="Python" shortName="PyAsyncCallInspection" suppressId="PyAsyncCall" displayName="Coroutine is not awaited" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAsyncCallInspection"/>
+    <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" displayName="Stub packages advertiser" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
