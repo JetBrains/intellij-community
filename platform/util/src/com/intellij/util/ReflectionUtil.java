@@ -238,10 +238,6 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetStaticField(@NotNull Class aClass, @NotNull @NonNls String name) {
-    resetField(aClass, null, name);
-  }
-
   @Nullable
   public static Method findMethod(@NotNull Collection<Method> methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
     for (final Method method : methods) {
