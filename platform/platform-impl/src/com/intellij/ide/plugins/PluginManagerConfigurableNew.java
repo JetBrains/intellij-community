@@ -274,7 +274,28 @@ public class PluginManagerConfigurableNew
     actions.add(new DumbAwareAction("Install Plugin from Disk...") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> myPluginsModel.appendOrUpdateDescriptor(pair.second), panel);
+        InstalledPluginsManagerMain.chooseAndInstall(myPluginsModel, pair -> {
+          myPluginsModel.appendOrUpdateDescriptor(pair.second);
+
+          boolean select = myInstalledPanel == null;
+
+          if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
+            myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
+          }
+
+          hideSearchPanel();
+          mySearchTextField.setTextIgnoreEvents("");
+
+          if (select) {
+            for (UIPluginGroup group : myInstalledPanel.getGroups()) {
+              CellPluginComponent component = group.findComponent(pair.second);
+              if (component != null) {
+                myInstalledPanel.setSelection(component);
+                break;
+              }
+            }
+          }
+        }, panel);
       }
     });
 
@@ -468,12 +489,11 @@ public class PluginManagerConfigurableNew
     }
 
     return () -> {
-      hideSearchPanel();
-
       if (myTabHeaderComponent.getSelectionTab() != INSTALLED_TAB) {
         myTabHeaderComponent.setSelectionWithEvents(INSTALLED_TAB);
       }
 
+      hideSearchPanel();
       mySearchTextField.setTextIgnoreEvents(option);
 
       if (!StringUtil.isEmpty(option)) {

@@ -225,7 +225,7 @@ public class MultiSelectionEventHandler extends EventHandler {
 
   @Override
   public void initialSelection(boolean scrollAndFocus) {
-    if (!myComponents.isEmpty()) {
+    if (!myComponents.isEmpty() && mySelectionLength == 0) {
       singleSelection(myComponents.get(0), 0, scrollAndFocus);
     }
   }
