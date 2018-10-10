@@ -211,7 +211,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   int getSeveritiesCount() {
-    return createCurrentSeverityNames().size();
+    return STANDARD_SEVERITIES.size() + myMap.size();
   }
 
   public HighlightSeverity getSeverityByIndex(final int i) {
@@ -243,15 +243,6 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return null;
   }
 
-  @NotNull
-  private List<String> createCurrentSeverityNames() {
-    List<String> list = new ArrayList<>();
-    list.addAll(STANDARD_SEVERITIES.keySet());
-    list.addAll(myMap.keySet());
-    ContainerUtil.sort(list);
-    return list;
-  }
-
   Icon getRendererIconByIndex(int i) {
     final HighlightSeverity severity = getSeverityByIndex(i);
     HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
@@ -263,7 +254,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   public boolean isSeverityValid(@NotNull String severityName) {
-    return createCurrentSeverityNames().contains(severityName);
+    return STANDARD_SEVERITIES.containsKey(severityName) || myMap.containsKey(severityName);
   }
 
   @Override
