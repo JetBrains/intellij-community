@@ -1298,12 +1298,9 @@ Function FreeDiskSpace
 ; $9 contains parent dir for installation
   System::Call 'Kernel32::GetDiskFreeSpaceEx(t "$9", *l.r1, *l.r2, *l.r3)i.r0'
   ${If} $0 <> 0
-    MessageBox MB_OK " FreeBytesAvailable=$1 $\n TotalNumberOfBytes=$2 $\n TotalNumberOfFreeBytes=$3"
 ; convert byte values into KB
     System::Int64Op $1 / 1024
     Pop $1
-    MessageBox MB_OK "FreeSpace $1"
-    ${LogText} "FreeSpace $1"
   ${Else}
     ${LogText} "An error occurred during calculation disk space $0"
   ${EndIf}
