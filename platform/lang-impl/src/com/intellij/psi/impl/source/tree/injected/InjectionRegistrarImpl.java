@@ -73,14 +73,17 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   private final PsiFile myHostPsiFile;
   private Thread currentThread;
 
-  InjectionRegistrarImpl(@NotNull Project project, @NotNull PsiFile hostPsiFile, @NotNull PsiElement contextElement) {
+  InjectionRegistrarImpl(@NotNull Project project,
+                         @NotNull PsiFile hostPsiFile,
+                         @NotNull PsiElement contextElement,
+                         @NotNull PsiDocumentManager docManager) {
     myProject = project;
     myContextElement = contextElement;
     myHostPsiFile = PsiUtilCore.getTemplateLanguageFile(hostPsiFile);
     FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) throw new IllegalArgumentException(viewProvider +" must not be injected");
     myHostVirtualFile = viewProvider.getVirtualFile();
-    myDocumentManagerBase = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    myDocumentManagerBase = (PsiDocumentManagerBase)docManager;
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
 

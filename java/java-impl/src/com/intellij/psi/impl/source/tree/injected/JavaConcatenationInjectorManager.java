@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.util.*;
@@ -66,7 +67,8 @@ public class JavaConcatenationInjectorManager extends SimpleModificationTracker 
                                            @NotNull Project project,
                                            @NotNull PsiElement anchor,
                                            @NotNull PsiElement[] operands) {
-    InjectionRegistrarImpl registrar = new InjectionRegistrarImpl(project, containingFile, anchor);
+    PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
+    InjectionRegistrarImpl registrar = new InjectionRegistrarImpl(project, containingFile, anchor, docManager);
     InjectionResult result = null;
     JavaConcatenationInjectorManager concatenationInjectorManager = getInstance(project);
     for (ConcatenationAwareInjector concatenationInjector : concatenationInjectorManager.myConcatenationInjectors) {
