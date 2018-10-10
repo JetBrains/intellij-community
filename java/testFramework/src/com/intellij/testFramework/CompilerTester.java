@@ -326,6 +326,7 @@ public class CompilerTester {
       return text.contains("Compilation completed successfully") ||
              text.contains("used to compile") ||
              text.contains("illegal reflective") ||
+             text.contains("Picked up") ||
              text.contains("consider reporting this to the maintainers") ||
              text.startsWith("Using Groovy-Eclipse");
     }
