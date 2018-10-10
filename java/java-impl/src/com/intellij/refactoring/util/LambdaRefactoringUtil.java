@@ -292,10 +292,8 @@ public class LambdaRefactoringUtil {
       PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
       if (methodReferenceInCopy != null) {
         PsiType functionalInterfaceType = methodReferenceInCopy.getFunctionalInterfaceType();
-        String canonicalText = functionalInterfaceType != null ? functionalInterfaceType.getCanonicalText() : null;
         PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
-        PsiType lambdaFunctionalInterfaceType = lambdaCopy.getFunctionalInterfaceType();
-        return Comparing.equal(canonicalText, lambdaFunctionalInterfaceType != null ? lambdaFunctionalInterfaceType.getCanonicalText() : null);
+        return Comparing.equal(functionalInterfaceType, lambdaCopy.getFunctionalInterfaceType());
       }
     }
     return false;
