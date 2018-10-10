@@ -1506,13 +1506,8 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     override fun isDropInto(component: JComponent, oldIndex: Int, newIndex: Int): Boolean {
-      val oldPath = tree.getPathForRow(oldIndex)
-      val newPath = tree.getPathForRow(newIndex)
-      if (oldPath == null || newPath == null) {
-        return false
-      }
-      val oldNode = oldPath.lastPathComponent as DefaultMutableTreeNode
-      val newNode = newPath.lastPathComponent as DefaultMutableTreeNode
+      val oldNode = (tree.getPathForRow(oldIndex) ?: return false).lastPathComponent as DefaultMutableTreeNode
+      val newNode = (tree.getPathForRow(newIndex) ?: return false).lastPathComponent as DefaultMutableTreeNode
       return getKind(oldNode).isConfiguration && getKind(newNode) == FOLDER
     }
 
@@ -1522,14 +1517,16 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       var newParent = newNode.parent as DefaultMutableTreeNode
       val oldKind = getKind(oldNode)
       val wasExpanded = tree.isExpanded(TreePath(oldNode.path))
-      if (isDropInto(tree, oldIndex, newIndex)) { //Drop in folder
+      // drop in folder
+      if (isDropInto(tree, oldIndex, newIndex)) {
         removeNodeFromParent(oldNode)
         var index = newNode.childCount
         if (oldKind.isConfiguration) {
           var middleIndex = newNode.childCount
           for (i in 0 until newNode.childCount) {
             if (getKind(newNode.getChildAt(i) as DefaultMutableTreeNode) == TEMPORARY_CONFIGURATION) {
-              middleIndex = i//index of first temporary configuration in target folder
+              //index of first temporary configuration in target folder
+              middleIndex = i
               break
             }
           }
@@ -1565,6 +1562,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         }
         insertNodeInto(oldNode, newParent, index)
       }
+
       val treePath = TreePath(oldNode.path)
       tree.selectionPath = treePath
       if (wasExpanded) {
