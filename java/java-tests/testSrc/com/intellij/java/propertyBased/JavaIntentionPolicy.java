@@ -112,6 +112,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove 'try-finally' block") ||
                                      intentionText.startsWith("Fix doc comment") ||
                                      intentionText.startsWith("Add Javadoc") ||
+                                     intentionText.startsWith("Replace qualified name with import") || //may change references in javadoc, making refs always qualified in javadoc makes them expand on "reformat"
                                      intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||

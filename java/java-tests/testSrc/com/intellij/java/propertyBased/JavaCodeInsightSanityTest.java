@@ -62,9 +62,7 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   public void testPreserveComments() {
     boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
     try {
-      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
       AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
-      javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS;
       enableAlmostAllInspections();
       Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
         file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
