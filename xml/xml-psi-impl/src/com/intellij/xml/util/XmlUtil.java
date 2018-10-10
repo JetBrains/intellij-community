@@ -298,7 +298,8 @@ public class XmlUtil {
     try {
       if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);
-        return XmlTagUtil.getCharacterByEntityName(text);
+        char c = XmlTagUtil.getCharacterByEntityName(text);
+        return c == 0 ? ' ' : c;
       }
       text = text.substring(2, text.length() - 1);
     }
