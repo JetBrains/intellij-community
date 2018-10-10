@@ -17,8 +17,8 @@ import java.util.*
 
 class MethodCandidate(val method: PsiMethod,
                       val siteSubstitutor: PsiSubstitutor,
-                      val arguments: List<Argument>,
-                      val context: GroovyPsiElement) {
+                      private val arguments: List<Argument>,
+                      private val context: GroovyPsiElement) {
 
   val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy {
     mapArguments(typeComputer)
