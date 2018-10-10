@@ -237,7 +237,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/java-annotations"),
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1",
                        license: "Apache 2.0", url: "https://github.com/JetBrains/java-annotations"),
-    new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", version: "0.2", license: "Apache 2.0",
+    new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", version: "0.2.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/jetCheck"),
     new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),
