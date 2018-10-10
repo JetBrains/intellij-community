@@ -14,6 +14,7 @@ import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.uast.UastVisitorAdapter;
 import com.intellij.ui.ContextHelpLabel;
@@ -106,11 +107,12 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         if (sourcePsi != null) {
           Module targetModule = ModuleUtilCore.findModuleForPsiElement(targetElement);
           Module sourceModule = ModuleUtilCore.findModuleForPsiElement(sourcePsi);
-          if (isPackageLocalAccessSuspicious(sourceModule, targetModule)) {
+          if (isPackageLocalAccessSuspicious(sourceModule, targetModule) && PsiTreeUtil.getParentOfType(sourcePsi, PsiComment.class) == null) {
             List<IntentionAction> fixes =
               JvmElementActionFactories.createModifierActions(targetElement, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
-            holder.registerProblem(sourcePsi, StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true))) + " is " + accessType +
-                                              ", but declared in a different module '" + targetModule.getName() + "'",
+            String elementDescription = StringUtil.removeHtmlTags(StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true)));
+            holder.registerProblem(sourcePsi, elementDescription + " is " + accessType + ", but declared in a different module '"
+                                              + targetModule.getName() + "'",
                                    IntentionWrapper.wrapToQuickFixes(fixes.toArray(IntentionAction.EMPTY_ARRAY), targetElement.getContainingFile()));
           }
         }
