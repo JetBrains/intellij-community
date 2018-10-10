@@ -1093,7 +1093,7 @@
                      implementationClass="com.siyeh.ig.initialization.AbstractMethodCallInConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleBraceInitialization" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="double.brace.initialization.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.initialization.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.initialization.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.initialization.DoubleBraceInitializationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="InstanceVariableMayNotBeInitialized" shortName="InstanceVariableInitialization"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="instance.variable.may.not.be.initialized.display.name"
