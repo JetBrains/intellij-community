@@ -1715,7 +1715,7 @@ public class JBUI {
       }
 
       public static Color separatorTextColor() {
-        return JBColor.namedColor("Popup.separator.foreground", Color.gray);
+        return JBColor.namedColor("Popup.Separator.foreground", Color.gray);
       }
     }
 
