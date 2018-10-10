@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -80,7 +79,7 @@ public class TerminalView {
     return project.getComponent(TerminalView.class);
   }
 
-  public void initTerminal(final ToolWindow toolWindow) {
+  public void initTerminal(@NotNull ToolWindow toolWindow, @Nullable TerminalArrangementState arrangementState) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -94,8 +93,7 @@ public class TerminalView {
     });
 
     myToolWindow.setToHideOnEmptyContent(true);
-    TerminalArrangementState state = Registry.get("terminal.persistant.tabs").asBoolean() ? TerminalArrangementManager.getInstance(myProject).getArrangementState() : null;
-    List<TerminalTabState> states = state != null ? state.myTabStates : null;
+    List<TerminalTabState> states = arrangementState != null ? arrangementState.myTabStates : null;
     if (ContainerUtil.isEmpty(states)) {
       newTab(null);
     }
@@ -103,23 +101,21 @@ public class TerminalView {
       for (TerminalTabState tabState : states) {
         createNewSession(myTerminalRunner, tabState);
       }
+      ContentManager contentManager = toolWindow.getContentManager();
+      Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
+      if (content != null) {
+        contentManager.setSelectedContent(content);
+      }
     }
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-        if (window != null) {
-          boolean visible = window.isVisible();
-          if (visible) {
-            if (myToolWindow.getContentManager().getContentCount() == 0) {
-              initTerminal(window);
-            }
-            else if (myFileToOpen != null) {
-              //myTerminalRunner.openSessionForFile(myTerminalWidget, myFileToOpen);
-            }
-            myFileToOpen = null;
+        if (toolWindow.isVisible()) {
+          if (myToolWindow.getContentManager().getContentCount() == 0) {
+            initTerminal(toolWindow, null);
           }
+          myFileToOpen = null;
         }
       }
     });
