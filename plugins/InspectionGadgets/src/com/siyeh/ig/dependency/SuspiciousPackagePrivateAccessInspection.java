@@ -78,8 +78,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         PsiElement resolve = node.resolve();
         if (resolve instanceof PsiField) {
           PsiField field = (PsiField)resolve;
-          checkAccess(node.getSelector(), field, node.getReceiver()
-          );
+          checkAccess(node.getSelector(), field, node.getReceiver());
         }
         return false;
       }
@@ -98,18 +97,21 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
         PsiElement resolve = node.resolve();
         if (resolve instanceof PsiMember) {
           PsiMember member = (PsiMember)resolve;
-          checkAccess(getReferenceNameElement(node), member, node.getQualifierExpression());
+          UElement sourceNode = getReferenceNameElement(node);
+          if (sourceNode != null) {
+            checkAccess(sourceNode, member, node.getQualifierExpression());
+          }
         }
         return false;
       }
 
-      private void checkClassReference(UElement sourceNode, PsiClass targetClass) {
+      private void checkClassReference(@NotNull UElement sourceNode, @Nullable PsiClass targetClass) {
         if (targetClass != null) {
           checkAccess(sourceNode, targetClass, null);
         }
       }
 
-      private void checkAccess(@NotNull UElement sourceNode, PsiMember target, @Nullable UExpression receiver) {
+      private void checkAccess(@NotNull UElement sourceNode, @NotNull PsiMember target, @Nullable UExpression receiver) {
         if (target.hasModifier(JvmModifier.PACKAGE_LOCAL)) {
           checkPackageLocalAccess(sourceNode, target, "package-private");
         }
@@ -136,6 +138,7 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
     }, true);
   }
 
+  @Nullable
   private static UElement getReferenceNameElement(UCallableReferenceExpression node) {
     PsiElement psi = node.getSourcePsi();
     if (psi instanceof PsiReferenceExpression) {
