@@ -20,6 +20,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
@@ -87,5 +88,12 @@
     <action id="Github.PullRequest.Preview.Refresh"
             class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
             internal="true"/>
+
+    <group>
+      <action id="Github.PullRequest.Zip.Commits.Toggle"
+              class="org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent$ToggleZipCommitsAction"/>
+
+      <add-to-group group-id="ChangesView.GroupBy" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>

@@ -13,7 +13,6 @@ interface GithubPullRequestDataProvider {
   val detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
   val branchFetchRequest: CompletableFuture<Couple<String>>
   val logCommitsRequest: CompletableFuture<List<GitCommit>>
-  val changesRequest: CompletableFuture<List<Change>>
 
   fun addRequestsChangesListener(listener: RequestsChangedListener)
   fun removeRequestsChangesListener(listener: RequestsChangedListener)
@@ -22,11 +21,10 @@ interface GithubPullRequestDataProvider {
   fun reloadDetails()
 
   @CalledInAwt
-  fun reloadChanges()
+  fun reloadCommits()
 
   interface RequestsChangedListener : EventListener {
     fun detailsRequestChanged()
-    fun changesRequestChanged()
-
+    fun commitsRequestChanged()
   }
 }

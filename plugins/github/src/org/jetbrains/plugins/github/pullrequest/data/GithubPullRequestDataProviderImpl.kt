@@ -49,14 +49,13 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   override var detailsRequest: CompletableFuture<GithubPullRequestDetailedWithHtml>
     by Delegates.observable(CompletableFuture()) { _, _, _ -> requestsChangesEventDispatcher.multicaster.detailsRequestChanged() }
   override var branchFetchRequest = CompletableFuture<Couple<String>>()
-  override var logCommitsRequest = CompletableFuture<List<GitCommit>>()
-  override var changesRequest: CompletableFuture<List<Change>>
-    by Delegates.observable(CompletableFuture()) { _, _, _ -> requestsChangesEventDispatcher.multicaster.changesRequestChanged() }
+  override var logCommitsRequest: CompletableFuture<List<GitCommit>>
+    by Delegates.observable(CompletableFuture()) { _, _, _ -> requestsChangesEventDispatcher.multicaster.commitsRequestChanged() }
 
   @CalledInAwt
   internal fun load() {
     requestDetails()
-    requestChanges()
+    requestCommits()
   }
 
   @CalledInAwt
@@ -65,8 +64,8 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
   }
 
   @CalledInAwt
-  override fun reloadChanges() {
-    requestChanges()
+  override fun reloadCommits() {
+    requestCommits()
   }
 
   @CalledInAwt
@@ -88,7 +87,7 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
         if (oldDetails == null
             || oldDetails.base.sha != details.base.sha
             || oldDetails.head.sha != details.head.sha) {
-          reloadChanges()
+          reloadCommits()
         }
       }
     }
@@ -100,24 +99,21 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     detailsRequest = newDetailsRequest
   }
 
-  private fun requestChanges() {
+  private fun requestCommits() {
     changesLoadingIndicator.cancel()
     changesLoadingIndicator = NonReusableEmptyProgressIndicator()
 
     val detailsRequest = detailsRequest
     val newBranchFetchRequest = CompletableFuture<Couple<String>>()
     val newLogCommitsRequest = CompletableFuture<List<GitCommit>>()
-    val newChangesRequest = CompletableFuture<List<Change>>()
     progressManager.runProcessWithProgressAsynchronously(object : Task.Backgroundable(project, "Load Pull Request Changes", true) {
       override fun run(indicator: ProgressIndicator) {
         fetchBranch(newBranchFetchRequest, detailsRequest, indicator)
         loadCommits(newLogCommitsRequest, newBranchFetchRequest, indicator)
-        zipChanges(newChangesRequest, newLogCommitsRequest, indicator)
       }
     }, changesLoadingIndicator)
     branchFetchRequest = newBranchFetchRequest
     logCommitsRequest = newLogCommitsRequest
-    changesRequest = newChangesRequest
   }
 
   @CalledInAwt
@@ -157,15 +153,6 @@ internal class GithubPullRequestDataProviderImpl(private val project: Project,
     runPartialTask(result, indicator) {
       val hashes = fetchRequest.joinCancellable()
       GitLogUtil.collectFullDetails(project, repository.root, "${hashes.first}..${hashes.second}")
-    }
-
-  @CalledInBackground
-  private fun zipChanges(result: CompletableFuture<List<Change>>,
-                         commitsRequest: CompletableFuture<List<GitCommit>>,
-                         indicator: ProgressIndicator) =
-    runPartialTask(result, indicator) {
-      val commits = commitsRequest.joinCancellable()
-      CommittedChangesTreeBrowser.zipChanges(commits.reversed().flatMap { it.changes })
     }
 
   @Throws(ProcessCanceledException::class)

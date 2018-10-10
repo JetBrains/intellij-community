@@ -2,9 +2,13 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.ui.IdeBorderFactory
@@ -14,13 +18,18 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import git4idea.GitCommit
+import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import java.awt.BorderLayout
 import javax.swing.border.Border
+import javax.swing.tree.DefaultTreeModel
 import kotlin.properties.Delegates
 
-internal class GithubPullRequestChangesComponent(project: Project) : GithubDataLoadingComponent<List<Change>>(), Disposable {
+internal class GithubPullRequestChangesComponent(project: Project,
+                                                 projectUiSettings: GithubPullRequestsProjectUISettings
+) : GithubDataLoadingComponent<List<GitCommit>>(), Disposable {
 
-  private val changesBrowser = PullRequestChangesBrowserWithError(project)
+  private val changesBrowser = PullRequestChangesBrowserWithError(project, projectUiSettings)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
   private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
@@ -30,16 +39,17 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
     loadingPanel.add(changesBrowser, BorderLayout.CENTER)
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
     setContent(loadingPanel)
+    Disposer.register(this, changesBrowser)
   }
 
   override fun reset() {
     changesBrowser.emptyText.text = DEFAULT_EMPTY_TEXT
-    changesBrowser.changes = emptyList()
+    changesBrowser.commits = emptyList()
   }
 
-  override fun handleResult(result: List<Change>) {
+  override fun handleResult(result: List<GitCommit>) {
     changesBrowser.emptyText.text = "Pull request does not contain any changes"
-    changesBrowser.changes = result
+    changesBrowser.commits = result
   }
 
   override fun handleError(error: Throwable) {
@@ -51,10 +61,11 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      if(changesBrowser.changes.isNullOrEmpty()) {
+      if (changesBrowser.commits.isNullOrEmpty()) {
         changesBrowser.emptyText.clear()
         loadingPanel.startLoading()
-      } else {
+      }
+      else {
         backgroundLoadingPanel.startLoading()
       }
     }
@@ -66,26 +77,67 @@ internal class GithubPullRequestChangesComponent(project: Project) : GithubDataL
 
   override fun dispose() {}
 
+  internal class PullRequestChangesBrowserWithError(project: Project,
+                                                    private val projectUiSettings: GithubPullRequestsProjectUISettings
+  ) : ChangesBrowserBase(project, false, false), ComponentWithEmptyText, Disposable {
+
+    var commits: List<GitCommit> by Delegates.observable(listOf()) { _, _, _ ->
+      myViewer.rebuildTree()
+    }
+
+    init {
+      projectUiSettings.addChangesListener(this) {
+        myViewer.rebuildTree()
+      }
+      init()
+    }
+
+    override fun getEmptyText() = myViewer.emptyText
+
+    override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
+
+    override fun buildTreeModel(): DefaultTreeModel {
+      val builder = TreeModelBuilder(myProject, grouping)
+      if (projectUiSettings.zipChanges) {
+        val zipped = CommittedChangesTreeBrowser.zipChanges(commits.reversed().flatMap { it.changes })
+        builder.setChanges(zipped, null)
+      }
+      else {
+        for (commit in commits) {
+          val tag = CommitTag(commit)
+          builder.setChanges(commit.changes, null, tag)
+        }
+      }
+      return builder.build()
+    }
+
+    override fun dispose() {}
+  }
+
+  private data class CommitTag(val commit: GitCommit) {
+    override fun toString(): String = commit.subject
+  }
+
+  class ToggleZipCommitsAction : ToggleAction("Commit"), DumbAware {
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.isEnabledAndVisible = e.getData(ChangesBrowserBase.DATA_KEY) is PullRequestChangesBrowserWithError
+    }
+
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val project = e.project ?: return false
+      return !GithubPullRequestsProjectUISettings.getInstance(project).zipChanges
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      val project = e.project ?: return
+      GithubPullRequestsProjectUISettings.getInstance(project).zipChanges = !state
+    }
+  }
+
   companion object {
     //language=HTML
     private const val DEFAULT_EMPTY_TEXT = "Select pull request to view list of changed files"
-
-    private class PullRequestChangesBrowserWithError(project: Project)
-      : ChangesBrowserBase(project, false, false), ComponentWithEmptyText {
-
-      var changes: List<Change> by Delegates.observable(listOf()) { _, _, _ ->
-        myViewer.rebuildTree()
-      }
-
-      init {
-        init()
-      }
-
-      override fun buildTreeModel() = TreeModelBuilder.buildFromChanges(myProject, grouping, changes, null)
-
-      override fun getEmptyText() = myViewer.emptyText
-
-      override fun createViewerBorder(): Border = IdeBorderFactory.createBorder(SideBorder.TOP)
-    }
   }
 }

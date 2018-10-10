@@ -149,9 +149,18 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
+    return setChanges(changes, changeNodeDecorator, null);
+  }
+
+  @NotNull
+  public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes,
+                                     @Nullable ChangeNodeDecorator changeNodeDecorator,
+                                     @Nullable Object tag) {
+    ChangesBrowserNode<?> parentNode = createTagNode(tag);
+
     List<? extends Change> sortedChanges = sorted(changes, CHANGE_COMPARATOR);
     for (Change change : sortedChanges) {
-      insertChangeNode(change, myRoot, createChangeNode(change, changeNodeDecorator));
+      insertChangeNode(change, parentNode, createChangeNode(change, changeNodeDecorator));
     }
     return this;
   }
