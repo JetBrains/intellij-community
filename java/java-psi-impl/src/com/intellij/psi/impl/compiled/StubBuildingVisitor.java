@@ -59,7 +59,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final Function<String, String> myMapping;
   private final boolean myAnonymousInner;
   private final boolean myLocalClassInner;
-  private boolean myNoAnnotationOffsets;
+  private boolean myAsm6Mode;
   private String myInternalName;
   private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
@@ -80,7 +80,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myAnonymousInner = anonymousInner;
     myLocalClassInner = localClassInner;
     //noinspection ConstantConditions
-    myNoAnnotationOffsets = ASM_API > Opcodes.ASM6 && !(classSource == null && innersStrategy.getClass().getName().startsWith("org.jetbrains.kotlin."));
+    myAsm6Mode = ASM_API <= Opcodes.ASM6 || classSource == null && innersStrategy.getClass().getName().startsWith("org.jetbrains.kotlin.");
   }
 
   public PsiClassStub<?> getResult() {
@@ -277,7 +277,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (innerClass != null) {
         StubBuildingVisitor<T> visitor =
           new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner);
-        visitor.myNoAnnotationOffsets = myNoAnnotationOffsets;
+        visitor.myAsm6Mode = myAsm6Mode;
         myInnersStrategy.accept(innerClass, visitor);
       }
     }
@@ -391,8 +391,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
-    boolean noSynthetics = isConstructor && hasSignature && Type.getArgumentTypes(desc).length == info.argTypes.size();
-    int paramIgnoreCount = myNoAnnotationOffsets || noSynthetics ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
+    boolean noSynthetics = myAsm6Mode && isConstructor && hasSignature && Type.getArgumentTypes(desc).length == info.argTypes.size();
+    int paramIgnoreCount = noSynthetics ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     int localVarIgnoreCount = isEnumConstructor ? 3 : isInnerClassConstructor ? 2 : !isStatic ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, paramStubs, paramIgnoreCount, localVarIgnoreCount, myMapping);
   }
@@ -576,8 +576,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final PsiParameterStubImpl[] myParamStubs;
     private final int myParamCount;
     private final int myLocalVarIgnoreCount;
-    private final int myParamIgnoreCount;
     private final Function<String, String> myMapping;
+    private int myParamIgnoreCount;
     private int myParamNameIndex;
     private int myUsedParamSize;
     private int myUsedParamCount;
@@ -597,6 +597,13 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       myLocalVarIgnoreCount = localVarIgnoreCount;
       myParamIgnoreCount = paramIgnoreCount;
       myMapping = mapping;
+    }
+
+    @Override
+    public void visitAnnotableParameterCount(int parameterCount, boolean visible) {
+      if (myParamIgnoreCount > 0 && parameterCount == myParamCount) {
+        myParamIgnoreCount = 0;
+      }
     }
 
     @Override
