@@ -15,11 +15,8 @@ class ExpressionConstraint(private val expression: GrExpression, private val lef
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     when (expression) {
       is GrMethodCall -> {
-        val invokedExpression = expression.invokedExpression
-        when (invokedExpression) {
-          is GrReferenceExpression -> constraints.add(ReferenceExpressionConstraint(invokedExpression, leftType))
-          else -> return true
-        }
+        val invokedExpression = expression.invokedExpression as? GrReferenceExpression ?: return true
+        constraints.add(ReferenceExpressionConstraint(invokedExpression, leftType))
       }
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
