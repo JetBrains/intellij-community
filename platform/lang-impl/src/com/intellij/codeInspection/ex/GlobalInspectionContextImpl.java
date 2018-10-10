@@ -77,6 +77,7 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
@@ -459,8 +460,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }
 
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-      Stream.concat(getWrappersFromTools(localTools, file, includeDoNotShow).stream(),
-                    getWrappersFromTools(globalSimpleTools, file, includeDoNotShow).stream())
+      Stream<? extends InspectionToolWrapper> concat = Stream.concat(getWrappersFromTools(localTools, file, includeDoNotShow),
+                                                                     getWrappersFromTools(globalSimpleTools, file, includeDoNotShow));
+      concat
         .filter(wrapper -> wrapper.getTool() instanceof ExternalAnnotatorBatchInspection)
         .forEach(wrapper -> {
           ProblemDescriptor[] descriptors = ((ExternalAnnotatorBatchInspection)wrapper.getTool()).checkFile(file, this, inspectionManager);
@@ -569,15 +571,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
                                                                HighlightInfoProcessor.getEmpty());
     try {
       boolean includeDoNotShow = includeDoNotShow(getCurrentProfile());
-      final List<LocalInspectionToolWrapper> lTools = getWrappersFromTools(localTools, file, includeDoNotShow);
-      List<LocalInspectionToolWrapper> nonExternalAnnotators =
-        ContainerUtil.filter(lTools, wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
-      pass.doInspectInBatch(this, inspectionManager, nonExternalAnnotators);
+      pass.doInspectInBatch(this, inspectionManager,
+                            GlobalInspectionContextImpl.<LocalInspectionToolWrapper>getWrappersFromTools(localTools, file, includeDoNotShow)
+                                                       .filter(wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection))
+                                                       .collect(Collectors.toList()));
 
-      List<GlobalInspectionToolWrapper> globalSTools = getWrappersFromTools(globalSimpleTools, file, includeDoNotShow);
-      final List<GlobalInspectionToolWrapper> tools =
-        ContainerUtil.filter(globalSTools, wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection));
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, myProgressIndicator, toolWrapper -> {
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+        GlobalInspectionContextImpl.<GlobalInspectionToolWrapper>getWrappersFromTools(globalSimpleTools, file, includeDoNotShow)
+                                   .filter(wrapper -> !(wrapper.getTool() instanceof ExternalAnnotatorBatchInspection))
+                                   .collect(Collectors.toList()), myProgressIndicator, toolWrapper -> {
         GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
         ProblemsHolder holder = new ProblemsHolder(inspectionManager, file, false);
         ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, wrappersMap);
@@ -808,18 +810,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @NotNull
-  private static <T extends InspectionToolWrapper> List<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
-                                                                                @NotNull PsiFile file,
-                                                                                boolean includeDoNotShow) {
-    final List<T> lTools = new ArrayList<>();
-    for (Tools tool : localTools) {
+  private static <T extends InspectionToolWrapper> Stream<T> getWrappersFromTools(@NotNull List<? extends Tools> localTools,
+                                                                                  @NotNull PsiFile file,
+                                                                                  boolean includeDoNotShow) {
+    return localTools.stream().map(tool -> {
       //noinspection unchecked
-      final T enabledTool = (T)tool.getEnabledTool(file, includeDoNotShow);
-      if (enabledTool != null) {
-        lTools.add(enabledTool);
-      }
-    }
-    return lTools;
+      return (T)tool.getEnabledTool(file, includeDoNotShow);
+    }).filter(Objects::nonNull);
   }
 
   @NotNull
