@@ -692,11 +692,11 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     });
   }
 
-  private static List<TextFilePatch> loadTextPatches(final Project project,
-                                                     final ShelvedChangeList changeList,
-                                                     final List<ShelvedChange> changes,
-                                                     final List<FilePatch> remainingPatches,
-                                                     final CommitContext commitContext)
+  static List<TextFilePatch> loadTextPatches(final Project project,
+                                             final ShelvedChangeList changeList,
+                                             final List<ShelvedChange> changes,
+                                             final List<FilePatch> remainingPatches,
+                                             final CommitContext commitContext)
     throws IOException, PatchSyntaxException {
     final List<TextFilePatch> textFilePatches = loadPatches(project, changeList.PATH, commitContext);
 
