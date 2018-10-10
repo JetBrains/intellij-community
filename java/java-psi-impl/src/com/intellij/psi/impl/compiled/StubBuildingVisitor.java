@@ -366,18 +366,19 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isInnerClassConstructor = isConstructor && !isEnum && isInner() && !isGroovyClosure(canonicalMethodName);
 
     List<String> args = info.argTypes;
-    if (!hasSignature && isEnumConstructor && args.size() >= 2 && CommonClassNames.JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
-      // omit synthetic enum constructor parameters
-      args = args.subList(2, args.size());
+    if (!hasSignature) {
+      if (isEnumConstructor && args.size() >= 2 && CommonClassNames.JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
+        args = args.subList(2, args.size());  // omit synthetic enum constructor parameters
+      }
+      else if (isInnerClassConstructor && args.size() >= 1) {
+        args = args.subList(1, args.size());  // omit synthetic inner class constructor parameter
+      }
     }
 
     PsiParameterListStubImpl parameterList = new PsiParameterListStubImpl(stub);
     int paramCount = args.size();
     PsiParameterStubImpl[] paramStubs = new PsiParameterStubImpl[paramCount];
     for (int i = 0; i < paramCount; i++) {
-      // omit synthetic inner class constructor parameter
-      if (i == 0 && !hasSignature && isInnerClassConstructor) continue;
-
       String arg = args.get(i);
       boolean isEllipsisParam = isVarargs && i == paramCount - 1;
       TypeInfo typeInfo = TypeInfo.fromString(arg, isEllipsisParam);
@@ -392,7 +393,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     boolean noSynthetics = isConstructor && hasSignature && Type.getArgumentTypes(desc).length == info.argTypes.size();
     int paramIgnoreCount = myNoAnnotationOffsets || noSynthetics ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
-    int localVarIgnoreCount = isEnumConstructor ? 3 : isStatic ? 0 : 1;
+    int localVarIgnoreCount = isEnumConstructor ? 3 : isInnerClassConstructor ? 2 : !isStatic ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, paramStubs, paramIgnoreCount, localVarIgnoreCount, myMapping);
   }
 
