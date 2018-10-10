@@ -149,10 +149,10 @@ public class SuspiciousPackagePrivateAccessInspection extends AbstractBaseUastLo
       accessObjectType = (PsiClass)element;
     }
 
-    UClass sourceClass = UastUtils.getParentOfType(sourceNode, UClass.class);
+    PsiElement sourcePsi = sourceNode.getSourcePsi();
+    PsiClass sourceClass = PsiTreeUtil.getParentOfType(sourcePsi, PsiClass.class);
     if (sourceClass == null) return false;
-    PsiClass sourceClassJava = sourceClass.getJavaPsi();
-    return JavaResolveUtil.canAccessProtectedMember(member, memberClass, accessObjectType, sourceClassJava, member.hasModifierProperty(PsiModifier.STATIC));
+    return JavaResolveUtil.canAccessProtectedMember(member, memberClass, accessObjectType, sourceClass, member.hasModifierProperty(PsiModifier.STATIC));
   }
 
   private boolean isPackageLocalAccessSuspicious(Module sourceModule, Module targetModule) {

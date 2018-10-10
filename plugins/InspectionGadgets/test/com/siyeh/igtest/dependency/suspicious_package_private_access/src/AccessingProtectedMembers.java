@@ -18,5 +18,14 @@ class AccessingProtectedMembersFromSubclass extends ProtectedMembers {
     aClass.<warning descr="Method ProtectedMembers.method() is protected and used not through a subclass here, but declared in a different module 'dep'">method</warning>();
     AccessingProtectedMembersFromSubclass myInstance = new AccessingProtectedMembersFromSubclass();
     myInstance.method();
+
+    ProtectedMembers.StaticInner inner1;
+    StaticInner inner2;
+  }
+
+  public static class StaticInnerImpl1 extends ProtectedMembers.StaticInner {
+  }
+
+  public static class StaticInnerImpl2 extends StaticInner {
   }
 }
