@@ -2,7 +2,6 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -47,7 +46,8 @@ class UiDslTest {
   @Before
   fun beforeMethod() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
+      // let's for now to see how it is going on macOS
+      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac /* || SystemInfo.isWin10OrNewer */)
     }
 
     System.setProperty("idea.ui.comment.copyable", "false")
