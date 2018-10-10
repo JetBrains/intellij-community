@@ -1549,9 +1549,8 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
         val type = getType(oldNode)!!
         removeNodeFromParent(oldNode)
         var index: Int
-        if (type !== getType(newNode)) {
-          val typeNode = getConfigurationTypeNode(type)!!
-          newParent = typeNode
+        if (type !== getType(newParent)) {
+          newParent = getConfigurationTypeNode(type)!!
           index = newParent.childCount
         }
         else {
