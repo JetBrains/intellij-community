@@ -14,6 +14,8 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -32,8 +34,17 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
-      collector.awaitFinish();
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      try {
+        collector.awaitFinish(1000);
+      }
+      catch (TimeoutException e) {
+        Assert.fail("Search timeout exceeded");
+      }
+      catch (InterruptedException e) {
+      } finally {
+        indicator.cancel();
+      }
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
         Assert.assertEquals(String.format("Scenario '%s'. found elements by contributor %s", scenario.description, contributorId), results, values);
@@ -49,8 +60,18 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
     SESearcher searcher = new SingleThreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
 
     scenarios.forEach(scenario -> {
-      searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
-      collector.awaitFinish();
+      ProgressIndicator indicator = searcher.search(scenario.contributorsAndLimits, "", false, ignrd -> null);
+      try {
+        collector.awaitFinish(1000);
+      }
+      catch (TimeoutException e) {
+        Assert.fail("Search timeout exceeded");
+      }
+      catch (InterruptedException e) {
+      } finally {
+        indicator.cancel();
+      }
+
       scenario.results.forEach((contributorId, results) -> {
         List<String> values = collector.getContributorValues(contributorId);
         Assert.assertEquals(String.format("Scenario '%s'. found elements by contributor %s", scenario.description, contributorId), results, values);
@@ -406,8 +427,9 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       return values != null ? values : Collections.emptyList();
     }
 
-    public void awaitFinish() {
-      myPhaser.arriveAndAwaitAdvance();
+    public void awaitFinish(long timeout) throws TimeoutException, InterruptedException {
+      int phase = myPhaser.arrive();
+      myPhaser.awaitAdvanceInterruptibly(phase, timeout, TimeUnit.MILLISECONDS);
     }
 
     public void clear() {
