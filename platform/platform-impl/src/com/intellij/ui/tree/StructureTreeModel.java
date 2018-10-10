@@ -33,13 +33,15 @@ import static org.jetbrains.concurrency.Promises.rejectedPromise;
 /**
  * @author Sergey.Malenkov
  */
-public class StructureTreeModel extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
+public class StructureTreeModel<Structure extends AbstractTreeStructure>
+  extends AbstractTreeModel implements Disposable, InvokerSupplier, ChildrenProvider<TreeNode> {
+
   private static final TreePath ROOT_INVALIDATED = new TreePath(new DefaultMutableTreeNode());
   private static final Logger LOG = Logger.getInstance(StructureTreeModel.class);
   private final Reference<Node> root = new Reference<>();
   private final String description;
   private final Invoker invoker;
-  private volatile AbstractTreeStructure structure;
+  private volatile Structure structure;
   private volatile Comparator<? super Node> comparator;
 
   private StructureTreeModel(@NotNull String prefix, boolean background) {
@@ -49,12 +51,12 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
               : new Invoker.EDT(this);
   }
 
-  public StructureTreeModel(@NotNull AbstractTreeStructure structure) {
+  public StructureTreeModel(@NotNull Structure structure) {
     this(structure.toString(), true);
     this.structure = structure;
   }
 
-  public StructureTreeModel(@NotNull AbstractTreeStructure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
+  public StructureTreeModel(@NotNull Structure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
     this(structure);
     this.comparator = wrapToNodeComparator(comparator);
   }
@@ -107,10 +109,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
    * @return a promise that will be succeed if the specified function returns non-null value
    */
   @NotNull
-  private <Result> Promise<Result> onValidThread(@NotNull Function<AbstractTreeStructure, Result> function) {
+  private <Result> Promise<Result> onValidThread(@NotNull Function<Structure, Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
-      AbstractTreeStructure structure = this.structure;
+      Structure structure = this.structure;
       if (!disposed && structure != null) {
         Result result = function.apply(structure);
         if (result != null) promise.setResult(result);
@@ -343,7 +345,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   }
 
   private boolean isValid(@NotNull Node node) {
-    AbstractTreeStructure structure = this.structure;
+    Structure structure = this.structure;
     return structure != null && isValid(structure, node.getElement());
   }
 
@@ -362,7 +364,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   @Nullable
   private Node getValidRoot() {
-    AbstractTreeStructure structure = this.structure;
+    Structure structure = this.structure;
     if (structure == null) return null;
 
     Object element = structure.getRootElement();
@@ -378,7 +380,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
-    AbstractTreeStructure structure = this.structure;
+    Structure structure = this.structure;
     if (structure == null) return null;
 
     NodeDescriptor descriptor = node.getDescriptor();
