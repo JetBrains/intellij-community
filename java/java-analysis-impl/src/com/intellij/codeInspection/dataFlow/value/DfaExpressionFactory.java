@@ -169,11 +169,11 @@ public class DfaExpressionFactory {
       return myFactory.getVarFactory().createVariableValue(var, refExpr.getType());
     }
     DfaVariableValue qualifier = getQualifierOrThisVariable(refExpr);
+    PsiType type = refExpr.getType();
     if (qualifier != null) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), qualifier);
+      return myFactory.getVarFactory().createVariableValue(var, type, qualifier);
     }
 
-    PsiType type = refExpr.getType();
     return myFactory.createTypeValue(type, DfaPsiUtil.getElementNullability(type, psiElement));
   }
 
