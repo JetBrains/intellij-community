@@ -20,11 +20,11 @@ class MethodCandidate(val method: PsiMethod,
                       private val arguments: List<Argument>,
                       private val context: GroovyPsiElement) {
 
-  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy {
+  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     mapArguments(typeComputer)
   }
 
-  private val erasedArguments: Array<PsiType?> by lazy {
+  private val erasedArguments: Array<PsiType?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     arguments.map(typeComputer).map(TypeConversionUtil::erasure).toTypedArray()
   }
 

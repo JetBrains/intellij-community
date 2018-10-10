@@ -17,11 +17,11 @@ class MethodResolveResult(
   state: ResolveState
 ) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
 
-  private val siteSubstitutor by lazy {
+  private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     super.getSubstitutor().putAll(method.typeParameters, ref.typeArguments)
   }
 
-  private val methodCandidate by lazy {
+  private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
     val argumentConstraints = buildArguments(ref)
     if (method is GrGdkMethod) {
       val arguments = mutableListOf<Argument>().apply {
@@ -35,7 +35,7 @@ class MethodResolveResult(
     }
   }
 
-  private val applicabilitySubstitutor by lazy {
+  private val applicabilitySubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (ref.typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
@@ -44,7 +44,7 @@ class MethodResolveResult(
     }
   }
 
-  private val fullSubstitutor by lazy {
+  private val fullSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (ref.typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
