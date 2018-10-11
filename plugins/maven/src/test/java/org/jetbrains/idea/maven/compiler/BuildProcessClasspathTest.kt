@@ -2,18 +2,19 @@
 package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager
-import com.intellij.testFramework.IdeaTestCase
+import com.intellij.openapi.project.DefaultProjectFactory
+import com.intellij.psi.impl.light.LightJavaModule
+import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.cmdline.ClasspathBootstrap
+import org.junit.Test
 import java.io.File
 
-class BuildProcessClasspathTest : IdeaTestCase() {
-  fun testBuildProcessClasspath() {
-    val cp = mutableListOf<String>()
-    cp.addAll(ClasspathBootstrap.getBuildProcessApplicationClasspath())
-    cp.addAll(BuildProcessClasspathManager().getBuildProcessPluginsClasspath(project))
-    val cpFileNames = cp.map { File(it).name }
-    assertContainsElements(cpFileNames,
-                           "intellij.maven.jps",
-                           "plexus-utils-3.0.22.jar")
+class BuildProcessClasspathTest : BareTestFixtureTestCase() {
+  @Test fun testBuildProcessClasspath() {
+    val baseCp = ClasspathBootstrap.getBuildProcessApplicationClasspath()
+    val pluginsCp = BuildProcessClasspathManager().getBuildProcessPluginsClasspath(DefaultProjectFactory.getInstance().defaultProject)
+    val libs = (baseCp.asSequence() + pluginsCp.asSequence()).map { LightJavaModule.moduleName(File(it).name) }.toSet()
+    assertThat(libs).contains("intellij.maven.jps", "plexus.utils")
   }
 }
