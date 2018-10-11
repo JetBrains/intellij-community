@@ -31,7 +31,10 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -595,14 +598,12 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         throw e;
       }
 
-      System.err.println("In file: " + file);cause.printStackTrace();
       LOG.error("In file: " + file.getName(), cause);
     }
     catch (IndexNotReadyException e) {
       throw e;
     }
     catch (Throwable e) {
-      System.err.println("In file: " + file);e.printStackTrace();
       LOG.error("In file: " + file.getName(), e);
     }
     finally {
