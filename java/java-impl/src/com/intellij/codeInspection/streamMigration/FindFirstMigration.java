@@ -42,7 +42,9 @@ class FindFirstMigration extends BaseStreamApiMigration {
       PsiStatement[] statements = tb.getStatements();
       if (statements.length != 2) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
-      if (assignment == null || tb.getVariable().getType() instanceof PsiPrimitiveType) {
+      if (assignment == null ||
+          (tb.getVariable().getType() instanceof PsiPrimitiveType &&
+           !ExpressionUtils.isReferenceTo(assignment.getRExpression(), tb.getVariable()))) {
         // if we found an assignment with primitive stream variable, then we are not assigning to local variable
         // (see StreamApiMigrationInspection#findMigrationForBreak), thus it could be handled via ifPresent()
         if(!(statements[0] instanceof PsiExpressionStatement)) return null;
