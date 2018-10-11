@@ -131,6 +131,13 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
     return true;
   }
+
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return 
+      //changes javadoc explicitly
+      familyName.equals("Move to Javadoc '@throws'");
+  }
 }
 
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
@@ -165,8 +172,6 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       // Cutting the message at different points is possible like
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
       familyName.equals("Simplify boolean expression") ||
-      //changes javadoc explicitly
-      familyName.equals("Move to Javadoc '@throws'") ||
       //may break catches with explicit exceptions
       familyName.equals("Replace Exceptions in Throws Clause with Single More General Exception");
   }
