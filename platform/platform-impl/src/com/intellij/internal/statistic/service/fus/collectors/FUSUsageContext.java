@@ -66,10 +66,6 @@ public class FUSUsageContext {
     assert data.length <= MAX_DATA_SIZE;
     return new FUSUsageContext(data);
   }
-  public static FUSUsageContext create(@NotNull Map<String, String> data) {
-    assert data.size() <= MAX_DATA_SIZE;
-    return new FUSUsageContext(data);
-  }
 
   @NotNull
   private static String getContextDataKey(int i) {
