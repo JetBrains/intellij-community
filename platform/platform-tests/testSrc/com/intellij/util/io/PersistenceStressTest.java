@@ -17,13 +17,13 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.CacheUpdateRunner;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -34,10 +34,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -45,7 +42,6 @@ import java.util.concurrent.Future;
  * @author Dmitry Avdeev
  */
 public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCase {
-  private static final Condition<Future<Boolean>> STILL_RUNNING = future -> !future.isDone();
   private final ExecutorService myThreadPool = PooledThreadExecutor.INSTANCE;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
@@ -93,19 +89,15 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   public void testReadWrite() throws Exception {
-    List<Future<Boolean>> futures = new ArrayList<>();
+    List<Future<Boolean>> futures = Collections.synchronizedList(new ArrayList<>());
     for (PersistentHashMap<String, Record> map : myMaps) {
-      Future<Boolean> submit = submit(map);
+      Future<Boolean> submit = myThreadPool.submit(() -> doTask(map));
       futures.add(submit);
     }
     Future<?> waitFuture = myThreadPool.submit(() -> {
-      try {
-        while (ContainerUtil.find(futures, STILL_RUNNING) != null) {
-          Thread.sleep(100);
-          myMaps.forEach(PersistentHashMap::dropMemoryCaches);
-        }
-      }
-      catch (InterruptedException ignore) {
+      while (ContainerUtil.exists(futures, future -> !future.isDone())) {
+        TimeoutUtil.sleep(100);
+        myMaps.forEach(PersistentHashMap::dropMemoryCaches);
       }
     });
 
@@ -119,7 +111,7 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
     }
 
     FileBasedIndexImpl index = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    while (ContainerUtil.find(futures, STILL_RUNNING) != null) {
+    while (ContainerUtil.exists(futures, future -> !future.isDone())) {
       Thread.sleep(100);
       CacheUpdateRunner.processFiles(new EmptyProgressIndicator(), files, getProject(),
                                      content -> index.indexFileContent(getProject(), content));
@@ -128,11 +120,6 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
       assertTrue(future.get());
     }
     waitFuture.get();
-  }
-
-  @NotNull
-  private Future<Boolean> submit(final PersistentHashMap<String, Record> map) {
-    return myThreadPool.submit(() -> doTask(map));
   }
 
   private boolean doTask(PersistentHashMap<String, Record> map) {

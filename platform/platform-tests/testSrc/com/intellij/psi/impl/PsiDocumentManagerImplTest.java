@@ -692,7 +692,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       String insert = "ddfdkjh";
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, insert));
 
-      TimeoutUtil.sleep(50);
+      UIUtil.dispatchAllInvocationEvents();
 
       WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(0, insert.length(), ""));
 

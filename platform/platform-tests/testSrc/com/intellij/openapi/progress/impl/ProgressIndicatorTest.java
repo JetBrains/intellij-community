@@ -48,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -184,10 +183,14 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   public void testThereIsNoDelayBetweenIndicatorCancelAndProgressManagerCheckCanceled() throws Throwable {
     for (int i=0; i<100;i++) {
       final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-      List<Thread> threads = ContainerUtil.map(Collections.nCopies(10, ""),
-                                               s -> new Thread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      int N = 10;
+      Semaphore started = new Semaphore(N);
+      Semaphore others = new Semaphore(1);
+      List<Thread> threads = ContainerUtil.map(Collections.nCopies(N, ""),
+                                               __ -> new Thread(() -> ProgressManager.getInstance().executeProcessUnderProgress(() -> {
                                                  try {
-                                                   Thread.sleep(new Random().nextInt(100));
+                                                   started.up();
+                                                   others.waitFor();
                                                    indicator.cancel();
                                                    ProgressManager.checkCanceled();
                                                    fail("checkCanceled() must know about canceled indicator even from different thread");
@@ -199,6 +202,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
                                                  }
                                                }, indicator), "indicator test"));
       threads.forEach(Thread::start);
+      started.waitFor();
+      others.up();
       ConcurrencyUtil.joinAll(threads);
     }
     if (exception != null) throw exception;
