@@ -7,6 +7,7 @@ import com.intellij.ide.ui.laf.VisualPaddingsProvider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -90,21 +91,28 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   internal val columnIndexIncludingSubRows: Int
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
-  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, noGrid: Boolean = false): MigLayoutRow {
+  fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
     if (subRows == null) {
       subRows = SmartList()
     }
 
     val subRows = subRows!!
 
-    if (separated) {
+    if (isSeparated) {
       val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
       subRows.add(row)
       row.apply {
-        val separatorComponent = SeparatorComponent(0, OnePixelDivider.BACKGROUND, null)
+        val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
         val cc = CC()
         cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
-        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        if (title == null) {
+          cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+        }
+        else {
+          cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
+          // TitledSeparator doesn't grow by default opposite to SeparatorComponent
+          cc.growX()
+        }
         componentConstraints.put(separatorComponent, cc)
         addComponent(separatorComponent, lazyOf(cc))
       }

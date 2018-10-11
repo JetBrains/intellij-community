@@ -59,8 +59,12 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   // it doesn't lead to any issue.
   val columnConstraints = AC()
 
-  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, separated: Boolean): Row {
-    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, separated = separated)
+  override fun newRow(label: JLabel?, buttonGroup: ButtonGroup?, isSeparated: Boolean): Row {
+    return rootRow.createChildRow(label = label, buttonGroup = buttonGroup, isSeparated = isSeparated)
+  }
+
+  override fun newTitledRow(title: String): Row {
+    return rootRow.createChildRow(isSeparated = true, title = title)
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
