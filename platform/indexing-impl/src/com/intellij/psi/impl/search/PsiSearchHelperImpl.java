@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -303,6 +304,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
         try {
           processVirtualFile(vfile, localProcessor, stopped);
+        }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
         }
         catch (Throwable e) {
           LOG.error("Error during processing of: " + vfile.getName(), e);
