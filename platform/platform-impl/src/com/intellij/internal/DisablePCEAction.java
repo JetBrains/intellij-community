@@ -65,6 +65,11 @@ public class DisablePCEAction extends DumbAwareToggleAction {
       protected void doCheckCanceled() throws ProcessCanceledException {
         runCheckCanceledHooks(getProgressIndicator());
       }
+
+      @Override
+      public boolean isInNonCancelableSection() {
+        return true;
+      }
     };
   }
 
