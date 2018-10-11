@@ -59,7 +59,9 @@ public interface UsageView extends Disposable {
    */
   default void setReRunActivity(@NotNull Runnable runnable) {};
 
-  //This action would be called to run search again (only if it's enabled)
+  /**
+   * @param rerunAction this action is used to provide non-standard search restart. Disabled action makes toolbar button disabled too.
+   */
   default void setRerunAction(@NotNull Action rerunAction) {};
 
   void setAdditionalComponent(@Nullable JComponent component);
