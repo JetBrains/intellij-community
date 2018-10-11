@@ -28,6 +28,7 @@ import com.intellij.diff.tools.external.ExternalDiffTool;
 import com.intellij.diff.tools.external.ExternalMergeTool;
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -82,7 +83,8 @@ public class DiffManagerImpl extends DiffManagerEx {
     if (Registry.is("show.diff.as.editor.tab") &&
         project != null &&
         DiffUtil.getWindowMode(hints) == WindowWrapper.Mode.FRAME) {
-      ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(requests);
+      String placeName = requests.getUserData(DiffUserDataKeys.PLACE_NAME);
+      ChainDiffVirtualFile diffFile = new ChainDiffVirtualFile(placeName, requests);
       FileEditorManager.getInstance(project).openFile(diffFile, true);
       return;
     }

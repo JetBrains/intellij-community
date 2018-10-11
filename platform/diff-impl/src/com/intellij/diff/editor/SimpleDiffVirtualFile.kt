@@ -7,7 +7,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.CalledInAwt
 
-class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile() {
+class SimpleDiffVirtualFile(private val request: DiffRequest) : DiffVirtualFile(request.title) {
   override fun getName(): String = request.title ?: super.getName()
 
   override fun createProcessorAsync(project: Project): Builder {

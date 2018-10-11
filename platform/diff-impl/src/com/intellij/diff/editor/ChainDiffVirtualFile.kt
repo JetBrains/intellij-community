@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 
-class ChainDiffVirtualFile(private val chain: DiffRequestChain) : DiffVirtualFile() {
+class ChainDiffVirtualFile(name: String?, private val chain: DiffRequestChain) : DiffVirtualFile(name) {
   override fun createProcessorAsync(project: Project): Builder {
     val edtCallback = (chain as? AsyncDiffRequestChain)?.forceLoadRequests()
 
