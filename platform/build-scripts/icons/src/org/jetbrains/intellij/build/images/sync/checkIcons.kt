@@ -69,7 +69,7 @@ fun checkIcons(
   devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
   doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false, doSyncRemovedIconsInDev: Boolean = true,
   loggerImpl: Consumer<String> = Consumer { println(it) },
-  errorHandler: Consumer<String> = Consumer { throw IllegalStateException(it) }
+  errorHandler: Consumer<String> = Consumer { error(it) }
 ) {
   logger = loggerImpl
   val iconsRepo = findGitRepoRoot(iconsRepoDir)
