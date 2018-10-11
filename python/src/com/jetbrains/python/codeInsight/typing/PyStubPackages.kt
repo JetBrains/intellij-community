@@ -8,7 +8,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -64,15 +64,11 @@ fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
     if (subdirectory?.name == stubPackageName) {
       subdirectory.putUserData(STUB_PACKAGE_KEY, true)
 
-      if (subdirectory
-          .findFile("py.typed")
-          ?.virtualFile
-          .let { it != null && VfsUtilCore.loadText(it, "partial\n".length + 1) == "partial\n" }) {
-        // +1 to length is to ensure that py.typed has exactly this content
-        return ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
+      return if (stubPackageIsPartial(subdirectory)) {
+        ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
       }
       else {
-        return ResolveResultList.to(subdirectory)
+        ResolveResultList.to(subdirectory)
       }
     }
   }
@@ -124,6 +120,13 @@ fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): VirtualF
   index.getContentRootForFile(file)?.let { return it }
 
   return null
+}
+
+fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
+  val pyTyped = stubPackageDirectory.findFile("py.typed") ?: return false
+
+  return pyTyped.textLength < "partial".length + 5 &&
+         pyTyped.text.let { it.startsWith("partial") && it.substring("partial".length).all(StringUtil::isLineBreak) }
 }
 
 private fun pyi(element: PsiElement) = element is PyiFile || PyUtil.turnDirIntoInit(element) is PyiFile
