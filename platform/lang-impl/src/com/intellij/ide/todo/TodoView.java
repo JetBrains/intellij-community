@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -30,6 +29,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -256,43 +256,31 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
-      // this invokeLater guaranties that this code will be invoked after
-      // PSI gets the same event.
-      DumbService.getInstance(myProject).smartInvokeLater(() -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        if (myAllTodos == null) {
-          return;
-        }
-        Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
-        ReadAction.run(() -> {
-                         for (TodoPanel panel : myPanels) {
-                           panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
-                             files.computeIfAbsent(panel, p -> new HashSet<>()).add(virtualFile);
-                             return true;
-                           });
-                         }
-                       });
-        ApplicationManager.getApplication().invokeLater(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
-            panel.updateTree();
-          }
-        }, ModalityState.NON_MODAL);
-      }, IdeBundle.message("progress.looking.for.todos"), false, myProject));
+      refresh();
     }
   }
 
   public void refresh() {
-    ApplicationManager.getApplication().runReadAction(() -> {
-          for (TodoPanel panel : myPanels) {
-            panel.rebuildCache();
-          }
-        }
-    );
-    ApplicationManager.getApplication().invokeLater(() -> {
-      for (TodoPanel panel : myPanels) {
-        panel.updateTree();
+    Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
+    ReadAction.nonBlocking(() -> {
+      if (myAllTodos == null) {
+        return;
       }
-    }, ModalityState.NON_MODAL);
+      for (TodoPanel panel : myPanels) {
+        panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
+          files.computeIfAbsent(panel, p -> new HashSet<>()).add(virtualFile);
+          return true;
+        });
+      }
+    })
+      .finishOnUiThread(ModalityState.NON_MODAL, (__) -> {
+        for (TodoPanel panel : myPanels) {
+          panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
+          panel.updateTree();
+        }
+      })
+      .inSmartMode(myProject)
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   public void addCustomTodoView(final TodoTreeBuilderFactory factory, final String title, final TodoPanelSettings settings) {
