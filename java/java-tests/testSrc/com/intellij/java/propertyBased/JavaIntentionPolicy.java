@@ -146,6 +146,12 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
   }
+
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return  //may break catches with explicit exceptions
+      familyName.equals("Replace Exceptions in Throws Clause with Single More General Exception");
+  }
 }
 
 class JavaParenthesesPolicy extends JavaIntentionPolicy {
