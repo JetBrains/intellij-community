@@ -278,22 +278,8 @@ public class TerminalView {
   }
 
   @NotNull
-  private static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
+  static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
     return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
-  }
-
-  @NotNull
-  TerminalArrangementState getArrangementState() {
-    TerminalArrangementState arrangementState = new TerminalArrangementState();
-    ContentManager contentManager = myToolWindow.getContentManager();
-    for (Content content : contentManager.getContents()) {
-      JBTerminalWidget widget = getWidgetByContent(content);
-      TerminalTabState tabState = new TerminalTabState();
-      tabState.myTabName = content.getTabName();
-      arrangementState.myTabStates.add(tabState);
-    }
-    arrangementState.mySelectedTabIndex = contentManager.getIndexOfContent(contentManager.getSelectedContent());
-    return arrangementState;
   }
 
   /**
