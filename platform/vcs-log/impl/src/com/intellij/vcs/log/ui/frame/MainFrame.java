@@ -380,6 +380,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull private final MainFrame myFrame;
 
     private MyDiffVirtualFile(@NotNull MainFrame frame) {
+      super("Vcs Log Diff");
       myFrame = frame;
     }
 
