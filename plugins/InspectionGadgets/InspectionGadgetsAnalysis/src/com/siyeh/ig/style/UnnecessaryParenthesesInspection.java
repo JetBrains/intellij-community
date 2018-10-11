@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -120,7 +121,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
           return;
         }
       }
-      if (!ParenthesesUtils.areParenthesesNeeded(expression, ignoreClarifyingParentheses)) {
+      if (!ParenthesesUtils.areParenthesesNeeded(expression, ignoreClarifyingParentheses) &&
+          !ErrorUtil.containsError(expression) && !ErrorUtil.containsError(expression.getExpression())) {
         registerError(expression);
         return;
       }
