@@ -192,11 +192,9 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
   }
 
   @Override
+  @NotNull
   public String getSignature(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();
-    if (range.isEmpty()) {
-      return null;
-    }
     StringBuilder buffer = new StringBuilder();
     buffer.append(TYPE_MARKER).append("#");
     buffer.append(range.getStartOffset());

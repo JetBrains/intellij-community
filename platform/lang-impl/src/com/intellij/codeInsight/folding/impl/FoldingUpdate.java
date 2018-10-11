@@ -271,7 +271,9 @@ public class FoldingUpdate {
   static class RegionInfo {
     @NotNull
     final FoldingDescriptor descriptor;
+    @NotNull
     final PsiElement element;
+    @NotNull
     final String signature;
     final boolean collapsedByDefault;
 
@@ -285,9 +287,10 @@ public class FoldingUpdate {
       signature = createSignature(psiElement);
     }
 
+    @NotNull
     private static String createSignature(@NotNull PsiElement element) {
       String signature = FoldingPolicy.getSignature(element);
-      if (signature != null && Registry.is("folding.signature.validation")) {
+      if (Registry.is("folding.signature.validation")) {
         PsiFile containingFile = element.getContainingFile();
         PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
         if (!element.equals(restoredElement)) {
