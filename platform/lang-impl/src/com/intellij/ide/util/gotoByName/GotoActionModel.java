@@ -61,8 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -485,12 +485,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Override
     public int compareTo(@NotNull GroupMapping o) {
-      return Comparing.compare(getBestGroupName(), o.getBestGroupName());
+      return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
     }
 
     @Nullable
     public String getBestGroupName() {
       if (myBestNameComputed) return myBestGroupName;
+      return getFirstGroupName();
+    }
+
+    @Nullable
+    private String getFirstGroupName() {
       List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
       return path != null ? getPathName(path) : null;
     }
