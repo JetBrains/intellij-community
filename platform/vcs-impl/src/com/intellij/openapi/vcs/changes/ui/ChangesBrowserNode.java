@@ -66,7 +66,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private boolean myHelper;
   @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
-  protected ChangesBrowserNode(Object userObject) {
+  protected ChangesBrowserNode(T userObject) {
     super(userObject);
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
@@ -105,7 +105,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
     }
-    return new ChangesBrowserNode(userObject);
+    return new ChangesBrowserNode<>(userObject);
   }
 
   @Override
