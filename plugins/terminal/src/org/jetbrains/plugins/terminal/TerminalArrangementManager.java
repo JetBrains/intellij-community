@@ -6,10 +6,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @State(name = "TerminalArrangementManager", storages = {
   @Storage(StoragePathMacros.CACHE_FILE)
@@ -59,10 +66,35 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     for (Content content : contentManager.getContents()) {
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
+      JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+      Future<String> directory = getWorkingDirectory(widget);
+      try {
+        tabState.myWorkingDirectory = directory != null ? directory.get(1000, TimeUnit.MILLISECONDS) : null;
+      }
+      catch (InterruptedException ignored) {
+      }
+      catch (ExecutionException e) {
+        LOG.warn("No working directory for " + tabState.myTabName, e);
+      }
+      catch (TimeoutException e) {
+        LOG.warn("Timeout fetching working directory for " + tabState.myTabName, e);
+      }
       arrangementState.myTabStates.add(tabState);
     }
     arrangementState.mySelectedTabIndex = contentManager.getIndexOfContent(contentManager.getSelectedContent());
     return arrangementState;
+  }
+
+  @Nullable
+  private static Future<String> getWorkingDirectory(@NotNull JBTerminalWidget widget) {
+    TerminalPtyProcessTtyConnector connector = ObjectUtils.tryCast(widget.getTtyConnector(),
+                                                                   TerminalPtyProcessTtyConnector.class);
+    if (connector == null) return null;
+    Process process = connector.getProcess();
+    if (process.isAlive()) {
+      return ProcessInfoUtil.getWorkingDirectory(process);
+    }
+    return null;
   }
 
   @NotNull
