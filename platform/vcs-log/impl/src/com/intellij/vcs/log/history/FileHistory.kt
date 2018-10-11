@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
@@ -55,7 +56,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
-    if (fileNamesData.hasRenames) {
+    if (fileNamesData.hasRenames && Registry.`is`("vcs.history.refine")) {
       val visibleLinearGraph = controller.compiledGraph
 
       val (row, path) = startCommit?.let {
