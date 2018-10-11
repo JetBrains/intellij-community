@@ -37,9 +37,7 @@ class VariableExtractor {
   private final Editor myEditor;
   private final IntroduceVariableSettings mySettings;
   private final PsiExpression myExpression;
-  private final PsiElement myExpressionParent;
   private final PsiElement myAnchor;
-  private final PsiElement myAnchorStatement;
   private final PsiElement myContainer;
   private final PsiExpression[] myOccurrences;
   private final boolean myIsInsideLoop;
@@ -58,20 +56,19 @@ class VariableExtractor {
     myProject = project;
     myExpression = expression;
     myEditor = editor;
-    myAnchorStatement = anchorStatement;
     myOccurrences = occurrences;
     mySettings = settings;
     myContainer = anchorStatement.getParent();
     myIsInsideLoop = RefactoringUtil.isLoopOrIf(myContainer);
     myAnchor = correctAnchor(expression, anchorStatement, myIsInsideLoop);
     myReplaceSelf = settings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(expression);
-    myExpressionParent = expression.getParent();
-    myReplaceLoop = myIsInsideLoop ? myExpressionParent instanceof PsiExpressionStatement
-                                   : myContainer instanceof PsiLambdaExpression && myExpressionParent == myContainer;
+    PsiElement expressionParent = expression.getParent();
+    myReplaceLoop = myIsInsideLoop ? expressionParent instanceof PsiExpressionStatement
+                                   : myContainer instanceof PsiLambdaExpression && expressionParent == myContainer;
     PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(myContainer, PsiCodeBlock.class, false);
     myFieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
 
-    myDeleteSelf = shouldDeleteSelf();
+    myDeleteSelf = shouldDeleteSelf(anchorStatement, expressionParent);
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
     if (myDeleteSelf) {
       if (editor != null) {
@@ -81,9 +78,9 @@ class VariableExtractor {
     }
   }
 
-  private boolean shouldDeleteSelf() {
-    if (!myIsInsideLoop && myReplaceSelf && myExpressionParent instanceof PsiExpressionStatement && myAnchor.equals(myAnchorStatement)) {
-      PsiElement parent = myExpressionParent.getParent();
+  private boolean shouldDeleteSelf(PsiElement origAnchor, PsiElement expressionParent) {
+    if (!myIsInsideLoop && myReplaceSelf && expressionParent instanceof PsiExpressionStatement && myAnchor.equals(origAnchor)) {
+      PsiElement parent = expressionParent.getParent();
       return parent instanceof PsiCodeBlock ||
              //fabrique
              parent instanceof PsiCodeFragment;
@@ -109,7 +106,7 @@ class VariableExtractor {
         if (myDeleteSelf) {
           CommentTracker commentTracker = new CommentTracker();
           commentTracker.markUnchanged(initializer);
-          commentTracker.deleteAndRestoreComments(myExpressionParent);
+          commentTracker.deleteAndRestoreComments(newExpr.getParent());
           if (myEditor != null) {
             LogicalPosition pos = new LogicalPosition(myPosition.line, myPosition.column);
             myEditor.getCaretModel().moveToLogicalPosition(pos);
@@ -129,8 +126,8 @@ class VariableExtractor {
       }
 
       if (declaration instanceof PsiDeclarationStatement) {
-        declaration = RefactoringUtil.putStatementInLoopBody((PsiStatement)declaration, myContainer, myAnchorStatement, myReplaceSelf &&
-                                                                                                                        myReplaceLoop);
+        declaration = RefactoringUtil.putStatementInLoopBody((PsiStatement)declaration, myContainer, myAnchor,
+                                                             myReplaceSelf && myReplaceLoop);
       }
       declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
       PsiVariable var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
