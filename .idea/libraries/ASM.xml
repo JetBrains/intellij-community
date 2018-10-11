@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="ASM">
+  <library name="ASM" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:asm-all:7.0-beta" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/asm-all.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/7.0-beta/asm-all-7.0-beta.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/asm-src.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/asm-all/7.0-beta/asm-all-7.0-beta-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
