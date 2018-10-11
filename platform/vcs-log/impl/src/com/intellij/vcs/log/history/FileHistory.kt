@@ -49,6 +49,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
       val trivialMerges = hideTrivialMerges(collapsedGraph) { nodeId: Int ->
         trivialCandidates.contains(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId))
       }
+      if (trivialMerges.isNotEmpty()) LOG.debug("Excluding ${trivialMerges.size} trivial merges from history for ${startPath.path}")
       trivialMerges.forEach { pathsMap.remove(permanentGraphInfo.permanentCommitsInfo.getCommitId(it)) }
     }
   }
@@ -66,8 +67,9 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
         val (paths, excluded) = refiner.refine(row, path)
         if (!excluded.isEmpty()) {
+          LOG.info("Excluding ${excluded.size} commits from history for ${startPath.path}")
           val hidden = hideCommits(controller, permanentGraphInfo, excluded)
-          if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
+          if (!hidden) LOG.error("Could not hide excluded commits from history for ${startPath.path}")
         }
         return paths
       }
