@@ -143,7 +143,7 @@ public class VfsRootAccess {
 
       allowed.addAll(ourAdditionalRoots);
     }
-    catch (Exception ignored) {
+    catch (Error ignored) {
       // sometimes library.getRoots() may crash if called from inside library modification
     }
 
