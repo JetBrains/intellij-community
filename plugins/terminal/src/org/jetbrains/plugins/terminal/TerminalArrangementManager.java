@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "TerminalArrangementManager", storages = {
-  @Storage(StoragePathMacros.CACHE_FILE),
+  @Storage(StoragePathMacros.CACHE_FILE)
 })
 public class TerminalArrangementManager implements PersistentStateComponent<TerminalArrangementState> {
 
@@ -33,7 +33,11 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   @Nullable
   @Override
   public TerminalArrangementState getState() {
-    return isAvailable() ? calcArrangementState() : null;
+    if (!isAvailable() || myTerminalToolWindow == null) {
+      // do not save state, reuse previously stored state
+      return null;
+    }
+    return calcArrangementState(myTerminalToolWindow);
   }
 
   @Override
@@ -49,13 +53,9 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   }
 
   @NotNull
-  private TerminalArrangementState calcArrangementState() {
+  private TerminalArrangementState calcArrangementState(@NotNull ToolWindow terminalToolWindow) {
     TerminalArrangementState arrangementState = new TerminalArrangementState();
-    if (myTerminalToolWindow == null) {
-      LOG.warn("Unavailable " + TerminalToolWindowFactory.TOOL_WINDOW_ID + " toolwindow");
-      return arrangementState;
-    }
-    ContentManager contentManager = myTerminalToolWindow.getContentManager();
+    ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
       TerminalTabState tabState = new TerminalTabState();
       tabState.myTabName = content.getTabName();
