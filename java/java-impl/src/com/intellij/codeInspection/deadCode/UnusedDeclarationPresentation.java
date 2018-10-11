@@ -38,7 +38,6 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -156,7 +155,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull Consumer<Element> problemSink,
+  public void exportResults(@NotNull Consumer<Element> resultConsumer,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
@@ -195,9 +194,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
-      problemSink.accept(element);
+      resultConsumer.accept(element);
     }
-    super.exportResults(problemSink, refEntity, excludedDescriptions);
+    super.exportResults(resultConsumer, refEntity, excludedDescriptions);
   }
 
   @NotNull

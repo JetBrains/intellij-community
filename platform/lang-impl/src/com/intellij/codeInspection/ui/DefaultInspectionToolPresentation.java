@@ -211,14 +211,14 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Consumer<Element> problemSink,
+  public void exportResults(@NotNull final Consumer<Element> resultConsumer,
                             @NotNull final Predicate<? super RefEntity> excludedEntities,
                             @NotNull final Predicate<? super CommonProblemDescriptor> excludedDescriptors) {
     getRefManager().iterate(new RefVisitor(){
       @Override
       public void visitElement(@NotNull RefEntity elem) {
         if (!excludedEntities.test(elem)) {
-          exportResults(problemSink, elem, excludedDescriptors);
+          exportResults(resultConsumer, elem, excludedDescriptors);
         }
       }
     });
@@ -333,12 +333,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull Consumer<Element> problemSink,
+  public void exportResults(@NotNull Consumer<Element> resultConsumer,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> isDescriptorExcluded) {
     CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
     if (descriptions != null) {
-      exportResults(descriptions, refEntity, problemSink, isDescriptorExcluded);
+      exportResults(descriptions, refEntity, resultConsumer, isDescriptorExcluded);
     }
   }
 
