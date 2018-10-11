@@ -226,6 +226,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
         return;
       }
 
+      Dimension minSize = mySearchEverywhereUI.getMinimumSize();
+      JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
+      myBalloon.setMinimumSize(minSize);
+
       if (viewType == SearchEverywhereUI.ViewType.SHORT) {
         myBalloonFullSize = myBalloon.getSize();
         JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
@@ -235,6 +239,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
           myBalloonFullSize = mySearchEverywhereUI.getPreferredSize();
           JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
         }
+        myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
+        myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
         myBalloon.setSize(myBalloonFullSize);
       }
     });
