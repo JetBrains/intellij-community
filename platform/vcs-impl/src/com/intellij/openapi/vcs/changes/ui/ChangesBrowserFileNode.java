@@ -35,7 +35,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final VirtualFile file = getUserObject();
     FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
 
