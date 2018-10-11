@@ -475,7 +475,7 @@ public class EditorPainter implements TextDrawingCallback {
           if (foldRegion != null && Registry.is("editor.highlight.foldings")) {
             attributes = getFoldingInnerAttributes(attributes, foldRegion);
           }
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null)) {
+          if (attributes != null) {
             paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), foldRegion != null);
           }
           if (attributes != null && attributes.getForegroundColor() != null) {
@@ -561,9 +561,7 @@ public class EditorPainter implements TextDrawingCallback {
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
                                   @Nullable Color effectColor, @Nullable EffectType effectType) {
-    if (hasTextEffect(effectColor, effectType, false)) {
-      paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
-    }
+    paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
       fragment.draw(g, fragment.getStartX(), y);
       x = fragment.getEndX();
@@ -571,16 +569,10 @@ public class EditorPainter implements TextDrawingCallback {
     return x;
   }
 
-  private static boolean hasTextEffect(@Nullable Color effectColor, @Nullable EffectType effectType, boolean allowBorder) {
-    return effectColor != null && (effectType == EffectType.LINE_UNDERSCORE ||
-                                   effectType == EffectType.BOLD_LINE_UNDERSCORE ||
-                                   effectType == EffectType.BOLD_DOTTED_LINE ||
-                                   effectType == EffectType.WAVE_UNDERSCORE ||
-                                   effectType == EffectType.STRIKEOUT ||
-                                   allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX));
-  }
-
-  private void paintTextEffect(Graphics2D g, float xFrom, float xTo, int y, Color effectColor, EffectType effectType, boolean allowBorder) {
+  private void paintTextEffect(@NotNull Graphics2D g, float xFrom, float xTo, int y, @Nullable Color effectColor, @Nullable EffectType effectType, boolean allowBorder) {
+    if (effectColor == null) {
+      return;
+    }
     g.setColor(effectColor);
     int xStart = (int)xFrom;
     int xEnd = (int)xTo;
@@ -716,8 +708,8 @@ public class EditorPainter implements TextDrawingCallback {
     int y = (int)lineEnd.getY() + yShift;
     TextAttributes attributes = highlighter.getTextAttributes();
     paintBackground(g, attributes, x, y, myView.getPlainSpaceWidth());
-    if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), false)) {
-      paintTextEffect(g, x, x + myView.getPlainSpaceWidth() - 1, y + myView.getAscent(), 
+    if (attributes != null) {
+      paintTextEffect(g, x, x + myView.getPlainSpaceWidth() - 1, y + myView.getAscent(),
                       attributes.getEffectColor(), attributes.getEffectType(), false);
     }
   }
@@ -1245,10 +1237,10 @@ public class EditorPainter implements TextDrawingCallback {
     if (primary == null) return secondary;
     if (secondary == null) return primary;
     return new TextAttributes(primary.getForegroundColor() == null ? secondary.getForegroundColor() : primary.getForegroundColor(),
-                              primary.getBackgroundColor() == null ? secondary.getBackgroundColor() : primary.getBackgroundColor(),
-                              primary.getEffectColor() == null ? secondary.getEffectColor() : primary.getEffectColor(),
-                              primary.getEffectType() == null ? secondary.getEffectType() : primary.getEffectType(),
-                              primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
+                         primary.getBackgroundColor() == null ? secondary.getBackgroundColor() : primary.getBackgroundColor(),
+                         primary.getEffectColor() == null ? secondary.getEffectColor() : primary.getEffectColor(),
+                         primary.getEffectType() == null ? secondary.getEffectType() : primary.getEffectType(),
+                         primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
   }
 
   @Override
