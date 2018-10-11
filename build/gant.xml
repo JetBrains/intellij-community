@@ -10,11 +10,11 @@
   </condition>
 
   <target name="init">
-    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
-               else="${project.home}/build/dependencies/gradlew">
+    <property name="gradle.home" value="${project.home}/build/dependencies"/>
+    <condition property="gradlew" value="gradlew.bat" else="gradlew">
       <os family="windows"/>
     </condition>
-    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
+    <exec executable="${gradle.home}/${gradlew}" dir="${gradle.home}" failonerror="true">
       <env key="JAVA_HOME" value="${java.home}"/>
       <arg value="--no-daemon"/>
       <arg value="setupBuildScriptsDeps"/>
