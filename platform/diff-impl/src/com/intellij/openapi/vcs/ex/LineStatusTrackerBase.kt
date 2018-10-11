@@ -20,7 +20,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.UndoConstants
 import com.intellij.openapi.diagnostic.Logger
@@ -62,7 +61,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     this.project = project
     this.document = document
 
-    vcsDocument = DocumentImpl(this.document.immutableCharSequence)
+    vcsDocument = DocumentImpl(this.document.immutableCharSequence, true)
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
     vcsDocument.setReadOnly(true)
 
@@ -137,11 +136,9 @@ abstract class LineStatusTrackerBase<R : Range> {
     if (side.isLeft) {
       vcsDocument.setReadOnly(false)
       try {
-        runWriteAction {
           CommandProcessor.getInstance().runUndoTransparentAction {
             task(vcsDocument)
           }
-        }
         return true
       }
       finally {
