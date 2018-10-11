@@ -110,6 +110,9 @@ abstract class Cell {
     label()
   }
 
+  /**
+   * @see LayoutBuilder.titledRow
+   */
   fun panel(title: String, wrappedComponent: Component, vararg constraints: CCFlags) {
     val panel = Panel(title)
     panel.add(wrappedComponent)
