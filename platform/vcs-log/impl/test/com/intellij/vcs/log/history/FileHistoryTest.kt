@@ -19,7 +19,6 @@ import gnu.trove.THashMap
 import gnu.trove.TIntObjectHashMap
 import org.junit.Assert
 import org.junit.Assume.assumeFalse
-import org.junit.Ignore
 import org.junit.Test
 
 class FileHistoryTest {
@@ -161,10 +160,7 @@ class FileHistoryTest {
 
   /**
    * Rename happens in one branch, while the other branch only consists of couple of trivial merge commits.
-   * Refiner walks to the trivial branch first instead of meaningful branch and because of this misses the rename completely.
-   * Solution would be to drop trivial merges before refining and always walk to the NOT_CHANGED branch.
    */
-  @Ignore
   @Test
   fun historyWithUndetectedRename() {
     val after = LocalFilePath("after.txt", false)
