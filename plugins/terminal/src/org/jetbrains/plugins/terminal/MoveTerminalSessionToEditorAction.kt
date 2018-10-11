@@ -4,12 +4,13 @@ package org.jetbrains.plugins.terminal
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.TabInfo
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl
 
-class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase() {
+class MoveTerminalSessionToEditorAction : TerminalSessionContextMenuActionBase(), DumbAware {
   override fun actionPerformed(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
     val tabInfo = TabInfo(selectedContent!!.component)
       .setText(selectedContent.displayName)

@@ -2,21 +2,15 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
-import java.awt.FlowLayout
-import java.awt.GridLayout
 import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JTextField
-import javax.swing.event.DocumentEvent
-import javax.swing.event.DocumentListener
 
-class RenameTerminalSessionAction : TerminalSessionContextMenuActionBase() {
+class RenameTerminalSessionAction : TerminalSessionContextMenuActionBase(), DumbAware {
   override fun actionPerformed(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
     val dialog = RenameTerminalSessionDialog(e.project!!, selectedContent!!.displayName)
     if (dialog.showAndGet()) {
