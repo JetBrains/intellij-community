@@ -17,10 +17,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrGetAtReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyReference;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
 
 /**
@@ -29,11 +32,11 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceAr
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
   private final NullableLazyValue<GrIndexPropertyReference> myRValueReference = AtomicNullableLazyValue.createValue(
-    () -> GroovyLValueUtil.isRValue(this) ? new GrIndexPropertyReference(this, true) : null
+    () -> isRValue(this) ? new GrGetAtReference(this) : null
   );
 
   private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(
-    () -> GroovyLValueUtil.isLValue(this) ? new GrIndexPropertyReference(this, false) : null
+    () -> isLValue(this) ? new GrPutAtReference(this) : null
   );
 
   private final NotNullLazyValue<GroovyReference[]> myReferences = AtomicNotNullLazyValue.createValue(

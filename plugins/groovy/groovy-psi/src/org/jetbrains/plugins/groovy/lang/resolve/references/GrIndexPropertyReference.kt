@@ -3,17 +3,15 @@ package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
 import org.jetbrains.plugins.groovy.lang.psi.util.isClassLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.isSimpleArrayAccess
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReferenceBase
 
-class GrIndexPropertyReference(element: GrIndexProperty, val rhs: Boolean) : GroovyReferenceBase<GrIndexProperty>(element) {
+abstract class GrIndexPropertyReference(element: GrIndexProperty) : GroovyCallReferenceBase<GrIndexProperty>(element) {
 
   /**
    * Consider expression `foo[a, b, c]`.
@@ -21,33 +19,35 @@ class GrIndexPropertyReference(element: GrIndexProperty, val rhs: Boolean) : Gro
    * - rValue reference, i.e. reference to a getAt() method, will have range of `[`.
    * - lValue reference, i.e. reference to a putAt() method, will have range of `]`.
    */
-  override fun getRangeInElement(): TextRange {
-    val argumentList = element.argumentList
-    val startOffsetInParent = argumentList.startOffsetInParent
-    val rangeStart = if (rhs) startOffsetInParent else startOffsetInParent + argumentList.textLength - 1
-    return TextRange.from(rangeStart, 1)
-  }
+  abstract override fun getRangeInElement(): TextRange
 
-  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    return element.doMultiResolve(rhs, incomplete) ?: emptyList()
-  }
+  final override val realReference: Boolean get() = element.run { !isClassLiteral() && !isSimpleArrayAccess() }
+
+  final override val receiver: PsiType? get() = element.invokedExpression.type
 }
 
-private fun GrIndexProperty.doMultiResolve(rhs: Boolean, incomplete: Boolean): Collection<GroovyResolveResult>? {
-  if (isClassLiteral()) return null
-  if (isSimpleArrayAccess()) return null
+class GrGetAtReference(element: GrIndexProperty) : GrIndexPropertyReference(element) {
 
-  val argumentListType = getArgumentListType() ?: return null
-  val thisType = invokedExpression.type ?: PsiType.getJavaLangObject(manager, resolveScope)
+  override fun getRangeInElement(): TextRange = TextRange.from(element.argumentList.startOffsetInParent, 1)
 
-  val rType = if (rhs) null else (parent as? GrAssignmentExpression)?.type
-  if (rType == null && !rhs && !incomplete) return null
+  override val methodName: String get() = "getAt"
 
-  val name = if (rhs) "getAt" else "putAt"
+  override val arguments: Arguments get() = listOf(element.getArgumentListType())
+}
 
-  val argTypes = if (rType == null) arrayOf(argumentListType) else arrayOf(argumentListType, rType)
-  val candidates = ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argTypes)
-  if (!rhs || argumentListType !is GrTupleType || candidates.any { it.isValidResult }) return candidates.toList()
+class GrPutAtReference(element: GrIndexProperty) : GrIndexPropertyReference(element) {
 
-  return ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argumentListType.componentTypesArray).toList()
+  override fun getRangeInElement(): TextRange {
+    val argumentList = element.argumentList
+    return TextRange.from(argumentList.startOffsetInParent + argumentList.textLength - 1, 1)
+  }
+
+  override val methodName: String get() = "putAt"
+
+  override val arguments: Arguments
+    get() {
+      val listArgument = element.getArgumentListType()
+      val rValue = (element.parent as? GrAssignmentExpression)?.type
+      return listOf(listArgument, rValue)
+    }
 }
