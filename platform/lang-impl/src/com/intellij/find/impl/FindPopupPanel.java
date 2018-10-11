@@ -144,7 +144,16 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myDisposable = Disposer.newDisposable();
     myPreviewUpdater = new Alarm(myDisposable);
     myScopeUI = FindPopupScopeUIProvider.getInstance().create(this);
-    myComponentValidator = new ComponentValidator(myDisposable);
+    myComponentValidator = new ComponentValidator(myDisposable) {
+      @Override
+      public void updateInfo(@Nullable ValidationInfo info) {
+        if (info != null && info.component == mySearchComponent) {
+          super.updateInfo(null);
+        } else {
+        super.updateInfo(info);
+        }
+      }
+    };
 
     Disposer.register(myDisposable, () -> {
       finishPreviousPreviewSearch();
