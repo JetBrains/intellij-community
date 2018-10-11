@@ -117,7 +117,7 @@ public class GdkMethodUtil {
   }
 
   public static boolean isWithName(String name) {
-    return WITH.equals(name) || IDENTITY.equals(name);
+    return WITH.equals(name) || IDENTITY.equals(name) || "tap".equals(name);
   }
 
   @Nullable
