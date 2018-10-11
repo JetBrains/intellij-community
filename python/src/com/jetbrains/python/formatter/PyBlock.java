@@ -58,6 +58,13 @@ public class PyBlock implements ASTBlock {
                                                                       PyElementTypes.SUBSCRIPTION_EXPRESSION,
                                                                       PyElementTypes.GENERATOR_EXPRESSION);
 
+  private static final TokenSet ourCollectionLiteralsTypes = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
+                                                                             PyElementTypes.LIST_COMP_EXPRESSION,
+                                                                             PyElementTypes.DICT_LITERAL_EXPRESSION,
+                                                                             PyElementTypes.DICT_COMP_EXPRESSION,
+                                                                             PyElementTypes.SET_LITERAL_EXPRESSION,
+                                                                             PyElementTypes.SET_COMP_EXPRESSION);
+
   private static final TokenSet ourBrackets = TokenSet.create(PyTokenTypes.LPAR, PyTokenTypes.RPAR,
                                                               PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
                                                               PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
@@ -275,7 +282,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getNormalIndent();
+        childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION ||
@@ -284,7 +291,7 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = Indent.getNormalIndent();
+        childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
@@ -353,7 +360,8 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNoneIndent();
       }
       else {
-        childIndent = isIndentNext(child) ? Indent.getContinuationIndent() : Indent.getNormalIndent();
+        final boolean useWiderIndent = isIndentNext(child) || settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS;
+        childIndent = useWiderIndent ? Indent.getContinuationIndent() : Indent.getNormalIndent();
       }
     }
     else if (parentType == PyElementTypes.ARGUMENT_LIST || parentType == PyElementTypes.PARAMETER_LIST) {
@@ -399,7 +407,7 @@ public class PyBlock implements ASTBlock {
     }
     if (childType == PyElementTypes.KEY_VALUE_EXPRESSION && isChildOfDictLiteral(child)) {
       childWrap = myDictWrapping;
-      childIndent = Indent.getNormalIndent();
+      childIndent = settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
     }
 
     if (isAfterStatementList(child) &&
@@ -1049,11 +1057,15 @@ public class PyBlock implements ASTBlock {
 
     final IElementType parentType = myNode.getElementType();
     // constructs that imply indent for their children
+    final PyCodeStyleSettings settings = myContext.getPySettings();
     if (parentType == PyElementTypes.PARAMETER_LIST ||
-        (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getPySettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS)) {
+        (parentType == PyElementTypes.ARGUMENT_LIST && settings.USE_CONTINUATION_INDENT_FOR_ARGUMENTS)) {
       return Indent.getContinuationIndent();
     }
-    if (ourListElementTypes.contains(parentType) || myNode.getPsi() instanceof PyStatementPart) {
+    if (ourCollectionLiteralsTypes.contains(parentType) || parentType == PyElementTypes.TUPLE_EXPRESSION) {
+      return settings.USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS ? Indent.getContinuationIndent() : Indent.getNormalIndent();
+    }
+    else if (ourListElementTypes.contains(parentType) || myNode.getPsi() instanceof PyStatementPart) {
       return Indent.getNormalIndent();
     }
 
