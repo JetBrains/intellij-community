@@ -377,7 +377,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
     final Path configurationFile = getProjectConfigurationFile(project);
-    if (!Files.isRegularFile(configurationFile)) return projects;
+    if (!configurationFile.toFile().isFile()) return projects;
 
     DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 

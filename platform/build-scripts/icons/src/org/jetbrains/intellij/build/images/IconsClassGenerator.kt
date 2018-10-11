@@ -47,7 +47,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       val firstRootDir = firstRoot.file.toPath().resolve("icons")
       var oldClassName: String?
       // this is added to remove unneeded empty directories created by previous version of this script
-      if (Files.isDirectory(firstRootDir)) {
+      if (firstRootDir.toFile().isDirectory()) {
         try {
           Files.delete(firstRootDir)
           println("deleting empty directory $firstRootDir")

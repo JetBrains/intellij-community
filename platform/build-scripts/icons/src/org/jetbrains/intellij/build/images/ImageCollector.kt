@@ -168,7 +168,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
     }
 
     when {
-      Files.isDirectory(file) -> {
+      file.toFile().isDirectory() -> {
         if (level == 1 && file.fileName.toString() == "META-INF") {
           return common
         }
