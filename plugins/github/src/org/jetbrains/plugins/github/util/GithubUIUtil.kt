@@ -42,7 +42,10 @@ object GithubUIUtil {
   }
 
   fun createIssueLabelLabel(label: GithubIssueLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.MINI).apply {
-    background = Color.decode("0x${label.color}")
-    foreground = if (ColorUtil.isDark(background)) Color.white else Color.black
+    val apiColor = ColorUtil.fromHex(label.color)
+    background = JBColor(apiColor, ColorUtil.darker(apiColor, 3))
+    foreground = computeForeground(background)
   }.andOpaque()
+
+  private fun computeForeground(bg: Color) = if (ColorUtil.isDark(bg)) Color.white else Color.black
 }
