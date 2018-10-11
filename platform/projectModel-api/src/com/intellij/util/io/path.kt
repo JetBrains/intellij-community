@@ -12,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 
-fun Path.exists(): Boolean = this.toFile().exists()
+fun Path.exists(): Boolean = Files.exists(this)
 
 fun Path.createDirectories(): Path {
   // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
