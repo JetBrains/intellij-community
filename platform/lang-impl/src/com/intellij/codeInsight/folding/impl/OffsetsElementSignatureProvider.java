@@ -155,11 +155,8 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
 
     // There is a possible case that we have a hierarchy of PSI elements that target the same document range. We need to find
     // out the right one then.
-    
-    int indexFromRoot = 0;
-    for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
-      indexFromRoot++;
-    }
+
+    int indexFromRoot = getElementHierarchyIndex(element);
 
     if (processingInfoStorage != null) {
       processingInfoStorage.append(String.format("Target element index is %d. Current index from root is %d%n", index, indexFromRoot));
@@ -203,15 +200,22 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     
     // There is a possible case that given PSI element has a parent or child that targets the same range. So, we remember
     // not only target range offsets but 'hierarchy index' as well.
-    int index = 0;
-    for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
-      index++;
-    }
+    int index = getElementHierarchyIndex(element);
+
     buffer.append(ELEMENT_TOKENS_SEPARATOR).append(index);
     PsiFile containingFile = element.getContainingFile();
     if (containingFile != null && containingFile.getViewProvider().getLanguages().size() > 1) {
       buffer.append(ELEMENT_TOKENS_SEPARATOR).append(containingFile.getLanguage().getID());
     }
     return buffer.toString();
+  }
+
+  private static int getElementHierarchyIndex(@NotNull PsiElement element) {
+    TextRange range = element.getTextRange();
+    int index = 0;
+    for (PsiElement e = element.getParent(); e != null && range.equals(e.getTextRange()); e = e.getParent()) {
+      index++;
+    }
+    return index;
   }
 }
