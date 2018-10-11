@@ -4,6 +4,7 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
@@ -54,4 +55,14 @@ public abstract class PatternDialectProvider {
   }
 
   public abstract Icon getIcon();
+
+  @NotNull
+  protected static String getGroupModulePattern(ModuleGroupNode node) {
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
+      return node.getModuleGroup().getQualifiedName() + "*";
+    }
+    else {
+      return "group:" + node.getModuleGroup().toString();
+    }
+  }
 }

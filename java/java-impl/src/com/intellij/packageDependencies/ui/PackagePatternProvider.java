@@ -54,7 +54,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
     final String scope = scope1;
     if (node instanceof ModuleGroupNode){
       if (!recursively) return null;
-      return new PatternPackageSet("*..*", scope, ProjectPatternProvider.getGroupModulePattern((ModuleGroupNode)node));
+      return new PatternPackageSet("*..*", scope, PatternDialectProvider.getGroupModulePattern((ModuleGroupNode)node));
     } else if (node instanceof ModuleNode) {
       if (!recursively) return null;
       final String modulePattern = ((ModuleNode)node).getModuleName();
