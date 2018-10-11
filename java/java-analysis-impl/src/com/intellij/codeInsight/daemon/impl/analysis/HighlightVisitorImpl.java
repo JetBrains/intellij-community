@@ -222,9 +222,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
       return psiJavaReference.advancedResolve(false);
     }
-    if (reference instanceof PsiPolyVariantReference &&
-        reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
-      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
+    if (reference instanceof PsiPolyVariantReference) {
+      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false, new PsiReference.Hint(PsiClass.class));
       if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
         return (JavaResolveResult)resolve[0];
       }

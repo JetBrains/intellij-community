@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,22 @@ public interface PsiReference {
    */
   @Nullable
   PsiElement resolve();
+
+  class Hint {
+    public Class<? extends PsiElement> targetClass;
+
+    public Hint(Class<? extends PsiElement> targetClass) {
+      this.targetClass = targetClass;
+    }
+  }
+
+  /**
+   * Implementations may optimize resolving process depending on the given hint.
+   */
+  default PsiElement resolve(Hint hint) {
+    PsiElement element = resolve();
+    return element != null && ReflectionUtil.isAssignable(hint.targetClass, element.getClass()) ? element : null;
+  }
 
   /**
    * Returns the name of the reference target element which does not depend on import statements
