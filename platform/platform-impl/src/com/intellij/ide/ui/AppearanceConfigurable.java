@@ -5,14 +5,10 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -221,15 +217,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getNavigateToPreview() != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
     settings.setNavigateToPreview(myComponent.myNavigateToPreviewCheckBox.isSelected());
 
-    ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
-    boolean updateEditorScheme = false;
-    if (settings.getColorBlindness() != blindness) {
-      settings.setColorBlindness(blindness);
-      update = true;
-      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
-      updateEditorScheme = true;
-    }
-
     update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
 
@@ -291,12 +278,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
     myComponent.updateCombo();
 
-    if (updateEditorScheme) {
-      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
-    }
-    else {
-      EditorFactory.getInstance().refreshAllEditors();
-    }
+    EditorFactory.getInstance().refreshAllEditors();
   }
 
   private static int getIntValue(JComboBox combo, int defaultValue) {
@@ -360,7 +342,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.mySmoothScrollingCheckBox.setSelected(settings.getSmoothScrolling());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
-    myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -425,7 +406,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
     isModified |= myComponent.mySmoothScrollingCheckBox.isSelected() != settings.getSmoothScrolling();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
-    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 
@@ -501,7 +481,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private ComboBox myPresentationModeFontSize;
     private JCheckBox mySmoothScrollingCheckBox;
     private JCheckBox myNavigateToPreviewCheckBox;
-    private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
