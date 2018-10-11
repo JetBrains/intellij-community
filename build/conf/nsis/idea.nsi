@@ -655,20 +655,21 @@ Function checkVersion
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   Call OMReadRegStr
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} check_version
-  Goto Done
+  Goto done
 check_version:
   StrCpy $2 "Build"
   Call OMReadRegStr
-  StrCmp $3 "" Done
-  IntCmpU $3 ${VER_BUILD} ask_Install_Over Done ask_Install_Over
+  StrCmp $3 "" done
+  IntCmpU $3 ${VER_BUILD} ask_Install_Over done ask_Install_Over
 ask_Install_Over:
-  ${LogText} "$(current_version_already_installed)"
+  ${LogText} "${PRODUCT_WITH_VER} is already installed."
+  IfSilent continue 0
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
   Abort
 continue:
   StrCpy $0 "complete"
-Done:
+done:
 FunctionEnd
 
 
@@ -1244,15 +1245,19 @@ Function .onInit
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
   IfSilent silent_mode uac_elevate
+
 silent_mode:
   Call checkAvailableRequiredDiskSpace
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
+
 silent_config:
   Call silentConfigReader
   Goto validate_install_dir
 custom_silent_config:
   Call customSilentConfigReader
+
 validate_install_dir:
+  Call searchCurrentVersion
   Call silentInstallDirValidate
   Call OnDirectoryPageLeave
 set_reg_key:
