@@ -220,10 +220,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       return;
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("New watch roots registered. Recursive: " + recursive.size() + ", flat: " + flat.size() + ", restart = " + restart);
-    }
-
     mySettingRoots.incrementAndGet();
     myRecursiveWatchRoots = recursive;
     myFlatWatchRoots = flat;
