@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +36,7 @@ public class TestDiscoveryIndex implements Disposable {
   public TestDiscoveryIndex(final Project project, @NotNull Path basePath) {
     myBasePath = basePath;
 
-    if (Files.exists(basePath)) {
+    if (basePath.toFile().exists()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
         getHolder(); // proactively init with maybe io costly compact
       }));

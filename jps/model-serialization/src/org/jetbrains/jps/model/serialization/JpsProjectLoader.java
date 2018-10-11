@@ -308,7 +308,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
 
     Set<String> unloadedModules = new HashSet<>();
-    if (!myLoadUnloadedModules && Files.exists(workspaceFile)) {
+    if (!myLoadUnloadedModules && workspaceFile.toFile().exists()) {
       Element unloadedModulesList = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "UnloadedModulesList");
       for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
         unloadedModules.add(element.getAttributeValue("name"));

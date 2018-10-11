@@ -88,9 +88,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
   private fun processRoot(sourceRoot: JpsModuleSourceRoot) {
     val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
-    if (!Files.exists(root)) {
-      return
-    }
+    if (!root.toFile().exists()) return
 
     val answer = downToRoot(root, root, null, IconRobotsData(), 0)
     val iconsRoot = (if (answer == null || Files.isDirectory(answer)) answer else answer.parent) ?: return
@@ -231,7 +229,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
 
     fun fork(dir: Path, root: Path): IconRobotsData {
       val robots = dir.resolve(ROBOTS_FILE_NAME)
-      if (!Files.exists(robots)) {
+      if (!robots.toFile().exists()) {
         return this
       }
 

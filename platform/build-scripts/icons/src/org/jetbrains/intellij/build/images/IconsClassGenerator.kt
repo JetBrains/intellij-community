@@ -81,7 +81,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       outFile = targetRoot.resolve("$className.java")
     }
 
-    val oldText = if (Files.exists(outFile)) Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8) else null
+    val oldText = if (outFile.toFile().exists()) Files.readAllBytes(outFile).toString(StandardCharsets.UTF_8) else null
     val newText = generate(module, className, packageName, customLoad, getCopyrightComment(oldText))
 
     val oldLines = oldText?.lines() ?: emptyList()
@@ -309,7 +309,7 @@ class IconsClassGenerator(private val projectHome: File, val util: JpsModule, pr
       assert(isIcon(imageFile)) { "Overriding icon should be valid: $iconName - $imageFile" }
     }
 
-    val size = if (Files.exists(imageFile)) imageSize(imageFile) else null
+    val size = if (imageFile.toFile().exists()) imageSize(imageFile) else null
     val comment: String
     when {
       size != null -> comment = " // ${size.width}x${size.height}"
