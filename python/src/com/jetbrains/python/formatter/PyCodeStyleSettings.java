@@ -96,6 +96,7 @@ public class PyCodeStyleSettings extends CustomCodeStyleSettings {
    * the same indentation level for arguments as for parameters.
    */
   public boolean USE_CONTINUATION_INDENT_FOR_ARGUMENTS = false;
+  public boolean USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = false;
 
   public boolean OPTIMIZE_IMPORTS_SORT_IMPORTS = true;
   public boolean OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = false;
