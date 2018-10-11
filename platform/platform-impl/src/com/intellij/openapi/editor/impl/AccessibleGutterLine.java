@@ -135,7 +135,7 @@ class AccessibleGutterLine extends JPanel {
         @NotNull
         @Override
         public String getAccessibleName() {
-          return "line " + String.valueOf(myLogicalLineNum + 1);
+          return "line " + (myLogicalLineNum + 1);
         }
         @Override
         public String getAccessibleTooltipText() {
