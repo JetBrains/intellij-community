@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.vfs.VirtualFile
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 
@@ -45,7 +46,7 @@ class DiffRequestProcessorEditor(
   override fun dispose() {}
 
   override fun isValid(): Boolean = !processor.isDisposed
-
+  override fun getFile(): VirtualFile = file
   //
   // Unused
   //
