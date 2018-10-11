@@ -116,6 +116,11 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           break;
         }
       }
+      if (getExtensionIndex(extension) != -1) {
+        LOG.error("Extension was already added: " + extension);
+        return;
+      }
+
       registerExtension(extension, adapter, index, true);
     }
     else {
@@ -125,11 +130,6 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
-    if (getExtensionIndex(extension) != -1) {
-      LOG.error("Extension was already added: " + extension);
-      return;
-    }
-
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
       LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
