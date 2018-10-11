@@ -8,5 +8,5 @@ public class TerminalTabState {
   public String myTabName;
 
   @Attribute("currentWorkingDirectory")
-  public String myCurrentWorkingDirectory;
+  public String myWorkingDirectory;
 }

@@ -226,7 +226,7 @@ public class TerminalView {
 
   @Nullable
   private VirtualFile getCurrentWorkingDir(@Nullable TerminalTabState tabState) {
-    String dir = tabState != null ? tabState.myCurrentWorkingDirectory : null;
+    String dir = tabState != null ? tabState.myWorkingDirectory : null;
     VirtualFile result = null;
     if (dir != null) {
       result = LocalFileSystem.getInstance().findFileByPath(dir);
