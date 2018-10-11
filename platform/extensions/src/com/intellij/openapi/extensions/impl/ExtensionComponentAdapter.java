@@ -47,13 +47,6 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     myOrder = order;
   }
 
-  public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable Element extensionElement,
-                                   PicoContainer container,
-                                   PluginDescriptor pluginDescriptor) {
-    this(implementationClassName, container, pluginDescriptor, null, LoadingOrder.ANY, extensionElement);
-  }
-
   @Override
   public Object getComponentKey() {
     return this;
@@ -66,21 +59,22 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
 
   @Override
   public Object getComponentInstance(final PicoContainer container) throws PicoException, ProcessCanceledException {
-    if (myComponentInstance == null) {
+    Object instance = myComponentInstance;
+    if (instance == null) {
       try {
         Class impl = loadImplementationClass();
-        Object componentInstance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
+        instance = new CachingConstructorInjectionComponentAdapter(getComponentKey(), impl, null, true).getComponentInstance(container);
 
         if (myExtensionElement != null) {
           try {
-            XmlSerializer.deserializeInto(componentInstance, myExtensionElement);
+            XmlSerializer.deserializeInto(instance, myExtensionElement);
           }
           catch (Exception e) {
             throw new PicoInitializationException(e);
           }
         }
 
-        myComponentInstance = componentInstance;
+        myComponentInstance = instance;
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -90,13 +84,13 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
         throw new PicoPluginExtensionInitializationException(t.getMessage(), t, pluginId);
       }
 
-      if (myComponentInstance instanceof PluginAware) {
-        PluginAware pluginAware = (PluginAware)myComponentInstance;
+      if (instance instanceof PluginAware) {
+        PluginAware pluginAware = (PluginAware)instance;
         pluginAware.setPluginDescriptor(myPluginDescriptor);
       }
     }
 
-    return myComponentInstance;
+    return instance;
   }
 
   @Override
@@ -162,8 +156,8 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
     return myNotificationSent;
   }
 
-  void setNotificationSent(boolean notificationSent) {
-    myNotificationSent = notificationSent;
+  void setNotificationSent() {
+    myNotificationSent = true;
   }
 
   @Override

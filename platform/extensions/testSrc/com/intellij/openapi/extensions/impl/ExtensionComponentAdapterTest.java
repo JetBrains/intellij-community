@@ -33,7 +33,7 @@ public class ExtensionComponentAdapterTest {
     Element element = JDOMUtil.load("<bean implementation=\"123\"/>");
     DefaultPicoContainer container = new DefaultPicoContainer();
     DefaultPluginDescriptor descriptor = new DefaultPluginDescriptor("test");
-    new ExtensionComponentAdapter(name, element, container, descriptor).getComponentInstance(container);
+    new ExtensionComponentAdapter(name, container, descriptor, null, LoadingOrder.ANY, element).getComponentInstance(container);
   }
 
   @NotNull

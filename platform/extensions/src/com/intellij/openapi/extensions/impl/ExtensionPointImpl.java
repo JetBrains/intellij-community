@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.StringInterner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +153,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
 
         notifyListenersOnAdd(extension, adapter.getPluginDescriptor());
-        adapter.setNotificationSent(true);
+        adapter.setNotificationSent();
       }
     }
   }
@@ -199,9 +200,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       //noinspection unchecked
       return (T[])Array.newInstance(getExtensionClass(), 0);
     }
-    else {
-      return myExtensionsCacheAsArray.clone();
-    }
+    return myExtensionsCacheAsArray.clone();
   }
 
   @NotNull
@@ -243,6 +242,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
       myExtensionAdapters = new LinkedHashSet<>(adapters);
 
       Set<ExtensionComponentAdapter> loaded = ContainerUtil.newHashOrEmptySet(myLoadedAdapters);
+      OpenTHashSet<T> duplicates = new OpenTHashSet<>(adapters.size());
 
       myLoadedAdapters = Collections.emptyList();
       boolean errorHappened = false;
@@ -254,11 +254,12 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             errorHappened = true;
             LOG.error("null extension in: " + adapter + ";\ngetExtensionClass(): " + getExtensionClass() + ";\n" );
           }
-          if (i > 0 && extension == result[i - 1]) {
+          if (!duplicates.add(extension)) {
             errorHappened = true;
+            T duplicate = duplicates.get(extension);
             LOG.error("Duplicate extension found: " + extension + "; " +
-                      " Adapter:      " + adapter + ";\n" +
-                      " Prev adapter: " + adapters.get(i-1) + ";\n" +
+                      " Prev extension: " + duplicate + ";\n" +
+                      " Adapter:        " + adapter + ";\n" +
                       " getExtensionClass(): " + getExtensionClass() + ";\n" +
                       " result:" + Arrays.asList(result));
           }
@@ -268,6 +269,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             continue;
           }
           result[i] = extension;
+
           registerExtension(extension, adapter, myLoadedAdapters.size(), !loaded.contains(adapter));
         }
         catch (ProcessCanceledException e) {
@@ -331,7 +333,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @Override
-  public void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
+  public synchronized void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
     for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myExtensionAdapters, myLoadedAdapters)) {
       if (adapter.getAssignableToClassName().equals(extensionClass.getCanonicalName())) {
         unregisterExtensionAdapter(adapter);
@@ -479,6 +481,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     return extensionClass;
   }
 
+  @Override
   public String toString() {
     return getName();
   }
@@ -528,7 +531,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final LoadingOrder myLoadingOrder;
 
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null);
+      super(extension.getClass().getName(), null, null, null, LoadingOrder.ANY, null);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }
