@@ -274,7 +274,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
         xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
         xmlWriter.writeAttribute(GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE, Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper));
         xmlWriter.writeCharacters("\n");
-        xmlWriter.close();
+        xmlWriter.flush();
       }
 
       exportResults(descriptions, refElement, p -> {
