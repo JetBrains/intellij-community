@@ -9,10 +9,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
-import com.intellij.codeInspection.ui.InspectionNode;
-import com.intellij.codeInspection.ui.InspectionResultsView;
-import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.*;
 import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
@@ -24,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -35,7 +33,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +124,6 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final Exception[] ex = new Exception[1];
 
       final Set<String> visitedTools = new THashSet<>();
-      final Element aggregateRoot = new Element(ROOT);
 
       Format format = JDOMUtil.createFormat("\n");
       XMLOutputFactory xmlOutputFactory = XMLOutputFactory.newInstance();
@@ -141,7 +137,9 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           if (!visitedTools.add(toolNode.getToolWrapper().getShortName())) return true;
 
           String name = toolWrapper.getShortName();
-          try (BufferedWriter fileWriter = getWriter(outputDirectoryName, name)) {
+          try (BufferedWriter fileWriter = getWriter(outputDirectoryName, name);
+               XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, name + AGGREGATE,
+                                                                       xmlOutputFactory, format, ROOT)) {
             XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
             xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
@@ -157,15 +155,20 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
                   throw new RuntimeException(e);
                 }
               }, presentation::isExcluded, presentation::isExcluded);
-              presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
+              if (presentation instanceof AggregateResultsExporter) {
+                ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
+              }
             }
-            writeDocument(aggregateRoot, outputDirectoryName, name + AGGREGATE);
             xmlWriter.writeCharacters(format.getLineSeparator());
             xmlWriter.writeEndElement();
             xmlWriter.flush();
           }
           catch (IOException | XMLStreamException e) {
             ex[0] = e;
+          }
+          catch (XmlWriterWrapperException e) {
+            Throwable cause = e.getCause();
+            ex[0] = cause instanceof Exception ? (Exception)cause : e;
           }
         }
         return true;
@@ -200,14 +203,6 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     return new File(outputDirectoryName, name + InspectionApplication.XML_EXTENSION);
   }
 
-  private static void writeDocument(@NotNull Element problems, String outputDirectoryName, String name) throws IOException {
-    if (problems.getContentSize() != 0) {
-      JDOMUtil.writeDocument(new Document(problems),
-                             outputDirectoryName + File.separator + name + InspectionApplication.XML_EXTENSION,
-                             CodeStyle.getDefaultSettings().getLineSeparator());
-    }
-  }
-
   @NotNull
   private Collection<InspectionToolPresentation> getPresentationsFromAllScopes(@NotNull InspectionNode node) {
     final InspectionToolWrapper wrapper = node.getToolWrapper();
@@ -225,5 +220,124 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
     }
     return wrappers.map(w -> myView.getGlobalInspectionContext().getPresentation(w)).collect(Collectors.toList());
+  }
+
+  private static class XmlWriterWrapper implements Closeable {
+    private final Project myProject;
+    private final String myOutputDirectoryName;
+    private final String myName;
+    private final XMLOutputFactory myFactory;
+    private final Format myFormat;
+    private final String myRootTagName;
+
+    private XMLStreamWriter myXmlWriter;
+    private Writer myFileWriter;
+
+    XmlWriterWrapper(@NotNull Project project,
+                     @NotNull String outputDirectoryName,
+                     @NotNull String name,
+                     @NotNull XMLOutputFactory factory,
+                     @NotNull Format format,
+                     @NotNull String rootTagName) {
+      myProject = project;
+      myOutputDirectoryName = outputDirectoryName;
+      myName = name;
+      myFactory = factory;
+      myFormat = format;
+      myRootTagName = rootTagName;
+    }
+
+    void writeElement(@NotNull Element element) {
+      try {
+        checkOpen();
+
+        myXmlWriter.writeCharacters(myFormat.getLineSeparator() + myFormat.getIndent());
+        myXmlWriter.flush();
+
+        JbXmlOutputter.collapseMacrosAndWrite(element, myProject, myFileWriter);
+        myFileWriter.flush();
+      }
+      catch (XMLStreamException | IOException e) {
+        throw new XmlWriterWrapperException(e);
+      }
+    }
+
+    void checkOpen() {
+      if (myXmlWriter == null) {
+        myFileWriter = openFile(myOutputDirectoryName, myName);
+        myXmlWriter = startWritingXml(myFileWriter);
+      }
+    }
+
+    @Override
+    public void close()  {
+      if (myXmlWriter != null) {
+        try {
+          endWritingXml(myXmlWriter);
+        }
+        finally {
+          myXmlWriter = null;
+          try {
+            closeFile(myFileWriter);
+          }
+          finally {
+            myFileWriter = null;
+          }
+        }
+      }
+    }
+
+    @NotNull
+    private static Writer openFile(@NotNull String outputDirectoryName, @NotNull String name) {
+      try {
+        return getWriter(outputDirectoryName, name);
+      }
+      catch (FileNotFoundException e) {
+        throw new XmlWriterWrapperException(e);
+      }
+    }
+
+    private static void closeFile(@NotNull Writer fileWriter) {
+      try {
+        fileWriter.close();
+      }
+      catch (IOException e) {
+        throw new XmlWriterWrapperException(e);
+      }
+    }
+
+    @NotNull
+    private XMLStreamWriter startWritingXml(@NotNull Writer fileWriter) {
+      try {
+        XMLStreamWriter xmlWriter = myFactory.createXMLStreamWriter(fileWriter);
+        xmlWriter.writeStartElement(myRootTagName);
+        return xmlWriter;
+      }
+      catch (XMLStreamException e) {
+        throw new XmlWriterWrapperException(e);
+      }
+    }
+
+    private void endWritingXml(@NotNull XMLStreamWriter xmlWriter) {
+      try {
+        try {
+          xmlWriter.writeCharacters(myFormat.getLineSeparator());
+          xmlWriter.writeEndElement();
+          xmlWriter.flush();
+        }
+        finally {
+          xmlWriter.close();
+        }
+      }
+      catch (XMLStreamException e) {
+        throw new XmlWriterWrapperException(e);
+      }
+    }
+  }
+
+  private static class XmlWriterWrapperException extends RuntimeException {
+    private XmlWriterWrapperException(Throwable cause) {
+      super(cause);
+    }
   }
 }
