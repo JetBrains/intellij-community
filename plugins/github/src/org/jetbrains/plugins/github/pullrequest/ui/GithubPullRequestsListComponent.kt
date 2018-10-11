@@ -175,11 +175,11 @@ internal class GithubPullRequestsListComponent(project: Project,
     list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
-      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
+      .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { refresh() }
     if (!list.isEmpty) {
       //language=HTML
       val errorText = "<html><body>$prefix<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>"
-      errorPanel.setError(errorText, linkActivationListener = { loadMore() })
+      errorPanel.setError(errorText, linkActivationListener = { refresh() })
     }
   }
 
