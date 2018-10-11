@@ -822,8 +822,8 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       this.loading = null;
     }
 
-    private void setChildren(List<Node> children) {
-      this.leaf = children == null;
+    private void setChildren(@NotNull List<Node> children) {
+      this.leaf = false;
       this.children = children;
       this.loading = null;
     }
