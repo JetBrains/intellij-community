@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.gradle;
+package org.jetbrains.plugins.gradle.performance;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -8,14 +8,13 @@ import com.intellij.openapi.externalSystem.service.project.PerformanceTrace;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 
 import java.util.Collection;
 import java.util.Map;
 
-public class GradleTraceTest extends GradleImportingTestCase {
+public class GradleTraceTest extends GradleImportPerformanceTestCase {
 
   @Test
   public void testEmptyImport() {
@@ -64,16 +63,6 @@ public class GradleTraceTest extends GradleImportingTestCase {
 
     assertTracedTimePercentAtLeast(trace, importDoneTime - testStartTime, 80);
   }
-
-  private static void assertTracedTimePercentAtLeast(@NotNull final Map<String, Long> trace, long time, int threshold) {
-    final long tracedTime = trace.get("Gradle data obtained")
-                            + trace.get("Gradle project data processed")
-                            + trace.get("Data import total");
-
-    double percent = (double)tracedTime / time * 100;
-    assertTrue( String.format("Test time [%d] traced time [%d], percentage [%.2f]", time, tracedTime, percent), percent > threshold && percent < 100);
-  }
-
 
   private static long sum(@NotNull Collection<Long> values) {
     long result = 0;
