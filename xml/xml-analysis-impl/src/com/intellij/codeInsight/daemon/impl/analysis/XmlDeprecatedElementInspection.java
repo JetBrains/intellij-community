@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,8 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
     if (!(declaration instanceof XmlTag)) return false;
     XmlComment comment = XmlUtil.findPreviousComment(declaration);
     if (comment != null && pattern.matcher(comment.getCommentText().trim()).matches()) return true;
-    return checkTag(((XmlTag)declaration).findFirstSubTag("annotation"), pattern);
+    XmlTag tag = (XmlTag)declaration;
+    return checkTag(ArrayUtil.getFirstElement(tag.findSubTags("annotation", tag.getNamespace())), pattern);
   }
 
   private static boolean checkTag(XmlTag tag, Pattern pattern) {
