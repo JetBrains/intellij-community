@@ -51,7 +51,7 @@ public class JavaLambdaUnwrapper extends JavaUnwrapper {
     }
     else {
       context.extractElement(body, from);
-      if (context.myIsEffective && !(from.getParent() instanceof PsiLambdaExpression)) {
+      if (context.isEffective() && !(from.getParent() instanceof PsiLambdaExpression)) {
         PsiStatement emptyStatement = JavaPsiFacade.getElementFactory(from.getProject()).createStatementFromText(";", from);
         from.getParent().addBefore(emptyStatement, from);
       }
