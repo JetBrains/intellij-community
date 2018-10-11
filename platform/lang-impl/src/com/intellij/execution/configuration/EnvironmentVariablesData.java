@@ -17,6 +17,7 @@ package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -128,7 +129,32 @@ public class EnvironmentVariablesData {
     else {
       commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
     }
-    commandLine.withEnvironment(myEnvs);
+    commandLine.withEnvironment(getValidEnvs());
+  }
+
+  @NotNull
+  private Map<String, String> getValidEnvs() {
+    boolean hasInvalid = myEnvs.entrySet().stream().anyMatch(entry -> !isValid(entry));
+    if (!hasInvalid) {
+      return myEnvs;
+    }
+    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+    for (Map.Entry<String, String> entry : myEnvs.entrySet()) {
+      if (isValid(entry)) {
+        builder.put(entry);
+      }
+    }
+    return builder.build();
+  }
+
+  private static boolean isValid(@NotNull Map.Entry<String, String> entry) {
+    try {
+      EnvironmentUtil.validate(entry.getKey(), entry.getValue());
+      return true;
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   /**
