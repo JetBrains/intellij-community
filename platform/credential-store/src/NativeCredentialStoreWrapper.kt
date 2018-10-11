@@ -11,26 +11,33 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
+import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.TimeUnit
-
-private val nullCredentials = Credentials("\u0000", OneTimeString("\u0000"))
 
 internal val NOTIFICATION_MANAGER by lazy {
   // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
   SingletonNotificationManager(NotificationGroup("Password Safe", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
 }
 
-private class CredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
+// used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
+private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
   private val fallbackStore = lazy { createInMemoryKeePassCredentialStore() }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
 
   private val postponedCredentials = createInMemoryKeePassCredentialStore()
+  private val postponedRemovedCredentials = ContainerUtil.newConcurrentSet<CredentialAttributes>()
+
   private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    postponedCredentials.get(attributes)?.let {
-      return if (it === nullCredentials) null else it
+    if (store is KeePassCredentialStore) {
+      if (postponedRemovedCredentials.contains(attributes)) {
+        return null
+      }
+      postponedCredentials.get(attributes)?.let {
+        return it
+      }
     }
 
     if (deniedItems.getIfPresent(attributes) != null) {
@@ -58,30 +65,39 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Crede
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
-    fun doSave() {
-      var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
-      try {
-        store.set(attributes, credentials)
-      }
-      catch (e: UnsatisfiedLinkError) {
-        store = fallbackStore.value
-        notifyUnsatisfiedLinkError(e)
-        store.set(attributes, credentials)
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-
-      postponedCredentials.set(attributes, null)
-    }
-
     LOG.runAndLogException {
       if (fallbackStore.isInitialized()) {
         fallbackStore.value.set(attributes, credentials)
+        return
+      }
+
+      if (credentials == null) {
+        postponedRemovedCredentials.add(attributes)
       }
       else {
-        postponedCredentials.set(attributes, credentials ?: nullCredentials)
-        queueProcessor.add { doSave() }
+        postponedCredentials.set(attributes, credentials)
+      }
+
+      queueProcessor.add {
+        try {
+          var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
+          try {
+            store.set(attributes, credentials)
+          }
+          catch (e: UnsatisfiedLinkError) {
+            store = fallbackStore.value
+            notifyUnsatisfiedLinkError(e)
+            store.set(attributes, credentials)
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+        finally {
+          if (!postponedRemovedCredentials.remove(attributes)) {
+            postponedCredentials.set(attributes, null)
+          }
+        }
       }
     }
   }
@@ -99,7 +115,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? {
     if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
-      return CredentialStoreWrapper(KeyChainCredentialStore())
+      return NativeCredentialStoreWrapper(KeyChainCredentialStore())
     }
     return null
   }
@@ -108,7 +124,7 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
 private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? {
     if (SystemInfo.isLinux && SystemProperties.getBooleanProperty("use.linux.keychain", true)) {
-      return CredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
+      return NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
     }
     return null
   }
