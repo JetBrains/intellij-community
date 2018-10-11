@@ -64,6 +64,13 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                            @NotNull CachedValueProvider<T> provider,
                                            boolean trackValue) {
     CachedValue<T> value = dataHolder.getUserData(key);
+    if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
+      //noinspection unchecked
+      CachedValueBase.Data<T> data = ((CachedValueBase<T>)value).getUpToDateOrNull(false);
+      if (data != null) {
+        return data.value;
+      }
+    }
     while (isOutdated(value)) {
       if (dataHolder.replace(key, value, null)) {
         value = null;
