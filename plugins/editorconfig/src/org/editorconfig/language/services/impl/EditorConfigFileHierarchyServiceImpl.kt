@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiManager
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.reference.SoftReference
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
@@ -31,7 +32,7 @@ import java.lang.ref.Reference
 class EditorConfigFileHierarchyServiceImpl(
   private val manager: PsiManager,
   private val application: Application,
-  project: Project
+  private val project: Project
 ) : EditorConfigFileHierarchyService, BulkFileListener, RegistryValueListener.Adapter() {
   private val taskExecutor = SequentialTaskExecutor
     .createSequentialApplicationPoolExecutor("editorconfig.notification.vfs.update.executor")
@@ -46,9 +47,9 @@ class EditorConfigFileHierarchyServiceImpl(
     Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, project)
   }
 
-  private fun updateHandlers() {
+  private fun updateHandlers(project: Project) {
     application.assertIsDispatchThread()
-    application.messageBus.syncPublisher(EditorConfigNotificationTopic).editorConfigChanged()
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null)
   }
 
   // method of BulkFileListener
@@ -65,7 +66,7 @@ class EditorConfigFileHierarchyServiceImpl(
         affectingFilesCache.clear()
       }
 
-      updateHandlers()
+      updateHandlers(project)
     }
   }
 
@@ -98,7 +99,7 @@ class EditorConfigFileHierarchyServiceImpl(
         affectingFilesCache[virtualFile] = SoftReference(affectingFiles)
       }
 
-      updateHandlers()
+      updateHandlers(project)
     }.submit(taskExecutor)
   }
 
