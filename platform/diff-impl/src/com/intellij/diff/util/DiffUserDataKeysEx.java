@@ -84,6 +84,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<DiffTool> FORCE_DIFF_TOOL = Key.create("Diff.ForceDiffTool");
 
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
+  Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
 
   //
   // MergeContext / MergeRequest
