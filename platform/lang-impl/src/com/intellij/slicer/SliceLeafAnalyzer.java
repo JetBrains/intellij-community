@@ -54,9 +54,9 @@ public class SliceLeafAnalyzer {
     myProvider = provider;
   }
 
-  static SliceNode filterTree(SliceNode oldRoot,
-                              NullableFunction<? super SliceNode, ? extends SliceNode> filter,
-                              PairProcessor<? super SliceNode, ? super List<SliceNode>> postProcessor) {
+  public static SliceNode filterTree(SliceNode oldRoot,
+                                     NullableFunction<? super SliceNode, ? extends SliceNode> filter,
+                                     PairProcessor<? super SliceNode, ? super List<SliceNode>> postProcessor) {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
@@ -95,7 +95,7 @@ public class SliceLeafAnalyzer {
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
     root.targetEqualUsages.clear();
-    root.myCachedChildren = new ArrayList<>(leaves.size());
+    List<SliceNode> leafValueRoots = new ArrayList<>(leaves.size());
 
     for (final PsiElement leafExpression : leaves) {
       SliceNode newNode = filterTree(oldRootStart, oldNode -> {
@@ -114,8 +114,10 @@ public class SliceLeafAnalyzer {
                                                                  root,
                                                                  myProvider.createRootUsage(leafExpression, oldRoot.getValue().params),
                                                                  Collections.singletonList(newNode));
-      root.myCachedChildren.add(lvNode);
+      leafValueRoots.add(lvNode);
     }
+    root.setChildren(leafValueRoots);
+
     return root;
   }
 
@@ -162,7 +164,7 @@ public class SliceLeafAnalyzer {
                                           () -> ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy()));
   }
 
-  static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
+  public static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {
     private final AbstractTreeStructure myTreeStructure;
     // use tree structure because it's setting 'parent' fields in the process
 

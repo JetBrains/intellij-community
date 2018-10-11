@@ -56,7 +56,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @NotNull
-  SliceNode copy() {
+  public SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;

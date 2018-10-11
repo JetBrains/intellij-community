@@ -19,8 +19,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author cdr
@@ -43,7 +45,7 @@ public class SliceRootNode extends SliceNode {
 
   @NotNull
   @Override
-  SliceRootNode copy() {
+  public SliceRootNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceRootNode newNode = new SliceRootNode(getProject(), new DuplicateMap(), newUsage);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -73,7 +75,11 @@ public class SliceRootNode extends SliceNode {
   }
 
   @NotNull
-  SliceUsage getRootUsage() {
+  public SliceUsage getRootUsage() {
     return myRootUsage;
+  }
+
+  public void setChildren(List<? extends SliceNode> children) {
+    myCachedChildren = new ArrayList<>(children);
   }
 }
