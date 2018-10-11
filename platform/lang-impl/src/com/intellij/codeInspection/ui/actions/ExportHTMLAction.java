@@ -45,8 +45,10 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
 import java.io.*;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExportHTMLAction.class);
@@ -124,7 +126,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final InspectionTreeNode root = myView.getTree().getRoot();
       final Exception[] ex = new Exception[1];
 
-      final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
+      final Set<String> visitedTools = new THashSet<>();
       final Element aggregateRoot = new Element(ROOT);
 
       Format format = JDOMUtil.createFormat("\n");
@@ -136,16 +138,14 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           if (toolNode.isExcluded()) return true;
 
           InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
-          if (!visitedWrappers.add(toolWrapper)) return true;
+          if (!visitedTools.add(toolNode.getToolWrapper().getShortName())) return true;
 
           String name = toolWrapper.getShortName();
           try (BufferedWriter fileWriter = getWriter(outputDirectoryName, name)) {
             XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
             xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
-            final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
-            for (InspectionToolWrapper wrapper : toolWrappers) {
-              InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
+            for (InspectionToolPresentation presentation : getPresentationsFromAllScopes(toolNode)) {
               presentation.exportResults(p -> {
                 try {
                   xmlWriter.writeCharacters(format.getLineSeparator() + format.getIndent());
@@ -209,22 +209,21 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private Set<InspectionToolWrapper> getWorkedTools(@NotNull InspectionNode node) {
-    final Set<InspectionToolWrapper> result = new HashSet<>();
+  private Collection<InspectionToolPresentation> getPresentationsFromAllScopes(@NotNull InspectionNode node) {
     final InspectionToolWrapper wrapper = node.getToolWrapper();
+    Stream<InspectionToolWrapper> wrappers;
     if (myView.getCurrentProfileName() == null){
-      result.add(wrapper);
-      return result;
-    }
-    final String shortName = wrapper.getShortName();
-    final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
-    final Tools tools = context.getTools().get(shortName);
-    if (tools != null) {   //dummy entry points tool
-      for (ScopeToolState state : tools.getTools()) {
-        InspectionToolWrapper toolWrapper = state.getTool();
-        result.add(toolWrapper);
+      wrappers = Stream.of(wrapper);
+    } else {
+      final String shortName = wrapper.getShortName();
+      final GlobalInspectionContextImpl context = myView.getGlobalInspectionContext();
+      final Tools tools = context.getTools().get(shortName);
+      if (tools != null) {   //dummy entry points tool
+        wrappers = tools.getTools().stream().map(ScopeToolState::getTool);
+      } else {
+        wrappers = Stream.empty();
       }
     }
-    return result;
+    return wrappers.map(w -> myView.getGlobalInspectionContext().getPresentation(w)).collect(Collectors.toList());
   }
 }
