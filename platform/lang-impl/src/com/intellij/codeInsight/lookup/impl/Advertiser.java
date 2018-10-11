@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,6 +91,8 @@ public class Advertiser {
     myComponent.add(myTextPanel, gb.next());
     myComponent.add(myNextLabel, gb.next());
     myComponent.add(new NonOpaquePanel(), gb.next().fillCellHorizontally().weightx(1));
+    myComponent.setOpaque(true);
+    myComponent.setBackground(JBUI.CurrentTheme.Advertiser.background());
   }
 
   private void updateAdvertisements() {
@@ -112,6 +115,7 @@ public class Advertiser {
   private static JLabel createLabel() {
     JLabel label = new JLabel();
     label.setFont(adFont());
+    label.setForeground(JBUI.CurrentTheme.Advertiser.foreground());
     return label;
   }
 
