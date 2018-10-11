@@ -4,7 +4,7 @@ class C {
       bar();
     } catch (Ex1 | Ex2 e) {
       // unique comment
-    }
+    } /* another comment */
   }
 
   void bar() throws Ex1, Ex2 {}

@@ -68,6 +68,18 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testIdenticalCatchCommentsInDifferentPlaces() {
+    doTest();
+  }
+
+  public void testIdenticalNonemptyCatchWithDifferentCommentsProcessAll() {
+    doTest(true, true);
+  }
+
+  public void testIdenticalNonemptyCatchWithDifferentCommentsProcessOne() {
+    doTest(false, true);
+  }
+
   public void doTest() {
     doTest(false, false);
   }
