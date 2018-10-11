@@ -56,7 +56,6 @@ class FileTemplatesLoader {
   private final FTManager myCodeTemplatesManager;
   private final FTManager myJ2eeTemplatesManager;
 
-  private final Map<String, FTManager> myDirToManagerMap = new HashMap<>();
   private final FTManager[] myAllManagers;
 
   private static final String INTERNAL_DIR = "internal";
@@ -85,13 +84,7 @@ class FileTemplatesLoader {
       myCodeTemplatesManager,
       myJ2eeTemplatesManager};
 
-    myDirToManagerMap.put("", myDefaultTemplatesManager);
-    myDirToManagerMap.put(INTERNAL_DIR + "/", myInternalTemplatesManager);
-    myDirToManagerMap.put(INCLUDES_DIR + "/", myPatternsManager);
-    myDirToManagerMap.put(CODE_TEMPLATES_DIR + "/", myCodeTemplatesManager);
-    myDirToManagerMap.put(J2EE_TEMPLATES_DIR + "/", myJ2eeTemplatesManager);
-
-    loadDefaultTemplates();
+    loadDefaultTemplates(configDir);
     for (FTManager manager : myAllManagers) {
       manager.loadCustomizedContent();
     }
@@ -112,14 +105,17 @@ class FileTemplatesLoader {
     return new FTManager(myInternalTemplatesManager);
   }
 
+  @NotNull
   FTManager getPatternsManager() {
     return new FTManager(myPatternsManager);
   }
 
+  @NotNull
   FTManager getCodeTemplatesManager() {
     return new FTManager(myCodeTemplatesManager);
   }
 
+  @NotNull
   FTManager getJ2eeTemplatesManager() {
     return new FTManager(myJ2eeTemplatesManager);
   }
@@ -132,7 +128,7 @@ class FileTemplatesLoader {
     return myDefaultIncludeDescription;
   }
 
-  private void loadDefaultTemplates() {
+  private void loadDefaultTemplates(@NotNull File configDir) {
     Set<URL> processedUrls = new HashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -151,7 +147,7 @@ class FileTemplatesLoader {
                 continue;
               }
               processedUrls.add(url);
-              loadDefaultsFromRoot(url);
+              loadDefaultsFromRoot(url, configDir);
             }
           }
         }
@@ -162,7 +158,7 @@ class FileTemplatesLoader {
     }
   }
 
-  private void loadDefaultsFromRoot(final URL root) throws IOException {
+  private void loadDefaultsFromRoot(@NotNull URL root, @NotNull File configDir) throws IOException {
     final List<String> children = UrlUtil.getChildrenRelativePaths(root);
     if (children.isEmpty()) {
       return;
@@ -180,27 +176,28 @@ class FileTemplatesLoader {
       }
     }
     for (final String path : children) {
-      for (Map.Entry<String, FTManager> entry : myDirToManagerMap.entrySet()) {
-        final String prefix = entry.getKey();
+      if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) continue;
+      for (FTManager ftManager : myAllManagers) {
+        File managerRoot = ftManager.getConfigRoot(false);
+        String relativePath = configDir.equals(managerRoot) ? "" : FileUtil.getRelativePath(configDir, managerRoot)+"/";
+        String prefix = FileUtil.toSystemIndependentName(relativePath);
         if (matchesPrefix(path, prefix)) {
-          if (path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
-            final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-            final String extension = myTypeManager.getExtension(filename);
-            final String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-            final URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm())+ "/" + path));
-            final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath == null ? null :
-                                       UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
-            assert templateUrl != null;
-            entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
-          }
+          String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
+          String extension = myTypeManager.getExtension(filename);
+          String templateName = filename.substring(0, filename.length() - extension.length() - 1);
+          URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm())+ "/" + path));
+          String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
+          URL descriptionUrl = descriptionPath == null ? null :
+                               UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
+          assert templateUrl != null;
+          ftManager.addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           break; // FTManagers loop
         }
       }
     }
   }
 
-  private static boolean matchesPrefix(String path, String prefix) {
+  private static boolean matchesPrefix(@NotNull String path, @NotNull String prefix) {
     if (prefix.isEmpty()) {
       return !path.contains("/");
     }
@@ -209,7 +206,10 @@ class FileTemplatesLoader {
 
   //Example: templateName="NewClass"   templateExtension="java"
   @Nullable
-  private static String getDescriptionPath(String pathPrefix, String templateName, String templateExtension, Set<String> descriptionPaths) {
+  private static String getDescriptionPath(@NotNull String pathPrefix,
+                                           @NotNull String templateName,
+                                           @NotNull String templateExtension,
+                                           @NotNull Set<String> descriptionPaths) {
     final Locale locale = Locale.getDefault();
 
     String descName = MessageFormat

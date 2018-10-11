@@ -92,7 +92,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
     }
   }
 
-  private static String getXmlElementGroupName(FTManager manager) {
+  private static String getXmlElementGroupName(@NotNull FTManager manager) {
     return manager.getName().toLowerCase(Locale.US) + "_templates";
   }
 }

@@ -68,6 +68,7 @@ public class FTManager {
     myDefaultTemplates.addAll(original.myDefaultTemplates);
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }
@@ -156,7 +157,7 @@ public class FTManager {
     }
   }
 
-  void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
+  void updateTemplates(@NotNull Collection<? extends FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<>();
     for (DefaultTemplate template : myDefaultTemplates) {
       toDisable.add(template.getQualifiedName());
@@ -174,7 +175,7 @@ public class FTManager {
     saveTemplates(true);
   }
 
-  private void restoreDefaults(Set<String> toDisable) {
+  private void restoreDefaults(@NotNull Set<String> toDisable) {
     getTemplates().clear();
     mySortedTemplates = null;
     for (DefaultTemplate template : myDefaultTemplates) {
@@ -185,12 +186,13 @@ public class FTManager {
     }
   }
 
-  void addDefaultTemplate(DefaultTemplate template) {
+  void addDefaultTemplate(@NotNull DefaultTemplate template) {
     myDefaultTemplates.add(template);
     createAndStoreBundledTemplate(template);
   }
 
-  private BundledFileTemplate createAndStoreBundledTemplate(DefaultTemplate template) {
+  @NotNull
+  private BundledFileTemplate createAndStoreBundledTemplate(@NotNull DefaultTemplate template) {
     final BundledFileTemplate bundled = new BundledFileTemplate(template, myInternal);
     final String qName = bundled.getQualifiedName();
     final FileTemplateBase previous = getTemplates().put(qName, bundled);
@@ -326,7 +328,7 @@ public class FTManager {
    *  If template was not modified, it is not saved.
    *  todo: review saving algorithm
    */
-  private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
+  private static void saveTemplate(@NotNull File parentDir, @NotNull FileTemplateBase template, @NotNull String lineSeparator) throws IOException {
     final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
 
     try (FileOutputStream fileOutputStream = startWriteOrCreate(templateFile);
@@ -387,6 +389,7 @@ public class FTManager {
     return Pair.create(name, ext);
   }
 
+  @NotNull
   public Map<String, FileTemplateBase> getTemplates() {
     return myOriginal != null ? myOriginal.myTemplates : myTemplates;
   }
