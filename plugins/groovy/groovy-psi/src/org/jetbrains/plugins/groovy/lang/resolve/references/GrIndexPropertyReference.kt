@@ -49,5 +49,5 @@ private fun GrIndexProperty.doMultiResolve(rhs: Boolean, incomplete: Boolean): C
   val candidates = ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argTypes)
   if (!rhs || argumentListType !is GrTupleType || candidates.any { it.isValidResult }) return candidates.toList()
 
-  return ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argumentListType.componentTypes).toList()
+  return ResolveUtil.getMethodCandidates(thisType, name, this, incomplete, *argumentListType.componentTypesArray).toList()
 }

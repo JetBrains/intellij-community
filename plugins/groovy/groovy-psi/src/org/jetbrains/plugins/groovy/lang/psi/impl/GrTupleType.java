@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
@@ -12,17 +11,19 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
+import java.util.List;
+
 public abstract class GrTupleType extends GrLiteralClassType {
 
   private final VolatileNotNullLazyValue<PsiType[]> myParameters = VolatileNotNullLazyValue.createValue(() -> {
-    PsiType[] types = getComponentTypes();
-    if (types.length == 0) return PsiType.EMPTY_ARRAY;
-    final PsiType leastUpperBound = getLeastUpperBound(types);
+    List<PsiType> types = getComponentTypes();
+    if (types.isEmpty()) return PsiType.EMPTY_ARRAY;
+    final PsiType leastUpperBound = getLeastUpperBound(types.toArray(PsiType.EMPTY_ARRAY));
     if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
     return new PsiType[]{leastUpperBound};
   });
 
-  private final VolatileNotNullLazyValue<PsiType[]> myComponents = VolatileNotNullLazyValue.createValue(this::inferComponents);
+  private final VolatileNotNullLazyValue<List<PsiType>> myComponents = VolatileNotNullLazyValue.createValue(this::inferComponents);
 
   public GrTupleType(@NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     this(scope, facade, LanguageLevel.JDK_1_5);
@@ -49,18 +50,18 @@ public abstract class GrTupleType extends GrLiteralClassType {
   @Override
   @NotNull
   public String getInternalCanonicalText() {
-    PsiType[] types = getComponentTypes();
+    List<PsiType> types = getComponentTypes();
 
     StringBuilder builder = new StringBuilder();
     builder.append("[");
-    for (int i = 0; i < types.length; i++) {
+    for (int i = 0; i < types.size(); i++) {
       if (i >= 2) {
         builder.append(",...");
         break;
       }
 
       if (i > 0) builder.append(", ");
-      builder.append(getInternalCanonicalText(types[i]));
+      builder.append(getInternalCanonicalText(types.get(i)));
     }
     builder.append("]");
     return builder.toString();
@@ -68,12 +69,10 @@ public abstract class GrTupleType extends GrLiteralClassType {
 
   public boolean equals(Object obj) {
     if (obj instanceof GrTupleType) {
-      PsiType[] componentTypes = getComponentTypes();
-      PsiType[] otherComponents = ((GrTupleType)obj).getComponentTypes();
-      for (int i = 0; i < Math.min(componentTypes.length, otherComponents.length); i++) {
-        if (!Comparing.equal(componentTypes[i], otherComponents[i])) return false;
-      }
-      return true;
+      List<PsiType> componentTypes = getComponentTypes();
+      List<PsiType> otherComponents = ((GrTupleType)obj).getComponentTypes();
+      return componentTypes.size() == otherComponents.size() &&
+             componentTypes.equals(otherComponents);
     }
     return super.equals(obj);
   }
@@ -81,11 +80,11 @@ public abstract class GrTupleType extends GrLiteralClassType {
   @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
     if (type instanceof GrTupleType) {
-      PsiType[] otherComponents = ((GrTupleType)type).getComponentTypes();
-      PsiType[] componentTypes = getComponentTypes();
-      for (int i = 0; i < Math.min(componentTypes.length, otherComponents.length); i++) {
-        PsiType componentType = componentTypes[i];
-        PsiType otherComponent = otherComponents[i];
+      List<PsiType> otherComponents = ((GrTupleType)type).getComponentTypes();
+      List<PsiType> componentTypes = getComponentTypes();
+      for (int i = 0; i < Math.min(componentTypes.size(), otherComponents.size()); i++) {
+        PsiType componentType = componentTypes.get(i);
+        PsiType otherComponent = otherComponents.get(i);
         if (otherComponent == null) {
           if (componentType != null && !TypesUtil.isClassType(componentType, CommonClassNames.JAVA_LANG_OBJECT)) return false;
         }
@@ -98,12 +97,17 @@ public abstract class GrTupleType extends GrLiteralClassType {
   }
 
   @NotNull
-  public PsiType[] getComponentTypes() {
+  public List<PsiType> getComponentTypes() {
     return myComponents.getValue();
   }
 
   @NotNull
-  protected abstract  PsiType[] inferComponents();
+  public final PsiType[] getComponentTypesArray() {
+    return getComponentTypes().toArray(PsiType.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  protected abstract List<PsiType> inferComponents();
 
   @NotNull
   @Override

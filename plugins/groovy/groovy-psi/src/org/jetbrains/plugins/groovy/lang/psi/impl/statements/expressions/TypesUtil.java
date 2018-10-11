@@ -418,16 +418,16 @@ public class TypesUtil implements TypeConstants {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;
       GrTupleType tuple2 = (GrTupleType)type2;
-      PsiType[] components1 = tuple1.getComponentTypes();
-      PsiType[] components2 = tuple2.getComponentTypes();
+      List<PsiType> components1 = tuple1.getComponentTypes();
+      List<PsiType> components2 = tuple2.getComponentTypes();
 
-      if (components1.length == 0) return genNewListBy(type2, manager);
-      if (components2.length == 0) return genNewListBy(type1, manager);
+      if (components1.isEmpty()) return genNewListBy(type2, manager);
+      if (components2.isEmpty()) return genNewListBy(type1, manager);
 
-      PsiType[] components3 = PsiType.createArray(Math.min(components1.length, components2.length));
+      PsiType[] components3 = PsiType.createArray(Math.min(components1.size(), components2.size()));
       for (int i = 0; i < components3.length; i++) {
-        PsiType c1 = components1[i];
-        PsiType c2 = components2[i];
+        PsiType c1 = components1.get(i);
+        PsiType c2 = components2.get(i);
         if (c1 == null || c2 == null) {
           components3[i] = null;
         }
@@ -435,7 +435,7 @@ public class TypesUtil implements TypeConstants {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrImmediateTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);
@@ -498,8 +498,8 @@ public class TypesUtil implements TypeConstants {
 
   private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {
     if (type1 instanceof GrTupleType) {
-      PsiType[] types = ((GrTupleType)type1).getComponentTypes();
-      if (types.length == 0 && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
+      List<PsiType> types = ((GrTupleType)type1).getComponentTypes();
+      if (types.isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
     }
 
     return false;
@@ -724,9 +724,9 @@ public class TypesUtil implements TypeConstants {
     return new GrTupleType(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
       @NotNull
       @Override
-      protected PsiType[] inferComponents() {
+      protected List<PsiType> inferComponents() {
         final GrAnnotationMemberValue[] initializers = value.getInitializers();
-        return ContainerUtil.map(initializers, value1 -> inferAnnotationMemberValueType(value1), PsiType.createArray(initializers.length));
+        return ContainerUtil.map(initializers, TypesUtil::inferAnnotationMemberValueType);
       }
 
       @Override

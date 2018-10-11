@@ -279,7 +279,7 @@ public class PsiUtil {
       PsiType type = expression.getType();
       if (expression instanceof GrSpreadArgument) {
         if (type instanceof GrTupleType) {
-          result.addAll(Arrays.asList(((GrTupleType)type).getComponentTypes()));
+          result.addAll(((GrTupleType)type).getComponentTypes());
         }
         else {
           return null;

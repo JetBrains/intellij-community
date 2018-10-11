@@ -52,7 +52,7 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
           for (PsiType type : GroovyExpectedTypesProvider.getDefaultExpectedTypes(list)) {
             if (!(type instanceof PsiClassType)) continue;
 
-            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypes(),closure);
+            final GroovyResolveResult[] candidates = PsiUtil.getConstructorCandidates((PsiClassType)type,((GrTupleType)listType).getComponentTypesArray(),closure);
             for (GroovyResolveResult resolveResult : candidates) {
               final PsiElement method = resolveResult.getElement();
               if (!(method instanceof PsiMethod) || !((PsiMethod)method).isConstructor()) continue;

@@ -20,8 +20,7 @@ public class GrListToArrayTypeConverter extends GrTypeConverter {
     if (!(targetType instanceof PsiArrayType) || !(actualType instanceof GrTupleType)) return null;
 
     final PsiType lComponentType = ((PsiArrayType)targetType).getComponentType();
-    PsiType[] types = ((GrTupleType)actualType).getComponentTypes();
-    for (PsiType rComponentType: types) {
+    for (PsiType rComponentType : ((GrTupleType)actualType).getComponentTypes()) {
       if (!TypesUtil.isAssignableByParameter(lComponentType, rComponentType, context)) return null;
     }
     return ConversionResult.OK;

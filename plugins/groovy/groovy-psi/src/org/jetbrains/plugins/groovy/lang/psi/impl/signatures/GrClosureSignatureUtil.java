@@ -248,7 +248,7 @@ public class GrClosureSignatureUtil {
           }
           PsiType arg = args[0];
           if (arg instanceof GrTupleType) {
-            PsiType[] _args = ((GrTupleType)arg).getComponentTypes();
+            PsiType[] _args = ((GrTupleType)arg).getComponentTypesArray();
             map = mapArgTypesToParameters(signature, _args, context, false);
             if (map != null) {
               results.add(new Trinity<>(signature, map,
