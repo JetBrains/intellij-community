@@ -4,11 +4,7 @@ package org.editorconfig.language.services
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.messages.Topic
 import org.editorconfig.language.psi.EditorConfigPsiFile
-import org.editorconfig.language.widget.EditorConfigNotificationServiceListener
-
-val EditorConfigNotificationTopic = Topic("EDITORCONFIG_VFS_NOTIFICATION_TOPIC", EditorConfigNotificationServiceListener::class.java)
 
 sealed class EditorConfigServiceResult
 data class EditorConfigServiceLoaded(val list: List<EditorConfigPsiFile>) : EditorConfigServiceResult()
