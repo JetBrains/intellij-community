@@ -114,20 +114,18 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
       public Set<String> generatedRoots = ContainerUtil.newHashSet();
     }
 
-    State myState;
+    State myState = new State();
 
     static IgnoredFileRootStore getInstance(Project project) {
       return ServiceManager.getService(project, IgnoredFileRootStore.class);
     }
 
     boolean containsRoot(@NotNull String root) {
-      return myState != null && myState.generatedRoots.contains(root);
+      return myState.generatedRoots.contains(root);
     }
 
     void addRoot(@NotNull String root) {
-      if (myState != null) {
-        myState.generatedRoots.add(root);
-      }
+      myState.generatedRoots.add(root);
     }
 
     @Nullable
