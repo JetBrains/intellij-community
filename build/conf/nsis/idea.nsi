@@ -599,7 +599,6 @@ update_context_menu:
   ClearErrors
   ${ConfigRead} "$R1" "updateContextMenu=" $R3
   IfErrors download_jre32
-  ${LogText} "  update Context Menu: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
 
@@ -1106,11 +1105,9 @@ add_to_path:
   ${EndIf}
 
 update_context_menu:
-  ${LogText} "update context menu: $updateContextMenu"
   ${If} $updateContextMenu > 0
     !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $updateContextMenu" "State"
     ${If} $R0 == 1
-      ${LogText} "update context menu"
       Call UpdateContextMenu
     ${EndIf}
   ${EndIf}
