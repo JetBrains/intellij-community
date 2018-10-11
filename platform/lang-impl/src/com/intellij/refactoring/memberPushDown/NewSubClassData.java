@@ -26,7 +26,7 @@ public class NewSubClassData {
   private final Object myContext;
   private final String myNewClassName;
 
-  public NewSubClassData(PsiElement context, String newClassName) {
+  public NewSubClassData(Object context, String newClassName) {
     myContext = context;
     myNewClassName = newClassName;
   }
