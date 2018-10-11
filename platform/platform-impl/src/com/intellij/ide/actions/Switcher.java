@@ -184,7 +184,7 @@ public class Switcher extends AnAction implements DumbAware {
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, @Nullable final VirtualFile[] vFiles) {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
-  
+
   public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     Project project = e.getProject();
     if (SWITCHER != null) {
@@ -740,7 +740,24 @@ public class Switcher extends AnAction implements DumbAware {
     @Deprecated
     @NotNull
     protected List<VirtualFile> getFiles(@NotNull Project project) {
-      throw new UnsupportedOperationException("deprecated");
+      List<VirtualFile> recentFiles = EditorHistoryManager.getInstance(project).getFileList();
+      VirtualFile[] openFiles = FileEditorManager.getInstance(project).getOpenFiles();
+
+      Set<VirtualFile> recentFilesSet = ContainerUtil.newHashSet(recentFiles);
+      Set<VirtualFile> openFilesSet = ContainerUtil.newHashSet(openFiles);
+
+      // Add missing FileEditor tabs right after the last one, that is available via "Recent Files"
+      int index = 0;
+      for (int i = 0; i < recentFiles.size(); i++) {
+        if (openFilesSet.contains(recentFiles.get(i))) {
+          index = i;
+          break;
+        }
+      }
+
+      List<VirtualFile> result = new ArrayList<>(recentFiles);
+      result.addAll(index, ContainerUtil.filter(openFiles, it -> !recentFilesSet.contains(it)));
+      return result;
     }
 
     @NotNull
@@ -983,14 +1000,14 @@ public class Switcher extends AnAction implements DumbAware {
     void toggleShowEditedFiles() {
       myShowOnlyEditedFilesCheckBox.doClick();
     }
-    
+
     void setShowOnlyEditedFiles(boolean onlyEdited) {
       if (myShowOnlyEditedFilesCheckBox.isSelected() != onlyEdited) {
         myShowOnlyEditedFilesCheckBox.setSelected(onlyEdited);
       }
-      
+
       final boolean listWasSelected = files.getSelectedIndex() != -1;
-      
+
       final Pair<List<FileInfo>, Integer> filesAndSelection = getFilesToShowAndSelectionIndex(
         project, collectFiles(project, onlyEdited), toolWindows.getModel().getSize(), isPinnedMode());
       final int selectionIndex = filesAndSelection.getSecond();
@@ -1317,7 +1334,7 @@ public class Switcher extends AnAction implements DumbAware {
              + "</html>";
     }
   }
-  
+
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final SwitcherPanel mySwitcherPanel;
     boolean open;
