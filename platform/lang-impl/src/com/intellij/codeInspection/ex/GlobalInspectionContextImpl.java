@@ -243,70 +243,80 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         BufferedWriter[] writers = new BufferedWriter[inspections.size()];
         XMLStreamWriter[] xmlWriters = new XMLStreamWriter[inspections.size()];
 
-        int i = 0;
-        for (Tools inspection : inspections) {
-          inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
-          try {
-            BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
-            writers[i] = writer;
-            XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(writer);
-            xmlWriters[i++] = xmlWriter;
-            xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
-            xmlWriter.writeCharacters("\n");
-            xmlWriter.flush();
-          }
-          catch (FileNotFoundException | XMLStreamException e) {
-            LOG.error(e);
-          }
-        }
 
-        getRefManager().iterate(new RefVisitor() {
-          @Override
-          public void visitElement(@NotNull final RefEntity refEntity) {
-            int i = 0;
-            for (Tools tools: inspections) {
-              for (ScopeToolState state : tools.getTools()) {
-                try {
-                  InspectionToolWrapper toolWrapper = state.getTool();
-                  InspectionToolPresentation presentation = getPresentation(toolWrapper);
-                  BufferedWriter writer = writers[i];
-                  presentation.exportResults(e -> {
-                    try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
-                      writer.flush();
-                    }
-                    catch (IOException e1) {
-                      throw new RuntimeException(e1);
-                    }
-                  }, refEntity, d -> false);
-                }
-                catch (Throwable e) {
-                  LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
-                }
-              }
-              i++;
+        try {
+          int i = 0;
+          for (Tools inspection : inspections) {
+            inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
+            try {
+              BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
+              writers[i] = writer;
+              XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(writer);
+              xmlWriters[i++] = xmlWriter;
+              xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+              xmlWriter.writeCharacters("\n");
+              xmlWriter.flush();
+            }
+            catch (FileNotFoundException | XMLStreamException e) {
+              LOG.error(e);
             }
           }
-        });
 
-        for (XMLStreamWriter xmlWriter : xmlWriters) {
-          try {
-            xmlWriter.writeEndElement();
-            xmlWriter.flush();
+          getRefManager().iterate(new RefVisitor() {
+            @Override
+            public void visitElement(@NotNull final RefEntity refEntity) {
+              int i = 0;
+              for (Tools tools : inspections) {
+                for (ScopeToolState state : tools.getTools()) {
+                  try {
+                    InspectionToolWrapper toolWrapper = state.getTool();
+                    InspectionToolPresentation presentation = getPresentation(toolWrapper);
+                    BufferedWriter writer = writers[i];
+                    if (writer != null) {
+                      presentation.exportResults(e -> {
+                        try {
+                          JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                          writer.flush();
+                        }
+                        catch (IOException e1) {
+                          throw new RuntimeException(e1);
+                        }
+                      }, refEntity, d -> false);
+                    }
+                  }
+                  catch (Throwable e) {
+                    LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
+                  }
+                }
+                i++;
+              }
+            }
+          });
+
+          for (XMLStreamWriter xmlWriter : xmlWriters) {
+            if (xmlWriter != null) {
+              try {
+                xmlWriter.writeEndElement();
+                xmlWriter.flush();
+              }
+              catch (XMLStreamException e) {
+                LOG.error(e);
+              }
+            }
           }
-          catch (XMLStreamException e) {
-            LOG.error(e);
+        } finally {
+          for (BufferedWriter writer : writers) {
+            if (writer != null) {
+              try {
+                writer.close();
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
           }
         }
 
-        for (BufferedWriter writer : writers) {
-          try {
-            writer.close();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
       });
     }
   }
