@@ -224,6 +224,9 @@ public class FilterPanel implements FilterTable {
   }
 
   public void initFilters(@NotNull MatchVariableConstraint constraint) {
+    if (myCompiledPattern == null) {
+      return;
+    }
     myConstraint = constraint;
     final String varName = myConstraint.getName();
     final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
