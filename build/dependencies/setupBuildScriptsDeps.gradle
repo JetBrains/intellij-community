@@ -14,6 +14,7 @@ configurations {
 }
 
 List<String> projectLibraries = [
+  "ASM",
   "jetbrains-annotations-java5",
   "Groovy",
   "cli-parser",
