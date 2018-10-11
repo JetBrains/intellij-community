@@ -81,6 +81,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by property(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by property(AntialiasingType.SUBPIXEL)
+  @get:OptionTag("HIGH_CONTRAST") var highContrast by property(false)
   @get:OptionTag("COLOR_BLINDNESS") var colorBlindness by enum<ColorBlindness>()
   @get:OptionTag("MOVE_MOUSE_ON_DEFAULT_BUTTON") var moveMouseOnDefaultButton by property(false)
   @get:OptionTag("ENABLE_ALPHA_MODE") var enableAlphaMode by property(false)
