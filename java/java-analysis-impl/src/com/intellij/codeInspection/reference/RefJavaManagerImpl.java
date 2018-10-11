@@ -510,7 +510,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
               if (dataElements.length > 0) {
                 final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(psi, PsiModifierListOwner.class);
                 if (listOwner != null) {
-                  final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
+                  final WritableRefElement element = (WritableRefElement)myRefManager.getReference(listOwner);
                   if (element != null) {
                     String suppression = StringUtil.join(dataElements, PsiElement::getText, ",");
                     element.addSuppression(suppression);
@@ -566,7 +566,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     private void retrieveSuppressions(UAnnotation annotation, UAnnotated annotated) {
       if (annotated != null) {
         PsiElement annotatedSrc = annotated.getSourcePsi();
-        final RefElementImpl element = (RefElementImpl)myRefManager.getReference(annotatedSrc);
+        final WritableRefElement element = (WritableRefElement)myRefManager.getReference(annotatedSrc);
         if (element != null) {
           StringBuilder buf = new StringBuilder();
           final List<UNamedExpression> nameValuePairs = annotation.getAttributeValues();
@@ -614,7 +614,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
           field = (PsiField)psiElement;
           RefElement refElement = myRefManager.getReference(field);
           if (refElement != null) {
-            ((RefElementImpl)refElement).addSuppression(suppressId);
+            ((WritableRefElement)refElement).addSuppression(suppressId);
           }
         }
         else {

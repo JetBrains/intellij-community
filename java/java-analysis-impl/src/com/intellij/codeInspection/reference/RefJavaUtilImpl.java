@@ -310,7 +310,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              boolean hasConstructorsMarked = false;
 
                              if (defaultConstructorOnly) {
-                               RefMethodImpl refDefaultConstructor = (RefMethodImpl)refClass.getDefaultConstructor();
+                               WritableRefElement refDefaultConstructor = (WritableRefElement)refClass.getDefaultConstructor();
                                if (refDefaultConstructor != null) {
                                  refDefaultConstructor.addInReference(refFrom);
                                  refFrom.addOutReference(refDefaultConstructor);
@@ -320,7 +320,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                              else {
                                for (RefMethod cons : refClass.getConstructors()) {
                                  if (cons instanceof RefImplicitConstructor) continue;
-                                 ((RefMethodImpl)cons).addInReference(refFrom);
+                                 ((WritableRefElement)cons).addInReference(refFrom);
                                  refFrom.addOutReference(cons);
                                  hasConstructorsMarked = true;
                                }

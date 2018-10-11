@@ -48,7 +48,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   RefMethodImpl(@NotNull RefElement ownerClass, UMethod method, PsiElement psi, RefManager manager) {
     super(method, psi, manager);
 
-    ((RefEntityImpl)ownerClass).add(this);
+    ((WritableRefEntity)ownerClass).add(this);
   }
 
   // To be used only from RefImplicitConstructor.
@@ -57,7 +57,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     ((RefClassImpl)ownerClass).add(this);
 
     addOutReference(ownerClass);
-    ((RefClassImpl)ownerClass).addInReference(this);
+    ((WritableRefElement)ownerClass).addInReference(this);
 
     setConstructor(true);
   }
@@ -65,7 +65,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public synchronized void add(@NotNull RefEntity child) {
     if (child instanceof RefParameter) {
-      ((RefEntityImpl)child).setOwner(this);
+      ((WritableRefEntity)child).setOwner(this);
       return;
     }
     super.add(child);
@@ -183,7 +183,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         RefClass ownerClass = getOwnerClass();
         if (ownerClass != null) {
           for (RefClass superClass : ownerClass.getBaseClasses()) {
-            RefMethodImpl superDefaultConstructor = (RefMethodImpl)superClass.getDefaultConstructor();
+            WritableRefElement superDefaultConstructor = (WritableRefElement)superClass.getDefaultConstructor();
             if (superDefaultConstructor != null) {
               superDefaultConstructor.addInReference(this);
               addOutReference(superDefaultConstructor);

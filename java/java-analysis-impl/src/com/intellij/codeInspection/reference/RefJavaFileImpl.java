@@ -33,7 +33,7 @@ public class RefJavaFileImpl extends RefFileImpl {
     if (!packageName.isEmpty()) {
       ((RefPackageImpl)getRefManager().getExtension(RefJavaManager.MANAGER).getPackage(packageName)).add(this);
     } else if (myRefModule != null) {
-      ((RefModuleImpl)myRefModule).add(this);
+      ((WritableRefEntity)myRefModule).add(this);
     } else {
       ((RefProjectImpl)manager.getRefProject()).add(this);
     }

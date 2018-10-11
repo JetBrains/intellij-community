@@ -160,22 +160,22 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  void fireNodeMarkedReferenced(RefElement refWhat,
-                                RefElement refFrom,
-                                boolean referencedFromClassInitializer,
-                                final boolean forReading,
-                                final boolean forWriting) {
+  public void fireNodeMarkedReferenced(RefElement refWhat,
+                                       RefElement refFrom,
+                                       boolean referencedFromClassInitializer,
+                                       final boolean forReading,
+                                       final boolean forWriting) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting);
     }
   }
 
-  void fireNodeMarkedReferenced(RefElement refWhat,
-                                RefElement refFrom,
-                                boolean referencedFromClassInitializer,
-                                final boolean forReading,
-                                final boolean forWriting,
-                                PsiElement element) {
+  public void fireNodeMarkedReferenced(RefElement refWhat,
+                                       RefElement refFrom,
+                                       boolean referencedFromClassInitializer,
+                                       final boolean forReading,
+                                       final boolean forWriting,
+                                       PsiElement element) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting, element);
     }
@@ -187,7 +187,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  void fireBuildReferences(RefElement refElement) {
+  public void fireBuildReferences(RefElement refElement) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
       annotator.onReferencesBuild(refElement);
     }
@@ -618,7 +618,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
+  public <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
     return getFromRefTableOrCache(element, factory, null);
   }
 
@@ -712,7 +712,7 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  boolean isValidPointForReference() {
+  public boolean isValidPointForReference() {
     return myIsInProcess || myOfflineView || ApplicationManager.getApplication().isUnitTestMode();
   }
 }

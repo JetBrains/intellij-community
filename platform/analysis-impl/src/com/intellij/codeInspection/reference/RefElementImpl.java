@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
+public abstract class RefElementImpl extends RefEntityImpl implements RefElement, WritableRefElement {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
 
   private static final int IS_ENTRY_MASK = 0x80;
@@ -169,7 +169,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return ObjectUtils.notNull(myInReferences, ContainerUtil.emptyList());
   }
 
-  synchronized void addInReference(RefElement refElement) {
+  @Override
+  public synchronized void addInReference(RefElement refElement) {
     List<RefElement> inReferences = myInReferences;
     if (inReferences == null){
       myInReferences = inReferences = new ArrayList<>(1);
@@ -179,7 +180,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }
   }
 
-  synchronized void addOutReference(RefElement refElement) {
+  @Override
+  public synchronized void addOutReference(RefElement refElement) {
     List<RefElement> outReferences = myOutReferences;
     if (outReferences == null){
       myOutReferences = outReferences = new ArrayList<>(1);
@@ -221,7 +223,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public void referenceRemoved() {
     myIsDeleted = true;
     if (getOwner() != null) {
-      ((RefEntityImpl)getOwner()).removeChild(this);
+      getOwner().removeChild(this);
     }
 
     for (RefElement refCallee : getOutReferences()) {
@@ -246,7 +248,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   protected abstract void initialize();
 
-  void addSuppression(final String text) {
+  @Override
+  public void addSuppression(final String text) {
     mySuppressions = text.split("[, ]");
   }
 
