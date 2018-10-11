@@ -52,6 +52,7 @@ var launcherShortcut
 var secondLauncherShortcut
 var addToPath
 var downloadJRE
+var updateContextMenu
 
 ;------------------------------------------------------------------------------
 ; include "Modern User Interface"
@@ -355,6 +356,7 @@ Function getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
   !insertmacro INSTALLOPTIONS_READ $downloadJRE "Desktop.ini" "Settings" "DownloadJRE"
+  !insertmacro INSTALLOPTIONS_READ $updateContextMenu "Desktop.ini" "Settings" "UpdateContextMenu"
 FunctionEnd
 
 
@@ -588,10 +590,18 @@ launcher_64:
 update_PATH:
   ClearErrors
   ${ConfigRead} "$R1" "updatePATH=" $R3
-  IfErrors download_jre32
+  IfErrors update_context_menu
   ${LogText} "  update PATH env var: $R3"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
+
+update_context_menu:
+  ClearErrors
+  ${ConfigRead} "$R1" "updateContextMenu=" $R3
+  IfErrors download_jre32
+  ${LogText} "  update Context Menu: $R3"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
 
 download_jre32:
   ClearErrors
@@ -903,6 +913,11 @@ createRegistration:
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
+FunctionEnd
+
+
+Function UpdateContextMenu
+  ${LogText} "update Context Menu"
 
 ; add "Open with PRODUCT" action for files to Windows context menu
   StrCpy $0 "HKCU"
@@ -950,6 +965,7 @@ createRegistration:
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 FunctionEnd
+
 
 Function ProductAssociation
   ${LogText} "do associations ${MUI_PRODUCT} ${VER_BUILD}"
@@ -1011,12 +1027,14 @@ FunctionEnd
 
 
 Function getPathEnvVar
+  ${LogText} "  get value of user's PATH env var"
   ClearErrors
   ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
-  ${LogText} "  PATH: HKCU ${Environment} Path $pathEnvVar"
   IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
+  ${LogText} "  Path: $pathEnvVar"
   Goto done
 do_not_change_path:
+  ${LogText} "  an error occured on readyng value of PATH env var"
   StrCpy $pathEnvVar ""
 done:
 FunctionEnd
@@ -1085,6 +1103,16 @@ add_to_path:
     Call createProductEnvVar
     CALL updatePathEnvVar
     SetRebootFlag true
+  ${EndIf}
+
+update_context_menu:
+  ${LogText} "update context menu: $updateContextMenu"
+  ${If} $updateContextMenu > 0
+    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $updateContextMenu" "State"
+    ${If} $R0 == 1
+      ${LogText} "update context menu"
+      Call UpdateContextMenu
+    ${EndIf}
   ${EndIf}
 
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
