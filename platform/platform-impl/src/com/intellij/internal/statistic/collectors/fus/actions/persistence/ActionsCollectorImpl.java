@@ -6,14 +6,18 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -32,7 +36,13 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
     key = isDevelopedByJetBrains(context) ? key : DEFAULT_ID;
 
-    FeatureUsageLogger.INSTANCE.log("actions", key);
+    final Map<String, Object> data = ContainerUtil.newHashMap(FUSUsageContext.OS_CONTEXT.getData());
+    data.put("context_menu", isContextMenu);
+    if (isContextMenu && place!= null) {
+      data.put("place", place);
+    }
+    FeatureUsageLogger.INSTANCE.log("actions", key, data);
+
     Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);
