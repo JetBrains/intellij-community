@@ -34,11 +34,11 @@ public class NewSubClassData {
   /**
    * Directory to create new class
    */
-  protected Object getContext() {
+  public Object getContext() {
     return myContext;
   }
 
-  protected String getNewClassName() {
+  public String getNewClassName() {
     return myNewClassName;
   }
 }
