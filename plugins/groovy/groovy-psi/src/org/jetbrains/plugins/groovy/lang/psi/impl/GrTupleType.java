@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -13,29 +12,17 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * @author ven
- */
 public abstract class GrTupleType extends GrLiteralClassType {
-  private final VolatileNotNullLazyValue<PsiType[]> myParameters = new VolatileNotNullLazyValue<PsiType[]>() {
-    @NotNull
-    @Override
-    protected PsiType[] compute() {
-      PsiType[] types = getComponentTypes();
-      if (types.length == 0) return PsiType.EMPTY_ARRAY;
-      final PsiType leastUpperBound = getLeastUpperBound(types);
-      if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
-      return new PsiType[]{leastUpperBound};
-    }
-  };
 
-  private final VolatileNotNullLazyValue<PsiType[]> myComponents = new VolatileNotNullLazyValue<PsiType[]>() {
-    @NotNull
-    @Override
-    protected PsiType[] compute() {
-      return inferComponents();
-    }
-  };
+  private final VolatileNotNullLazyValue<PsiType[]> myParameters = VolatileNotNullLazyValue.createValue(() -> {
+    PsiType[] types = getComponentTypes();
+    if (types.length == 0) return PsiType.EMPTY_ARRAY;
+    final PsiType leastUpperBound = getLeastUpperBound(types);
+    if (leastUpperBound == PsiType.NULL) return EMPTY_ARRAY;
+    return new PsiType[]{leastUpperBound};
+  });
+
+  private final VolatileNotNullLazyValue<PsiType[]> myComponents = VolatileNotNullLazyValue.createValue(this::inferComponents);
 
   public GrTupleType(@NotNull GlobalSearchScope scope, @NotNull JavaPsiFacade facade) {
     this(scope, facade, LanguageLevel.JDK_1_5);
