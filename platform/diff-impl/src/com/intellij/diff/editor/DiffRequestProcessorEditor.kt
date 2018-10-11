@@ -47,6 +47,11 @@ class DiffRequestProcessorEditor(
 
   override fun isValid(): Boolean = !processor.isDisposed
   override fun getFile(): VirtualFile = file
+
+  override fun selectNotify() {
+    processor.updateRequest()
+  }
+
   //
   // Unused
   //
@@ -55,7 +60,6 @@ class DiffRequestProcessorEditor(
   override fun getState(level: FileEditorStateLevel): FileEditorState = FileEditorState.INSTANCE
   override fun setState(state: FileEditorState) {}
   override fun isModified(): Boolean = false
-  override fun selectNotify() {}
   override fun deselectNotify() {}
 
   override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
