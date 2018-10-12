@@ -35,6 +35,7 @@ public abstract class AbstractFoldingPolicyTest extends LightPlatformCodeInsight
         continue;
       }
       String signature = FoldingPolicy.getSignature(element);
+      assertNotNull(signature);
       assertEquals(element, FoldingPolicy.restoreBySignature(element.getContainingFile(), signature));
     }
   }

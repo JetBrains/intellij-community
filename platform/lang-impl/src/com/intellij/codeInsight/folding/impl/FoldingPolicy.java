@@ -27,15 +27,13 @@ public class FoldingPolicy {
     }
   }
 
-  @NotNull
+  @Nullable
   public static String getSignature(@NotNull PsiElement element) {
     for(ElementSignatureProvider provider: ElementSignatureProvider.EP_NAME.getExtensionList()) {
       String signature = provider.getSignature(element);
       if (signature != null) return signature;
     }
-    String signature = GENERIC_PROVIDER.getSignature(element);
-    assert signature != null; // Default provider is always expected to generate a signature
-    return signature;
+    return GENERIC_PROVIDER.getSignature(element);
   }
 
   @Nullable

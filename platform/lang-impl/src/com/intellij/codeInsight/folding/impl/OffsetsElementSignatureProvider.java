@@ -17,12 +17,10 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +91,7 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     }
 
     FileViewProvider viewProvider = file.getViewProvider();
-    PsiElement element = start == end ? findEmptyElementAt(viewProvider, language, start) : viewProvider.findElementAt(start, language);
+    PsiElement element = viewProvider.findElementAt(start, language);
     if (element == null) {
       return null;
     }
@@ -125,30 +123,6 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
       return findElement(start, end, index, injectedStartElement, processingInfoStorage);
     }
     return null;
-  }
-
-  private static PsiElement findEmptyElementAt(FileViewProvider viewProvider, Language language, int offset) {
-    PsiElement element = viewProvider.getPsi(language);
-    if (element == null) return null;
-    if (offset == element.getTextLength()) {
-      while (true) {
-        PsiElement lastChild = element.getLastChild();
-        if (lastChild == null) {
-          break;
-        }
-        else {
-          element = lastChild;
-        }
-      }
-    }
-    else {
-      element = AbstractFileViewProvider.findElementAt(element, offset);
-      if (element == null) return null;
-      element = PsiTreeUtil.prevLeaf(element);
-      if (element == null) return null;
-    }
-    TextRange range = element.getTextRange();
-    return range != null && range.equalsToRange(offset, offset) ? element : null;
   }
 
   @Nullable
@@ -215,9 +189,11 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
   }
 
   @Override
-  @NotNull
   public String getSignature(@NotNull PsiElement element) {
     TextRange range = element.getTextRange();
+    if (range.isEmpty()) {
+      return null;
+    }
     StringBuilder buffer = new StringBuilder();
     buffer.append(TYPE_MARKER).append("#");
     buffer.append(range.getStartOffset());
