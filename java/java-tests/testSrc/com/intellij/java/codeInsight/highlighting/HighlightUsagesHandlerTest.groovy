@@ -181,7 +181,7 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
 
   void testSuppressedWarningsInInjectionHighlights() {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
-    testInjector.injectAll(getTestRootDisposable());
+    testInjector.injectAll(myFixture.getTestRootDisposable());
     myFixture.configureByText 'Foo.java', '''
       public class Foo {
         public static void a(boolean b, String c) {
