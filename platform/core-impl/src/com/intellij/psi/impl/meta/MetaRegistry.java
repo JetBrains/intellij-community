@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public class MetaRegistry extends MetaDataRegistrar {
 
@@ -55,16 +56,7 @@ public class MetaRegistry extends MetaDataRegistrar {
           ensureContributorsLoaded();
           for (final MyBinding binding : ourBindings) {
             if (binding.myFilter.isClassAcceptable(element.getClass()) && binding.myFilter.isAcceptable(element, element.getParent())) {
-              final PsiMetaData data;
-              try {
-                data = binding.myDataClass.newInstance();
-              }
-              catch (InstantiationException e) {
-                throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
-              }
-              catch (IllegalAccessException e) {
-                throw new RuntimeException("failed to instantiate " + binding.myDataClass, e);
-              }
+              final PsiMetaData data = binding.myDataClass.get();
               data.init(element);
               Object[] dependences = data.getDependencies();
               for (Object dependence : dependences) {
@@ -105,7 +97,7 @@ public class MetaRegistry extends MetaDataRegistrar {
    */
   @Deprecated
   static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
-                                                                Class<T> aMetadataClass,
+                                                         Supplier<? extends T> aMetadataClass,
                                                                 Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
     addBinding(binding);
@@ -122,7 +114,7 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @deprecated
    */
   @Deprecated
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
+  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Supplier<? extends T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));
   }
 
@@ -132,19 +124,28 @@ public class MetaRegistry extends MetaDataRegistrar {
 
   @Override
   public <T extends PsiMetaData> void registerMetaData(ElementFilter filter, Class<T> metadataDescriptorClass) {
-    addMetadataBinding(filter, metadataDescriptorClass);
+    Supplier<? extends T> supplier = ()-> {
+      try {
+        return metadataDescriptorClass.newInstance();
+      }
+      catch (InstantiationException | IllegalAccessException e) {
+        LOG.error(e);
+      }
+      return null;
+    };
+    addMetadataBinding(filter, supplier);
   }
 
   @Override
-  public <T extends PsiMetaData> void registerMetaData(ElementPattern<?> pattern, Class<T> metadataDescriptorClass) {
+  public <T extends PsiMetaData> void registerMetaData(ElementPattern<?> pattern, Supplier<? extends T> metadataDescriptorClass) {
     addMetadataBinding(new PatternFilter(pattern), metadataDescriptorClass);
   }
 
   private static class MyBinding {
     private final ElementFilter myFilter;
-    private final Class<? extends PsiMetaData> myDataClass;
+    private final Supplier<? extends PsiMetaData> myDataClass;
 
-    MyBinding(@NotNull ElementFilter filter, @NotNull Class<? extends PsiMetaData> dataClass) {
+    MyBinding(@NotNull ElementFilter filter, @NotNull Supplier<? extends PsiMetaData> dataClass) {
       myFilter = filter;
       myDataClass = dataClass;
     }
