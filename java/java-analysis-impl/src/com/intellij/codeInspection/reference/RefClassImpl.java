@@ -48,7 +48,6 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private RefMethodImpl myDefaultConstructor; //guarded by this
   private List<RefMethod> myOverridingMethods; //guarded by this
   private Set<RefElement> myInTypeReferences; //guarded by this
-  private Set<RefElement> myInstanceReferences;//guarded by this
   private List<RefJavaElement> myClassExporters;//guarded by this
   private final RefModule myRefModule;
 
