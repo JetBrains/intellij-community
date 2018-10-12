@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,7 +30,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import java.util.HashSet;
 
 import java.util.*;
 
@@ -56,6 +56,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
+      DumbService.getInstance(project).completeJustSubmittedTasks();
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
