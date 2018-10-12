@@ -184,11 +184,13 @@ public class PyiUtil {
           final PyClassLikeType instanceType = classType.toInstance();
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
                                                                                                PyResolveContext.noImplicits(), false);
-          return takeTopPriorityElement(resolveResults);
+          final PsiElement result = takeTopPriorityElement(resolveResults);
+          return result == element ? null : result;
         }
       }
       else if (originalOwner instanceof PyFile) {
-        return takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
+        final PsiElement result = takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
+        return result == element ? null : result;
       }
     }
     return null;
