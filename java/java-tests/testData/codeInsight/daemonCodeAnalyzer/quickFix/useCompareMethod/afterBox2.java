@@ -1,4 +1,4 @@
-// "Fix all ''compare()' method can be used to compare primitives' problems in file" "true"
+// "Fix all ''compare()' method can be used to compare numbers' problems in file" "true"
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
