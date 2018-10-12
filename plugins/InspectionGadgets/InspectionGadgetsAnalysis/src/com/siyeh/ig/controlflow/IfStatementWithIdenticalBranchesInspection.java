@@ -55,7 +55,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
           if (result != null) {
             ProblemHighlightType highlightType;
             if (result.myIsWarning) {
-              highlightType = ProblemHighlightType.WEAK_WARNING;
+              highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
             }
             else {
               if (!isOnTheFly) return;
