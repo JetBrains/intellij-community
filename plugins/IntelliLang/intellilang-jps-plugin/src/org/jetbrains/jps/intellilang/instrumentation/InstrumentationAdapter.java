@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.intellilang.instrumentation;
 
-import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 
 import java.text.MessageFormat;
@@ -11,7 +10,7 @@ import java.util.List;
 import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.NEW_ASM;
 import static org.jetbrains.jps.intellilang.instrumentation.PatternInstrumenter.isStringType;
 
-class InstrumentationAdapter extends FailSafeMethodVisitor implements Opcodes {
+class InstrumentationAdapter extends MethodVisitor implements Opcodes {
   @SuppressWarnings("SpellCheckingInspection") private static final String RETURN_VALUE_NAME = "$returnvalue$";
 
   private final PatternInstrumenter myInstrumenter;

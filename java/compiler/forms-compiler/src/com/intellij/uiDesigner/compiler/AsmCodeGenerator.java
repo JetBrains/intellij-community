@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.compiler;
 
-import com.intellij.compiler.instrumentation.FailSafeClassReader;
-import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
@@ -254,7 +252,6 @@ public class AsmCodeGenerator {
 
     @Override
     public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
-
       if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME) ||
           name.equals(LOAD_BUTTON_TEXT_METHOD) || name.equals(LOAD_LABEL_TEXT_METHOD)) {
         return null;
@@ -263,17 +260,11 @@ public class AsmCodeGenerator {
         myHaveCreateComponentsMethod = true;
         myCreateComponentsAccess = access;
       }
-
       final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
       if (name.equals(CONSTRUCTOR_NAME) && !myExplicitSetupCall) {
         return new FormConstructorVisitor(methodVisitor, myClassName, mySuperName);
       }
-      return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
-    }
-
-    MethodVisitor visitNewMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
-      final MethodVisitor methodVisitor = super.visitMethod(access, name, desc, signature, exceptions);
-      return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
+      return methodVisitor;
     }
 
     @Override
@@ -893,7 +884,7 @@ public class AsmCodeGenerator {
     }
   }
 
-  private class FormConstructorVisitor extends FailSafeMethodVisitor {
+  private class FormConstructorVisitor extends MethodVisitor {
     private final String myClassName;
     private final String mySuperName;
     private boolean callsSelfConstructor = false;
@@ -977,7 +968,7 @@ public class AsmCodeGenerator {
       return myExplicitSetupCall;
     }
 
-    private class FirstPassConstructorVisitor extends FailSafeMethodVisitor {
+    private class FirstPassConstructorVisitor extends MethodVisitor {
       FirstPassConstructorVisitor() {
         super(ASM_API_VERSION, new MethodVisitor(ASM_API_VERSION){});
       }

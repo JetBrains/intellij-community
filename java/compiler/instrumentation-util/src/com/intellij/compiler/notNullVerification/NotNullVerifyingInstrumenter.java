@@ -2,7 +2,6 @@
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
-import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
 import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader;
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
@@ -151,7 +150,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   @Override
   public MethodVisitor visitMethod(int access, final String name, String desc, String signature, String[] exceptions) {
     if ((access & Opcodes.ACC_BRIDGE) != 0) {
-      return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, desc, signature, exceptions));
+      return super.visitMethod(access, name, desc, signature, exceptions);
     }
 
     final boolean isStatic = isStatic(access);
@@ -167,7 +166,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
     final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
-    return new FailSafeMethodVisitor(Opcodes.API_VERSION, v) {
+    return new MethodVisitor(Opcodes.API_VERSION, v) {
       private final Map<Integer, NotNullState> myNotNullParams = new LinkedHashMap<Integer, NotNullState>();
       private int myParamAnnotationOffset = paramAnnotationOffset;
       private NotNullState myMethodNotNull;
