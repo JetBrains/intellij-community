@@ -135,36 +135,20 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
           if (!visitedWrappers.add(toolWrapper)) return true;
 
           String name = toolWrapper.getShortName();
-          try (BufferedWriter fileWriter = getWriter(outputDirectoryName, name);
+          try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, name,
+                                                                    xmlOutputFactory, format, GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
                XmlWriterWrapper aggregateWriter = new XmlWriterWrapper(myView.getProject(), outputDirectoryName, name + AGGREGATE,
                                                                        xmlOutputFactory, format, ROOT)) {
-            XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(fileWriter);
-            xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+            reportWriter.checkOpen();
 
             final Set<InspectionToolWrapper> toolWrappers = getWorkedTools(toolNode);
             for (InspectionToolWrapper wrapper : toolWrappers) {
               InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
-              presentation.exportResults(p -> {
-                try {
-                  xmlWriter.writeCharacters(format.getLineSeparator() + format.getIndent());
-                  xmlWriter.flush();
-                  JbXmlOutputter.collapseMacrosAndWrite(p, myView.getProject(), fileWriter);
-                  fileWriter.flush();
-                }
-                catch (IOException | XMLStreamException e) {
-                  throw new RuntimeException(e);
-                }
-              }, presentation::isExcluded, presentation::isExcluded);
+              presentation.exportResults(reportWriter::writeElement, presentation::isExcluded, presentation::isExcluded);
               if (presentation instanceof AggregateResultsExporter) {
                 ((AggregateResultsExporter)presentation).exportAggregateResults(aggregateWriter::writeElement);
               }
             }
-            xmlWriter.writeCharacters(format.getLineSeparator());
-            xmlWriter.writeEndElement();
-            xmlWriter.flush();
-          }
-          catch (IOException | XMLStreamException e) {
-            ex[0] = e;
           }
           catch (XmlWriterWrapperException e) {
             Throwable cause = e.getCause();
@@ -278,6 +262,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
         }
         finally {
           myXmlWriter = null;
+
           try {
             closeFile(myFileWriter);
           }
@@ -338,7 +323,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
   private static class XmlWriterWrapperException extends RuntimeException {
     private XmlWriterWrapperException(Throwable cause) {
-      super(cause);
+      super(cause.getMessage(), cause);
     }
   }
 }
