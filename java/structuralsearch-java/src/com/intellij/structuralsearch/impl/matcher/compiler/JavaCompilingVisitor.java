@@ -63,8 +63,22 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      if (!handleWord(reference.getReferenceName(), myCompilingVisitor.getContext())) return;
+      final String word = reference.getReferenceName();
+      if (!handleWord(word, myCompilingVisitor.getContext())) return;
+      if (reference.isQualified() && isClassFromJavaLangPackage(reference.resolve())) return;
       super.visitReferenceElement(reference);
+    }
+
+    private boolean isClassFromJavaLangPackage(PsiElement target) {
+      if (!(target instanceof PsiClass)) {
+        return false;
+      }
+      final PsiFile file = target.getContainingFile();
+      if (!(file instanceof PsiJavaFile)) {
+        return false;
+      }
+      final PsiJavaFile javaFile = (PsiJavaFile)file;
+      return "java.lang".equals(javaFile.getPackageName());
     }
 
     @Override
