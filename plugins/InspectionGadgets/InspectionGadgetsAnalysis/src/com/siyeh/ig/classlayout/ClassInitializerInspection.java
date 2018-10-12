@@ -122,7 +122,7 @@ public class ClassInitializerInspection extends BaseInspection {
       }
       final PsiCodeBlock codeBlock = initializer.getBody();
       PsiElement element = codeBlock.getFirstBodyElement();
-      final PsiElement last = codeBlock.getLastBodyElement();
+      final PsiElement last = codeBlock.getRBrace();
       while (element != null && element != last) {
         body.add(element);
         element = element.getNextSibling();
