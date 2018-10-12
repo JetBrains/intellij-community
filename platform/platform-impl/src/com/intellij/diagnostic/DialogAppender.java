@@ -10,8 +10,6 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.containers.ConcurrentList;
-import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -20,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,7 +30,7 @@ public class DialogAppender extends AppenderSkeleton {
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
-  private final ConcurrentList<LoggingEvent> myEarlyEvents = ContainerUtil.createConcurrentList();
+  private final Queue<LoggingEvent> myEarlyEvents = new ConcurrentLinkedQueue<>();
 
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
@@ -41,23 +41,19 @@ public class DialogAppender extends AppenderSkeleton {
 
     boolean isLoaded = IdeaApplication.isLoaded();
     if (isLoaded) {
-      queuePendingEarlyEvents();
+      LoggingEvent eventFromQueue;
+      while ((eventFromQueue = myEarlyEvents.poll()) != null) {
+        queueAppend(eventFromQueue);
+      }
     }
 
     if (!event.getLevel().isGreaterOrEqual(Level.ERROR)) return;
 
     if (isLoaded) {
       queueAppend(event);
-    } else {
-      if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
-        myEarlyEvents.add(event);
-      }
     }
-  }
-
-  private void queuePendingEarlyEvents() {
-    for (LoggingEvent earlyEvent : myEarlyEvents) {
-      queueAppend(earlyEvent);
+    else if (myEarlyEvents.size() < MAX_EARLY_LOGGING_EVENTS) {
+      myEarlyEvents.add(event);
     }
   }
 
