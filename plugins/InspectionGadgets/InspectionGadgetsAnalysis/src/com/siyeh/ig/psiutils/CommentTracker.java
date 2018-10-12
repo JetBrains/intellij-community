@@ -3,6 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
@@ -25,6 +26,7 @@ import java.util.function.Predicate;
 public final class CommentTracker {
   private final Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
+  private PsiElement lastTextWithCommentsElement = null;
 
   /**
    * Marks the element as unchanged and returns its text. The unchanged elements are assumed to be preserved
@@ -124,6 +126,49 @@ public final class CommentTracker {
       throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
     }
     addIgnored(lastElement);
+  }
+
+  /**
+   * Returns an element text, possibly prepended with comments which are located between the supplied element
+   * and the previous element passed into this method. The used comments are deleted from the original document.
+   *
+   * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
+   * because PsiExpression cannot start with comment.
+   *
+   * <p>This method can be used if several parts of original code are reused in the generated replacement.
+   *
+   * @param element an element to convert to the text
+   * @return the string containing the element text and possibly some comments.
+   */
+  public String textWithComments(@NotNull PsiElement element) {
+    StringBuilder sb = new StringBuilder();
+    if (lastTextWithCommentsElement != null) {
+      int start = lastTextWithCommentsElement.getTextRange().getEndOffset();
+      int end = element.getTextRange().getStartOffset();
+      PsiElement parent = PsiTreeUtil.findCommonParent(lastTextWithCommentsElement, element);
+      if (parent != null && start < end) {
+        List<PsiElement> toDelete = new ArrayList<>();
+        PsiTreeUtil.processElements(parent, e -> {
+          if (e instanceof PsiComment) {
+            TextRange range = e.getTextRange();
+            if (range.getStartOffset() >= start && range.getEndOffset() <= end && !shouldIgnore((PsiComment)e)) {
+              sb.append(e.getText());
+              PsiElement cur = e;
+              while (cur.getNextSibling() == null && cur != parent) cur = cur.getParent();
+              if (cur.getNextSibling() instanceof PsiWhiteSpace) {
+                sb.append(cur.getNextSibling().getText());
+              }
+              toDelete.add(e);
+            }
+          }
+          return true;
+        });
+        toDelete.forEach(PsiElement::delete);
+      }
+    }
+    lastTextWithCommentsElement = element;
+    sb.append(element.getText());
+    return sb.toString();
   }
 
   /**

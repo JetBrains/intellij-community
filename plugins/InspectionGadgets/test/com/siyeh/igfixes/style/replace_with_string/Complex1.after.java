@@ -10,15 +10,15 @@ class Complex1 {
 
   @Override
   public String toString() {
-      // important
-      return "TopProductBean" +
-              " {productName=" + productName +
-              ", mtdRc=" + mtdRc +
-              ", pfmRc=" + pfmRc +
-              ", pymRc=" + pymRc +
-              ", ytdRc=" + ytdRc +
-              ", pytdRc=" + pytdRc +
-              ", yoyRc=" + yoy +
-              '}';
+    return "TopProductBean" +
+            " {productName=" + productName +
+            ", mtdRc=" + mtdRc +
+            ", pfmRc=" + pfmRc +
+            ", pymRc=" + pymRc +
+            // important
+            ", ytdRc=" + ytdRc +
+            ", pytdRc=" + pytdRc +
+            ", yoyRc=" + yoy +
+            '}';
   }
 }

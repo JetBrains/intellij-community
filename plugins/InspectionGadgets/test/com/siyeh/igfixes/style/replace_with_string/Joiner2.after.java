@@ -3,14 +3,13 @@ import java.util.StringJoiner;
 
 class Test {
   void test2(String s, CharSequence s1) {
-      // comment1
-      // comment2
-      // comment3
-      // comment4
       String sj = "foo" +
+              // comment1
               s +
+              // comment2
               "bar" +
-              s1;
+              // comment3
+              s1;// comment4
       System.out.println(sj);
   }
 }
