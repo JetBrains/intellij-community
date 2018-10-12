@@ -962,7 +962,12 @@ Function UpdateContextMenu
 
   StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
   StrCpy $2 "Icon"
-  StrCpy $3 '"$productLauncher" "%1"'
+  StrCpy $3 "$productLauncher"
+  call OMWriteRegStr
+
+  StrCpy $1 "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}\command"
+  StrCpy $2 ""
+  StrCpy $3 '"$productLauncher" "%V"'
   call OMWriteRegStr
 FunctionEnd
 
