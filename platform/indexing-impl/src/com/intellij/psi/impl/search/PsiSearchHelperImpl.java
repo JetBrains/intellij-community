@@ -787,7 +787,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           throw e;
         }
         catch (Exception | Error e) {
-          LOG.error(e);
+          PsiFile file = scope.getContainingFile();
+          LOG.error("Error during processing of: " + (file != null ? file.getName() : scope), e);
           return true;
         }
       }
