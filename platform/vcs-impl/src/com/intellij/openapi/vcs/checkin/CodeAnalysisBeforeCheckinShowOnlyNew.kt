@@ -13,10 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CodeSmellDetector
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.ChangeListManagerEx
-import com.intellij.openapi.vcs.changes.LocalChangeList
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.openapi.vcs.ex.compareLines
@@ -73,9 +70,8 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
 
   private fun runAnalysisAfterShelvingSync(project: Project, progressIndicator: ProgressIndicator,  afterShelve: () -> Unit) {
     val operation = ShelveOperation(project)
-    operation.changeListManager.blockModalNotifications()
-    operation.changeListManager.freeze("Performing rollback")
-    try {
+
+    VcsFreezingProcess(project, VcsBundle.message("searching.for.code.smells.freezing.process")) {
       val progressManager = ProgressManager.getInstance()
       progressManager.executeNonCancelableSection { operation.save(progressIndicator) }
       try {
@@ -84,10 +80,7 @@ internal object CodeAnalysisBeforeCheckinShowOnlyNew {
       finally {
         progressManager.executeNonCancelableSection { operation.load(progressIndicator) }
       }
-    } finally {
-      operation.changeListManager.unblockModalNotifications()
-      operation.changeListManager.unfreeze()
-    }
+    }.execute()
   }
 
   private class ShelveOperation(project: Project) {
