@@ -104,7 +104,7 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/net/"),
     new LibraryLicense(name: "Apache Lucene", libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", license: "Apache 2.0",
                        url: "http://lucene.apache.org/java"),
-    new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "7.0 (with patches by JetBrains)",
+    new LibraryLicense(name: "ASM Bytecode Manipulation Framework", libraryName: "ASM", version: "6.2.1 (with patches by JetBrains)",
                        license: "BSD", url: "http://asm.objectweb.org/", licenseUrl: "http://asm.objectweb.org/license.html",
                        additionalLibraryNames: ["asm-capture"]),
     new LibraryLicense(name: "ASM Tools", libraryName: "asm-tools", license: "BSD", url: "http://asm.objectweb.org/",
