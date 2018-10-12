@@ -149,12 +149,9 @@ public class StringPropertyCodeGenerator extends PropertyCodeGenerator implement
     }
   }
 
-  @SuppressWarnings("Duplicates")
-  private void generateLoadTextMethod(AsmCodeGenerator.FormClassVisitor visitor,
-                                      String methodName,
-                                      String componentClass,
-                                      String setMnemonicMethodName) {
-    MethodVisitor mv = visitor.visitMethod(ACC_PRIVATE | ACC_SYNTHETIC, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
+  private void generateLoadTextMethod(final AsmCodeGenerator.FormClassVisitor visitor, final String methodName, final String componentClass,
+                                      final String setMnemonicMethodName) {
+    MethodVisitor mv = visitor.visitNewMethod(ACC_PRIVATE | ACC_SYNTHETIC, methodName, "(L" + componentClass + ";Ljava/lang/String;)V", null, null);
     mv.visitCode();
     mv.visitTypeInsn(NEW, "java/lang/StringBuffer");
     mv.visitInsn(DUP);
