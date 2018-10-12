@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
+import com.intellij.ide.passwordSafe.impl.BasePasswordSafe
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import org.junit.ClassRule
@@ -19,7 +19,7 @@ class PasswordSafeTest {
     macTest {
       val settings = PasswordSafeSettings()
       settings.providerType = ProviderType.KEYCHAIN
-      doErasePassword(PasswordSafeImpl(settings, KeyChainCredentialStore()))
+      doErasePassword(BasePasswordSafe(settings, KeyChainCredentialStore()))
     }
   }
 
@@ -28,12 +28,12 @@ class PasswordSafeTest {
     macTest {
       val settings = PasswordSafeSettings()
       settings.providerType = ProviderType.KEYCHAIN
-      doNullUsername(PasswordSafeImpl(settings, KeyChainCredentialStore()))
+      doNullUsername(BasePasswordSafe(settings, KeyChainCredentialStore()))
     }
   }
 }
 
-internal fun doNullUsername(ps: PasswordSafeImpl) {
+internal fun doNullUsername(ps: BasePasswordSafe) {
   val attributes = CredentialAttributes(randomString())
   try {
     ps.set(attributes, Credentials(null, "password"))
@@ -47,7 +47,7 @@ internal fun doNullUsername(ps: PasswordSafeImpl) {
   }
 }
 
-internal fun doErasePassword(ps: PasswordSafeImpl) {
+internal fun doErasePassword(ps: BasePasswordSafe) {
   val attributes = CredentialAttributes(randomString())
   try {
     ps.set(attributes, Credentials("a", "b"))
