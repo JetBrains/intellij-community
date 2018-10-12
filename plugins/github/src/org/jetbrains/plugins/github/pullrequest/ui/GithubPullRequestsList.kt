@@ -1,7 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.ide.CopyProvider
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
@@ -18,13 +23,15 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.Component
 import java.awt.FlowLayout
+import java.awt.datatransfer.StringSelection
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+internal class GithubPullRequestsList(private val copyPasteManager: CopyPasteManager,
+                                      avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory,
                                       model: ListModel<GithubSearchedIssue>)
-  : JBList<GithubSearchedIssue>(model), Disposable {
+  : JBList<GithubSearchedIssue>(model), CopyProvider, DataProvider, Disposable {
 
   private val avatarIconSize = JBValue.UIInteger("Github.PullRequests.List.Assignee.Avatar.Size", 20)
   private val avatarIconsProvider = avatarIconsProviderFactory.create(avatarIconSize, this)
@@ -46,6 +53,18 @@ internal class GithubPullRequestsList(avatarIconsProviderFactory: CachingGithubA
     if (childComponent !is JComponent) return null
     return childComponent.toolTipText
   }
+
+  override fun performCopy(dataContext: DataContext) {
+    if (selectedIndex < 0) return
+    val selection = model.getElementAt(selectedIndex)
+    copyPasteManager.setContents(StringSelection("#${selection.number} ${selection.title}"))
+  }
+
+  override fun isCopyEnabled(dataContext: DataContext) = !isSelectionEmpty
+
+  override fun isCopyVisible(dataContext: DataContext) = false
+
+  override fun getData(dataId: String) = if (PlatformDataKeys.COPY_PROVIDER.`is`(dataId)) this else null
 
   override fun dispose() {}
 
