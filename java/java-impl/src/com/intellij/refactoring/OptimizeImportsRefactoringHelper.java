@@ -54,9 +54,9 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
+    DumbService.getInstance(project).completeJustSubmittedTasks();
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
-      DumbService.getInstance(project).completeJustSubmittedTasks();
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
