@@ -74,48 +74,27 @@ public class PyiUtil {
     return null;
   }
 
+  /**
+   * @param function function whose scope is used to look for implementation
+   * @param context  context to be used in determining if some function is overload
+   * @return implementation in the scope owner of {@code function} with the same name as {@code function} has.
+   * <i>Note: returns {@code null} if {@code function} is located in pyi-file.</i>
+   */
   @Nullable
-  public static PyFunction getImplementation(@NotNull PyFunction overload) {
-    final PsiFile file = overload.getContainingFile();
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(overload.getProject());
-
-    if (pyButNotPyiFile(file) && isOverload(overload, context)) {
-      final PsiElement similar = findSimilarElement(overload, (PyFile)file);
-
-      if (similar instanceof PyFunction && !isOverload(similar, context)) {
-        return (PyFunction)similar;
-      }
-    }
-
-    return null;
+  public static PyFunction getImplementation(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final PsiFile file = function.getContainingFile();
+    if (file instanceof PyiFile) return null;
+    return ContainerUtil.getLastItem(collectImplementationsOrOverloads(function, true, context));
   }
 
+  /**
+   * @param function function whose scope is used to look for overloads
+   * @param context  context to be used in determining if some function is overload
+   * @return overloads in the scope owner of {@code function} with the same name as {@code function} has.
+   */
   @NotNull
   public static List<PyFunction> getOverloads(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
-    final String name = function.getName();
-    final List<PyFunction> overloads = new ArrayList<>();
-    final Processor<PyFunction> overloadsProcessor = f -> {
-      if (name != null && name.equals(f.getName()) && isOverload(f, context)) {
-        overloads.add(f);
-      }
-      return true;
-    };
-    if (owner instanceof PyClass) {
-      final PyClass cls = (PyClass)owner;
-      if (name != null) {
-        cls.visitMethods(overloadsProcessor, false, context);
-      }
-    }
-    else if (owner instanceof PyFile) {
-      final PyFile file = (PyFile)owner;
-      for (PyFunction f : file.getTopLevelFunctions()) {
-        if (!overloadsProcessor.process(f)) {
-          break;
-        }
-      }
-    }
-    return overloads;
+    return collectImplementationsOrOverloads(function, false, context);
   }
 
   public static boolean isOverload(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
@@ -194,6 +173,40 @@ public class PyiUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static List<PyFunction> collectImplementationsOrOverloads(@NotNull PyFunction function,
+                                                                    boolean implementations,
+                                                                    @NotNull TypeEvalContext context) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(function);
+    final String name = function.getName();
+
+    final List<PyFunction> result = new ArrayList<>();
+
+    final Processor<PyFunction> overloadsProcessor = f -> {
+      if (name != null && name.equals(f.getName()) && implementations ^ isOverload(f, context)) {
+        result.add(f);
+      }
+      return true;
+    };
+
+    if (owner instanceof PyClass) {
+      final PyClass cls = (PyClass)owner;
+      if (name != null) {
+        cls.visitMethods(overloadsProcessor, false, context);
+      }
+    }
+    else if (owner instanceof PyFile) {
+      final PyFile file = (PyFile)owner;
+      for (PyFunction f : file.getTopLevelFunctions()) {
+        if (!overloadsProcessor.process(f)) {
+          break;
+        }
+      }
+    }
+
+    return result;
   }
 
   @Nullable
