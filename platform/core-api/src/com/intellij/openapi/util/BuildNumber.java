@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -15,12 +16,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
  */
 public class BuildNumber implements Comparable<BuildNumber> {
-  private static final String BUILD_NUMBER = "__BUILD_NUMBER__";
+  private static final Set<String> BUILD_NUMBER_PLACEHOLDERS = ContainerUtil.set("__BUILD_NUMBER__", "__BUILD__");
   private static final String STAR = "*";
   private static final String SNAPSHOT = "SNAPSHOT";
   private static final String FALLBACK_VERSION = "999.SNAPSHOT";
@@ -104,10 +106,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
   public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
     if (StringUtil.isEmptyOrSpaces(version)) return null;
 
-    if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
-      return new BuildNumber(productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "", currentVersion().myComponents);
-    }
-
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;
@@ -117,6 +115,10 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
     else {
       productCode = productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "";
+    }
+
+    if (BUILD_NUMBER_PLACEHOLDERS.contains(code) || SNAPSHOT.equals(code)) {
+      return new BuildNumber(productCode, currentVersion().myComponents);
     }
 
     int baselineVersionSeparator = code.indexOf('.');
@@ -152,7 +154,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   private static int parseBuildNumber(String version, String code, String pluginName) {
-    if (SNAPSHOT.equals(code) || BUILD_NUMBER.equals(code) || STAR.equals(code)) {
+    if (SNAPSHOT.equals(code) || BUILD_NUMBER_PLACEHOLDERS.contains(code) || STAR.equals(code)) {
       return SNAPSHOT_VALUE;
     }
 

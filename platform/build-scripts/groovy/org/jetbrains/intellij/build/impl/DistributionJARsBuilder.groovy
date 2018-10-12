@@ -370,8 +370,8 @@ class DistributionJARsBuilder {
         }
       }
 
-      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
-      def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
+      def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.applicationInfo.productCode}-plugins-to-publish"
+      def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
       buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish.keySet()), pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
 

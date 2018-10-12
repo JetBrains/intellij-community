@@ -38,7 +38,7 @@ class ProductInfoGenerator {
       name: context.applicationInfo.productName,
       version: context.applicationInfo.fullVersion,
       buildNumber: context.buildNumber,
-      productCode: context.productProperties.productCode,
+      productCode: context.applicationInfo.productCode,
       svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
       launch: launch
     )

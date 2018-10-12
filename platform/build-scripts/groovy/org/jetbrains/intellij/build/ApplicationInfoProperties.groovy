@@ -34,6 +34,7 @@ class ApplicationInfoProperties {
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
    */
   final String minorVersionMainPart
+  String productCode
   final String productName
   final String edition
   final String motto
@@ -51,6 +52,11 @@ class ApplicationInfoProperties {
     patchVersion = root.version.first().@patch ?: "0"
     fullVersionFormat = root.version.first().@full ?: "{0}.{1}"
     shortProductName = root.names.first().@product
+    String buildNumber = root.build.first().@number
+    int productCodeSeparator = buildNumber.indexOf('-')
+    if (productCodeSeparator != -1) {
+      productCode = buildNumber.substring(0, productCodeSeparator)
+    }
     productName = root.names.first().@fullname ?: shortProductName
     edition = root.names.first().@edition
     motto = root.names.first().@motto

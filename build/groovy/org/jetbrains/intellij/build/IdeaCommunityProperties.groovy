@@ -27,7 +27,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
   IdeaCommunityProperties(String home) {
     baseFileName = "idea"
     platformPrefix = "Idea"
-    productCode = "IC"
     applicationInfoModule = "intellij.idea.community.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true

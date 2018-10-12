@@ -14,7 +14,6 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
@@ -223,18 +222,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
-  }
-
-  private static String getProductPrefix() {
-    String prefix = null;
-    if (PlatformUtils.isIdeaCommunity()) {
-      prefix = "IC";
-    }
-    else if (PlatformUtils.isIdeaUltimate()) {
-      prefix = "IU";
-    }
-    return prefix;
+    return BuildNumber.fromString(myBuildNumber);
   }
 
   @Override

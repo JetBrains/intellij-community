@@ -195,7 +195,7 @@ idea.fatal.error.notification=disabled
     def artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
     def builtinPluginsRepoUrl = ""
     if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.productProperties.productCode}-plugins/plugins.xml")
+      builtinPluginsRepoUrl = artifactsServer.urlToArtifact("${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
     }
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber,
@@ -296,7 +296,7 @@ idea.fatal.error.notification=disabled
     }
 
     if (buildContext.shouldBuildDistributions()) {
-      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
+      def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.applicationInfo.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
