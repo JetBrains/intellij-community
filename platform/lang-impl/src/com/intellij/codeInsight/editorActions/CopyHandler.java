@@ -5,6 +5,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
@@ -13,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
@@ -24,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CopyHandler extends EditorActionHandler {
+  private static final Logger LOG = Logger.getInstance(CopyHandler.class);
+
   private final EditorActionHandler myOriginalAction;
 
   public CopyHandler(final EditorActionHandler originalHandler) {
@@ -77,7 +81,12 @@ public class CopyHandler extends EditorActionHandler {
 
     DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
       for (CopyPastePostProcessor<? extends TextBlockTransferableData> processor : CopyPastePostProcessor.EP_NAME.getExtensionList()) {
-        transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        try {
+          transferableDatas.addAll(processor.collectTransferableData(file, editor, startOffsets, endOffsets));
+        }
+        catch (IndexNotReadyException e) {
+          LOG.debug(e);
+        }
       }
     });
 
