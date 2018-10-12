@@ -3559,7 +3559,7 @@ public class AbstractTreeUi {
         getBuilder().sortChildren(myNodeComparator, node, children);
       }
       catch (IllegalArgumentException exception) {
-        StringBuilder sb = new StringBuilder("cannot sort children");
+        StringBuilder sb = new StringBuilder("cannot sort children in ").append(toString());
         children.forEach(child -> sb.append('\n').append(child));
         throw new IllegalArgumentException(sb.toString(), exception);
       }
