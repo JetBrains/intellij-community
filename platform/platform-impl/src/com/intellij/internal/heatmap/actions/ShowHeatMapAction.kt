@@ -516,19 +516,8 @@ class ShowHeatMapAction : AnAction(), DumbAware {
 
   private fun getProductCodeFromPlatformPrefix(): String {
     return when {
-      PlatformUtils.isIdeaCommunity() -> "IC"
-      PlatformUtils.isIdeaUltimate() -> "IU"
-      PlatformUtils.isAppCode() -> "AC"
-      PlatformUtils.isCLion() -> "CL"
-      PlatformUtils.isDataGrip() -> "DB"
       PlatformUtils.isGoIde() -> "GO"
-      PlatformUtils.isPyCharmPro() -> "PY"
-      PlatformUtils.isPyCharmCommunity() -> "PC"
-      PlatformUtils.isPyCharmEducational() -> "PE"
-      PlatformUtils.isPhpStorm() -> "PS"
       PlatformUtils.isRider() -> "RD"
-      PlatformUtils.isWebStorm() -> "WS"
-      PlatformUtils.isRubyMine() -> "RM"
       else -> ""
     }
   }
