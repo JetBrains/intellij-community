@@ -17,7 +17,8 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   companion object {
-    private val NAMEDTUPLE_SPECIAL_ATTRIBUTES = setOf("_make", "_asdict", "_replace", "_source", "_fields")
+    private val NAMEDTUPLE_SPECIAL_ATTRIBUTES = setOf("_make", "_asdict", "_replace", "_source", "_fields", "_field_types",
+                                                      "_field_defaults")
   }
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
