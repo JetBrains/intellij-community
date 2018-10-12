@@ -67,20 +67,24 @@ public interface PsiReference {
   @Nullable
   PsiElement resolve();
 
-  class Hint {
-    public Class<? extends PsiElement> targetClass;
+  class Hint<T extends PsiElement> {
+    public final Class<T> targetClass;
 
-    public Hint(Class<? extends PsiElement> targetClass) {
+    private Hint(Class<T> targetClass) {
       this.targetClass = targetClass;
+    }
+
+    public static <T extends PsiElement> Hint<T> classHint(Class<T> targetClass) {
+      return new Hint<>(targetClass);
     }
   }
 
   /**
    * Implementations may optimize resolving process depending on the given hint.
    */
-  default PsiElement resolve(Hint hint) {
+  default <T extends PsiElement> T resolve(Hint<T> hint) {
     PsiElement element = resolve();
-    return element != null && ReflectionUtil.isAssignable(hint.targetClass, element.getClass()) ? element : null;
+    return element != null && ReflectionUtil.isAssignable(hint.targetClass, element.getClass()) ? (T)element : null;
   }
 
   /**
