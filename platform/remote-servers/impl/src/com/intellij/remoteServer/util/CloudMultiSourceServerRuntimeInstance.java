@@ -3,7 +3,6 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudAgentLogger;
@@ -16,7 +15,6 @@ import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +63,7 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
 
   @NotNull
   @Override
-  public String getDeploymentName(@NotNull DeploymentSource source) {
+  public String getDeploymentName(@NotNull DeploymentSource source, DC configuration) {
     return CloudDeploymentNameProvider.DEFAULT_NAME_PROVIDER.getDeploymentName(source);
   }
 
