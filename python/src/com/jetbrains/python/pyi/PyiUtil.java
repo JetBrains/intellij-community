@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -104,13 +105,15 @@ public class PyiUtil {
            PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);
   }
 
+  /**
+   * @param element element whose original element should be found
+   * @param cls     class of original element's type
+   * @param <T>     expected type of original element
+   * @return original element or {@code element} if original is not instance of {@code cls} or does not exist.
+   */
   @NotNull
-  public static <T extends PyElement> T stubToOriginal(@NotNull T element, @NotNull Class<T> cls) {
-    final PsiElement originalElement = getOriginalElement(element);
-    if (cls.isInstance(originalElement)) {
-      return cls.cast(originalElement);
-    }
-    return element;
+  public static <T extends PyElement> T getOriginalElementOrLeaveAsIs(@NotNull T element, @NotNull Class<T> cls) {
+    return ObjectUtils.notNull(PyUtil.as(getOriginalElement(element), cls), element);
   }
 
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
