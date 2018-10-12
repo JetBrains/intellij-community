@@ -2,6 +2,7 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -366,7 +367,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return contentToReuse;
     }
 
-    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
+    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment);
     final ContentManager contentManager = toolWindowId == null ?
                                           getContentManagerForRunner(executionEnvironment.getExecutor(), null) :
                                           myToolwindowIdToContentManagerMap.get(toolWindowId);
@@ -567,10 +568,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Override
   @Nullable
-  public String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null) {
+  public String getContentDescriptorToolWindowId(@Nullable RunConfiguration configuration) {
+    if (configuration != null) {
       RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
-      if (runDashboardManager.isShowInDashboard(settings.getConfiguration())) {
+      if (runDashboardManager.isShowInDashboard(configuration)) {
         return runDashboardManager.getToolWindowId();
       }
     }
@@ -584,7 +585,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     // Also there are some places where ToolWindowId.RUN or ToolWindowId.DEBUG are used directly.
     // For example, HotSwapProgressImpl.NOTIFICATION_GROUP. All notifications for this group is shown in Debug tool window,
     // however such notifications should be shown in Run Dashboard tool window, if run content is redirected to Run Dashboard tool window.
-    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
+    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment);
     return toolWindowId != null ? toolWindowId : executionEnvironment.getExecutor().getToolWindowId();
   }
 

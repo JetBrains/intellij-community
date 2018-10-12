@@ -173,11 +173,11 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
     ExecutionTarget effectiveTarget = target;
 
-    if (effectiveTarget == null && ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
+    if (effectiveTarget == null && ExecutionTargetManager.canRun(settings.getConfiguration(), env.getExecutionTarget())) {
       effectiveTarget = env.getExecutionTarget();
     }
 
-    List<ExecutionTarget> allTargets = ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings);
+    List<ExecutionTarget> allTargets = ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings.getConfiguration());
     if (effectiveTarget == null) {
       effectiveTarget = ContainerUtil.find(allTargets, it -> it.isReady());
     }
@@ -320,7 +320,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         RunnerAndConfigurationSettings settings = RunManagerImpl.getInstanceImpl(myProject).findConfigurationByTypeAndName(
           myTypeNameTarget.getType(), myTypeNameTarget.getName());
         ExecutionTarget target = ((ExecutionTargetManagerImpl)ExecutionTargetManager.getInstance(myProject)).findTargetByIdFor(
-          settings, myTypeNameTarget.getTargetId());
+          settings != null ? settings.getConfiguration() : null, myTypeNameTarget.getTargetId());
 
         setSettingsWithTarget(settings, target);
       }

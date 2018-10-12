@@ -3,6 +3,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
@@ -230,13 +231,14 @@ public class ExecutionUtil {
       return ExecutionEnvironmentBuilder.create(executor, settings);
     }
     catch (ExecutionException e) {
-      Project project = settings.getConfiguration().getProject();
+      RunConfiguration configuration = settings.getConfiguration();
+      Project project = configuration.getProject();
       RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
-      String toolWindowId = manager.getContentDescriptorToolWindowId(settings);
+      String toolWindowId = manager.getContentDescriptorToolWindowId(configuration);
       if (toolWindowId == null) {
         toolWindowId = executor.getToolWindowId();
       }
-      handleExecutionError(project, toolWindowId, settings.getConfiguration().getName(), e);
+      handleExecutionError(project, toolWindowId, configuration.getName(), e);
       return null;
     }
   }

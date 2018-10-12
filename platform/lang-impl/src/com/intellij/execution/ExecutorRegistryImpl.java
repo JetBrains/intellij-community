@@ -200,8 +200,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         return false;
       }
       for (SettingsAndEffectiveTarget pair : pairs) {
-        RunnerAndConfigurationSettings runnerAndConfigurationSettings = pair.getSettings();
-        RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
+        RunConfiguration configuration = pair.getConfiguration();
         if (configuration instanceof CompoundRunConfiguration) {
           if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets())) {
             return false;
@@ -209,7 +208,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         }
         final ProgramRunner runner = ProgramRunner.getRunner(myExecutor.getId(), configuration);
         if (runner == null
-            || !ExecutionTargetManager.canRun(runnerAndConfigurationSettings, pair.getTarget())
+            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
             || isStarting(project, myExecutor.getId(), runner.getRunnerId())) {
           return false;
         }
@@ -227,30 +226,30 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         return;
       }
 
-      final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
+      final RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(project);
       boolean enabled = false;
       boolean hideDisabledExecutorButtons = false;
       String text;
-      if (selectedConfiguration != null) {
-        if (DumbService.isDumb(project) && !selectedConfiguration.getType().isDumbAware()) {
+      if (selectedSettings != null) {
+        if (DumbService.isDumb(project) && !selectedSettings.getType().isDumbAware()) {
           presentation.setEnabled(false);
           return;
         }
 
-        presentation.setIcon(getInformativeIcon(project, selectedConfiguration));
-        RunConfiguration configuration = selectedConfiguration.getConfiguration();
+        presentation.setIcon(getInformativeIcon(project, selectedSettings));
+        RunConfiguration configuration = selectedSettings.getConfiguration();
         if (configuration instanceof CompoundRunConfiguration) {
           enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
         }
         else {
           ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(selectedConfiguration, target)));
+          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target)));
           hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
-        text = myExecutor.getStartActionText(selectedConfiguration.getName());
+        text = myExecutor.getStartActionText(configuration.getName());
       }
       else {
         text = getTemplatePresentation().getTextWithMnemonic();
@@ -306,15 +305,14 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       return RunManager.getInstance(project).getSelectedConfiguration();
     }
 
-    private void run(@NotNull Project project, @Nullable RunnerAndConfigurationSettings configuration, @NotNull DataContext dataContext) {
-      if (configuration != null && configuration.getConfiguration() instanceof CompoundRunConfiguration) {
-        for (SettingsAndEffectiveTarget pair : ((CompoundRunConfiguration)configuration.getConfiguration()).getConfigurationsWithEffectiveRunTargets()) {
-          run(project, pair.getSettings(), dataContext);
+    private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @NotNull DataContext dataContext) {
+      if (configuration instanceof CompoundRunConfiguration) {
+        for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets()) {
+          run(project, settingsAndEffectiveTarget.getConfiguration(), dataContext);
         }
       }
       else {
-        ExecutionEnvironmentBuilder builder =
-          configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
+        ExecutionEnvironmentBuilder builder = configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
         if (builder == null) {
           return;
         }
@@ -329,7 +327,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         return;
       }
       MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
-      run(project, getSelectedConfiguration(project), e.getDataContext());
+      RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
+      if (selectedConfiguration != null) {
+        run(project, selectedConfiguration.getConfiguration(), e.getDataContext());
+      }
     }
   }
 }

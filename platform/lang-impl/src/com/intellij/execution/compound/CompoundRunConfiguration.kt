@@ -6,7 +6,6 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.compareTypesForUi
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -17,15 +16,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 import kotlin.collections.LinkedHashMap
 
-data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
+data class SettingsAndEffectiveTarget(val configuration: RunConfiguration, val target: ExecutionTarget)
 
-class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null, 
-                                                         project: Project, 
+class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
+                                                         project: Project,
                                                          factory: ConfigurationFactory = runConfigurationType<CompoundRunConfigurationType>()) :
   RunConfigurationMinimalBase<CompoundRunConfigurationOptions>(name, factory, project), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
@@ -35,7 +35,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
       if (compareTypeResult == 0) o1.name.compareTo(o2.name) else compareTypeResult
     }
   }
-  
+
   // have to use RunConfiguration instead of RunnerAndConfigurationSettings because setConfigurations (called from CompoundRunConfigurationSettingsEditor.applyEditorTo) cannot use RunnerAndConfigurationSettings
   private var sortedConfigurationsWithTargets = LinkedHashMap<RunConfiguration, ExecutionTarget?>()
   private var isInitialized = false
@@ -63,6 +63,11 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
       return
     }
 
+    doInit(runManager)
+  }
+
+  @TestOnly
+  fun doInit(runManager: RunManagerImpl) {
     sortedConfigurationsWithTargets.clear()
 
     val targetManager = ExecutionTargetManager.getInstance(project) as ExecutionTargetManagerImpl
@@ -73,11 +78,11 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
       if (type == null || name == null) {
         continue
       }
-      
-      val settings = runManager.findConfigurationByTypeAndName(type, name)
-      if (settings != null && settings.configuration !== this) {
+
+      val settings = runManager.findConfigurationByTypeAndName(type, name)?.configuration
+      if (settings != null && settings !== this) {
         val target = item.targetId?.let { targetManager.findTargetByIdFor(settings, it) }
-        sortedConfigurationsWithTargets.put(settings.configuration, target)
+        sortedConfigurationsWithTargets.put(settings, target)
       }
     }
 
@@ -95,8 +100,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
       throw RuntimeConfigurationException("There is nothing to run")
     }
 
-    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this)
-    if (ExecutionTargetManager.getInstance(project).getTargetsFor(temp).isEmpty()) {
+    if (ExecutionTargetManager.getInstance(project).getTargetsFor(this).isEmpty()) {
       throw RuntimeConfigurationException("No suitable targets to run on; please choose a target for each configuration")
     }
   }
@@ -109,15 +113,15 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
       throw ExecutionException(e.message)
     }
 
-    promptUserToUseRunDashboard(
-      project,
-      getConfigurationsWithEffectiveRunTargets().map { it.settings.configuration.type }
-    )
+    promptUserToUseRunDashboard(project, getConfigurationsWithEffectiveRunTargets().map {
+      it.configuration.type
+    })
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
         val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
-        for ((settings, target) in getConfigurationsWithEffectiveRunTargets()) {
+        for ((configuration, target) in getConfigurationsWithEffectiveRunTargets()) {
+          val settings = RunManagerImpl.getInstanceImpl(project).findSettings(configuration) ?: continue
           ExecutionUtil.runConfiguration(settings, executor, target, groupId)
         }
       }
@@ -126,21 +130,18 @@ class CompoundRunConfiguration @JvmOverloads constructor(name: String? = null,
   }
 
   fun getConfigurationsWithEffectiveRunTargets(): List<SettingsAndEffectiveTarget> {
-    val runManager = RunManagerImpl.getInstanceImpl(project)
     val activeTarget = ExecutionTargetManager.getActiveTarget(project)
     val defaultTarget = DefaultExecutionTarget.INSTANCE
 
     return sortedConfigurationsWithTargets.mapNotNull { (configuration, specifiedTarget) ->
-      runManager.getSettings(configuration)?.let {
-        val effectiveTarget = specifiedTarget ?: if (ExecutionTargetManager.canRun(it, activeTarget)) activeTarget else defaultTarget
-        SettingsAndEffectiveTarget(it, effectiveTarget)
-      }
+      val effectiveTarget = specifiedTarget ?: if (ExecutionTargetManager.canRun(configuration, activeTarget)) activeTarget else defaultTarget
+      SettingsAndEffectiveTarget(configuration, effectiveTarget)
     }
   }
-  
+
   override fun getState(): CompoundRunConfigurationOptions? {
     if (isDirty.compareAndSet(true, false)) {
-      options.configurations = sortedConfigurationsWithTargets.mapTo(ArrayList()) { entry -> 
+      options.configurations = sortedConfigurationsWithTargets.mapTo(ArrayList()) { entry ->
         TypeNameTarget(entry.key.type.id, entry.key.name, entry.value?.id)
       }
     }
