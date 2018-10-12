@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.introduceVariable;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,7 +18,11 @@ import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,10 +43,7 @@ class VariableExtractor {
   private PsiElement myAnchor;
   private final PsiElement myContainer;
   private final PsiExpression[] myOccurrences;
-  private final boolean myIsInsideLoop;
   private final boolean myReplaceSelf;
-  private final boolean myDeleteSelf;
-  private final boolean myReplaceLoop;
   private final FieldConflictsResolver myFieldConflictsResolver;
   private final LogicalPosition myPosition;
 
@@ -57,34 +59,16 @@ class VariableExtractor {
     myOccurrences = occurrences;
     mySettings = settings;
     myContainer = anchorStatement.getParent();
-    myIsInsideLoop = RefactoringUtil.isLoopOrIf(myContainer);
-    myAnchor = correctAnchor(expression, anchorStatement, myIsInsideLoop);
+    myAnchor = correctAnchor(expression, anchorStatement, occurrences);
     myReplaceSelf = settings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(expression);
-    PsiElement expressionParent = expression.getParent();
-    myReplaceLoop = myIsInsideLoop ? expressionParent instanceof PsiExpressionStatement
-                                   : myContainer instanceof PsiLambdaExpression && expressionParent == myContainer;
     PsiCodeBlock newDeclarationScope = PsiTreeUtil.getParentOfType(myContainer, PsiCodeBlock.class, false);
     myFieldConflictsResolver = new FieldConflictsResolver(settings.getEnteredName(), newDeclarationScope);
-
-    myDeleteSelf = shouldDeleteSelf(anchorStatement, expressionParent);
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
-  }
-
-  private boolean shouldDeleteSelf(PsiElement origAnchor, PsiElement expressionParent) {
-    if (!myIsInsideLoop && myReplaceSelf && expressionParent instanceof PsiExpressionStatement && myAnchor.equals(origAnchor)) {
-      PsiElement parent = expressionParent.getParent();
-      return parent instanceof PsiCodeBlock ||
-             //fabrique
-             parent instanceof PsiCodeFragment;
-    }
-    return false;
   }
 
   private SmartPsiElementPointer<PsiVariable> extractVariable() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     try {
-      PsiElement statement = myExpression.getParent();
-
       final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
       PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
       final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
@@ -97,33 +81,23 @@ class VariableExtractor {
       PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, myProject);
       replaceOccurrences(newExpr);
 
-      PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
-      if (!myIsInsideLoop) {
-        declaration = addDeclaration(declaration, initializer);
-        if (myDeleteSelf) {
-          commentTracker.deleteAndRestoreComments(statement);
-          if (myEditor != null) {
-            myEditor.getCaretModel().moveToLogicalPosition(myPosition);
-            myEditor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            myEditor.getSelectionModel().removeSelection();
-          }
+      ensureCodeBlock();
+
+      PsiVariable var = createVariable(type, initializer);
+
+      if (myAnchor instanceof PsiExpressionStatement &&
+          ExpressionUtils.isReferenceTo(((PsiExpressionStatement)myAnchor).getExpression(), var)) {
+        commentTracker.deleteAndRestoreComments(myAnchor);
+        if (myEditor != null) {
+          myEditor.getCaretModel().moveToLogicalPosition(myPosition);
+          myEditor.getCaretModel().moveToOffset(var.getTextRange().getEndOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          myEditor.getSelectionModel().removeSelection();
         }
       }
 
-      PsiVariable var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
-                                      ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
-                                      : declaration);
       highlight(var);
 
-      if (declaration instanceof PsiDeclarationStatement) {
-        declaration = RefactoringUtil.putStatementInLoopBody((PsiStatement)declaration, myContainer, myAnchor,
-                                                             myReplaceSelf && myReplaceLoop);
-      }
-      declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
-      var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
-                                      ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
-                                      : declaration);
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
       myFieldConflictsResolver.fix();
       return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
@@ -132,6 +106,24 @@ class VariableExtractor {
       LOG.error(e);
     }
     return null;
+  }
+
+  private PsiVariable createVariable(PsiType type, PsiExpression initializer) {
+    PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
+    declaration = addDeclaration(declaration, initializer, myAnchor);
+    declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
+    return (PsiVariable)(declaration instanceof PsiDeclarationStatement
+                         ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
+                         : declaration);
+  }
+
+  private void ensureCodeBlock() {
+    if (myAnchor instanceof PsiStatement && RefactoringUtil.isLoopOrIf(myAnchor.getParent())) {
+      myAnchor = BlockUtils.expandSingleStatementToBlockStatement((PsiStatement)myAnchor);
+    }
+    if (myAnchor instanceof PsiExpression) {
+      myAnchor = RefactoringUtil.getParentStatement(RefactoringUtil.ensureCodeBlock(((PsiExpression)myAnchor)), false);
+    }
   }
 
   private void highlight(PsiVariable var) {
@@ -145,10 +137,9 @@ class VariableExtractor {
   private void replaceOccurrences(PsiExpression newExpr) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     PsiExpression ref = elementFactory.createExpressionFromText(mySettings.getEnteredName(), null);
-    boolean needReplaceSelf = !myDeleteSelf && myReplaceSelf;
+    boolean needReplaceSelf = myReplaceSelf;
     if (mySettings.isReplaceAllOccurrences()) {
       for (PsiExpression occurrence : myOccurrences) {
-        if (myDeleteSelf && occurrence.equals(myExpression)) continue;
         PsiExpression correctedOccurrence = occurrence.equals(myExpression) ? newExpr : occurrence;
         correctedOccurrence = RefactoringUtil.outermostParenthesizedExpression(correctedOccurrence);
         if (mySettings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(correctedOccurrence)) {
@@ -180,9 +171,9 @@ class VariableExtractor {
     return elementFactory.createVariableDeclarationStatement(name, type, initializer, myContainer);
   }
 
-  private PsiElement addDeclaration(PsiElement declaration, PsiExpression initializer) {
-    if (myAnchor instanceof PsiDeclarationStatement) {
-      final PsiElement[] declaredElements = ((PsiDeclarationStatement)myAnchor).getDeclaredElements();
+  private static PsiElement addDeclaration(PsiElement declaration, PsiExpression initializer, PsiElement anchor) {
+    if (anchor instanceof PsiDeclarationStatement) {
+      final PsiElement[] declaredElements = ((PsiDeclarationStatement)anchor).getDeclaredElements();
       if (declaredElements.length > 1) {
         final int[] usedFirstVar = new int[]{-1};
         initializer.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -199,11 +190,11 @@ class VariableExtractor {
           final PsiVariable psiVariable = (PsiVariable)declaredElements[usedFirstVar[0]];
           psiVariable.normalizeDeclaration();
           final PsiDeclarationStatement parDeclarationStatement = PsiTreeUtil.getParentOfType(psiVariable, PsiDeclarationStatement.class);
-          return myContainer.addAfter(declaration, parDeclarationStatement);
+          return anchor.getParent().addAfter(declaration, parDeclarationStatement);
         }
       }
     }
-    return myContainer.addBefore(declaration, myAnchor);
+    return anchor.getParent().addBefore(declaration, anchor);
   }
 
   @NotNull
@@ -229,13 +220,30 @@ class VariableExtractor {
   }
 
   @NotNull
-  private static PsiElement correctAnchor(PsiExpression expr, @NotNull PsiElement anchorStatement, boolean isInsideLoop) {
-    PsiElement child = anchorStatement;
-    if (!isInsideLoop) {
-      child = locateAnchor(child);
-      if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {
-        child = child.getNextSibling();
+  private static PsiElement correctAnchor(PsiExpression expr,
+                                          @NotNull PsiElement anchorStatement,
+                                          PsiExpression[] occurrences) {
+    if (anchorStatement instanceof PsiWhileStatement) {
+      PsiExpression condition = ((PsiWhileStatement)anchorStatement).getCondition();
+      if (condition != null) {
+        PsiExpression expression = StreamEx
+          .of(occurrences).filter(occ -> PsiTreeUtil.isAncestor(condition, occ, false))
+          .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
+        if (expression != null) {
+          PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
+          if (polyadic != null && JavaTokenType.ANDAND.equals(polyadic.getOperationTokenType())) {
+            PsiExpression anchor = ContainerUtil.find(polyadic.getOperands(), op -> PsiTreeUtil.isAncestor(op, expression, false));
+            LOG.assertTrue(anchor != null);
+            return anchor;
+          }
+          return condition;
+        }
       }
+    }
+    if (RefactoringUtil.isLoopOrIf(anchorStatement.getParent())) return anchorStatement;
+    PsiElement child = locateAnchor(anchorStatement);
+    if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {
+      child = child.getNextSibling();
     }
     return child == null ? anchorStatement : child;
   }

@@ -7,9 +7,7 @@ class C {
 
     void test () {
         C c = new C();
-        while (true) {
-            String ok = c.f();
-            if (!(ok != null)) break;
+        for (;<selection>c.f()</selection> != null;) {
             c = c.getParent();
         }
     }

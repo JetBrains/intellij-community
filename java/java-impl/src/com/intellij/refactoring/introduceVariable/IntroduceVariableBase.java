@@ -665,7 +665,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && allChoice;
 
           PsiExpression[] allOccurrences = Arrays.stream(occurrences)
-            .filter(occurrence -> !(expr.equals(occurrence) && expr.getParent() instanceof PsiExpressionStatement))
             .filter(occurrence -> allChoice || (noWriteChoice && !PsiUtil.isAccessedForWriting(occurrence)) || expr.equals(occurrence))
             .toArray(PsiExpression[]::new);
           if (choice.isChain()) {
@@ -1055,7 +1054,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
   public static void checkInLoopCondition(PsiExpression occurence, MultiMap<PsiElement, String> conflicts) {
     final PsiElement loopForLoopCondition = RefactoringUtil.getLoopForLoopCondition(occurence);
-    if (loopForLoopCondition == null) return;
+    if (loopForLoopCondition == null || loopForLoopCondition instanceof PsiWhileStatement) return;
     final List<PsiVariable> referencedVariables = RefactoringUtil.collectReferencedVariables(occurence);
     final List<PsiVariable> modifiedInBody = new ArrayList<>();
     for (PsiVariable psiVariable : referencedVariables) {

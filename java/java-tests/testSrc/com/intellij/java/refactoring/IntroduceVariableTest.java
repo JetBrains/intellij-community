@@ -155,6 +155,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSCR26075() {
+    doTest(new MockIntroduceVariableHandler("ok", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
+  public void testSCR26075For() {
     doTest(new MockIntroduceVariableHandler("wrong", false, false, false, CommonClassNames.JAVA_LANG_STRING) {
       @Override
       protected void assertValidationResult(boolean validationResult) {
@@ -190,6 +194,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testInsideWhile() {
     doTest(new MockIntroduceVariableHandler("temp", false, false, false, "int"));
+  }
+
+  public void testWhileCondition() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
+  }
+
+  public void testWhileCondition2() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
 
   public void testSCR40281() {
