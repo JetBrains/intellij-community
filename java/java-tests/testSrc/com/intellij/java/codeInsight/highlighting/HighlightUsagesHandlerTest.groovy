@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection
+import com.intellij.psi.impl.source.tree.injected.MyTestInjector
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -176,6 +177,22 @@ class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase {
     myFixture.enableInspections(new SillyAssignmentInspection())
     ctrlShiftF7()
     assertRangeText 'i'
+  }
+
+  void testSuppressedWarningsInInjectionHighlights() {
+    MyTestInjector testInjector = new MyTestInjector(getPsiManager());
+    testInjector.injectAll(getTestRootDisposable());
+    myFixture.configureByText 'Foo.java', '''
+      public class Foo {
+        public static void a(boolean b, String c) {
+           @SuppressWarnings({"SillyAssignment"})
+           String java = "class A {{int i = 0; i = i;}}";
+        }
+      }'''.stripIndent()
+    myFixture.enableInspections(new SillyAssignmentInspection())
+    myFixture.editor.caretModel.moveToOffset(myFixture.file.text.indexOf("illyAssignment"))
+    ctrlShiftF7()
+    assertRangeText '"class A {{int i = 0; i = i;}}"'
   }
 
   void "test statically imported overloads from usage"() {

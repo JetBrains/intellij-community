@@ -38,6 +38,7 @@ import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -534,14 +535,19 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (!(element instanceof RefElement)) return;
     SmartPsiElementPointer pointer = ((RefElement)element).getPointer();
     if (pointer == null) return;
-    VirtualFile entityFile = pointer.getVirtualFile();
+    VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
     StreamEx.of(descriptors).select(ProblemDescriptorBase.class).forEach(d -> {
       VirtualFile file = d.getContainingFile();
       if (file != null) {
-        if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
-        LOG.assertTrue(file.equals(entityFile), "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
+        LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
+                       "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate());
       }
     });
+  }
+
+  @Contract("null -> null")
+  private static VirtualFile ensureNotInjectedFile(VirtualFile file) {
+    return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
   }
 }
