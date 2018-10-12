@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,6 +31,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
 
 internal class GithubPullRequestsListComponent(project: Project,
+                                               copyPasteManager: CopyPasteManager,
                                                actionManager: ActionManager,
                                                autoPopupController: AutoPopupController,
                                                private val loader: GithubPullRequestsLoader,
@@ -38,7 +40,7 @@ internal class GithubPullRequestsListComponent(project: Project,
 
   val selectionModel = GithubPullRequestsListSelectionModel()
   private val listModel = CollectionListModel<GithubSearchedIssue>()
-  private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
+  private val list = GithubPullRequestsList(copyPasteManager, avatarIconsProviderFactory, listModel)
   private val scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {

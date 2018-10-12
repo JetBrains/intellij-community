@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -32,6 +33,7 @@ import javax.swing.JComponent
 
 
 internal class GithubPullRequestsComponentFactory(private val project: Project,
+                                                  private val copyPasteManager: CopyPasteManager,
                                                   private val progressManager: ProgressManager,
                                                   private val git: Git,
                                                   private val avatarLoader: CachingGithubUserAvatarLoader,
@@ -63,7 +65,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)
-    private val list = GithubPullRequestsListComponent(project, actionManager, autoPopupController,
+    private val list = GithubPullRequestsListComponent(project, copyPasteManager, actionManager, autoPopupController,
                                                        listLoader,
                                                        avatarIconsProviderFactory).apply {
       requestExecutor.addListener(this) { this.refresh() }
