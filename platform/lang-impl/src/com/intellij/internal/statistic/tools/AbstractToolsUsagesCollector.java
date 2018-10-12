@@ -95,36 +95,6 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     }
   }
 
-  public static class AllBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
-
-    @NotNull
-    @Override
-    public String getGroupId() {
-      return "statistics.all.bundled.tools";
-    }
-
-    @NotNull
-    @Override
-    protected Stream<ScopeToolState> filter(@NotNull final Stream<ScopeToolState> tools) {
-      return tools.filter(BUNDLED);
-    }
-  }
-
-  public static class AllListedToolsUsagesCollector extends AbstractListedToolsUsagesCollector {
-
-    @NotNull
-    @Override
-    public String getGroupId() {
-      return "statistics.all.listed.tools";
-    }
-
-    @NotNull
-    @Override
-    protected Stream<ScopeToolState> filter(@NotNull final Stream<ScopeToolState> tools) {
-      return tools.filter(LISTED);
-    }
-  }
-
   public static class EnabledBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
 
