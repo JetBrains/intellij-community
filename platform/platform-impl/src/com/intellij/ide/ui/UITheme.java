@@ -347,31 +347,30 @@ public class UITheme {
 
   //
   //json deserialization methods
-  //intentionally made public as this class is scrambled in CLion/AppCode
   //
 
   @SuppressWarnings("unused")
-  public void setName(String name) {
+  private void setName(String name) {
     this.name = name;
   }
 
   @SuppressWarnings("unused")
-  public void setDark(boolean dark) {
+  private void setDark(boolean dark) {
     this.dark = dark;
   }
 
   @SuppressWarnings("unused")
-  public void setAuthor(String author) {
+  private void setAuthor(String author) {
     this.author = author;
   }
 
   @SuppressWarnings("unused")
-  public void setUi(Map<String, Object> ui) {
+  private void setUi(Map<String, Object> ui) {
     this.ui = ui;
   }
 
   @SuppressWarnings("unused")
-  public void setIcons(Map<String, Object> icons) {
+  private void setIcons(Map<String, Object> icons) {
     this.icons = icons;
   }
 
