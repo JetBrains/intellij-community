@@ -268,6 +268,9 @@ public abstract class AbstractExternalSystemConfigurable<
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.disposeUIResources();
     }
+    if (mySystemSettingsControl != null) {
+      mySystemSettingsControl.disposeUIResources();
+    }
     myProjectSettingsControls.clear();
     myComponent = null;
     myProjectsList = null;
