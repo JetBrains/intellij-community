@@ -68,12 +68,6 @@ class VariableExtractor {
 
     myDeleteSelf = shouldDeleteSelf(anchorStatement, expressionParent);
     myPosition = editor != null ? editor.getCaretModel().getLogicalPosition() : null;
-    if (myDeleteSelf) {
-      if (editor != null) {
-        LogicalPosition pos = new LogicalPosition(myPosition.line, myPosition.column);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-      }
-    }
   }
 
   private boolean shouldDeleteSelf(PsiElement origAnchor, PsiElement expressionParent) {
@@ -109,8 +103,7 @@ class VariableExtractor {
         if (myDeleteSelf) {
           commentTracker.deleteAndRestoreComments(statement);
           if (myEditor != null) {
-            LogicalPosition pos = new LogicalPosition(myPosition.line, myPosition.column);
-            myEditor.getCaretModel().moveToLogicalPosition(pos);
+            myEditor.getCaretModel().moveToLogicalPosition(myPosition);
             myEditor.getCaretModel().moveToOffset(declaration.getTextRange().getEndOffset());
             myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
             myEditor.getSelectionModel().removeSelection();
