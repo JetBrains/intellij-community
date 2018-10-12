@@ -41,7 +41,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private final Set<XBreakpointBase<?,?,?>> myAllBreakpoints = new HashSet<>();
   private final Map<XBreakpointType, EventDispatcher<XBreakpointListener>> myDispatchers = new HashMap<>();
   private XBreakpointsDialogState myBreakpointsDialogSettings;
-  private final EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
+  private volatile EventDispatcher<XBreakpointListener> myAllBreakpointsDispatcher;
   private final XLineBreakpointManager myLineBreakpointManager;
   private final Project myProject;
   private final XDebuggerManagerImpl myDebuggerManager;
@@ -53,7 +53,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager) {
     myProject = project;
     myDebuggerManager = debuggerManager;
-    myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
     myDependentBreakpointManager = new XDependentBreakpointManager(this);
     myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager);
     if (!project.isDefault()) {
@@ -67,19 +66,25 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointAdded(@NotNull XBreakpoint breakpoint) {
-        myAllBreakpointsDispatcher.getMulticaster().breakpointAdded(breakpoint);
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointAdded(breakpoint);
+        }
       }
 
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint breakpoint) {
-        myAllBreakpointsDispatcher.getMulticaster().breakpointRemoved(breakpoint);
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointRemoved(breakpoint);
+        }
       }
 
       @SuppressWarnings("unchecked")
       @Override
       public void breakpointChanged(@NotNull XBreakpoint breakpoint) {
-        myAllBreakpointsDispatcher.getMulticaster().breakpointChanged(breakpoint);
+        if (myAllBreakpointsDispatcher != null) {
+          myAllBreakpointsDispatcher.getMulticaster().breakpointChanged(breakpoint);
+        }
       }
     });
   }
@@ -329,12 +334,21 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
   @Override
   public void addBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
-    myAllBreakpointsDispatcher.addListener(listener);
+    getDispatcher().addListener(listener);
   }
 
   @Override
   public void removeBreakpointListener(@NotNull final XBreakpointListener<XBreakpoint<?>> listener) {
-    myAllBreakpointsDispatcher.removeListener(listener);
+    getDispatcher().removeListener(listener);
+  }
+
+  private EventDispatcher<XBreakpointListener> getDispatcher() {
+    synchronized (myDispatchers) {
+      if (myAllBreakpointsDispatcher == null) {
+        myAllBreakpointsDispatcher = EventDispatcher.create(XBreakpointListener.class);
+      }
+      return myAllBreakpointsDispatcher;
+    }
   }
 
   @Override
