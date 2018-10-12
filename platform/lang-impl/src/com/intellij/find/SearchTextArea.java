@@ -108,7 +108,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         if (!StringUtil.isEmpty(str)) super.insertString(offs, str, a);
       }
     });
-    myTextArea.getDocument().putProperty(EditorCopyPasteHelper.TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE);
+    if (Registry.is("ide.find.field.trims.pasted.text", false)) {
+      myTextArea.getDocument().putProperty(EditorCopyPasteHelper.TRIM_TEXT_ON_PASTE_KEY, Boolean.TRUE);
+    }
     myTextArea.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
