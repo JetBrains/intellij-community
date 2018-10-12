@@ -18,8 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -30,7 +30,7 @@ public class DialogAppender extends AppenderSkeleton {
   private static final int MAX_ASYNC_LOGGING_EVENTS = 5;
 
   private static final int MAX_EARLY_LOGGING_EVENTS = 5;
-  private final Queue<LoggingEvent> myEarlyEvents = new ConcurrentLinkedQueue<>();
+  private final Queue<LoggingEvent> myEarlyEvents = new ArrayDeque<>();
 
   private final AtomicInteger myPendingAppendCounts = new AtomicInteger();
   private volatile Runnable myDialogRunnable;
