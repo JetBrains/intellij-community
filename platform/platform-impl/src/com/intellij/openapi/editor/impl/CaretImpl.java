@@ -1174,11 +1174,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
       validateContext(true);
-      int caretOffset = getOffset();
+      myUnknownDirection = false;
       RangeMarker marker = mySelectionMarker;
       if (marker != null && marker.isValid()) {
         int startOffset = marker.getStartOffset();
         int endOffset = marker.getEndOffset();
+        int caretOffset = getOffset();
         mySelectionMarker = null;
         myEditor.getSelectionModel().fireSelectionChanged(new SelectionEvent(myEditor, startOffset, endOffset, caretOffset, caretOffset));
       }
