@@ -55,7 +55,6 @@ public interface UsageView extends Disposable {
 
   /**
    * @deprecated see {@link UsageView#setRerunAction(Action)}
-   * @param runnable
    */
   default void setReRunActivity(@NotNull Runnable runnable) {};
 
