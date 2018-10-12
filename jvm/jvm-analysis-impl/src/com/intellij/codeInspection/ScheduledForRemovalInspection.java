@@ -24,9 +24,4 @@ public class ScheduledForRemovalInspection extends AnnotatedElementInspectionBas
     String message = JvmAnalysisBundle.message("jvm.inspections.scheduled.for.removal.description", getReferenceText(reference));
     holder.registerProblem(reference, message, ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL);
   }
-
-  @Override
-  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
-    return true;
-  }
 }

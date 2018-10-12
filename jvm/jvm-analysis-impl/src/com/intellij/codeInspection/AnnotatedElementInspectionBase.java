@@ -16,6 +16,11 @@ import org.jetbrains.uast.UastContextKt;
 import javax.swing.*;
 import java.util.List;
 
+/**
+ * This class can be extended by inspections that should report usage of elements annotated with some particular annotation(s).
+ *
+ * @since 2018.3
+ */
 public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool {
   public boolean myIgnoreInsideImports = true;
 
@@ -25,7 +30,9 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
 
   protected abstract void createProblem(@NotNull PsiReference reference, @NotNull ProblemsHolder holder);
 
-  protected abstract boolean shouldProcessElement(@NotNull PsiModifierListOwner element);
+  protected boolean shouldProcessElement(@NotNull PsiModifierListOwner element) {
+    return true;
+  }
 
 
   @NotNull
