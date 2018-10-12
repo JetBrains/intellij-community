@@ -26,12 +26,11 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -44,6 +43,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.LinkedList;
+import java.util.Optional;
 
 /**
 * @author Konstantin Bulenkov
@@ -97,21 +97,25 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
     if (text.startsWith("(") && text.endsWith(")")) {
       text = text.substring(1, text.length() - 1);
     }
-    if (text.contains("/") || text.contains(File.separator)) {
+
+    if ((text.contains("/") || text.contains(File.separator)) && element instanceof PsiFileSystemItem) {
       Project project = element.getProject();
-      String projectPath = project.getBasePath();
-      File file = new File(text);
-      if (file.exists()) {
-        File root = projectPath == null ? null : new File(FileUtil.toSystemDependentName(projectPath));
-        if (root != null && FileUtil.isAncestor(root, file, true)) {
-          text = ObjectUtils.notNull(FileUtil.getRelativePath(root, file), text);
+      String basePath = Optional.ofNullable(project.getBasePath())
+        .map(FileUtil::toSystemDependentName)
+        .orElse(null);
+      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+      if (file != null) {
+        String filePath = FileUtil.toSystemDependentName(file.getPath());
+        if (basePath != null && FileUtil.isAncestor(basePath, filePath, true)) {
+          text = ObjectUtils.notNull(FileUtil.getRelativePath(basePath, text, File.separatorChar), text);
         }
         else {
-          VirtualFile vFile = VfsUtil.findFileByIoFile(file, false);
-          VirtualFile vRoot = vFile == null ? null : GotoFileCellRenderer.getAnyRoot(vFile, project);
-          root = vRoot == null ? null : VfsUtilCore.virtualToIoFile(vRoot);
-          text = root != null ? ObjectUtils.notNull(FileUtil.getRelativePath(root.getParentFile(), file), text) :
-                 FileUtil.getLocationRelativeToUserHome(text);
+          String rootPath = Optional.ofNullable(GotoFileCellRenderer.getAnyRoot(file, project))
+            .map(root -> FileUtil.toSystemDependentName(root.getPath()))
+            .orElse(null);
+          text = rootPath != null
+                 ? ObjectUtils.notNull(FileUtil.getRelativePath(rootPath, text, File.separatorChar), text)
+                 : FileUtil.getLocationRelativeToUserHome(text);
         }
       }
     }
