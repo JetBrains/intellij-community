@@ -73,6 +73,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
+           //may break catches with explicit exceptions
+           actionText.matches("Replace with throws .*") ||
            actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
   }
 
@@ -146,12 +148,6 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
   }
-
-  @Override
-  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
-    return  //may break catches with explicit exceptions
-      familyName.equals("Replace Exceptions in Throws Clause with Single More General Exception");
-  }
 }
 
 class JavaParenthesesPolicy extends JavaIntentionPolicy {
@@ -177,9 +173,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       familyName.equals("Extract If Condition") ||
       // Cutting the message at different points is possible like
       // "Simplify 'foo || bar || baz || ...' to false" and "Simplify 'foo || (bar) || baz ...' to false"
-      familyName.equals("Simplify boolean expression") ||
-      //may break catches with explicit exceptions
-      familyName.equals("Replace Exceptions in Throws Clause with Single More General Exception");
+      familyName.equals("Simplify boolean expression");
   }
 
   @NotNull
