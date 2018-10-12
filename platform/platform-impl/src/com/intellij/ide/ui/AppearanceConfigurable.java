@@ -434,7 +434,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
     boolean isHighContrast = settings.getHighContrast();
     if (myComponent.myHighContrast != isHighContrast) {
-      myComponent.setHighContrast(settings.getHighContrast());
+      myComponent.setHighContrast(isHighContrast);
     }
     return isModified;
   }
