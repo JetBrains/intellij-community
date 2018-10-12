@@ -110,8 +110,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
   public static final Color SECTION_COLOR = Gray.get(0x90);
 
-  private static final BufferedImage EMPTY_IMAGE = UIUtil.createImage(1, 1, Transparency.TRANSLUCENT);
-
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
 
   private static final int PREFERRED_HEIGHT_MAX_EM = 10;
