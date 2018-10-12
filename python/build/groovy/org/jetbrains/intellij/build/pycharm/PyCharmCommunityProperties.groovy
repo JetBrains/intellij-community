@@ -22,7 +22,6 @@ import org.jetbrains.intellij.build.*
  */
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
-    productCode = "PC"
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "intellij.pycharm.community.resources"
     brandingResourcePaths = ["$communityHome/python/resources"]

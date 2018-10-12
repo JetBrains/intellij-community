@@ -14,7 +14,6 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
   PyCharmEduProperties(String home) {
     pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
     dependenciesPath = new File(home, "community/edu/dependencies").exists() ? "$home/community/edu/dependencies" : "$home/edu/dependencies"
-    productCode = "PE"
     platformPrefix = "PyCharmEdu"
     applicationInfoModule = "intellij.pycharm.edu"
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]

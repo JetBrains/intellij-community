@@ -37,7 +37,7 @@ class PythonCommunityPluginBuilder {
     def buildTasks = BuildTasks.create(buildContext)
     buildTasks.buildDistributions()
     
-    def builtPlugins = new File("$buildContext.paths.artifacts/${buildContext.productProperties.productCode}-plugins").listFiles()
+    def builtPlugins = new File("$buildContext.paths.artifacts/${buildContext.applicationInfo.productCode}-plugins").listFiles()
     if (builtPlugins == null || builtPlugins.length == 0) {
       buildContext.messages.warning("No plugins were built")
       return 
