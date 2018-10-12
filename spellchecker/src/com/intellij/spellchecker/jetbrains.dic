@@ -330,6 +330,7 @@ jshint
 json
 jsonb
 junit
+jupyter
 keepduplicates
 kerberos
 keychain
