@@ -63,7 +63,7 @@ public abstract class CloudMultiSourceServerRuntimeInstance<
 
   @NotNull
   @Override
-  public String getDeploymentName(@NotNull DeploymentSource source, DC configuration) {
+  public String getDeploymentName(@NotNull DeploymentSource source, @NotNull DC configuration) {
     return CloudDeploymentNameProvider.DEFAULT_NAME_PROVIDER.getDeploymentName(source);
   }
 
