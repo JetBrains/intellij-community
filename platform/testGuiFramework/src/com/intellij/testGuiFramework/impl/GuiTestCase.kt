@@ -12,6 +12,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestPaths.testScreenshotDirPath
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.tryWithPause
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.launcher.system.SystemInfo.isMac
@@ -144,7 +145,7 @@ open class GuiTestCase {
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
    * is a Mac native.
    */
-  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout) {
+  fun chooseFileInFileChooser(path: String, timeout: Timeout = Timeouts.defaultTimeout, needToRefresh: Boolean = false) {
     val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "false")
     if (macNativeFileChooser) {
       MacFileChooserDialogFixture(robot()).selectByPath(path)
@@ -171,6 +172,13 @@ open class GuiTestCase {
         textfield("")
         invokeAction("\$SelectAll")
         typeText(path)
+        if (needToRefresh) {
+          tryWithPause(ComponentLookupException::class.java, "Path is located in the tree", Timeouts.seconds10) {
+            actionButton("Refresh").click()
+            textfield("").deleteText()
+            typeText(path)
+          }
+        }
         button("OK").clickWhenEnabled()
         waitTillGone()
       }
