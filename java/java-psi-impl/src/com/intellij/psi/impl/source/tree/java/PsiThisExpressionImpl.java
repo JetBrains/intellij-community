@@ -113,6 +113,7 @@ public class PsiThisExpressionImpl extends ExpressionPsiElement implements PsiTh
     }
   }
 
+  @Override
   public String toString() {
     return "PsiThisExpression:" + getText();
   }

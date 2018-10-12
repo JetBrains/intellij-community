@@ -43,6 +43,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     super(stub, GroovyElementTypes.ENUM_DEFINITION);
   }
 
+  @Override
   public String toString() {
     return "Enumeration definition";
   }

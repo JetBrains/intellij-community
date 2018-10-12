@@ -138,6 +138,7 @@ public class PsiBinaryExpressionImpl extends ExpressionPsiElement implements Psi
     }
   }
 
+  @Override
   public String toString() {
     return "PsiBinaryExpression:" + getText();
   }

@@ -465,6 +465,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     }
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "PsiClass:" + getName();

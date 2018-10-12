@@ -38,6 +38,7 @@ public class GrDocInlinedTagImpl extends GroovyDocPsiElementImpl implements GrDo
     visitor.visitDocTag(this);
   }
 
+  @Override
   public String toString() {
     return "GrDocInlinedTag";
   }

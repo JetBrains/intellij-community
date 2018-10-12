@@ -95,6 +95,7 @@ public class PsiLabeledStatementImpl extends CompositePsiElement implements PsiL
     }
   }
 
+  @Override
   public String toString() {
     return "PsiLabeledStatement";
   }

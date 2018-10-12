@@ -40,6 +40,7 @@ public class PsiCoreCommentImpl extends LeafPsiElement implements PsiComment {
     visitor.visitComment(this);
   }
 
+  @Override
   public String toString(){
     return "PsiComment(" + getElementType().toString() + ")";
   }

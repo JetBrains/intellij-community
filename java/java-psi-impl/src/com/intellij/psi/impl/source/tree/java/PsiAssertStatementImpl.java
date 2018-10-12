@@ -110,6 +110,7 @@ public class PsiAssertStatementImpl extends CompositePsiElement implements PsiAs
     }
   }
 
+  @Override
   public String toString() {
     return "PsiAssertStatement";
   }

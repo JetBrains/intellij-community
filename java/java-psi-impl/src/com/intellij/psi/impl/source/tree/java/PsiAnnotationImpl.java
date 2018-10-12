@@ -71,6 +71,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     return t;
   }
 
+  @Override
   public String toString() {
     return "PsiAnnotation";
   }

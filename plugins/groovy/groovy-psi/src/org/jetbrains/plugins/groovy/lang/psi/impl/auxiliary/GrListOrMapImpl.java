@@ -39,6 +39,7 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     visitor.visitListOrMap(this);
   }
 
+  @Override
   public String toString() {
     return "Generalized list";
   }

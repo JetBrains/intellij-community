@@ -262,6 +262,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
             return myName;
         }
 
+        @Override
         public String toString() {
             return "DocElement";
         }

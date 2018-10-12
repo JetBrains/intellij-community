@@ -32,6 +32,7 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
     myMigration = migration;
   }
 
+  @Override
   public String toString() {
     return "MigrationPackage: " + getQualifiedName();
   }

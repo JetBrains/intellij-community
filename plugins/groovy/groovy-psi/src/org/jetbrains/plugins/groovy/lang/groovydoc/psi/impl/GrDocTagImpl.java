@@ -39,6 +39,7 @@ public class GrDocTagImpl extends GroovyDocPsiElementImpl implements GrDocTag {
     visitor.visitDocTag(this);
   }
 
+  @Override
   public String toString() {
     return "GroovyDocTag";
   }

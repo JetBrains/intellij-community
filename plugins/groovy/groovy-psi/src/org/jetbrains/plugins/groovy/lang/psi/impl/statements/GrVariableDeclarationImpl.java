@@ -158,6 +158,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
     visitor.visitVariableDeclaration(this);
   }
 
+  @Override
   public String toString() {
     return "Variable definitions";
   }

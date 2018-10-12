@@ -86,6 +86,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
     visitor.visitCodeReferenceElement(this);
   }
 
+  @Override
   public String toString() {
     return "Reference element";
   }

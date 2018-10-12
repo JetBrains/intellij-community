@@ -28,6 +28,7 @@ public class GrNamedArgumentImpl extends GroovyPsiElementImpl implements GrNamed
     visitor.visitNamedArgument(this);
   }
 
+  @Override
   public String toString() {
     return "Named argument";
   }

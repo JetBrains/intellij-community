@@ -194,6 +194,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
     super.deleteChildInternal(child);
   }
 
+  @Override
   public String toString() {
     return "PsiTryStatement";
   }

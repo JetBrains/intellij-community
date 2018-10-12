@@ -23,6 +23,7 @@ public class GrClassDefinitionImpl extends GrTypeDefinitionImpl implements GrCla
     super(stub, GroovyElementTypes.CLASS_DEFINITION);
   }
 
+  @Override
   public String toString() {
     return "Class definition";
   }

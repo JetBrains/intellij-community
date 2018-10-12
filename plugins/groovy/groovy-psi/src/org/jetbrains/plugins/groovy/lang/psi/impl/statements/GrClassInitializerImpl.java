@@ -38,6 +38,7 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
     visitor.visitClassInitializer(this);
   }
 
+  @Override
   public String toString() {
     return "Class initializer";
   }

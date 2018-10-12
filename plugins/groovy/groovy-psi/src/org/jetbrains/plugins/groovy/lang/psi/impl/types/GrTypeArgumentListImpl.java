@@ -25,6 +25,7 @@ public class GrTypeArgumentListImpl extends GroovyPsiElementImpl implements GrTy
     visitor.visitTypeArgumentList(this);
   }
 
+  @Override
   public String toString() {
     return "Type arguments";
   }

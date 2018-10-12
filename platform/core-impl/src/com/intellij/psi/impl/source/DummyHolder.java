@@ -109,6 +109,7 @@ public class DummyHolder extends PsiFileImpl {
     visitor.visitFile(this);
   }
 
+  @Override
   public String toString() {
     return "DummyHolder";
   }

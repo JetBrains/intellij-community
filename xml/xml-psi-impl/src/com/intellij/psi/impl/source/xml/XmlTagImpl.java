@@ -1039,6 +1039,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     }
   }
 
+  @Override
   public String toString() {
     return "XmlTag:" + getName();
   }

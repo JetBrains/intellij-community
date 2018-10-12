@@ -205,6 +205,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     }
   }
 
+  @Override
   public String toString() {
     return "PsiImportStaticReferenceElement:" + getText();
   }

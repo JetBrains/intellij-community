@@ -389,6 +389,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
+  @Override
   public String toString() {
     return "PsiNewExpression:" + getText();
   }

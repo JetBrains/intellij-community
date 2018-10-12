@@ -474,6 +474,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
     }
   }
 
+  @Override
   public String toString(){
     return "PsiClass:" + getName();
   }

@@ -28,6 +28,7 @@ public class GrAnnotationArrayInitializerImpl extends GroovyPsiElementImpl imple
     visitor.visitAnnotationArrayInitializer(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation array initializer";
   }

@@ -80,6 +80,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
+  @Override
   public String toString() {
     return "Groovy script";
   }

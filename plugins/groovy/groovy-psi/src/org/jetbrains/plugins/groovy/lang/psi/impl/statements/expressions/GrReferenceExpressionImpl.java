@@ -172,6 +172,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return ((GrReferenceExpressionImpl)qualifier).isFullyQualified();
   }
 
+  @Override
   public String toString() {
     return "Reference expression";
   }

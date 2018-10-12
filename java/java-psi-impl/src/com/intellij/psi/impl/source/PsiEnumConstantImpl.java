@@ -55,6 +55,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     super(node);
   }
 
+  @Override
   public String toString() {
     return "PsiEnumConstant:" + getName();
   }

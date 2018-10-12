@@ -124,6 +124,7 @@ public class PsiSwitchLabelStatementImpl extends CompositePsiElement implements 
     }
   }
 
+  @Override
   public String toString() {
     return "PsiSwitchLabelStatement";
   }

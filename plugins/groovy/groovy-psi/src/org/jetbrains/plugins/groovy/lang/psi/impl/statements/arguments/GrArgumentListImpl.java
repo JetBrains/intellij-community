@@ -39,6 +39,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     visitor.visitArgumentList(this);
   }
 
+  @Override
   public String toString() {
     return "Arguments";
   }

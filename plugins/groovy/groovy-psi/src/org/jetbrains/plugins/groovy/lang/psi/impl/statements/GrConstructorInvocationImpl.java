@@ -30,6 +30,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     visitor.visitConstructorInvocation(this);
   }
 
+  @Override
   public String toString() {
     return "Constructor invocation";
   }

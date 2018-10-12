@@ -133,6 +133,7 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
     return new PsiReference[]{new PsiLabelReference(this, getLabelIdentifier())};
   }
 
+  @Override
   public String toString() {
     return "PsiBreakStatement";
   }

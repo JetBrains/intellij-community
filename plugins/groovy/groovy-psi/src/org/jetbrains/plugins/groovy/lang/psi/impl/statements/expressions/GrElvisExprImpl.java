@@ -17,6 +17,7 @@ public class GrElvisExprImpl extends GrConditionalExprImpl implements GrElvisExp
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Elvis expression";
   }

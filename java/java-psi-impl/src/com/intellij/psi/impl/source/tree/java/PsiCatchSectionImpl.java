@@ -204,6 +204,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     }
   }
 
+  @Override
   public String toString() {
     return "PsiCatchSection";
   }

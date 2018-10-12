@@ -36,6 +36,7 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Type parameter list";
   }

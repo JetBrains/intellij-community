@@ -33,6 +33,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Assignment expression";
   }

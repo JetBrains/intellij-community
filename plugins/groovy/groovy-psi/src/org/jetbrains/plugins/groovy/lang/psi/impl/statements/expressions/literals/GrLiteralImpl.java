@@ -37,6 +37,7 @@ public class GrLiteralImpl extends GrAbstractLiteral implements GrLiteral, PsiLa
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Literal";
   }

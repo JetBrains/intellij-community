@@ -44,6 +44,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
   @Override
   public abstract void accept(@NotNull GroovyElementVisitor visitor);
 
+  @Override
   public String toString() {
     return "Type definition body";
   }

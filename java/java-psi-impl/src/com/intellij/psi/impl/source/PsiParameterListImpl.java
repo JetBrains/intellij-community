@@ -87,6 +87,7 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
     }
   }
 
+  @Override
   @NonNls
   public String toString(){
     return "PsiParameterList:" + getText();

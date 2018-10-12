@@ -196,6 +196,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     }
   }
 
+  @Override
   public String toString() {
     return "PsiIfStatement";
   }

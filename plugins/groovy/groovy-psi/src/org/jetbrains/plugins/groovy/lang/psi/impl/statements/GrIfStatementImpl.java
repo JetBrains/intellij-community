@@ -32,6 +32,7 @@ public class GrIfStatementImpl extends GroovyPsiElementImpl implements GrIfState
     visitor.visitIfStatement(this);
   }
 
+  @Override
   public String toString() {
     return "IF statement";
   }

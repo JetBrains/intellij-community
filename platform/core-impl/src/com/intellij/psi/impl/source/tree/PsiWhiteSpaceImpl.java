@@ -33,6 +33,7 @@ public class PsiWhiteSpaceImpl extends LeafPsiElement implements PsiWhiteSpace {
     visitor.visitWhiteSpace(this);
   }
 
+  @Override
   public String toString(){
     return "PsiWhiteSpace";
   }

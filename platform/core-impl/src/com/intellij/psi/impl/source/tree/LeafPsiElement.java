@@ -200,6 +200,7 @@ public class LeafPsiElement extends LeafElement implements PsiElement, Navigatio
     return SharedImplUtil.doReplace(this, this, newElement);
   }
 
+  @Override
   public String toString() {
     return "PsiElement" + "(" + getElementType().toString() + ")";
   }

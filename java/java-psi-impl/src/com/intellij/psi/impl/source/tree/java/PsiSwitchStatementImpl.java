@@ -112,6 +112,7 @@ public class PsiSwitchStatementImpl extends CompositePsiElement implements PsiSw
     }
   }
 
+  @Override
   public String toString() {
     return "PsiSwitchStatement";
   }

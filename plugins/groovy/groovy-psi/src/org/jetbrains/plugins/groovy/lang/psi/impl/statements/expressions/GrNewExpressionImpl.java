@@ -49,6 +49,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     super(node);
   }
 
+  @Override
   public String toString() {
     return "NEW expression";
   }

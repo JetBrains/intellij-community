@@ -81,6 +81,7 @@ public class PsiExpressionStatementImpl extends CompositePsiElement implements P
     }
   }
 
+  @Override
   public String toString() {
     return "PsiExpressionStatement";
   }

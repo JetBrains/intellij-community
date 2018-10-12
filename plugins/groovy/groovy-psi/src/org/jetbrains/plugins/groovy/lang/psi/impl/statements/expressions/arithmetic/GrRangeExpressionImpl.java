@@ -17,6 +17,7 @@ public class GrRangeExpressionImpl extends GrBinaryExpressionImpl implements GrR
     super(node);
   }
 
+  @Override
   public String toString() {
     return "Range expression";
   }

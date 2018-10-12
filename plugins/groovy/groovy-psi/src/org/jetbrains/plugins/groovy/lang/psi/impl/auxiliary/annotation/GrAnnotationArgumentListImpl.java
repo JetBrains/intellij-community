@@ -36,6 +36,7 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
     visitor.visitAnnotationArgumentList(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation arguments";
   }

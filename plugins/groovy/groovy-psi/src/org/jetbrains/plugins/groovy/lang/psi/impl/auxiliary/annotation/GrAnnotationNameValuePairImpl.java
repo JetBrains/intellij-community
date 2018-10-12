@@ -37,6 +37,7 @@ public class GrAnnotationNameValuePairImpl extends GrStubElementBase<GrNameValue
     visitor.visitAnnotationNameValuePair(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation member value pair";
   }

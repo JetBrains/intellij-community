@@ -70,6 +70,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     visitor.visitIndexProperty(this);
   }
 
+  @Override
   public String toString() {
     return "Property by index";
   }

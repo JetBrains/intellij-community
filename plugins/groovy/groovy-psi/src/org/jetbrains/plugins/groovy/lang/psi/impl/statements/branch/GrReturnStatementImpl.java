@@ -25,6 +25,7 @@ public class GrReturnStatementImpl extends GroovyPsiElementImpl implements GrRet
     visitor.visitReturnStatement(this);
   }
 
+  @Override
   public String toString() {
     return "RETURN statement";
   }

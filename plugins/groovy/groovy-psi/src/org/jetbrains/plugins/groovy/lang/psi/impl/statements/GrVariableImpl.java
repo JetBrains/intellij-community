@@ -36,6 +36,7 @@ public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implement
     visitor.visitVariable(this);
   }
 
+  @Override
   public String toString() {
     return "Variable";
   }

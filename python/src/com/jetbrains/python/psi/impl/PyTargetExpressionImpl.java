@@ -487,6 +487,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return myQualifiedName;
   }
 
+  @Override
   public String toString() {
     return super.toString() + ": " + getName();
   }

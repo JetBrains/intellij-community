@@ -31,6 +31,7 @@ public class GrEnumConstantListImpl extends GrStubElementBase<EmptyStub> impleme
     visitor.visitEnumConstants(this);
   }
 
+  @Override
   public String toString() {
     return "Enumeration constants";
   }
