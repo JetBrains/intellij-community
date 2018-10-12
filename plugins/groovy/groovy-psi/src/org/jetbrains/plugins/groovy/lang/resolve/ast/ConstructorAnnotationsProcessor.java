@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -57,7 +56,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   @NotNull
   private static GrLightMethodBuilder generateMapConstructor(@NotNull GrTypeDefinition typeDefinition) {
     final GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition.getManager(), typeDefinition.getName());
-    mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP, false);
+    mapConstructor.addParameter("args", CommonClassNames.JAVA_UTIL_HASH_MAP);
     mapConstructor.setConstructor(true);
     mapConstructor.setContainingClass(typeDefinition);
     return mapConstructor;
