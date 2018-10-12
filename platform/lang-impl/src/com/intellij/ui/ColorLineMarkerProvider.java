@@ -24,6 +24,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * @author Konstantin Bulenkov
+ */
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
   public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 
