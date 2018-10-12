@@ -1,12 +1,15 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +21,10 @@ import java.util.*;
  * @author yole
  */
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
+
+  @NotNull
+  public static final Set<String> NAMEDTUPLE_SPECIAL_ATTRIBUTES =
+    ImmutableSet.of("_make", "_asdict", "_replace", "_source", "_fields", "_field_types", "_field_defaults");
 
   @NotNull
   private final String myName;
@@ -64,12 +71,24 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   }
 
   @Override
-  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+  @NotNull
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, @NotNull ProcessingContext context) {
     final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
     for (String field : myFields.keySet()) {
       result.add(LookupElementBuilder.create(field));
     }
+
+    if (completionPrefix == null) {
+      final Condition<String> nameFilter = NAMEDTUPLE_SPECIAL_ATTRIBUTES::contains;
+      final CompletionVariantsProcessor processor =
+        new CompletionVariantsProcessor(location, null, nameFilter, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
+
+      myClass.processClassLevelDeclarations(processor);
+
+      result.addAll(processor.getResultList());
+    }
+
     return ArrayUtil.toObjectArray(result);
   }
 

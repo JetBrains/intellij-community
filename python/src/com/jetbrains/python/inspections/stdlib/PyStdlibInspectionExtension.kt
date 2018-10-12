@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections.stdlib
 import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
@@ -15,11 +16,6 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyStdlibInspectionExtension : PyInspectionExtension() {
-
-  companion object {
-    private val NAMEDTUPLE_SPECIAL_ATTRIBUTES = setOf("_make", "_asdict", "_replace", "_source", "_fields", "_field_types",
-                                                      "_field_defaults")
-  }
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     return PyNames.TYPE_ENUM == complementary.containingClass?.qualifiedName
