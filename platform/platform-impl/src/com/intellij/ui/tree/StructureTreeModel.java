@@ -41,19 +41,19 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private final Reference<Node> root = new Reference<>();
   private final String description;
   private final Invoker invoker;
-  private volatile Structure structure;
+  private final Structure structure;
   private volatile Comparator<? super Node> comparator;
 
-  private StructureTreeModel(@NotNull String prefix, boolean background) {
-    description = format(prefix);
+  private StructureTreeModel(@NotNull Structure structure, boolean background) {
+    this.structure = structure;
+    description = format(structure.toString());
     invoker = background
               ? new Invoker.BackgroundThread(this)
               : new Invoker.EDT(this);
   }
 
   public StructureTreeModel(@NotNull Structure structure) {
-    this(structure.toString(), true);
-    this.structure = structure;
+    this(structure, true);
   }
 
   public StructureTreeModel(@NotNull Structure structure, @NotNull Comparator<? super NodeDescriptor> comparator) {
@@ -84,7 +84,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   @Override
   public void dispose() {
     comparator = null;
-    structure = null;
     Node node = root.set(null);
     if (node != null) node.dispose();
     // notify tree to clean up inner structures
@@ -112,8 +111,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   private <Result> Promise<Result> onValidThread(@NotNull Function<Structure, Result> function) {
     AsyncPromise<Result> promise = new AsyncPromise<>();
     invoker.runOrInvokeLater(() -> {
-      Structure structure = this.structure;
-      if (!disposed && structure != null) {
+      if (!disposed) {
         Result result = function.apply(structure);
         if (result != null) promise.setResult(result);
       }
@@ -345,8 +343,7 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
   }
 
   private boolean isValid(@NotNull Node node) {
-    Structure structure = this.structure;
-    return structure != null && isValid(structure, node.getElement());
+    return isValid(structure, node.getElement());
   }
 
   private static boolean isValid(@NotNull AbstractTreeStructure structure, Object element) {
@@ -364,9 +361,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Nullable
   private Node getValidRoot() {
-    Structure structure = this.structure;
-    if (structure == null) return null;
-
     Object element = structure.getRootElement();
     if (!isValid(structure, element)) return null;
 
@@ -380,9 +374,6 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @Nullable
   private List<Node> getValidChildren(@NotNull Node node) {
-    Structure structure = this.structure;
-    if (structure == null) return null;
-
     NodeDescriptor descriptor = node.getDescriptor();
     if (descriptor == null) return null;
 
