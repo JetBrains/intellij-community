@@ -604,7 +604,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
   public void testPureNoArgMethodAsVariable() { doTest(); }
-  public void testRedundantAssignment() { doTest(); }
+  public void testRedundantAssignment() {
+    doTest();
+    assertTrue(myFixture.getAvailableIntentions().stream().anyMatch(action -> action.getText().equals("Extract side effect")));
+  }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }

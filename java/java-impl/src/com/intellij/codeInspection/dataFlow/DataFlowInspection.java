@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -113,7 +114,8 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
+    // Delegation is necessary as DeleteSideEffectsAwareFix instanceof IntentionAction, thus QuickFixWrapper#wrap refuses to wrap it
+    return new DelegatingFix(new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression()));
   }
 
   @Override
