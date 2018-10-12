@@ -1548,6 +1548,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     myChangedFilesCollector.removeFileIdFromFilesScheduledForUpdate(fileId);
+    if (file instanceof VirtualFileSystemEntry) ((VirtualFileSystemEntry)file).setFileIndexed(true);
   }
 
   private void doIndexFileContent(@Nullable Project project, @NotNull final com.intellij.ide.caches.FileContent content) {
@@ -2140,7 +2141,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           return true;
         }
         myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
-          boolean oldStuff = true;
+          boolean isUptoDate = true;
           if (file.isDirectory() || !isTooLarge(file)) {
             final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
@@ -2154,7 +2155,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                   synchronized (myFiles) {
                     myFiles.add(file);
                   }
-                  oldStuff = false;
+                  isUptoDate = false;
                   break;
                 }
               }
@@ -2174,7 +2175,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           int inputId = Math.abs(getIdMaskingNonIdBasedFile(file));
           for (ID<?, ?> indexId : myNotRequiringContentIndices) {
             if (shouldIndexFile(file, indexId)) {
-              oldStuff = false;
+              isUptoDate = false;
               if (fileContent == null) {
                 fileContent = new FileContentImpl(file);
               }
@@ -2183,7 +2184,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           }
           IndexingStamp.flushCache(inputId);
 
-          if (oldStuff && file instanceof VirtualFileSystemEntry) {
+          if (isUptoDate && file instanceof VirtualFileSystemEntry) {
             ((VirtualFileSystemEntry)file).setFileIndexed(true);
           }
         });
