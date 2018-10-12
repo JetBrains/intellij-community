@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
@@ -75,8 +76,9 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, @NotNull ProcessingContext context) {
     final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
+
     for (String field : myFields.keySet()) {
-      result.add(LookupElementBuilder.create(field));
+      result.add(LookupElementBuilder.create(field).withIcon(PlatformIcons.FIELD_ICON));
     }
 
     if (completionPrefix == null) {
