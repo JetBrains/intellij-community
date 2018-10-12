@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.util.CachedValue;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -39,7 +40,9 @@ public class JsonCachedValues {
 
   @Nullable
   private static JsonSchemaObject computeSchemaObject(@NotNull PsiFile f) {
-    final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)f).getTopLevelValue(), JsonObject.class);
+    final JsonObject topLevelValue = AstLoadingFilter.forceAllowTreeLoading(
+      f,
+      () -> ObjectUtils.tryCast(((JsonFile)f).getTopLevelValue(), JsonObject.class));
     if (topLevelValue != null) {
       return new JsonSchemaReader().read(topLevelValue);
     }
@@ -149,7 +152,7 @@ public class JsonCachedValues {
 
   private static List<Pair<Collection<String>, String>> computeSchemaCatalog(PsiFile catalog) {
     if (!catalog.isValid()) return null;
-    JsonValue value = ((JsonFile)catalog).getTopLevelValue();
+    JsonValue value = AstLoadingFilter.forceAllowTreeLoading(catalog, () -> ((JsonFile)catalog).getTopLevelValue());
     if (!(value instanceof JsonObject)) return null;
 
     JsonProperty schemas = ((JsonObject)value).findProperty("schemas");
