@@ -64,7 +64,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   ShowContentAction myShowContent;
 
-  ContentLayout myTabsLayout = new TabContentLayout(this);
+  TabContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
@@ -337,6 +337,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   @Override
   public String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
+  }
+
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myTabsLayout.setTabDoubleClickActions(actions);
   }
 
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {

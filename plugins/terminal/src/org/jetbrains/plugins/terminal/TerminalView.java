@@ -91,6 +91,7 @@ public class TerminalView {
         newTab(null);
       }
     });
+    ((ToolWindowImpl)myToolWindow).setTabDoubleClickActions(new RenameTerminalSessionAction());
 
     myToolWindow.setToHideOnEmptyContent(true);
     List<TerminalTabState> states = arrangementState != null ? arrangementState.myTabStates : null;
