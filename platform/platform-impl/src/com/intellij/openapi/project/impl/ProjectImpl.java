@@ -46,6 +46,7 @@ import org.jetbrains.annotations.*;
 import org.picocontainer.*;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
@@ -80,7 +81,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     myName = projectName;
-    // light project may be changed later during test, so we need to remember its initial state 
+    // light project may be changed later during test, so we need to remember its initial state
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
 
@@ -109,7 +110,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   public void setProjectName(@NotNull String projectName) {
     if (!projectName.equals(myName)) {
       myName = projectName;
-      
+
       StartupManager.getInstance(this).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
         if (isDisposed()) return;
 
@@ -189,7 +190,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @NotNull
   @Override
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getProjectComponents();
   }
 

@@ -331,19 +331,19 @@ public class PluginNode implements IdeaPluginDescriptor {
 
   @Override
   @NotNull
-  public ComponentConfig[] getAppComponents() {
+  public List<ComponentConfig> getAppComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getProjectComponents() {
+  public List<ComponentConfig> getProjectComponents() {
     throw new IllegalStateException();
   }
 
   @Override
   @NotNull
-  public ComponentConfig[] getModuleComponents() {
+  public List<ComponentConfig> getModuleComponents() {
     throw new IllegalStateException();
   }
 
