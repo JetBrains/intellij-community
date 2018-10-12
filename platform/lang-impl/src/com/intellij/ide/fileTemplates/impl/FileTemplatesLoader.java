@@ -133,12 +133,14 @@ class FileTemplatesLoader {
   }
 
   private void loadDefaultTemplates() {
-    final Set<URL> processedUrls = new HashSet<>();
+    Set<URL> processedUrls = new HashSet<>();
+    Set<ClassLoader> processedLoaders = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
         final ClassLoader loader = plugin.getPluginClassLoader();
-        if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty()) {
-          continue; // development mode, when IDEA_CORE's loader contains all the classpath
+        if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).getUrls().isEmpty() ||
+            !processedLoaders.add(loader)) {
+          continue; // test or development mode, when IDEA_CORE's loader contains all the classpath
         }
         try {
           final Enumeration<URL> systemResources = loader.getResources(DEFAULT_TEMPLATES_ROOT);
