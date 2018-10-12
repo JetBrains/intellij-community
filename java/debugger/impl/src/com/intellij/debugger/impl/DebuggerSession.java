@@ -84,6 +84,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   private final DebuggerContextImpl SESSION_EMPTY_CONTEXT;
   //Thread, user is currently stepping through
   private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
+  private final AtomicReference<ThreadReferenceProxyImpl> myLastThread = new AtomicReference<>();
   private final Alarm myUpdateAlarm = new Alarm();
 
   private boolean myModifiedClassesScanRequired = false;
@@ -276,6 +277,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   /* Stepping */
   private void resumeAction(final DebugProcessImpl.ResumeCommand command, Event event) {
+    myLastThread.set(getContextManager().getContext().getThreadProxy());
     getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAIT_EVALUATION, event, null);
     myDebugProcess.getManagerThread().schedule(command);
   }
@@ -391,6 +393,8 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
   public void dispose() {
     getProcess().dispose();
+    clearSteppingThrough();
+    myLastThread.set(null);
     DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
       myContextManager.setState(SESSION_EMPTY_CONTEXT, State.DISPOSED, Event.DISPOSE, null);
       myContextManager.dispose();
@@ -504,24 +508,30 @@ public class DebuggerSession implements AbstractDebuggerSession {
         }
 
         if (currentThread == null) {
-          final Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
-          // heuristics: try to pre-select EventDispatchThread
-          for (final ThreadReferenceProxyImpl thread : allThreads) {
-            if (ThreadState.isEDT(thread.name())) {
-              currentThread = thread;
-              break;
-            }
+          Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
+          ThreadReferenceProxyImpl lastThread = myLastThread.get();
+          if (lastThread != null && allThreads.contains(lastThread)) {
+            currentThread = lastThread;
           }
-          if (currentThread == null) {
-            // heuristics: display the first thread with RUNNABLE status
-            for (final ThreadReferenceProxyImpl thread : allThreads) {
-              currentThread = thread;
-              try {
-                if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING && currentThread.frameCount() > 0) {
-                  break;
-                }
+          else {
+            // heuristics: try to pre-select EventDispatchThread
+            for (ThreadReferenceProxyImpl thread : allThreads) {
+              if (ThreadState.isEDT(thread.name())) {
+                currentThread = thread;
+                break;
               }
-              catch (EvaluateException ignored) {
+            }
+            if (currentThread == null) {
+              // heuristics: display the first thread with RUNNABLE status
+              for (final ThreadReferenceProxyImpl thread : allThreads) {
+                currentThread = thread;
+                try {
+                  if (currentThread.status() == ThreadReference.THREAD_STATUS_RUNNING && currentThread.frameCount() > 0) {
+                    break;
+                  }
+                }
+                catch (EvaluateException ignored) {
+                }
               }
             }
           }
