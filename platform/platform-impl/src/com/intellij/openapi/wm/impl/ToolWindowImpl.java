@@ -314,6 +314,10 @@ public final class ToolWindowImpl implements ToolWindowEx {
     getDecorator().setTabActions(actions);
   }
 
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myContentUI.setTabDoubleClickActions(actions);
+  }
+
   @Override
   public final void setAvailable(final boolean available, final Runnable runnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();

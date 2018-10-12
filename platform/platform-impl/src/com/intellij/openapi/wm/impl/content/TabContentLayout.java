@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,6 +18,7 @@ import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -40,6 +42,7 @@ class TabContentLayout extends ContentLayout {
       return myLastLayout.moreRect;
     }
   };
+  List<AnAction> myDoubleClickActions = ContainerUtil.newArrayList();
 
   TabContentLayout(ToolWindowContentUi ui) {
     super(ui);
@@ -79,6 +82,10 @@ class TabContentLayout extends ContentLayout {
     myTabs.clear();
     myContent2Tabs.clear();
     myIdLabel = null;
+  }
+
+  void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myDoubleClickActions = ContainerUtil.newArrayList(actions);
   }
 
   private static void showPopup(MouseEvent e, List<ContentTabLabel> tabs) {
