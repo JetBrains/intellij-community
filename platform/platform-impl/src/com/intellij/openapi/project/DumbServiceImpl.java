@@ -251,6 +251,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator == null) indicator = new EmptyProgressIndicator();
 
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      HeavyProcessLatch.INSTANCE.stopThreadPrioritizing();
+    }
+
     indicator.pushState();
     try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
       task.performInDumbMode(indicator);
