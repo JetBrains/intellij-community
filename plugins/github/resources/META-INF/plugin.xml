@@ -56,7 +56,7 @@
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction" internal="true">
+    <action id="Github.View.Pull.Request" class="org.jetbrains.plugins.github.GithubViewPullRequestsAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
     <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -20,9 +19,6 @@ import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUrlUtil
 
 class GithubViewPullRequestsAction : AbstractGithubUrlGroupingAction("View Pull Requests", null, AllIcons.Vcs.Vendors.Github) {
-  override fun isEnabledAndVisible(e: AnActionEvent): Boolean {
-    return Registry.`is`("github.pullrequests.view.enabled") && super.isEnabledAndVisible(e)
-  }
 
   override fun actionPerformed(e: AnActionEvent,
                                project: Project,
