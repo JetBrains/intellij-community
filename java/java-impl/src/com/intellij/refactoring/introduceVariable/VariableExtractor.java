@@ -13,7 +13,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.FieldConflictsResolver;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -21,7 +20,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +35,7 @@ class VariableExtractor {
   private final Editor myEditor;
   private final IntroduceVariableSettings mySettings;
   private final PsiExpression myExpression;
-  private final PsiElement myAnchor;
+  private PsiElement myAnchor;
   private final PsiElement myContainer;
   private final PsiExpression[] myOccurrences;
   private final boolean myIsInsideLoop;
@@ -91,22 +89,25 @@ class VariableExtractor {
   private SmartPsiElementPointer<PsiVariable> extractVariable() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     try {
+      PsiElement statement = myExpression.getParent();
+
       final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
       PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
       final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
         mySettings.getSelectedType());
       initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(initializer);
+      initializer = (PsiExpression)initializer.copy();
 
       PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, myProject);
-      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+      replaceOccurrences(newExpr);
+
       PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
       if (!myIsInsideLoop) {
         declaration = addDeclaration(declaration, initializer);
-        LOG.assertTrue(newExpr.isValid());
         if (myDeleteSelf) {
-          CommentTracker commentTracker = new CommentTracker();
-          commentTracker.markUnchanged(initializer);
-          commentTracker.deleteAndRestoreComments(newExpr.getParent());
+          commentTracker.deleteAndRestoreComments(statement);
           if (myEditor != null) {
             LogicalPosition pos = new LogicalPosition(myPosition.line, myPosition.column);
             myEditor.getCaretModel().moveToLogicalPosition(pos);
@@ -117,20 +118,17 @@ class VariableExtractor {
         }
       }
 
-      PsiExpression ref = elementFactory.createExpressionFromText(mySettings.getEnteredName(), null);
-      if (mySettings.isReplaceAllOccurrences()) {
-        replaceOccurrences(ref, myOccurrences, myExpression, newExpr);
-      }
-      else if (!myDeleteSelf && myReplaceSelf) {
-        IntroduceVariableBase.replace(newExpr, ref, myProject);
-      }
+      PsiVariable var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
+                                      ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
+                                      : declaration);
+      highlight(var);
 
       if (declaration instanceof PsiDeclarationStatement) {
         declaration = RefactoringUtil.putStatementInLoopBody((PsiStatement)declaration, myContainer, myAnchor,
                                                              myReplaceSelf && myReplaceLoop);
       }
       declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
-      PsiVariable var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
+      var = (PsiVariable)(declaration instanceof PsiDeclarationStatement
                                       ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
                                       : declaration);
       PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
@@ -143,29 +141,38 @@ class VariableExtractor {
     return null;
   }
 
-  private void replaceOccurrences(@NotNull PsiExpression ref,
-                                  @NotNull PsiExpression[] occurrences,
-                                  @NotNull PsiExpression origExpr,
-                                  @NotNull PsiExpression newExpr) {
-    ArrayList<PsiElement> array = new ArrayList<>();
-    for (PsiExpression occurrence : occurrences) {
-      if (myDeleteSelf && occurrence.equals(origExpr)) continue;
-      if (occurrence.equals(origExpr)) {
-        occurrence = newExpr;
-      }
-      occurrence = RefactoringUtil.outermostParenthesizedExpression(occurrence);
-      if (mySettings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(occurrence)) {
-        array.add(IntroduceVariableBase.replace(occurrence, ref, myProject));
-      }
-    }
-
-    if (!myDeleteSelf && myReplaceSelf && newExpr instanceof PsiPolyadicExpression && newExpr.isValid() && !newExpr.isPhysical()) {
-      array.add(IntroduceVariableBase.replace(newExpr, ref, myProject));
-    }
-
+  private void highlight(PsiVariable var) {
     if (myEditor != null) {
-      final PsiElement[] replacedOccurrences = PsiUtilCore.toPsiElementArray(array);
-      IntroduceVariableBase.highlightReplacedOccurrences(myProject, myEditor, replacedOccurrences);
+      PsiElement[] occurrences =
+        PsiTreeUtil.collectElements(myContainer, e -> e instanceof PsiReference && ((PsiReference)e).isReferenceTo(var));
+      IntroduceVariableBase.highlightReplacedOccurrences(myProject, myEditor, occurrences);
+    }
+  }
+
+  private void replaceOccurrences(PsiExpression newExpr) {
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
+    PsiExpression ref = elementFactory.createExpressionFromText(mySettings.getEnteredName(), null);
+    boolean needReplaceSelf = !myDeleteSelf && myReplaceSelf;
+    if (mySettings.isReplaceAllOccurrences()) {
+      for (PsiExpression occurrence : myOccurrences) {
+        if (myDeleteSelf && occurrence.equals(myExpression)) continue;
+        PsiExpression correctedOccurrence = occurrence.equals(myExpression) ? newExpr : occurrence;
+        correctedOccurrence = RefactoringUtil.outermostParenthesizedExpression(correctedOccurrence);
+        if (mySettings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(correctedOccurrence)) {
+          PsiElement replacement = IntroduceVariableBase.replace(correctedOccurrence, ref, myProject);
+          if (occurrence.equals(myAnchor)) {
+            myAnchor = replacement;
+          }
+        }
+      }
+
+      needReplaceSelf &= newExpr instanceof PsiPolyadicExpression && newExpr.isValid() && !newExpr.isPhysical();
+    }
+    if (needReplaceSelf) {
+      PsiElement replacement = IntroduceVariableBase.replace(newExpr, ref, myProject);
+      if (newExpr.equals(myAnchor)) {
+        myAnchor = replacement;
+      }
     }
   }
 
