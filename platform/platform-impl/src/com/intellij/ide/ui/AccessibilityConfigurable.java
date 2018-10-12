@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -111,6 +112,16 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
       if (predicate.test(info)) return info;
     }
     return null;
+  }
+
+  @NotNull
+  @SuppressWarnings("UseOfObsoleteCollectionType")
+  static Vector<LookAndFeelInfo> getInstalledLookAndFeels(boolean withHighContrast) {
+    Vector<LookAndFeelInfo> vector = new Vector<>();
+    for (LookAndFeelInfo info : LafManager.getInstance().getInstalledLookAndFeels()) {
+      if (withHighContrast || !isHighContrast(info)) vector.add(info);
+    }
+    return vector;
   }
 
   private static final class View {
