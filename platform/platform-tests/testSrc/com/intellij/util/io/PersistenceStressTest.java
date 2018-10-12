@@ -79,13 +79,17 @@ public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCa
 
   @Override
   public void tearDown() throws Exception {
-    for (PersistentHashMap<String, Record> map : myMaps) {
-      map.close();
+    try {
+      for (PersistentHashMap<String, Record> map : myMaps) {
+        map.close();
+      }
+      myEnumerator.close();
+      myEnumerator = null;
+      myMaps.clear();
     }
-    myEnumerator.close();
-    myEnumerator = null;
-    myMaps.clear();
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testReadWrite() throws Exception {
