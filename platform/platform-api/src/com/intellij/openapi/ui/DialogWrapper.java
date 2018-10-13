@@ -1951,7 +1951,7 @@ public abstract class DialogWrapper {
                  Collections.singletonList(new ValidationInfo(text, component)));
   }
 
-  protected final void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
     Application application = ApplicationManager.getApplication();
