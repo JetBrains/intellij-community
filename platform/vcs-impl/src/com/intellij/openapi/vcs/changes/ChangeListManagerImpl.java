@@ -34,8 +34,8 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vcs.changes.actions.ChangeListRemoveConfirmation;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
+import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.changes.ui.CommitHelper;
-import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
@@ -1665,7 +1665,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return myConflictTracker;
   }
 
-  private static class MyChangesDeltaForwarder implements PlusMinusModify<BaseRevision> {
+  private static class MyChangesDeltaForwarder implements ChangeListDeltaListener {
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
@@ -1679,21 +1679,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Override
-    public void modify(BaseRevision was, BaseRevision become) {
+    public void modified(@NotNull BaseRevision was, @NotNull BaseRevision become) {
       doModify(was, become);
     }
 
     @Override
-    public void plus(final BaseRevision baseRevision) {
+    public void added(@NotNull BaseRevision baseRevision) {
       doModify(baseRevision, baseRevision);
     }
 
     @Override
-    public void minus(final BaseRevision baseRevision) {
+    public void removed(@NotNull BaseRevision baseRevision) {
        myScheduler.submit(() -> {
          AbstractVcs vcs = getVcs(baseRevision);
          if (vcs != null) {
-           myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
+           myRevisionsCache.changeRemoved(Pair.create(baseRevision.getPath(), vcs));
          }
          BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
        });
@@ -1703,7 +1703,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
+          myRevisionsCache.changeUpdated(Pair.create(was.getPath(), vcs));
         }
         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });

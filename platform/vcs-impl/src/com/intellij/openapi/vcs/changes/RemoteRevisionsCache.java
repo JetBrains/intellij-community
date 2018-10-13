@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
@@ -37,7 +36,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>>, VcsListener {
+public class RemoteRevisionsCache implements VcsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsCache");
 
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
@@ -143,8 +142,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
-  @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
+  public void changeUpdated(final Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
       myRemoteRevisionsStateCache.plus(pair);
@@ -179,8 +177,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
-  @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
+  public void changeRemoved(Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
       myRemoteRevisionsStateCache.minus(pair);

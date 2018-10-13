@@ -25,7 +25,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -627,7 +627,7 @@ public class ChangeListWorker {
 
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
-                                     @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+                                     @NotNull ChangeListDeltaListener deltaListener) {
     HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
 
     notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
@@ -676,20 +676,20 @@ public class ChangeListWorker {
   }
 
   private static void notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
-                                         @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+                                         @NotNull ChangeListDeltaListener deltaListener) {
     final Set<BaseRevision> toRemove = new HashSet<>();
     final Set<BaseRevision> toAdd = new HashSet<>();
     final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
     was.getDelta(became, toRemove, toAdd, toModify);
 
     for (BaseRevision pair : toRemove) {
-      deltaListener.minus(pair);
+      deltaListener.removed(pair);
     }
     for (BaseRevision pair : toAdd) {
-      deltaListener.plus(pair);
+      deltaListener.added(pair);
     }
     for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
-      deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
+      deltaListener.modified(beforeAfter.getBefore(), beforeAfter.getAfter());
     }
   }
 

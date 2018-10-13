@@ -15,6 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-public interface PlusMinusModify<T> extends PlusMinus<T> {
-  void modify(T was, T become);
+import com.intellij.openapi.vcs.changes.BaseRevision;
+import org.jetbrains.annotations.NotNull;
+
+public interface ChangeListDeltaListener {
+  void removed(@NotNull BaseRevision was);
+
+  void added(@NotNull BaseRevision become);
+
+  void modified(@NotNull BaseRevision was, @NotNull BaseRevision become);
 }
