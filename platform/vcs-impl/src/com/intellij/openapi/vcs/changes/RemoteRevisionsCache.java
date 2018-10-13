@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
@@ -30,6 +29,7 @@ import com.intellij.openapi.vcs.update.UpdateFilesHelper;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -142,12 +142,12 @@ public class RemoteRevisionsCache implements VcsListener {
     }
   }
 
-  public void changeUpdated(final Pair<String, AbstractVcs> pair) {
-    final AbstractVcs vcs = pair.getSecond();
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
-      myRemoteRevisionsStateCache.plus(pair);
-    } else {
-      myRemoteRevisionsNumbersCache.plus(pair);
+      myRemoteRevisionsStateCache.changeUpdated(path, vcs);
+    }
+    else {
+      myRemoteRevisionsNumbersCache.changeUpdated(path, vcs);
     }
   }
 
@@ -177,12 +177,12 @@ public class RemoteRevisionsCache implements VcsListener {
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
-  public void changeRemoved(Pair<String, AbstractVcs> pair) {
-    final AbstractVcs vcs = pair.getSecond();
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
-      myRemoteRevisionsStateCache.minus(pair);
-    } else {
-      myRemoteRevisionsNumbersCache.minus(pair);
+      myRemoteRevisionsStateCache.changeRemoved(path, vcs);
+    }
+    else {
+      myRemoteRevisionsNumbersCache.changeRemoved(path, vcs);
     }
   }
 
