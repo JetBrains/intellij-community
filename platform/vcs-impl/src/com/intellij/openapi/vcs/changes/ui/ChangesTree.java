@@ -88,7 +88,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
-    super(ChangesBrowserNode.createRoot(project));
+    super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
