@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,7 +11,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -627,7 +613,7 @@ public class ChangeListWorker {
 
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
-                                     @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+                                     @NotNull ChangeListDeltaListener deltaListener) {
     HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
 
     notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
@@ -676,20 +662,20 @@ public class ChangeListWorker {
   }
 
   private static void notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
-                                         @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+                                         @NotNull ChangeListDeltaListener deltaListener) {
     final Set<BaseRevision> toRemove = new HashSet<>();
     final Set<BaseRevision> toAdd = new HashSet<>();
     final Set<BeforeAfter<BaseRevision>> toModify = new HashSet<>();
     was.getDelta(became, toRemove, toAdd, toModify);
 
     for (BaseRevision pair : toRemove) {
-      deltaListener.minus(pair);
+      deltaListener.removed(pair);
     }
     for (BaseRevision pair : toAdd) {
-      deltaListener.plus(pair);
+      deltaListener.added(pair);
     }
     for (BeforeAfter<BaseRevision> beforeAfter : toModify) {
-      deltaListener.modify(beforeAfter.getBefore(), beforeAfter.getAfter());
+      deltaListener.modified(beforeAfter.getBefore(), beforeAfter.getAfter());
     }
   }
 
