@@ -2,51 +2,73 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.impl.content.BaseLabel
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.content.Content
-import javax.swing.JComponent
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.UIUtil
+import java.awt.Font
+import java.awt.Point
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import javax.swing.Box
+import javax.swing.JTextField
 
 class RenameTerminalSessionAction : TerminalSessionContextMenuActionBase(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent, activeToolWindow: ToolWindow, selectedContent: Content?) {
-    val dialog = RenameTerminalSessionDialog(e.project!!, selectedContent!!.displayName)
-    if (dialog.showAndGet()) {
-      selectedContent.displayName = dialog.name
-    }
+
+  override fun actionPerformed(e: AnActionEvent, terminalToolWindow: ToolWindow, content: Content?) {
+    val baseLabel = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? BaseLabel
+    val contextContent = baseLabel?.content ?: return
+    showRenamePopup(baseLabel, contextContent)
   }
 
-  class RenameTerminalSessionDialog(project: Project, name: String) : DialogWrapper(project) {
-    private val centerPanel = RenameTerminalSessionPanel()
+  private fun showRenamePopup(baseLabel: BaseLabel, content: Content) {
+    val textField = JTextField(content.displayName)
+    textField.selectAll()
 
-    public var name
-      get() = centerPanel.myNameField.text
-      set(value) {
-        centerPanel.myNameField.text = value
+    val label = JBLabel("Enter new session name:")
+    label.font = UIUtil.getLabelFont().deriveFont(Font.BOLD)
+
+    val panel = SwingHelper.newLeftAlignedVerticalPanel(label, Box.createVerticalStrut(JBUI.scale(2)), textField)
+    panel.addFocusListener(object : FocusAdapter() {
+      override fun focusGained(e: FocusEvent?) {
+        IdeFocusManager.findInstance().requestFocus(textField, false)
       }
+    })
 
-    init {
-      this.name = name
-      super.setTitle("Rename Terminal Session")
-      init()
-    }
+    val balloon = JBPopupFactory.getInstance().createDialogBalloonBuilder(panel, null)
+      .setShowCallout(true)
+      .setCloseButtonEnabled(false)
+      .setAnimationCycle(0)
+      .setDisposable(content)
+      .setHideOnKeyOutside(true)
+      .setHideOnClickOutside(true)
+      .setRequestFocus(true)
+      .setBlockClicksThroughBalloon(true)
+      .createBalloon()
 
-    override fun getPreferredFocusedComponent(): JComponent? {
-      return centerPanel.myNameField
+    textField.addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        if (e != null && e.keyCode == KeyEvent.VK_ENTER) {
+          if (!Disposer.isDisposed(content)) {
+            content.displayName = textField.text
+          }
+          balloon.hide()
+        }
+      }
+    })
 
-    }
-
-    override fun doValidate(): ValidationInfo? {
-      return if (centerPanel.myNameField.text.isBlank())
-        ValidationInfo("Session name should not be blank", centerPanel.myNameField)
-      else
-        null
-    }
-
-    override fun createCenterPanel(): JComponent? {
-      return centerPanel
-    }
+    balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
 }
