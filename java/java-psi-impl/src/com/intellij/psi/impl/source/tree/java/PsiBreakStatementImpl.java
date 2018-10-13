@@ -120,8 +120,9 @@ public class PsiBreakStatementImpl extends CompositePsiElement implements PsiBre
   @Override
   public PsiReference getReference() {
     final PsiReference[] references = getReferences();
-    if (references != null && references.length > 0)
+    if (references.length > 0) {
       return references[0];
+    }
     return null;
   }
 

@@ -46,7 +46,8 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     if (child == getThenBranch()) {
       replaceChildInternal(child, (TreeElement)JavaPsiFacade.getElementFactory(getProject()).createStatementFromText("{}", null));
       return;
-    } else if (child == getElseBranch()) {
+    }
+    if (child == getElseBranch()) {
       ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
       if (elseKeyword != null) {
         super.deleteChildInternal(elseKeyword);
@@ -141,14 +142,12 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         return findChildByType(ELSE_KEYWORD);
 
       case ChildRole.ELSE_BRANCH:
-        {
-          ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
-          if (elseKeyword == null) return null;
-          for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (child.getPsi() instanceof PsiStatement) return child;
-          }
-          return null;
+        ASTNode elseKeyword = findChildByRole(ChildRole.ELSE_KEYWORD);
+        if (elseKeyword == null) return null;
+        for(ASTNode child = elseKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+          if (child.getPsi() instanceof PsiStatement) return child;
         }
+        return null;
     }
   }
 
@@ -176,9 +175,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
         if (findChildByRoleAsPsiElement(ChildRole.THEN_BRANCH) == child) {
           return ChildRole.THEN_BRANCH;
         }
-        else {
-          return ChildRole.ELSE_BRANCH;
-        }
+        return ChildRole.ELSE_BRANCH;
       }
       else {
         return ChildRoleBase.NONE;

@@ -121,16 +121,14 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
         return findChildByType(FINALLY_KEYWORD);
 
       case ChildRole.FINALLY_BLOCK:
-        {
-          ASTNode finallyKeyword = findChildByRole(ChildRole.FINALLY_KEYWORD);
-          if (finallyKeyword == null) return null;
-          for(ASTNode child = finallyKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
-            if (child.getElementType() == CODE_BLOCK){
-              return child;
-            }
+        ASTNode finallyKeyword = findChildByRole(ChildRole.FINALLY_KEYWORD);
+        if (finallyKeyword == null) return null;
+        for(ASTNode child = finallyKeyword.getTreeNext(); child != null; child = child.getTreeNext()){
+          if (child.getElementType() == CODE_BLOCK){
+            return child;
           }
-          return null;
         }
+        return null;
     }
   }
 

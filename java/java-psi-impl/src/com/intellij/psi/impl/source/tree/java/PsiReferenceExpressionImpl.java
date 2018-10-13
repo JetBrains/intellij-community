@@ -462,13 +462,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
   }
 
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    // this reference's variants are rather obtained with processVariants()
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
   @Override
   public boolean isSoft() {
     return false;
@@ -497,10 +490,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           myVarNames.add(element.getName());
         }
-        if (element instanceof PsiField && myVarNames.contains(element.getName())) {
-          return false;
-        }
-        return true;
+        return !(element instanceof PsiField) || !myVarNames.contains(element.getName());
       }
 
       private boolean shouldProcessMethod(@NotNull PsiMethod method) {

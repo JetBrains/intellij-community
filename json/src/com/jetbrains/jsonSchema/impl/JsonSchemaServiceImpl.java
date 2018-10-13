@@ -179,8 +179,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @NotNull
   public List<JsonSchemaFileProvider> getProvidersForFile(@NotNull VirtualFile file) {
-    return myState.getProviders().stream().filter(provider -> isProviderAvailable(file, provider)).collect(
-      Collectors.toList());
+    return ContainerUtil.filter(myState.getProviders(), provider -> isProviderAvailable(file, provider));
   }
 
   @Nullable

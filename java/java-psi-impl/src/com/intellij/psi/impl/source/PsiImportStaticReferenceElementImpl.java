@@ -30,7 +30,6 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -326,13 +325,6 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   public void processVariants(@NotNull PsiScopeProcessor processor) {
     FilterScopeProcessor proc = new FilterScopeProcessor(new ClassFilter(PsiModifierListOwner.class), processor);
     PsiScopesUtil.resolveAndWalk(proc, this, null, true);
-  }
-
-  @Override
-  @NotNull
-  public Object[] getVariants() {
-    // IMPLEMENT[dsl]
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

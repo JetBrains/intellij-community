@@ -95,7 +95,6 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
         return findChildByType(SEMICOLON);
 
       case ChildRole.FOR_UPDATE:
-      {
         ASTNode semicolon = findChildByRole(ChildRole.FOR_SEMICOLON);
         for(ASTNode child = semicolon; child != null; child = child.getTreeNext()){
           if (child.getPsi() instanceof PsiStatement) {
@@ -104,13 +103,11 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
           if (child.getElementType() == RPARENTH) break;
         }
         return null;
-      }
 
       case ChildRole.RPARENTH:
         return findChildByType(RPARENTH);
 
       case ChildRole.LOOP_BODY:
-      {
         ASTNode rparenth = findChildByRole(ChildRole.RPARENTH);
         for(ASTNode child = rparenth; child != null; child = child.getTreeNext()){
           if (child.getPsi() instanceof PsiStatement) {
@@ -118,7 +115,6 @@ public class PsiForStatementImpl extends PsiLoopStatementImpl implements PsiForS
           }
         }
         return null;
-      }
     }
   }
 
