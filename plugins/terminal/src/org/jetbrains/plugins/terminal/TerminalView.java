@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
@@ -63,7 +64,8 @@ public class TerminalView {
   private final LocalTerminalDirectRunner myTerminalRunner;
   private TerminalDockContainer myDockContainer;
 
-  LocalTerminalDirectRunner getTerminalRunner() {
+  @NotNull
+  public LocalTerminalDirectRunner getTerminalRunner() {
     return myTerminalRunner;
   }
 
