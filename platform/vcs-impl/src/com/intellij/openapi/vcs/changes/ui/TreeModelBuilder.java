@@ -44,7 +44,7 @@ public class TreeModelBuilder {
   // in subtree root, but further down the tree.
   public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
-  @NotNull protected final Project myProject;
+  protected final Project myProject;
   @NotNull protected final DefaultTreeModel myModel;
   @NotNull protected final ChangesBrowserNode myRoot;
   @NotNull private final ChangesGroupingPolicyFactory myGroupingPolicyFactory;
@@ -74,8 +74,11 @@ public class TreeModelBuilder {
     this(project, ChangesGroupingSupport.collectFactories(project).getByKey(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
   }
 
-  public TreeModelBuilder(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-    myProject = project;
+  /**
+   * Requires non-null Project for local changes.
+   */
+  public TreeModelBuilder(Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
+    myProject = project != null && !project.isDefault() ? project : null;
     myRoot = ChangesBrowserNode.createRoot();
     myModel = new DefaultTreeModel(myRoot);
     myGroupingPolicyFactory = grouping;
@@ -101,7 +104,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public static DefaultTreeModel buildFromChanges(@NotNull Project project,
+  public static DefaultTreeModel buildFromChanges(@Nullable Project project,
                                                   @NotNull ChangesGroupingPolicyFactory grouping,
                                                   @NotNull Collection<? extends Change> changes,
                                                   @Nullable ChangeNodeDecorator changeNodeDecorator) {
@@ -111,7 +114,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public static DefaultTreeModel buildFromFilePaths(@NotNull Project project,
+  public static DefaultTreeModel buildFromFilePaths(@Nullable Project project,
                                                     @NotNull ChangesGroupingPolicyFactory grouping,
                                                     @NotNull Collection<FilePath> filePaths) {
     return new TreeModelBuilder(project, grouping)
@@ -137,7 +140,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public static DefaultTreeModel buildFromVirtualFiles(@NotNull Project project,
+  public static DefaultTreeModel buildFromVirtualFiles(@Nullable Project project,
                                                        @NotNull ChangesGroupingPolicyFactory grouping,
                                                        @NotNull Collection<VirtualFile> virtualFiles) {
     return new TreeModelBuilder(project, grouping)
@@ -156,6 +159,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setUnversioned(@Nullable List<VirtualFile> unversionedFiles) {
+    assert myProject != null;
     if (ContainerUtil.isEmpty(unversionedFiles)) return this;
     ChangesBrowserUnversionedFilesNode node = new ChangesBrowserUnversionedFilesNode(myProject, unversionedFiles);
     return insertSpecificNodeToModel(unversionedFiles, node);
@@ -163,6 +167,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, boolean updatingMode) {
+    assert myProject != null;
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
     ChangesBrowserIgnoredFilesNode node = new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles, updatingMode);
     return insertSpecificNodeToModel(ignoredFiles, node);
@@ -181,6 +186,7 @@ public class TreeModelBuilder {
 
   @NotNull
   public TreeModelBuilder setChangeLists(@NotNull Collection<? extends ChangeList> changeLists, boolean skipSingleDefaultChangeList) {
+    assert myProject != null;
     final RemoteRevisionsCache revisionsCache = RemoteRevisionsCache.getInstance(myProject);
     boolean skipChangeListNode = skipSingleDefaultChangeList && isSingleBlankChangeList(changeLists);
     for (ChangeList list : changeLists) {

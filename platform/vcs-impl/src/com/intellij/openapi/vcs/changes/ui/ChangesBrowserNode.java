@@ -80,12 +80,12 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  public static ChangesBrowserNode createChange(@NotNull Project project, @NotNull Change userObject) {
+  public static ChangesBrowserNode createChange(@Nullable Project project, @NotNull Change userObject) {
     return new ChangesBrowserChangeNode(project, userObject, null);
   }
 
   @NotNull
-  public static ChangesBrowserNode createFile(@NotNull Project project, @NotNull VirtualFile userObject) {
+  public static ChangesBrowserNode createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
     return new ChangesBrowserFileNode(project, userObject);
   }
 
@@ -95,7 +95,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
-  public static ChangesBrowserNode createLogicallyLocked(@NotNull Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
+  public static ChangesBrowserNode createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
     return new ChangesBrowserLogicallyLockedFile(project, file, lock);
   }
 
