@@ -156,26 +156,24 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
+    if (vcs.getDiffProvider() == null) return;
 
-    final String key = pair.getFirst();
-    final AbstractVcs newVcs = pair.getSecond();
-
-    final VirtualFile root = getRootForPath(key);
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
 
-    final VcsRoot vcsRoot = new VcsRoot(newVcs, root);
+    final VcsRoot vcsRoot = new VcsRoot(vcs, root);
 
     synchronized (myLock) {
-      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
+      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(path);
       if (value == null) {
         final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
-        myData.put(key, Pair.create(vcsRoot, NOT_LOADED));
-        queue.addRequest(key);
-      } else if (! value.getFirst().equals(vcsRoot)) {
-        switchVcs(value.getFirst(), vcsRoot, key);
+        myData.put(path, Pair.create(vcsRoot, NOT_LOADED));
+        queue.addRequest(path);
+      }
+      else if (!value.getFirst().equals(vcsRoot)) {
+        switchVcs(value.getFirst(), vcsRoot, path);
       }
     }
   }
@@ -203,19 +201,18 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
-    final VirtualFile root = getRootForPath(pair.getFirst());
+    if (vcs.getDiffProvider() == null) return;
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
 
     final LazyRefreshingSelfQueue<String> queue;
-    final String key = pair.getFirst();
     synchronized (myLock) {
-      queue = getQueue(new VcsRoot(pair.getSecond(), root));
-      myData.remove(key);
+      queue = getQueue(new VcsRoot(vcs, root));
+      myData.remove(path);
     }
-    queue.forceRemove(key);
+    queue.forceRemove(path);
   }
 
   // +-

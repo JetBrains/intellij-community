@@ -1640,7 +1640,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
        myScheduler.submit(() -> {
          AbstractVcs vcs = getVcs(baseRevision);
          if (vcs != null) {
-           myRevisionsCache.changeRemoved(Pair.create(baseRevision.getPath(), vcs));
+           myRevisionsCache.changeRemoved(baseRevision.getPath(), vcs);
          }
          BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
        });
@@ -1650,7 +1650,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          myRevisionsCache.changeUpdated(Pair.create(was.getPath(), vcs));
+          myRevisionsCache.changeUpdated(was.getPath(), vcs);
         }
         BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
       });
