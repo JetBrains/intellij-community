@@ -15,8 +15,8 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
@@ -40,7 +40,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val inKeychain = RadioButton("In native Keychain")
 
   private val inKeePass = RadioButton("In KeePass")
-  private var keePassDbFile: TextFieldWithHistoryWithBrowseButton by notNull()
+  private var keePassDbFile: TextFieldWithBrowseButton by notNull()
 
   private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
 

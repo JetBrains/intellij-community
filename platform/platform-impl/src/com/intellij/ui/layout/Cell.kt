@@ -10,14 +10,12 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.Link
-import com.intellij.ui.components.Panel
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.event.ActionEvent
@@ -78,14 +76,26 @@ abstract class Cell {
     return component
   }
 
+  fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,
+                                           value: String? = null,
+                                           project: Project? = null,
+                                           fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                                           historyProvider: (() -> List<String>)? = null,
+                                           fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
+                                           comment: String? = null): TextFieldWithHistoryWithBrowseButton {
+    val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
+    value?.let { component.text = it }
+    component(comment = comment)
+    return component
+  }
+
   fun textFieldWithBrowseButton(browseDialogTitle: String,
                                 value: String? = null,
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                historyProvider: (() -> List<String>)? = null,
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null,
-                                comment: String? = null): TextFieldWithHistoryWithBrowseButton {
-    val component = textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider, fileChosen)
+                                comment: String? = null): TextFieldWithBrowseButton {
+    val component = textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)
     value?.let { component.text = it }
     component(comment = comment)
     return component
