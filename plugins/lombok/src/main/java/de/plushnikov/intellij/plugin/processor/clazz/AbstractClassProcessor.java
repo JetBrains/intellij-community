@@ -176,31 +176,34 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     final Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
 
     for (PsiField classField : psiFields) {
-      if (!onlyExplicitlyIncluded || !PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationIncludeFQN)) {
-        if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
-          continue;
-        }
-        final String fieldName = classField.getName();
-        if (null == fieldName) {
-          continue;
-        }
-        if (explicitExclude && excludeProperty.contains(fieldName)) {
-          continue;
-        }
-        if (explicitOf && !ofProperty.contains(fieldName)) {
-          continue;
-        }
+      if (!PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationIncludeFQN)) {
+        if (!onlyExplicitlyIncluded) {
+          if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
+            continue;
+          }
+          final String fieldName = classField.getName();
+          if (null == fieldName) {
+            continue;
+          }
+          if (explicitExclude && excludeProperty.contains(fieldName)) {
+            continue;
+          }
+          if (explicitOf && !ofProperty.contains(fieldName)) {
+            continue;
+          }
 
-        if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
-          continue;
-        }
+          if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
+            continue;
+          }
 
-        if (PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationExcludeFQN)) {
-          continue;
+          if (PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationExcludeFQN)) {
+            continue;
+          }
+          result.add(classField);
         }
+      } else {
+        result.add(classField);
       }
-
-      result.add(classField);
     }
     return result;
   }

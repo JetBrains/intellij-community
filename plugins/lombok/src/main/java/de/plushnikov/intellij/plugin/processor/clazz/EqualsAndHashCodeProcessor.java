@@ -202,7 +202,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiCodeBlock createCanEqualCodeBlock(@NotNull PsiClass psiClass) {
-    final String blockText = String.format("return other instanceof %s;", psiClass.getName());
+    final String blockText = String.format("return other instanceof %s;", PsiClassUtil.getClassType(psiClass).getCanonicalText());
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
@@ -210,13 +210,14 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
-    final String psiClassName = psiClass.getName();
+    final String canonicalClassName = PsiClassUtil.getClassType(psiClass).getCanonicalText();
+    final String canonicalWildcardClassName = PsiClassUtil.getWildcardClassType(psiClass).getCanonicalText();
 
     final StringBuilder builder = new StringBuilder();
 
     builder.append("if (o == this) return true;\n");
-    builder.append("if (!(o instanceof ").append(psiClassName).append(")) return false;\n");
-    builder.append("final ").append(psiClassName).append(" other = (").append(psiClassName).append(")o;\n");
+    builder.append("if (!(o instanceof ").append(canonicalClassName).append(")) return false;\n");
+    builder.append("final ").append(canonicalWildcardClassName).append(" other = (").append(canonicalWildcardClassName).append(")o;\n");
 
     if (hasCanEqualMethod) {
       builder.append("if (!other.canEqual((java.lang.Object)this)) return false;\n");
@@ -261,6 +262,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final int PRIME_FOR_HASHCODE = 59;
   private static final int PRIME_FOR_TRUE = 79;
   private static final int PRIME_FOR_FALSE = 97;
+  private static final int PRIME_FOR_NULL = 43;
 
   private String createHashcodeBlockString(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
@@ -270,13 +272,15 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
     final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, true);
 
-    if (!psiFields.isEmpty() || callSuper) {
+    if (!psiFields.isEmpty()) {
       builder.append("final int PRIME = ").append(PRIME_FOR_HASHCODE).append(";\n");
     }
-    builder.append("int result = 1;\n");
+    builder.append("int result = ");
 
     if (callSuper) {
-      builder.append("result = result * PRIME + super.hashCode();\n");
+      builder.append("super.hashCode();\n");
+    } else {
+      builder.append("1;\n");
     }
 
     for (PsiField classField : psiFields) {
@@ -308,7 +312,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
         }
       } else {
         builder.append("final java.lang.Object $").append(fieldName).append(" = this.").append(fieldAccessor).append(";\n");
-        builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? 43 : $").append(fieldName).append(".hashCode());\n");
+        builder.append("result = result * PRIME + ($").append(fieldName).append(" == null ? " + PRIME_FOR_NULL + " : $").append(fieldName).append(".hashCode());\n");
       }
     }
     builder.append("return result;\n");

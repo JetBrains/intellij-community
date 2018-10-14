@@ -16,6 +16,10 @@ public class ToStringTest extends AbstractLombokConfigSystemTestCase {
     return super.getBasePath() + "/configsystem/tostring";
   }
 
+  public void testConfiguration$ToStringConfiguration() throws IOException {
+    doTest();
+  }
+
   public void testDoNotUseGetters$SomeTest() throws IOException {
     doTest();
   }

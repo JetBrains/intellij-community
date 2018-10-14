@@ -1,15 +1,20 @@
 import lombok.ToString;
-@ToString class ToStringOuter {
+
+@ToString
+class ToStringOuter {
 	int x;
 	String name;
-	@ToString class ToStringInner {
+	@ToString
+  class ToStringInner {
 		 int y;
 	}
-	@ToString static class ToStringStaticInner {
+	@ToString
+  static class ToStringStaticInner {
 		int y;
 	}
 	class ToStringMiddle {
-		@ToString class ToStringMoreInner {
+		@ToString
+    class ToStringMoreInner {
 			String name;
 		}
 	}
