@@ -415,7 +415,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   public void initMySearchField() {
-    mySearchField.setFont(UIUtil.getLabelFont().deriveFont(18f));
     mySearchField.putClientProperty(MATCHED_PROVIDER_PROPERTY, UNKNOWN_CONFIGURATION_ICON);
 
     setHandleMatchedConfiguration();
