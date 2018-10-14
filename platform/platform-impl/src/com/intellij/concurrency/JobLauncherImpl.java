@@ -218,7 +218,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     @Override
-    public List<Void> scheduleAndWaitForResults() throws Throwable {
+    public List<Void> scheduleAndWaitForResults() {
       throw new IncorrectOperationException();
     }
 
@@ -274,7 +274,7 @@ public class JobLauncherImpl extends JobLauncher {
       }
 
       @Override
-      public Boolean call() throws Exception {
+      public Boolean call() {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
           try {
             while (true) {

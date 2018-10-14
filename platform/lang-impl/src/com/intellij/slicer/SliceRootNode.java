@@ -79,7 +79,7 @@ public class SliceRootNode extends SliceNode {
     return myRootUsage;
   }
 
-  public void setChildren(List<? extends SliceNode> children) {
+  public void setChildren(@NotNull List<? extends SliceNode> children) {
     myCachedChildren = new ArrayList<>(children);
   }
 }

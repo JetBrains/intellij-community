@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +104,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @Override
-  protected boolean hasHardcodedContracts(PsiElement element) {
+  protected boolean hasHardcodedContracts(@NotNull PsiElement element) {
     return HardcodedContracts.hasHardcodedContracts(element);
   }
 
@@ -169,6 +168,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     myTracker.incModificationCount();
   }
 
+  @NotNull
   private List<PsiClass> getAllNullabilityNickNames() {
     if (!getNotNulls().contains(JAVAX_ANNOTATION_NONNULL)) {
       return Collections.emptyList();
@@ -188,6 +188,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   // some frameworks use jsr305 annotations but don't have them in classpath
+  @NotNull
   private List<PsiClass> getUnresolvedNicknameUsages() {
     List<PsiClass> result = new ArrayList<>();
     Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
@@ -248,6 +249,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return getNickNamedNullability(candidate) != Nullability.UNKNOWN;
   }
 
+  @NotNull
   private static Nullability getNickNamedNullability(@NotNull PsiClass psiClass) {
     if (AnnotationUtil.findAnnotation(psiClass, TYPE_QUALIFIER_NICKNAME) == null) return Nullability.UNKNOWN;
 
@@ -256,7 +258,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   @NotNull
-  private static Nullability extractNullityFromWhenValue(PsiAnnotation nonNull) {
+  private static Nullability extractNullityFromWhenValue(@NotNull PsiAnnotation nonNull) {
     PsiAnnotationMemberValue when = nonNull.findAttributeValue("when");
     if (when instanceof PsiReferenceExpression) {
       String refName = ((PsiReferenceExpression)when).getReferenceName();
@@ -270,8 +272,9 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     return Nullability.UNKNOWN;
   }
 
-  private List<String> filterNickNames(Nullability nullability) {
-    return StreamEx.of(getAllNullabilityNickNames()).filter(c -> getNickNamedNullability(c) == nullability).map(PsiClass::getQualifiedName).toList();
+  @NotNull
+  private List<String> filterNickNames(@NotNull Nullability nullability) {
+    return ContainerUtil.mapNotNull(getAllNullabilityNickNames(), c -> getNickNamedNullability(c) == nullability ? c.getQualifiedName() : null);
   }
 
   @NotNull
