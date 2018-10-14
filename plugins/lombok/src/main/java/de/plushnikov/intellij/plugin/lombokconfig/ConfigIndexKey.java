@@ -28,7 +28,7 @@ public class ConfigIndexKey {
 
     ConfigIndexKey that = (ConfigIndexKey) o;
 
-    if (configKey != null ? !configKey.equals(that.configKey) : that.configKey != null) {
+    if (configKey != null ? !configKey.equalsIgnoreCase(that.configKey) : that.configKey != null) {
       return false;
     }
     if (directoryName != null ? !directoryName.equals(that.directoryName) : that.directoryName != null) {
@@ -41,7 +41,7 @@ public class ConfigIndexKey {
   @Override
   public int hashCode() {
     int result = directoryName != null ? directoryName.hashCode() : 0;
-    result = 31 * result + (configKey != null ? configKey.hashCode() : 0);
+    result = 31 * result + (configKey != null ? configKey.toLowerCase().hashCode() : 0);
     return result;
   }
 }
