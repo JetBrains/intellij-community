@@ -31,8 +31,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   public String myDefaultNullable = NULLABLE;
   public String myDefaultNotNull = NOT_NULL;
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NULLABLES));
-  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NOT_NULLS));
+  public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NULLABLES));
+  public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NOT_NULLS));
   private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
   private final SimpleModificationTracker myTracker = new SimpleModificationTracker();
 
@@ -110,7 +110,6 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
 
-  @SuppressWarnings("deprecation")
   @Override
   public Element getState() {
     Element component = new Element("component");
@@ -143,7 +142,6 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
            new HashSet<>(myNotNulls).equals(ContainerUtil.newHashSet(DEFAULT_NOT_NULLS));
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public void loadState(@NotNull Element state) {
     try {
@@ -155,10 +153,11 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     }
 
     Element instrumented = state.getChild(INSTRUMENTED_NOT_NULLS_TAG);
-    if (instrumented != null) {
-      myInstrumentedNotNulls = ContainerUtil.mapNotNull(instrumented.getChildren("option"), o -> o.getAttributeValue("value"));
-    } else {
+    if (instrumented == null) {
       myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
+    }
+    else {
+      myInstrumentedNotNulls = ContainerUtil.mapNotNull(instrumented.getChildren("option"), o -> o.getAttributeValue("value"));
     }
   }
 
