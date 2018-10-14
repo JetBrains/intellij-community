@@ -58,7 +58,7 @@ public class ObjectApiResponse<K> {
     if (!(o instanceof ObjectApiResponse))
       return false;
 
-    final ObjectApiResponse other = (ObjectApiResponse) o;
+    final ObjectApiResponse<?> other = (ObjectApiResponse<?>) o;
     if (!other.canEqual((Object) this))
       return false;
 

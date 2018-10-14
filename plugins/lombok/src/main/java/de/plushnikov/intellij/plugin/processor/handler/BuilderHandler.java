@@ -10,14 +10,24 @@ import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingular
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.util.*;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -386,7 +396,9 @@ public class BuilderHandler {
 
   @NotNull
   public PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass) {
-    return toStringProcessor.createToStringMethod(builderClass, Arrays.asList(builderClass.getFields()), psiAnnotation);
+    final List<EqualsAndHashCodeToStringHandler.MemberInfo> memberInfos = Arrays.stream(builderClass.getFields())
+      .map(EqualsAndHashCodeToStringHandler.MemberInfo::new).collect(Collectors.toList());
+    return toStringProcessor.createToStringMethod(builderClass, memberInfos, psiAnnotation);
   }
 
   @NotNull

@@ -73,7 +73,7 @@ public class DataSimple {
         this.a = a;
     }
 
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (o == this) return true;
         if (!(o instanceof DataSimple)) return false;
         final DataSimple other = (DataSimple) o;
@@ -91,6 +91,10 @@ public class DataSimple {
         return true;
     }
 
+    protected boolean canEqual(final Object other) {
+        return other instanceof DataSimple;
+    }
+
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -105,10 +109,6 @@ public class DataSimple {
         final Object $a = this.getA();
         result = result * PRIME + ($a == null ? 43 : $a.hashCode());
         return result;
-    }
-
-    protected boolean canEqual(Object other) {
-        return other instanceof DataSimple;
     }
 
     public String toString() {

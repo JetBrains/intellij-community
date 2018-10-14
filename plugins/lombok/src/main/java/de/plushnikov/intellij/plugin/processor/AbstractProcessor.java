@@ -7,12 +7,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
-import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
-import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -89,15 +86,6 @@ public abstract class AbstractProcessor implements Processor {
 
   @NotNull
   public abstract Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass);
-
-  protected String getGetterName(final @NotNull PsiField psiField) {
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
-
-    final String psiFieldName = psiField.getName();
-    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
-
-    return LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
-  }
 
   protected void filterToleratedElements(@NotNull Collection<? extends PsiModifierListOwner> definedMethods) {
     definedMethods.removeIf(definedMethod -> PsiAnnotationSearchUtil.isAnnotatedWith(definedMethod, Tolerate.class));

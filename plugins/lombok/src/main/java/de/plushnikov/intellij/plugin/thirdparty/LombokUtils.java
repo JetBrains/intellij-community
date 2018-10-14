@@ -1,7 +1,10 @@
 package de.plushnikov.intellij.plugin.thirdparty;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,6 +26,15 @@ Various problems with spring have also been reported. See issue #287, issue #271
   public static final Pattern NULLABLE_PATTERN = Pattern.compile("^(?:nullable|checkfornull)$", Pattern.CASE_INSENSITIVE);
 
   public static final Pattern DEPRECATED_PATTERN = Pattern.compile("^(?:deprecated)$", Pattern.CASE_INSENSITIVE);
+
+  public static String getGetterName(final @NotNull PsiField psiField) {
+    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+
+    final String psiFieldName = psiField.getName();
+    final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
+
+    return LombokUtils.toGetterName(accessorsInfo, psiFieldName, isBoolean);
+  }
 
   /**
    * Generates a getter name from a given field name.

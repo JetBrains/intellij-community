@@ -33,7 +33,6 @@ public class WithoutSuperTest {
     if (!(o instanceof WithoutSuperTest)) return false;
     final WithoutSuperTest other = (WithoutSuperTest) o;
     if (!other.canEqual((java.lang.Object) this)) return false;
-    if (!super.equals(o)) return false;
     if (this.getIntProperty() != other.getIntProperty()) return false;
     if (this.isBooleanProperty() != other.isBooleanProperty()) return false;
     if (java.lang.Double.compare(this.getDoubleProperty(), other.getDoubleProperty()) != 0) return false;
@@ -47,7 +46,6 @@ public class WithoutSuperTest {
   public int hashCode() {
     final int PRIME = 59;
     int result = 1;
-    result = result * PRIME + super.hashCode();
     result = result * PRIME + this.getIntProperty();
     result = result * PRIME + (this.isBooleanProperty() ? 79 : 97);
     final long $doubleProperty = java.lang.Double.doubleToLongBits(this.getDoubleProperty());

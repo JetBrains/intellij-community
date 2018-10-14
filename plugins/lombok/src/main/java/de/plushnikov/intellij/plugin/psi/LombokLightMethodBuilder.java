@@ -3,22 +3,7 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightModifierList;
@@ -80,8 +65,19 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return super.setMethodReturnType(returnType);
   }
 
+  public LombokLightMethodBuilder withFinalParameter(@NotNull String name, @NotNull PsiType type) {
+    final LombokLightParameter lombokLightParameter = createParameter(name, type);
+    lombokLightParameter.setModifiers(PsiModifier.FINAL);
+    return withParameter(lombokLightParameter);
+  }
+
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
-    return withParameter(new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE));
+    return withParameter(createParameter(name, type));
+  }
+
+  @NotNull
+  private LombokLightParameter createParameter(@NotNull String name, @NotNull PsiType type) {
+    return new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE);
   }
 
   public LombokLightMethodBuilder withParameter(@NotNull PsiParameter psiParameter) {

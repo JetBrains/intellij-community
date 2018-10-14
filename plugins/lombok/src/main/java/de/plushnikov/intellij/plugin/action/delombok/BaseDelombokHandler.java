@@ -3,25 +3,7 @@ package de.plushnikov.intellij.plugin.action.delombok;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameterList;
-import com.intellij.psi.PsiTypeParameterListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
@@ -171,14 +153,16 @@ public class BaseDelombokHandler {
 
     for (PsiParameter parameter : fromMethod.getParameterList().getParameters()) {
       PsiParameter param = elementFactory.createParameter(parameter.getName(), parameter.getType());
-      if (parameter.getModifierList() != null) {
+      final PsiModifierList parameterModifierList = parameter.getModifierList();
+      if (parameterModifierList != null) {
         PsiModifierList modifierList = param.getModifierList();
-        for (PsiAnnotation originalAnnotation : parameter.getModifierList().getAnnotations()) {
+        for (PsiAnnotation originalAnnotation : parameterModifierList.getAnnotations()) {
           final PsiAnnotation annotation = modifierList.addAnnotation(originalAnnotation.getQualifiedName());
           for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
             annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
           }
         }
+        modifierList.setModifierProperty(PsiModifier.FINAL, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       resultMethod.getParameterList().add(param);
     }

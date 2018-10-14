@@ -1,10 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler;
+import de.plushnikov.intellij.plugin.processor.handler.EqualsAndHashCodeToStringHandler.MemberInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -27,8 +30,15 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   public static final String METHOD_NAME = "toString";
 
+  private static final String INCLUDE_ANNOTATION_METHOD = "name";
+  private static final String INCLUDE_ANNOTATION_RANK = "rank";
+  private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
+
+  private final EqualsAndHashCodeToStringHandler handler;
+
   public ToStringProcessor() {
     super(PsiMethod.class, ToString.class);
+    handler = new EqualsAndHashCodeToStringHandler();
   }
 
   @Override
@@ -84,13 +94,13 @@ public class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final Collection<PsiField> psiFields = filterFields(psiClass, psiAnnotation, false);
-    final PsiMethod stringMethod = createToStringMethod(psiClass, psiFields, psiAnnotation);
+    final Collection<MemberInfo> memberInfos = handler.filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
+    final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation);
     return Collections.singletonList(stringMethod);
   }
 
   @NotNull
-  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
+  public PsiMethod createToStringMethod(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
     final PsiManager psiManager = psiClass.getManager();
 
     return new LombokLightMethodBuilder(psiManager, METHOD_NAME)
@@ -98,13 +108,13 @@ public class ToStringProcessor extends AbstractClassProcessor {
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(PsiModifier.PUBLIC)
-      .withBody(createCodeBlock(psiClass, psiFields, psiAnnotation));
+      .withBody(createCodeBlock(psiClass, memberInfos, psiAnnotation));
   }
 
   @NotNull
-  private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
+  private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
     final String blockText;
-    final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
+    final String paramString = createParamString(psiClass, memberInfos, psiAnnotation);
     blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
@@ -124,7 +134,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return psiClassName.toString();
   }
 
-  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
+  private String createParamString(@NotNull PsiClass psiClass, @NotNull Collection<MemberInfo> memberInfos, @NotNull PsiAnnotation psiAnnotation) {
     final boolean callSuper = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "callSuper", false);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.TOSTRING_DO_NOT_USE_GETTERS);
     final boolean includeFieldNames = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "includeFieldNames", ConfigKey.TOSTRING_INCLUDE_FIELD_NAMES);
@@ -134,15 +144,14 @@ public class ToStringProcessor extends AbstractClassProcessor {
       paramString.append("super=\" + super.toString() + \", ");
     }
 
-    for (PsiField classField : psiFields) {
-      final String fieldName = classField.getName();
+    for (MemberInfo memberInfo : memberInfos) {
 
       if (includeFieldNames) {
-        paramString.append(fieldName).append('=');
+        paramString.append(memberInfo.getName()).append('=');
       }
       paramString.append("\"+");
 
-      final PsiType classFieldType = classField.getType();
+      final PsiType classFieldType = memberInfo.getType();
       if (classFieldType instanceof PsiArrayType) {
         final PsiType componentType = ((PsiArrayType) classFieldType).getComponentType();
         if (componentType instanceof PsiPrimitiveType) {
@@ -152,8 +161,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
         }
       }
 
-      final String fieldAccessor = buildAttributeNameString(doNotUseGetters, classField, psiClass);
-      paramString.append("this.").append(fieldAccessor);
+      final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
+      paramString.append("this.").append(memberAccessor);
 
       if (classFieldType instanceof PsiArrayType) {
         paramString.append(")");
@@ -179,7 +188,9 @@ public class ToStringProcessor extends AbstractClassProcessor {
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
-      if (PsiClassUtil.getNames(filterFields(containingClass, psiAnnotation, false)).contains(psiField.getName())) {
+      final String psiFieldName = StringUtil.notNullize(psiField.getName());
+      if (handler.filterFields(containingClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD).stream()
+        .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }
     }

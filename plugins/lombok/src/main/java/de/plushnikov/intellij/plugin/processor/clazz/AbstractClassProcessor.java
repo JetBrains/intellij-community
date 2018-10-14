@@ -18,24 +18,17 @@ import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -66,7 +59,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, getSupportedAnnotationClasses());
     if (null != psiAnnotation) {
       if (validate(psiAnnotation, psiClass, ProblemEmptyBuilder.getInstance())) {
-        result = new ArrayList<PsiElement>();
+        result = new ArrayList<>();
         generatePsiElements(psiClass, psiAnnotation, result);
       }
     }
@@ -111,7 +104,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
 
   protected abstract void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target);
 
-  protected void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
+  void validateOfParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> ofProperty) {
     for (String fieldName : ofProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
@@ -124,7 +117,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
   }
 
-  protected void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> excludeProperty) {
+  void validateExcludeParam(PsiClass psiClass, ProblemBuilder builder, PsiAnnotation psiAnnotation, Collection<String> excludeProperty) {
     for (String fieldName : excludeProperty) {
       if (!StringUtil.isEmptyOrSpaces(fieldName)) {
         PsiField fieldByName = psiClass.findFieldByName(fieldName, false);
@@ -146,88 +139,13 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   private String calcNewPropertyValue(Collection<String> allProperties, String fieldName) {
     String result = null;
     if (!allProperties.isEmpty() && (allProperties.size() > 1 || !allProperties.contains(fieldName))) {
-      result = allProperties.stream().filter(((Predicate<String>) fieldName::equals).negate()).collect(Collectors.joining("\",\"", "{\"", "\"}"));
+      result = allProperties.stream().filter(((Predicate<String>) fieldName::equals).negate())
+        .collect(Collectors.joining("\",\"", "{\"", "\"}"));
     }
     return result;
   }
 
-  protected Collection<PsiField> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean filterTransient) {
-    final boolean explicitOf = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "of");
-    final boolean explicitExclude = PsiAnnotationUtil.hasDeclaredProperty(psiAnnotation, "exclude");
-    final boolean onlyExplicitlyIncluded = PsiAnnotationUtil.getBooleanAnnotationValue(psiAnnotation, "onlyExplicitlyIncluded", false);
-
-    final String annotationFQN = psiAnnotation.getQualifiedName();
-    final String annotationIncludeFQN = annotationFQN + ".Include";
-    final String annotationExcludeFQN = annotationFQN + ".Exclude";
-
-    //Having both exclude and of generates a warning; the exclude parameter will be ignored in that case.
-    final Collection<String> ofProperty;
-    final Collection<String> excludeProperty;
-    if (!explicitOf) {
-      excludeProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "exclude", String.class));
-      ofProperty = Collections.emptyList();
-    } else {
-      ofProperty = makeSet(PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "of", String.class));
-      excludeProperty = Collections.emptyList();
-    }
-
-    final Collection<PsiField> psiFields = PsiClassUtil.collectClassFieldsIntern(psiClass);
-
-    final Collection<PsiField> result = new ArrayList<PsiField>(psiFields.size());
-
-    for (PsiField classField : psiFields) {
-      if (!PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationIncludeFQN)) {
-        if (!onlyExplicitlyIncluded) {
-          if (classField.hasModifierProperty(PsiModifier.STATIC) || (filterTransient && classField.hasModifierProperty(PsiModifier.TRANSIENT))) {
-            continue;
-          }
-          final String fieldName = classField.getName();
-          if (null == fieldName) {
-            continue;
-          }
-          if (explicitExclude && excludeProperty.contains(fieldName)) {
-            continue;
-          }
-          if (explicitOf && !ofProperty.contains(fieldName)) {
-            continue;
-          }
-
-          if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) && !ofProperty.contains(fieldName)) {
-            continue;
-          }
-
-          if (PsiAnnotationSearchUtil.isAnnotatedWith(classField, annotationExcludeFQN)) {
-            continue;
-          }
-          result.add(classField);
-        }
-      } else {
-        result.add(classField);
-      }
-    }
-    return result;
-  }
-
-  protected String buildAttributeNameString(boolean doNotUseGetters, @NotNull PsiField classField, @NotNull PsiClass psiClass) {
-    final String fieldName = classField.getName();
-    if (doNotUseGetters) {
-      return fieldName;
-    } else {
-      final String getterName = getGetterName(classField);
-
-      final boolean hasGetter;
-      if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, Data.class, Value.class, lombok.experimental.Value.class, Getter.class)) {
-        final PsiAnnotation getterLombokAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiClass, Getter.class);
-        hasGetter = null == getterLombokAnnotation || null != LombokProcessorUtil.getMethodModifier(getterLombokAnnotation);
-      } else {
-        hasGetter = PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), getterName);
-      }
-
-      return hasGetter ? getterName + "()" : fieldName;
-    }
-  }
-
-  protected boolean shouldGenerateNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull AbstractConstructorClassProcessor argsConstructorProcessor) {
+  boolean shouldGenerateNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull AbstractConstructorClassProcessor argsConstructorProcessor) {
     boolean result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
     if (result) {
       result = !PsiClassUtil.hasSuperClass(psiClass);
@@ -244,10 +162,4 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return result;
   }
 
-  private Collection<String> makeSet(@NotNull Collection<String> exclude) {
-    if (exclude.isEmpty()) {
-      return Collections.emptySet();
-    }
-    return new HashSet<String>(exclude);
-  }
 }

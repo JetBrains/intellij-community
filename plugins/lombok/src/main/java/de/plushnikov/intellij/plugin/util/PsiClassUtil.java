@@ -62,6 +62,11 @@ public class PsiClassUtil {
     }
   }
 
+  @NotNull
+  public static Collection<PsiMember> collectClassMemberIntern(@NotNull PsiClass psiClass) {
+    return Arrays.stream(psiClass.getChildren()).filter(e -> e instanceof PsiField || e instanceof PsiMethod).map(PsiMember.class::cast).collect(Collectors.toList());
+  }
+
   private static <T extends PsiElement> Collection<T> filterPsiElements(@NotNull PsiClass psiClass, @NotNull Class<T> desiredClass) {
     return Arrays.stream(psiClass.getChildren()).filter(desiredClass::isInstance).map(desiredClass::cast).collect(Collectors.toList());
   }
