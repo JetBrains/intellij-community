@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -202,7 +203,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiCodeBlock createCanEqualCodeBlock(@NotNull PsiClass psiClass) {
-    final String blockText = String.format("return other instanceof %s;", PsiClassUtil.getClassType(psiClass).getCanonicalText());
+    final String blockText = String.format("return other instanceof %s;", PsiTypesUtil.getClassType(psiClass).getCanonicalText());
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
@@ -210,7 +211,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final boolean callSuper = readCallSuperAnnotationOrConfigProperty(psiAnnotation, psiClass);
     final boolean doNotUseGetters = readAnnotationOrConfigProperty(psiAnnotation, psiClass, "doNotUseGetters", ConfigKey.EQUALSANDHASHCODE_DO_NOT_USE_GETTERS);
 
-    final String canonicalClassName = PsiClassUtil.getClassType(psiClass).getCanonicalText();
+    final String canonicalClassName = PsiTypesUtil.getClassType(psiClass).getCanonicalText();
     final String canonicalWildcardClassName = PsiClassUtil.getWildcardClassType(psiClass).getCanonicalText();
 
     final StringBuilder builder = new StringBuilder();

@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.psi.util.PsiTypesUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ public class PsiClassUtil {
   @NotNull
   public static Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
-      return new ArrayList<PsiMethod>(((PsiExtensibleClass) psiClass).getOwnMethods());
+      return new ArrayList<>(((PsiExtensibleClass) psiClass).getOwnMethods());
     } else {
       return filterPsiElements(psiClass, PsiMethod.class);
     }
@@ -89,11 +88,6 @@ public class PsiClassUtil {
     // It returns abstract classes, but also Object.
     final PsiClassType[] superTypes = psiClass.getSuperTypes();
     return superTypes.length == 0 || superTypes.length > 1 || CommonClassNames.JAVA_LANG_OBJECT.equals(superTypes[0].getCanonicalText());
-  }
-
-  @NotNull
-  public static PsiType getClassType(@NotNull PsiClass psiClass) {
-    return PsiTypesUtil.getClassType(psiClass);
   }
 
   @NotNull
