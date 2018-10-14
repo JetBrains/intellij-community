@@ -43,7 +43,8 @@ public abstract class NullableNotNullManager {
     "androidx.annotation.RecentlyNullable",
     "org.checkerframework.checker.nullness.qual.Nullable",
     "org.checkerframework.checker.nullness.compatqual.NullableDecl",
-    "org.checkerframework.checker.nullness.compatqual.NullableType"
+    "org.checkerframework.checker.nullness.compatqual.NullableType",
+    "com.android.annotations.Nullable",
   };
   static final String[] DEFAULT_NOT_NULLS = {
     NotNull.class.getName(),
@@ -54,7 +55,8 @@ public abstract class NullableNotNullManager {
     "androidx.annotation.RecentlyNonNull",
     "org.checkerframework.checker.nullness.qual.NonNull",
     "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
-    "org.checkerframework.checker.nullness.compatqual.NonNullType"
+    "org.checkerframework.checker.nullness.compatqual.NonNullType",
+    "com.android.annotations.NonNull",
   };
   private static final List<String> DEFAULT_ALL = Arrays.asList(ArrayUtil.mergeArrays(DEFAULT_NULLABLES, DEFAULT_NOT_NULLS));
 
