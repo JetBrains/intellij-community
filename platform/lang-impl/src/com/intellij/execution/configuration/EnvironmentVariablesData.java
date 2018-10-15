@@ -148,13 +148,7 @@ public class EnvironmentVariablesData {
   }
 
   private static boolean isValid(@NotNull Map.Entry<String, String> entry) {
-    try {
-      EnvironmentUtil.validate(entry.getKey(), entry.getValue());
-      return true;
-    }
-    catch (Exception e) {
-      return false;
-    }
+    return EnvironmentUtil.isValidName(entry.getKey()) && EnvironmentUtil.isValidValue(entry.getValue());
   }
 
   /**
