@@ -1,0 +1,12 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Python Copyright</name>
+  <id>org.jetbrains.plugins.python-copyright</id>
+  <version>VERSION</version>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.python</depends>
+  <depends>com.intellij.copyright</depends>
+
+  <xi:include href="/META-INF/python-copyright-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+</idea-plugin>
