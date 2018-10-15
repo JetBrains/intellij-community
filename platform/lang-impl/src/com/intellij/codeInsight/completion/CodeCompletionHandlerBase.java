@@ -25,7 +25,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -464,33 +463,24 @@ public class CodeCompletionHandlerBase {
       Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
       boolean wasInjected = hostEditor != editor;
       OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
-      hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          OffsetsInFile targetOffsets = findInjectedOffsetsIfAny(caret);
-          PsiFile targetFile = targetOffsets.getFile();
-          Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
-          int targetCaretOffset = targetEditor.getCaretModel().getOffset();
-          int idEnd = targetCaretOffset + idEndOffsetDelta;
-          if (idEnd > targetEditor.getDocument().getTextLength()) {
-            idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
-          }
-          WatchingInsertionContext currentContext = insertItem(indicator.getLookup(), item, completionChar, update,
-                                                                                    targetEditor, targetFile,
-                                                                                    targetCaretOffset, idEnd,
-                                                                                    targetOffsets.getOffsets());
-          lastContext.set(currentContext);
+      hostEditor.getCaretModel().runForEachCaret(caret -> {
+        OffsetsInFile targetOffsets = findInjectedOffsetsIfAny(caret, wasInjected, topLevelOffsets, hostEditor);
+        PsiFile targetFile = targetOffsets.getFile();
+        Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
+        int targetCaretOffset = targetEditor.getCaretModel().getOffset();
+        int idEnd = targetCaretOffset + idEndOffsetDelta;
+        if (idEnd > targetEditor.getDocument().getTextLength()) {
+          idEnd = targetCaretOffset; // no replacement by Tab when offsets gone wrong for some reason
         }
-
-        private OffsetsInFile findInjectedOffsetsIfAny(Caret caret) {
-          if (!wasInjected) return topLevelOffsets;
-
-          PsiDocumentManager.getInstance(topLevelOffsets.getFile().getProject()).commitDocument(hostEditor.getDocument());
-          return topLevelOffsets.toInjectedIfAny(caret.getOffset());
-        }
+        WatchingInsertionContext currentContext = insertItem(indicator.getLookup(), item, completionChar, update,
+                                                                                  targetEditor, targetFile,
+                                                                                  targetCaretOffset, idEnd,
+                                                                                  targetOffsets.getOffsets());
+        lastContext.set(currentContext);
       });
       context = lastContext.get();
-    } else {
+    }
+    else {
       PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject());
       context = insertItem(indicator.getLookup(), item, completionChar, update, editor, psiFile, caretOffset,
                            idEndOffset, indicator.getOffsetMap());
@@ -501,6 +491,16 @@ public class CodeCompletionHandlerBase {
     checkPsiTextConcistency(indicator);
 
     return context;
+  }
+
+  private static OffsetsInFile findInjectedOffsetsIfAny(@NotNull Caret caret,
+                                                        boolean wasInjected,
+                                                        @NotNull OffsetsInFile topLevelOffsets,
+                                                        @NotNull Editor hostEditor) {
+    if (!wasInjected) return topLevelOffsets;
+
+    PsiDocumentManager.getInstance(topLevelOffsets.getFile().getProject()).commitDocument(hostEditor.getDocument());
+    return topLevelOffsets.toInjectedIfAny(caret.getOffset());
   }
 
   private static int calcIdEndOffset(CompletionProcessEx indicator) {

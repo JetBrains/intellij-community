@@ -111,14 +111,11 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   }
 
   private static void insertStringForEachCaret(final Editor editor, final String text, final int relativeOffset) {
-    editor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        int caretOffset = caret.getOffset();
-        int startOffset = Math.max(0, caretOffset - relativeOffset);
-        editor.getDocument().replaceString(startOffset, caretOffset, text);
-        caret.moveToOffset(startOffset + text.length());
-      }
+    editor.getCaretModel().runForEachCaret(caret -> {
+      int caretOffset = caret.getOffset();
+      int startOffset = Math.max(0, caretOffset - relativeOffset);
+      editor.getDocument().replaceString(startOffset, caretOffset, text);
+      caret.moveToOffset(startOffset + text.length());
     });
   }  
 

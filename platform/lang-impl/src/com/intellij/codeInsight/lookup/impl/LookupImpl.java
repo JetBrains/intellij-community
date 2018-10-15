@@ -544,16 +544,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     final String lookupString = getCaseCorrectedLookupString(item, matcher, itemPattern);
 
     final Editor hostEditor = editor;
-    hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        EditorModificationUtil.deleteSelectedText(hostEditor);
-        final int caretOffset = hostEditor.getCaretModel().getOffset();
+    hostEditor.getCaretModel().runForEachCaret(__ -> {
+      EditorModificationUtil.deleteSelectedText(hostEditor);
+      final int caretOffset = hostEditor.getCaretModel().getOffset();
 
-        int offset = insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
-        hostEditor.getCaretModel().moveToOffset(offset);
-        hostEditor.getSelectionModel().removeSelection();
-      }
+      int offset = insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      hostEditor.getCaretModel().moveToOffset(offset);
+      hostEditor.getSelectionModel().removeSelection();
     });
 
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);

@@ -103,15 +103,12 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();
       final int[] index = {0};
-      editor.getCaretModel().runForEachCaret(new CaretAction() {
-        @Override
-        public void perform(Caret caret) {
-          String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
-          normalizedText = trimTextIfNeed(editor, normalizedText);
-          int caretOffset = caret.getOffset();
-          ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
-          EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
-        }
+      editor.getCaretModel().runForEachCaret(caret -> {
+        String normalizedText = TextBlockTransferable.convertLineSeparators(editor, segments.next());
+        normalizedText = trimTextIfNeed(editor, normalizedText);
+        int caretOffset = caret.getOffset();
+        ranges[index[0]++] = new TextRange(caretOffset, caretOffset + normalizedText.length());
+        EditorModificationUtil.insertStringAtCaret(editor, normalizedText, false, true);
       });
       return ranges;
     }

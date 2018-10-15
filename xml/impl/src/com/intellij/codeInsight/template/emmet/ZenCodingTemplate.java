@@ -23,8 +23,6 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -303,9 +301,8 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
   public static void doWrap(@NotNull final String abbreviation, @NotNull final CustomTemplateCallback callback) {
     final ZenCodingGenerator defaultGenerator = findApplicableDefaultGenerator(callback, true);
     assert defaultGenerator != null;
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(callback.getProject(), () -> callback.getEditor().getCaretModel().runForEachCaret(
+      __ -> {
         String selectedText = callback.getEditor().getSelectionModel().getSelectedText();
         if (selectedText != null) {
           ZenCodingNode node = parse(abbreviation, callback, defaultGenerator, selectedText);
@@ -324,8 +321,7 @@ public class ZenCodingTemplate extends CustomLiveTemplateBase {
             CommonRefactoringUtil.showErrorHint(callback.getProject(), callback.getEditor(), e.getMessage(), "Emmet error", "");
           }
         }
-      }
-    }), CodeInsightBundle.message("insert.code.template.command"), null));
+      }), CodeInsightBundle.message("insert.code.template.command"), null));
   }
 
   @Override
