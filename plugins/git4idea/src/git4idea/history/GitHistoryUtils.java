@@ -249,10 +249,7 @@ public class GitHistoryUtils {
     GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
   }
 
-  public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
-    // adjust path using change manager
-    path = VcsUtil.getLastCommitPath(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(path);
+  public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
     h.setSilent(true);

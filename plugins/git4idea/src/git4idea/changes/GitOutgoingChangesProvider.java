@@ -115,7 +115,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;
     try {
-      return new Date(GitHistoryUtils.getAuthorTime(myProject, file, revision.asString()));
+      VirtualFile root = GitUtil.getGitRoot(VcsUtil.getLastCommitPath(myProject, file));
+      return new Date(GitHistoryUtils.getAuthorTime(myProject, root, revision.asString()));
     }
     catch (VcsException e) {
       return null;
@@ -124,6 +125,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
 
   /**
    * Get a merge base between the current branch and specified branch.
+   *
    * @return the common commit or null if the there is no common commit
    */
   @Nullable
