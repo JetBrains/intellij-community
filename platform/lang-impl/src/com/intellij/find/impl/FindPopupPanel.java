@@ -602,6 +602,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           myFileMaskField.hidePopup();
           return;
         }
+        if (myScopeUI.hideAllPopups()) {
+          return;
+        }
         if (enterAsOK) {
           myOkActionListener.actionPerformed(null);
         }
