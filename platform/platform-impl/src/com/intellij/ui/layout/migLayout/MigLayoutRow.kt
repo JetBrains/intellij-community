@@ -26,19 +26,32 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   companion object {
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, isParentRowLabeled: Boolean) {
-      val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true)
-      val commentComponentCC = CC()
-      val commentRow = parent.createChildRow()
-      commentRow.addComponent(commentComponent, lazyOf(commentComponentCC))
-      commentComponentCC.horizontal.gapBefore = gapToBoundSize(commentRow.getCommentLeftInset(component), true)
+      val cc = CC()
+      parent.createChildRow().addComponent(ComponentPanelBuilder.createCommentComponent(comment, true), lazyOf(cc))
+      cc.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(parent.spacing, component), true)
       if (isParentRowLabeled) {
-        commentComponentCC.skip()
+        cc.skip()
       }
-      commentRow.componentConstraints.put(commentComponent, commentComponentCC)
+    }
+
+    // as static method to ensure that members of current row are not used
+    private fun createSeparatorRow(row: MigLayoutRow, title: String?) {
+      val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
+      val cc = CC()
+      cc.vertical.gapBefore = gapToBoundSize(row.spacing.largeVerticalGap, false)
+      if (title == null) {
+        cc.vertical.gapAfter = gapToBoundSize(row.spacing.verticalGap * 2, false)
+      }
+      else {
+        cc.vertical.gapAfter = gapToBoundSize(row.spacing.verticalGap, false)
+        // TitledSeparator doesn't grow by default opposite to SeparatorComponent
+        cc.growX()
+      }
+      row.addComponent(separatorComponent, lazyOf(cc))
     }
   }
 
-  val components = SmartList<JComponent>()
+  val components: MutableList<JComponent> = SmartList()
   var rightIndex = Int.MAX_VALUE
 
   private var lastComponentConstraintsWithSplit: CC? = null
@@ -116,21 +129,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (isSeparated) {
       val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
       subRows.add(row)
-      row.apply {
-        val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
-        val cc = CC()
-        cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
-        if (title == null) {
-          cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
-        }
-        else {
-          cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
-          // TitledSeparator doesn't grow by default opposite to SeparatorComponent
-          cc.growX()
-        }
-        componentConstraints.put(separatorComponent, cc)
-        addComponent(separatorComponent, lazyOf(cc))
-      }
+      createSeparatorRow(row, title)
     }
 
     val row = MigLayoutRow(this, componentConstraints, builder,
@@ -173,35 +172,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private fun computeChildRowIndent(): Int {
     val firstComponent = components.firstOrNull() ?: return 0
     if (firstComponent is JRadioButton || firstComponent is JCheckBox) {
-      return getCommentLeftInset(firstComponent)
+      return getCommentLeftInset(spacing, firstComponent)
     }
     else {
       return spacing.horizontalGap * 3
     }
-  }
-
-  private fun getCommentLeftInset(component: JComponent): Int {
-    if (component is JTextField) {
-      // 1px border, better to indent comment text
-      return 1
-    }
-
-    // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
-    // this logic will be moved into computeCommentInsets
-    val componentBorderVisualLeftPadding = when {
-      spacing.isCompensateVisualPaddings -> {
-        val border = component.border
-        if (border is VisualPaddingsProvider) {
-          border.getVisualPaddings(component)?.left ?: 0
-        }
-        else {
-          0
-        }
-      }
-      else -> 0
-    }
-    val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
-    return insets.left - componentBorderVisualLeftPadding
   }
 
   override operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int, growPolicy: GrowPolicy?, comment: String?) {
@@ -270,7 +245,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       componentCC.value.horizontal.gapBefore = builder.defaultComponentConstraintCreator.horizontalUnitSizeGap
 
       if (lastComponentConstraintsWithSplit == null) {
-        val prevComponent = components.get(components.size - 2)!!
+        val prevComponent = components.get(components.size - 2)
         var cc = componentConstraints.get(prevComponent)
         if (cc == null) {
           cc = CC()
@@ -300,4 +275,28 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun createRow(label: String?): Row {
     return createChildRow(label = label?.let { Label(it) })
   }
+}
+
+private fun getCommentLeftInset(spacing: SpacingConfiguration, component: JComponent): Int {
+  if (component is JTextField) {
+    // 1px border, better to indent comment text
+    return 1
+  }
+
+  // as soon as ComponentPanelBuilder will also compensate visual paddings (instead of compensating on LaF level),
+  // this logic will be moved into computeCommentInsets
+  val componentBorderVisualLeftPadding = when {
+    spacing.isCompensateVisualPaddings -> {
+      val border = component.border
+      if (border is VisualPaddingsProvider) {
+        border.getVisualPaddings(component)?.left ?: 0
+      }
+      else {
+        0
+      }
+    }
+    else -> 0
+  }
+  val insets = ComponentPanelBuilder.computeCommentInsets(component, true)
+  return insets.left - componentBorderVisualLeftPadding
 }
