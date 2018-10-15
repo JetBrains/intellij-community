@@ -5,7 +5,10 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.*;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -101,6 +104,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
   }
+
+  private boolean myFirstSetup = true;
 
   /**
    * Invoked via reflection.
@@ -410,7 +415,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     final UIManager.LookAndFeelInfo oldLaf = myCurrentLaf;
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
-    ApplicationManager.getApplication().invokeLater(() -> updateEditorScheme(oldLaf));
+    if (!myFirstSetup) {
+      ApplicationManager.getApplication().invokeLater(() -> updateEditorScheme(oldLaf));
+    }
+    myFirstSetup = false;
   }
 
   private static void updateEditorScheme(UIManager.LookAndFeelInfo oldLaf) {
@@ -423,8 +431,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       PropertiesComponent properties = PropertiesComponent.getInstance();
       String savedEditorThemeKey = dark ? DARCULA_EDITOR_THEME_KEY : DEFAULT_EDITOR_THEME_KEY;
       String toSavedEditorThemeKey = dark ? DEFAULT_EDITOR_THEME_KEY : DARCULA_EDITOR_THEME_KEY;
-      String themeName =  wasUITheme ? dark ? DarculaLaf.NAME : EditorColorsScheme.DEFAULT_SCHEME_NAME
-                                     : properties.getValue(savedEditorThemeKey);
+      String themeName =  properties.getValue(savedEditorThemeKey);
       if (themeName != null && colorsManager.getScheme(themeName) != null) {
         targetScheme = themeName;
       }
