@@ -36,8 +36,10 @@ public class PsiTreeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiTreeUtil");
 
   private static final Key<Object> MARKER = Key.create("PsiTreeUtil.copyElements.MARKER");
-  private static final Class[] WS = {PsiWhiteSpace.class};
-  private static final Class[] WS_COMMENTS = {PsiWhiteSpace.class, PsiComment.class};
+  @SuppressWarnings("unchecked")
+  private static final Class<? extends PsiElement>[] WS = new Class[]{PsiWhiteSpace.class};
+  @SuppressWarnings("unchecked") private static final Class<? extends PsiElement>[]
+    WS_COMMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   /**
    * Checks whether one element in the psi tree is under another.
@@ -754,7 +756,7 @@ public class PsiTreeUtil {
 
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
+  public static PsiElement skipSiblingsForward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
       if (!instanceOf(e, elementClasses)) {
@@ -778,7 +780,7 @@ public class PsiTreeUtil {
 
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class... elementClasses) {
+  public static PsiElement skipSiblingsBackward(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... elementClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getPrevSibling(); e != null; e = e.getPrevSibling()) {
       if (!instanceOf(e, elementClasses)) {
@@ -802,7 +804,7 @@ public class PsiTreeUtil {
 
   @Nullable
   @Contract("null, _ -> null")
-  public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class... parentClasses) {
+  public static PsiElement skipParentsOfType(@Nullable PsiElement element, @NotNull Class<? extends PsiElement>... parentClasses) {
     if (element == null) return null;
     for (PsiElement e = element.getParent(); e != null; e = e.getParent()) {
       if (!instanceOf(e, parentClasses)) {
