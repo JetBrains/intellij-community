@@ -276,7 +276,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements BaseComponen
 
   @Override
   public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
+    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new ArtifactVirtualFileListener(myProject, this));
     updateWatchedRoots();
   }
 
