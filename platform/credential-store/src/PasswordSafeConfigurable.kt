@@ -2,7 +2,10 @@
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
-import com.intellij.credentialStore.keePass.*
+import com.intellij.credentialStore.keePass.DB_FILE_NAME
+import com.intellij.credentialStore.keePass.KeePassFileManager
+import com.intellij.credentialStore.keePass.MasterKeyFileStorage
+import com.intellij.credentialStore.keePass.getDefaultMasterPasswordFile
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
@@ -107,7 +110,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     settings.keepassDb = newDbFile.toString()
     try {
-      KeePassCredentialStore(dbFile = newDbFile, masterKeyFile = getDefaultMasterPasswordFile()).save()
+      KeePassFileManager(newDbFile, getDefaultMasterPasswordFile()).useExisting()
     }
     catch (e: IncorrectMasterPasswordException) {
       throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
