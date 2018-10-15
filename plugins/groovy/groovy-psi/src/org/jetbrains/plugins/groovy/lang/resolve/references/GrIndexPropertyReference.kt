@@ -9,9 +9,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
 import org.jetbrains.plugins.groovy.lang.psi.util.isClassLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.isSimpleArrayAccess
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReferenceBase
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
 
-abstract class GrIndexPropertyReference(element: GrIndexProperty) : GroovyCallReferenceBase<GrIndexProperty>(element) {
+abstract class GrIndexPropertyReference(element: GrIndexProperty) : GroovyMethodCallReferenceBase<GrIndexProperty>(element) {
 
   /**
    * Consider expression `foo[a, b, c]`.

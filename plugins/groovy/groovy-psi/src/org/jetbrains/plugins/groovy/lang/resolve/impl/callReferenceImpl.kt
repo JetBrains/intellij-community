@@ -6,9 +6,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference
 
-fun GroovyCallReference.resolveImpl(incomplete: Boolean): Collection<GroovyResolveResult> {
+fun GroovyMethodCallReference.resolveImpl(incomplete: Boolean): Collection<GroovyResolveResult> {
   val receiver = receiver ?: TypesUtil.getJavaLangObject(element)
   val methodName = methodName
 

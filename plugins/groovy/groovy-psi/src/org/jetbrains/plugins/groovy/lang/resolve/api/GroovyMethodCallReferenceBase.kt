@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveImpl
 
-abstract class GroovyCallReferenceBase<T : PsiElement>(element: T) : GroovyReferenceBase<T>(element), GroovyCallReference {
+abstract class GroovyMethodCallReferenceBase<T : PsiElement>(element: T) : GroovyReferenceBase<T>(element), GroovyMethodCallReference {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     if (realReference) {
