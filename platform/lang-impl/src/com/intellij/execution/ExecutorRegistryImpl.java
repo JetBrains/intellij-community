@@ -305,14 +305,15 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       return RunManager.getInstance(project).getSelectedConfiguration();
     }
 
-    private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @NotNull DataContext dataContext) {
+    private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
       if (configuration instanceof CompoundRunConfiguration) {
+        RunManager runManager = RunManager.getInstance(project);
         for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets()) {
-          run(project, settingsAndEffectiveTarget.getConfiguration(), dataContext);
+          run(project, settingsAndEffectiveTarget.getConfiguration(), runManager.findSettings(configuration), dataContext);
         }
       }
       else {
-        ExecutionEnvironmentBuilder builder = configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
+        ExecutionEnvironmentBuilder builder = settings == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, settings);
         if (builder == null) {
           return;
         }
@@ -326,10 +327,11 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       if (project == null || project.isDisposed()) {
         return;
       }
+
       MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
       if (selectedConfiguration != null) {
-        run(project, selectedConfiguration.getConfiguration(), e.getDataContext());
+        run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
       }
     }
   }
