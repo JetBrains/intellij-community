@@ -23,6 +23,21 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             val noGrid: Boolean = false,
                             private val buttonGroup: ButtonGroup? = null,
                             private val indent: Int /* level number (nested rows) */) : Row() {
+  companion object {
+    // as static method to ensure that members of current row are not used
+    private fun createCommentRow(parent: MigLayoutRow, comment: String, component: JComponent, isParentRowLabeled: Boolean) {
+      val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true)
+      val commentComponentCC = CC()
+      val commentRow = parent.createChildRow()
+      commentRow.addComponent(commentComponent, lazyOf(commentComponentCC))
+      commentComponentCC.horizontal.gapBefore = gapToBoundSize(commentRow.getCommentLeftInset(component), true)
+      if (isParentRowLabeled) {
+        commentComponentCC.skip()
+      }
+      commentRow.componentConstraints.put(commentComponent, commentComponentCC)
+    }
+  }
+
   val components = SmartList<JComponent>()
   var rightIndex = Int.MAX_VALUE
 
@@ -213,16 +228,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
       val isParentRowLabeled = labeled
       // create comment in a new sibling row (developer is still able to create sub rows because rows is not stored in a flat list)
-      parent!!.createChildRow().apply {
-        val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true)
-        val commentComponentCC = CC()
-        addComponent(commentComponent, lazyOf(commentComponentCC))
-        commentComponentCC.horizontal.gapBefore = gapToBoundSize(getCommentLeftInset(component), true)
-        if (isParentRowLabeled) {
-          commentComponentCC.skip()
-        }
-        componentConstraints.put(commentComponent, commentComponentCC)
-      }
+      createCommentRow(parent!!, comment, component, isParentRowLabeled)
     }
 
     if (buttonGroup != null && component is JToggleButton) {
