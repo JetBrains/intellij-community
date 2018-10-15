@@ -9,6 +9,8 @@
   <!-- Enable command-line language -->
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
+  <xi:include href="/META-INF/python-copyright.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.jetbrains.python.testing.PyTestLegacyInteropInitializer"/>
     <psi.treeChangePreprocessor implementation="com.jetbrains.python.PythonPsiManager"/>
