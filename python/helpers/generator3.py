@@ -87,8 +87,19 @@ def is_mac_skipped_module(path, f):
     return 0
 
 
-def is_skipped_module(path, f):
-    return is_mac_skipped_module(path, f) or is_posix_skipped_module(path, f[:f.rindex('.')]) or 'pynestkernel' in f
+def is_tensorflow_contrib_ops_module(qname):
+    # These modules cannot be imported directly. Instead tensorflow uses special
+    # tensorflow.contrib.util.loader.load_op_library() to load them and create
+    # Python modules at runtime. Their names in sys.modules are then md5 sums
+    # of the list of exported Python definitions.
+    return TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN.match(qname)
+
+
+def is_skipped_module(path, f, qname):
+    return (is_mac_skipped_module(path, f) or
+            is_posix_skipped_module(path, f[:f.rindex('.')]) or
+            'pynestkernel' in f or
+            is_tensorflow_contrib_ops_module(qname))
 
 
 def is_module(d, root):
@@ -139,7 +150,11 @@ def list_binaries(paths):
             note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
             for f in files:
                 name = cut_binary_lib_suffix(root, f)
-                if name and not is_skipped_module(root, f):
+                if name:
+                    the_name = prefix + name
+                    if is_skipped_module(root, f, the_name):
+                        note('skipping module %s' % the_name)
+                        continue
                     note("cutout: %s", name)
                     if preprefix:
                         note("prefixes: %s %s", prefix, preprefix)
@@ -147,7 +162,6 @@ def list_binaries(paths):
                         if pre_name in res:
                             res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
-                    the_name = prefix + name
                     file_path = os.path.join(root, f)
 
                     res[the_name.upper()] = (the_name, file_path, os.path.getsize(file_path), int(os.stat(file_path).st_mtime))
