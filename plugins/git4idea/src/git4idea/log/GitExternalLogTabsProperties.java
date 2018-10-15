@@ -84,8 +84,7 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
 
   @NotNull
   private static List<RecentGroup> convertToRecentGroups(Deque<VcsLogUiPropertiesImpl.UserGroup> groups) {
-    if (ContainerUtil.isEmpty(groups)) return new ArrayList<>();
-    return ContainerUtil.map2List(groups, RecentGroup::new);
+    return new ArrayList<>(ContainerUtil.map2List(groups, RecentGroup::new));
   }
 
   public static class State {
