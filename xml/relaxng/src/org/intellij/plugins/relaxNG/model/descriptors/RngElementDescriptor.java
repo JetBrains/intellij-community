@@ -28,6 +28,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
@@ -271,6 +272,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       return decl;
     }
 
+    return AstLoadingFilter.forceAllowTreeLoading(file, () -> getDeclarationImpl(project, decl, location, file));
+  }
+
+  @Nullable
+  private static PsiElement getDeclarationImpl(@NotNull Project project, PsiElement decl, Locator location, PsiFile file) {
     final int column = location.getColumnNumber();
     final int line = location.getLineNumber();
 

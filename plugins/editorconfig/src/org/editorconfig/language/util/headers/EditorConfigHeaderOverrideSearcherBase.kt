@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.util.headers
 
+import com.intellij.util.AstLoadingFilter
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPsiFile
 import org.editorconfig.language.psi.EditorConfigSection
@@ -27,7 +28,7 @@ abstract class EditorConfigHeaderOverrideSearcherBase {
     val currentFile = EditorConfigPsiTreeUtil.getOriginalFile(header.containingFile) as? EditorConfigPsiFile ?: return emptySequence()
 
     return findRelevantPsiFiles(currentFile)
-      .map(EditorConfigPsiFile::sections)
+      .map { AstLoadingFilter.forceAllowTreeLoading<List<EditorConfigSection>, RuntimeException>(it) { it.sections } }
       .flatMap(List<EditorConfigSection>::asSequence)
       .map(EditorConfigSection::getHeader)
       .filter(EditorConfigHeader::isValidGlob)

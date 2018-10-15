@@ -120,7 +120,8 @@ public class JsonCachedValues {
 
   @Nullable
   static String fetchSchemaId(@NotNull PsiFile psiFile) {
-    final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
+    final JsonObject topLevelValue = AstLoadingFilter
+      .forceAllowTreeLoading(psiFile, () ->ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class));
     return topLevelValue == null ? null : readId(topLevelValue);
   }
 
