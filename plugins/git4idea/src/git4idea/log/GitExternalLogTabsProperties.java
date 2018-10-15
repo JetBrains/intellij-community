@@ -12,9 +12,7 @@ import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties.RecentGroup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent.BRANCH_FILTER_NAME;
 import static com.intellij.vcs.log.ui.filter.UserFilterPopupComponent.USER_FILER_NAME;
@@ -69,10 +67,8 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
           newState.LONG_EDGES_VISIBLE = oldState.LONG_EDGES_VISIBLE;
           newState.BEK_SORT_TYPE = oldState.BEK_SORT_TYPE;
           newState.SHOW_ROOT_NAMES = oldState.SHOW_ROOT_NAMES;
-          List<RecentGroup> recentBranches = ContainerUtil.map2List(oldState.RECENTLY_FILTERED_BRANCH_GROUPS, RecentGroup::new);
-          List<RecentGroup> recentUsers = ContainerUtil.map2List(oldState.RECENTLY_FILTERED_USER_GROUPS, RecentGroup::new);
-          newState.RECENT_FILTERS.put(BRANCH_FILTER_NAME, recentBranches);
-          newState.RECENT_FILTERS.put(USER_FILER_NAME, recentUsers);
+          newState.RECENT_FILTERS.put(BRANCH_FILTER_NAME, convertToRecentGroups(oldState.RECENTLY_FILTERED_BRANCH_GROUPS));
+          newState.RECENT_FILTERS.put(USER_FILER_NAME, convertToRecentGroups(oldState.RECENTLY_FILTERED_USER_GROUPS));
           newState.HIGHLIGHTERS.putAll(oldState.HIGHLIGHTERS);
           newState.FILTERS.putAll(oldState.FILTERS);
           newState.COLUMN_WIDTH.putAll(oldState.COLUMN_WIDTH);
@@ -84,6 +80,12 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
       }
     }
     return new TabState();
+  }
+
+  @NotNull
+  private static List<RecentGroup> convertToRecentGroups(Deque<VcsLogUiPropertiesImpl.UserGroup> groups) {
+    if (ContainerUtil.isEmpty(groups)) return new ArrayList<>();
+    return ContainerUtil.map2List(groups, RecentGroup::new);
   }
 
   public static class State {
