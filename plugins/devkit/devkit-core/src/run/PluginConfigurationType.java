@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationSingletonPolicy;
 import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
@@ -84,5 +85,11 @@ public final class PluginConfigurationType extends SimpleConfigurationType {
     }
 
     return myVmParameters;
+  }
+
+  @NotNull
+  @Override
+  public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
   }
 }
