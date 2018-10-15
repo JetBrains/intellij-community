@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -74,4 +75,8 @@ public interface SearchEverywhereClassifier {
 
   @Nullable
   default GlobalSearchScope getProjectScope(@NotNull Project project) { return null; }
+
+  static boolean isNewUIEnabled() {
+    return Registry.is("new.search.everywhere");
+  }
 }
