@@ -326,6 +326,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     // ensure that expensive save operation is not performed before startupActivityPassed
+    // first save may be quite cost operation, because cache is not warmed up yet
     if (!isInitialized()) {
       LOG.debug("Skip save for " + getName() + ": not initialized");
       return;
