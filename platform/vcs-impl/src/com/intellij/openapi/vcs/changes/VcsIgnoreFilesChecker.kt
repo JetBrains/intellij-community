@@ -1,28 +1,32 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.VcsListener
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vcsUtil.VcsUtil
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.VcsIgnoreFilesChecker")
+class VcsIgnoreFilesChecker(private val project: Project) : ProjectComponent {
 
-class VcsIgnoreFilesChecker : StartupActivity, DumbAware {
+  override fun projectOpened() =
+    project.messageBus
+      .connect()
+      .subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+        generateVcsIgnoreFileIfNeeded(project)
+      })
 
-  override fun runActivity(project: Project) = generateVcsIgnoreFileIfNeeded(project)
+  private fun generateVcsIgnoreFileIfNeeded(project: Project) =
+    ApplicationManager.getApplication().executeOnPooledThread {
+      if (!project.isDisposed) {
+        val projectFile = project.projectFile ?: return@executeOnPooledThread
 
-  private fun generateVcsIgnoreFileIfNeeded(project: Project) {
-    //at the moment we check and generate if needed ignore file only for projectDir. In future we can utilize VcsRootDetector for that purpose
-    val projectBasePath = project.basePath ?: return
-    val projectBaseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath) ?: return
-    val vcs = VcsUtil.getVcsFor(project, projectBaseDir)
-    if (vcs != null) {
-      LOG.debug("Generate VCS file for $vcs")
-      VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectBaseDir)
+        val projectVcsRoot = VcsUtil.getVcsRootFor(project, projectFile)
+        if (projectVcsRoot != null) {
+          VcsImplUtil.generateIgnoreFileIfNeeded(project, projectVcsRoot)
+        }
+      }
     }
-  }
 }
