@@ -412,7 +412,7 @@ if __name__ == "__main__":
     opts = dict(opts)
 
     quiet = '-q' in opts
-    _is_verbose = '-v' in opts
+    set_verbose('-v' in opts)
     subdir = opts.get('-d', '')
 
     if not opts or '-h' in opts:

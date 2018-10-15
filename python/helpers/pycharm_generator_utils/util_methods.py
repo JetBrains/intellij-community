@@ -615,9 +615,14 @@ def action(msg, *data):
     CURRENT_ACTION = msg % data
     note(msg, *data)
 
+
+def set_verbose(verbose):
+    global _is_verbose
+    _is_verbose = verbose
+
+
 def note(msg, *data):
     """Say something at debug info level (stderr)"""
-    global _is_verbose
     if _is_verbose:
         sys.stderr.write(msg % data)
         sys.stderr.write("\n")
