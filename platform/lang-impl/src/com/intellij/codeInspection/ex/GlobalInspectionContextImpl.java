@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ui.DefaultInspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.ui.InspectionTreeState;
-import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
+import com.intellij.codeInspection.ui.actions.ExportToXMLAction;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
 import com.intellij.concurrency.SensitiveProgressWrapper;
@@ -209,7 +209,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         for (ScopeToolState toolDescr : sameTools.getTools()) {
           InspectionToolWrapper toolWrapper = toolDescr.getTool();
           if (toolWrapper instanceof LocalInspectionToolWrapper) {
-            hasProblems = ExportHTMLAction.getInspectionResultFile(outputPath, toolWrapper.getShortName()).exists();
+            hasProblems = ExportToXMLAction.getInspectionResultFile(outputPath, toolWrapper.getShortName()).exists();
           }
           else {
             InspectionToolPresentation presentation = getPresentation(toolWrapper);
@@ -226,7 +226,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       // close "problem" tag for local inspections (see DefaultInspectionToolPresentation.addProblemElement())
       if (hasProblems) {
         try {
-          final File file = ExportHTMLAction.getInspectionResultFile(outputPath, sameTools.getShortName());
+          final File file = ExportToXMLAction.getInspectionResultFile(outputPath, sameTools.getShortName());
           inspectionsResults.add(file);
           FileUtil.writeToFile(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(CharsetToolkit.UTF8_CHARSET), true);
         }
@@ -247,9 +247,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         try {
           int i = 0;
           for (Tools inspection : inspections) {
-            inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
+            inspectionsResults.add(ExportToXMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
             try {
-              BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
+              BufferedWriter writer = ExportToXMLAction.getWriter(outputPath, inspection.getShortName());
               writers[i] = writer;
               XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(writer);
               xmlWriters[i++] = xmlWriter;

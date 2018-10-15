@@ -308,7 +308,7 @@
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
-    
+
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
@@ -316,7 +316,7 @@
       <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
-    
+
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
@@ -1070,6 +1070,15 @@
       <action id="EditInspectionSettings" class="com.intellij.codeInspection.ui.actions.EditSettingsAction"/>
       <action id="DisableInspection" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$DisableInspection"/>
       <action id="RunInspectionOn" class="com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction$RunInspectionOn"/>
+    </group>
+
+    <group id="InspectionToolWindow.Toolbar">
+      <action id="ExportInspectionResults" class="com.intellij.codeInspection.ui.actions.ExportAction"/>
+    </group>
+
+    <group id="InspectionToolWindow.ExportPopup">
+      <action id="ExportInspectionResultsToHTML" class="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
+      <action id="ExportInspectionResultsToXML" class="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
     </group>
 
     <group id="ExtractMethodToolWindow.TreePopup" compact="true">

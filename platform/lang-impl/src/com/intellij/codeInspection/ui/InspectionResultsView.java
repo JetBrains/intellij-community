@@ -11,7 +11,6 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.offlineViewer.OfflineInspectionRVContentProvider;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.*;
@@ -307,7 +306,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupByDirectoryAction(this));
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
-    specialGroup.add(new ExportHTMLAction(this));
+    specialGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("InspectionToolWindow.Toolbar"));
     specialGroup.add(new InvokeQuickFixAction(this));
     return createToolbar(specialGroup);
   }
