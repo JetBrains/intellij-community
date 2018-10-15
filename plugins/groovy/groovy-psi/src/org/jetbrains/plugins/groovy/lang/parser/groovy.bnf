@@ -770,7 +770,7 @@ expression_list ::= expression (',' expression)*
 // FIXME get rid of this weird logic
 private for_body ::= &<<extendedStatement>> | &';' | block_or_statement { name = 'loop body' }
 
-synchronized_statement ::= 'synchronized' '(' expression ')' lazy_block
+synchronized_statement ::= 'synchronized' '(' expression ')' mb_nl lazy_block
 {
   pin = 2
 }
