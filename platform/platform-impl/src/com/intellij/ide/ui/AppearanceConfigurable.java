@@ -71,6 +71,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myFontSizeCombo.setEditable(true);
     myComponent.myPresentationModeFontSize.setEditable(true);
 
+    //noinspection unchecked
+    myComponent.myLafComboBox.setModel(new DefaultComboBoxModel(LafManager.getInstance().getInstalledLookAndFeels()));
     myComponent.myLafComboBox.setRenderer(new LafComboBoxRenderer());
 
     myComponent.myAntialiasingInIDE.setModel(new DefaultComboBoxModel(AntialiasingType.values()));
@@ -330,7 +332,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
-    myComponent.setHighContrast(settings.getHighContrast());
+    myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
     myComponent.myDisableMnemonics.setSelected(settings.getDisableMnemonics());
@@ -432,10 +434,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     int tooltipDelay = myComponent.myInitialTooltipDelaySlider.getValue();
     isModified |=  tooltipDelay != Registry.intValue("ide.tooltip.initialDelay");
 
-    boolean isHighContrast = settings.getHighContrast();
-    if (myComponent.myHighContrast != isHighContrast) {
-      myComponent.setHighContrast(isHighContrast);
-    }
     return isModified;
   }
 
@@ -488,15 +486,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
     private JBCheckBox myDarkWindowHeaders;
-
-    boolean myHighContrast;
-
-    void setHighContrast(boolean isHighContrast) {
-      //noinspection unchecked
-      myLafComboBox.setModel(new DefaultComboBoxModel(AccessibilityConfigurable.getInstalledLookAndFeels(isHighContrast)));
-      myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
-      myHighContrast = isHighContrast;
-    }
 
     MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());
