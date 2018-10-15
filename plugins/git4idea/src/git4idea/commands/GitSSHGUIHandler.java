@@ -183,7 +183,7 @@ public class GitSSHGUIHandler {
   /**
    * Ask password
    *
-   * @param username      a user name
+   * @param username      a user name (ex: "user@host:port" string)
    * @param resetPassword true if the previous password supplied to the service was incorrect
    * @param lastError     the previous error  @return a password or null if dialog was cancelled.
    */
