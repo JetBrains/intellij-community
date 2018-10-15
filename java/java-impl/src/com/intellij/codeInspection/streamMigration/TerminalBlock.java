@@ -65,9 +65,8 @@ class TerminalBlock {
     int startOffset = controlFlow.getStartOffset(myStatements[0]);
     int endOffset = controlFlow.getEndOffset(myStatements[myStatements.length - 1]);
     if (startOffset < 0 || endOffset < 0) return null;
-    return ControlFlowUtil
-      .findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(), PsiContinueStatement.class,
-                                   PsiBreakStatement.class, PsiReturnStatement.class);
+    return ControlFlowUtil.findExitPointsAndStatements(controlFlow, startOffset, endOffset, new IntArrayList(),
+                                                       ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES);
   }
 
   PsiStatement getSingleStatement() {

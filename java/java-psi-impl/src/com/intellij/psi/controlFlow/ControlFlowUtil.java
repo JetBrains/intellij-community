@@ -354,7 +354,7 @@ public class ControlFlowUtil {
   @NotNull
   public static Collection<PsiStatement> findExitPointsAndStatements(@NotNull ControlFlow flow, final int start, final int end,
                                                                      @NotNull IntArrayList exitPoints,
-                                                                     @NotNull Class... classesFilter) {
+                                                                     @NotNull Class<? extends PsiStatement>... classesFilter) {
     if (end == start) {
       exitPoints.add(end);
       return Collections.emptyList();
@@ -461,7 +461,9 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  @SuppressWarnings("unchecked")
+  public static final Class<? extends PsiStatement>[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(@NotNull ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
