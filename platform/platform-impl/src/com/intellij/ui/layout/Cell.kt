@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
@@ -57,6 +58,13 @@ abstract class Cell {
   fun link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit) {
     val result = Link(text, action = action)
     style?.let { UIUtil.applyStyle(it, result) }
+    result()
+  }
+
+  fun browserLink(text: String, url: String) {
+    val result = HyperlinkLabel()
+    result.setHyperlinkText(text)
+    result.setHyperlinkTarget(url)
     result()
   }
 
