@@ -17,7 +17,7 @@ class Groovy25ResolveTest extends Groovy25Test implements ResolveTest {
 class A { def prop }
 new A().tap { <caret>prop = 1 }
 ''', GrReferenceExpression
-    def reference = expression.LValueReference
+    def reference = expression
     assert reference != null
     def resolved = reference.resolve()
     assert resolved instanceof GrAccessorMethod
