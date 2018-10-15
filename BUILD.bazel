@@ -92,6 +92,8 @@ iml_project(
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.idea",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.output.parser",
         "//tools/adt/idea/android-kotlin:intellij.android.kotlin.tests",
+        "//tools/adt/idea/android-lang-databinding:intellij.android.lang-databinding",
+        "//tools/adt/idea/android-lang-databinding:intellij.android.lang-databinding.tests",
         "//tools/adt/idea/android-lang:intellij.android.lang",
         "//tools/adt/idea/android-lang:intellij.android.lang.tests",
         "//tools/adt/idea/android-layout-inspector",
