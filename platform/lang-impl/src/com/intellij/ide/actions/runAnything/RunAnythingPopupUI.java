@@ -99,7 +99,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private Editor myEditor;
   @Nullable
   private VirtualFile myVirtualFile;
-  private DataContext myDataContext;
+  @NotNull private final DataContext myDataContext;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
   private String myLastInputText = null;
@@ -406,12 +406,12 @@ public class RunAnythingPopupUI extends BigPopupUI {
     return topPanel;
   }
 
-  public void createDataContext(AnActionEvent e) {
+  @NotNull
+  public DataContext createDataContext(@NotNull AnActionEvent e) {
     HashMap<String, Object> dataMap = ContainerUtil.newHashMap();
-    //todo
     dataMap.put(CommonDataKeys.PROJECT.getName(), e.getProject());
     dataMap.put(LangDataKeys.MODULE.getName(), getModule());
-    myDataContext = createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
+    return createDataContext(SimpleDataContext.getSimpleContext(dataMap, e.getDataContext()), ALT_IS_PRESSED.get());
   }
 
   public void initMySearchField() {
@@ -837,6 +837,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
     myEditor = actionEvent.getData(CommonDataKeys.EDITOR);
     myVirtualFile = actionEvent.getData(CommonDataKeys.VIRTUAL_FILE);
 
+    myDataContext = createDataContext(actionEvent);
+
     init();
 
     initSearchActions();
@@ -846,10 +848,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
     initSearchField();
 
     initMySearchField();
-
-    createDataContext(actionEvent);
-
-    //installActions();
   }
 
   @NotNull
