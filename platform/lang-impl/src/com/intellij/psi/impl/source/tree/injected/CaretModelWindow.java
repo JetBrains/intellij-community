@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +92,9 @@ class CaretModelWindow implements CaretModel {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now
-        CaretEvent event = new CaretEvent(myEditorWindow, createInjectedCaret(e.getCaret()),
+        Caret caret = e.getCaret();
+        assert caret != null;
+        CaretEvent event = new CaretEvent(createInjectedCaret(caret),
                                           myEditorWindow.hostToInjected(e.getOldPosition()),
                                           myEditorWindow.hostToInjected(e.getNewPosition()));
         listener.caretPositionChanged(event);
@@ -242,6 +245,7 @@ class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
+  @Contract("null -> null; !null -> !null")
   private InjectedCaret createInjectedCaret(Caret caret) {
     if (caret == null) {
       return null;

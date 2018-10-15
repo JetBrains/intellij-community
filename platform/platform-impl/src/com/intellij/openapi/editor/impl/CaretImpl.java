@@ -491,7 +491,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
 
     if (!oldVisualPosition.equals(myVisibleCaret) || !oldCaretPosition.equals(myLogicalCaret)) {
-      CaretEvent event = new CaretEvent(myEditor, this, oldCaretPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
       }
@@ -606,7 +606,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     requestRepaint(oldY);
 
     if (fireListeners && (!oldPosition.equals(myLogicalCaret) || !oldVisualPosition.equals(myVisibleCaret))) {
-      CaretEvent event = new CaretEvent(myEditor, this, oldPosition, myLogicalCaret);
+      CaretEvent event = new CaretEvent(this, oldPosition, myLogicalCaret);
       myEditor.getCaretModel().fireCaretPositionChanged(event);
     }
   }
