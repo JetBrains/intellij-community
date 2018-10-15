@@ -268,11 +268,13 @@ public class GitHistoryUtils {
   /**
    * Get name of the file in the last commit. If file was renamed, returns the previous name.
    *
+   * @deprecated use {@link VcsUtil#getLastCommitPath(Project, FilePath)}
    * @param project the context project
    * @param path    the path to check
    * @return the name of file in the last commit or argument
    */
   @NotNull
+  @Deprecated
   public static FilePath getLastCommitName(@NotNull Project project, @NotNull FilePath path) {
     return VcsUtil.getLastCommitPath(project, path);
   }
