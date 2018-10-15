@@ -291,12 +291,18 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private VirtualFile getWorkDirectory(@Nullable Module module, boolean isAltPressed) {
     if (isAltPressed) {
       if (myVirtualFile != null) {
-        return myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        VirtualFile file = myVirtualFile.isDirectory() ? myVirtualFile : myVirtualFile.getParent();
+        if (file != null) {
+          return file;
+        }
       }
 
       VirtualFile[] selectedFiles = FileEditorManager.getInstance(getProject()).getSelectedFiles();
       if (selectedFiles.length > 0) {
-        return selectedFiles[0].getParent();
+        VirtualFile file = selectedFiles[0].getParent();
+        if (file != null) {
+          return file;
+        }
       }
     }
 
