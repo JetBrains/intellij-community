@@ -885,19 +885,34 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  public void saveRemainingPatches(final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                                   final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext, boolean delete) {
+  @Nullable
+  public ShelvedChangeList saveRemainingPatches(final ShelvedChangeList changeList,
+                                                final List<FilePatch> remainingPatches,
+                                                final List<ShelvedBinaryFile> remainingBinaries,
+                                                CommitContext commitContext,
+                                                boolean delete) {
+    ShelvedChangeList newlyCreatedList = null;
     if ((delete && changeList.isDeleted()) || (!delete && changeList.isRecycled())) {
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
     }
     else {
-      saveRemainingAndRecycleOthers(changeList, remainingPatches, remainingBinaries, commitContext, delete);
+      newlyCreatedList = saveRemainingAndRecycleOthers(changeList, remainingPatches, remainingBinaries, commitContext, delete);
     }
     notifyStateChanged();
+    return newlyCreatedList;
   }
 
-  private void saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList, final List<FilePatch> remainingPatches,
-                                             final List<ShelvedBinaryFile> remainingBinaries, CommitContext commitContext, boolean delete) {
+  /**
+   * Delete applied/deleted changes from original list and create recycled/delete copy with others
+   *
+   * @return newly created recycled/deleted list or null if no new list was created
+   */
+  @Nullable
+  private ShelvedChangeList saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList,
+                                                          final List<FilePatch> remainingPatches,
+                                                          final List<ShelvedBinaryFile> remainingBinaries,
+                                                          CommitContext commitContext,
+                                                          boolean delete) {
 
     try {
       ShelvedChangeList listCopy = createChangelistCopy(changeList);
@@ -905,15 +920,18 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
       filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
       if (delete) {
-        deleteChangeList(listCopy);
+        //if completely deleted -> return null;
+        if (deleteChangeList(listCopy) == null) return null;
       }
       else {
         recycleChangeList(listCopy);
       }
       saveListAsScheme(listCopy);
+      return listCopy;
     }
     catch (IOException e) {
       // do not delete if cannot recycle
+      return null;
     }
   }
 
@@ -1028,7 +1046,15 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     notifyStateChanged();
   }
 
-  public void deleteChangeList(@NotNull final ShelvedChangeList changeList) {
+
+  /**
+   * Remove changelist completely or mark as deleted
+   *
+   * @param changeList list to delete or to mark as deleted
+   * @return changelist if marked as deleted or null if was completely removed
+   */
+  public ShelvedChangeList deleteChangeList(@NotNull final ShelvedChangeList changeList) {
+    ShelvedChangeList deletedList = null;
     if (changeList.isDeleted()) {
       deleteListImpl(changeList);
       mySchemeManager.removeScheme(changeList);
@@ -1036,8 +1062,10 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     else {
       changeList.setDeleted(true);
       changeList.updateDate();
+      deletedList = changeList;
     }
     notifyStateChanged();
+    return deletedList;
   }
 
   private void deleteListImpl(@NotNull final ShelvedChangeList changeList) {
