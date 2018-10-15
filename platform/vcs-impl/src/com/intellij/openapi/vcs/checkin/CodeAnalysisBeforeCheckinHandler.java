@@ -147,6 +147,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           assert myProject != null;
+          indicator.setIndeterminate(true);
           codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
         } catch (ProcessCanceledException e) {
           exception.set(e);
