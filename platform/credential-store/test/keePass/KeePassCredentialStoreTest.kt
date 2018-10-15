@@ -3,8 +3,6 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.DB_FILE_NAME
-import com.intellij.credentialStore.KeePassCredentialStore
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -152,5 +150,6 @@ private fun randomString() = UUID.randomUUID().toString()
 // avoid this constructor in production sources to avoid m
 @Suppress("TestFunctionName")
 internal fun createStore(baseDir: Path): KeePassCredentialStore {
-  return KeePassCredentialStore(dbFile = baseDir.resolve(DB_FILE_NAME), masterKeyFile = baseDir.resolve(MASTER_KEY_FILE_NAME))
+  return KeePassCredentialStore(dbFile = baseDir.resolve(DB_FILE_NAME),
+                                masterKeyFile = baseDir.resolve(MASTER_KEY_FILE_NAME))
 }

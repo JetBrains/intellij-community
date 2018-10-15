@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.credentialStore.keePass.KeePassCredentialStore
+import com.intellij.credentialStore.keePass.copyTo
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.ide.passwordSafe.impl.providers.ByteArrayWrapper
