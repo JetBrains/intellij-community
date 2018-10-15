@@ -4,8 +4,6 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.TextFieldWithHistory
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
@@ -87,7 +85,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   private fun addGrowIfNeed(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
     when {
-      component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
+      component is ComponentWithBrowseButton<*> -> {
         // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
         cc.value.minWidth("${spacing.maxShortTextWidth}px")
         cc.value.growX()
