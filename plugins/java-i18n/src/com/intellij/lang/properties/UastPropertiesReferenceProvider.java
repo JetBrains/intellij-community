@@ -4,19 +4,13 @@ package com.intellij.lang.properties;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.UastReferenceProvider;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -57,22 +51,6 @@ class UastPropertiesReferenceProvider extends UastReferenceProvider {
         }
       }
     }
-    else {
-      PsiElement psi = element.getSourcePsi();
-      if (psi instanceof XmlAttributeValue && isNonDynamicAttribute(psi)) {
-        if (psi.getTextLength() < 2) {
-          return PsiReference.EMPTY_ARRAY;
-        }
-        value = ((XmlAttributeValue)psi).getValue();
-        final XmlAttribute attribute = (XmlAttribute)psi.getParent();
-        if ("key".equals(attribute.getName())) {
-          final XmlTag parent = attribute.getParent();
-          if ("message".equals(parent.getLocalName()) && Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS, parent.getNamespace()) >= 0) {
-            propertyRefWithPrefix = true;
-          }
-        }
-      }
-    }
 
     if (value instanceof String) {
       String text = (String)value;
@@ -83,10 +61,6 @@ class UastPropertiesReferenceProvider extends UastReferenceProvider {
       return new PsiReference[]{reference};
     }
     return PsiReference.EMPTY_ARRAY;
-  }
-
-  static boolean isNonDynamicAttribute(PsiElement element) {
-    return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class, JspXmlTagBase.class) == null;
   }
 
   private static boolean canBePropertyKeyRef(@NotNull UExpression element) {
