@@ -16,7 +16,6 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -197,13 +196,9 @@ class JarLoader extends Loader {
 
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
-          String name = entry.getName();
-          int ind = name.lastIndexOf('/');
-          if (ind != -1) {
-            int packageHash = StringUtil.stringHashCodeInsensitive(name, 0, ind);
-            result.add(packageHash);
-          }
+          result.add(ClasspathCache.getPackageNameHash(entry.getName()));
         }
+        result.add(0); // empty package is in every jar
         return result;
       }
       finally {
@@ -226,14 +221,8 @@ class JarLoader extends Loader {
         myPackageHashesInside = packagesInside = buildPackageHashes();
       }
 
-      if (packagesInside != null) {
-        int ind = name.lastIndexOf('/');
-        if (ind != -1) {
-          int packageHash = StringUtil.stringHashCodeInsensitive(name, 0, ind);
-          if (!packagesInside.contains(packageHash)) {
-            return null;
-          }
-        }
+      if (packagesInside != null && !packagesInside.contains(ClasspathCache.getPackageNameHash(name))) {
+        return null;
       }
     }
 

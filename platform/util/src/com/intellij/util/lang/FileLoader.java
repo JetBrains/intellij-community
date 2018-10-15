@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -100,64 +102,18 @@ class FileLoader extends Loader {
     try {
       if (myConfiguration.myLazyClassloadingCaches) {
         DirEntry lastEntry = root;
-        int prevIndex = 0;
+        int prevIndex = 0;   // 0 .. prevIndex is package
         int nextIndex = name.indexOf('/', prevIndex);
 
         while (true) {
-          int nameEnd = nextIndex == -1 ? name.length() : nextIndex;
+          int nameEnd = nextIndex == -1 ? name.length() : nextIndex; // prevIndex, nameEnd is package or class name
           int nameHash = StringUtil.stringHashCodeInsensitive(name, prevIndex, nameEnd);
-          int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
-          
-          if (childrenNameHashes == null) {
-            String[] list = (prevIndex != 0 ? new File(myRootDir, name.substring(0, prevIndex)) : myRootDir).list();
-            
-            if (list != null) {
-              childrenNameHashes = new int[list.length];
-              for (int i = 0; i < list.length; ++i) {
-                childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
-              }
-            }
-            else {
-              childrenNameHashes = DirEntry.empty;
-            }
-            lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
-          }
-
-          boolean found = false;
-          for (int childNameHash : childrenNameHashes) {
-            if (childNameHash == nameHash) {
-              found = true;
-              break;
-            }
-          }
-
-          if (!found) {
-            return null;
-          }
+          if (!nameHashIsPresentInChildren(lastEntry, name, prevIndex, nameHash)) return null;
           if (nextIndex == -1 || nextIndex == name.length() - 1) {
             break;
           }
 
-          DirEntry nextEntry = null;
-          List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
-          
-          if (directories != null) {
-            for (DirEntry previouslyScannedDir : directories) {
-              if (previouslyScannedDir.nameHash == nameHash && previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
-                nextEntry = previouslyScannedDir;
-                break;
-              }
-            }
-          }
-
-          if (nextEntry == null) {
-            nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
-            List<DirEntry> newChildrenDirectories = directories != null ? new SmartList<DirEntry>(directories) : new SmartList<DirEntry>();
-            newChildrenDirectories.add(nextEntry);
-            lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
-          }
-
-          lastEntry = nextEntry;
+          lastEntry = findOrCreateNextDirEntry(lastEntry, name, prevIndex, nameEnd, nameHash);
           prevIndex = nextIndex + 1;
           nextIndex = name.indexOf('/', prevIndex);
         }
@@ -173,6 +129,58 @@ class FileLoader extends Loader {
     catch (Exception ignore) {
     }
     return null;
+  }
+
+  @NotNull
+  private static DirEntry findOrCreateNextDirEntry(DirEntry lastEntry, String name,
+                                            int prevIndex,
+                                            int nameEnd,
+                                            int nameHash) {
+    DirEntry nextEntry = null;
+    List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
+
+    if (directories != null) {
+      //noinspection ForLoopReplaceableByForEach
+      for (int index = 0, len = directories.size(); index < len; ++index) {
+        DirEntry previouslyScannedDir = directories.get(index);
+        if (previouslyScannedDir.nameHash == nameHash &&
+            previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
+          nextEntry = previouslyScannedDir;
+          break;
+        }
+      }
+    }
+
+    if (nextEntry == null) {
+      nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
+      List<DirEntry> newChildrenDirectories = directories != null ? new ArrayList<DirEntry>(directories) : new SmartList<DirEntry>();
+      newChildrenDirectories.add(nextEntry);
+      lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
+    }
+
+    lastEntry = nextEntry;
+    return lastEntry;
+  }
+
+  private boolean nameHashIsPresentInChildren(DirEntry lastEntry, String name, int prevIndex, int nameHash) {
+    int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
+
+    if (childrenNameHashes == null) {
+      String[] list = (prevIndex != 0 ? new File(myRootDir, name.substring(0, prevIndex)) : myRootDir).list();
+
+      if (list != null) {
+        childrenNameHashes = new int[list.length];
+        for (int i = 0; i < list.length; ++i) {
+          childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
+        }
+      }
+      else {
+        childrenNameHashes = DirEntry.empty;
+      }
+      lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
+    }
+
+    return ArrayUtil.indexOf(childrenNameHashes, nameHash) >= 0;
   }
 
   private static final AtomicInteger totalLoaders = new AtomicInteger();
