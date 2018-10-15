@@ -120,11 +120,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
+    var subRows = subRows
     if (subRows == null) {
+      // subRows in most cases > 1
       subRows = ArrayList()
+      this.subRows = subRows
     }
-
-    val subRows = subRows!!
 
     if (isSeparated) {
       val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
