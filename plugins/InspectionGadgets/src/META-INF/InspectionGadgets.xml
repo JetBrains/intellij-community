@@ -2697,10 +2697,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="VolatileArrayField" bundle="com.siyeh.InspectionGadgetsBundle" key="volatile.array.field.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.VolatileArrayFieldInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="VolatileLongOrDoubleField" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="volatile.long.or.double.field.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.threading.VolatileLongOrDoubleFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WaitCalledOnCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="wait.called.on.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
