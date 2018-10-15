@@ -38,12 +38,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
       val cc = CC()
-      cc.vertical.gapBefore = gapToBoundSize(row.spacing.largeVerticalGap, false)
+      val spacing = row.spacing
+      cc.vertical.gapBefore = gapToBoundSize(spacing.largeVerticalGap, false)
       if (title == null) {
-        cc.vertical.gapAfter = gapToBoundSize(row.spacing.verticalGap * 2, false)
+        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
       }
       else {
-        cc.vertical.gapAfter = gapToBoundSize(row.spacing.verticalGap, false)
+        cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
         // TitledSeparator doesn't grow by default opposite to SeparatorComponent
         cc.growX()
       }
@@ -120,24 +121,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = Math.max(columnIndex, subRows?.maxBy { it.columnIndex }?.columnIndex ?: 0)
 
   fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
-    var subRows = subRows
-    if (subRows == null) {
-      // subRows in most cases > 1
-      subRows = ArrayList()
-      this.subRows = subRows
-    }
-
-    if (isSeparated) {
-      val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
-      configureSeparatorRow(row, title)
-      subRows.add(row)
-    }
+    val subRows = getOrCreateSubRowsList()
 
     val row = MigLayoutRow(this, componentConstraints, builder,
                            labeled = label != null,
                            noGrid = noGrid,
                            indent = indent + computeChildRowIndent(),
                            buttonGroup = buttonGroup)
+
+    if (isSeparated) {
+      val separatorRow = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
+      configureSeparatorRow(separatorRow, title)
+      row.getOrCreateSubRowsList().add(separatorRow)
+    }
+
     subRows.add(row)
 
     if (label != null) {
@@ -145,6 +142,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     return row
+  }
+
+  private fun getOrCreateSubRowsList(): MutableList<MigLayoutRow> {
+    var subRows = subRows
+    if (subRows == null) {
+      // subRows in most cases > 1
+      subRows = ArrayList()
+      this.subRows = subRows
+    }
+    return subRows
   }
 
   // cell mode not tested with "gear" button, wait first user request
