@@ -69,6 +69,7 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   }
   public void testFieldInitializerUsedInMethodReference() { doTest(); }
   public void testFieldInitializerChainedConstructor() { doTest(); }
+  public void testUnderAlwaysFalseCondition() { doTest(); }
 
   @NotNull
   @Override
