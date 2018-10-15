@@ -366,7 +366,7 @@ class CommunityLibraryLicenses {
 
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python.helpers", version: "0.3.2", license: "BSD",
                        url: "http://pockets.readthedocs.org/"),
-    new LibraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/",
+    new LibraryLicense(name: "protobuf", version: "3.5.1", license: "New BSD", url: "http://code.google.com/p/protobuf/",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
     new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.5", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole",
