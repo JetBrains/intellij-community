@@ -1,123 +1,36 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.codeInspection.i18n.JavaI18nUtil;
-import com.intellij.lang.properties.references.PropertyReference;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
-import com.intellij.psi.impl.source.jsp.jspXml.JspXmlTagBase;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UastContextKt;
 
-import java.util.Arrays;
-
-/**
- * @author cdr
- */
 public class PropertiesReferenceProvider extends PsiReferenceProvider {
+  private final UastPropertiesReferenceProvider myProvider;
 
-  private final boolean myDefaultSoft;
-
-  @SuppressWarnings("unused") // invoked by reflection
+  // used by reflection
+  @SuppressWarnings("unused")
   public PropertiesReferenceProvider() {
     this(false);
   }
 
-  public PropertiesReferenceProvider(final boolean defaultSoft) {
-    myDefaultSoft = defaultSoft;
+  public PropertiesReferenceProvider(boolean defaultSoft) {
+    myProvider = new UastPropertiesReferenceProvider(defaultSoft);
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+    UElement uElement = UastContextKt.toUElement(element);
+    return uElement == null ? PsiReference.EMPTY_ARRAY : myProvider.getReferencesByElement(uElement, context);
   }
 
   @Override
   public boolean acceptsTarget(@NotNull PsiElement target) {
-    return target instanceof IProperty;
-  }
-
-  @Override
-  @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-    Object value = null;
-    String bundleName = null;
-    boolean propertyRefWithPrefix = false;
-    boolean soft = myDefaultSoft;
-
-    if (element instanceof PsiLiteralExpression && canBePropertyKeyRef((PsiExpression)element)) {
-      PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
-      value = literalExpression.getValue();
-
-      final Ref<PsiAnnotationMemberValue> resourceBundleValue = Ref.create();
-      if (JavaI18nUtil.mustBePropertyKey(literalExpression, resourceBundleValue)) {
-        soft = false;
-        PsiAnnotationMemberValue resourceBundleName = resourceBundleValue.get();
-        if (resourceBundleName instanceof PsiExpression) {
-          PsiExpression expr = (PsiExpression)resourceBundleName;
-          final Object bundleValue =
-            JavaPsiFacade.getInstance(expr.getProject()).getConstantEvaluationHelper().computeConstantExpression(expr);
-          bundleName = bundleValue == null ? null : bundleValue.toString();
-        }
-      }
-    }
-    else if (element instanceof XmlAttributeValue && isNonDynamicAttribute(element)) {
-      if (element.getTextLength() < 2) {
-        return PsiReference.EMPTY_ARRAY;
-      }
-      value = ((XmlAttributeValue)element).getValue();
-      final XmlAttribute attribute = (XmlAttribute)element.getParent();
-      if ("key".equals(attribute.getName())) {
-        final XmlTag parent = attribute.getParent();
-        if ("message".equals(parent.getLocalName()) && Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS, parent.getNamespace()) >= 0) {
-          propertyRefWithPrefix = true;
-        }
-      }
-    }
-
-    if (value instanceof String) {
-      String text = (String)value;
-      PsiReference reference = propertyRefWithPrefix ?
-                               new PrefixBasedPropertyReference(text, element, null, soft) :
-                               new PropertyReference(text, element, bundleName, soft);
-      return new PsiReference[]{reference};
-    }
-    return PsiReference.EMPTY_ARRAY;
-  }
-
-  static boolean isNonDynamicAttribute(final PsiElement element) {
-    return PsiTreeUtil.getChildOfAnyType(element, OuterLanguageElement.class, JspXmlTagBase.class) == null;
-  }
-
-  private static boolean canBePropertyKeyRef(@NotNull PsiExpression element) {
-    PsiElement parent = element.getParent();
-    if (parent instanceof PsiExpression) {
-      if (parent instanceof PsiConditionalExpression) {
-        PsiExpression elseExpr = ((PsiConditionalExpression)parent).getElseExpression();
-        PsiExpression thenExpr = ((PsiConditionalExpression)parent).getThenExpression();
-        return (element == thenExpr || element == elseExpr) && canBePropertyKeyRef((PsiExpression)parent);
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      return true;
-    }
+    return myProvider.acceptsTarget(target);
   }
 }

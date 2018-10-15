@@ -93,7 +93,7 @@ public class PrefixBasedPropertyReference extends PropertyReference {
 
           if (attributeValue != null && attributeValue.length() > 0) {
             final XmlAttributeValue valueElement = curParentTag.getAttribute(PREFIX_ATTR_NAME, null).getValueElement();
-            if (PropertiesReferenceProvider.isNonDynamicAttribute(valueElement)) {
+            if (UastPropertiesReferenceProvider.isNonDynamicAttribute(valueElement)) {
               myKeyPrefix = attributeValue;
             }
             else {

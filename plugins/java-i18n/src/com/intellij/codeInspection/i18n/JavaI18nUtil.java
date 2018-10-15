@@ -61,11 +61,12 @@ public class JavaI18nUtil extends I18nUtil {
     return isPassedToAnnotatedParam(expression, AnnotationUtil.PROPERTY_KEY, resourceBundleRef, null);
   }
 
-  public static boolean mustBePropertyKey(@NotNull ULiteralExpression expression) {
+  public static boolean mustBePropertyKey(@NotNull ULiteralExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
     final UElement parent = expression.getUastParent();
     if (parent instanceof UVariable) {
       UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
+        processAnnotationAttributes(resourceBundleRef, annotation);
         return true;
       }
     }
@@ -184,6 +185,18 @@ public class JavaI18nUtil extends I18nUtil {
         final String name = attribute.getName();
         if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
           resourceBundleRef.set(attribute.getValue());
+        }
+      }
+    }
+  }
+
+  private static void processAnnotationAttributes(@Nullable Ref<? super UExpression> resourceBundleRef,
+                                                  @NotNull UAnnotation annotation) {
+    if (resourceBundleRef != null) {
+      for (UNamedExpression attribute : annotation.getAttributeValues()) {
+        final String name = attribute.getName();
+        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
+          resourceBundleRef.set(attribute.getExpression());
         }
       }
     }

@@ -35,6 +35,7 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
                                  priority)
 }
 
+@JvmOverloads
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
@@ -48,6 +49,7 @@ abstract class UastReferenceProvider {
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
+  open fun acceptsTarget(target: PsiElement): Boolean = true
 }
 
 /**
@@ -113,5 +115,5 @@ private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) 
     return provider.getReferencesByElement(uElement, context)
   }
 
-  override fun acceptsTarget(target: PsiElement): Boolean = true
+  override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
 }

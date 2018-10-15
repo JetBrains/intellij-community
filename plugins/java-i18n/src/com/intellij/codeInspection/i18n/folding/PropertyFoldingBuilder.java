@@ -251,7 +251,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
     if (property == NULL) return false;
     if (property != null) return true;
 
-    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr);
+    final boolean isI18n = JavaI18nUtil.mustBePropertyKey(expr, null);
     if (!isI18n) {
       sourcePsi.putUserData(CACHE, NULL);
     }

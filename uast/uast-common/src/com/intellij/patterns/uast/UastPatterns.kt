@@ -23,6 +23,8 @@ fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
 fun uExpression(): UExpressionPattern<UExpression, *> = expressionCapture(UExpression::class.java)
 
+fun uNamedExpression(): UExpressionPattern<UNamedExpression, *> = expressionCapture(UNamedExpression::class.java)
+
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
@@ -69,6 +71,8 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
     receiverClassPattern.accepts(receiverClass)
   }
+
+  fun withUastParent(parentPattern: ElementPattern<out UElement>): Self = filter { it.uastParent?.let { parentPattern.accepts(it) } ?: false }
 
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
