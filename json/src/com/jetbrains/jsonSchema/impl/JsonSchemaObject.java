@@ -918,8 +918,23 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaType guessType() {
+    // if we have an explicit type, here we are
     JsonSchemaType type = getType();
     if (type != null) return type;
+
+    // process type variants before heuristic type detection
+    final Set<JsonSchemaType> typeVariants = getTypeVariants();
+    if (typeVariants != null) {
+      final int size = typeVariants.size();
+      if (size == 1) {
+        return typeVariants.iterator().next();
+      }
+      else if (size >= 2) {
+        return null;
+      }
+    }
+
+    // heuristic type detection based on the set of applied constraints
     boolean hasObjectChecks = hasObjectChecks();
     boolean hasNumericChecks = hasNumericChecks();
     boolean hasStringChecks = hasStringChecks();
