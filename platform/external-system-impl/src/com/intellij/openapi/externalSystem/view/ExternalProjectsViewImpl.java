@@ -274,7 +274,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   private ActionGroup createAdditionalGearActionsGroup() {
     ActionManager actionManager = ActionManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    String[] ids = new String[]{"ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
+    String[] ids = new String[]{"ExternalSystem.GroupModules", "ExternalSystem.GroupTasks", "ExternalSystem.ShowInheritedTasks", "ExternalSystem.ShowIgnored"};
     for (String id : ids) {
       final AnAction gearAction = actionManager.getAction(id);
       if (gearAction instanceof ExternalSystemViewGearAction) {
@@ -456,6 +456,11 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   }
 
   @Override
+  public boolean getGroupModules() {
+    return myState.groupModules;
+  }
+
+  @Override
   public boolean useTasksNode() {
     return true;
   }
@@ -463,7 +468,15 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   public void setGroupTasks(boolean value) {
     if (myState.groupTasks != value) {
       myState.groupTasks = value;
-      scheduleTasksRebuild();
+      scheduleNodesRebuild(TasksNode.class);
+    }
+  }
+
+  public void setGroupModules(boolean value) {
+    if (myState.groupModules != value) {
+      myState.groupModules = value;
+      scheduleNodesRebuild(ModuleNode.class);
+      scheduleNodesRebuild(ProjectNode.class);
     }
   }
 
@@ -489,14 +502,13 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                              .orElse(null);
   }
 
-  private void scheduleTasksRebuild() {
+  private <T extends ExternalSystemNode> void scheduleNodesRebuild(@NotNull Class<T> nodeClass) {
     scheduleStructureRequest(() -> {
       assert myStructure != null;
-      final List<TasksNode> tasksNodes = myStructure.getNodes(TasksNode.class);
-      for (TasksNode tasksNode : tasksNodes) {
+      for (T tasksNode : myStructure.getNodes(nodeClass)) {
         tasksNode.cleanUpCache();
-        updateUpTo(tasksNode);
       }
+      myStructure.updateNodes(nodeClass);
     });
   }
 

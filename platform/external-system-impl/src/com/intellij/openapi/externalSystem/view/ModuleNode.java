@@ -19,11 +19,14 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,15 +36,22 @@ import java.util.List;
 public class ModuleNode extends ExternalSystemNode<ModuleData> {
   private final boolean myIsRoot;
   private final ModuleData myData;
+  // registry of all modules since we can't use getExternalProjectsView for getting modules withing a module
+  private Collection<ModuleNode> myAllModules = Collections.emptyList();
   private final RunConfigurationsNode myRunConfigurationsNode;
 
   public ModuleNode(ExternalProjectsView externalProjectsView,
                     DataNode<ModuleData> dataNode,
+                    @Nullable ExternalSystemNode parent,
                     boolean isRoot) {
-    super(externalProjectsView, null, dataNode);
+    super(externalProjectsView, parent, dataNode);
     myIsRoot = isRoot;
     myData = dataNode.getData();
     myRunConfigurationsNode = new RunConfigurationsNode(externalProjectsView, this);
+  }
+
+  public void setAllModules(Collection<ModuleNode> allModules) {
+    myAllModules = allModules;
   }
 
   @Override
@@ -62,6 +72,13 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     List<ExternalSystemNode<?>> myChildNodes = ContainerUtil.newArrayList();
+    if (getExternalProjectsView().getGroupModules()) {
+      List<ModuleNode> childModules = ContainerUtil.findAll(
+        myAllModules,
+        module -> module != this && StringUtil.equals(module.getIdeParentGrouping(), getIdeGrouping())
+      );
+      myChildNodes.addAll(childModules);
+    }
     //noinspection unchecked
     myChildNodes.addAll((Collection<? extends ExternalSystemNode<?>>)super.doBuildChildren());
     myChildNodes.add(myRunConfigurationsNode);
@@ -84,5 +101,47 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     childrenChanged();
     getExternalProjectsView().updateUpTo(this);
     getExternalProjectsView().updateUpTo(myRunConfigurationsNode);
+  }
+
+  @Override
+  public String getName() {
+    String[] moduleGroup = myData.getIdeModuleGroup();
+    if (getExternalProjectsView().getGroupModules() && moduleGroup != null) {
+      return ArrayUtil.getLastElement(moduleGroup);
+    }
+    return super.getName();
+  }
+
+  @Override
+  public boolean isVisible() {
+    if (!myIsRoot && getExternalProjectsView().getGroupModules()) {
+      ModuleNode parentModule = findParent(ModuleNode.class);
+
+      String actualParentModuleIdeGroup = parentModule != null ? parentModule.getIdeGrouping() : null;
+      ProjectNode parentProject = findParent(ProjectNode.class);
+      if (actualParentModuleIdeGroup == null && parentProject != null && parentProject.isSingleModuleProject()) {
+        actualParentModuleIdeGroup = parentProject.getName();
+      }
+
+      return StringUtil.equals(actualParentModuleIdeGroup, getIdeParentGrouping());
+    }
+    return super.isVisible();
+  }
+
+  @Nullable
+  public String getIdeGrouping() {
+    ModuleData data = getData();
+    if (data == null) return null;
+    String internalName = StringUtil.nullize(data.getInternalName());
+    String parentGrouping = getIdeParentGrouping();
+    if (parentGrouping == null) return internalName;
+    return StringUtil.join(parentGrouping, ".", internalName);
+  }
+
+  @Nullable
+  public String getIdeParentGrouping() {
+    ModuleData data = getData();
+    if (data == null) return null;
+    return StringUtil.nullize(data.getGroup());
   }
 }
