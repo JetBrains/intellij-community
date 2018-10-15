@@ -21,7 +21,9 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -50,10 +52,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     public int BEK_SORT_TYPE = 0;
     public boolean SHOW_ROOT_NAMES = false;
     public boolean SHOW_ONLY_AFFECTED_CHANGES = false;
-    @Deprecated
-    public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
-    @Deprecated
-    public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
     public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
     public TextFilterSettings TEXT_FILTER_SETTINGS = new TextFilterSettings();
@@ -203,26 +201,6 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
   public void removeChangeListener(@NotNull PropertiesChangeListener listener) {
     myListeners.remove(listener);
     myAppSettings.removeChangeListener(listener);
-  }
-
-  // to remove after 2018.3 release
-  @Deprecated
-  public static class UserGroup {
-    public List<String> users = new ArrayList<>();
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      UserGroup group = (UserGroup)o;
-      if (!users.equals(group.users)) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return users.hashCode();
-    }
   }
 
   public static class TextFilterSettings {

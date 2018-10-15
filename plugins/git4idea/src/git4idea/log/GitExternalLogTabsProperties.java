@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent.BRANCH_FILTER_NAME;
-import static com.intellij.vcs.log.ui.filter.UserFilterPopupComponent.USER_FILER_NAME;
-
 @State(
   name = "Git.Log.External.Tabs.Properties",
   storages = {
@@ -67,8 +64,6 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
           newState.LONG_EDGES_VISIBLE = oldState.LONG_EDGES_VISIBLE;
           newState.BEK_SORT_TYPE = oldState.BEK_SORT_TYPE;
           newState.SHOW_ROOT_NAMES = oldState.SHOW_ROOT_NAMES;
-          newState.RECENT_FILTERS.put(BRANCH_FILTER_NAME, convertToRecentGroups(oldState.RECENTLY_FILTERED_BRANCH_GROUPS));
-          newState.RECENT_FILTERS.put(USER_FILER_NAME, convertToRecentGroups(oldState.RECENTLY_FILTERED_USER_GROUPS));
           newState.HIGHLIGHTERS.putAll(oldState.HIGHLIGHTERS);
           newState.FILTERS.putAll(oldState.FILTERS);
           newState.COLUMN_WIDTH.putAll(oldState.COLUMN_WIDTH);
@@ -80,11 +75,6 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
       }
     }
     return new TabState();
-  }
-
-  @NotNull
-  private static List<RecentGroup> convertToRecentGroups(Deque<VcsLogUiPropertiesImpl.UserGroup> groups) {
-    return new ArrayList<>(ContainerUtil.map2List(groups, RecentGroup::new));
   }
 
   public static class State {
