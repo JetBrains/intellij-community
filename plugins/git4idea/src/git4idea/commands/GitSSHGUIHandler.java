@@ -191,21 +191,30 @@ public class GitSSHGUIHandler {
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     return myAuthenticationGate.waitAndCompute(() -> {
       String error = processLastError(resetPassword, lastError);
-      CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
-      CredentialAttributes newAttributes = passwordCredentialAttributes(username);
-      Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
-      if (credentials != null && !resetPassword) {
-        String password = credentials.getPasswordAsString();
-        if (password != null) return password;
-      }
-      if (myIgnoreAuthenticationRequest) return null;
-      return CredentialPromptDialog.askPassword(myProject,
-                                                GitBundle.getString("ssh.password.title"),
-                                                GitBundle.message("ssh.password.message", username),
-                                                newAttributes,
-                                                true,
-                                                error);
+      return askPassword(myProject, username, resetPassword, myIgnoreAuthenticationRequest, error);
     });
+  }
+
+  @Nullable
+  static String askPassword(@Nullable Project project,
+                            @NotNull String username,
+                            boolean resetPassword,
+                            boolean ignoreAuthenticationRequest,
+                            @Nullable String error) {
+    CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
+    CredentialAttributes newAttributes = passwordCredentialAttributes(username);
+    Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
+    }
+    if (ignoreAuthenticationRequest) return null;
+    return CredentialPromptDialog.askPassword(project,
+                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.message", username),
+                                              newAttributes,
+                                              true,
+                                              error);
   }
 
   /**
