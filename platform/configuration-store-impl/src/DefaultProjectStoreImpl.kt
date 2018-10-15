@@ -95,6 +95,8 @@ class DefaultProjectStoreImpl(override val project: Project, private val pathMac
 
   override fun setPath(path: String) {
   }
+
+  override fun toString() = "default project"
 }
 
 // ExportSettingsAction checks only "State" annotation presence, but doesn't require PersistentStateComponent implementation, so, we can just specify annotation

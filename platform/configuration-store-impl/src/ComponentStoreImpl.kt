@@ -168,14 +168,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
-    val timeLogPrefix = "Saving"
-    val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+    var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
-      val start = if (timeLog == null) 0 else System.currentTimeMillis()
-
+      val start = System.currentTimeMillis()
       try {
         val info = components.get(name)!!
         var currentModificationCount = -1L
@@ -207,17 +205,20 @@ abstract class ComponentStoreImpl : IComponentStore {
         errors.add(Exception("Cannot get $name component state", e))
       }
 
-      timeLog?.let {
-        val duration = System.currentTimeMillis() - start
-        if (duration > 10) {
-          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(
-            ((duration % 60000) / 1000)).append("sec")
+      val duration = System.currentTimeMillis() - start
+      if (duration > 10) {
+        if (timeLog == null) {
+          timeLog = StringBuilder("Saving " + toString())
         }
+        else {
+          timeLog.append(", ")
+        }
+        timeLog.append(name).append(" took ").append(duration).append(" ms")
       }
     }
 
-    if (timeLog != null && timeLog.length > timeLogPrefix.length) {
-      LOG.debug(timeLog.toString())
+    if (timeLog != null) {
+      LOG.info(timeLog.toString())
     }
     return errors
   }
@@ -538,6 +539,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   fun removeComponent(name: String) {
     components.remove(name)
   }
+
+  override fun toString() = storageManager.componentManager.toString()
 }
 
 internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {

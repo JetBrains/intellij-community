@@ -110,6 +110,7 @@ public final class StoreUtil {
    * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
    */
   public static void saveProjectsAndApp(boolean isForceSavingAllSettings) {
+    long start = System.currentTimeMillis();
     ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings);
 
     ProjectManager projectManager = ProjectManager.getInstance();
@@ -120,6 +121,9 @@ public final class StoreUtil {
     for (Project project : projectManager.getOpenProjects()) {
       saveProject(project, isForceSavingAllSettings);
     }
+
+    long duration = System.currentTimeMillis() - start;
+    LOG.info("saveProjectsAndApp took " + duration + " ms");
   }
 
   public static void saveProject(@NotNull Project project, boolean isForce) {

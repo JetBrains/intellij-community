@@ -35,6 +35,8 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     // here, because no Project (and so, ProjectStoreImpl) on Welcome Screen
     service<DefaultProjectExportableAndSaveTrigger>().save(isForce)
   }
+
+  override fun toString() = "app"
 }
 
 class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null)
