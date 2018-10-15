@@ -46,6 +46,9 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
     try {
       validateBounds(panel, snapshotDir, snapshotName)
     }
+    catch (e: MultipleFailureException) {
+      errors.addAll(e.failures)
+    }
     catch (e: Throwable) {
       errors.add(e)
     }
