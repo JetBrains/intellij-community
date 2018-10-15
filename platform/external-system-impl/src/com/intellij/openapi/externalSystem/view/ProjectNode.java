@@ -68,7 +68,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   public boolean isSingleModuleProject() {
-    getChildren();
     return singleModuleProject;
   }
 

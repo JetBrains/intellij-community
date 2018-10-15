@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
@@ -160,6 +157,10 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       final AbstractExternalSystemSettings systemSettings =
         ExternalSystemApiUtil.getSettings(externalProjectsView.getProject(), externalProjectsView.getSystemId());
 
+      final Map<String, ModuleNode> groupToModule = ContainerUtil.newHashMap(moduleDataNodes.size());
+
+      List<ModuleNode> moduleNodes = ContainerUtil.newArrayList();
+
       for (DataNode<?> dataNode : moduleDataNodes) {
         final ModuleData data = (ModuleData)dataNode.getData();
 
@@ -169,9 +170,25 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
           projectSettings != null && data.getLinkedExternalProjectPath().equals(projectSettings.getExternalProjectPath()) &&
           projectDataNode != null && projectDataNode.getData().getInternalName().equals(data.getInternalName());
         //noinspection unchecked
-        final ModuleNode moduleNode = new ModuleNode(externalProjectsView, (DataNode<ModuleData>)dataNode, isRoot);
-        result.add(moduleNode);
+        final ModuleNode moduleNode = new ModuleNode(externalProjectsView, (DataNode<ModuleData>)dataNode, null, isRoot);
+        moduleNodes.add(moduleNode);
+
+        String group = moduleNode.getIdeGrouping();
+        if (group != null) {
+          groupToModule.put(group, moduleNode);
+        }
       }
+
+      for (ModuleNode moduleNode : moduleNodes) {
+        moduleNode.setAllModules(moduleNodes);
+        String parentGroup = moduleNode.getIdeParentGrouping();
+        if (parentGroup == null) {
+          continue;
+        }
+        moduleNode.setParent(groupToModule.get(parentGroup));
+      }
+
+      result.addAll(moduleNodes);
     }
   }
 
