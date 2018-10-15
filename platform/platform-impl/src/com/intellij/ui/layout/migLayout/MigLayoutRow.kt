@@ -268,7 +268,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         var cc = componentConstraints.get(prevComponent)
         if (cc == null) {
           cc = CC()
-          componentConstraints.set(prevComponent, cc)
+          componentConstraints.put(prevComponent, cc)
         }
         cc.split++
         lastComponentConstraintsWithSplit = cc
