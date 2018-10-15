@@ -32,7 +32,7 @@
     <g fill="white" font-family="'Segoe UI'" transform="translate(0,54)" stroke="white">
       <rect x="0" width="480" height="256" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="silver" font-family="'Segoe UI'" transform="translate(0,54)" stroke="silver">
+    <g fill="rgb(50,50,50)" font-family="'Segoe UI'" transform="translate(0,54)" stroke="rgb(50,50,50)">
       <rect x="0" width="1" height="256" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="480" height="1" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="479" width="1" height="256" y="0" clip-path="url(#1)" stroke="none"/>
