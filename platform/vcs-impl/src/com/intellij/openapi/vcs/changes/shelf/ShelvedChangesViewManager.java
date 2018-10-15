@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -14,6 +13,8 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.TreeState;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -29,7 +30,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,6 +61,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -318,7 +319,7 @@ public class ShelvedChangesViewManager implements Disposable {
     });
   }
 
-  private static class ChangelistComparator implements Comparator<ShelvedChangeList> {
+  static class ChangelistComparator implements Comparator<ShelvedChangeList> {
     private final static ChangelistComparator ourInstance = new ChangelistComparator();
 
     public static ChangelistComparator getInstance() {
@@ -619,22 +620,58 @@ public class ShelvedChangesViewManager implements Disposable {
       List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, getShelveChanges(dataContext));
       List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, getBinaryShelveChanges(dataContext));
 
-      int changeListSize = shelvedListsToDelete.size();
       int fileListSize = binariesToDelete.size() + changesToDelete.size();
-      if (fileListSize == 0 && changeListSize == 0) return;
+      if (fileListSize == 0 && shelvedListsToDelete.isEmpty()) return;
 
-      String message = VcsBundle.message("shelve.changes.delete.items.confirm", constructDeleteFilesInfoMessage(fileListSize),
-                                         changeListSize != 0 && fileListSize != 0 ? " and " : "",
-                                         constructShelvedListInfoMessage(changeListSize, getFirstItem(shelvedListsToDelete)));
-      int rc = Messages
-        .showOkCancelDialog(myProject, message, VcsBundle.message("shelvedChanges.delete.title"), CommonBundle.message("button.delete"),
-                            CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-      if (rc != Messages.OK) return;
+      Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate = newHashMap();
       for (ShelvedChangeList changeList : shelvedListsToDelete) {
-        ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
+        Date originalDate = changeList.DATE;
+        ShelvedChangeList recentlyDeleted = ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
+        if (recentlyDeleted != null) {
+          createdDeletedListsWithOriginalDate.put(recentlyDeleted, originalDate);
+        }
       }
       for (ShelvedChangeList list : shelvedListsFromChanges) {
-        removeChangesFromChangeList(project, list, changesToDelete, binariesToDelete);
+        Date originalDate = list.DATE;
+        ShelvedChangeList listWithDeletedChanges = removeChangesFromChangeList(project, list, changesToDelete, binariesToDelete);
+        if (listWithDeletedChanges != null) {
+          createdDeletedListsWithOriginalDate.put(listWithDeletedChanges, originalDate);
+        }
+      }
+      if (!createdDeletedListsWithOriginalDate.isEmpty()) {
+        showUndoDeleteNotification(shelvedListsToDelete, fileListSize, createdDeletedListsWithOriginalDate);
+      }
+    }
+
+    private void showUndoDeleteNotification(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                            int fileListSize,
+                                            @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
+      int changeListSize = shelvedListsToDelete.size();
+      String message =
+        StringUtil.capitalize(VcsBundle.message("shelve.changes.delete.notification", constructDeleteFilesInfoMessage(fileListSize),
+                                                changeListSize != 0 && fileListSize != 0 ? " and " : "",
+                                                constructShelvedListInfoMessage(changeListSize, getFirstItem(shelvedListsToDelete))));
+      AnAction showRecentlyDeleted = ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted");
+      VcsNotifier.getInstance(myProject)
+        .notifyMinorInfo("Shelf Deletion", XmlStringUtil.wrapInHtml(message),
+                         new UndoShelfDeletionAction(createdDeletedListsWithOriginalDate), NotificationAction
+                           .create(showRecentlyDeleted.getTemplatePresentation().getText(),
+                                   (e, n) -> showRecentlyDeleted.actionPerformed(e)));
+    }
+
+    private class UndoShelfDeletionAction extends NotificationAction {
+      @NotNull private final Map<ShelvedChangeList, Date> myListDateMap;
+
+      private UndoShelfDeletionAction(@NotNull Map<ShelvedChangeList, Date> listDateMap) {
+        super("Undo");
+        myListDateMap = listDateMap;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
+        myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
+        notification.expire();
       }
     }
 
@@ -660,23 +697,18 @@ public class ShelvedChangesViewManager implements Disposable {
     @NotNull
     private String constructShelvedListInfoMessage(int size, @Nullable ShelvedChangeList first) {
       if (size == 0) return "";
-      String message;
-      if (size == 1 && first != null) {
-        message = "<b> one shelved changelist</b> named [<b>" + first.DESCRIPTION + "</b>]";
-      }
-      else {
-        message = "<b>" + size + " shelved " + StringUtil.pluralize("changelist", size) + "</b>";
-      }
-      return message + " with all changes inside";
+      if (size == 1 && first != null) return "one shelved changelist [<b>" + first.DESCRIPTION + "</b>]";
+      return size + " shelved " + StringUtil.pluralize("changelist", size);
     }
 
     @NotNull
     private String constructDeleteFilesInfoMessage(int size) {
       if (size == 0) return "";
-      return "<b>" + (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size) + "</b>";
+      return (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size);
     }
 
-    private void removeChangesFromChangeList(@NotNull Project project,
+    @Nullable
+    private ShelvedChangeList removeChangesFromChangeList(@NotNull Project project,
                                                           @NotNull ShelvedChangeList list,
                                                           @NotNull List<ShelvedChange> changes,
                                                           @NotNull List<ShelvedBinaryFile> binaryFiles) {
@@ -691,13 +723,13 @@ public class ShelvedChangesViewManager implements Disposable {
       catch (IOException | PatchSyntaxException e) {
         LOG.info(e);
         VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
-        return;
+        return null;
       }
       if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-        myShelveChangesManager.deleteChangeList(list);
+        return myShelveChangesManager.deleteChangeList(list);
       }
       else {
-        myShelveChangesManager.saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
+        return myShelveChangesManager.saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
       }
     }
 
