@@ -462,7 +462,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
-    return file.getDocument();
+    return AstLoadingFilter.forceAllowTreeLoading(file, () -> file.getDocument());
   }
 
   @Override
