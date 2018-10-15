@@ -46,10 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -308,7 +306,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       Map<VcsRevisionNumber, String> authorsMap = authorsMappingProvider.getAuthors();
 
       Map<String, Color> authorColors = new HashMap<>();
-      for (String author : ContainerUtil.sorted(authorsMap.values(), Comparing::compare)) {
+      for (String author : ContainerUtil.sorted(new HashSet<>(authorsMap.values()))) {
         int index = authorColors.size();
         Color color = authorsColorPalette.get(index % authorsColorPalette.size());
         authorColors.put(author, color);
