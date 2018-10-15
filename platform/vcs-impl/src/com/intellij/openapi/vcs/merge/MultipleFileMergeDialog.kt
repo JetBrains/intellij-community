@@ -56,7 +56,7 @@ import javax.swing.tree.TreeNode
  * @author yole
  */
 open class MultipleFileMergeDialog(
-  private val project: Project,
+  private val project: Project?,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
   private val mergeDialogCustomizer: MergeDialogCustomizer
@@ -71,7 +71,16 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
   private val projectManager = ProjectManagerEx.getInstanceEx()
-  private var groupByDirectory = VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
+
+  private var groupByDirectory: Boolean = false
+    get() = when {
+      project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
+      else -> field
+    }
+    set(value) = when {
+      project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = value
+      else -> field = value
+    }
 
   private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
     override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window, IdeFocusManager.getInstance(project).focusOwner)
@@ -149,9 +158,11 @@ open class MultipleFileMergeDialog(
         }
       }
 
-      row {
-        checkBox("Group files by directory", groupByDirectory) { _, component ->
-          toggleGroupByDirectory(component.isSelected)
+      if (project != null) {
+        row {
+          checkBox("Group files by directory", groupByDirectory) { _, component ->
+            toggleGroupByDirectory(component.isSelected)
+          }
         }
       }
     }
@@ -226,7 +237,6 @@ open class MultipleFileMergeDialog(
 
   private fun toggleGroupByDirectory(state: Boolean) {
     groupByDirectory = state
-    VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY = groupByDirectory
     val firstSelectedFile = getSelectedFiles().firstOrNull()
     updateTree()
     if (firstSelectedFile != null) {
@@ -236,7 +246,7 @@ open class MultipleFileMergeDialog(
   }
 
   private fun updateTree() {
-    val factory = if (groupByDirectory)
+    val factory = if (project != null && groupByDirectory)
       ChangesGroupingSupport.collectFactories(project).getByKey(ChangesGroupingSupport.DIRECTORY_GROUPING)
     else
       NoneChangesGroupingFactory
@@ -348,7 +358,8 @@ open class MultipleFileMergeDialog(
       }
     }
     processedFiles.addAll(files)
-    VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
+
+    if (project != null) VcsDirtyScopeManager.getInstance(project).filesDirty(files, emptyList())
   }
 
   private fun markFileProcessed(file: VirtualFile, resolution: MergeSession.Resolution) {
