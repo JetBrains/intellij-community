@@ -121,7 +121,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   fun createChildRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, isSeparated: Boolean = false, noGrid: Boolean = false, title: String? = null): MigLayoutRow {
     if (subRows == null) {
-      subRows = SmartList()
+      subRows = ArrayList()
     }
 
     val subRows = subRows!!
