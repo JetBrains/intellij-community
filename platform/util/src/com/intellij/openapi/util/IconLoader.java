@@ -304,7 +304,7 @@ public final class IconLoader {
       return icon;
     }
     if (!StringUtil.startsWithChar(path, '/')) return null;
-    return findIcon(path, path.substring(1), null, classLoader, HandleNotFound.strict(STRICT), false);
+    return findIcon(path, path.substring(1), null, classLoader, HandleNotFound.strict(false), false);
   }
 
   @Nullable
