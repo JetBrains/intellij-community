@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -138,7 +139,7 @@ public final class IconLoader {
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
-    return findIcon(path, callerClass);
+    return findIcon(path, null, callerClass, callerClass.getClassLoader(), HandleNotFound.LOG_ERROR, false);
   }
 
   @Nullable
@@ -150,7 +151,7 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), true, true);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(true), true);
   }
 
   public static void activate() {
@@ -177,17 +178,17 @@ public final class IconLoader {
    */
   @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), STRICT, false);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
   }
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), STRICT, false);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
   }
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), strict, false);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(strict), false);
   }
 
   private static Icon findReflectiveIcon(@NotNull String path, @Nullable ClassLoader classLoader) {
@@ -277,7 +278,7 @@ public final class IconLoader {
                                @Nullable String pathToResolve,
                                @Nullable Class clazz,
                                @NotNull ClassLoader classLoader,
-                               boolean strict,
+                               HandleNotFound handleNotFound,
                                boolean deferResolve)
   {
     Icon icon = findReflectiveIcon(originalPath, classLoader);
@@ -287,7 +288,7 @@ public final class IconLoader {
     Pair<String, Object> key = Pair.create(originalPath, (Object)classLoader);
     CachedImageIcon cachedIcon = ourIconsCache.get(key);
     if (cachedIcon == null) {
-      cachedIcon = CachedImageIcon.create(originalPath, pathToResolve, classLoader, clazz, strict, deferResolve);
+      cachedIcon = CachedImageIcon.create(originalPath, pathToResolve, classLoader, clazz, handleNotFound, deferResolve);
       if (cachedIcon == null) {
         return null;
       }
@@ -303,7 +304,7 @@ public final class IconLoader {
       return icon;
     }
     if (!StringUtil.startsWithChar(path, '/')) return null;
-    return findIcon(path, path.substring(1), null, classLoader, STRICT, false);
+    return findIcon(path, path.substring(1), null, classLoader, HandleNotFound.strict(STRICT), false);
   }
 
   @Nullable
@@ -518,7 +519,6 @@ public final class IconLoader {
     private volatile String myOriginalPath;
     @Nullable private volatile ClassLoader myClassLoader;
     @NotNull private volatile MyUrlResolver myResolver;
-    private volatile boolean myStrict;
     private volatile boolean myDark;
     private volatile boolean myDarkOverridden;
     private volatile int numberOfPatchers = ourPatchers.size();
@@ -543,7 +543,6 @@ public final class IconLoader {
       myOriginalPath = icon.myOriginalPath;
       myClassLoader = icon.myClassLoader;
       myResolver = icon.myResolver;
-      myStrict = icon.myStrict;
       myDark = icon.myDark;
       myDarkOverridden = icon.myDarkOverridden;
       numberOfPatchers = icon.numberOfPatchers;
@@ -568,14 +567,13 @@ public final class IconLoader {
                                   @Nullable String pathToResolve,
                                   @NotNull ClassLoader classLoader,
                                   @Nullable Class clazz,
-                                  boolean strict,
+                                  HandleNotFound handleNotFound,
                                   boolean deferResolve)
     {
       CachedImageIcon icon = new CachedImageIcon(null, true);
       icon.myOriginalPath = originalPath;
-      icon.myStrict = strict;
       icon.myClassLoader = classLoader;
-      icon.myResolver = icon.new MyUrlResolver(pathToResolve, clazz);
+      icon.myResolver = icon.new MyUrlResolver(pathToResolve, clazz, handleNotFound);
       if (!deferResolve && icon.getURL() == null) return null;
       return icon;
     }
@@ -626,7 +624,7 @@ public final class IconLoader {
             myClassLoader = patchedPath.second;
           }
           if (myClassLoader != null && path != null && path.startsWith("/")) {
-            myResolver = new MyUrlResolver(path.substring(1), null).resolve();
+            myResolver = new MyUrlResolver(path.substring(1), null, myResolver.myHandleNotFound).resolve();
           }
         }
       }
@@ -787,12 +785,35 @@ public final class IconLoader {
       }
     }
 
+    enum HandleNotFound {
+      THROW_EXCEPTION {
+        @Override
+        void handle(String msg) {
+          throw new RuntimeException(msg);
+        }
+      },
+      LOG_ERROR {
+        @Override
+        void handle(String msg) {
+          LOG.error(msg);
+        }
+      },
+      IGNORE;
+
+      void handle(String msg) throws RuntimeException {}
+
+      static HandleNotFound strict(boolean strict) {
+        return strict ? THROW_EXCEPTION : IGNORE;
+      }
+    }
+
     /**
      * Used to defer URL resolve.
      */
     private class MyUrlResolver {
       @Nullable private final Class myClass;
       @Nullable private final String myOverriddenPath;
+      @NotNull private final HandleNotFound myHandleNotFound;
       @Nullable private volatile URL myUrl;
       private volatile boolean isResolved;
 
@@ -800,12 +821,14 @@ public final class IconLoader {
         myClass = null;
         myOverriddenPath = null;
         myUrl = url;
+        myHandleNotFound = HandleNotFound.IGNORE;
         isResolved = true;
       }
 
-      MyUrlResolver(@Nullable String path, @Nullable Class clazz) {
+      MyUrlResolver(@Nullable String path, @Nullable Class clazz, @NotNull HandleNotFound handleNotFound) {
         myOverriddenPath = path;
         myClass = clazz;
+        myHandleNotFound = handleNotFound;
         if (!Registry.is("ide.icons.deferUrlResolve")) resolve();
       }
 
@@ -816,7 +839,7 @@ public final class IconLoader {
       /**
        * Resolves the URL if it's not yet resolved.
        */
-      MyUrlResolver resolve() {
+      MyUrlResolver resolve() throws RuntimeException {
         if (isResolved) return this;
         try {
           String path = ObjectUtils.notNull(myOverriddenPath, myOriginalPath);
@@ -825,8 +848,8 @@ public final class IconLoader {
             // Some plugins use findIcon("icon.png",IconContainer.class)
             url = findURL(path, myClass);
           }
-          if (url == null && myStrict) {
-            throw new RuntimeException("Can't find icon in '" + myOriginalPath + "' near " + myClassLoader);
+          if (url == null) {
+            myHandleNotFound.handle("Can't find icon in '" + myOriginalPath + "' near " + myClassLoader);
           }
           myUrl = url;
         } finally {
