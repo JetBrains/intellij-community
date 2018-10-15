@@ -19,9 +19,12 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -128,6 +131,7 @@ class VariableExtractor {
   }
 
   private void replaceOccurrences(PsiExpression newExpr) {
+    assert myAnchor.isValid();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     PsiExpression ref = elementFactory.createExpressionFromText(mySettings.getEnteredName(), null);
     boolean needReplaceSelf = myReplaceSelf;
@@ -137,7 +141,7 @@ class VariableExtractor {
         correctedOccurrence = RefactoringUtil.outermostParenthesizedExpression(correctedOccurrence);
         if (mySettings.isReplaceLValues() || !RefactoringUtil.isAssignmentLHS(correctedOccurrence)) {
           PsiElement replacement = IntroduceVariableBase.replace(correctedOccurrence, ref, myProject);
-          if (occurrence.equals(myAnchor)) {
+          if (!myAnchor.isValid()) {
             myAnchor = replacement;
           }
         }
@@ -147,7 +151,7 @@ class VariableExtractor {
     }
     if (needReplaceSelf) {
       PsiElement replacement = IntroduceVariableBase.replace(newExpr, ref, myProject);
-      if (newExpr.equals(myAnchor)) {
+      if (!myAnchor.isValid()) {
         myAnchor = replacement;
       }
     }
@@ -222,31 +226,40 @@ class VariableExtractor {
 
   @NotNull
   private static PsiElement correctAnchor(PsiExpression expr,
-                                          @NotNull PsiElement anchorStatement,
+                                          @NotNull PsiElement anchor,
                                           PsiExpression[] occurrences) {
-    if (anchorStatement instanceof PsiWhileStatement) {
-      PsiExpression condition = ((PsiWhileStatement)anchorStatement).getCondition();
+    PsiExpression firstOccurrence = StreamEx.of(occurrences)
+      .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
+    if (anchor instanceof PsiWhileStatement) {
+      PsiExpression condition = ((PsiWhileStatement)anchor).getCondition();
       if (condition != null) {
-        PsiExpression expression = StreamEx
-          .of(occurrences).filter(occ -> PsiTreeUtil.isAncestor(condition, occ, false))
-          .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
-        if (expression != null) {
+        if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false)) {
           PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
           if (polyadic != null && JavaTokenType.ANDAND.equals(polyadic.getOperationTokenType())) {
-            PsiExpression anchor = ContainerUtil.find(polyadic.getOperands(), op -> PsiTreeUtil.isAncestor(op, expression, false));
-            LOG.assertTrue(anchor != null);
-            return anchor;
+            PsiExpression operand = ContainerUtil.find(polyadic.getOperands(), op -> PsiTreeUtil.isAncestor(op, firstOccurrence, false));
+            LOG.assertTrue(operand != null);
+            return operand;
           }
           return condition;
         }
       }
     }
-    if (RefactoringUtil.isLoopOrIf(anchorStatement.getParent())) return anchorStatement;
-    PsiElement child = locateAnchor(anchorStatement);
+    if (firstOccurrence != null && ControlFlowUtils.canExtractStatement(firstOccurrence)) {
+      PsiExpression ancestorCandidate = anchor instanceof PsiIfStatement ? ((PsiIfStatement)anchor).getCondition() :
+                                        anchor instanceof PsiReturnStatement ? ((PsiReturnStatement)anchor).getReturnValue():
+                                        anchor instanceof PsiExpression ? (PsiExpression)anchor :
+                                        null;
+      if (PsiTreeUtil.isAncestor(ancestorCandidate, firstOccurrence, false) &&
+          ReorderingUtils.canExtract(ancestorCandidate, firstOccurrence) == ThreeState.NO) {
+        return firstOccurrence;
+      }
+    }
+    if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
+    PsiElement child = locateAnchor(anchor);
     if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {
       child = child.getNextSibling();
     }
-    return child == null ? anchorStatement : child;
+    return child == null ? anchor : child;
   }
 
   private static PsiElement locateAnchor(PsiElement child) {
