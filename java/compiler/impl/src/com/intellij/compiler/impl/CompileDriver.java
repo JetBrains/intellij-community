@@ -40,6 +40,7 @@ import com.intellij.packaging.impl.compiler.ArtifactCompilerUtil;
 import com.intellij.packaging.impl.compiler.ArtifactsCompiler;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.task.ProjectTaskListener;
 import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -299,12 +300,16 @@ public class CompileDriver {
           case FILES_GENERATED:
             final List<CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> generated = event.getGeneratedFilesList();
             final CompilationStatusListener publisher = !myProject.isDisposed()? messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS) : null;
+            final ProjectTaskListener buildTaskEventPublisher = !myProject.isDisposed()? messageBus.syncPublisher(ProjectTaskListener.TOPIC) : null;
             Set<String> writtenArtifactOutputPaths = outputToArtifact != null ? new THashSet<>(FileUtil.PATH_HASHING_STRATEGY) : null;
             for (CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile generatedFile : generated) {
               final String root = FileUtil.toSystemIndependentName(generatedFile.getOutputRoot());
               final String relativePath = FileUtil.toSystemIndependentName(generatedFile.getRelativePath());
               if (publisher != null) {
                 publisher.fileGenerated(root, relativePath);
+              }
+              if (buildTaskEventPublisher != null) {
+                buildTaskEventPublisher.fileGenerated(root, relativePath);
               }
               if (outputToArtifact != null) {
                 Collection<Artifact> artifacts = outputToArtifact.get(root);

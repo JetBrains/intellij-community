@@ -15,6 +15,8 @@
  */
 package com.intellij.task.impl;
 
+import com.intellij.compiler.impl.CompileDriver;
+import com.intellij.compiler.impl.CompileScopeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.openapi.compiler.CompileScope;
@@ -60,6 +62,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
         callback.finished(new ProjectTaskResult(aborted, errors, warnings));
 
     Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = groupBy(tasks);
+    runModulesResourcesBuildTasks(project, context, compileNotification, taskMap);
     runModulesBuildTasks(project, context, compileNotification, taskMap);
     runFilesBuildTasks(project, compileNotification, taskMap);
     runArtifactsBuildTasks(project, context, compileNotification, taskMap);
@@ -67,12 +70,14 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
 
   @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
-    return true;
+    return projectTask instanceof ModuleBuildTask ||
+           (projectTask instanceof ProjectModelBuildTask && ((ProjectModelBuildTask)projectTask).getBuildableElement() instanceof Artifact);
   }
 
   public static Map<Class<? extends ProjectTask>, List<ProjectTask>> groupBy(@NotNull Collection<? extends ProjectTask> tasks) {
     return tasks.stream().collect(Collectors.groupingBy(o -> {
       if (o instanceof ModuleFilesBuildTask) return ModuleFilesBuildTask.class;
+      if (o instanceof ModuleResourcesBuildTask) return ModuleResourcesBuildTask.class;
       if (o instanceof ModuleBuildTask) return ModuleBuildTask.class;
       if (o instanceof ProjectModelBuildTask) return ProjectModelBuildTask.class;
       return o.getClass();
@@ -102,6 +107,33 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
       else {
         compilerManager.compile(scope, compileNotification);
       }
+    }
+  }
+
+  private static void runModulesResourcesBuildTasks(@NotNull Project project,
+                                                    @NotNull ProjectTaskContext context,
+                                                    @Nullable CompileStatusNotification compileNotification,
+                                                    @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
+    Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleResourcesBuildTask.class);
+    if (ContainerUtil.isEmpty(buildTasks)) return;
+
+    CompilerManager compilerManager = CompilerManager.getInstance(project);
+
+    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
+    CompileScope scope = createScope(compilerManager, context,
+                                     modulesBuildSettings.modules,
+                                     modulesBuildSettings.includeDependentModules,
+                                     modulesBuildSettings.includeRuntimeDependencies);
+    List<String> moduleNames = modulesBuildSettings.modules.stream()
+      .map(Module::getName)
+      .collect(Collectors.toList());
+    CompileScopeUtil.setResourcesScopeForExternalBuild(scope, moduleNames);
+
+    if (modulesBuildSettings.isIncrementalBuild) {
+      compilerManager.make(scope, compileNotification);
+    }
+    else {
+      compilerManager.compile(scope, compileNotification);
     }
   }
 
@@ -180,6 +212,11 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                           boolean includeRuntimeDependencies) {
     CompileScope scope = compilerManager.createModulesCompileScope(
       modules.toArray(Module.EMPTY_ARRAY), includeDependentModules, includeRuntimeDependencies);
+
+    if (context.isAutoRun()) {
+      CompileDriver.setCompilationStartedAutomatically(scope);
+    }
+
     RunConfiguration configuration = context.getRunConfiguration();
     if (configuration != null) {
       scope.putUserData(CompilerManager.RUN_CONFIGURATION_KEY, configuration);

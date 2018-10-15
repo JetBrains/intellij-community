@@ -16,27 +16,41 @@
 package com.intellij.task;
 
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectTaskContext {
+public class ProjectTaskContext extends UserDataHolderBase {
   @Nullable
-  private Object mySessionId;
+  private final Object mySessionId;
   @Nullable
-  private RunConfiguration myRunConfiguration;
+  private final RunConfiguration myRunConfiguration;
+  private final boolean myAutoRun;
 
   public ProjectTaskContext() {
+    this(null, null, false);
+  }
+
+  public ProjectTaskContext(boolean autoRun) {
+    this(null, null, autoRun);
   }
 
   public ProjectTaskContext(@Nullable Object sessionId) {
-    mySessionId = sessionId;
+    this(sessionId, null, false);
   }
 
   public ProjectTaskContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration) {
+    this(sessionId, runConfiguration, false);
+  }
+
+  public ProjectTaskContext(@Nullable Object sessionId, @Nullable RunConfiguration runConfiguration, boolean autoRun) {
     mySessionId = sessionId;
     myRunConfiguration = runConfiguration;
+    myAutoRun = autoRun;
   }
 
   @Nullable
@@ -47,5 +61,14 @@ public class ProjectTaskContext {
   @Nullable
   public RunConfiguration getRunConfiguration() {
     return myRunConfiguration;
+  }
+
+  public boolean isAutoRun() {
+    return myAutoRun;
+  }
+
+  public <T> ProjectTaskContext withUserData(@NotNull Key<T> key, @Nullable T value) {
+    putUserData(key, value);
+    return this;
   }
 }

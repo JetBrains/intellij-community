@@ -16,7 +16,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.task.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -61,7 +62,7 @@ public class HotSwapUIImpl extends HotSwapUI {
       public void sessionAttached(DebuggerSession session) {
         if (myConn == null) {
           myConn = bus.connect();
-          myConn.subscribe(CompilerTopics.COMPILATION_STATUS, new MyCompilationStatusListener());
+          myConn.subscribe(ProjectTaskListener.TOPIC, new MyCompilationStatusListener());
         }
       }
 
@@ -283,14 +284,14 @@ public class HotSwapUIImpl extends HotSwapUI {
                                    @Nullable HotSwapStatusListener callback) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
-      CompilerManager compilerManager = CompilerManager.getInstance(session.getProject());
+      ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(session.getProject());
       if (callback == null) {
-        compilerManager.make(null);
+        projectTaskManager.buildAllModules();
       }
       else {
-        CompileScope compileScope = compilerManager.createProjectCompileScope(session.getProject());
-        compileScope.putUserData(HOT_SWAP_CALLBACK_KEY, callback);
-        compilerManager.make(compileScope, null);
+        ProjectTask buildProjectTask = projectTaskManager.createAllModulesBuildTask(true, session.getProject());
+        ProjectTaskContext context = new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
+        projectTaskManager.run(context, buildProjectTask, null);
       }
     }
     else {
@@ -312,7 +313,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     myAskBeforeHotswap = false;
   }
 
-  private class MyCompilationStatusListener implements CompilationStatusListener {
+  private class MyCompilationStatusListener implements ProjectTaskListener {
 
     private final AtomicReference<Map<String, List<String>>> myGeneratedPaths = new AtomicReference<>(new HashMap<>());
     private final THashSet<File> myOutputRoots;
@@ -333,28 +334,37 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
-      final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
+    public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
+      if (!hasCompilationResults(executionResult)) return;
+
+      Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
+      generated = generated.isEmpty() ? null : generated;
       if (myProject.isDisposed()) {
         return;
       }
 
+      int errors = executionResult.getErrors();
+      boolean aborted = executionResult.isAborted();
       if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
         for (HotSwapVetoableListener listener : myListeners) {
-          if (!listener.shouldHotSwap(compileContext)) {
+          if (!listener.shouldHotSwap(DummyCompileContext.getInstance()) ||
+              !listener.shouldHotSwap(context, executionResult)) {
             return;
           }
         }
 
         List<DebuggerSession> sessions = getHotSwappableDebugSessions();
         if (!sessions.isEmpty()) {
-          CompileScope compileScope = compileContext.getCompileScope();
-          HotSwapStatusListener callback = compileScope != null ? compileScope.getUserData(HOT_SWAP_CALLBACK_KEY) : null;
-
+          HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
           hotSwapSessions(sessions, generated, callback);
         }
       }
       myPerformHotswapAfterThisCompilation = true;
+    }
+
+    private boolean hasCompilationResults(@NotNull ProjectTaskResult executionResult) {
+      return executionResult.anyMatch((task, state) -> task instanceof ModuleBuildTask &&
+                                                       !state.isFailed() && !state.isSkipped());
     }
   }
 
