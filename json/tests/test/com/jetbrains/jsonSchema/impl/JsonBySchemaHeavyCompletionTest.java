@@ -153,5 +153,7 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
     });
   }
 
-
+  public void testGuessType() throws Exception {
+    baseInsertTest("guessType", "test");
+  }
 }

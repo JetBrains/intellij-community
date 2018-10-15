@@ -234,7 +234,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
       }
       else if (isSurelyValue) {
-        final JsonSchemaType type = schema.getType();
+        final JsonSchemaType type = schema.guessType();
         suggestSpecialValues(type);
         if (type != null) {
           suggestByType(schema, type);
@@ -360,7 +360,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
       }
 
-      builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
+      builder = builder.withIcon(getIcon(jsonSchemaObject.guessType()));
 
       if (hasSameType(variants)) {
         final JsonSchemaType type = jsonSchemaObject.guessType();
@@ -398,7 +398,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     }
 
     private static boolean hasSameType(@NotNull Collection<JsonSchemaObject> variants) {
-      return variants.stream().map(JsonSchemaObject::getType).filter(Objects::nonNull).distinct().count() <= 1;
+      return variants.stream().map(JsonSchemaObject::guessType).filter(Objects::nonNull).distinct().count() <= 1;
     }
 
     private static InsertHandler<LookupElement> createArrayOrObjectLiteralInsertHandler(boolean newline, int insertedTextSize) {
@@ -447,7 +447,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private InsertHandler<LookupElement> createPropertyInsertHandler(@NotNull JsonSchemaObject jsonSchemaObject,
                                                                      final boolean hasValue,
                                                                      boolean insertComma) {
-      JsonSchemaType type = jsonSchemaObject.getType();
+      JsonSchemaType type = jsonSchemaObject.guessType();
       List<Object> values = jsonSchemaObject.getEnum();
       if (type == null && values != null && !values.isEmpty()) type = detectType(values);
       final Object defaultValue = jsonSchemaObject.getDefault();
