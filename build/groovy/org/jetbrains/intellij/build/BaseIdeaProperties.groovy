@@ -138,7 +138,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.compatiblePluginsToIgnore = [
       "intellij.akka",
       "intellij.changesManager",
-      "intellij.chronon.me",
       "intellij.cidr.externalSystem",
       "intellij.flex.uiDesigner.tests",
       "intellij.griffon",
