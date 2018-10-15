@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
@@ -82,6 +81,10 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
     if (view != null) view.apply();
   }
 
+  private static boolean isCurrent(LookAndFeelInfo info) {
+    return info == LafManager.getInstance().getCurrentLookAndFeel();
+  }
+
   private static boolean isDarcula(LookAndFeelInfo info) {
     return info instanceof DarculaLookAndFeelInfo;
   }
@@ -114,21 +117,23 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
     return null;
   }
 
-  @NotNull
-  @SuppressWarnings("UseOfObsoleteCollectionType")
-  static Vector<LookAndFeelInfo> getInstalledLookAndFeels(boolean withHighContrast) {
-    Vector<LookAndFeelInfo> vector = new Vector<>();
-    for (LookAndFeelInfo info : LafManager.getInstance().getInstalledLookAndFeels()) {
-      if (withHighContrast || !isHighContrast(info)) vector.add(info);
-    }
-    return vector;
-  }
-
   private static final class View {
     private final JPanel pMain = new JPanel(new VerticalLayout(JBUI.scale(5)));
     private final JCheckBox cbHighContrast = new JCheckBox(IdeBundle.message("checkbox.support.high.contrast"));
     private final JCheckBox cbScreenReaders = new JCheckBox(IdeBundle.message("checkbox.support.screen.readers"));
     private final ColorBlindnessPanel pColorBlindness = new ColorBlindnessPanel();
+    private LookAndFeelInfo currentLookAndFeel;
+    private boolean currentHighContrast;
+
+    private boolean isCurrentHighContrastModified() {
+      return cbHighContrast.isEnabled() && cbHighContrast.isSelected() != currentHighContrast;
+    }
+
+    private void resetCurrentHighContrast() {
+      currentLookAndFeel = LafManager.getInstance().getCurrentLookAndFeel();
+      currentHighContrast = isHighContrast(currentLookAndFeel);
+      cbHighContrast.setSelected(currentHighContrast);
+    }
 
     View() {
       pMain.add(cbHighContrast);
@@ -137,10 +142,11 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
     }
 
     boolean isModified() {
-      UISettings ui = UISettings.getInstance();
-      if (cbHighContrast.isEnabled() && cbHighContrast.isSelected() != ui.getHighContrast()) return true;
+      if (!isCurrent(currentLookAndFeel)) resetCurrentHighContrast();
+      if (isCurrentHighContrastModified()) return true;
 
       ColorBlindness blindness = pColorBlindness.getColorBlindness();
+      UISettings ui = UISettings.getInstance();
       if (blindness != ui.getColorBlindness()) return true;
 
       GeneralSettings general = GeneralSettings.getInstance();
@@ -150,9 +156,10 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
     }
 
     void reset() {
-      UISettings ui = UISettings.getInstance();
+      resetCurrentHighContrast();
       cbHighContrast.setEnabled(findLookAndFeel(AccessibilityConfigurable::isHighContrast) != null);
-      cbHighContrast.setSelected(ui.getHighContrast());
+
+      UISettings ui = UISettings.getInstance();
       pColorBlindness.setColorBlindness(ui.getColorBlindness());
 
       GeneralSettings general = GeneralSettings.getInstance();
@@ -164,11 +171,8 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
     }
 
     void apply() {
-      UISettings ui = UISettings.getInstance();
-      boolean updateHighContrast = cbHighContrast.isEnabled() && cbHighContrast.isSelected() != ui.getHighContrast();
-      if (updateHighContrast) ui.setHighContrast(cbHighContrast.isSelected());
-
       ColorBlindness blindness = pColorBlindness.getColorBlindness();
+      UISettings ui = UISettings.getInstance();
       boolean updateColorBlindness = blindness != ui.getColorBlindness();
       if (updateColorBlindness) ui.setColorBlindness(blindness);
 
@@ -176,7 +180,8 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
       boolean updateScreenReaders = cbScreenReaders.isEnabled() && cbScreenReaders.isSelected() != general.isSupportScreenReaders();
       if (updateScreenReaders) general.setSupportScreenReaders(cbScreenReaders.isSelected());
 
-      if (updateHighContrast) {
+      // allow to set/reset high contrast theme only if it is not changed in Appearance
+      if (isCurrent(currentLookAndFeel) && isCurrentHighContrastModified()) {
         LookAndFeelInfo replacement = null;
         LookAndFeelInfo current = LafManager.getInstance().getCurrentLookAndFeel();
         if (cbHighContrast.isSelected()) {
@@ -208,13 +213,12 @@ public final class AccessibilityConfigurable implements SearchableConfigurable {
           switchLafAndUpdateUI(LafManager.getInstance(), replacement, true);
         }
       }
-      if (updateHighContrast || updateColorBlindness) {
-        ui.fireUISettingsChanged();
-      }
       if (updateColorBlindness) {
+        ui.fireUISettingsChanged();
         ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
         ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
       }
+      resetCurrentHighContrast();
     }
   }
 }
