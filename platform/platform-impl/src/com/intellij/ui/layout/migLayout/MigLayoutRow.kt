@@ -35,7 +35,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     // as static method to ensure that members of current row are not used
-    private fun createSeparatorRow(row: MigLayoutRow, title: String?) {
+    private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
       val cc = CC()
       cc.vertical.gapBefore = gapToBoundSize(row.spacing.largeVerticalGap, false)
@@ -129,8 +129,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     if (isSeparated) {
       val row = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
+      configureSeparatorRow(row, title)
       subRows.add(row)
-      createSeparatorRow(row, title)
     }
 
     val row = MigLayoutRow(this, componentConstraints, builder,
