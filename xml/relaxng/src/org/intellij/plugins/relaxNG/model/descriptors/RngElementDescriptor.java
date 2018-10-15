@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -291,10 +292,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     final PsiElement at;
     if (column > 0) {
       if (decl.getContainingFile().getFileType() == RncFileType.getInstance()) {
-        final PsiElement rncElement = file.findElementAt(startOffset + column);
-        final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
-        final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
-        return nameClass != null ? nameClass.getPsi() : rncElement;
+        return new RncLocationPsiElement(file, startOffset, column);
       }
       at = file.findElementAt(startOffset + column - 2);
     } else {
@@ -413,5 +411,44 @@ public class RngElementDescriptor implements XmlElementDescriptor {
 
   public DElementPattern getElementPattern() {
     return myElementPattern;
+  }
+
+  private static class RncLocationPsiElement extends FakePsiElement {
+    private final PsiFile myFile;
+    private final int myStartOffset;
+    private final int myColumn;
+
+    public RncLocationPsiElement(PsiFile file, int startOffset, int column) {
+      myFile = file;
+      myStartOffset = startOffset;
+      myColumn = column;
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getNavigationElement() {
+      final PsiElement rncElement = myFile.findElementAt(myStartOffset + myColumn);
+      final ASTNode pattern = rncElement != null ? TreeUtil.findParent(rncElement.getNode(), RncElementTypes.PATTERN) : null;
+      final ASTNode nameClass = pattern != null ? pattern.findChildByType(RncElementTypes.NAME_CLASS) : null;
+      return nameClass != null ? nameClass.getPsi() : rncElement;
+    }
+
+    @Override
+    public PsiElement getParent() {
+      return getNavigationElement();
+    }
+
+    @Override
+    public boolean equals(Object another) {
+      return another instanceof RncLocationPsiElement &&
+             ((RncLocationPsiElement)another).myFile == myFile &&
+             ((RncLocationPsiElement)another).myStartOffset == myStartOffset &&
+             ((RncLocationPsiElement)another).myColumn == myColumn;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myFile, myStartOffset, myColumn);
+    }
   }
 }
