@@ -103,6 +103,6 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   }
 
   private static boolean isAvailable() {
-    return Registry.is("terminal.persistant.tabs");
+    return Registry.is("terminal.persistent.tabs");
   }
 }
