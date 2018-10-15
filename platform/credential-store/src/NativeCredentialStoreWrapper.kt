@@ -2,6 +2,7 @@
 package com.intellij.credentialStore
 
 import com.google.common.cache.CacheBuilder
+import com.intellij.credentialStore.keePass.createInMemoryKeePassCredentialStore
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -31,13 +32,11 @@ private class NativeCredentialStoreWrapper(private val store: CredentialStore) :
   private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()
 
   override fun get(attributes: CredentialAttributes): Credentials? {
-    if (store is KeePassCredentialStore) {
-      if (postponedRemovedCredentials.contains(attributes)) {
-        return null
-      }
-      postponedCredentials.get(attributes)?.let {
-        return it
-      }
+    if (postponedRemovedCredentials.contains(attributes)) {
+      return null
+    }
+    postponedCredentials.get(attributes)?.let {
+      return it
     }
 
     if (deniedItems.getIfPresent(attributes) != null) {

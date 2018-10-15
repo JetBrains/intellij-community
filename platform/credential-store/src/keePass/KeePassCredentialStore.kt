@@ -1,13 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.credentialStore
+package com.intellij.credentialStore.keePass
 
+import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
-import com.intellij.credentialStore.keePass.MASTER_KEY_FILE_NAME
-import com.intellij.credentialStore.keePass.MasterKey
-import com.intellij.credentialStore.keePass.MasterKeyFileStorage
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.setOwnerPermissions
@@ -35,7 +33,8 @@ internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials
     group.addEntry(entry)
   }
   val baseDir = getDefaultKeePassBaseDirectory()
-  return KeePassCredentialStore(baseDir.resolve(DB_FILE_NAME), baseDir.resolve(MASTER_KEY_FILE_NAME), preloadedDb = keepassDb)
+  return KeePassCredentialStore(baseDir.resolve(DB_FILE_NAME), baseDir.resolve(MASTER_KEY_FILE_NAME),
+                                preloadedDb = keepassDb)
 }
 
 internal fun getDefaultKeePassBaseDirectory() = Paths.get(PathManager.getConfigPath())
@@ -45,7 +44,8 @@ internal fun getDefaultMasterPasswordFile() = getDefaultKeePassBaseDirectory().r
 internal fun createInMemoryKeePassCredentialStore(): KeePassCredentialStore {
   val baseDirectory = getDefaultKeePassBaseDirectory()
   // for now not safe to pass fake path because later KeePassCredentialStore can be transformed to not in memory
-  return KeePassCredentialStore(baseDirectory.resolve(DB_FILE_NAME), baseDirectory.resolve(MASTER_KEY_FILE_NAME), isMemoryOnly = true)
+  return KeePassCredentialStore(baseDirectory.resolve(DB_FILE_NAME),
+                                baseDirectory.resolve(MASTER_KEY_FILE_NAME), isMemoryOnly = true)
 }
 
 /**
