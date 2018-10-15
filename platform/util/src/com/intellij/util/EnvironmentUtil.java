@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -150,14 +151,23 @@ public class EnvironmentUtil {
    * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
    */
   public static void validate(String name, String value) throws IllegalArgumentException {
-    if (name == null || name.isEmpty() || name.indexOf('\0') != -1 || name.indexOf('=', SystemInfo.isWindows ? 1 : 0) != -1) {
+    if (!isValidName(name)) {
       throw new IllegalArgumentException("Illegal environment variable name: " + name);
     }
-    if (value == null || value.indexOf('\0') != -1) {
+    if (!isValidValue(value)) {
       throw new IllegalArgumentException("Illegal environment variable value: " + value);
     }
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidName(@Nullable String name) {
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfo.isWindows ? 1 : 0) == -1;
+  }
+
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidValue(@Nullable String value) {
+    return value != null && value.indexOf('\0') == -1;
+  }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
