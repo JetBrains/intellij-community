@@ -81,11 +81,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
-    row.apply {
-      componentConstraints.put(component, cc)
-      arrayOf<CCFlags>()
-      component()
-    }
+    row.addComponent(component, lazyOf(cc))
   }
 
   override fun build(container: Container, layoutConstraints: Array<out LCFlags>) {

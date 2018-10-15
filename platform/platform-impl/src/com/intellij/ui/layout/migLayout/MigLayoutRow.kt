@@ -209,7 +209,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   }
 
   // separate method to avoid JComponent as a receiver
-  private fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
+  internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
 
     if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
