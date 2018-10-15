@@ -79,11 +79,13 @@ class VariableExtractor {
       initializer = (PsiExpression)initializer.copy();
 
       PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, myProject);
+      PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
+
       replaceOccurrences(newExpr);
 
       ensureCodeBlock();
 
-      PsiVariable var = createVariable(type, initializer);
+      PsiVariable var = addVariable(declaration, initializer);
 
       if (myAnchor instanceof PsiExpressionStatement &&
           ExpressionUtils.isReferenceTo(((PsiExpressionStatement)myAnchor).getExpression(), var)) {
@@ -106,15 +108,6 @@ class VariableExtractor {
       LOG.error(e);
     }
     return null;
-  }
-
-  private PsiVariable createVariable(PsiType type, PsiExpression initializer) {
-    PsiElement declaration = createDeclaration(type, mySettings.getEnteredName(), initializer);
-    declaration = addDeclaration(declaration, initializer, myAnchor);
-    declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
-    return (PsiVariable)(declaration instanceof PsiDeclarationStatement
-                         ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
-                         : declaration);
   }
 
   private void ensureCodeBlock() {
@@ -158,6 +151,14 @@ class VariableExtractor {
         myAnchor = replacement;
       }
     }
+  }
+
+  private PsiVariable addVariable(PsiElement declaration, PsiExpression initializer) {
+    declaration = addDeclaration(declaration, initializer, myAnchor);
+    declaration = JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(declaration);
+    return (PsiVariable)(declaration instanceof PsiDeclarationStatement
+                         ? ((PsiDeclarationStatement)declaration).getDeclaredElements()[0]
+                         : declaration);
   }
 
   @NotNull
