@@ -221,10 +221,14 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
       else null
     }
 
-    private fun createTypedNamedTupleReplaceType(anchor: PsiElement, fields: ImmutableNTFields, resultType: PyType): PyCallableType {
+    private fun createTypedNamedTupleReplaceType(anchor: PsiElement, fields: ImmutableNTFields, qualifierType: PyClassLikeType): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
+      val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(anchor.project)
 
+      if (qualifierType.isDefinition) {
+        parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+      }
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
@@ -238,11 +242,15 @@ class PyNamedTupleTypeProvider : PyTypeProviderBase() {
 
     private fun createUntypedNamedTupleReplaceType(call: PyCallExpression,
                                                    fields: ImmutableNTFields,
-                                                   resultType: PyType,
+                                                   qualifierType: PyClassLikeType,
                                                    context: TypeEvalContext): PyCallableType {
       val parameters = mutableListOf<PyCallableParameter>()
+      val resultType = qualifierType.toInstance()
       val elementGenerator = PyElementGenerator.getInstance(call.project)
 
+      if (qualifierType.isDefinition) {
+        parameters.add(PyCallableParameterImpl.nonPsi(PyNames.CANONICAL_SELF, resultType))
+      }
       parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()))
 
       val ellipsis = elementGenerator.createEllipsis()
