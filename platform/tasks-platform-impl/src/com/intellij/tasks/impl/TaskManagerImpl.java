@@ -313,14 +313,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
-    return restoreVcsContext(task);
+    restoreVcsContext(task);
+    return task;
   }
 
-  private LocalTask restoreVcsContext(LocalTask task) {
-    if (!isVcsEnabled()) return task;
+  private void restoreVcsContext(LocalTask task) {
+    if (!isVcsEnabled())
+      return;
 
     List<ChangeListInfo> changeLists = task.getChangeLists();
-    if (!changeLists.isEmpty()) {
+    if (changeLists.isEmpty()) {
+      task.addChangelist(new ChangeListInfo(myChangeListManager.getDefaultChangeList()));
+    }
+    else {
       ChangeListInfo info = changeLists.get(0);
       LocalChangeList changeList = myChangeListManager.getChangeList(info.id);
       if (changeList == null) {
@@ -357,7 +362,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<>(multiMap.values()));
 
     switchBranch(info);
-    return task;
   }
 
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
@@ -872,14 +876,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Nullable
   @Override
   public LocalTask getAssociatedTask(@NotNull LocalChangeList list) {
+    if (hasChangelist(getActiveTask(), list))
+      return getActiveTask();
     for (LocalTask task : getLocalTasks()) {
-      for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
-        if (changeListInfo.id.equals(list.getId())) {
-          return task;
-        }
-      }
+      if (hasChangelist(task, list))
+        return task;
     }
     return null;
+  }
+
+  private static boolean hasChangelist(LocalTask task, LocalChangeList list) {
+    for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
+      if (changeListInfo.id.equals(list.getId())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
