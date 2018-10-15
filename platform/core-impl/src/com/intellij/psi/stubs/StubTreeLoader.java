@@ -65,7 +65,9 @@ public abstract class StubTreeLoader {
   }
 
   @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message, @Nullable ObjectStubTree stubTree, @NotNull PsiFileWithStubSupport psiFile) {
+  public RuntimeException stubTreeAndIndexDoNotMatch(@NotNull String _message,
+                                                     @Nullable ObjectStubTree stubTree,
+                                                     @NotNull PsiFileWithStubSupport psiFile) {
     VirtualFile file = psiFile.getViewProvider().getVirtualFile();
     StubTree stubTreeFromIndex = (StubTree)readFromVFile(psiFile.getProject(), file);
     boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -92,12 +94,14 @@ public abstract class StubTreeLoader {
 
     if (!compiled) {
       String text = psiFile.getText();
-      PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject()).createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
+      PsiFile fromText = PsiFileFactory.getInstance(psiFile.getProject())
+        .createFileFromText(psiFile.getName(), psiFile.getFileType(), text);
       if (fromText.getLanguage().equals(psiFile.getLanguage())) {
         boolean consistent = DebugUtil.psiToString(psiFile, true).equals(DebugUtil.psiToString(fromText, true));
         if (consistent) {
           msg += "\n tree consistent";
-        } else {
+        }
+        else {
           msg += "\n AST INCONSISTENT, perhaps after incremental reparse; " + fromText;
         }
       }
@@ -164,8 +168,9 @@ public abstract class StubTreeLoader {
   public static String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
     Function<PsiFile, String> fileClassName = file -> file.getClass().getSimpleName();
     Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
-      pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
-    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
+      pair -> "(" + (pair.first == null ? "<unknown type>" : pair.first.toString() + ", " + pair.first.getLanguage()) +
+              " -> " + fileClassName.fun(pair.second) + ")";
+    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider, true);
     return ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
