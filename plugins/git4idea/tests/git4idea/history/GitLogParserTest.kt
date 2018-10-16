@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitUtil
@@ -21,13 +20,6 @@ import java.io.File
 import java.util.*
 
 class GitLogParserTest : GitPlatformTest() {
-  private var root: VirtualFile? = null
-
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    root = projectRoot
-  }
 
   @Throws(VcsException::class)
   fun testParseAllWithoutNameStatus() {
@@ -164,8 +156,8 @@ class GitLogParserTest : GitPlatformTest() {
     UsefulTestCase.assertSameElements(actual.refs, expected.refs)
 
     if (option == STATUS) {
-      assertPaths(actual.getFilePaths(root!!), expected.paths())
-      assertChanges(actual.parseChanges(myProject, root!!), expected.changes())
+      assertPaths(actual.getFilePaths(projectRoot), expected.paths())
+      assertChanges(actual.parseChanges(myProject, projectRoot), expected.changes())
     }
   }
 
