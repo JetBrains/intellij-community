@@ -444,6 +444,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/databinding/intellij.android.databinding.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android-debuggers/intellij.android.debuggers.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" filepath="$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" />
