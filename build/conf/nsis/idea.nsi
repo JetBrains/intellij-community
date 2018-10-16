@@ -305,7 +305,7 @@ Function OnDirectoryPageLeave
   Call instDirEmpty
   StrCmp $9 "not empty" abort skip_abort
 abort:
-  ${LogText} "installation dir is not empty: $INSTDIR"
+  ${LogText} "ERROR: installation dir is not empty: $INSTDIR"
   MessageBox MB_OK|MB_ICONEXCLAMATION "$(empty_or_upgrade_folder)"
   Abort
 skip_abort:
@@ -546,7 +546,13 @@ check_if_install_dir_contains_PROGRAMFILES64:
     ${StrLoc} $0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
     StrCmp $0 "" done update_install_dir
 update_install_dir:
+    ${LogText} ""
+    ${LogText} "  NOTE: Specified install dir: $INSTDIR is required administrative rights."
+    ${LogText} "  It is corresponding with the admin mode in silent config file."
+    ${LogText} "  But installation has been run with user mode. So install dir has been changed to: "
     StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
+    ${LogText} "  $INSTDIR "
+    ${LogText} ""
   ${EndIf}
 done:
   pop $0
@@ -645,7 +651,7 @@ Function IncorrectSilentInstallParameters
   !define msg5 "Run installation in silent mode with logging:$\r$\n"
   !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\r$\n"
   MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}"
-  ${LogText} "silent installation: incorrect parameters."
+  ${LogText} "ERROR: silent installation: incorrect parameters."
   Abort
 FunctionEnd
 
@@ -662,7 +668,7 @@ check_version:
   StrCmp $3 "" done
   IntCmpU $3 ${VER_BUILD} ask_Install_Over done ask_Install_Over
 ask_Install_Over:
-  ${LogText} "${PRODUCT_WITH_VER} is already installed."
+  ${LogText} "NOTE: ${PRODUCT_WITH_VER} is already installed."
   IfSilent continue 0
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
@@ -1319,7 +1325,7 @@ Function checkAvailableRequiredDiskSpace
 
   IntCmp $3 1 done
     MessageBox MB_OK "Error: Not enough disk space!"
-    ${LogText} "Error: Not enough disk space!"
+    ${LogText} "ERROR: Not enough disk space!"
     Abort
 done:
 FunctionEnd
