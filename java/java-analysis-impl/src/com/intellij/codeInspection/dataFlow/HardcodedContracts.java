@@ -153,7 +153,8 @@ public class HardcodedContracts {
                                         returnTrue()),
                 new StandardMethodContract(new ValueConstraint[]{NULL_VALUE, NOT_NULL_VALUE}, returnFalse()),
                 new StandardMethodContract(new ValueConstraint[]{NOT_NULL_VALUE, NULL_VALUE}, returnFalse())
-              ));
+              ))
+    .register(enumValues(), ContractProvider.of(new StandardMethodContract(new ValueConstraint[0], returnNew())));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
