@@ -41,6 +41,5 @@
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="library" name="netty-handler" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
-    <orderEntry type="module" module-name="intellij.copyright" />
   </component>
 </module>

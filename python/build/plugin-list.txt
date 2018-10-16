@@ -5,6 +5,7 @@ intellij.markdown
 intellij.platform.langInjection
 intellij.platform.remoteServers.git
 intellij.properties
+intellij.python.copyright
 intellij.python.ipnb
 intellij.python.langInjection
 intellij.python.reStructuredText
