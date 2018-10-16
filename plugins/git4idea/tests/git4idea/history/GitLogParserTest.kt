@@ -138,7 +138,7 @@ class GitLogParserTest : GitPlatformTest() {
       UsefulTestCase.assertOrderedEquals(actualPaths, expectedPaths)
 
       val actualChanges = actual.parseChanges(myProject, projectRoot)
-      val expectedChanges = Arrays.asList(*expected.changes)
+      val expectedChanges = expected.changes
       TestCase.assertEquals(expectedChanges.size, actualChanges.size)
       for (i in actualChanges.indices) {
         assertChange(actualChanges[i], expectedChanges[i])
@@ -177,6 +177,7 @@ class GitLogParserTest : GitPlatformTest() {
 }
 
 private class GitTestLogRecord internal constructor(private val data: Map<GitTestLogRecordInfo, Any>,
+                                                    val changes: List<GitTestChange> = emptyList(),
                                                     private val newRefsFormat: Boolean = false) {
   val hash: String
     get() = data[GitTestLogRecordInfo.HASH] as String
@@ -234,9 +235,6 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
       }
       return "(" + StringUtil.join(refs, ", ") + ")"
     }
-
-  val changes: Array<GitTestChange>
-    get() = data[GitTestLogRecordInfo.CHANGES] as Array<GitTestChange>
 
   internal fun rawBody(): String {
     return subject + "\n\n" + body
@@ -304,7 +302,6 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
     BODY,
     PARENTS,
     REFS,
-    CHANGES
   }
 
   internal class GitTestChange internal constructor(internal val type: Change.Type,
@@ -357,6 +354,7 @@ private val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIM
                                       PARENTS, PARENTS, RAW_BODY, REF_NAMES)
 
 private fun createTestRecord(vararg parameters: Pair<GitTestLogRecord.GitTestLogRecordInfo, Any>,
+                             changes: List<GitTestLogRecord.GitTestChange> = emptyList(),
                              newRefsFormat: Boolean = false): GitTestLogRecord {
   val data = mutableMapOf(Pair(GitTestLogRecord.GitTestLogRecordInfo.AUTHOR_TIME, Date(1317027817L * 1000)),
                           Pair(GitTestLogRecord.GitTestLogRecordInfo.AUTHOR_NAME, "John Doe"),
@@ -366,17 +364,16 @@ private fun createTestRecord(vararg parameters: Pair<GitTestLogRecord.GitTestLog
                           Pair(GitTestLogRecord.GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com"))
   parameters.associateTo(data) { it }
   data[GitTestLogRecord.GitTestLogRecordInfo.HASH] = DigestUtils.sha1Hex(data.toString())
-  return GitTestLogRecord(data, newRefsFormat)
+  return GitTestLogRecord(data, changes, newRefsFormat)
 }
 
 private fun generateRecordWithSubject(subject: String): GitTestLogRecord {
   return createTestRecord(Pair(GitTestLogRecord.GitTestLogRecordInfo.SUBJECT, subject),
                           Pair(GitTestLogRecord.GitTestLogRecordInfo.BODY, "Small description"),
                           Pair(GitTestLogRecord.GitTestLogRecordInfo.PARENTS, arrayOf("2c815939f45fbcfda9583f84b14fe9d393ada790")),
-                          Pair(GitTestLogRecord.GitTestLogRecordInfo.CHANGES,
-                               arrayOf(modified("src/CClass.java"),
-                                       added("src/OtherClass.java"),
-                                       deleted("src/OldClass.java"))))
+                          changes = listOf(modified("src/CClass.java"),
+                                           added("src/OtherClass.java"),
+                                           deleted("src/OldClass.java")))
 }
 
 private fun generateRecords(newRefsFormat: Boolean): MutableList<GitTestLogRecord> {
@@ -389,31 +386,28 @@ private fun generateRecords(newRefsFormat: Boolean): MutableList<GitTestLogRecor
 
                                                                                 "Then comes a long long description.\n" +
                                                                                 "Probably multilined."),
-                               Pair(GitTestLogRecord.GitTestLogRecordInfo.CHANGES,
-                                    arrayOf(moved("file2", "file3"),
-                                            added("readme.txt"),
-                                            modified("src/CClass.java"),
-                                            deleted("src/ChildAClass.java"))),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.REFS,
                                     Arrays.asList("HEAD", "refs/heads/master")),
+                               changes = listOf(moved("file2", "file3"),
+                                                added("readme.txt"),
+                                                modified("src/CClass.java"),
+                                                deleted("src/ChildAClass.java")),
                                newRefsFormat = newRefsFormat))
 
   records.add(createTestRecord(Pair(GitTestLogRecord.GitTestLogRecordInfo.SUBJECT, "Commit message"),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.BODY, "Small description"),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.PARENTS, arrayOf(records[0].hash)),
-                               Pair(GitTestLogRecord.GitTestLogRecordInfo.CHANGES,
-                                    arrayOf(modified("src/CClass.java"))),
+                               changes = listOf(modified("src/CClass.java")),
                                newRefsFormat = newRefsFormat))
 
   records.add(createTestRecord(Pair(GitTestLogRecord.GitTestLogRecordInfo.SUBJECT, "Commit message"),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.BODY, "Small description"),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.PARENTS,
                                     arrayOf(records[0].hash, records[1].hash)),
-                               Pair(GitTestLogRecord.GitTestLogRecordInfo.CHANGES,
-                                    arrayOf(modified("src/CClass.java"))),
                                Pair(GitTestLogRecord.GitTestLogRecordInfo.REFS,
                                     Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master",
                                                   "refs/tags/v1.0")),
+                               changes = listOf(modified("src/CClass.java")),
                                newRefsFormat = newRefsFormat))
 
   return records
