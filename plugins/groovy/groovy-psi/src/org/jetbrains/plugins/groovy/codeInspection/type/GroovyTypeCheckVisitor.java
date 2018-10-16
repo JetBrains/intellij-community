@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
 import java.util.Map;
@@ -335,7 +336,14 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
       if (resolved != null) {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
-          checkMethodApplicability(resolveResult, true, info);
+          GrMethodCall call = info.getCall();
+          GroovyMethodCallReference reference = call.getCallReference();
+          if (reference.isRealReference()) {
+            checkCallApplicability(reference.getReceiver(), true, info);
+          }
+          else {
+            checkMethodApplicability(resolveResult, true, info);
+          }
         }
         else {
           checkCallApplicability(referenceExpression.getType(), true, info);

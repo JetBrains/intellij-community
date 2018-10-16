@@ -16,6 +16,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GrMethodCallReference;
 
 /**
  * @author Maxim.Medvedev
@@ -24,6 +26,14 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  private final GroovyMethodCallReference myCallReference = new GrMethodCallReference(this);
+
+  @NotNull
+  @Override
+  public GroovyMethodCallReference getCallReference() {
+    return myCallReference;
   }
 
   @Override
@@ -56,9 +66,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    GrExpression expression = getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    return ((GrReferenceExpression)expression).multiResolve(incompleteCode);
+    return myCallReference.multiResolve(incompleteCode);
   }
 
   @Override

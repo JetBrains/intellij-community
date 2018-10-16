@@ -12,7 +12,9 @@ abstract class GroovyMethodCallReferenceBase<T : PsiElement>(element: T) : Groov
       return resolveImpl(incomplete)
     }
     else {
-      return emptyList()
+      return fakeResolve(incomplete)
     }
   }
+
+  protected open fun fakeResolve(incomplete: Boolean): Collection<GroovyResolveResult> = emptyList()
 }

@@ -72,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
 
 import java.util.*;
@@ -507,8 +508,15 @@ public class PsiUtil {
     final PsiElement element = result.getElement();
     if (element == null) return false;
     if (element instanceof PsiMethod) {
-      PsiType returnType = getSmartReturnType((PsiMethod)element);
       final GrExpression expression = call.getInvokedExpression();
+      final GroovyMethodCallReference reference = call.getCallReference();
+      if (expression instanceof GrReferenceExpression && reference.isRealReference()) {
+        PsiType receiver = reference.getReceiver();
+        if (receiver instanceof GrClosureType) {
+          return isRawClosureCall(call, result, (GrClosureType)receiver);
+        }
+      }
+      PsiType returnType = getSmartReturnType((PsiMethod)element);
       if (expression instanceof GrReferenceExpression && result.isInvokedOnProperty()) {
         if (returnType instanceof GrClosureType) {
           return isRawClosureCall(call, result, (GrClosureType)returnType);
