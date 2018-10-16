@@ -1457,3 +1457,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ranking/java/0.0.3:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ranking/java/0.0.3:jar"],
 )
+
+# managed by go/iml_to_build
+java_library(
+    name = "kotlin-gradle-plugin-model",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.3.0:jar"],
+)

@@ -96,6 +96,8 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "Juniversalchardet", libraryName: "juniversalchardet", version: "1.0.3",
                        url: "https://code.google.com/archive/p/juniversalchardet",
                        license: "MPL 1.1",  licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
+    new LibraryLicense(name: "kotlin-gradle-plugin-model", libraryName: "kotlin-gradle-plugin-model", version: "1.3.0",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     // for moshi module library in intellij.android.core
     new LibraryLicense(name: "Moshi", libraryName: "moshi", version: "1.6.0", license: "Apache 2.0",
                        url: "https://github.com/square/moshi"),
