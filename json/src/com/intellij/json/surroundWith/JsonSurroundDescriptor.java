@@ -20,7 +20,9 @@ import java.util.List;
  */
 public class JsonSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
-    new JsonWithObjectLiteralSurrounder()
+    new JsonWithObjectLiteralSurrounder(),
+    new JsonWithArrayLiteralSurrounder(),
+    new JsonWithQuotesSurrounder()
   };
 
   @NotNull
