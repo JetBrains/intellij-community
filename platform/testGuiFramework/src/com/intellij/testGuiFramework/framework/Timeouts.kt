@@ -20,6 +20,7 @@ object Timeouts {
   val minutes05 = Timeout.timeout(5, TimeUnit.MINUTES)
   val minutes10 = Timeout.timeout(10, TimeUnit.MINUTES)
   val minutes15 = Timeout.timeout(15, TimeUnit.MINUTES)
+  val minutes20 = Timeout.timeout(20, TimeUnit.MINUTES)
   val hours01 = Timeout.timeout(1, TimeUnit.HOURS)
 
 }
