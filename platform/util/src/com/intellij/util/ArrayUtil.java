@@ -677,7 +677,12 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull Object[] objects, @Nullable Object object) {
-    return ArrayUtilRt.indexOf(objects, object, 0, objects.length);
+    return indexOf(objects, object, 0, objects.length);
+  }
+
+  @Contract(pure=true)
+  public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
+    return ArrayUtilRt.indexOf(objects, object, start, end);
   }
 
   @Contract(pure=true)
@@ -722,15 +727,15 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, @Nullable final T obj) {
-    if (obj == null) {
-      for (int i = src.length - 1; i >= 0; i--) {
-        if (src[i] == null) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final T o = src[i];
+      if (o == null) {
+        if (obj == null) {
           return i;
         }
       }
-    } else {
-      for (int i = src.length - 1; i >= 0; i--) {
-        if (obj.equals(src[i])) {
+      else {
+        if (o.equals(obj)) {
           return i;
         }
       }
