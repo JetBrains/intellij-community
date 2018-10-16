@@ -23,11 +23,46 @@ class TrimUtilTest : DiffTestCase() {
 
   fun testPunctuation() {
     for (c in Character.MIN_VALUE..Character.MAX_VALUE) {
-      doCheckPunctuation(c)
+      assertIsPunctuation(c, isPunctuation(c))
     }
   }
 
-  private fun doCheckPunctuation(c: Char) {
-    assertEquals(StringUtil.containsChar(PUNCTUATION, c), isPunctuation(c), "'" + c + "' - " + c.toInt())
+  fun testContinuousScript() {
+    assertIsAlpha("!? \t\n+~", false)
+
+    assertIsAlpha("AB12", true)
+    assertIsAlpha("АБВ汉语日ひรไ", true)
+    assertIsAlpha("\r_\u0001", true)
+
+    assertIsContinuous("12_ABZ", false)
+    assertIsContinuous("АБВ", false)
+    assertIsContinuous("ʁit", false)
+    assertIsContinuous("음훈", false)
+    assertIsContinuous("\r_\u0001", false)
+
+    assertIsContinuous("象形文字", true)
+    assertIsContinuous("อักษรไ", true)
+    assertIsContinuous("ひらがなカタカナ日本語", true)
+    assertIsContinuous("汉语漢語", true)
+    assertIsContinuous("☺♥", true)
+    assertIsContinuous("\u200e\u200f\u061c", true)
   }
+
+  private fun assertIsPunctuation(c: Char, actual: Boolean) {
+    assertEquals(StringUtil.containsChar(PUNCTUATION, c), actual, "'" + c + "' - " + c.toInt())
+  }
+
+  private fun assertIsAlpha(text: String, expected: Boolean) {
+    text.codePoints().forEach {
+      assertEquals(expected, isAlpha(it), "$it - ${it.codePointValue}")
+    }
+  }
+
+  private fun assertIsContinuous(text: String, expected: Boolean) {
+    text.codePoints().forEach {
+      assertEquals(expected, isContinuousScript(it), "$it - ${it.codePointValue}")
+    }
+  }
+
+  private val Int.codePointValue: String get() = StringBuilder().appendCodePoint(this).toString()
 }

@@ -503,4 +503,42 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
   }
+
+  fun testContinuousScript() {
+    words {
+      ("ABCD" - "DABC")
+      ("----" - "----").default()
+      testDefault()
+    }
+
+    words {
+      ("汉语漢語" - "語汉语漢")
+      ("   -" - "-   ").default()
+      testDefault()
+    }
+
+    words {
+      ("AB漢CD" - "DA漢CD")
+      ("--   " - "--   ").default()
+      testDefault()
+    }
+
+    words {
+      ("AB漢CD" - "DA语CD")
+      ("---  " - "---  ").default()
+      testDefault()
+    }
+
+    words {
+      ("a_c" - "x_c").plainSource()
+      ("---" - "---").default()
+      testDefault()
+    }
+
+    words {
+      ("!_?" - "!_+")
+      ("  -" - "  +").default()
+      testDefault()
+    }
+  }
 }
