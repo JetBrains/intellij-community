@@ -663,12 +663,15 @@ Function checkVersion
   IfFileExists $3\bin\${PRODUCT_EXE_FILE} check_version
   Goto done
 check_version:
+  StrCpy $9 $3
   StrCpy $2 "Build"
   Call OMReadRegStr
   StrCmp $3 "" done
   IntCmpU $3 ${VER_BUILD} ask_Install_Over done ask_Install_Over
 ask_Install_Over:
-  ${LogText} "NOTE: ${PRODUCT_WITH_VER} is already installed."
+  ${LogText} ""
+  ${LogText} "  NOTE: ${PRODUCT_WITH_VER} is already installed:"
+  ${LogText} "  $9"
   IfSilent continue 0
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
