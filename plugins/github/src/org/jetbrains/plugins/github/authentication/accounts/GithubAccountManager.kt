@@ -5,6 +5,7 @@ import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
@@ -17,8 +18,8 @@ import kotlin.properties.Delegates.observable
  * Handles application-level Github accounts
  */
 @State(name = "GithubAccounts", storages = [
-  Storage(value = "github.xml"),
-  Storage(value = "github_settings.xml", deprecated = true)
+  Storage(value = "github.xml", roamingType = RoamingType.DISABLED),
+  Storage(value = "github_settings.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 ])
 internal class GithubAccountManager(private val passwordSafe: PasswordSafe) : PersistentStateComponent<Array<GithubAccount>> {
   var accounts: Set<GithubAccount> by observable(setOf()) { _, oldValue, newValue ->
