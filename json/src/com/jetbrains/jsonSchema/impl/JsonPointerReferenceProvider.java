@@ -35,7 +35,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isHttpPath;
 
 /**
@@ -77,10 +77,10 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       }
     }
     if (!myOnlyFilePart) {
-      String relativePath = JsonSchemaService.normalizeId(splitter.getRelativePath()).replace('\\', '/');
-      List<String> parts1 = StringUtil.split(relativePath, "/");
+      String relativePath = normalizeSlashes(JsonSchemaService.normalizeId(splitter.getRelativePath()));
+      List<String> parts1 = split(relativePath);
       String[] strings = ContainerUtil.toArray(parts1, String[]::new);
-      List<String> parts2 = StringUtil.split(originalText.substring(hash + 1).replace('\\', '/'), "/");
+      List<String> parts2 = split(normalizeSlashes(originalText.substring(hash + 1)));
       if (strings.length == parts2.size()) {
         int start = hash + 2;
         for (int i = 0; i < parts2.size(); i++) {
@@ -142,10 +142,10 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     }
 
     final String normalized = JsonSchemaService.normalizeId(splitter.getRelativePath());
-    if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || StringUtil.split(normalized.replace("\\", "/"), "/").size() == 0)) {
+    if (!alwaysRoot && (StringUtil.isEmptyOrSpaces(normalized) || split(normalizeSlashes(normalized)).size() == 0)) {
       return element.getManager().findFile(schemaFile);
     }
-    final List<String> chain = StringUtil.split(normalized.replace("\\", "/"), "/");
+    final List<String> chain = split(normalizeSlashes(normalized));
     final JsonSchemaObject schemaObject = service.getSchemaObjectForSchemaFile(schemaFile);
     if (schemaObject == null) return null;
 
@@ -160,7 +160,21 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
       }
       else {
         int idx = step.getIdx();
-        if (idx < 0 || !(root instanceof JsonArray)) return null;
+        if (idx < 0) return null;
+
+        if (!(root instanceof JsonArray)) {
+          if (root instanceof JsonObject) {
+            JsonProperty property = ((JsonObject)root).findProperty(String.valueOf(idx));
+            if (property == null) {
+              return null;
+            }
+            root = property.getValue();
+            continue;
+          }
+          else {
+            return null;
+          }
+        }
         List<JsonValue> list = ((JsonArray)root).getValueList();
         if (idx >= list.size()) return null;
         root = list.get(idx);
@@ -243,7 +257,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
         if (element instanceof JsonObject) {
           return ((JsonObject)element).getPropertyList().stream()
             .filter(p -> p.getValue() instanceof JsonContainer && (finalPrefix == null || p.getName().startsWith(finalPrefix)))
-            .map(p -> LookupElementBuilder.create(p, JsonPointerUtil.escapeForJsonPointer(p.getName()))
+            .map(p -> LookupElementBuilder.create(p, escapeForJsonPointer(p.getName()))
             .withIcon(getIcon(p.getValue()))).toArray();
         }
         else if (element instanceof JsonArray) {
