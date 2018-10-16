@@ -127,7 +127,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     myBus = bus;
     mySchemeManager = createShelveSchemeManager(project, VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH);
 
-    myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanSystemUnshelvedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
+    myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanDeletedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
@@ -184,7 +184,8 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       mySchemeManager.loadSchemes();
       //workaround for ignoring not valid patches, because readScheme doesn't support nullable value as it should be
       filterNonValidShelvedChangeLists();
-      cleanSystemUnshelvedOlderOneWeek();
+      markDeletedSystemUnshelved();
+      cleanDeletedOlderOneWeek();
     }
     catch (Exception e) {
       LOG.error("Couldn't read shelf information", e);
@@ -716,18 +717,28 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     return myRemoveFilesFromShelf;
   }
 
-  private void cleanSystemUnshelvedOlderOneWeek() {
-    Calendar cal = Calendar.getInstance();
-    cal.add(Calendar.DAY_OF_MONTH, -7);
-    cleanUnshelved(true, cal.getTimeInMillis());
+  private void markDeletedSystemUnshelved() {
+    List<ShelvedChangeList> systemUnshelved =
+      filter(mySchemeManager.getAllSchemes(), list -> (list.isRecycled()) && list.isMarkedToDelete());
+    for (ShelvedChangeList list : systemUnshelved) {
+      list.setDeleted(true);
+      list.markToDelete(false);
+    }
   }
 
-  public void cleanUnshelved(final boolean onlyMarkedToDelete, long timeBefore) {
+  private void cleanDeletedOlderOneWeek() {
+    Calendar cal = Calendar.getInstance();
+    cal.add(Calendar.DAY_OF_MONTH, -7);
+    clean(list -> (list.isDeleted() && list.DATE.before(new Date(cal.getTimeInMillis()))));
+  }
+
+  public void cleanUnshelved(long timeBefore) {
     final Date limitDate = new Date(timeBefore);
-    final List<ShelvedChangeList> toDelete = filter(mySchemeManager.getAllSchemes(), list -> (list.isRecycled()) &&
-                                                                                                           list.DATE.before(limitDate) &&
-                                                                                                           (!onlyMarkedToDelete ||
-                                                                                                            list.isMarkedToDelete()));
+    clean(l -> l.isRecycled() && l.DATE.before(limitDate));
+  }
+
+  private void clean(@NotNull Condition<ShelvedChangeList> condition) {
+    final List<ShelvedChangeList> toDelete = filter(mySchemeManager.getAllSchemes(), condition);
     clearShelvedLists(toDelete, true);
   }
 
@@ -1043,6 +1054,10 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   public void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
     changeList.setRecycled(true);
     changeList.updateDate();
+    if (changeList.isMarkedToDelete()) {
+      changeList.markToDelete(false);
+      changeList.setDeleted(true);
+    }
     notifyStateChanged();
   }
 
