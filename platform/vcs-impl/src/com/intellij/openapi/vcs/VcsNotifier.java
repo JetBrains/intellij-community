@@ -183,4 +183,12 @@ public class VcsNotifier {
   public Notification logInfo(@NotNull String title, @NotNull String message) {
     return notify(SILENT_NOTIFICATION, title, message, NotificationType.INFORMATION);
   }
+
+  public void showNotificationAndHideExisting(@NotNull Notification notificationToShow, @NotNull Class<? extends Notification> klass) {
+    NotificationsManager notificationsManager = NotificationsManager.getNotificationsManager();
+    for (Notification notification : notificationsManager.getNotificationsOfType(klass, myProject)) {
+      notification.expire();
+    }
+    notificationToShow.notify(myProject);
+  }
 }
