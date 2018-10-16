@@ -1085,7 +1085,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     protected Match localVariablesAreEquivalent(@NotNull PsiLocalVariable localVariable1,
                                                 @NotNull PsiLocalVariable localVariable2) {
       if (!myLocalVariables.contains(localVariable1) || !myLocalVariables.contains(localVariable2)) {
-        return super.variablesAreEquivalent(localVariable1, localVariable2);
+        return super.localVariablesAreEquivalent(localVariable1, localVariable2);
       }
       if (!equalNotConsideringInitializer(localVariable1, localVariable2)) return EXACT_MISMATCH;
       PsiExpression firstInitializer = localVariable1.getInitializer();
