@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -21,9 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author yole
- */
 public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -201,18 +197,8 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement problemElement = descriptor.getPsiElement();
-      if (problemElement == null || !problemElement.isValid()) {
-        return;
-      }
-      try {
-        doFix(project, problemElement);
-      }
-      catch (IncorrectOperationException e) {
-        final Class<? extends TitleCapitalizationFix> aClass = getClass();
-        final String className = aClass.getName();
-        final Logger logger = Logger.getInstance(className);
-        logger.error(e);
-      }
+      if (problemElement == null) return;
+      doFix(project, problemElement);
     }
 
     protected void doFix(Project project, PsiElement element) throws IncorrectOperationException {
