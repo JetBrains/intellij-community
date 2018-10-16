@@ -157,7 +157,7 @@ class GitLogParserTest : GitPlatformTest() {
 
     if (option == STATUS) {
       assertPaths(actual.getFilePaths(projectRoot), expected.paths())
-      assertChanges(actual.parseChanges(myProject, projectRoot), expected.changes())
+      assertChanges(actual.parseChanges(myProject, projectRoot), Arrays.asList(*expected.changes))
     }
   }
 
@@ -276,24 +276,8 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
   val changes: Array<GitTestChange>
     get() = data[GitTestLogRecordInfo.CHANGES] as Array<GitTestChange>
 
-  private fun parentsAsString(): String {
-    return parents.joinToString(" ")
-  }
-
   internal fun rawBody(): String {
     return subject + "\n\n" + body
-  }
-
-  internal fun changes(): List<GitTestChange> {
-    return Arrays.asList(*changes)
-  }
-
-  private fun changesAsString(): String {
-    val sb = StringBuilder()
-    for (change in changes) {
-      sb.append(change.toOutputString())
-    }
-    return sb.toString()
   }
 
   fun paths(): List<String> {
@@ -318,7 +302,7 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
     sb.append(RECORD_END)
 
     if (nameStatusOption == STATUS) {
-      sb.append("\n\n").append(changesAsString())
+      sb.append("\n\n").append(changes.joinToString("") { it.toOutputString() })
     }
 
     return sb.toString()
@@ -336,7 +320,7 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
       AUTHOR_EMAIL -> return authorEmail
       COMMITTER_NAME -> return committerName
       COMMITTER_EMAIL -> return committerEmail
-      PARENTS -> return parentsAsString()
+      PARENTS -> return parents.joinToString(" ")
       REF_NAMES -> return refsForOutput
       SHORT_REF_LOG_SELECTOR -> {
       }
