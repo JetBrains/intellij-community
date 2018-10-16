@@ -1,12 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
@@ -20,13 +16,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
 /**
  * @author ilyas
  */
-public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
+public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub>
+  implements GrTypeParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 
   public GrTypeParameterListImpl(EmptyStub stub) {
     super(stub, GroovyElementTypes.TYPE_PARAMETER_LIST);
@@ -134,5 +134,11 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
       if (!processElement(processor, typeParameter, state)) return false;
     }
     return true;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getTypeParameters());
   }
 }

@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -23,12 +23,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author ilyas
  */
-public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgumentList {
+public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgumentList, PsiListLikeElement {
 
   public GrArgumentListImpl(@NotNull ASTNode node) {
     super(node);
@@ -231,5 +232,11 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   @Override
   public PsiType[] getExpressionTypes() {
     return PsiType.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getAllArguments());
   }
 }

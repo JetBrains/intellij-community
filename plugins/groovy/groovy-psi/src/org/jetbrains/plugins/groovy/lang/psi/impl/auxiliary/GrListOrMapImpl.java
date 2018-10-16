@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.TokenSet;
@@ -20,10 +20,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.List;
+
 /**
  * @author ilyas
  */
-public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
+public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap, PsiListLikeElement {
+
   private static final TokenSet MAP_LITERAL_TOKEN_SET = TokenSet.create(GroovyElementTypes.NAMED_ARGUMENT, GroovyTokenTypes.mCOLON);
 
   private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
@@ -128,5 +131,11 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   public void subtreeChanged() {
     myInitializers = null;
     myNamedArguments = null;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return PsiTreeUtil.getChildrenOfAnyType(this, GrExpression.class, GrNamedArgument.class);
   }
 }
