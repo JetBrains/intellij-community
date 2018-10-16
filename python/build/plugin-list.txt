@@ -1,4 +1,5 @@
 intellij.configurationScript
+intellij.copyright
 intellij.editorconfig
 intellij.markdown
 intellij.platform.langInjection
