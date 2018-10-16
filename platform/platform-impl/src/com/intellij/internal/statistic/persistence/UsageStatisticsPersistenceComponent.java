@@ -177,6 +177,11 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     /* Android Studio: we use our own mechanism
     return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
     */
+    // As we cannot control when IJ calls into this code, we need to load the AnalyticsSettings if
+    // we're not initialized yet, to ensure we properly return opt-in status.
+    if (!AnalyticsSettings.getInitialized()) {
+      AnalyticsSettings.initialize(getAndroidLogger());
+    }
     return AnalyticsSettings.getOptedIn();
   }
 
