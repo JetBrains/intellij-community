@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -185,6 +186,15 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Override
+    public void visitArrayAccessExpression(PsiArrayAccessExpression expression) {
+      super.visitArrayAccessExpression(expression);
+      if (!isImplicitArrayToStringCall(expression)) {
+        return;
+      }
+      registerError(expression, expression, Boolean.FALSE);
+    }
+
+    @Override
     public void visitMethodCallExpression(
       PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
@@ -216,24 +226,17 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       return type instanceof PsiArrayType;
     }
 
-    private static boolean isImplicitArrayToStringCall(
-      PsiExpression expression) {
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiArrayType)) {
-        return false;
-      }
+    private static boolean isImplicitArrayToStringCall(PsiExpression expression) {
       if (ExpressionUtils.isStringConcatenationOperand(expression)) {
-        return true;
+        return expression.getType() instanceof PsiArrayType;
       }
-      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      while (parent instanceof PsiConditionalExpression &&
+             !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
+        parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+      }
       if (parent instanceof PsiExpressionList) {
-        final PsiExpressionList expressionList =
-          (PsiExpressionList)parent;
-        final PsiArrayType arrayType = (PsiArrayType)type;
-        final PsiType componentType = arrayType.getComponentType();
-        if (componentType.equals(PsiType.CHAR)) {
-          return false;
-        }
+        final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final PsiElement grandParent = expressionList.getParent();
         if (!(grandParent instanceof PsiMethodCallExpression)) {
           return false;
@@ -259,16 +262,15 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
           if (arguments.length != 1) {
             return false;
           }
-          return InheritanceUtil.isInheritor(containingClass,
-                                             CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER);
+          return isNonCharArray(expression) && InheritanceUtil.isInheritor(containingClass,
+                                                                           CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER);
         }
         else if ("valueOf".equals(methodName)) {
           if (arguments.length != 1) {
             return false;
           }
-          final String qualifiedName =
-            containingClass.getQualifiedName();
-          return CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName);
+          final String qualifiedName = containingClass.getQualifiedName();
+          return CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName) && isNonCharArray(expression);
         }
         if (!"print".equals(methodName) &&
             !"println".equals(methodName)) {
@@ -299,6 +301,9 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
             }
           }
         }
+        if (!isNonCharArray(expression)) {
+          return false;
+        }
         final String qualifiedName = containingClass.getQualifiedName();
         if ("java.util.Formatter".equals(qualifiedName) ||
             CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
@@ -314,6 +319,15 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
         }
       }
       return false;
+    }
+
+    private static boolean isNonCharArray(PsiExpression expression) {
+      final PsiType type = expression.getType();
+      if (!(type instanceof PsiArrayType)) {
+        return false;
+      }
+      final PsiType componentType = ((PsiArrayType)type).getComponentType();
+      return !componentType.equals(PsiType.CHAR);
     }
   }
 }
