@@ -7,6 +7,6 @@
   <depends>com.intellij.modules.python</depends>
   <depends>com.intellij.copyright</depends>
 
-  <xi:include href="/META-INF/python-terminal-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-copyright-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
 </idea-plugin>
