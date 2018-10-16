@@ -27,13 +27,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
 /**
  * @author Irina.Chernushina on 4/20/2017.
@@ -114,16 +115,14 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   public static List<Step> buildSteps(@NotNull String nameInSchema) {
-    final List<String> chain = StringUtil.split(JsonSchemaService.normalizeId(nameInSchema).replace("\\", "/"), "/");
+    final List<String> chain = split(normalizeSlashes(JsonSchemaService.normalizeId(nameInSchema)));
     List<Step> steps = ContainerUtil.newArrayListWithCapacity(chain.size());
     for (String s: chain) {
-      if (!StringUtil.isEmpty(s)) {
-        try {
-          steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
-        }
-        catch (NumberFormatException e) {
-          steps.add(Step.createPropertyStep(JsonPointerUtil.unescapeJsonPointerPart(s)));
-        }
+      try {
+        steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
+      }
+      catch (NumberFormatException e) {
+        steps.add(Step.createPropertyStep(unescapeJsonPointerPart(s)));
       }
     }
     return steps;
@@ -438,7 +437,7 @@ public class JsonSchemaVariantsTreeBuilder {
         return propertyStep(parent, acceptAdditionalPropertiesSchemas);
       } else {
         assert myIdx >= 0;
-        return arrayElementStep(parent, acceptAdditionalPropertiesSchemas);
+        return arrayOrNumericPropertyElementStep(parent, acceptAdditionalPropertiesSchemas);
       }
     }
 
@@ -523,8 +522,8 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @NotNull
-    private Pair<ThreeState, JsonSchemaObject> arrayElementStep(@NotNull JsonSchemaObject parent,
-                                                                boolean acceptAdditionalPropertiesSchemas) {
+    private Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(@NotNull JsonSchemaObject parent,
+                                                                                 boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
         return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
       }
@@ -533,6 +532,14 @@ public class JsonSchemaVariantsTreeBuilder {
         if (myIdx >= 0 && myIdx < list.size()) {
           return Pair.create(ThreeState.UNSURE, list.get(myIdx));
         }
+      }
+      final String keyAsString = String.valueOf(myIdx);
+      if (parent.getProperties().containsKey(keyAsString)) {
+        return Pair.create(ThreeState.UNSURE, parent.getProperties().get(keyAsString));
+      }
+      final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
+      if (matchingPatternPropertySchema != null) {
+        return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
       }
       if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
         return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
@@ -551,7 +558,7 @@ public class JsonSchemaVariantsTreeBuilder {
     private final String myRelativePath;
 
     public SchemaUrlSplitter(@NotNull final String ref) {
-      if ("#".equals(ref)) {
+      if (isSelfReference(ref)) {
         mySchemaId = null;
         myRelativePath = "";
         return;
