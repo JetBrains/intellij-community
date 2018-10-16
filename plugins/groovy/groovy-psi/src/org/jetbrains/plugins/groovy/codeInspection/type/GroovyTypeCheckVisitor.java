@@ -35,7 +35,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrBuilderMethod;
@@ -310,6 +309,12 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       }
     }
     return PsiUtil.isApplicableConcrete(info.getArgumentTypes(), method, substitutor, info.getCall(), false);
+  }
+
+  @Override
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    super.visitMethodCall(call);
+    checkMethodCall(new GrMethodCallInfo(call));
   }
 
   private void checkMethodCall(@NotNull CallInfo<? extends GrMethodCall> info) {
@@ -693,12 +698,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    super.visitMethodCallExpression(methodCallExpression);
-    checkMethodCall(new GrMethodCallInfo(methodCallExpression));
-  }
-
-  @Override
   public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
     if (newExpression.getArrayCount() > 0) return;
@@ -708,12 +707,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     GrNewExpressionInfo info = new GrNewExpressionInfo(newExpression);
     processConstructorCall(info);
-  }
-
-  @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    super.visitApplicationStatement(applicationStatement);
-    checkMethodCall(new GrMethodCallInfo(applicationStatement));
   }
 
   @Override

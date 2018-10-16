@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.lang.ASTNode;
@@ -41,7 +39,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.arithmet
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrPropertySelection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -52,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SubtypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -115,8 +111,8 @@ public class ExpressionGenerator extends Generator {
   }
 
   @Override
-  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
-    generateMethodCall(methodCallExpression);
+  public void visitMethodCall(@NotNull GrMethodCall call) {
+    generateMethodCall(call);
   }
 
   private void generateMethodCall(GrMethodCall methodCallExpression) {
@@ -333,12 +329,6 @@ public class ExpressionGenerator extends Generator {
     new ClassGenerator(classNameProvider, classItemGenerator).writeMembers(builder, anonymous);
     builder.append('}');
   }
-
-  @Override
-  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
-    generateMethodCall(applicationStatement);
-  }
-
 
   @Override
   public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
