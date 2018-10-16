@@ -664,4 +664,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testWideningToDouble() { doTest(); }
   public void testCompoundAssignment() { doTest(); }
   public void testNumericCast() { doTest(); }
+  public void testEnumValues() { doTest(); }
 }

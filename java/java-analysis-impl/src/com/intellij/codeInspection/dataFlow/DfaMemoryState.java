@@ -131,6 +131,15 @@ public interface DfaMemoryState {
    */
   <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value);
 
+  /**
+   * Returns a map of known facts associated with given variable
+   *
+   * @param variable a variable to query the facts from
+   * @return facts map
+   */
+  @NotNull
+  DfaFactMap getFacts(@NotNull DfaVariableValue variable);
+
   void flushFields();
 
   void flushVariable(@NotNull DfaVariableValue variable);

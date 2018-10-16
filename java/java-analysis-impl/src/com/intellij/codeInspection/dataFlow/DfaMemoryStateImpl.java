@@ -1156,6 +1156,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return var;
   }
 
+  @NotNull
+  @Override
+  public DfaFactMap getFacts(@NotNull DfaVariableValue variable) {
+    return getVariableState(variable).myFactMap;
+  }
+
   DfaFactMap getFactMap(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
       DfaVariableState state = getExistingVariableState((DfaVariableValue)value);
