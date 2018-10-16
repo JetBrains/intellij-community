@@ -270,24 +270,13 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitLog
 
   private fun optionToValue(option: GitLogOption): String {
     when (option) {
-      HASH -> return hash
-      SUBJECT -> return subject
-      BODY -> return body
       RAW_BODY -> return rawBody()
       COMMIT_TIME -> return (commitTime.time / 1000).toString()
-      AUTHOR_NAME -> return authorName
       AUTHOR_TIME -> return (authorTime.time / 1000).toString()
-      AUTHOR_EMAIL -> return authorEmail
-      COMMITTER_NAME -> return committerName
-      COMMITTER_EMAIL -> return committerEmail
       PARENTS -> return parents.joinToString(" ")
       REF_NAMES -> return refsForOutput
-      SHORT_REF_LOG_SELECTOR -> {
-      }
-      TREE -> {
-      }
+      else -> return data[option] as String
     }
-    throw AssertionError()
   }
 
   internal class GitTestChange internal constructor(internal val type: Change.Type,
