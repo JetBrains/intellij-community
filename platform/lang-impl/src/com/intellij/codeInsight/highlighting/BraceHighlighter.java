@@ -31,17 +31,12 @@ public class BraceHighlighter implements StartupActivity {
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (e.getCaret() != e.getEditor().getCaretModel().getPrimaryCaret()) return;
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
         // Don't update braces in case of the active selection.
         if (editor.getProject() != project || selectionModel.hasSelection()) {
-          return;
-        }
-
-        final Document document = editor.getDocument();
-        int line = e.getNewPosition().line;
-        if (line < 0 || line >= document.getLineCount()) {
           return;
         }
         updateBraces(editor, myAlarm);

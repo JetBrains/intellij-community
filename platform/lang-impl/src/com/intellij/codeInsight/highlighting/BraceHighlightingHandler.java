@@ -46,7 +46,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,20 +53,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class BraceHighlightingHandler {
   private static final Key<List<RangeHighlighter>> BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY = Key.create("BraceHighlighter.BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY");
   private static final Key<RangeHighlighter> LINE_MARKER_IN_EDITOR_KEY = Key.create("BraceHighlighter.LINE_MARKER_IN_EDITOR_KEY");
   private static final Key<LightweightHint> HINT_IN_EDITOR_KEY = Key.create("BraceHighlighter.HINT_IN_EDITOR_KEY");
-
-  /**
-   * Holds weak references to the editors that are being processed at non-EDT.
-   * <p/>
-   * Is intended to be used to avoid submitting unnecessary new processing request from EDT, i.e. it's assumed that the collection
-   * Must be accessed from the EDT only.
-   */
-  private static final Set<Editor> PROCESSED_EDITORS = ContainerUtil.createWeakSet();
+  private static final Key<Boolean> PROCESSED = Key.create("BraceHighlighter.PROCESSED");
 
   @NotNull private final Project myProject;
   @NotNull private final EditorEx myEditor;
@@ -93,11 +84,8 @@ public class BraceHighlightingHandler {
                                                          @NotNull final Processor<? super BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
-    if (!PROCESSED_EDITORS.add(editor)) {
-      // Skip processing if that is not really necessary.
-      // Assuming to be in EDT here.
-      return;
-    }
+    if (editor.getUserData(PROCESSED) != null) return;
+    editor.putUserData(PROCESSED, Boolean.TRUE);
     // any request to the UI component need to be done from EDT
     final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
 
@@ -128,7 +116,7 @@ public class BraceHighlightingHandler {
                   }
                 }
                 finally {
-                  PROCESSED_EDITORS.remove(editor);
+                  editor.putUserData(PROCESSED, null);
                 }
               }, modalityState);
             })) {
@@ -156,13 +144,13 @@ public class BraceHighlightingHandler {
                                    @NotNull Alarm alarm,
                                    @NotNull Processor<? super BraceHighlightingHandler> processor) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      PROCESSED_EDITORS.remove(editor);
+      editor.putUserData(PROCESSED, null);
       lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
     }, modalityState);
   }
 
   private static void removeFromProcessedLater(@NotNull Editor editor) {
-    ApplicationManager.getApplication().invokeLater(() -> PROCESSED_EDITORS.remove(editor));
+    ApplicationManager.getApplication().invokeLater(() -> editor.putUserData(PROCESSED, null));
   }
 
   private static boolean isValidFile(PsiFile file) {
