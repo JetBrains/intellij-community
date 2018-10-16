@@ -335,31 +335,35 @@ public class HotSwapUIImpl extends HotSwapUI {
 
     @Override
     public void finished(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult executionResult) {
-      if (!hasCompilationResults(executionResult)) return;
+      try {
+        if (!hasCompilationResults(executionResult)) return;
 
-      Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
-      generated = generated.isEmpty() ? null : generated;
-      if (myProject.isDisposed()) {
-        return;
-      }
+        Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
+        generated = generated.isEmpty() ? null : generated;
+        if (myProject.isDisposed()) {
+          return;
+        }
 
-      int errors = executionResult.getErrors();
-      boolean aborted = executionResult.isAborted();
-      if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
-        for (HotSwapVetoableListener listener : myListeners) {
-          if (!listener.shouldHotSwap(DummyCompileContext.getInstance()) ||
-              !listener.shouldHotSwap(context, executionResult)) {
-            return;
+        int errors = executionResult.getErrors();
+        boolean aborted = executionResult.isAborted();
+        if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
+          for (HotSwapVetoableListener listener : myListeners) {
+            if (!listener.shouldHotSwap(DummyCompileContext.getInstance()) ||
+                !listener.shouldHotSwap(context, executionResult)) {
+              return;
+            }
+          }
+
+          List<DebuggerSession> sessions = getHotSwappableDebugSessions();
+          if (!sessions.isEmpty()) {
+            HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
+            hotSwapSessions(sessions, generated, callback);
           }
         }
-
-        List<DebuggerSession> sessions = getHotSwappableDebugSessions();
-        if (!sessions.isEmpty()) {
-          HotSwapStatusListener callback = context.getUserData(HOT_SWAP_CALLBACK_KEY);
-          hotSwapSessions(sessions, generated, callback);
-        }
       }
-      myPerformHotswapAfterThisCompilation = true;
+      finally {
+        myPerformHotswapAfterThisCompilation = true;
+      }
     }
 
     private boolean hasCompilationResults(@NotNull ProjectTaskResult executionResult) {
