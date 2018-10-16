@@ -53,7 +53,8 @@ class GitLogParserTest : GitPlatformTest() {
     }
 
     parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
-    val output = prepareOutputForAllRecords(expectedRecords, nameStatusOption)
+
+    val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
     val actualRecords = parser!!.parse(output)
     assertAllRecords(actualRecords, expectedRecords, nameStatusOption)
   }
@@ -434,14 +435,6 @@ class GitLogParserTest : GitPlatformTest() {
                                            SUBJECT, BODY,
                                            PARENTS, PARENTS, RAW_BODY, REF_NAMES)
     private var newRefsFormat: Boolean = false
-
-    private fun prepareOutputForAllRecords(records: List<GitTestLogRecord>, nameStatusOption: NameStatus): String {
-      val sb = StringBuilder()
-      for (record in records) {
-        sb.append(record.prepareOutputLine(nameStatusOption)).append("\n")
-      }
-      return sb.toString()
-    }
   }
 }
 
