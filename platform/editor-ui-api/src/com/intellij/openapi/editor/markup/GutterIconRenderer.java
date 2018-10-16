@@ -7,12 +7,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.CompositeIcon;
+import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.regex.Pattern;
 
 /**
@@ -117,16 +118,32 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   @Override
   @NotNull
   public String getAccessibleName() {
-    Icon icon = getIcon();
+    return getAccessibleName(getIcon(), true);
+  }
+
+  private static String getAccessibleName(Icon icon, boolean includePrefix) {
+    if (icon instanceof RetrievableIcon) {
+      return getAccessibleName(((RetrievableIcon)icon).retrieveIcon(), includePrefix);
+    }
+    if (icon instanceof CompositeIcon) {
+      StringBuilder b = new StringBuilder("composite icon: ");
+      int count = ((CompositeIcon)icon).getIconCount();
+      for (int i = 0; i < count; i++) {
+        b.append(getAccessibleName(((CompositeIcon)icon).getIcon(i), false));
+        if (i < count - 1) b.append(" & ");
+      }
+      return b.toString();
+    }
+    String prefix = includePrefix ? "icon: " : "";
     if (icon instanceof IconLoader.CachedImageIcon) {
       String path = ((IconLoader.CachedImageIcon)icon).getOriginalPath();
       if (path != null) {
         String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
         String name = split[split.length - 1];
-        return "icon: " + name.split(Pattern.quote("."))[0];
+        return prefix + name.split(Pattern.quote("."))[0];
       }
     }
-    return "icon: unknown";
+    return prefix + "unknown";
   }
 
   @Nullable
