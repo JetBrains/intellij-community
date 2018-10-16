@@ -62,6 +62,13 @@ bind '"\e\e[D": backward-word'
 bind '"\e\O[C":forward-word'
 bind '"\e\O[D": backward-word'
 
+# jediterm does not support bracketed paste mode so disable it
+# IDEA-177768
+if bind -q bracketed-paste-begin >/dev/null 2>&1
+then
+  bind 'set enable-bracketed-paste off'
+fi
+
 function generate_command_executed_sequence() {
    printf '\e\7'
 }
