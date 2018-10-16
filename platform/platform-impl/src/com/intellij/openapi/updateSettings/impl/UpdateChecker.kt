@@ -105,7 +105,7 @@ object UpdateChecker {
    */
   @JvmStatic
   fun getPluginUpdates(): Collection<PluginDownloader>? =
-    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
+    checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, ApplicationInfo.getInstance().build)
 
   private fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
