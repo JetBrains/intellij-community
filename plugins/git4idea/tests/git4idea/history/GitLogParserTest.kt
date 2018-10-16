@@ -133,13 +133,7 @@ class GitLogParserTest : GitPlatformTest() {
     TestCase.assertEquals(expected.authorName, actual.authorName)
     TestCase.assertEquals(expected.authorEmail, actual.authorEmail)
     TestCase.assertEquals(expected.authorTime.time, actual.authorTimeStamp)
-
-    val expectedAuthorAndCommitter = GitUtil.adjustAuthorName(
-      String.format("%s <%s>", expected.authorName, expected.authorEmail),
-      String.format("%s <%s>", expected.committerName, expected.committerEmail))
-    TestCase.assertEquals(expectedAuthorAndCommitter, getAuthorAndCommitter(actual))
-
-
+    
     TestCase.assertEquals(expected.subject, actual.subject)
     TestCase.assertEquals(expected.body, actual.body)
     TestCase.assertEquals(expected.rawBody(), actual.rawBody)
@@ -153,13 +147,6 @@ class GitLogParserTest : GitPlatformTest() {
       assertChanges(actual.parseChanges(myProject, projectRoot), Arrays.asList(*expected.changes))
     }
   }
-
-  private fun getAuthorAndCommitter(actual: GitLogRecord): String {
-    val author = String.format("%s <%s>", actual.authorName, actual.authorEmail)
-    val committer = String.format("%s <%s>", actual.committerName, actual.committerEmail)
-    return GitUtil.adjustAuthorName(author, committer)
-  }
-
   private fun assertPaths(actualPaths: List<FilePath>, expectedPaths: List<String>) {
     val actual = ContainerUtil.map<FilePath, String>(actualPaths) { path -> FileUtil.getRelativePath(File(projectPath), path.ioFile) }
     val expected = ContainerUtil.map(expectedPaths) { s -> FileUtil.toSystemDependentName(s) }
