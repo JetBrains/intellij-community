@@ -152,7 +152,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         PropertyChangeListener focusListener = it -> myUpdateHeadersAlarm.request();
         KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener);
-        Disposer.register(ToolWindowManagerImpl.this, () -> keyboardFocusManager.removePropertyChangeListener(focusListener));
+        Disposer.register(ToolWindowManagerImpl.this,
+                          () -> keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener));
       }
 
       @Override
