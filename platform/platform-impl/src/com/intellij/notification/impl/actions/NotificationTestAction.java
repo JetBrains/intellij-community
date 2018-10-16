@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,11 +52,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       init();
       setOKButtonText("Notify");
       setTitle("Test Notification");
-      myMessage.setText(
-        PropertiesComponent.getInstance().getValue(MESSAGE_KEY, "GroupID:\nTitle:\nSubtitle:\nContent:\nContent:\nActions:\nSticky:\n"));
+      myMessage.setText(PropertiesComponent.getInstance().getValue(MESSAGE_KEY));
     }
 
-    @Nullable
     @Override
     protected String getDimensionServiceKey() {
       return "NotificationTestAction";
@@ -73,9 +73,34 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       return new Action[]{getOKAction(), getCancelAction()};
     }
 
+    @NotNull
+    @Override
+    protected Action[] createLeftSideActions() {
+      Action balloon = new AbstractAction("Balloon Examples") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          setExamples("// Example 1\nIcon:/toolwindows/toolWindowChanges.png\nTitle:Deleted Branch\nContent:Unmerged commits discarded\n" +
+                      "Actions:Restore,View Commits,Delete Tracked Branch\n\n" +
+                      "// Example 2\nType:warn\nTitle:Title\nSubtitle:Subtitle\nContent:Foo<br>Bar\nSticky\n--\n" +
+                      "// Description\nType:info/error/warn\nIcon:\nTitle:\nSubtitle:\n" +
+                      "Content:\nContent:\nActions:\nSticky\n--\n");
+        }
+      };
+      Action toolwindow = new AbstractAction("Toolwindow Examples") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          setExamples("// Example\nToolwindow\nContent:Compilation completed successfully in 7 s 851 ms\n--\n" +
+                      "// Description: Notifications shows for toolwindow TODO\n" +
+                      "Toolwindow\nType:info/error/warn\nIcon:\nTitle:\n" +
+                      "Content:\nContent:\n--\n");
+        }
+      };
+      return new Action[]{balloon, toolwindow};
+    }
+
     @Override
     public void doCancelAction() {
-      PropertiesComponent.getInstance().setValue(MESSAGE_KEY, myMessage.getText());
+      PropertiesComponent.getInstance().setValue(MESSAGE_KEY, StringUtil.nullize(myMessage.getText(), true));
       super.doCancelAction();
     }
 
@@ -84,8 +109,16 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       newNotification(myMessage.getText());
     }
 
-    private void newNotification(String text) {
-      final List<NotificationInfo> notifications = new ArrayList<>();
+    private void setExamples(@NotNull String text) {
+      try {
+        myMessage.getDocument().insertString(0, text, null);
+      }
+      catch (BadLocationException ignore) {
+      }
+    }
+
+    private void newNotification(@NotNull String text) {
+      List<NotificationInfo> notifications = new ArrayList<>();
       NotificationInfo notification = null;
 
       for (String line : StringUtil.splitByLines(text, false)) {
@@ -105,8 +138,8 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           notification = new NotificationInfo();
           notifications.add(notification);
         }
-        if (line.startsWith("GroupID:")) {
-          notification.setGroupId(StringUtil.substringAfter(line, ":"));
+        if (line.startsWith("Icon:")) {
+          notification.setIcon(StringUtil.substringAfter(line, ":"));
         }
         else if (line.startsWith("Title:")) {
           notification.setTitle(StringUtil.substringAfter(line, ":"));
@@ -129,14 +162,14 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         else if (line.startsWith("Type:")) {
           notification.setType(StringUtil.substringAfter(line, ":"));
         }
-        else if (line.startsWith("Sticky:")) {
-          notification.setSticky("true".equals(StringUtil.substringAfter(line, ":")));
+        else if (line.equals("Sticky")) {
+          notification.setSticky(true);
         }
-        else if (line.startsWith("Listener:")) {
-          notification.setAddListener("true".equals(StringUtil.substringAfter(line, ":")));
+        else if (line.equals("Listener")) {
+          notification.setAddListener(true);
         }
-        else if (line.startsWith("Toolwindow:")) {
-          notification.setToolwindow("true".equals(StringUtil.substringAfter(line, ":")));
+        else if (line.equals("Toolwindow")) {
+          notification.setToolwindow(true);
         }
       }
 
@@ -149,7 +182,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
   }
 
   private static class NotificationInfo implements NotificationListener {
-    private String myGroupId;
+    private String myIcon;
     private String myTitle;
     private String mySubtitle;
     private List<String> myContent;
@@ -163,15 +196,15 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public Notification getNotification() {
       if (myNotification == null) {
-        Icon icon = null;
-        if (!StringUtil.isEmpty(myGroupId)) {
-          icon = IconLoader.findIcon(myGroupId);
-        }
+        Icon icon = StringUtil.isEmpty(myIcon) ? null : IconLoader.findIcon(myIcon);
+
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         if (myToolwindow) {
           displayId = TEST_TOOLWINDOW_GROUP.getDisplayId();
         }
+
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
+
         if (icon == null) {
           myNotification =
             new Notification(displayId, StringUtil.notNullize(myTitle), content, myType, getListener());
@@ -179,7 +212,8 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         else {
           myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
         }
-        if (myActions != null) {
+
+        if (myActions != null && !myToolwindow) {
           for (String action : myActions) {
             myNotification.addAction(new MyAnAction(action));
           }
@@ -193,8 +227,8 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       return myAddListener ? this : null;
     }
 
-    public void setGroupId(@Nullable String groupId) {
-      myGroupId = groupId;
+    public void setIcon(@Nullable String icon) {
+      myIcon = icon;
     }
 
     public void setTitle(@Nullable String title) {
@@ -242,7 +276,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     @Override
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (MessageDialogBuilder.yesNo("Notification Listener", event.getDescription() + "      Expire?").isYes()) {
+      if (myNotification != null && MessageDialogBuilder.yesNo("Notification Listener", event.getDescription() + "      Expire?").isYes()) {
         myNotification.expire();
         myNotification = null;
       }
@@ -264,6 +298,9 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
+        if (myNotification == null) {
+          return;
+        }
         Notification.get(e);
         if (MessageDialogBuilder.yesNo("AnAction", getTemplatePresentation().getText() + "      Expire?").isYes()) {
           myNotification.expire();
