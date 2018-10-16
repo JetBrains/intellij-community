@@ -26,7 +26,7 @@ internal fun execute(workingDir: File?, vararg command: String, silent: Boolean 
     val error = process.errorStream.bufferedReader().use { it.readText() }
     process.waitFor(1, TimeUnit.MINUTES)
     if (process.exitValue() != 0) {
-      error("Command $command failed with ${process.exitValue()} : $error")
+      error("Command ${command.joinToString(" ")} failed with ${process.exitValue()} : $error")
     }
     output
   }

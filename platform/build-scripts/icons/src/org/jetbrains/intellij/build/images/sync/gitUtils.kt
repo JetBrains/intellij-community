@@ -132,6 +132,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
 
 @Volatile
 private var latestChangeCommits = emptyMap<String, CommitInfo>()
+private val latestChangeCommitsGuard = Any()
 
 internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
   val foundRepo = repo ?: findGitRepoRoot(path, silent = true)
@@ -141,7 +142,7 @@ internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
       if (!latestChangeCommits.containsKey(file)) {
         val commitInfo = commitInfo(foundRepo, "--", path)
         if (commitInfo != null) {
-          synchronized(latestChangeCommits) {
+          synchronized(latestChangeCommitsGuard) {
             val tmp = HashMap(latestChangeCommits)
             tmp[file] = commitInfo
             latestChangeCommits = tmp
@@ -217,10 +218,11 @@ private fun isMergeOfMasterIntoMaster(repo: File, merge: CommitInfo) =
 
 @Volatile
 private var heads = emptyMap<File, String>()
+private val headsGuard = Any()
 
 private fun head(repo: File): String {
   if (!heads.containsKey(repo)) {
-    synchronized(heads) {
+    synchronized(headsGuard) {
       if (!heads.containsKey(repo)) {
         val tmp = HashMap(heads)
         tmp[repo] = execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD", silent = true).removeSuffix(System.lineSeparator())
