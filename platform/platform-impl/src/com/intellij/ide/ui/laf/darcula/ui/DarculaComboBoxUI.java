@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -545,8 +546,15 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   // Wide popup that uses preferred size
   protected static class CustomComboPopup extends BasicComboPopup {
+    private static final Color POPUP_BORDER_COLOR = JBColor.namedColor("ComboPopup.borderColor", JBColor.BLACK);
     public CustomComboPopup(JComboBox combo) {
       super(combo);
+    }
+
+    @Override
+    protected void configurePopup() {
+      super.configurePopup();
+      setBorder(new CustomLineBorder(POPUP_BORDER_COLOR, JBUI.insets(1)));
     }
 
     @Override
