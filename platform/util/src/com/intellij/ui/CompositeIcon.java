@@ -8,7 +8,7 @@ import javax.swing.*;
 /**
  * An icon composing and painting a number of icons.
  */
-public interface CompositeIcon {
+public interface CompositeIcon extends Icon {
   /**
    * Returns the icon count.
    */
