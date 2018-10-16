@@ -413,13 +413,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
       }
     }
     else {
-      toFocus = Arrays.stream(Window.getWindows()).
+      Optional<Component> toFocusOptional = Arrays.stream(Window.getWindows()).
         filter(window -> window instanceof RootPaneContainer).
         filter(window -> ((RootPaneContainer)window).getRootPane() != null).
         filter(window -> window.isActive()).
         findFirst().
-        map(w -> getFocusTargetFor(((RootPaneContainer)w).getRootPane())).
-        get();
+        map(w -> getFocusTargetFor(((RootPaneContainer)w).getRootPane()));
+
+      if (toFocusOptional.isPresent()) {
+        toFocus = toFocusOptional.get();
+      }
     }
 
     if (toFocus != null) {
