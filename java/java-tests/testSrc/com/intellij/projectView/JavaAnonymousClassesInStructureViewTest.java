@@ -3,11 +3,14 @@ package com.intellij.projectView;
 
 import com.intellij.ide.structureView.impl.java.FieldsFilter;
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider;
+import com.intellij.ide.structureView.impl.java.PropertiesGrouper;
+import com.intellij.ide.structureView.impl.java.SuperTypesGrouper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.TreeElementWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
@@ -102,5 +105,192 @@ public class JavaAnonymousClassesInStructureViewTest extends LightCodeInsightFix
 
   private static int getFieldsCount() {
     return ANNO_FIELD_COUNT + FIELD_COUNT;
+  }
+
+  public void testSuperTypeGrouping() {
+    doTest("abstract class Abstract {\n" +
+           "abstract void toImplement();\n" +
+           "void toOverride(){}}\n" +
+           "class aClass extends Abstract {\n" +
+           "void toImplement(){};\n" +
+           "void toOverride(){};}", "Test.java\n" +
+                                    " Abstract\n" +
+                                    "  toImplement(): void\n" +
+                                    "  toOverride(): void\n" +
+                                    " aClass\n" +
+                                    "  Abstract\n" +
+                                    "   toImplement(): void\n" +
+                                    "  Abstract\n" +
+                                    "   toOverride(): void\n", true, false);
+  }
+
+  public void testPropertiesGrouping() {
+    doPropertiesTest("class Foo { \n" +
+           "  int i;\n" +
+           "  void setI(int i){}\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n"  +
+           "   setI(int): void\n" +
+           "   getI(): int\n"+
+           "   i: int\n");
+
+    doPropertiesTest("class Foo { \n" +
+           "  void setI(int i){}\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n" +
+           "   setI(int): void\n" +
+           "   getI(): int\n");
+
+    doPropertiesTest("class Foo { \n" +
+           "  String i;\n" +
+           "  void setI(int i){}\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n"  +
+           "   setI(int): void\n" +
+           "   getI(): int\n"+
+           "  i: String\n");
+
+    doPropertiesTest("class Foo { \n" +
+           "  int i;\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n" +
+           "   getI(): int\n" +
+           "   i: int\n");
+
+    doPropertiesTest("class Foo { \n" +
+           "  void setI(int i){}\n" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n" +
+           "   setI(int): void\n");
+
+
+    doPropertiesTest("class Foo { \n" +
+           "  void setI(String i){}\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: String\n" +
+           "   setI(String): void\n" +
+           "  i: int\n" +
+           "   getI(): int\n");
+    //.hasModifierProperty(PsiModifier.STATIC)
+
+    doPropertiesTest("class Foo { \n" +
+           "  int i: \n" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n");
+
+    doPropertiesTest("class Foo { \n" +
+           "  static void setI(int i){}\n" +
+           "  int getI(){}" +
+           " }",
+
+           "Test.java\n" +
+           " Foo\n" +
+           "  i: int\n" +
+           "   setI(int): void\n" +
+           "   getI(): int\n");
+
+  }
+
+  public void testInnerMethodClasses() {
+    doTest("class Foo {\n" +
+           "  void foo(){\n" +
+           "    class Inner implements Runnable {\n" +
+           "      public void run(){}\n" +
+           "    }\n" +
+           "    new Runnable(){\n" +
+           "      public void run(){\n" +
+           "        class Inner2{}" +
+           "      \n}" +
+           "    };\n" +
+           "  }\n" +
+           "}",
+           "Test.java\n" +
+           " Foo\n" +
+           "  foo(): void\n" +
+           "   Inner\n" +
+           "    run(): void\n" +
+           "   $1\n" +
+           "    run(): void\n" +
+           "     Inner2");
+  }
+
+  public void testCustomRegionsIdea179610()  {
+    doTest(
+      "public class Main {\n" +
+      "\n" +
+      "    //region with empty row\n" +
+      "\n" +
+      "    private static String filter(String in) {\n" +
+      "        return in.toLowerCase();\n" +
+      "    }\n" +
+      "\n" +
+      "    //endregion\n" +
+      "\n" +
+      "\n" +
+      "    //region without empty row  \n" +
+      "    public static void foo(String p) {\n" +
+      "\n" +
+      "        System.out.println(p);\n" +
+      "        System.out.println(\"heelp\");\n" +
+      "\n" +
+      "    }\n" +
+      "    //endregion\n" +
+      "}",
+
+      "Test.java\n" +
+      " Main\n" +
+      "  with empty row\n" +
+      "   filter(String): String\n" +
+      "  without empty row\n" +
+      "   foo(String): void"
+    );
+  }
+
+  private void doTest(String classText, String expected) {
+    doTest(classText, expected, false, false);
+  }
+
+  private void doPropertiesTest(String classText, String expected) {
+    doTest(classText, expected, false, true);
+  }
+
+  private void doTest(String classText,
+                      String expected,
+                      boolean showInterfaces,
+                      boolean showProperties) {
+    myFixture.configureByText("Test.java", classText);
+    myFixture.testStructureView(svc -> {
+      svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
+      svc.setActionActive(PropertiesGrouper.ID, showProperties);
+      svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);
+      TreeUtil.expandAll(svc.getTree());
+      PlatformTestUtil.assertTreeStructureEquals(svc.getTree().getModel(), expected);
+    });
   }
 }
