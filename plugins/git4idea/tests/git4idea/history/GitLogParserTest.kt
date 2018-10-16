@@ -127,7 +127,7 @@ class GitLogParserTest : GitPlatformTest() {
 
     TestCase.assertEquals(expected.subject, actual.subject)
     TestCase.assertEquals(expected.body, actual.body)
-    TestCase.assertEquals(expected.rawBody(), actual.rawBody)
+    TestCase.assertEquals(expected.rawBody, actual.rawBody)
 
     UsefulTestCase.assertSameElements(actual.parentsHashes, *expected.parents)
     UsefulTestCase.assertSameElements(actual.refs, expected.refs)
@@ -236,9 +236,8 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitLog
       return "(" + StringUtil.join(refs, ", ") + ")"
     }
 
-  internal fun rawBody(): String {
-    return subject + "\n\n" + body
-  }
+  val rawBody: String
+    get() = subject + "\n\n" + body
 
   fun paths(): List<String> {
     val paths = ArrayList<String>()
@@ -270,7 +269,7 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitLog
 
   private fun optionToValue(option: GitLogOption): String {
     when (option) {
-      RAW_BODY -> return rawBody()
+      RAW_BODY -> return rawBody
       COMMIT_TIME -> return (commitTime.time / 1000).toString()
       AUTHOR_TIME -> return (authorTime.time / 1000).toString()
       PARENTS -> return parents.joinToString(" ")
