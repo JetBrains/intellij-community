@@ -3,12 +3,10 @@ package git4idea.history
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.containers.ContainerUtil
-import git4idea.GitUtil
 import git4idea.history.GitLogParser.*
 import git4idea.history.GitLogParser.GitLogOption.*
 import git4idea.history.GitLogParser.NameStatus.NONE
@@ -139,26 +137,19 @@ class GitLogParserTest : GitPlatformTest() {
     TestCase.assertEquals(expected.rawBody(), actual.rawBody)
 
     UsefulTestCase.assertSameElements(actual.parentsHashes, *expected.parents)
-
     UsefulTestCase.assertSameElements(actual.refs, expected.refs)
 
     if (option == STATUS) {
-      assertPaths(actual.getFilePaths(projectRoot), expected.paths())
-      assertChanges(actual.parseChanges(myProject, projectRoot), Arrays.asList(*expected.changes))
-    }
-  }
-  private fun assertPaths(actualPaths: List<FilePath>, expectedPaths: List<String>) {
-    val actual = ContainerUtil.map<FilePath, String>(actualPaths) { path -> FileUtil.getRelativePath(File(projectPath), path.ioFile) }
-    val expected = ContainerUtil.map(expectedPaths) { s -> FileUtil.toSystemDependentName(s) }
-    UsefulTestCase.assertOrderedEquals(actual, expected)
-  }
+      val actualPaths = actual.getFilePaths(projectRoot).map { FileUtil.getRelativePath(File(projectPath), it.ioFile) }
+      val expectedPaths = expected.paths().map { FileUtil.toSystemDependentName(it) }
+      UsefulTestCase.assertOrderedEquals(actualPaths, expectedPaths)
 
-  private fun assertChanges(actual: List<Change>, expected: List<GitTestLogRecord.GitTestChange>) {
-    TestCase.assertEquals(expected.size, actual.size)
-    for (i in actual.indices) {
-      val actualChange = actual[i]
-      val expectedChange = expected[i]
-      assertChange(actualChange, expectedChange)
+      val actualChanges = actual.parseChanges(myProject, projectRoot)
+      val expectedChanges = Arrays.asList(*expected.changes)
+      TestCase.assertEquals(expectedChanges.size, actualChanges.size)
+      for (i in actualChanges.indices) {
+        assertChange(actualChanges[i], expectedChanges[i])
+      }
     }
   }
 
