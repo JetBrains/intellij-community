@@ -300,14 +300,6 @@ class GitLogParserTest : GitPlatformTest() {
     val changes: Array<GitTestChange>
       get() = data[GitTestLogRecordInfo.CHANGES] as Array<GitTestChange>
 
-    private fun shortParents(): Array<String> {
-      return parents.map { it.substring(0, 7) }.toTypedArray()
-    }
-
-    private fun shortParentsAsString(): String {
-      return shortParents().joinToString(" ")
-    }
-
     private fun parentsAsString(): String {
       return parents.joinToString(" ")
     }
