@@ -27,7 +27,6 @@ class GitLogParserTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
     root = projectRoot
-    newRefsFormat = false
   }
 
   @Throws(VcsException::class)
@@ -41,8 +40,8 @@ class GitLogParserTest : GitPlatformTest() {
   }
 
   @Throws(VcsException::class)
-  private fun doTestAllRecords(nameStatusOption: NameStatus) {
-    val expectedRecords = generateRecords()
+  private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
+    val expectedRecords = generateRecords(newRefsFormat)
 
     val option: NameStatus
     when (nameStatusOption) {
@@ -102,14 +101,12 @@ class GitLogParserTest : GitPlatformTest() {
 
   @Throws(VcsException::class)
   fun test_old_refs_format() {
-    newRefsFormat = false
     doTestAllRecords(NONE)
   }
 
   @Throws(VcsException::class)
   fun test_new_refs_format() {
-    newRefsFormat = true
-    doTestAllRecords(STATUS)
+    doTestAllRecords(STATUS, true)
   }
 
   private fun doTestCustomCommitMessage(subject: String) {
@@ -236,7 +233,8 @@ class GitLogParserTest : GitPlatformTest() {
     CHANGES
   }
 
-  internal class GitTestLogRecord internal constructor(private val data: Map<GitTestLogRecordInfo, Any>) {
+  internal class GitTestLogRecord internal constructor(private val data: Map<GitTestLogRecordInfo, Any>,
+                                                       private val newRefsFormat: Boolean = false) {
 
     val hash: String
       get() = data[GitTestLogRecordInfo.HASH] as String
@@ -419,15 +417,14 @@ class GitLogParserTest : GitPlatformTest() {
   }
 
   companion object {
-
     internal val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
                                            SUBJECT, BODY,
                                            PARENTS, PARENTS, RAW_BODY, REF_NAMES)
-    private var newRefsFormat: Boolean = false
   }
 }
 
-private fun createTestRecord(vararg parameters: Pair<GitLogParserTest.GitTestLogRecordInfo, Any>): GitLogParserTest.GitTestLogRecord {
+private fun createTestRecord(vararg parameters: Pair<GitLogParserTest.GitTestLogRecordInfo, Any>,
+                             newRefsFormat: Boolean = false): GitLogParserTest.GitTestLogRecord {
   val data = mutableMapOf(Pair(GitLogParserTest.GitTestLogRecordInfo.AUTHOR_TIME, Date(1317027817L * 1000)),
                           Pair(GitLogParserTest.GitTestLogRecordInfo.AUTHOR_NAME, "John Doe"),
                           Pair(GitLogParserTest.GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com"),
@@ -436,7 +433,7 @@ private fun createTestRecord(vararg parameters: Pair<GitLogParserTest.GitTestLog
                           Pair(GitLogParserTest.GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com"))
   parameters.associateTo(data) { it }
   data[GitLogParserTest.GitTestLogRecordInfo.HASH] = DigestUtils.sha1Hex(data.toString())
-  return GitLogParserTest.GitTestLogRecord(data)
+  return GitLogParserTest.GitTestLogRecord(data, newRefsFormat)
 }
 
 internal fun generateRecordWithSubject(subject: String): GitLogParserTest.GitTestLogRecord {
@@ -449,7 +446,7 @@ internal fun generateRecordWithSubject(subject: String): GitLogParserTest.GitTes
                                        GitLogParserTest.GitTestChange.deleted("src/OldClass.java"))))
 }
 
-internal fun generateRecords(): MutableList<GitLogParserTest.GitTestLogRecord> {
+internal fun generateRecords(newRefsFormat: Boolean): MutableList<GitLogParserTest.GitTestLogRecord> {
   val records = mutableListOf<GitLogParserTest.GitTestLogRecord>()
   records.add(createTestRecord(Pair(GitLogParserTest.GitTestLogRecordInfo.COMMIT_NAME, "Bob Smith"),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.COMMIT_EMAIL, "Bob@site.com"),
@@ -465,13 +462,15 @@ internal fun generateRecords(): MutableList<GitLogParserTest.GitTestLogRecord> {
                                             GitLogParserTest.GitTestChange.modified("src/CClass.java"),
                                             GitLogParserTest.GitTestChange.deleted("src/ChildAClass.java"))),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.REFS,
-                                    Arrays.asList("HEAD", "refs/heads/master"))))
+                                    Arrays.asList("HEAD", "refs/heads/master")),
+                               newRefsFormat = newRefsFormat))
 
   records.add(createTestRecord(Pair(GitLogParserTest.GitTestLogRecordInfo.SUBJECT, "Commit message"),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.BODY, "Small description"),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.PARENTS, arrayOf(records[0].hash)),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.CHANGES,
-                                    arrayOf(GitLogParserTest.GitTestChange.modified("src/CClass.java")))))
+                                    arrayOf(GitLogParserTest.GitTestChange.modified("src/CClass.java"))),
+                               newRefsFormat = newRefsFormat))
 
   records.add(createTestRecord(Pair(GitLogParserTest.GitTestLogRecordInfo.SUBJECT, "Commit message"),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.BODY, "Small description"),
@@ -481,7 +480,8 @@ internal fun generateRecords(): MutableList<GitLogParserTest.GitTestLogRecord> {
                                     arrayOf(GitLogParserTest.GitTestChange.modified("src/CClass.java"))),
                                Pair(GitLogParserTest.GitTestLogRecordInfo.REFS,
                                     Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master",
-                                                  "refs/tags/v1.0"))))
+                                                  "refs/tags/v1.0")),
+                               newRefsFormat = newRefsFormat))
 
   return records
 }
