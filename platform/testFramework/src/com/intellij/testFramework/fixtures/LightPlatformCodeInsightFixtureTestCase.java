@@ -2,7 +2,6 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -74,7 +73,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     * @see #getBasePath()
     */
    protected String getTestDataPath() {
-     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
+     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
      return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
             StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
    }
