@@ -142,7 +142,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.flex.uiDesigner.tests",
       "intellij.griffon",
       "intellij.php.workshop",
-      "intellij.html.quirksmode",
       "intellij.shortcutPromoter",
       "intellij.flex.profiler"
     ]
