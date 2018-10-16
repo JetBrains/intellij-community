@@ -29,17 +29,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Date;
 
 interface GlobalMenuLib extends Library {
-  void runDbusServer(JLogger jlogger);
+  void runDbusServer(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
   void stopDbusServer();
   void execOnMainLoop(JRunnable run);
 
   Pointer registerWindow(long windowXid, EventHandler handler);
   void releaseWindowOnMainLoop(Pointer wi);
+
+  void bindNewWindow(Pointer wi, long windowXid);
+  void unbindWindow(Pointer wi, long windowXid);
 
   void clearRootMenu(Pointer wi);
   void clearMenu(Pointer dbmi);
@@ -100,11 +108,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final GlobalMenuLib ourLib;
   private static final GlobalMenuLib.JLogger ourGLogger;
   private static final Thread ourGlibMainLoopThread;
+  private static final Map<Long, GlobalMenuLinux> ourInstances = new ConcurrentHashMap<>();
+  private static boolean ourIsServiceAvailable = false;
 
   private final long myXid;
+  private final @NotNull JFrame myFrame;
   private List<MenuItemInternal> myRoots;
   private Pointer myWindowHandle;
-  private GlobalMenuLib.JRunnable myGlibLoopRunnable; // only to hold runnable object until it executed
+  private boolean myIsProcessed = false;
 
   private final EventFilter myEventFilter = new EventFilter();
 
@@ -120,7 +131,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
           LOG.error(msg);
         }
       };
-      ourGlibMainLoopThread = new Thread(()->ourLib.runDbusServer(ourGLogger), "Glib-main-loop");
+      ourGlibMainLoopThread = new Thread(()->ourLib.runDbusServer(ourGLogger, GlobalMenuLinux::_onAppmenuServiceAppeared, GlobalMenuLinux::_onAppmenuServiceVanished), "Glib-main-loop");
       ourGlibMainLoopThread.start();
     } else {
       ourGLogger = null;
@@ -130,12 +141,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static GlobalMenuLinux create(@NotNull JFrame frame) {
     final long xid = _getX11WindowXid(frame);
-    return xid == 0 ? null : new GlobalMenuLinux(xid);
+    return xid == 0 ? null : new GlobalMenuLinux(xid, frame);
   }
 
-  private GlobalMenuLinux(long xid) {
+  private GlobalMenuLinux(long xid, @NotNull JFrame frame) {
     LOG.info("created instance of GlobalMenuLinux for xid=0x" + Long.toHexString(xid));
     myXid = xid;
+    myFrame = frame;
+    ourInstances.put(myXid, this);
   }
 
   @Override
@@ -147,6 +160,20 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       LOG.info("scheduled destroying of GlobalMenuLinux for xid=0x" + Long.toHexString(myXid));
       ourLib.releaseWindowOnMainLoop(myWindowHandle);
     }
+  }
+
+  public void bindNewWindow(@NotNull Window frame) {
+    final long xid = _getX11WindowXid(frame);
+    if (xid == 0)
+      return;
+    ourLib.bindNewWindow(myWindowHandle, xid);
+  }
+
+  public void unbindNewWindow(@NotNull Window frame) {
+    final long xid = _getX11WindowXid(frame);
+    if (xid == 0)
+      return;
+    ourLib.unbindWindow(myWindowHandle, xid);
   }
 
   public void setRoots(List<ActionMenu> roots) {
@@ -168,29 +195,36 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     myRoots = newRoots;
     _trace("set new menu roots, count=%d", size);
+    myIsProcessed = false;
+    ourLib.execOnMainLoop(ourProcessQueue);
+  }
 
-    myGlibLoopRunnable = () -> {
-      // Glib-loop
+  private void _processRoots() {
+    // exec at glib-thread
+    if (myIsProcessed)
+      return;
+
+    myIsProcessed = true;
+
+    if (myWindowHandle == null) {
+      myWindowHandle = ourLib.registerWindow(myXid, this);
       if (myWindowHandle == null) {
-        myWindowHandle = ourLib.registerWindow(myXid, this);
-        if (myWindowHandle == null) {
-          LOG.error("AppMenu-service can't register xid " + myXid);
-          return;
-        }
-      }
-
-      ourLib.clearRootMenu(myWindowHandle);
-
-      final List<MenuItemInternal> croots = myRoots;
-      if (croots == null || croots.isEmpty())
+        LOG.error("AppMenu-service can't register xid " + myXid);
         return;
-
-      for (MenuItemInternal mi: croots) {
-        mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
       }
-    };
+    }
 
-    ourLib.execOnMainLoop(myGlibLoopRunnable); // TODO: clean ref myGlibLoopRunnable
+    ourLib.clearRootMenu(myWindowHandle);
+
+    final List<MenuItemInternal> croots = myRoots;
+    if (croots == null || croots.isEmpty())
+      return;
+
+    for (MenuItemInternal mi: croots)
+      mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
+
+    if (!Registry.is("linux.native.menu.debug.show.frame.menu", false))
+      ApplicationManager.getApplication().invokeLater(()->myFrame.getJMenuBar().setVisible(false));
   }
 
   private MenuItemInternal _findMenuItem(int uid) {
@@ -448,29 +482,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public static boolean isAvailable() { return ourLib != null; }
 
-  private static boolean _isLinuxEnvSupportsGlobalMenu() {
-    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
-      return false;
-
-    if (!Registry.is("linux.native.menu.debug.check.desktop"))
-      return true;
-
-    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    if (desktop == null)
-      return false;
-
-    desktop = desktop.toLowerCase();
-    return desktop.startsWith("unity") || desktop.startsWith("ubuntu") || desktop.equals("kde");
-  }
-
   private static GlobalMenuLib _loadLibrary() {
     if (!SystemInfo.isLinux)
       return null;
-
-    if (!_isLinuxEnvSupportsGlobalMenu()) {
-      LOG.info("skip loading of dbusmenu wrapper because not-supported desktop used: " + String.valueOf(System.getenv("XDG_CURRENT_DESKTOP")));
-      return null;
-    }
 
     UrlClassLoader.loadPlatformLibrary("dbm");
 
@@ -629,6 +643,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private class EventFilter {
     private Timer myTimer;
     private long myLastFirstRootEventMs = 0;
+    private GlobalMenuLib.JRunnable myGlibLoopRunnable;
 
     boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
       final long timeMs = System.currentTimeMillis();
@@ -717,7 +732,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
 
   @SuppressWarnings("deprecation")
-  private static long _getX11WindowXid(@NotNull JFrame frame) {
+  private static long _getX11WindowXid(@NotNull Window frame) {
     final ComponentPeer wndPeer = frame.getPeer();
     if (wndPeer == null) {
       // wait a little for X11-peer to be connected
@@ -805,5 +820,29 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       System.out.println(ourDtf.format(new Date()) + ": " + msg);
     else
       LOG.info(msg);
+  }
+
+  private static final GlobalMenuLib.JRunnable ourProcessQueue = () -> {
+    // exec at glib-thread
+    if (!ourIsServiceAvailable)
+      return;
+
+    for (GlobalMenuLinux gml: ourInstances.values())
+      gml._processRoots();
+  };
+
+  private static void _onAppmenuServiceAppeared() {
+    // exec at glib-thread
+    ourIsServiceAvailable = true;
+    ourProcessQueue.run();
+  }
+
+  private static void _onAppmenuServiceVanished() {
+    // exec at glib-thread
+    ourIsServiceAvailable = false;
+    for (GlobalMenuLinux gml: ourInstances.values()) {
+      gml.myWindowHandle = null;
+      ApplicationManager.getApplication().invokeLater(()->gml.myFrame.getJMenuBar().setVisible(true));
+    }
   }
 }

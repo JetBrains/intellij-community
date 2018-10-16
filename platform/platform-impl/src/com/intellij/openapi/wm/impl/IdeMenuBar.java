@@ -16,9 +16,11 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
@@ -35,10 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.RoundRectangle2D;
@@ -558,11 +557,32 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         frameMenuBar.myGlobalMenuLinux = gml;
         Disposer.register(frameMenuBar.myDisposable, gml);
         frameMenuBar.updateMenuActions(true);
-        if (!Registry.is("linux.native.menu.debug.show.frame.menu"))
-          frameMenuBar.setVisible(false);
       }
     } else if (frame.getJMenuBar() != null)
       LOG.info("The menubar '" + frame.getJMenuBar() + "' of frame '" + frame + "' isn't instance of IdeMenuBar");
+  }
+
+  public static void bindAppMenuOfParent(@NotNull final Window frame, IdeFrame parent) {
+    if (!GlobalMenuLinux.isAvailable())
+      return;
+    if (!(parent instanceof JFrame))
+      return;
+
+    final JFrame fr = (JFrame)parent;
+    if (fr.getJMenuBar() instanceof IdeMenuBar) {
+      final IdeMenuBar frameMenuBar = (IdeMenuBar)fr.getJMenuBar();
+      if (frameMenuBar.myGlobalMenuLinux != null) {
+        frame.addWindowListener(new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
+            frameMenuBar.myGlobalMenuLinux.unbindNewWindow(frame);
+          }
+          public void windowOpened(WindowEvent e) {
+            frameMenuBar.myGlobalMenuLinux.bindNewWindow(frame);
+          }
+        });
+      }
+    }
   }
 
   private static class MyExitFullScreenButton extends JButton {
