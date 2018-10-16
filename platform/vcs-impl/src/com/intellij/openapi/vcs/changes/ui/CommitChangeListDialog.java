@@ -355,7 +355,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    BorderLayoutPanel legendPanel = JBUI.Panels.simplePanel().addToRight(myLegend.getComponent());
+    BorderLayoutPanel legendPanel = JBUI.Panels.simplePanel().addToLeft(myLegend.getComponent());
     BorderLayoutPanel topPanel = JBUI.Panels.simplePanel().addToCenter(myBrowser).addToBottom(legendPanel);
 
     mySplitter = new Splitter(true);
