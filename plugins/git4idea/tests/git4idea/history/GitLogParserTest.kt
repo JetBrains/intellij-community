@@ -22,7 +22,6 @@ import java.util.*
 
 class GitLogParserTest : GitPlatformTest() {
   private var root: VirtualFile? = null
-  private var parser: GitLogParser? = null
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -52,23 +51,21 @@ class GitLogParserTest : GitPlatformTest() {
       else -> throw AssertionError()
     }
 
-    parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
 
     val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
-    val actualRecords = parser!!.parse(output)
+    val actualRecords = parser.parse(output)
     assertAllRecords(actualRecords, expectedRecords, nameStatusOption)
   }
 
   @Throws(VcsException::class)
   fun testParseOneRecordWithoutNameStatus() {
-    parser = GitLogParser(myProject, *GIT_LOG_OPTIONS)
-    doTestOneRecord(NONE)
+    doTestOneRecord(GitLogParser(myProject, *GIT_LOG_OPTIONS), NONE)
   }
 
   @Throws(VcsException::class)
   fun testParseOneRecordWithNameStatus() {
-    parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
-    doTestOneRecord(STATUS)
+    doTestOneRecord(GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS), STATUS)
   }
 
   fun test_char_0001_in_commit_message() {
@@ -118,18 +115,18 @@ class GitLogParserTest : GitPlatformTest() {
   private fun doTestCustomCommitMessage(subject: String) {
     val record = generateRecordWithSubject(subject)
 
-    parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
     val s = record.prepareOutputLine(NONE)
-    val records = parser!!.parse(s)
+    val records = parser.parse(s)
     TestCase.assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size)
     TestCase.assertEquals("Commit subject is incorrect", subject, records[0].subject)
   }
 
   @Throws(VcsException::class)
-  private fun doTestOneRecord(option: NameStatus) {
+  private fun doTestOneRecord(parser: GitLogParser, option: NameStatus) {
     val expectedRecord = generateRecordWithSubject("Subject")
     val s = expectedRecord.prepareOutputLine(option)
-    val actualRecord = parser!!.parseOneRecord(s)!!
+    val actualRecord = parser.parseOneRecord(s)!!
     assertRecord(actualRecord, expectedRecord, option)
   }
 
