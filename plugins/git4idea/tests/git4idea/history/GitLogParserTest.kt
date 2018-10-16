@@ -85,14 +85,7 @@ class GitLogParserTest : GitPlatformTest() {
   private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
     val expectedRecords = generateRecords(newRefsFormat)
 
-    val option: NameStatus
-    when (nameStatusOption) {
-      NONE -> option = NONE
-      STATUS -> option = STATUS
-      else -> throw AssertionError()
-    }
-
-    val parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
+    val parser = GitLogParser(myProject, nameStatusOption, *GIT_LOG_OPTIONS)
 
     val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
     val actualRecords = parser.parse(output)
