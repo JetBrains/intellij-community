@@ -32,24 +32,6 @@ class GitLogParserTest : GitPlatformTest() {
   }
 
   @Throws(VcsException::class)
-  private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
-    val expectedRecords = generateRecords(newRefsFormat)
-
-    val option: NameStatus
-    when (nameStatusOption) {
-      NONE -> option = NONE
-      STATUS -> option = STATUS
-      else -> throw AssertionError()
-    }
-
-    val parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
-
-    val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
-    val actualRecords = parser.parse(output)
-    assertAllRecords(actualRecords, expectedRecords, nameStatusOption)
-  }
-
-  @Throws(VcsException::class)
   fun testParseOneRecordWithoutNameStatus() {
     doTestOneRecord(GitLogParser(myProject, *GIT_LOG_OPTIONS), NONE)
   }
@@ -101,14 +83,25 @@ class GitLogParserTest : GitPlatformTest() {
     doTestAllRecords(STATUS, true)
   }
 
-  private fun doTestCustomCommitMessage(subject: String) {
-    val record = generateRecordWithSubject(subject)
+  @Throws(VcsException::class)
+  private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
+    val expectedRecords = generateRecords(newRefsFormat)
 
-    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
-    val s = record.prepareOutputLine(NONE)
-    val records = parser.parse(s)
-    TestCase.assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size)
-    TestCase.assertEquals("Commit subject is incorrect", subject, records[0].subject)
+    val option: NameStatus
+    when (nameStatusOption) {
+      NONE -> option = NONE
+      STATUS -> option = STATUS
+      else -> throw AssertionError()
+    }
+
+    val parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
+
+    val output = expectedRecords.joinToString("\n") { it.prepareOutputLine(nameStatusOption) }
+    val actualRecords = parser.parse(output)
+    TestCase.assertEquals(actualRecords.size, expectedRecords.size)
+    for (i in actualRecords.indices) {
+      assertRecord(actualRecords[i], expectedRecords[i], nameStatusOption)
+    }
   }
 
   @Throws(VcsException::class)
@@ -119,14 +112,14 @@ class GitLogParserTest : GitPlatformTest() {
     assertRecord(actualRecord, expectedRecord, option)
   }
 
-  @Throws(VcsException::class)
-  private fun assertAllRecords(actualRecords: List<GitLogRecord>,
-                               expectedRecords: List<GitTestLogRecord>,
-                               nameStatusOption: NameStatus) {
-    TestCase.assertEquals(actualRecords.size, expectedRecords.size)
-    for (i in actualRecords.indices) {
-      assertRecord(actualRecords[i], expectedRecords[i], nameStatusOption)
-    }
+  private fun doTestCustomCommitMessage(subject: String) {
+    val record = generateRecordWithSubject(subject)
+
+    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val s = record.prepareOutputLine(NONE)
+    val records = parser.parse(s)
+    TestCase.assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size)
+    TestCase.assertEquals("Commit subject is incorrect", subject, records[0].subject)
   }
 
   @Throws(VcsException::class)
