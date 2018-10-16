@@ -561,11 +561,6 @@ public class ParameterInfoComponent extends JPanel {
       myLabel.setForeground(FOREGROUND);
 
       myLabel.setText(XmlStringUtil.wrapInHtml(text));
-
-      //IDEA-95904 Darcula parameter info pop-up colors hard to read
-      if (UIUtil.isUnderDarcula()) {
-        myLabel.setText(myLabel.getText().replace("<b>", "<b color=ffC800>"));
-      }
       return myLabel.getText();
     }
 
