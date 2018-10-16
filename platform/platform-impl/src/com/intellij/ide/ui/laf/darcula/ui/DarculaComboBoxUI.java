@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -546,7 +546,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   // Wide popup that uses preferred size
   protected static class CustomComboPopup extends BasicComboPopup {
-    private static final Color POPUP_BORDER_COLOR = JBColor.namedColor("ComboPopup.borderColor", JBColor.BLACK);
     public CustomComboPopup(JComboBox combo) {
       super(combo);
     }
@@ -554,7 +553,28 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     @Override
     protected void configurePopup() {
       super.configurePopup();
-      setBorder(new CustomLineBorder(POPUP_BORDER_COLOR, JBUI.insets(1)));
+
+      Border border = UIManager.getBorder("ComboPopup.border");
+      if (border != null) {
+        setBorder(border);
+      }
+    }
+
+    @Override
+    public void updateUI() {
+      setUI(new BasicPopupMenuUI() {
+        @Override
+        public void uninstallDefaults() {}
+
+        @Override
+        public void installDefaults() {
+          if (popupMenu.getLayout() == null || popupMenu.getLayout() instanceof UIResource)
+            popupMenu.setLayout(new DefaultMenuLayout(popupMenu, BoxLayout.Y_AXIS));
+
+          popupMenu.setOpaque(true);
+          LookAndFeel.installColorsAndFont(popupMenu, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+        }
+      });
     }
 
     @Override
