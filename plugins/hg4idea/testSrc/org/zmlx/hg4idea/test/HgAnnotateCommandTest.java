@@ -3,10 +3,10 @@ package org.zmlx.hg4idea.test;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.thoughtworks.xstream.XStream;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.Before;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgAnnotateCommand;
@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,8 +36,8 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
   private File myOutputsDir;
   private List<HgAnnotationLine> myAnnotations;
 
-  @BeforeClass
-  private void loadEthalonAnnotations() throws IOException {
+  @Before
+  public void loadEthalonAnnotations() throws IOException {
     myPluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));
     myAnnotateDataDir = new File(myPluginRoot, "testData/annotate");
     myOutputsDir = new File(myAnnotateDataDir, "outputs");
@@ -54,29 +53,20 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
       reader.close();
     }
   }
-  
-  @DataProvider(name = "annotate_output")
-  public Object[][] createValidData() throws IOException {
-    Object[][] data = new Object[myOutputsDir.listFiles().length][];
-    for (int i = 0; i < myOutputsDir.listFiles().length; i++) {
-      File annotateData = myOutputsDir.listFiles()[i];
-      String fileText = FileUtil.loadFile(annotateData);
-      data[i] = new String[] {annotateData.getName(), fileText};
-    }
-    return data;
-  }
-  
-  @Test(dataProvider = "annotate_output")
-  public void testParse(String fileName, String annotationNativeOutput)
-    throws NoSuchMethodException, InvocationTargetException, IllegalAccessException
-  {
-    HgAnnotateCommand command = new HgAnnotateCommand(myProject);
-    Method parseMethod = HgAnnotateCommand.class.getDeclaredMethod("parse", List.class);
-    parseMethod.setAccessible(true);
 
-    List<String> annotations = Arrays.asList(annotationNativeOutput.split("(\n|\r|\r\n)"));
-    List<HgAnnotationLine> result = (List<HgAnnotationLine>)parseMethod.invoke(command, annotations);
-    assertEquals(result, myAnnotations);
+  @Test
+  public void testParse() throws Exception {
+    for (File file : myOutputsDir.listFiles()) {
+      String annotationNativeOutput = FileUtil.loadFile(file);
+
+      HgAnnotateCommand command = new HgAnnotateCommand(myProject);
+      Method parseMethod = HgAnnotateCommand.class.getDeclaredMethod("parse", List.class);
+      parseMethod.setAccessible(true);
+
+      List<String> annotations = Arrays.asList(LineTokenizer.tokenize(annotationNativeOutput, false));
+      List<HgAnnotationLine> result = (List<HgAnnotationLine>)parseMethod.invoke(command, annotations);
+      assertEquals(result, myAnnotations, file.getName());
+    }
   }
 
   //@Test
@@ -85,7 +75,7 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
 
     File outputFile = new File(myOutputsDir, "hg_1.9.0");
     String output = FileUtil.loadFile(outputFile);
-    String[] split = output.split("(\n|\r|\r\n)");
+    String[] split = LineTokenizer.tokenize(output, false);
     List<HgAnnotationLine> annotationLines = new ArrayList<>(split.length);
     
     Pattern pattern = Pattern.compile("\\s*(.+)\\s+(\\d+)\\s+([a-fA-F0-9]+)\\s+(\\d{4}-\\d{2}-\\d{2}):\\s*(\\d+): ?(.*)");

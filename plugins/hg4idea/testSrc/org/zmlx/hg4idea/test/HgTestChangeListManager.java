@@ -15,13 +15,12 @@
  */
 package org.zmlx.hg4idea.test;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.EdtTestUtil;
 import org.testng.Assert;
 
 import java.util.*;
@@ -83,7 +82,7 @@ public class HgTestChangeListManager {
     final LocalChangeList list = peer.getDefaultChangeList();
     assertNotNull(list);
     peer.editComment(list.getName(), "A comment to a commit");
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> peer.commitChangesSynchronouslyWithResult(list, changes));
+    EdtTestUtil.runInEdtAndWait(() -> peer.commitChangesSynchronouslyWithResult(list, changes));
     ensureUpToDate();
   }
 
@@ -92,9 +91,6 @@ public class HgTestChangeListManager {
    * It is called after each operation in the HgTestChangeListManager.
    */
   public void ensureUpToDate() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) { // for dispatch thread no need to force update.
-      peer.ensureUpToDate(false);
-    }
+    peer.ensureUpToDate(false);
   }
-
 }

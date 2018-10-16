@@ -12,7 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.test;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.command.HgLogCommand;
 

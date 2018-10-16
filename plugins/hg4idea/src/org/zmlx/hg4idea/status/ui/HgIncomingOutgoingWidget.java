@@ -119,7 +119,7 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
         myTooltip = "\n" + myChangesStatus.getToolTip();
       }
       if (!isVisible() || !isAlreadyShown) return;
-      myStatusBar.updateWidget(ID());
+      if (myStatusBar != null) myStatusBar.updateWidget(ID());
     });
   }
 

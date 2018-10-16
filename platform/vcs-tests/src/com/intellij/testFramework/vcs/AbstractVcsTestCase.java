@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -107,15 +108,21 @@ public abstract class AbstractVcsTestCase {
   }
 
   protected void tearDownProject() throws Exception {
-    if (myProject != null) {
-      ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
-      CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
-      myProject = null;
-    }
-    if (myProjectFixture != null) {
-      myProjectFixture.tearDown();
-      myProjectFixture = null;
-    }
+    new RunAll(
+      () -> {
+        if (myProject != null) {
+          ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
+          CommittedChangesCache.getInstance(myProject).clearCaches(EmptyRunnable.INSTANCE);
+          myProject = null;
+        }
+      },
+      () -> {
+        if (myProjectFixture != null) {
+          myProjectFixture.tearDown();
+          myProjectFixture = null;
+        }
+      })
+      .run();
   }
 
   public void setStandardConfirmation(final String vcsName, final VcsConfiguration.StandardConfirmation op,
