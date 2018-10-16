@@ -414,6 +414,21 @@ public class MavenModuleImporter {
 
     Element compilerConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
     if (compilerConfiguration != null) {
+      Element parameters = compilerConfiguration.getChild("parameters");
+      if (parameters != null && Boolean.parseBoolean(parameters.getTextTrim())) {
+        options.add("-parameters");
+      }
+
+      if(!mySettings.isUseMavenCompilerArguments()) return;
+
+      Element compilerArguments = compilerConfiguration.getChild("compilerArguments");
+      if (compilerArguments != null) {
+        for (Element compilerArgument : compilerArguments.getChildren()) {
+          options.add("-" + compilerArgument.getName());
+          addIfNotNull(options, nullize(compilerArgument.getTextTrim()));
+        }
+      }
+
       addIfNotNull(options, nullize(compilerConfiguration.getChildTextTrim("compilerArgument")));
 
       Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
