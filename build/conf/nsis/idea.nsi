@@ -453,7 +453,7 @@ Function downloadJre
     ${If} $0 == "OK"
       untgz::extract "-d" "$INSTDIR\jre32" "$TEMP\jre.tar.gz"
       StrCmp $R0 "success" remove_temp_jre
-      ${LogText} "jre32: Failed to extract"
+      ${LogText} "ERROR: jre32: Failed to extract"
       DetailPrint "Failed to extract jre.tar.gz"
       MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to extract $TEMP\jre.tar.gz"
       Goto clean
@@ -463,7 +463,7 @@ clean:
       IfFileExists "$TEMP\jre.tar.gz" 0 done
       Delete "$TEMP\jre.tar.gz"
     ${Else}
-      ${LogText} "jre32: download ${LINK_TO_JRE} is failed: $0"
+      ${LogText} "ERROR: jre32: download ${LINK_TO_JRE} is failed: $0"
       MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
     ${EndIf}
   ${EndIf}
