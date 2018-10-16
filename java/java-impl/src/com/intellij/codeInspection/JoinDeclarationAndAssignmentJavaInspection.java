@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -19,13 +20,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 import static com.intellij.codeInspection.ProblemHighlightType.INFORMATION;
-import static com.intellij.psi.util.PsiTreeUtil.*;
+import static com.intellij.psi.util.PsiTreeUtil.getNextSiblingOfType;
+import static com.intellij.psi.util.PsiTreeUtil.skipWhitespacesAndCommentsForward;
 import static com.siyeh.ig.psiutils.VariableAccessUtils.variableIsUsed;
 
 /**
@@ -220,7 +221,9 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         PsiAssignmentExpression assignmentExpression = context.myAssignment;
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
-          RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable);
+          String textAfter = PsiExpressionTrimRenderer.render(initializer) + ";<br>" +
+                             variable.getTypeElement().getText() + ' ' + variable.getName();
+          if (!RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable, textAfter)) return;
         }
 
         if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
