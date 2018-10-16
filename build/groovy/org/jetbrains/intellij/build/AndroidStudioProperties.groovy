@@ -398,6 +398,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         context.ant.copy(todir: "$lldbTarget/lib") {
           fileset(dir: "$root/prebuilts/python/windows-x86/x64/Lib")
         }
+
+        def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
+        context.ant.copy(todir: "$simpleperfTarget/windows") {
+          fileset(dir: "$root/prebuilts/tools/windows/simpleperf")
+        }
+        context.ant.copy(todir: "$simpleperfTarget/windows-x86_64") {
+          fileset(dir: "$root/prebuilts/tools/windows-x86_64/simpleperf")
+        }
       }
     }
   }
@@ -435,6 +443,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
         context.ant.copy(todir: "$lldbTarget/lib/python2.7") {
           fileset(dir: "$root/prebuilts/python/linux-x86/lib/python2.7")
+        }
+
+        def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
+        context.ant.copy(todir: "$simpleperfTarget/linux-x86") {
+          fileset(dir: "$root/prebuilts/tools/linux-x86/simpleperf")
+        }
+        context.ant.copy(todir: "$simpleperfTarget/linux-x86_64") {
+          fileset(dir: "$root/prebuilts/tools/linux-x86_64/simpleperf")
         }
       }
     }
@@ -477,6 +493,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       extraExecutables.add("bin/lldb/bin/LLDBFrontend")
       extraExecutables.add("bin/lldb/bin/llvm-symbolizer")
       extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
+
+      def simpleperfTarget = "$targetDirectory/plugins/android/resources/simpleperf"
+      context.ant.copy(todir: "$simpleperfTarget/darwin-x86") {
+        fileset(dir: "$root/prebuilts/tools/darwin-x86/simpleperf")
+      }
+      context.ant.copy(todir: "$simpleperfTarget/darwin-x86_64") {
+        fileset(dir: "$root/prebuilts/tools/darwin-x86_64/simpleperf")
+      }
     }
   }
 

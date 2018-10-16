@@ -21,6 +21,7 @@ iml_project(
         "//prebuilts/tools/common/simpleperf",
         "//prebuilts/tools:lldb",
         "//prebuilts/tools:offline-sdk",
+        "//prebuilts/tools:simpleperf",
         "//tools/adt/idea/adt-ui/lib/libwebp",
         "//tools/adt/idea/native/installer:uninstaller",
         "//tools/base/build-system:gradle-distrib",
