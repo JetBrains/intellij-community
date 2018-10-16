@@ -5,7 +5,7 @@ import com.intellij.psi.PsiType
 
 interface GroovyMethodCallReference : GroovyCallReference {
 
-  val realReference: Boolean
+  val isRealReference: Boolean
 
   val receiver: PsiType?
 

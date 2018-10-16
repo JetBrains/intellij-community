@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveImpl
 abstract class GroovyMethodCallReferenceBase<T : PsiElement>(element: T) : GroovyReferenceBase<T>(element), GroovyMethodCallReference {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    if (realReference) {
+    if (isRealReference) {
       return resolveImpl(incomplete)
     }
     else {
