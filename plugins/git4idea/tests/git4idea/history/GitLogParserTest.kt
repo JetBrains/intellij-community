@@ -228,15 +228,13 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
         val newRefs = ContainerUtil.newArrayList<String>()
         var headRefMet = false
         for (ref in refs) {
-          if (ref == "HEAD") {
-            headRefMet = true
-          }
-          else if (headRefMet) {
-            newRefs.add("HEAD -> $ref")
-            headRefMet = false
-          }
-          else {
-            newRefs.add(ref)
+          when {
+            ref == "HEAD" -> headRefMet = true
+            headRefMet -> {
+              newRefs.add("HEAD -> $ref")
+              headRefMet = false
+            }
+            else -> newRefs.add(ref)
           }
         }
         refs = newRefs
