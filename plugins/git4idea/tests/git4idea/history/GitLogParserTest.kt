@@ -1,291 +1,231 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.history;
+package git4idea.history
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitUtil;
-import git4idea.test.GitPlatformTest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.containers.ContainerUtil
+import git4idea.GitUtil
+import git4idea.history.GitLogParser.*
+import git4idea.history.GitLogParser.GitLogOption.*
+import git4idea.history.GitLogParser.NameStatus.NONE
+import git4idea.history.GitLogParser.NameStatus.STATUS
+import git4idea.test.GitPlatformTest
+import junit.framework.TestCase
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.util.*;
-
-import static git4idea.history.GitLogParser.*;
-import static git4idea.history.GitLogParser.GitLogOption.*;
-import static git4idea.history.GitLogParser.NameStatus.NONE;
-import static git4idea.history.GitLogParser.NameStatus.STATUS;
-
-public class GitLogParserTest extends GitPlatformTest {
-
-  public static final GitLogOption[] GIT_LOG_OPTIONS =
-    new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-      COMMITTER_EMAIL, SUBJECT, BODY, PARENTS, PARENTS, RAW_BODY, REF_NAMES
-    };
-  private VirtualFile myRoot;
-  private GitLogParser myParser;
-  private GitTestLogRecord myRecord;
-  private static boolean myNewRefsFormat;
-
-  private static final GitTestLogRecord RECORD1 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
-    .put(GitTestLogRecordInfo.HASH,         "2c815939f45fbcfda9583f84b14fe9d393ada790")
-    .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
-    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
-                                                                         .put(GitTestLogRecordInfo.COMMIT_NAME, "Bob Smith")
-                                                                         .put(GitTestLogRecordInfo.COMMIT_EMAIL, "Bob@site.com")
-                                                                         .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
-                                                                         .put(GitTestLogRecordInfo.BODY, "Description goes here\n" +
-                                                                                                         "\n" + // empty line
-                                                                                                         "Then comes a long long description.\n" +
-                                                                                                         "Probably multilined.")
-                                                                         .put(GitTestLogRecordInfo.PARENTS, new String[]{
-                                                                           "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7",
-                                                                           "7c1298fd1f93df414ce0d87128532f819de2cbd4"})
-                                                                         .put(GitTestLogRecordInfo.CHANGES, new GitTestChange[]{
-                                                                           GitTestChange.moved("file2", "file3"),
-                                                                           GitTestChange.added("readme.txt"),
-                                                                           GitTestChange.modified("src/CClass.java"),
-                                                                           GitTestChange.deleted("src/ChildAClass.java")})
-    .put(GitTestLogRecordInfo.REFS,           Arrays.asList("HEAD", "refs/heads/master"))
-                                                                         .build());
-
-  private static final GitTestLogRecord RECORD2 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
-    .put(GitTestLogRecordInfo.HASH,         "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
-    .put(GitTestLogRecordInfo.AUTHOR_TIME,  new Date(1317027817L * 1000))
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
-    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
-                                                                         .put(GitTestLogRecordInfo.COMMIT_NAME, "John Doe")
-                                                                         .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
-                                                                         .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
-                                                                         .put(GitTestLogRecordInfo.BODY, "Small description")
-    .put(GitTestLogRecordInfo.PARENTS,      new String[] { "7c1298fd1f93df414ce0d87128532f819de2cbd4" })
-    .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
-                                                                         .build());
-
-  private static final GitTestLogRecord RECORD3 = new GitTestLogRecord(ContainerUtil.<GitTestLogRecordInfo, Object>immutableMapBuilder()
-    .put(GitTestLogRecordInfo.HASH, "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
-    .put(GitTestLogRecordInfo.AUTHOR_TIME, new Date(1317027817L * 1000))
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
-                                                                         .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
-    .put(GitTestLogRecordInfo.COMMIT_TIME,  new Date(1315471452L * 1000))
-                                                                         .put(GitTestLogRecordInfo.COMMIT_NAME, "John Doe")
-                                                                         .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
-                                                                         .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
-                                                                         .put(GitTestLogRecordInfo.BODY, "Small description")
-    .put(GitTestLogRecordInfo.PARENTS,      new String[] { "7c1298fd1f93df414ce0d87128532f819de2cbd4" })
-    .put(GitTestLogRecordInfo.CHANGES,      new GitTestChange[] { GitTestChange.modified("src/CClass.java") })
-    .put(GitTestLogRecordInfo.REFS,         Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master", "refs/tags/v1.0"))
-                                                                         .build());
-  public static final List<GitTestLogRecord> ALL_RECORDS = Arrays.asList(RECORD1, RECORD2, RECORD3);
+class GitLogParserTest : GitPlatformTest() {
+  private var root: VirtualFile? = null
+  private var parser: GitLogParser? = null
+  private var record: GitTestLogRecord? = null
 
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myRoot = projectRoot;
-    myRecord = RECORD1; // for single record tests
-    myNewRefsFormat = false;
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
+    root = projectRoot
+    record = RECORD1 // for single record tests
+    newRefsFormat = false
   }
 
-  public void testParseAllWithoutNameStatus() throws VcsException {
-    doTestAllRecords(NONE);
+  @Throws(VcsException::class)
+  fun testParseAllWithoutNameStatus() {
+    doTestAllRecords(NONE)
   }
 
-  public void testParseAllWithNameStatus() throws VcsException {
-    doTestAllRecords(STATUS);
+  @Throws(VcsException::class)
+  fun testParseAllWithNameStatus() {
+    doTestAllRecords(STATUS)
   }
 
-  private void doTestAllRecords(NameStatus nameStatusOption) throws VcsException {
-    NameStatus option;
-    switch (nameStatusOption) {
-      case NONE:   option = NONE; break;
-      case STATUS: option = STATUS; break;
-      default: throw new AssertionError();
+  @Throws(VcsException::class)
+  private fun doTestAllRecords(nameStatusOption: NameStatus) {
+    val option: NameStatus
+    when (nameStatusOption) {
+      NONE -> option = NONE
+      STATUS -> option = STATUS
+      else -> throw AssertionError()
     }
 
-    myParser = new GitLogParser(myProject, option, GIT_LOG_OPTIONS);
-    String output = prepareOutputForAllRecords(nameStatusOption);
-    List<GitLogRecord> actualRecords = myParser.parse(output);
-    List<GitTestLogRecord> expectedRecords = ALL_RECORDS;
-    assertAllRecords(actualRecords, expectedRecords, nameStatusOption);
+    parser = GitLogParser(myProject, option, *GIT_LOG_OPTIONS)
+    val output = prepareOutputForAllRecords(nameStatusOption)
+    val actualRecords = parser!!.parse(output)
+    val expectedRecords = ALL_RECORDS
+    assertAllRecords(actualRecords, expectedRecords, nameStatusOption)
   }
 
-  public void testParseOneRecordWithoutNameStatus() throws VcsException {
-    myParser = new GitLogParser(myProject, GIT_LOG_OPTIONS);
-    doTestOneRecord(NONE);
+  @Throws(VcsException::class)
+  fun testParseOneRecordWithoutNameStatus() {
+    parser = GitLogParser(myProject, *GIT_LOG_OPTIONS)
+    doTestOneRecord(NONE)
   }
 
-  public void testParseOneRecordWithNameStatus() throws VcsException {
-    myParser = new GitLogParser(myProject, STATUS, GIT_LOG_OPTIONS);
-    doTestOneRecord(STATUS);
+  @Throws(VcsException::class)
+  fun testParseOneRecordWithNameStatus() {
+    parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    doTestOneRecord(STATUS)
   }
 
-  public void test_char_0001_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0001subject");
+  fun test_char_0001_in_commit_message() {
+    doTestCustomCommitMessage("Commit \u0001subject")
   }
 
-  public void test_double_char_0001_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0001\u0001subject");
+  fun test_double_char_0001_in_commit_message() {
+    doTestCustomCommitMessage("Commit \u0001\u0001subject")
   }
 
-  public void test_char_0003_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0003subject");
+  fun test_char_0003_in_commit_message() {
+    doTestCustomCommitMessage("Commit \u0003subject")
   }
 
-  public void test_double_char_0003_in_commit_message() {
-    doTestCustomCommitMessage("Commit \u0003\u0003subject");
+  fun test_double_char_0003_in_commit_message() {
+    doTestCustomCommitMessage("Commit \u0003\u0003subject")
   }
 
-  public void test_both_chars_0001_and_0003_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage");
+  fun test_both_chars_0001_and_0003_in_commit_message() {
+    doTestCustomCommitMessage("Subject \u0001of the \u0003# weirdmessage")
   }
 
-  public void test_both_double_chars_0001_and_0003_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0003\u0003# weirdmessage");
+  fun test_both_double_chars_0001_and_0003_in_commit_message() {
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0003\u0003# weirdmessage")
   }
 
-  public void test_char_0001_twice_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message");
+  fun test_char_0001_twice_in_commit_message() {
+    doTestCustomCommitMessage("Subject \u0001of the \u0001# weird message")
   }
 
-  public void test_double_char_0001_twice_in_commit_message() {
-    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0001\u0001# weird message");
+  fun test_double_char_0001_twice_in_commit_message() {
+    doTestCustomCommitMessage("Subject \u0001\u0001of the \u0001\u0001# weird message")
   }
 
-  public void test_old_refs_format() throws VcsException {
-    myNewRefsFormat = false;
-    doTestAllRecords(NONE);
+  @Throws(VcsException::class)
+  fun test_old_refs_format() {
+    newRefsFormat = false
+    doTestAllRecords(NONE)
   }
 
-  public void test_new_refs_format() throws VcsException {
-    myNewRefsFormat = true;
-    doTestAllRecords(STATUS);
+  @Throws(VcsException::class)
+  fun test_new_refs_format() {
+    newRefsFormat = true
+    doTestAllRecords(STATUS)
   }
 
-  private void doTestCustomCommitMessage(@NotNull String subject) {
-    Map<GitTestLogRecordInfo, Object> data = ContainerUtil.newHashMap(myRecord.myData);
-    data.put(GitTestLogRecordInfo.SUBJECT, subject);
-    myRecord = new GitTestLogRecord(data);
+  private fun doTestCustomCommitMessage(subject: String) {
+    val data = ContainerUtil.newHashMap(record!!.data)
+    data[GitTestLogRecordInfo.SUBJECT] = subject
+    record = GitTestLogRecord(data)
 
-    myParser = new GitLogParser(myProject, STATUS, GIT_LOG_OPTIONS);
-    String s = myRecord.prepareOutputLine(NONE);
-    List<GitLogRecord> records = myParser.parse(s);
-    assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size());
-    assertEquals("Commit subject is incorrect", subject, records.get(0).getSubject());
+    parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val s = record!!.prepareOutputLine(NONE)
+    val records = parser!!.parse(s)
+    TestCase.assertEquals("Incorrect amount of actual records: " + StringUtil.join(records, "\n"), 1, records.size)
+    TestCase.assertEquals("Commit subject is incorrect", subject, records[0].subject)
   }
 
-  private void doTestOneRecord(NameStatus option) throws VcsException {
-    String s = myRecord.prepareOutputLine(option);
-    GitLogRecord record = myParser.parseOneRecord(s);
-    assertRecord(record, myRecord, option);
+  @Throws(VcsException::class)
+  private fun doTestOneRecord(option: NameStatus) {
+    val s = record!!.prepareOutputLine(option)
+    val record = parser!!.parseOneRecord(s)
+    assertRecord(record!!, this.record!!, option)
   }
 
-  private void assertAllRecords(List<GitLogRecord> actualRecords,
-                                List<GitTestLogRecord> expectedRecords,
-                                NameStatus nameStatusOption) throws VcsException {
-    assertEquals(actualRecords.size(), expectedRecords.size());
-    for (int i = 0; i < actualRecords.size(); i++) {
-      assertRecord(actualRecords.get(i), expectedRecords.get(i), nameStatusOption);
+  @Throws(VcsException::class)
+  private fun assertAllRecords(actualRecords: List<GitLogRecord>,
+                               expectedRecords: List<GitTestLogRecord>,
+                               nameStatusOption: NameStatus) {
+    TestCase.assertEquals(actualRecords.size, expectedRecords.size)
+    for (i in actualRecords.indices) {
+      assertRecord(actualRecords[i], expectedRecords[i], nameStatusOption)
     }
   }
 
-  private static String prepareOutputForAllRecords(NameStatus nameStatusOption) {
-    StringBuilder sb = new StringBuilder();
-    for (GitTestLogRecord record : ALL_RECORDS) {
-      sb.append(record.prepareOutputLine(nameStatusOption)).append("\n");
-    }
-    return sb.toString();
-  }
+  @Throws(VcsException::class)
+  private fun assertRecord(actual: GitLogRecord, expected: GitTestLogRecord, option: NameStatus) {
+    TestCase.assertEquals(expected.hash, actual.hash)
 
-  private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, NameStatus option) throws VcsException {
-    assertEquals(expected.getHash(), actual.getHash());
+    TestCase.assertEquals(expected.committerName, actual.committerName)
+    TestCase.assertEquals(expected.committerEmail, actual.committerEmail)
+    TestCase.assertEquals(expected.commitTime, actual.date)
 
-    assertEquals(expected.getCommitterName(), actual.getCommitterName());
-    assertEquals(expected.getCommitterEmail(), actual.getCommitterEmail());
-    assertEquals(expected.getCommitTime(), actual.getDate());
+    TestCase.assertEquals(expected.authorName, actual.authorName)
+    TestCase.assertEquals(expected.authorEmail, actual.authorEmail)
+    TestCase.assertEquals(expected.authorTime.time, actual.authorTimeStamp)
 
-    assertEquals(expected.getAuthorName(), actual.getAuthorName());
-    assertEquals(expected.getAuthorEmail(), actual.getAuthorEmail());
-    assertEquals(expected.getAuthorTime().getTime(), actual.getAuthorTimeStamp());
-
-    String expectedAuthorAndCommitter = GitUtil.adjustAuthorName(
-      String.format("%s <%s>", expected.getAuthorName(), expected.getAuthorEmail()),
-      String.format("%s <%s>", expected.getCommitterName(), expected.getCommitterEmail()));
-    assertEquals(expectedAuthorAndCommitter, getAuthorAndCommitter(actual));
+    val expectedAuthorAndCommitter = GitUtil.adjustAuthorName(
+      String.format("%s <%s>", expected.authorName, expected.authorEmail),
+      String.format("%s <%s>", expected.committerName, expected.committerEmail))
+    TestCase.assertEquals(expectedAuthorAndCommitter, getAuthorAndCommitter(actual))
 
 
-    assertEquals(expected.getSubject(), actual.getSubject());
-    assertEquals(expected.getBody(), actual.getBody());
-    assertEquals(expected.rawBody(), actual.getRawBody());
+    TestCase.assertEquals(expected.subject, actual.subject)
+    TestCase.assertEquals(expected.body, actual.body)
+    TestCase.assertEquals(expected.rawBody(), actual.rawBody)
 
-    assertSameElements(actual.getParentsHashes(), expected.getParents());
+    UsefulTestCase.assertSameElements(actual.parentsHashes, *expected.parents)
 
-    assertSameElements(actual.getRefs(), expected.getRefs());
+    UsefulTestCase.assertSameElements(actual.refs, expected.refs)
 
     if (option == STATUS) {
-      assertPaths(actual.getFilePaths(myRoot), expected.paths());
-      assertChanges(actual.parseChanges(myProject, myRoot), expected.changes());
+      assertPaths(actual.getFilePaths(root!!), expected.paths())
+      assertChanges(actual.parseChanges(myProject, root!!), expected.changes())
     }
   }
 
-  @NotNull
-  String getAuthorAndCommitter(@NotNull GitLogRecord actual) {
-    String author = String.format("%s <%s>", actual.getAuthorName(), actual.getAuthorEmail());
-    String committer = String.format("%s <%s>", actual.getCommitterName(), actual.getCommitterEmail());
-    return GitUtil.adjustAuthorName(author, committer);
+  private fun getAuthorAndCommitter(actual: GitLogRecord): String {
+    val author = String.format("%s <%s>", actual.authorName, actual.authorEmail)
+    val committer = String.format("%s <%s>", actual.committerName, actual.committerEmail)
+    return GitUtil.adjustAuthorName(author, committer)
   }
 
-  private void assertPaths(List<FilePath> actualPaths, List<String> expectedPaths) {
-    List<String> actual = ContainerUtil.map(actualPaths, path -> FileUtil.getRelativePath(new File(projectPath), path.getIOFile()));
-    List<String> expected = ContainerUtil.map(expectedPaths, s -> FileUtil.toSystemDependentName(s));
-    assertOrderedEquals(actual, expected);
+  private fun assertPaths(actualPaths: List<FilePath>, expectedPaths: List<String>) {
+    val actual = ContainerUtil.map<FilePath, String>(actualPaths) { path -> FileUtil.getRelativePath(File(projectPath), path.ioFile) }
+    val expected = ContainerUtil.map(expectedPaths) { s -> FileUtil.toSystemDependentName(s) }
+    UsefulTestCase.assertOrderedEquals(actual, expected)
   }
 
-  private void assertChanges(List<Change> actual, List<GitTestChange> expected) {
-    assertEquals(expected.size(), actual.size());
-    for (int i = 0; i < actual.size(); i++) {
-      Change actualChange = actual.get(i);
-      GitTestChange expectedChange = expected.get(i);
-      assertChange(actualChange, expectedChange);
+  private fun assertChanges(actual: List<Change>, expected: List<GitTestChange>) {
+    TestCase.assertEquals(expected.size, actual.size)
+    for (i in actual.indices) {
+      val actualChange = actual[i]
+      val expectedChange = expected[i]
+      assertChange(actualChange, expectedChange)
     }
   }
 
-  private void assertChange(Change actualChange, GitTestChange expectedChange) {
-    assertEquals(actualChange.getType(), expectedChange.myType);
-    switch (actualChange.getType()) {
-      case MODIFICATION:
-      case MOVED:
-        assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.myBeforePath));
-        assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.myAfterPath));
-        return;
-      case NEW:
-        assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.myAfterPath));
-        return;
-      case DELETED:
-        assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.myBeforePath));
-        return;
-      default:
-        throw new AssertionError();
+  private fun assertChange(actualChange: Change, expectedChange: GitTestChange) {
+    TestCase.assertEquals(actualChange.type, expectedChange.type)
+    when (actualChange.type) {
+      Change.Type.MODIFICATION, Change.Type.MOVED -> {
+        TestCase.assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.beforePath!!))
+        TestCase.assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.afterPath!!))
+        return
+      }
+      Change.Type.NEW -> {
+        TestCase.assertEquals(getAfterPath(actualChange), FileUtil.toSystemDependentName(expectedChange.afterPath!!))
+        return
+      }
+      Change.Type.DELETED -> {
+        TestCase.assertEquals(getBeforePath(actualChange), FileUtil.toSystemDependentName(expectedChange.beforePath!!))
+        return
+      }
+      else -> throw AssertionError()
     }
   }
 
-  private String getBeforePath(Change actualChange) {
-    return FileUtil.getRelativePath(new File(projectPath), actualChange.getBeforeRevision().getFile().getIOFile());
+  private fun getBeforePath(actualChange: Change): String? {
+    return FileUtil.getRelativePath(File(projectPath), actualChange.beforeRevision!!.file.ioFile)
   }
 
-  private String getAfterPath(Change actualChange) {
-    return FileUtil.getRelativePath(new File(projectPath), actualChange.getAfterRevision().getFile().getIOFile());
+  private fun getAfterPath(actualChange: Change): String? {
+    return FileUtil.getRelativePath(File(projectPath), actualChange.afterRevision!!.file.ioFile)
   }
 
-  private enum GitTestLogRecordInfo {
+  private enum class GitTestLogRecordInfo {
     HASH,
     COMMIT_TIME,
     AUTHOR_TIME,
@@ -300,237 +240,263 @@ public class GitLogParserTest extends GitPlatformTest {
     CHANGES
   }
 
-  private static class GitTestLogRecord {
+  private class GitTestLogRecord internal constructor(internal val data: Map<GitTestLogRecordInfo, Any>) {
 
-    private final Map<GitTestLogRecordInfo, Object> myData;
+    val hash: String
+      get() = data[GitTestLogRecordInfo.HASH] as String
 
-    GitTestLogRecord(Map<GitTestLogRecordInfo, Object> data) {
-      myData = data;
-    }
+    val commitTime: Date
+      get() = data[GitTestLogRecordInfo.COMMIT_TIME] as Date
 
-    public String getHash() {
-      return (String)myData.get(GitTestLogRecordInfo.HASH);
-    }
+    val authorTime: Date
+      get() = data[GitTestLogRecordInfo.AUTHOR_TIME] as Date
 
-    public Date getCommitTime() {
-      return (Date)myData.get(GitTestLogRecordInfo.COMMIT_TIME);
-    }
+    val authorName: String
+      get() = data[GitTestLogRecordInfo.AUTHOR_NAME] as String
 
-    public Date getAuthorTime() {
-      return (Date)myData.get(GitTestLogRecordInfo.AUTHOR_TIME);
-    }
+    val authorEmail: String
+      get() = data[GitTestLogRecordInfo.AUTHOR_EMAIL] as String
 
-    public String getAuthorName() {
-      return (String)myData.get(GitTestLogRecordInfo.AUTHOR_NAME);
-    }
+    val committerName: String
+      get() = data[GitTestLogRecordInfo.COMMIT_NAME] as String
 
-    public String getAuthorEmail() {
-      return (String)myData.get(GitTestLogRecordInfo.AUTHOR_EMAIL);
-    }
+    val committerEmail: String
+      get() = data[GitTestLogRecordInfo.COMMIT_EMAIL] as String
 
-    public String getCommitterName() {
-      return (String)myData.get(GitTestLogRecordInfo.COMMIT_NAME);
-    }
+    val subject: String
+      get() = data[GitTestLogRecordInfo.SUBJECT] as String
 
-    public String getCommitterEmail() {
-      return (String)myData.get(GitTestLogRecordInfo.COMMIT_EMAIL);
-    }
+    val body: String
+      get() = data[GitTestLogRecordInfo.BODY] as String
 
-    public String getSubject() {
-      return (String)myData.get(GitTestLogRecordInfo.SUBJECT);
-    }
+    val parents: Array<String>
+      get() = data[GitTestLogRecordInfo.PARENTS] as Array<String>? ?: emptyArray()
 
-    public String getBody() {
-      return (String)myData.get(GitTestLogRecordInfo.BODY);
-    }
+    val refs: Collection<String>
+      get() = data[GitTestLogRecordInfo.REFS] as List<String>? ?: emptyList()
 
-    public String[] getParents() {
-      return (String[])myData.get(GitTestLogRecordInfo.PARENTS);
-    }
-
-    @NotNull
-    public Collection<String> getRefs() {
-      return ContainerUtil.notNullize((List<String>)myData.get(GitTestLogRecordInfo.REFS));
-    }
-
-    public String getRefsForOutput() {
-      Collection<String> refs = getRefs();
-      if (refs.isEmpty()) {
-        return "";
-      }
-      if (myNewRefsFormat) {
-        Collection<String> newRefs = ContainerUtil.newArrayList();
-        boolean headRefMet = false;
-        for (String ref : refs) {
-          if (ref.equals("HEAD")) {
-            headRefMet = true;
-          }
-          else if (headRefMet) {
-            newRefs.add("HEAD -> " + ref);
-            headRefMet = false;
-          }
-          else {
-            newRefs.add(ref);
-          }
+    val refsForOutput: String
+      get() {
+        var refs = refs
+        if (refs.isEmpty()) {
+          return ""
         }
-        refs = newRefs;
+        if (newRefsFormat) {
+          val newRefs = ContainerUtil.newArrayList<String>()
+          var headRefMet = false
+          for (ref in refs) {
+            if (ref == "HEAD") {
+              headRefMet = true
+            }
+            else if (headRefMet) {
+              newRefs.add("HEAD -> $ref")
+              headRefMet = false
+            }
+            else {
+              newRefs.add(ref)
+            }
+          }
+          refs = newRefs
+        }
+        return "(" + StringUtil.join(refs, ", ") + ")"
       }
-      return "(" + StringUtil.join(refs, ", ") + ")";
+
+    val changes: Array<GitTestChange>
+      get() = data[GitTestLogRecordInfo.CHANGES] as Array<GitTestChange>
+
+    internal fun shortParents(): Array<String> {
+      return parents.map { it.substring(0, 7) }.toTypedArray()
     }
 
-    public GitTestChange[] getChanges() {
-      return (GitTestChange[])myData.get(GitTestLogRecordInfo.CHANGES);
+    private fun shortParentsAsString(): String {
+      return shortParents().joinToString(" ")
     }
 
-    String[] shortParents() {
-      String[] parents = getParents();
-      String[] shortParents = new String[parents.length];
-      for (int i = 0; i < parents.length; i++) {
-        shortParents[i] = parents[i].substring(0, 7);
+    private fun parentsAsString(): String {
+      return parents.joinToString(" ")
+    }
+
+    internal fun rawBody(): String {
+      return subject + "\n\n" + body
+    }
+
+    internal fun changes(): List<GitTestChange> {
+      return Arrays.asList(*changes)
+    }
+
+    private fun changesAsString(): String {
+      val sb = StringBuilder()
+      for (change in changes) {
+        sb.append(change.toOutputString())
       }
-      return shortParents;
+      return sb.toString()
     }
 
-    private String shortParentsAsString() {
-      return StringUtil.join(shortParents(), " ");
-    }
-
-    private String parentsAsString() {
-      return StringUtil.join(getParents(), " ");
-    }
-
-    String rawBody() {
-      return getSubject() + "\n\n" + getBody();
-    }
-
-    List<GitTestChange> changes() {
-      return Arrays.asList(getChanges());
-    }
-
-    private String changesAsString() {
-      StringBuilder sb = new StringBuilder();
-      for (GitTestChange change : getChanges()) {
-        sb.append(change.toOutputString());
-      }
-      return sb.toString();
-    }
-
-    public List<String> paths() {
-      List<String> paths = new ArrayList<>();
-      for (GitTestChange change : getChanges()) {
-        switch (change.myType) {
-          case MODIFICATION:
-          case NEW:
-            paths.add(change.myAfterPath);
-            break;
-          case DELETED:
-            paths.add(change.myBeforePath);
-            break;
-          case MOVED:
-            paths.add(change.myBeforePath);
-            paths.add(change.myAfterPath);
-            break;
-          default:
-            throw new AssertionError();
+    fun paths(): List<String> {
+      val paths = ArrayList<String>()
+      for (change in changes) {
+        when (change.type) {
+          Change.Type.MODIFICATION, Change.Type.NEW -> paths.add(change.afterPath!!)
+          Change.Type.DELETED -> paths.add(change.beforePath!!)
+          Change.Type.MOVED -> {
+            paths.add(change.beforePath!!)
+            paths.add(change.afterPath!!)
+          }
+          else -> throw AssertionError()
         }
       }
-      return paths;
+      return paths
     }
 
-    String prepareOutputLine(NameStatus nameStatusOption) {
-      StringBuilder sb = new StringBuilder(RECORD_START);
-      sb.append(StringUtil.join(ContainerUtil.map(GIT_LOG_OPTIONS, this::optionToValue), ITEMS_SEPARATOR));
-      sb.append(RECORD_END);
+    internal fun prepareOutputLine(nameStatusOption: NameStatus): String {
+      val sb = StringBuilder(RECORD_START)
+      sb.append(GIT_LOG_OPTIONS.joinToString(ITEMS_SEPARATOR) { optionToValue(it) })
+      sb.append(RECORD_END)
 
       if (nameStatusOption == STATUS) {
-        sb.append("\n\n").append(changesAsString());
+        sb.append("\n\n").append(changesAsString())
       }
 
-      return sb.toString();
+      return sb.toString()
     }
 
-    private String optionToValue(GitLogOption option) {
-      switch (option) {
-        case HASH:
-          return getHash();
-        case SUBJECT:
-          return getSubject();
-        case BODY:
-          return getBody();
-        case RAW_BODY:
-          return rawBody();
-        case COMMIT_TIME:
-          return String.valueOf(getCommitTime().getTime() / 1000);
-        case AUTHOR_NAME:
-          return getAuthorName();
-        case AUTHOR_TIME:
-          return String.valueOf(getAuthorTime().getTime() / 1000);
-        case AUTHOR_EMAIL:
-          return getAuthorEmail();
-        case COMMITTER_NAME:
-          return getCommitterName();
-        case COMMITTER_EMAIL:
-          return getCommitterEmail();
-        case PARENTS:
-          return parentsAsString();
-        case REF_NAMES:
-          return getRefsForOutput();
-        case SHORT_REF_LOG_SELECTOR:
-          break;
+    private fun optionToValue(option: GitLogOption): String {
+      when (option) {
+        HASH -> return hash
+        SUBJECT -> return subject
+        BODY -> return body
+        RAW_BODY -> return rawBody()
+        COMMIT_TIME -> return (commitTime.time / 1000).toString()
+        AUTHOR_NAME -> return authorName
+        AUTHOR_TIME -> return (authorTime.time / 1000).toString()
+        AUTHOR_EMAIL -> return authorEmail
+        COMMITTER_NAME -> return committerName
+        COMMITTER_EMAIL -> return committerEmail
+        PARENTS -> return parentsAsString()
+        REF_NAMES -> return refsForOutput
+        SHORT_REF_LOG_SELECTOR -> {
+        }
+        TREE -> {
+        }
       }
-      throw new AssertionError();
+      throw AssertionError()
     }
   }
 
-  private static class GitTestChange {
-    final Change.Type myType;
-    final String myBeforePath;
-    final String myAfterPath;
+  private class GitTestChange internal constructor(internal val type: Change.Type,
+                                                   internal val beforePath: String?,
+                                                   internal val afterPath: String?) {
 
-    GitTestChange(Change.Type type, String beforePath, String afterPath) {
-      myAfterPath = afterPath;
-      myBeforePath = beforePath;
-      myType = type;
-    }
-
-    static GitTestChange added(String path) {
-      return new GitTestChange(Change.Type.NEW, null, path);
-    }
-
-    static GitTestChange deleted(String path) {
-      return new GitTestChange(Change.Type.DELETED, path, null);
-    }
-
-    static GitTestChange modified(String path) {
-      return new GitTestChange(Change.Type.MODIFICATION, path, path);
-    }
-
-    static GitTestChange moved(String before, String after) {
-      return new GitTestChange(Change.Type.MOVED, before, after);
-    }
-
-    String toOutputString() {
-      switch (myType) {
-        case MOVED: return outputString("R100", myBeforePath, myAfterPath);
-        case MODIFICATION: return outputString("M", myBeforePath, null);
-        case DELETED: return outputString("D", myBeforePath, null);
-        case NEW: return outputString("A", myAfterPath, null);
-        default:
-          throw new AssertionError();
+    internal fun toOutputString(): String {
+      when (type) {
+        Change.Type.MOVED -> return outputString("R100", beforePath, afterPath)
+        Change.Type.MODIFICATION -> return outputString("M", beforePath, null)
+        Change.Type.DELETED -> return outputString("D", beforePath, null)
+        Change.Type.NEW -> return outputString("A", afterPath, null)
+        else -> throw AssertionError()
       }
     }
 
-    private static String outputString(@NotNull String type, @Nullable String beforePath, @Nullable String afterPath) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(type).append("\t");
-      if (beforePath != null) {
-        sb.append(beforePath).append("\t");
+    companion object {
+
+      internal fun added(path: String): GitTestChange {
+        return GitTestChange(Change.Type.NEW, null, path)
       }
-      if (afterPath != null) {
-        sb.append(afterPath).append("\t");
+
+      internal fun deleted(path: String): GitTestChange {
+        return GitTestChange(Change.Type.DELETED, path, null)
       }
-      sb.append("\n");
-      return sb.toString();
+
+      internal fun modified(path: String): GitTestChange {
+        return GitTestChange(Change.Type.MODIFICATION, path, path)
+      }
+
+      internal fun moved(before: String, after: String): GitTestChange {
+        return GitTestChange(Change.Type.MOVED, before, after)
+      }
+
+      private fun outputString(type: String, beforePath: String?, afterPath: String?): String {
+        val sb = StringBuilder()
+        sb.append(type).append("\t")
+        if (beforePath != null) {
+          sb.append(beforePath).append("\t")
+        }
+        if (afterPath != null) {
+          sb.append(afterPath).append("\t")
+        }
+        sb.append("\n")
+        return sb.toString()
+      }
+    }
+  }
+
+  companion object {
+
+    internal val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
+                                           SUBJECT, BODY,
+                                           PARENTS, PARENTS, RAW_BODY, REF_NAMES)
+    private var newRefsFormat: Boolean = false
+
+    private val RECORD1 = GitTestLogRecord(ContainerUtil.immutableMapBuilder<GitTestLogRecordInfo, Any>()
+                                             .put(GitTestLogRecordInfo.HASH, "2c815939f45fbcfda9583f84b14fe9d393ada790")
+                                             .put(GitTestLogRecordInfo.AUTHOR_TIME, Date(1317027817L * 1000))
+                                             .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
+                                             .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+                                             .put(GitTestLogRecordInfo.COMMIT_TIME, Date(1315471452L * 1000))
+                                             .put(GitTestLogRecordInfo.COMMIT_NAME, "Bob Smith")
+                                             .put(GitTestLogRecordInfo.COMMIT_EMAIL, "Bob@site.com")
+                                             .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
+                                             .put(GitTestLogRecordInfo.BODY, "Description goes here\n" +
+                                                                             "\n" + // empty line
+
+                                                                             "Then comes a long long description.\n" +
+                                                                             "Probably multilined.")
+                                             .put(GitTestLogRecordInfo.PARENTS, arrayOf("c916c63b89d8fa81ebf23cc5cbcdb75e115623c7",
+                                                                                        "7c1298fd1f93df414ce0d87128532f819de2cbd4"))
+                                             .put(GitTestLogRecordInfo.CHANGES,
+                                                  arrayOf(GitTestChange.moved("file2", "file3"), GitTestChange.added("readme.txt"),
+                                                          GitTestChange.modified("src/CClass.java"),
+                                                          GitTestChange.deleted("src/ChildAClass.java")))
+                                             .put(GitTestLogRecordInfo.REFS, Arrays.asList("HEAD", "refs/heads/master"))
+                                             .build())
+
+    private val RECORD2 = GitTestLogRecord(ContainerUtil.immutableMapBuilder<GitTestLogRecordInfo, Any>()
+                                             .put(GitTestLogRecordInfo.HASH, "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
+                                             .put(GitTestLogRecordInfo.AUTHOR_TIME, Date(1317027817L * 1000))
+                                             .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
+                                             .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+                                             .put(GitTestLogRecordInfo.COMMIT_TIME, Date(1315471452L * 1000))
+                                             .put(GitTestLogRecordInfo.COMMIT_NAME, "John Doe")
+                                             .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
+                                             .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
+                                             .put(GitTestLogRecordInfo.BODY, "Small description")
+                                             .put(GitTestLogRecordInfo.PARENTS, arrayOf("7c1298fd1f93df414ce0d87128532f819de2cbd4"))
+                                             .put(GitTestLogRecordInfo.CHANGES, arrayOf(GitTestChange.modified("src/CClass.java")))
+                                             .build())
+
+    private val RECORD3 = GitTestLogRecord(ContainerUtil.immutableMapBuilder<GitTestLogRecordInfo, Any>()
+                                             .put(GitTestLogRecordInfo.HASH, "c916c63b89d8fa81ebf23cc5cbcdb75e115623c7")
+                                             .put(GitTestLogRecordInfo.AUTHOR_TIME, Date(1317027817L * 1000))
+                                             .put(GitTestLogRecordInfo.AUTHOR_NAME, "John Doe")
+                                             .put(GitTestLogRecordInfo.AUTHOR_EMAIL, "John.Doe@example.com")
+                                             .put(GitTestLogRecordInfo.COMMIT_TIME, Date(1315471452L * 1000))
+                                             .put(GitTestLogRecordInfo.COMMIT_NAME, "John Doe")
+                                             .put(GitTestLogRecordInfo.COMMIT_EMAIL, "John.Doe@example.com")
+                                             .put(GitTestLogRecordInfo.SUBJECT, "Commit message")
+                                             .put(GitTestLogRecordInfo.BODY, "Small description")
+                                             .put(GitTestLogRecordInfo.PARENTS, arrayOf("7c1298fd1f93df414ce0d87128532f819de2cbd4"))
+                                             .put(GitTestLogRecordInfo.CHANGES, arrayOf(GitTestChange.modified("src/CClass.java")))
+                                             .put(GitTestLogRecordInfo.REFS,
+                                                  Arrays.asList("refs/heads/sly->name", "refs/remotes/origin/master", "refs/tags/v1.0"))
+                                             .build())
+    private val ALL_RECORDS = Arrays.asList(RECORD1, RECORD2, RECORD3)
+
+    private fun prepareOutputForAllRecords(nameStatusOption: NameStatus): String {
+      val sb = StringBuilder()
+      for (record in ALL_RECORDS) {
+        sb.append(record.prepareOutputLine(nameStatusOption)).append("\n")
+      }
+      return sb.toString()
     }
   }
 }
