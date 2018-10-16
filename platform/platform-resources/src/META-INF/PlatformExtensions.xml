@@ -428,6 +428,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.FontSizeInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.HiDPIModeUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.LaFUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.LinuxWindowManagerUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ScaleInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
