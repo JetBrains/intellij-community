@@ -36,6 +36,7 @@ public class MavenImportingSettingsForm {
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myKeepSourceFoldersCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
+  private JCheckBox myUseMavenCompilerArgumentsCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
   private JCheckBox myDownloadAnnotationsCheckBox;
@@ -109,6 +110,7 @@ public class MavenImportingSettingsForm {
     data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
     data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
+    data.setUseMavenCompilerArguments(myUseMavenCompilerArgumentsCheckBox.isSelected());
 
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
     data.setGeneratedSourcesFolder((MavenImportingSettings.GeneratedSourcesFolder)myGeneratedSourcesComboBox.getSelectedItem());
@@ -141,6 +143,7 @@ public class MavenImportingSettingsForm {
     }
     myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
+    myUseMavenCompilerArgumentsCheckBox.setSelected(data.isUseMavenCompilerArguments());
 
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());
     myGeneratedSourcesComboBox.setSelectedItem(data.getGeneratedSourcesFolder());

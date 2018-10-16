@@ -419,6 +419,8 @@ public class MavenModuleImporter {
         options.add("-parameters");
       }
 
+      if(!mySettings.isUseMavenCompilerArguments()) return;
+
       Element compilerArguments = compilerConfiguration.getChild("compilerArguments");
       if (compilerArguments != null) {
         for (Element compilerArgument : compilerArguments.getChildren()) {
