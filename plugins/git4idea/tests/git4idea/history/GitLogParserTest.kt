@@ -82,6 +82,14 @@ class GitLogParserTest : GitPlatformTest() {
   }
 
   @Throws(VcsException::class)
+  fun test_files_with_spaces() {
+    val parser = GitLogParser(myProject, STATUS, *GIT_LOG_OPTIONS)
+    val expectedRecord = createTestRecord(changes = listOf(modified("file "), modified(" ")))
+    val actualRecord = parser.parseOneRecord(expectedRecord.prepareOutputLine(STATUS))!!
+    assertRecord(actualRecord, expectedRecord, STATUS)
+  }
+
+  @Throws(VcsException::class)
   private fun doTestAllRecords(nameStatusOption: NameStatus, newRefsFormat: Boolean = false) {
     val expectedRecords = generateRecords(newRefsFormat)
 
@@ -329,7 +337,9 @@ private val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIM
 private fun createTestRecord(vararg parameters: Pair<GitLogOption, Any>,
                              changes: List<GitTestLogRecord.GitTestChange> = emptyList(),
                              newRefsFormat: Boolean = false): GitTestLogRecord {
-  val data = mutableMapOf(Pair(AUTHOR_TIME, Date(1317027817L * 1000)),
+  val data = mutableMapOf(Pair(SUBJECT, "Subject"),
+                          Pair(BODY, "Body"),
+                          Pair(AUTHOR_TIME, Date(1317027817L * 1000)),
                           Pair(AUTHOR_NAME, "John Doe"),
                           Pair(AUTHOR_EMAIL, "John.Doe@example.com"),
                           Pair(COMMIT_TIME, Date(1315471452L * 1000)),
