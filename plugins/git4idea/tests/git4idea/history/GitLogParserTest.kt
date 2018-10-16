@@ -131,7 +131,7 @@ class GitLogParserTest : GitPlatformTest() {
     TestCase.assertEquals(expected.authorName, actual.authorName)
     TestCase.assertEquals(expected.authorEmail, actual.authorEmail)
     TestCase.assertEquals(expected.authorTime.time, actual.authorTimeStamp)
-    
+
     TestCase.assertEquals(expected.subject, actual.subject)
     TestCase.assertEquals(expected.body, actual.body)
     TestCase.assertEquals(expected.rawBody(), actual.rawBody)
@@ -318,9 +318,19 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
                                                     internal val beforePath: String?,
                                                     internal val afterPath: String?) {
 
-    private fun outputString(type: String, beforePath: String?, afterPath: String?): String {
+    private fun toOutputString(type: Change.Type): String {
+      when (type) {
+        Change.Type.MOVED -> return "R100"
+        Change.Type.MODIFICATION -> return "M"
+        Change.Type.DELETED -> return "D"
+        Change.Type.NEW -> return "A"
+        else -> throw AssertionError()
+      }
+    }
+
+    internal fun toOutputString(): String {
       val sb = StringBuilder()
-      sb.append(type).append("\t")
+      sb.append(toOutputString(type)).append("\t")
       if (beforePath != null) {
         sb.append(beforePath).append("\t")
       }
@@ -329,16 +339,6 @@ private class GitTestLogRecord internal constructor(private val data: Map<GitTes
       }
       sb.append("\n")
       return sb.toString()
-    }
-
-    internal fun toOutputString(): String {
-      when (type) {
-        Change.Type.MOVED -> return outputString("R100", beforePath, afterPath)
-        Change.Type.MODIFICATION -> return outputString("M", beforePath, null)
-        Change.Type.DELETED -> return outputString("D", beforePath, null)
-        Change.Type.NEW -> return outputString("A", afterPath, null)
-        else -> throw AssertionError()
-      }
     }
   }
 }
