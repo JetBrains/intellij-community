@@ -4,10 +4,10 @@
 package com.intellij.projectView;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider;
 import com.intellij.ide.structureView.impl.java.PublicElementsFilter;
 import com.intellij.ide.structureView.impl.java.VisibilitySorter;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +29,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     doTest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
@@ -50,9 +50,9 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
           "  myField1: boolean\n" +
           "  myField2: boolean\n");
 
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
 
         PlatformTestUtil.assertTreeEqual(
@@ -90,7 +90,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     doTest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, true);
 
         JTree tree = svc.getTree();
         tree.collapseRow(2);
@@ -117,7 +117,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
           "  myField3: boolean\n" +
           "  myField4: boolean\n");
 
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
@@ -138,7 +138,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     doTest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
@@ -165,7 +165,7 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
     doTest(new CheckAction() {
       @Override
       public void testClassStructure(StructureViewComponent svc) {
-        svc.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        svc.setActionActive(InheritedMembersNodeProvider.ID, false);
 
         PlatformTestUtil.assertTreeEqual(
           svc.getTree(),
