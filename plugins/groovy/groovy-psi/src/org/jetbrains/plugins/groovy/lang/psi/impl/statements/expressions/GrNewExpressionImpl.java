@@ -65,17 +65,28 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     if (list == null) { //so it is not anonymous class declaration
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createExpressionArgumentList();
-      PsiElement last = getLastChild();
-      assert last != null;
-      while (last.getPrevSibling() instanceof PsiWhiteSpace || last.getPrevSibling() instanceof PsiErrorElement) {
-        last = last.getPrevSibling();
-        assert last != null;
-      }
-      ASTNode astNode = last.getNode();
-      assert astNode != null;
-      getNode().addChild(newList.getNode(), astNode);
+      final PsiElement anchor = findAnchor(this);
+      final ASTNode anchorNode = anchor.getNode();
+      assert anchorNode != null;
+      getNode().addChild(newList.getNode(), anchorNode);
     }
     return super.addNamedArgument(namedArgument);
+  }
+
+  @NotNull
+  private static PsiElement findAnchor(@NotNull PsiElement element) {
+    PsiElement last = element.getLastChild();
+    assert last != null;
+    while (true) {
+      PsiElement prevSibling = last.getPrevSibling();
+      if (prevSibling instanceof PsiWhiteSpace || prevSibling instanceof PsiErrorElement) {
+        last = prevSibling;
+      }
+      else {
+        break;
+      }
+    }
+    return last;
   }
 
   @Nullable
