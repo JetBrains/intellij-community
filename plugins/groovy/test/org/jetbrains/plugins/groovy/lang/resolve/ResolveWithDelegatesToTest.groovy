@@ -172,21 +172,6 @@ test()
 ''', 'Foo'
   }
 
-  void testInConstructor() {
-    assertScript '''
-        class Foo {
-          def foo() {}
-        }
-
-        class Abc {
-          def Abc(@DelegatesTo(Foo) Closure cl) {
-          }
-        }
-
-        new Abc({fo<caret>o()})
-''', 'Foo'
-  }
-
   void testNamedArgs() {
     assertScript '''
 def with(@DelegatesTo.Target Object target, @DelegatesTo(strategy = Closure.DELEGATE_FIRST) Closure arg) {
