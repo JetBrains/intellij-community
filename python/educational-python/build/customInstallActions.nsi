@@ -194,13 +194,13 @@ get_python:
     ${LogText} "install python_$R8"
     ExecDos::exec /NOUNLOAD /ASYNC '$R7"$INSTDIR\python\python_$R8" $R9'
   ${Else}
-    ${LogText} "The python_$R8 download is failed: $0"
+    ${LogText} "ERROR: the python_$R8 download is failed: $0"
     MessageBox MB_OK|MB_ICONEXCLAMATION "The download is failed: $0" /SD IDOK
   ${EndIf}
 python_exists:
   Goto done
 skip_python_download:
-  ${LogText} "no internet connection"
+  ${LogText} "ERROR: no internet connection"
 done:
 FunctionEnd
 
