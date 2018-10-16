@@ -177,6 +177,11 @@ public final class UsageStatisticsPersistenceComponent implements PersistentStat
     }
     return options.isEAP() ? isAllowedForEAP : options.isSendingUsageStatsAllowed();
     */
+    // As we cannot control when IJ calls into this code, we need to load the AnalyticsSettings if
+    // we're not initialized yet, to ensure we properly return opt-in status.
+    if (!AnalyticsSettings.getInitialized()) {
+      AnalyticsSettings.initialize(getAndroidLogger());
+    }
     return AnalyticsSettings.getOptedIn();
   }
 
