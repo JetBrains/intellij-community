@@ -61,7 +61,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -652,12 +651,11 @@ public class ShelvedChangesViewManager implements Disposable {
         StringUtil.capitalize(VcsBundle.message("shelve.changes.delete.notification", constructDeleteFilesInfoMessage(fileListSize),
                                                 changeListSize != 0 && fileListSize != 0 ? " and " : "",
                                                 constructShelvedListInfoMessage(changeListSize, getFirstItem(shelvedListsToDelete))));
-      AnAction showRecentlyDeleted = ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted");
-      VcsNotifier.getInstance(myProject)
-        .notifyMinorInfo("Shelf Deletion", XmlStringUtil.wrapInHtml(message),
-                         new UndoShelfDeletionAction(createdDeletedListsWithOriginalDate), NotificationAction
-                           .create(showRecentlyDeleted.getTemplatePresentation().getText(),
-                                   (e, n) -> showRecentlyDeleted.actionPerformed(e)));
+
+      Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
+      shelfDeletionNotification.addAction(new UndoShelfDeletionAction(createdDeletedListsWithOriginalDate));
+      shelfDeletionNotification.addAction(ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted"));
+      VcsNotifier.getInstance(myProject).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
     }
 
     private class UndoShelfDeletionAction extends NotificationAction {
@@ -671,8 +669,13 @@ public class ShelvedChangesViewManager implements Disposable {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         ShelveChangesManager manager = ShelveChangesManager.getInstance(myProject);
+        List cantRestoreList = findAll(myListDateMap.keySet(), l -> !myShelveChangesManager.getDeletedLists().contains(l));
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
+        if (!cantRestoreList.isEmpty()) {
+          VcsNotifier.getInstance(myProject).notifyMinorWarning("Undo Shelf Deletion", VcsBundle
+            .message("shelve.changes.restore.error", cantRestoreList.size(), StringUtil.pluralize("changelist", cantRestoreList.size())));
+        }
       }
     }
 
