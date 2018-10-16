@@ -54,7 +54,7 @@ public class BraceHighlighter implements StartupActivity {
 
         final TextRange oldRange = e.getOldRange();
         final TextRange newRange = e.getNewRange();
-        if (oldRange != null && newRange != null && !(oldRange.isEmpty() ^ newRange.isEmpty())) {
+        if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
