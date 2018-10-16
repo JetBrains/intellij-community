@@ -324,8 +324,7 @@ private fun moved(before: String, after: String): GitTestLogRecord.GitTestChange
 }
 
 private val GIT_LOG_OPTIONS = arrayOf(HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL,
-                                      SUBJECT, BODY,
-                                      PARENTS, PARENTS, RAW_BODY, REF_NAMES)
+                                      SUBJECT, BODY, PARENTS, RAW_BODY, REF_NAMES)
 
 private fun createTestRecord(vararg parameters: Pair<GitLogOption, Any>,
                              changes: List<GitTestLogRecord.GitTestChange> = emptyList(),
