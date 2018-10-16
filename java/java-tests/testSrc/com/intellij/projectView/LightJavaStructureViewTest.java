@@ -22,7 +22,7 @@ import javax.swing.tree.TreeModel;
 import java.util.Collection;
 import java.util.List;
 
-public class JavaAnonymousClassesInStructureViewTest extends LightCodeInsightFixtureTestCase {
+public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase {
   @Language("JAVA")
   private static final String CLASS_WITH_ANONYMOUS = "class Foo {\n" +
                                                      "  Object field;\n" +
@@ -70,7 +70,7 @@ public class JavaAnonymousClassesInStructureViewTest extends LightCodeInsightFix
     int i = 0;
     for (Object element : getElements(true, false)) {
       assertEquals("$" + ++i, element.toString());
-    }  
+    }
   }
 
   public void testAnonymousInsideAnonymous() {
@@ -126,95 +126,94 @@ public class JavaAnonymousClassesInStructureViewTest extends LightCodeInsightFix
 
   public void testPropertiesGrouping() {
     doPropertiesTest("class Foo { \n" +
-           "  int i;\n" +
-           "  void setI(int i){}\n" +
-           "  int getI(){}" +
-           " }",
+                     "  int i;\n" +
+                     "  void setI(int i){}\n" +
+                     "  int getI(){}" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n"  +
-           "   setI(int): void\n" +
-           "   getI(): int\n"+
-           "   i: int\n");
-
-    doPropertiesTest("class Foo { \n" +
-           "  void setI(int i){}\n" +
-           "  int getI(){}" +
-           " }",
-
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n" +
-           "   setI(int): void\n" +
-           "   getI(): int\n");
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   setI(int): void\n" +
+                     "   getI(): int\n" +
+                     "   i: int\n");
 
     doPropertiesTest("class Foo { \n" +
-           "  String i;\n" +
-           "  void setI(int i){}\n" +
-           "  int getI(){}" +
-           " }",
+                     "  void setI(int i){}\n" +
+                     "  int getI(){}" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n"  +
-           "   setI(int): void\n" +
-           "   getI(): int\n"+
-           "  i: String\n");
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   setI(int): void\n" +
+                     "   getI(): int\n");
 
     doPropertiesTest("class Foo { \n" +
-           "  int i;\n" +
-           "  int getI(){}" +
-           " }",
+                     "  String i;\n" +
+                     "  void setI(int i){}\n" +
+                     "  int getI(){}" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n" +
-           "   getI(): int\n" +
-           "   i: int\n");
-
-    doPropertiesTest("class Foo { \n" +
-           "  void setI(int i){}\n" +
-           " }",
-
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n" +
-           "   setI(int): void\n");
-
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   setI(int): void\n" +
+                     "   getI(): int\n" +
+                     "  i: String\n");
 
     doPropertiesTest("class Foo { \n" +
-           "  void setI(String i){}\n" +
-           "  int getI(){}" +
-           " }",
+                     "  int i;\n" +
+                     "  int getI(){}" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: String\n" +
-           "   setI(String): void\n" +
-           "  i: int\n" +
-           "   getI(): int\n");
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   getI(): int\n" +
+                     "   i: int\n");
+
+    doPropertiesTest("class Foo { \n" +
+                     "  void setI(int i){}\n" +
+                     " }",
+
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   setI(int): void\n");
+
+
+    doPropertiesTest("class Foo { \n" +
+                     "  void setI(String i){}\n" +
+                     "  int getI(){}" +
+                     " }",
+
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: String\n" +
+                     "   setI(String): void\n" +
+                     "  i: int\n" +
+                     "   getI(): int\n");
     //.hasModifierProperty(PsiModifier.STATIC)
 
     doPropertiesTest("class Foo { \n" +
-           "  int i: \n" +
-           " }",
+                     "  int i: \n" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n");
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n");
 
     doPropertiesTest("class Foo { \n" +
-           "  static void setI(int i){}\n" +
-           "  int getI(){}" +
-           " }",
+                     "  static void setI(int i){}\n" +
+                     "  int getI(){}" +
+                     " }",
 
-           "Test.java\n" +
-           " Foo\n" +
-           "  i: int\n" +
-           "   setI(int): void\n" +
-           "   getI(): int\n");
-
+                     "Test.java\n" +
+                     " Foo\n" +
+                     "  i: int\n" +
+                     "   setI(int): void\n" +
+                     "   getI(): int\n");
   }
 
   public void testInnerMethodClasses() {
@@ -240,7 +239,7 @@ public class JavaAnonymousClassesInStructureViewTest extends LightCodeInsightFix
            "     Inner2");
   }
 
-  public void testCustomRegionsIdea179610()  {
+  public void testCustomRegionsIdea179610() {
     doTest(
       "public class Main {\n" +
       "\n" +
