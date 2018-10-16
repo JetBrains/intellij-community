@@ -5,8 +5,9 @@ import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.UastReferenceProvider;
+import com.intellij.psi.UastLiteralReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
@@ -16,7 +17,7 @@ import java.util.Objects;
 /**
  * @author cdr
  */
-class UastPropertiesReferenceProvider extends UastReferenceProvider {
+class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
 
   private final boolean myDefaultSoft;
 
@@ -29,20 +30,20 @@ class UastPropertiesReferenceProvider extends UastReferenceProvider {
     return target instanceof IProperty;
   }
 
-  @Override
   @NotNull
-  public PsiReference[] getReferencesByElement(@NotNull UElement element, @NotNull ProcessingContext context) {
+  @Override
+  public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression element,
+                                                @NotNull PsiLanguageInjectionHost host,
+                                                @NotNull ProcessingContext context) {
     Object value = null;
     String bundleName = null;
-    boolean propertyRefWithPrefix = false;
     boolean soft = myDefaultSoft;
 
-    if (element instanceof ULiteralExpression && canBePropertyKeyRef((UExpression)element)) {
-      ULiteralExpression literalExpression = (ULiteralExpression)element;
-      value = literalExpression.getValue();
+    if (canBePropertyKeyRef(element)) {
+      value = element.getValue();
 
       final Ref<UExpression> resourceBundleValue = Ref.create();
-      if (JavaI18nUtil.mustBePropertyKey(literalExpression, resourceBundleValue)) {
+      if (JavaI18nUtil.mustBePropertyKey(element, resourceBundleValue)) {
         soft = false;
         UExpression resourceBundleName = resourceBundleValue.get();
         if (resourceBundleName != null) {
@@ -55,9 +56,7 @@ class UastPropertiesReferenceProvider extends UastReferenceProvider {
     if (value instanceof String) {
       String text = (String)value;
       PsiElement source = Objects.requireNonNull(element.getSourcePsi());
-      PsiReference reference = propertyRefWithPrefix ?
-                               new PrefixBasedPropertyReference(text, source, null, soft) :
-                               new PropertyReference(text, source, bundleName, soft);
+      PsiReference reference = new PropertyReference(text, source, bundleName, soft);
       return new PsiReference[]{reference};
     }
     return PsiReference.EMPTY_ARRAY;

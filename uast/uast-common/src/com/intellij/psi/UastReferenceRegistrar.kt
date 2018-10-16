@@ -35,7 +35,6 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
                                  priority)
 }
 
-@JvmOverloads
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
                                                         provider: UastReferenceProvider,
                                                         priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {

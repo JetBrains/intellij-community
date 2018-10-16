@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UField;
+import org.jetbrains.uast.ULiteralExpression;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,22 +50,22 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
 
   @Override
   public void registerReferenceProviders(@NotNull final PsiReferenceRegistrar registrar) {
-    UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns.literalExpression(), new UastPropertiesReferenceProvider(true));
+    UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns.literalExpression(), new UastPropertiesReferenceProvider(true), PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns
-      .literalExpression()
-      .withUastParent(UastPatterns
-                        .uNamedExpression()
-                        .filter(expression -> AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(expression.getName()))),
-                                                         new ResourceBundleReferenceProvider());
+    UastReferenceRegistrar.registerUastReferenceProvider(registrar,
+                                                         UastPatterns.stringLiteralExpression().annotationParam(AnnotationUtil.PROPERTY_KEY,
+                                                                                                                AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER),
+                                                         new ResourceBundleReferenceProvider(), PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
-    UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns.literalExpression(), new UastReferenceProvider() {
+    UastReferenceRegistrar.registerUastReferenceProvider(registrar, UastPatterns.literalExpression(), new UastLiteralReferenceProvider() {
       private final ResourceBundleReferenceProvider myUnderlying = new ResourceBundleReferenceProvider();
 
       @NotNull
       @Override
-      public PsiReference[] getReferencesByElement(@NotNull UElement element, @NotNull ProcessingContext context) {
-        final UElement parent = element.getUastParent();
+      public PsiReference[] getReferencesByULiteral(@NotNull ULiteralExpression uLiteral,
+                                                    @NotNull PsiLanguageInjectionHost host,
+                                                    @NotNull ProcessingContext context) {
+        final UElement parent = uLiteral.getUastParent();
         if (!(parent instanceof UField)) {
           return PsiReference.EMPTY_ARRAY;
         }
@@ -73,7 +74,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         if (initializer == null) return PsiReference.EMPTY_ARRAY;
         PsiElement initializerSource = initializer.getSourcePsi();
         if (initializerSource == null) return PsiReference.EMPTY_ARRAY;
-        PsiElement elementSource = element.getSourcePsi();
+        PsiElement elementSource = uLiteral.getSourcePsi();
         if (initializerSource != elementSource ||
             !field.isFinal() ||
             !field.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
@@ -94,7 +95,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
                 if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(pair.getName())) {
                   final PsiAnnotationMemberValue value = pair.getValue();
                   if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == field.getSourcePsi()) {
-                    Collections.addAll(references, myUnderlying.getReferencesByElement(element, context));
+                    Collections.addAll(references, myUnderlying.getReferencesByElement(uLiteral, context));
                     return false;
                   }
                 }
@@ -104,7 +105,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         }
         return references.toArray(PsiReference.EMPTY_ARRAY);
       }
-    });
+    }, PsiReferenceRegistrar.DEFAULT_PRIORITY);
 
     registrar.registerReferenceProvider(PsiJavaPatterns.psiElement(PropertyValueImpl.class), new PsiReferenceProvider() {
       @NotNull

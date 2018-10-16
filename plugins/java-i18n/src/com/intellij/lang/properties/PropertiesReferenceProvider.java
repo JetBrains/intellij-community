@@ -15,6 +15,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastContextKt;
 
 import java.util.Arrays;
@@ -37,35 +38,28 @@ public class PropertiesReferenceProvider extends PsiReferenceProvider {
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-    UElement uElement = UastContextKt.toUElement(element);
-    if (uElement == null) {
+    if (element instanceof XmlAttributeValue && isNonDynamicAttribute(element)) {
+      if (element.getTextLength() < 2) {
+        return PsiReference.EMPTY_ARRAY;
+      }
+      String value = ((XmlAttributeValue)element).getValue();
+      final XmlAttribute attribute = (XmlAttribute)element.getParent();
 
-      if (element instanceof XmlAttributeValue && isNonDynamicAttribute(element)) {
-        if (element.getTextLength() < 2) {
-          return PsiReference.EMPTY_ARRAY;
+      boolean propertyRefWithPrefix = false;
+      if ("key".equals(attribute.getName())) {
+        final XmlTag parent = attribute.getParent();
+        if ("message".equals(parent.getLocalName()) && Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS, parent.getNamespace()) >= 0) {
+          propertyRefWithPrefix = true;
         }
-        String value = ((XmlAttributeValue)element).getValue();
-        final XmlAttribute attribute = (XmlAttribute)element.getParent();
-
-        boolean propertyRefWithPrefix = false;
-        if ("key".equals(attribute.getName())) {
-          final XmlTag parent = attribute.getParent();
-          if ("message".equals(parent.getLocalName()) && Arrays.binarySearch(XmlUtil.JSTL_FORMAT_URIS, parent.getNamespace()) >= 0) {
-            propertyRefWithPrefix = true;
-          }
-        }
-
-        PsiReference reference = propertyRefWithPrefix ?
-                                 new PrefixBasedPropertyReference(value, element, null, myDefaultSoft) :
-                                 new PropertyReference(value, element, null, myDefaultSoft);
-        return new PsiReference[]{reference};
       }
 
-      return PsiReference.EMPTY_ARRAY;
+      PsiReference reference = propertyRefWithPrefix ?
+                               new PrefixBasedPropertyReference(value, element, null, myDefaultSoft) :
+                               new PropertyReference(value, element, null, myDefaultSoft);
+      return new PsiReference[]{reference};
     }
-    else {
-      return myProvider.getReferencesByElement(uElement, context);
-    }
+    UElement uElement = UastContextKt.toUElement(element, ULiteralExpression.class);
+    return uElement == null ? PsiReference.EMPTY_ARRAY : myProvider.getReferencesByElement(uElement, context);
   }
 
   static boolean isNonDynamicAttribute(PsiElement element) {
