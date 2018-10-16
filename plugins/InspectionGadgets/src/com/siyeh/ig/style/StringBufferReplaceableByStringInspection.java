@@ -4,12 +4,15 @@ package com.siyeh.ig.style;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -270,7 +273,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         if (argumentList == null) {
           return null;
         }
-        addNewlineIfNeeded(argumentList, false, result);
+        addNewlineIfNeeded(argumentList, false, result, "");
         final PsiExpression[] arguments = argumentList.getExpressions();
         if (arguments.length == 1 && !TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           final PsiExpression argument = arguments[0];
@@ -279,11 +282,8 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             if (type != null && type.equalsToText("java.lang.CharSequence")) {
               result.append("String.valueOf(").append(tracker.textWithComments(argument)).append(')');
             }
-            else if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-              result.append('(').append(tracker.textWithComments(argument)).append(')');
-            }
             else {
-              result.append(tracker.textWithComments(argument));
+              result.append(tracker.textWithComments(argument, ParenthesesUtils.ADDITIVE_PRECEDENCE));
             }
           }
         }
@@ -309,12 +309,17 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           }
         }
         else if ("append".equals(referenceName) || "add".equals(referenceName)){
+          String commentsBefore = "";
+          ASTNode dot = ((CompositeElement)methodExpression.getNode()).findChildByRole(ChildRole.DOT);
+          if (dot != null && result.length() > 0) {
+            commentsBefore = tracker.commentsBefore(dot.getPsi());
+          }
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length == 0) {
             return null;
           }
           if (arguments.length > 1) {
-            addNewlineIfNeeded(argumentList, true, result);
+            addNewlineIfNeeded(argumentList, true, result, commentsBefore);
             result.append("String.valueOf").append(tracker.textWithComments(argumentList));
             return result;
           }
@@ -322,7 +327,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final PsiType type = argument.getType();
           final String argumentText = tracker.textWithComments(argument);
           if (result.length() != 0) {
-            addNewlineIfNeeded(argument, true, result);
+            addNewlineIfNeeded(argument, true, result, commentsBefore);
             if (ParenthesesUtils.getPrecedence(argument) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
                 (type instanceof PsiPrimitiveType && ParenthesesUtils.getPrecedence(argument) == ParenthesesUtils.ADDITIVE_PRECEDENCE)) {
               result.append('(').append(argumentText).append(')');
@@ -340,7 +345,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             }
           }
           else {
-            addNewlineIfNeeded(argumentList, false, result);
+            addNewlineIfNeeded(argumentList, false, result, commentsBefore);
             if (type instanceof PsiPrimitiveType) {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
@@ -379,21 +384,32 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       return result;
     }
 
-    private void addNewlineIfNeeded(PsiElement anchor, boolean insertPlus, StringBuilder out) {
+    private void addNewlineIfNeeded(PsiElement anchor, boolean insertPlus, StringBuilder out, String commentsBefore) {
       final boolean operationSignOnNextLine =
         CodeStyle.getLanguageSettings(anchor.getContainingFile(), JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
       final int lineNumber = getLineNumber(anchor);
       final boolean insertNewLine = currentLine != lineNumber;
       currentLine = lineNumber;
+      boolean needNewLine = insertNewLine && out.length() > 0;
       if (insertPlus && !operationSignOnNextLine) {
-        out.append('+');
+        out.append(needNewLine ? '+' + commentsBefore : commentsBefore + '+');
+      } else {
+        out.append(commentsBefore);
       }
-      if (insertNewLine && out.length() > 0) {
+      if (needNewLine && !hasTrailingLineBreak(out)) {
         out.append("\n "); // space is added to force line reformatting if the next line starts with comment
       }
       if (insertPlus && operationSignOnNextLine) {
         out.append('+');
       }
+    }
+
+    private static boolean hasTrailingLineBreak(StringBuilder sb) {
+      for(int i=sb.length()-1; i>=0; i--) {
+        if (sb.charAt(i) == '\n') return true;
+        if (!Character.isWhitespace(sb.charAt(i))) return false;
+      }
+      return false;
     }
 
     private static int getLineNumber(PsiElement element) {

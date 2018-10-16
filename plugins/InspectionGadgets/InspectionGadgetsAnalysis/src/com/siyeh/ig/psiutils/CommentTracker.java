@@ -129,18 +129,16 @@ public final class CommentTracker {
   }
 
   /**
-   * Returns an element text, possibly prepended with comments which are located between the supplied element
-   * and the previous element passed into this method. The used comments are deleted from the original document.
-   *
-   * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
-   * because PsiExpression cannot start with comment.
+   * Returns the comments which are located between the supplied element
+   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * The used comments are deleted from the original document.
    *
    * <p>This method can be used if several parts of original code are reused in the generated replacement.
    *
-   * @param element an element to convert to the text
+   * @param element an element grab the comments before it
    * @return the string containing the element text and possibly some comments.
    */
-  public String textWithComments(@NotNull PsiElement element) {
+  public String commentsBefore(@NotNull PsiElement element) {
     StringBuilder sb = new StringBuilder();
     if (lastTextWithCommentsElement != null) {
       int start = lastTextWithCommentsElement.getTextRange().getEndOffset();
@@ -152,6 +150,9 @@ public final class CommentTracker {
           if (e instanceof PsiComment) {
             TextRange range = e.getTextRange();
             if (range.getStartOffset() >= start && range.getEndOffset() <= end && !shouldIgnore((PsiComment)e)) {
+              if (sb.length() == 0 && e.getPrevSibling() instanceof PsiWhiteSpace) {
+                sb.append(e.getPrevSibling().getText());
+              }
               sb.append(e.getText());
               PsiElement cur = e;
               while (cur.getNextSibling() == null && cur != parent) cur = cur.getParent();
@@ -167,8 +168,43 @@ public final class CommentTracker {
       }
     }
     lastTextWithCommentsElement = element;
-    sb.append(element.getText());
     return sb.toString();
+  }
+
+  /**
+   * Returns an element text, possibly prepended with comments which are located between the supplied element
+   * and the previous element passed into {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * The used comments are deleted from the original document.
+   *
+   * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
+   * because PsiExpression cannot start with comment.
+   *
+   * <p>This method can be used if several parts of original code are reused in the generated replacement.
+   *
+   * @param element an element to convert to the text
+   * @return the string containing the element text and possibly some comments.
+   */
+  public String textWithComments(@NotNull PsiElement element) {
+    return commentsBefore(element)+element.getText();
+  }
+
+  /**
+   * Returns an element text, adding parentheses if necessary, possibly prepended with comments which are
+   * located between the supplied element and the previous element passed into
+   * {@link #textWithComments(PsiElement)} or {@link #commentsBefore(PsiElement)}.
+   * The used comments are deleted from the original document.
+   *
+   * <p>Note that if PsiExpression was passed, the resulting text may not parse as an PsiExpression,
+   * because PsiExpression cannot start with comment.
+   *
+   * <p>This method can be used if several parts of original code are reused in the generated replacement.
+   *
+   * @param expression an expression to convert to the text
+   * @param precedence precedence of surrounding operation
+   * @return the string containing the element text and possibly some comments.
+   */
+  public String textWithComments(@NotNull PsiExpression expression, int precedence) {
+    return commentsBefore(expression)+ParenthesesUtils.getText(expression, precedence + 1);
   }
 
   /**
@@ -471,63 +507,8 @@ public final class CommentTracker {
    * @return a string containing all the comments between start and end.
    */
   public static @NotNull String commentsBetween(@NotNull PsiElement start, @NotNull PsiElement end) {
-    PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
-    if (parent == null) {
-      throw new IllegalStateException("Common parent is not found: [" + start + ".." + end + "]");
-    }
-    PsiElement cur = next(start, parent);
-    List<PsiComment> comments = new ArrayList<>();
-    while (cur != null && !PsiTreeUtil.isAncestor(cur, end, false)) {
-      comments.addAll(PsiTreeUtil.findChildrenOfType(cur, PsiComment.class));
-      if (cur instanceof PsiComment) {
-        comments.add((PsiComment)cur);
-      }
-      cur = next(cur, parent);
-    }
-    if (cur == null) {
-      throw new IllegalStateException("End is not reached: [" + start + ".." + end + "]");
-    }
-    PsiElement tail = prev(end, cur);
-    Deque<PsiComment> tailComments = new ArrayDeque<>();
-    while (tail != null) {
-      PsiTreeUtil.findChildrenOfType(tail, PsiComment.class).forEach(tailComments::addFirst);
-      if (cur instanceof PsiComment) {
-        comments.add((PsiComment)cur);
-      }
-      tail = prev(tail, cur);
-    }
-    comments.addAll(tailComments);
-    StringBuilder sb = new StringBuilder();
-    for (PsiComment comment : comments) {
-      PsiElement prev = prev(comment, parent);
-      if (prev instanceof PsiWhiteSpace) {
-        sb.append(prev.getText());
-      }
-      sb.append(comment.getText());
-      PsiElement next = next(comment, parent);
-      if (next instanceof PsiWhiteSpace) {
-        sb.append(next.getText());
-      }
-      comment.delete();
-    }
-    return sb.toString();
-  }
-
-  private static PsiElement next(PsiElement cur, PsiElement stopAtParent) {
-    if (cur == stopAtParent) return null;
-    PsiElement next = cur.getNextSibling();
-    if (next != null) return next;
-    PsiElement parent = cur.getParent();
-    if (parent == stopAtParent) return null;
-    return next(parent, stopAtParent);
-  }
-
-  private static PsiElement prev(PsiElement cur, PsiElement stopAtParent) {
-    if (cur == stopAtParent) return null;
-    PsiElement prev = cur.getPrevSibling();
-    if (prev != null) return prev;
-    PsiElement parent = cur.getParent();
-    if (parent == stopAtParent || parent == null) return null;
-    return prev(parent, stopAtParent);
+    CommentTracker ct = new CommentTracker();
+    ct.lastTextWithCommentsElement = start;
+    return ct.commentsBefore(end);
   }
 }

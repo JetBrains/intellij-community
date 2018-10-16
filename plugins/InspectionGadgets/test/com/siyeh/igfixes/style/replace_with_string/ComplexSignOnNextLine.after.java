@@ -14,9 +14,8 @@ class Complex1 {
             + " {productName=" + productName
             + ", mtdRc=" + mtdRc
             + ", pfmRc=" + pfmRc
-            + ", pymRc=" + pymRc
-            +// important
-            ", ytdRc=" + ytdRc
+            + ", pymRc=" + pymRc // important
+            + ", ytdRc=" + ytdRc
             + ", pytdRc=" + pytdRc
             + ", yoyRc=" + yoy
             + '}';

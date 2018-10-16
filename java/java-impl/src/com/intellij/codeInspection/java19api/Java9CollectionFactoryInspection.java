@@ -353,18 +353,13 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       }
       else if (model.hasTooManyMapEntries()) {
         replacementText = StreamEx.ofSubLists(model.myContent, 2)
-          .prepend(Collections.<PsiExpression>emptyList())
-          .pairMap((prev, next) -> {
-            String prevComment = prev.isEmpty() ? "" : CommentTracker.commentsBetween(prev.get(1), next.get(0));
-            String midComment = CommentTracker.commentsBetween(next.get(0), next.get(1));
-            return prevComment + "java.util.Map.entry(" + ct.text(next.get(0)) + "," + midComment + ct.text(next.get(1)) + ")";
-          })
+          .map(expr -> ct.commentsBefore(expr.get(0)) +
+                       "java.util.Map.entry(" + ct.text(expr.get(0)) + "," + ct.textWithComments(expr.get(1)) + ")")
           .joining(",", "java.util.Map." + typeArgument + "ofEntries(", ")");
       }
       else {
         replacementText = StreamEx.of(model.myContent)
-          .prepend((PsiExpression)null)
-          .pairMap((prev, next) -> (prev == null ? "" : CommentTracker.commentsBetween(prev, next)) + ct.text(next))
+          .map(ct::textWithComments)
           .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")");
       }
       List<PsiLocalVariable> vars =
