@@ -58,7 +58,7 @@ public class VcsImplUtil {
   public static void generateIgnoreFileIfNeeded(@NotNull Project project, @NotNull VirtualFile vcsRoot) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, vcsRoot);
       if (vcs == null) {
-        LOG.warn("Cannot get VCS for root " + vcsRoot.getPath());
+        LOG.debug("Cannot get VCS for root " + vcsRoot.getPath());
         return;
       }
 
