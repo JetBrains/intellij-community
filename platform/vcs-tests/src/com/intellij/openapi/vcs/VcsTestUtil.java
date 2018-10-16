@@ -34,8 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class VcsTestUtil {
   public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
@@ -236,9 +235,24 @@ public class VcsTestUtil {
   public static void assertNotificationShown(@NotNull Project project, @Nullable Notification expected) {
     if (expected != null) {
       Notification actualNotification =
-        ((TestVcsNotifier)VcsNotifier.getInstance(project)).findExpectedNotification(expected);
+        ((TestVcsNotifier)VcsNotifier.getInstance(project)).getLastNotification();
       assertNotNull("No notification was shown", actualNotification);
+      assertEquals("Notification has wrong title", expected.getTitle(), actualNotification.getTitle());
+      assertEquals("Notification has wrong type", expected.getType(), actualNotification.getType());
+      assertEquals("Notification has wrong content", adjustTestContent(expected.getContent()), actualNotification.getContent());
     }
+  }
+
+  // we allow more spaces and line breaks in tests to make them more readable.
+  // After all, notifications display html, so all line breaks and extra spaces are ignored.
+  private static String adjustTestContent(@NotNull String s) {
+    StringBuilder res = new StringBuilder();
+    String[] splits = s.split("\n");
+    for (String split : splits) {
+      res.append(split.trim());
+    }
+
+    return res.toString();
   }
 
   public static String getTestDataPath() {

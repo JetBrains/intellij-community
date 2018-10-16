@@ -38,8 +38,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 public class GitRepositoryFiles {
   private static final Logger LOG = Logger.getInstance("#git4idea.repo.GitRepositoryFiles");
 
-  public static final String GITIGNORE = ".gitignore";
-
   private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   private static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
   private static final String CONFIG = "config";
@@ -62,6 +60,7 @@ public class GitRepositoryFiles {
   private static final String PRE_COMMIT_HOOK = "pre-commit";
   private static final String PRE_PUSH_HOOK = "pre-push";
   private static final String SHALLOW = "shallow";
+  private static final String GITIGNORE = ".gitignore";
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
