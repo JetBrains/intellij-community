@@ -919,6 +919,11 @@
                      groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="OverflowingLoopIndex"
+                     key="inspection.overflowing.loop.index.inspection.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OverflowingLoopIndexInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
