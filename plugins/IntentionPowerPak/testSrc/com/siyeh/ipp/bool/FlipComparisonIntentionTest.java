@@ -60,4 +60,12 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            "        foo > param >");
   }
 
+  public void testBrokenCode4() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    \"\"<foo>\"//simple/*_Flip '>' to '<'*/ end comment\n" +
+           "  }\n" +
+           "}");
+  }
+
 }
