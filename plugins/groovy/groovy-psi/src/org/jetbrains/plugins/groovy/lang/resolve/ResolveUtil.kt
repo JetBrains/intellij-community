@@ -107,7 +107,7 @@ private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
 
-fun wrapClassType(type: PsiType, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
+fun wrapClassType(type: PsiType?, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
 
 fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   return getCachedValue(clazz) {

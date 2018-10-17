@@ -1161,7 +1161,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(typeCastExpression.multiResolve(false));
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(typeCastExpression.getReference().multiResolve(false));
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PsiMethod) {

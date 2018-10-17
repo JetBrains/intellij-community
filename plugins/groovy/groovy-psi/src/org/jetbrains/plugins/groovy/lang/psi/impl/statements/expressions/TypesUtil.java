@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
@@ -62,23 +61,6 @@ public class TypesUtil implements TypeConstants {
   private TypesUtil() {
   }
 
-  @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
-                                                                      IElementType tokenType,
-                                                                      @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes) {
-    return getOverloadedOperatorCandidates(thisType, tokenType, place, argumentTypes, false);
-  }
-
-  @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
-                                                                      IElementType tokenType,
-                                                                      @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes,
-                                                                      boolean incompleteCode) {
-    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, incompleteCode, argumentTypes);
-  }
-
 
   public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
                                                                            IElementType tokenType,
@@ -116,31 +98,9 @@ public class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
-  private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<>();
   private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<>();
 
   static {
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, PLUS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, MINUS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, AND);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, OR);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, XOR);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, DIV);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, MOD);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, MULTIPLY);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, AS_TYPE);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, POWER);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, LEFT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, RIGHT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, RIGHT_SHIFT_UNSIGNED);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, EQUALS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, EQUALS);
-
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, AS_BOOLEAN);
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, POSITIVE);
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, NEGATIVE);
