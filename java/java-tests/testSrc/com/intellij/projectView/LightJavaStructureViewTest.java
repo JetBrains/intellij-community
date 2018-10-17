@@ -292,7 +292,7 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
       JTree tree = svc.getTree();
       PlatformTestUtil.waitWhileBusy(tree);
       PlatformTestUtil.expandAll(tree);
-      PlatformTestUtil.assertTreeStructureEquals(tree.getModel(), expected);
+      PlatformTestUtil.assertTreeEqual(tree, expected);
     });
   }
 }

@@ -25,7 +25,6 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.io.URLUtil
-import com.intellij.util.ui.tree.TreeUtil
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
@@ -131,14 +130,14 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
     val svc = builder.createStructureView(editor, project) as StructureViewComponent
     Disposer.register(myFixture.testRootDisposable, svc)
     svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
-    TreeUtil.expandAll(svc.tree)
-    PlatformTestUtil.assertTreeStructureEquals(svc.tree.model, """
-      StructureView.java
-       StructureView
-        B
+    PlatformTestUtil.expandAll(svc.tree)
+    PlatformTestUtil.assertTreeEqual(svc.tree, """
+      -StructureView.java
+       -StructureView
+        -B
          B()
-         build(int): StructureView
-          $1
+         -build(int): StructureView
+          -${'$'}1
            class initializer
         StructureView()
         getData(): int

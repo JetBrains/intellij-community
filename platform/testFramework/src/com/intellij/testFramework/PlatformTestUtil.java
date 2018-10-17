@@ -10,7 +10,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -506,49 +509,6 @@ public class PlatformTestUtil {
 
   public static String print(JTree tree) {
     return print(tree, false);
-  }
-
-  public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
-  }
-
-  @NotNull
-  protected static AbstractTreeStructure createStructure(@NotNull TreeModel treeModel) {
-    return new AbstractTreeStructure() {
-      @NotNull
-      @Override
-      public Object getRootElement() {
-        return treeModel.getRoot();
-      }
-
-      @NotNull
-      @Override
-      public Object[] getChildElements(@NotNull Object element) {
-        return TreeUtil.nodeChildren(element, treeModel).toList().toArray();
-      }
-
-      @Nullable
-      @Override
-      public Object getParentElement(@NotNull Object element) {
-        return ((AbstractTreeNode)element).getParent();
-      }
-
-      @NotNull
-      @Override
-      public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void commit() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean hasSomethingToCommit() {
-        throw new UnsupportedOperationException();
-      }
-    };
   }
 
   public static void invokeNamedAction(final String actionId) {
