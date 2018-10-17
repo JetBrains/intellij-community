@@ -161,33 +161,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
         g2.fillRect(0, 0, w, h);
       } else {
         g2.fill(shape);
-
-        g2.setColor(Gray.x00.withAlpha(70));
-        g2.draw(focusShape);
       }
     }
 
     if (item.isNextSelected() && navbar.isFocused()) {
       g2.setColor(selection);
       g2.fill(endShape);
-
-      Path2D.Double endFocusShape = new Path2D.Double();
-      if (toolbarVisible || floating) {
-        endFocusShape.moveTo(offset, 0);
-      } else {
-        endFocusShape.moveTo(w, 0);
-        endFocusShape.lineTo(offset, 0);
-      }
-
-      endFocusShape.lineTo(w - 1, h2);
-      endFocusShape.lineTo(offset, h - 1);
-
-      if (!toolbarVisible && !floating) {
-        endFocusShape.lineTo(w, h - 1);
-      }
-
-      g2.setColor(Gray.x00.withAlpha(70));
-      g2.draw(endFocusShape);
     }
 
 
