@@ -708,7 +708,7 @@ public class ExpressionGenerator extends Generator {
   public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
     final boolean postfix = expression.isPostfix();
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+    final GroovyResolveResult resolveResult = expression.getReference().advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     final GrExpression operand = expression.getOperand();
 

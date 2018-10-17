@@ -1,18 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithmetic;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
@@ -23,20 +21,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpre
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrUnaryOperatorReference;
 
-/**
- * @author ilyas
- */
 public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryExpression {
 
   private static final Function<GrUnaryExpressionImpl,PsiType> TYPE_CALCULATOR = new Function<GrUnaryExpressionImpl, PsiType>() {
     @Nullable
     @Override
     public PsiType fun(GrUnaryExpressionImpl unary) {
-      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.multiResolve(false));
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(unary.getReference().multiResolve(false));
 
       if (isIncDecNumber(resolveResult)) {
-        return unary.getOperand().getType();
+        return ObjectUtils.doIfNotNull(unary.getOperand(), GrExpression::getType);
       }
 
       final PsiType substituted = ResolveUtil.extractReturnTypeFromCandidate(resolveResult, unary, PsiType.EMPTY_ARRAY);
@@ -77,18 +73,16 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     }
   };
 
-  private static final ResolveCache.PolyVariantResolver<GrUnaryExpressionImpl> OUR_RESOLVER = (unary, incompleteCode) -> {
-    final GrExpression operand = unary.getOperand();
-    if (operand == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    final PsiType type = operand.getType();
-    if (type == null) return GroovyResolveResult.EMPTY_ARRAY;
-
-    return TypesUtil.getOverloadedUnaryOperatorCandidates(type, unary.getOperationTokenType(), operand, PsiType.EMPTY_ARRAY);
-  };
+  private final GroovyReference myReference = new GrUnaryOperatorReference(this);
 
   public GrUnaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  @Override
+  public GroovyReference getReference() {
+    return myReference;
   }
 
   @Override
@@ -128,59 +122,8 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     visitor.visitUnaryExpression(this);
   }
 
-  @NotNull
-  @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, OUR_RESOLVER);
-  }
-
   @Override
   public boolean isPostfix() {
     return getFirstChild() instanceof GrExpression;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElement() {
-    return this;
-  }
-
-  @NotNull
-  @Override
-  public TextRange getRangeInElement() {
-    final PsiElement opToken = getOperationToken();
-    final int offset = opToken.getStartOffsetInParent();
-    return new TextRange(offset, offset + opToken.getTextLength());
-  }
-
-  @NotNull
-  @Override
-  public String getCanonicalText() {
-    return getText();
-  }
-
-  @Override
-  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
-    throw new IncorrectOperationException("unary expression cannot be renamed to anything");
-  }
-
-  @Override
-  public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
-    throw new IncorrectOperationException("unary expression cannot be bounded to anything");
-  }
-
-  @Override
-  public boolean isReferenceTo(@NotNull PsiElement element) {
-    return getManager().areElementsEquivalent(resolve(), element);
-  }
-
-  @Override
-  public boolean isSoft() {
-    return false;
-  }
-
-  @Override
-  public PsiReference getReference() {
-    return this;
   }
 }
