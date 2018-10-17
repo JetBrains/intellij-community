@@ -57,8 +57,12 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
   else {
     try {
-      createPersistentCredentialStore()?.let {
-        return it
+      val store = createPersistentCredentialStore()
+      if (store == null) {
+        showError("Native keychain is not available")
+      }
+      else {
+        return store
       }
     }
     catch (e: Throwable) {
