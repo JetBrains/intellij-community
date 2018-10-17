@@ -1513,6 +1513,7 @@ public class AllIcons {
       public static final Icon Recording_stop = AllIcons.Actions.Suspend;
 
     }
+    public static final Icon NavBarSeparator = IconLoader.getIcon("/ide/NavBarSeparator.svg"); // 5x15
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
 
     public final static class Notification {

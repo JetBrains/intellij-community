@@ -1,10 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -169,57 +169,15 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       g2.fill(endShape);
     }
 
-
-    g2.translate(offset, 0);
-    int off = getDecorationOffset() - 1;
-
     if (!floating || !item.isLastElement()) {
-      if (toolbarVisible || floating) {
-        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
-          Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : false ? Gray.xFF.withAlpha(200) : Gray._205;
-          drawArrow(g2, Gray.x00.withAlpha(70), hl, off, h, !selected && !floating, false);
-        }
-      } else {
-        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
-          Color hl = UIUtil.isUnderDarcula() ? Gray._128.withAlpha(100) : Gray._255.withAlpha(200);
-          drawArrow(g2, Gray.x00.withAlpha(150), hl, off, h, !selected && !floating, true);
-        }
+      if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
+        Icon icon = AllIcons.Ide.NavBarSeparator;
+        icon.paintIcon(item, g2, w - icon.getIconWidth(), h2 - icon.getIconHeight() / 2);
       }
     }
 
     g2.dispose();
     return result;
-  }
-
-  private static void drawArrow(Graphics2D g2d, Color c, Color light, int decorationOffset, int h, boolean highlight, boolean gradient) {
-    int off = decorationOffset - 1;
-
-    g2d.setColor(c);
-    if (gradient) {
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(c, 10), 0, h / 2, c));
-    }
-    g2d.drawLine(0, 0, off, h / 2);
-
-    if (gradient) {
-      g2d.setPaint(UIUtil.getGradientPaint(0, h / 2, c, 0, h, ColorUtil.toAlpha(c, 10)));
-    }
-    g2d.drawLine(off, h / 2, 0, h);
-
-    if (highlight) {
-      g2d.translate(-1, 0);
-      g2d.setColor(light);
-
-      if (gradient) {
-        g2d.setPaint(UIUtil.getGradientPaint(0, 0, ColorUtil.toAlpha(light, 10), 0, h / 2, light));
-      }
-      g2d.drawLine(0, 0, off, h / 2);
-
-
-      if (gradient) {
-        g2d.setPaint(UIUtil.getGradientPaint(0, h / 2, light, 0, h, ColorUtil.toAlpha(light, 10)));
-      }
-      g2d.drawLine(off, h / 2, 0, h);
-    }
   }
 
   private static int getDecorationOffset() {
