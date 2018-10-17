@@ -10,7 +10,6 @@ import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.TimeUnit
@@ -113,7 +112,7 @@ private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? {
-    if (isMacOsCredentialStoreSupported && SystemProperties.getBooleanProperty("use.mac.keychain", true)) {
+    if (isMacOsCredentialStoreSupported) {
       return NativeCredentialStoreWrapper(KeyChainCredentialStore())
     }
     return null
@@ -122,7 +121,7 @@ private class MacOsCredentialStoreFactory : CredentialStoreFactory {
 
 private class LinuxSecretCredentialStoreFactory : CredentialStoreFactory {
   override fun create(): CredentialStore? {
-    if (SystemInfo.isLinux && SystemProperties.getBooleanProperty("use.linux.keychain", true)) {
+    if (SystemInfo.isLinux) {
       return NativeCredentialStoreWrapper(SecretCredentialStore("com.intellij.credentialStore.Credential"))
     }
     return null

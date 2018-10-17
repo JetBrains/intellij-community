@@ -121,7 +121,7 @@ internal class PasswordDatabaseConvertor : ApplicationLoadListener {
                 return
               }
             }
-            KeePassCredentialStore(newDb).save()
+            KeePassCredentialStore(newDb).save(EncryptionSpec(getDefaultEncryptionType(), null))
           }
         }
       }

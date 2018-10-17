@@ -6,5 +6,5 @@ import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 @RunWith(Suite::class)
-@Suite.SuiteClasses(KeePassTestSuite::class, CredentialSerializeTest::class, CredentialStoreTest::class, PasswordSafeTest::class, MasterPasswordMigrationTest::class)
+@Suite.SuiteClasses(KeePassTestSuite::class, CredentialSerializeTest::class, CredentialStoreTest::class, PasswordSafeTest::class, MasterPasswordMigrationTest::class, PgpTest::class)
 internal class CredentialStoreTestSuite

@@ -3,6 +3,8 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.getDefaultEncryptionType
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -35,7 +37,7 @@ class KeePassCredentialStoreTest {
       provider.set(CredentialAttributes(randomString(), accountName), Credentials(accountName, randomString()))
     }
 
-    provider.save()
+    provider.save(defaultEncryptionSpec)
     provider = createStore(baseDir)
 
     provider.deleteFileStorage()
@@ -109,7 +111,7 @@ class KeePassCredentialStoreTest {
     val pdbFile = baseDir.resolve(DB_FILE_NAME)
     val pdbPwdFile = baseDir.resolve(MASTER_KEY_FILE_NAME)
 
-    provider.save()
+    provider.save(defaultEncryptionSpec)
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
@@ -123,7 +125,7 @@ class KeePassCredentialStoreTest {
     provider.setPassword(fooAttributes, null)
     assertThat(provider.get(fooAttributes)).isNull()
 
-    provider.save()
+    provider.save(defaultEncryptionSpec)
 
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
@@ -136,7 +138,7 @@ class KeePassCredentialStoreTest {
     provider.setPassword(amAttributes, null)
     assertThat(provider.get(amAttributes)).isNull()
 
-    provider.save()
+    provider.save(defaultEncryptionSpec)
 
     provider.deleteFileStorage()
 
@@ -144,6 +146,7 @@ class KeePassCredentialStoreTest {
     assertThat(pdbPwdFile).doesNotExist()
   }
 }
+
 
 private fun randomString() = UUID.randomUUID().toString()
 
@@ -153,3 +156,5 @@ internal fun createStore(baseDir: Path): KeePassCredentialStore {
   return KeePassCredentialStore(dbFile = baseDir.resolve(DB_FILE_NAME),
                                 masterKeyFile = baseDir.resolve(MASTER_KEY_FILE_NAME))
 }
+
+internal val defaultEncryptionSpec = EncryptionSpec(getDefaultEncryptionType(), null)

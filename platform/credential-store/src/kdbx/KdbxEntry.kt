@@ -15,8 +15,6 @@
  */
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.credentialStore.SecureString
-import com.intellij.credentialStore.SecureStringImpl
 import com.intellij.util.getOrCreate
 import com.intellij.util.text.nullize
 import org.jdom.Element
@@ -83,8 +81,9 @@ internal class KdbxEntry(internal val entryElement: Element, private val databas
         return value
       }
 
+      // if value was not originally protected, protect it
       valueElement.setAttribute(KdbxAttributeNames.protected, "True")
-      val result = UnsavedProtectedValue(SecureStringImpl(value.value))
+      val result = UnsavedProtectedValue(database.protectValue(value.value))
       valueElement.setContent(result)
       return result
     }
@@ -108,11 +107,11 @@ internal class KdbxEntry(internal val entryElement: Element, private val databas
         return
       }
 
-      valueElement.setContent(UnsavedProtectedValue(value as SecureStringImpl))
+      valueElement.setContent(UnsavedProtectedValue(value as StringProtectedByStreamCipher))
       touch()
     }
 
-  private fun getOrCreatePropertyElement(name: String) = getPropertyElement(entryElement, name) ?: createPropertyElement(entryElement, name)
+  private fun getOrCreatePropertyElement(@Suppress("SameParameterValue") name: String) = getPropertyElement(entryElement, name) ?: createPropertyElement(entryElement, name)
 
   @Synchronized
   private fun touch() {

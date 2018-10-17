@@ -3,13 +3,15 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.configurationStore.JbXmlOutputter
 import com.intellij.credentialStore.OneTimeString
-import com.intellij.credentialStore.SecureString
-import com.intellij.credentialStore.SecureStringImpl
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.jdom.Element
 import org.jdom.Text
 import java.io.Writer
 import java.util.*
+
+internal interface SecureString {
+  fun get(clearable: Boolean = true): OneTimeString
+}
 
 internal class ProtectedValue(private var encryptedValue: ByteArray, private var position: Int, private var streamCipher: SkippingStreamCipher) : Text(), SecureString {
   @Synchronized
@@ -45,7 +47,7 @@ internal class ProtectedValue(private var encryptedValue: ByteArray, private var
   }
 }
 
-internal class UnsavedProtectedValue(val secureString: SecureStringImpl) : Text(), SecureString by secureString {
+internal class UnsavedProtectedValue(val secureString: StringProtectedByStreamCipher) : Text(), SecureString by secureString {
   override fun getText() = throw IllegalStateException("Must be converted to ProtectedValue for serialization")
 }
 
