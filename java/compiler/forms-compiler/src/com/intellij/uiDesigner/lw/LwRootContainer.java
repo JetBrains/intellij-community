@@ -27,8 +27,12 @@ import java.util.ArrayList;
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
-  */
+ */
 public final class LwRootContainer extends LwContainer implements IRootContainer{
+
+  //NecroRayder
+  private String myLookAndFeel;
+
   private String myClassToBind;
   private String myMainComponentBinding;
   private final ArrayList<LwButtonGroup> myButtonGroups = new ArrayList<LwButtonGroup>();
@@ -37,6 +41,14 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   public LwRootContainer() {
     super("javax.swing.JPanel");
     myLayoutSerializer = XYLayoutSerializer.INSTANCE;
+  }
+
+  //NecroRayder
+  public String getLookAndFeel(){ return myLookAndFeel; }
+
+  //NecroRayder
+  public void setLookAndFeel(String lookAndFeel) {
+    myLookAndFeel = lookAndFeel;
   }
 
   public String getMainComponentBinding(){

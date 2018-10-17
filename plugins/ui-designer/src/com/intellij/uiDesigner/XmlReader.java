@@ -235,6 +235,7 @@ public final class XmlReader {
       final RadRootContainer radRootContainer = (RadRootContainer)component;
       final LwRootContainer lwRootContainer = (LwRootContainer)lwComponent;
       radRootContainer.setClassToBind(lwRootContainer.getClassToBind());
+      radRootContainer.setLookAndFeel(lwRootContainer.getLookAndFeel()); //NecroRayder
       radRootContainer.setMainComponentBinding(lwRootContainer.getMainComponentBinding());
       radRootContainer.setButtonGroups(lwRootContainer.getButtonGroups());
       radRootContainer.setInspectionSuppressions(lwRootContainer.getInspectionSuppressions());

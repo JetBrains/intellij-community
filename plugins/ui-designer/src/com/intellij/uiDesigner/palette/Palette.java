@@ -552,11 +552,32 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       new IntEnumEditor(pairs), false);
   }
 
+  //NecroRayder
   @NotNull
   public IntrospectedProperty[] getIntrospectedProperties(@NotNull final RadComponent component) {
-    return getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
-  }
+    IntrospectedProperty[] properties = getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass()).clone();
 
+    //NecroRayder: inizialize margin property with component default value for selected look and feel.
+    IntrospectedProperty property;
+    property = getIntrospectedProperty(component, "margin");
+    if(property != null){
+      component.markPropertyAsModified(property);
+    }
+
+    //NecroRayder: inizialize background property with component default value for selected look and feel.
+    property = getIntrospectedProperty(component, "background");
+    if(property != null){
+      component.markPropertyAsModified(property);
+    }
+
+    //NecroRayder: inizialize foreground property with component default value for selected look and feel.
+    property = getIntrospectedProperty(component, "foreground");
+    if(property != null) {
+      component.markPropertyAsModified(property);
+    }
+
+    return properties;
+  }
   /**
    * @return arrays of all properties that can be introspected from the
    * specified class. Only properties with getter and setter methods are
@@ -723,7 +744,8 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
    */
   @Nullable
   public IntrospectedProperty getIntrospectedProperty(@NotNull final RadComponent component, @NotNull final String name) {
-    final IntrospectedProperty[] properties = getIntrospectedProperties(component);
+    //NecroRayder
+    final IntrospectedProperty[] properties = getIntrospectedProperties(component.getComponentClass(), component.getDelegee().getClass());
     for (final IntrospectedProperty property : properties) {
       if (name.equals(property.getName())) {
         return property;

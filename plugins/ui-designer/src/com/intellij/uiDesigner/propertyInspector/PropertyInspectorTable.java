@@ -100,6 +100,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private final Map<HighlightSeverity, SimpleTextAttributes> myModifiedHighlightAttributes = new HashMap<>();
 
   private final ClassToBindProperty myClassToBindProperty;
+  private final LookAndFeelProperty myLookAndFeelProperty; //NecroRayder
   private final BindingProperty myBindingProperty;
   private final BorderProperty myBorderProperty;
   private final LayoutManagerProperty myLayoutManagerProperty = new LayoutManagerProperty();
@@ -114,6 +115,9 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   PropertyInspectorTable(Project project, @NotNull final ComponentTree componentTree) {
     myProject = project;
     myClassToBindProperty = new ClassToBindProperty(project);
+
+    myLookAndFeelProperty = new LookAndFeelProperty(project); //NecroRayder
+
     myBindingProperty = new BindingProperty(project);
     myBorderProperty = new BorderProperty(project);
 
@@ -503,6 +507,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   private void collectProperties(final RadComponent component, final ArrayList<Property> result) {
     if (component instanceof RadRootContainer){
       addProperty(result, myClassToBindProperty);
+      addProperty(result, myLookAndFeelProperty); //NecroRayder
     }
     else {
       if (!(component instanceof RadVSpacer || component instanceof RadHSpacer)){
@@ -543,7 +548,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         for (final IntrospectedProperty property: introspectedProperties) {
           if (!property.appliesTo(component)) continue;
           if (!myShowExpertProperties && properties.isExpertProperty(component.getModule(), componentClass, property.getName()) &&
-            !isModifiedForSelection(property)) {
+              !isModifiedForSelection(property)) {
             continue;
           }
           addProperty(result, property);

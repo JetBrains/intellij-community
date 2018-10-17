@@ -477,6 +477,10 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     // TODO[yole]: install appropriate listeners so that the captions repaint themselves at correct time
     myHorzCaptionPanel.repaint();
     myVertCaptionPanel.repaint();
+
+    //NecroRayder
+    myRootContainer.refreshLookAndFeel();
+
   }
 
   public Object getNextSaveGroupId() {
@@ -785,7 +789,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     while (
       startOffset < oldLength && startOffset < newLength &&
       oldText.charAt(startOffset) == newText.charAt(startOffset)
-      ) {
+    ) {
       startOffset++;
     }
 
@@ -866,6 +870,10 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
       final LwRootContainer rootContainer = Utils.getRootContainer(text, new CompiledClassPropertiesProvider(classLoader));
       final RadRootContainer container = XmlReader.createRoot(this, rootContainer, classLoader, oldLocale);
+
+      //NecroRayder
+      container.refreshLookAndFeel();
+
       setRootContainer(container);
       if (keepSelection) {
         SelectionState.restoreSelection(this, selection);
