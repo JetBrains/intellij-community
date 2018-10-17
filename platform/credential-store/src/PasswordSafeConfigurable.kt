@@ -120,9 +120,15 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     else if (isKeepassFileLocationChanged(settings)) {
       createAndSaveKeePassDatabaseWithNewOptions(settings)
     }
-    else if (isPgpKeyChanged(settings)) {
+    else if (providerType == ProviderType.KEEPASS && isPgpKeyChanged(settings)) {
       // not our business in this case, if there is no db file, do not require not null KeePassFileManager
       createKeePassFileManager()?.saveMasterKeyToApplyNewEncryptionSpec()
+    }
+
+    // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
+    // (e.g. PGP key)
+    if (providerType == ProviderType.KEEPASS) {
+      createKeePassFileManager()?.setCustomMasterPasswordIfNeed(getDefaultKeePassDbFile())
     }
 
     settings.providerType = providerType
@@ -144,6 +150,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     settings.keepassDb = newDbFile.toString()
+
     try {
       runModalTask("Saving KeePass database", cancellable = false) {
         KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec()).useExisting()

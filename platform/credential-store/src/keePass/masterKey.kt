@@ -99,6 +99,7 @@ internal class MasterKeyFileStorage(private val passwordFile: Path) {
     return createEncryptionSupport(EncryptionSpec(encryptionType, pgpKeyId = null)).decrypt(value)
   }
 
+  // passed key will be cleared
   fun save(key: MasterKey?) {
     if (key == null) {
       passwordFile.delete()
