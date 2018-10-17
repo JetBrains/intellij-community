@@ -23,8 +23,6 @@ fun callExpression(): UCallExpressionPattern = UCallExpressionPattern()
 
 fun uExpression(): UExpressionPattern<UExpression, *> = expressionCapture(UExpression::class.java)
 
-fun uNamedExpression(): UExpressionPattern<UNamedExpression, *> = expressionCapture(UNamedExpression::class.java)
-
 fun <T : UElement> capture(clazz: Class<T>): UElementPattern.Capture<T> = UElementPattern.Capture(clazz)
 
 fun <T : UExpression> expressionCapture(clazz: Class<T>): UExpressionPattern.Capture<T> = UExpressionPattern.Capture(clazz)
