@@ -1,32 +1,32 @@
-/*
- * Copyright 2008-2016 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.refactoring.BaseRefactoringProcessor;
+import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.util.Query;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -86,6 +86,11 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
 
   @Override
   public boolean isEnabledByDefault() {
+    return true;
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
     return true;
   }
 
@@ -158,6 +163,17 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
+
+    @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
@@ -170,38 +186,120 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
   }
 
-  public static void convertJUnit3ClassToJUnit4(PsiClass containingClass) {
-    if (containingClass == null) {
+  public static void convertJUnit3ClassToJUnit4(PsiClass junit3Class) {
+    if (junit3Class == null) {
       return;
     }
-    final PsiReferenceList extendsList = containingClass.getExtendsList();
-    if (extendsList == null) {
-      return;
-    }
-    for (PsiMethod method : containingClass.getMethods()) {
-      @NonNls final String name = method.getName();
-      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          PsiType.VOID.equals(method.getReturnType()) &&
-          method.getParameterList().isEmpty()) {
-        final PsiModifierList modifierList = method.getModifierList();
-        if (name.startsWith("test")) {
-          addAnnotationIfNotPresent(modifierList, "org.junit.Test");
+    final MultiMap<PsiElement, String> conflicts = checkForConflicts(junit3Class);
+    if (conflicts == null) return; // check cancelled by user
+
+    final Runnable runnable = () -> {
+      WriteAction.run(() -> {
+        final PsiReferenceList extendsList = junit3Class.getExtendsList();
+        if (extendsList == null) {
+          return;
         }
-        else if (name.equals("setUp")) {
-          transformSetUpOrTearDownMethod(method);
-          addAnnotationIfNotPresent(modifierList, "org.junit.Before");
+        for (PsiMethod method : junit3Class.getMethods()) {
+          @NonNls final String name = method.getName();
+          if (!method.hasModifierProperty(PsiModifier.STATIC) &&
+              PsiType.VOID.equals(method.getReturnType()) &&
+              method.getParameterList().isEmpty()) {
+            final PsiModifierList modifierList = method.getModifierList();
+            if (name.startsWith("test")) {
+              addAnnotationIfNotPresent(modifierList, "org.junit.Test");
+            }
+            else if (name.equals("setUp")) {
+              transformSetUpOrTearDownMethod(method);
+              addAnnotationIfNotPresent(modifierList, "org.junit.Before");
+            }
+            else if (name.equals("tearDown")) {
+              transformSetUpOrTearDownMethod(method);
+              addAnnotationIfNotPresent(modifierList, "org.junit.After");
+            }
+          }
+          method.accept(new MethodCallModifier());
         }
-        else if (name.equals("tearDown")) {
-          transformSetUpOrTearDownMethod(method);
-          addAnnotationIfNotPresent(modifierList, "org.junit.After");
+        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+        for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+          referenceElement.delete();
+        }
+      });
+    };
+    if (!conflicts.isEmpty()) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
+          throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
         }
       }
-      method.accept(new MethodCallModifier());
+      else if (!new ConflictsDialog(junit3Class.getProject(), conflicts, runnable).showAndGet()) {
+        return;
+      }
     }
-    final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
-    for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-      referenceElement.delete();
+    runnable.run();
+  }
+
+  @Nullable
+  private static MultiMap<PsiElement, String> checkForConflicts(PsiClass junit3Class) {
+    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final Query<PsiReference> search = ReferencesSearch.search(junit3Class, junit3Class.getUseScope());
+    final String className = junit3Class.getQualifiedName();
+    final PsiClass objectClass = ClassUtils.findObjectClass(junit3Class);
+    junit3Class.accept(new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        if (!ExpressionUtil.isEffectivelyUnqualified(methodExpression)) {
+          return;
+        }
+        final PsiMethod method = expression.resolveMethod();
+        if (method == null || method.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null || aClass == junit3Class || aClass == objectClass ||
+            !junit3Class.isInheritor(aClass, true)) {
+          return;
+        }
+        final String className = aClass.getQualifiedName();
+        if ("junit.framework.Assert".equals(className) || "junit.framework.TestCase".equals(className)) {
+          final String methodName = method.getName();
+          if ("setUp".equals(methodName) || "tearDown".equals(methodName)) {
+            return;
+          }
+        }
+        final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
+        if (superMethods.length > 0) {
+          conflicts.putValue(expression, "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
+                                         " may change semantics when " + RefactoringUIUtil.getDescription(junit3Class, false) +
+                                         " is converted to JUnit 4");
+        }
+        else {
+          conflicts.putValue(expression, "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
+                                         " will not compile when " + RefactoringUIUtil.getDescription(junit3Class, false) +
+                                         " is converted to JUnit 4");
+        }
+      }
+    });
+    if (className != null) {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        search.forEach(reference -> {
+          final PsiElement element = reference.getElement().getParent();
+          if (!(element instanceof PsiExpression)) {
+            return true;
+          }
+          final PsiType expectedType = ExpectedTypeUtils.findExpectedType((PsiExpression)element, false);
+          if (InheritanceUtil.isInheritor(expectedType, "junit.framework.Test") && !InheritanceUtil.isInheritor(expectedType, className)) {
+            conflicts.putValue(element, "Reference " + CommonRefactoringUtil.htmlEmphasize(element.getText()) + " will not compile when " +
+                                        RefactoringUIUtil.getDescription(junit3Class, false) + " is converted to JUnit 4");
+          }
+          return true;
+        });
+      }, RefactoringBundle.message("detecting.possible.conflicts"), true, junit3Class.getProject())) {
+        return null;
+      }
     }
+    return conflicts;
   }
 
   private static void addAnnotationIfNotPresent(PsiModifierList modifierList, String qualifiedAnnotationName) {
@@ -259,7 +357,8 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      if (methodExpression.getQualifierExpression() != null) {
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier != null && !(qualifier instanceof PsiSuperExpression)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();
@@ -274,7 +373,8 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       if (!"junit.framework.Assert".equals(name) && !"junit.framework.TestCase".equals(name)) {
         return;
       }
-      @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();
+      @NonNls final String newExpressionText = "org.junit.Assert." + methodExpression.getReferenceName() +
+                                               expression.getArgumentList().getText();
       final Project project = expression.getProject();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText, expression);
