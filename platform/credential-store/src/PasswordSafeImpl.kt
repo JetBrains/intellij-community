@@ -24,57 +24,6 @@ import org.jetbrains.concurrency.runAsync
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
-
-private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
-  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return createInMemoryKeePassCredentialStore()
-  }
-
-  fun showError(title: String) {
-    NOTIFICATION_MANAGER.notify(title = title, content = "In-memory password storage will be used.", action = object: NotificationAction("Passwords Settings") {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        // to hide before Settings open, otherwise dialog and notification are shown at the same time
-        notification.expire()
-        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
-      }
-    })
-  }
-
-  if (settings.providerType == ProviderType.KEEPASS) {
-    try {
-      val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
-      return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
-    }
-    catch (e: IncorrectMasterPasswordException) {
-      LOG.warn(e)
-      showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError("Failed opening KeePass database")
-    }
-  }
-  else {
-    try {
-      val store = createPersistentCredentialStore()
-      if (store == null) {
-        showError("Native keychain is not available")
-      }
-      else {
-        return store
-      }
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      showError("Cannot use native keychain")
-    }
-  }
-
-  settings.providerType = ProviderType.MEMORY_ONLY
-  return createInMemoryKeePassCredentialStore()
-}
-
 open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafeSettings /* public - backward compatibility */,
                                                       provider: CredentialStore? = null /* TestOnly */) : PasswordSafe() {
   override var isRememberPasswordByDefault: Boolean
@@ -206,6 +155,57 @@ class PasswordSafeImpl(settings: PasswordSafeSettings /* public - backward compa
   // public - backward compatibility
   val memoryProvider: PasswordStorage
     get() = memoryHelperProvider.value as PasswordStorage
+}
+
+internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolve(DB_FILE_NAME)
+
+private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
+    return createInMemoryKeePassCredentialStore()
+  }
+
+  fun showError(title: String) {
+    NOTIFICATION_MANAGER.notify(title = title, content = "In-memory password storage will be used.", action = object: NotificationAction("Passwords Settings") {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        // to hide before Settings open, otherwise dialog and notification are shown at the same time
+        notification.expire()
+        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
+      }
+    })
+  }
+
+  if (settings.providerType == ProviderType.KEEPASS) {
+    try {
+      val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultKeePassDbFile()
+      return KeePassCredentialStore(dbFile, getDefaultMasterPasswordFile())
+    }
+    catch (e: IncorrectMasterPasswordException) {
+      LOG.warn(e)
+      showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      showError("Failed opening KeePass database")
+    }
+  }
+  else {
+    try {
+      val store = createPersistentCredentialStore()
+      if (store == null) {
+        showError("Native keychain is not available")
+      }
+      else {
+        return store
+      }
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+      showError("Cannot use native keychain")
+    }
+  }
+
+  settings.providerType = ProviderType.MEMORY_ONLY
+  return createInMemoryKeePassCredentialStore()
 }
 
 internal fun createPersistentCredentialStore(): CredentialStore? {
