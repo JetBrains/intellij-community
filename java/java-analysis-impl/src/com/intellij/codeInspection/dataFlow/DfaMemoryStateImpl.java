@@ -1293,7 +1293,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   void flushDependencies(@NotNull DfaVariableValue variable) {
-    for (DfaVariableValue dependent : variable.getDependentVariables()) {
+    for (DfaVariableValue dependent : variable.getDependentVariables().toArray(new DfaVariableValue[0])) {
       doFlush(dependent, false);
     }
   }
