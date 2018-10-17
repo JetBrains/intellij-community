@@ -3,6 +3,7 @@ class Test {
   void foo() {
       try {
       } finally {
+
       }
   }
 }

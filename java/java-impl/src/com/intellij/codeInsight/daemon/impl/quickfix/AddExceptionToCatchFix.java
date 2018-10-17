@@ -36,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +45,11 @@ import java.util.List;
  */
 public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix");
+  private final boolean myUncaughtOnly;
+
+  public AddExceptionToCatchFix(boolean uncaughtOnly) {
+    myUncaughtOnly = uncaughtOnly;
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
@@ -52,7 +59,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     if (element == null) return;
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
-    List<PsiClassType> unhandledExceptions = new ArrayList<>(ExceptionUtil.collectUnhandledExceptions(element, null));
+    List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
     if (unhandledExceptions.isEmpty()) return;
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
@@ -85,6 +92,20 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
     }
+  }
+
+  @NotNull
+  protected Collection<PsiClassType> getExceptions(PsiElement element, PsiElement topElement) {
+    Collection<PsiClassType> exceptions = ExceptionUtil.collectUnhandledExceptions(element, topElement);
+    if(!myUncaughtOnly && exceptions.isEmpty()) {
+      exceptions = ExceptionUtil.getThrownExceptions(element);
+      if (exceptions.isEmpty()) {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+        PsiClassType exceptionType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, element.getResolveScope());
+        exceptions = Collections.singleton(exceptionType);
+      }
+    }
+    return exceptions;
   }
 
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement,
@@ -164,7 +185,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   }
 
   @Nullable
-  private static PsiElement findElement(final PsiFile file, final int offset) {
+  private PsiElement findElement(final PsiFile file, final int offset) {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
@@ -181,15 +202,18 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     final PsiTryStatement statement = (PsiTryStatement) parent;
 
     final PsiCodeBlock tryBlock = statement.getTryBlock();
-    if (tryBlock != null && tryBlock.getTextRange().contains(offset)) {
-      if (!ExceptionUtil.collectUnhandledExceptions(tryBlock, statement.getParent()).isEmpty()) {
-        return tryBlock;
+    if (tryBlock != null) {
+      TextRange range = tryBlock.getTextRange();
+      if (range.contains(offset) || range.getEndOffset() == offset) {
+        if (!getExceptions(tryBlock, statement.getParent()).isEmpty()) {
+          return tryBlock;
+        }
       }
     }
 
     final PsiResourceList resourceList = statement.getResourceList();
     if (resourceList != null && resourceList.getTextRange().contains(offset)) {
-      if (!ExceptionUtil.collectUnhandledExceptions(resourceList, statement.getParent()).isEmpty()) {
+      if (!getExceptions(resourceList, statement.getParent()).isEmpty()) {
         return resourceList;
       }
     }

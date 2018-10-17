@@ -63,6 +63,11 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     if (finallyBlock == null) {
       return null;
     }
+    moveCaretToFinallyBlock(project, editor, finallyBlock);
+    return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
+  }
+
+  public static void moveCaretToFinallyBlock(Project project, Editor editor, PsiCodeBlock finallyBlock) {
     Document document = editor.getDocument();
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
     TextRange finallyBlockRange = finallyBlock.getTextRange();
@@ -71,6 +76,5 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsSurrounder{
     editor.getSelectionModel().removeSelection();
     CodeStyleManager.getInstance(project).adjustLineIndent(document, newLineOffset);
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    return new TextRange(editor.getCaretModel().getOffset(), editor.getCaretModel().getOffset());
   }
 }
