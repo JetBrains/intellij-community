@@ -259,5 +259,6 @@
                      enabledByDefault="true" level="INFORMATION"
                      key="inspection.objects.equals.can.be.simplified.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.siyeh.ig.style.ObjectsEqualsCanBeSimplifiedInspection"/>
+    <errorQuickFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaErrorQuickFixProvider"/>
   </extensions>
 </idea-plugin>
