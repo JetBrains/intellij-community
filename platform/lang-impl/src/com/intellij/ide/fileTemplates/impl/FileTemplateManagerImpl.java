@@ -225,7 +225,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
       try {
         result.add(getInternalTemplate(bean.name));
       }
-      catch (Exception ignore) {
+      catch (Exception e) {
+        LOG.error(e);
       }
     }
     return result.toArray(FileTemplate.EMPTY_ARRAY);
