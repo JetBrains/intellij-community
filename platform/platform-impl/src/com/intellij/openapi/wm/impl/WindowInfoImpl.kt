@@ -50,6 +50,11 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var floatingBounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
   /**
+   * This attribute persists state 'maximized' for ToolWindowType.WINDOWED where decoration is presented by JFrame
+   */
+  @get:Attribute("maximized")
+  override var isMaximized by property(false)
+  /**
    * ID of the tool window
    */
   var id: String? by string()
