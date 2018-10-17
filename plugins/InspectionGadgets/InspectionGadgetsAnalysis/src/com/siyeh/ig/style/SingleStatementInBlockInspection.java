@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -96,8 +95,8 @@ public class SingleStatementInBlockInspection extends BaseInspection {
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 1) {
           final PsiStatement statement = statements[0];
-          if (statement instanceof PsiLoopStatement || statement instanceof PsiIfStatement) {
-            return Pair.create(codeBlock.getLBrace(), codeBlock.getRBrace());
+          if (statement.textContains('\n')) {
+            return Pair.create(statement, statement);
           }
         }
       }
@@ -176,6 +175,9 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       else if (startParent instanceof PsiLoopStatement) {
         body = ((PsiLoopStatement)startParent).getBody();
       }
+      else if (startElement instanceof PsiIfStatement) {
+        body = ((PsiIfStatement)startElement).getThenBranch();
+      }
       else if (startElement instanceof PsiKeyword) {
         assert startParent instanceof PsiIfStatement;
         PsiIfStatement ifStatement = (PsiIfStatement)startParent;
@@ -183,9 +185,8 @@ public class SingleStatementInBlockInspection extends BaseInspection {
                ? ifStatement.getThenBranch()
                : ifStatement.getElseBranch();
       }
-      else if (PsiUtil.isJavaToken(startElement, JavaTokenType.RBRACE)) { // at the end of the omitted body
-        assert startParent instanceof PsiCodeBlock;
-        body = startParent.getParent();
+      else if (startParent instanceof PsiBlockStatement) { // at the end of the omitted body
+        body = startParent;
       }
       else {
         return;

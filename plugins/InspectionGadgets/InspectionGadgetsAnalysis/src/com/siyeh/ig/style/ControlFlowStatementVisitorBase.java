@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -105,26 +106,26 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     }
 
     if (rangeStart != null) {
-      final PsiElement beforeOmitted = omittedBodyBounds.getFirst();
-      final PsiElement endOfHighlight = beforeOmitted != null ? beforeOmitted : rangeStart;
-      registerErrorAtRange(rangeStart, endOfHighlight, keywordText);
+      PsiElement parent = PsiTreeUtil.findCommonParent(rangeStart, omittedBodyBounds.getFirst());
+      if (parent != null) {
+        int parentStart = parent.getTextRange().getStartOffset();
+        int startOffset = rangeStart.getTextRange().getStartOffset();
+        registerErrorAtOffset(parent, startOffset - parentStart, omittedBodyBounds.getFirst().getTextRange().getStartOffset() - startOffset,
+                              keywordText);
+      }
     }
 
     final PsiElement afterOmitted = omittedBodyBounds.getSecond();
     if (afterOmitted != null) {
-      PsiElement endOfHighlight = afterOmitted;
       if (rangeEnd != null && rangeEnd != afterOmitted) {
-        if (afterOmitted.getParent() == rangeEnd) {
-          final PsiElement rangeEndLastChild = rangeEnd.getLastChild();
-          if (rangeEndLastChild != null) {
-            endOfHighlight = rangeEndLastChild;
-          }
-        }
-        else {
-          endOfHighlight = rangeEnd;
+        PsiElement parent = PsiTreeUtil.findCommonParent(rangeEnd, afterOmitted);
+        if (parent != null) {
+          int parentStart = parent.getTextRange().getStartOffset();
+          int startOffset = afterOmitted.getTextRange().getEndOffset();
+          registerErrorAtOffset(parent, startOffset - parentStart, rangeEnd.getTextRange().getEndOffset() - startOffset,
+                                keywordText);
         }
       }
-      registerErrorAtRange(afterOmitted, endOfHighlight, keywordText);
     }
   }
 }
