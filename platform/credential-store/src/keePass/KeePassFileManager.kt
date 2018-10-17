@@ -6,7 +6,10 @@ import com.intellij.credentialStore.LOG
 import com.intellij.credentialStore.getTrimmedChars
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.credentialStore.kdbx.KdbxPassword
+import com.intellij.credentialStore.kdbx.KdbxPassword.Companion.createAndClear
+import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
+import com.intellij.credentialStore.toByteArrayAndClear
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -17,28 +20,44 @@ import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
-import com.intellij.util.io.toByteArray
 import java.awt.Component
-import java.nio.CharBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.security.SecureRandom
 import javax.swing.JPasswordField
 
-internal open class KeePassFileManager(private val file: Path, private val masterKeyFile: Path, private val masterKeyEncryptionSpec: EncryptionSpec) {
+internal open class KeePassFileManager(private val file: Path,
+                                       masterKeyFile: Path,
+                                       private val masterKeyEncryptionSpec: EncryptionSpec,
+                                       private val secureRandom: Lazy<SecureRandom>) {
+  private val masterKeyFileStorage = MasterKeyFileStorage(masterKeyFile)
+
   fun clear() {
+    if (!file.exists()) {
+      return
+    }
+
     try {
-      val db = KeePassCredentialStore(dbFile = file, masterKeyFile = masterKeyFile)
-      db.clear()
-      db.save(masterKeyEncryptionSpec)
+      // don't create with preloaded empty db because "clear" action should remove only IntelliJ group from database,
+      // but don't remove other groups
+      val masterPassword = masterKeyFileStorage.load()
+      if (masterPassword != null) {
+        val db = loadKdbx(file, KdbxPassword.createAndClear(masterPassword), secureRandom.value)
+        val store = KeePassCredentialStore(file, masterKeyFileStorage, db)
+        store.clear()
+        store.save(masterKeyEncryptionSpec)
+        return
+      }
     }
     catch (e: Exception) {
       // ok, just remove file
       if (e !is IncorrectMasterPasswordException && ApplicationManager.getApplication()?.isUnitTestMode == false) {
         LOG.error(e)
       }
-      file.delete()
     }
+
+    file.delete()
   }
 
   fun import(fromFile: Path, event: AnActionEvent?) {
@@ -67,7 +86,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
       }
     }
     else {
-      KeePassCredentialStore(dbFile = file, masterKeyFile = masterKeyFile).save(masterKeyEncryptionSpec)
+      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage)
     }
   }
 
@@ -79,7 +98,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
     var masterPassword = MasterKeyFileStorage(possibleMasterKeyFile).load()
     if (masterPassword != null) {
       try {
-        loadKdbx(file, KdbxPassword(masterPassword))
+        loadKdbx(file, KdbxPassword(masterPassword), secureRandom.value)
       }
       catch (e: IncorrectMasterPasswordException) {
         LOG.warn("On import \"$file\" found existing master key file \"$possibleMasterKeyFile\" but key is not correct")
@@ -89,7 +108,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
 
     if (masterPassword == null && !requestMasterPassword("Specify Master Password", contextComponent = contextComponent) {
         try {
-          loadKdbx(file, KdbxPassword(it))
+          loadKdbx(file, KdbxPassword(it), secureRandom.value)
           masterPassword = it
           null
         }
@@ -103,7 +122,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
     if (file !== this.file) {
       Files.copy(file, this.file, StandardCopyOption.REPLACE_EXISTING)
     }
-    MasterKeyFileStorage(masterKeyFile).save(createMasterKey(masterPassword!!))
+    masterKeyFileStorage.save(createMasterKey(masterPassword!!))
     return true
   }
 
@@ -112,7 +131,8 @@ internal open class KeePassFileManager(private val file: Path, private val maste
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
     val store = try {
-      KeePassCredentialStore(file, masterKeyFile)
+      val db = if (file.exists()) loadKdbx(file, KdbxPassword(this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)), secureRandom.value) else KeePassDatabase()
+      KeePassCredentialStore(file, this.masterKeyFileStorage, db)
     }
     catch (e: IncorrectMasterPasswordException) {
       // ok, old key is required
@@ -142,7 +162,7 @@ internal open class KeePassFileManager(private val file: Path, private val maste
 
       if (errors.isEmpty()) {
         try {
-          if (doSetNewMasterPassword(current, new)) {
+          if (doSetNewMasterPassword(current!!, new!!)) {
             return@dialog errors
           }
         }
@@ -161,9 +181,9 @@ internal open class KeePassFileManager(private val file: Path, private val maste
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
-  protected fun doSetNewMasterPassword(current: CharArray?, new: CharArray?): Boolean {
-    val store = KeePassCredentialStore(file, masterKeyFile, preloadedMasterKey = createMasterKey(current!!))
-    store.setMasterPassword(createMasterKey(new!!))
+  protected fun doSetNewMasterPassword(current: CharArray, new: CharArray): Boolean {
+    val db = loadKdbx(file, createAndClear(current.toByteArrayAndClear()), secureRandom.value)
+    saveDatabase(file, db, createMasterKey(new), masterKeyFileStorage)
     return false
   }
 
@@ -206,7 +226,6 @@ internal open class KeePassFileManager(private val file: Path, private val maste
   }
 
   fun saveMasterKeyToApplyNewEncryptionSpec() {
-    val masterKeyFileStorage = MasterKeyFileStorage(masterKeyFile)
     // if null, master key file doesn't exist now, it will be saved later somehow, no need to re-save with a new encryption spec
     val existing = masterKeyFileStorage.load() ?: return
     // no need to re-save db file because master password is not changed, only master key encryption spec changed
@@ -220,7 +239,6 @@ internal open class KeePassFileManager(private val file: Path, private val maste
       return
     }
 
-    val masterKeyFileStorage = MasterKeyFileStorage(masterKeyFile)
     if (!masterKeyFileStorage.isAutoGenerated()) {
       return
     }
@@ -230,11 +248,4 @@ internal open class KeePassFileManager(private val file: Path, private val maste
       null
     }
   }
-}
-
-private fun CharArray.toByteArrayAndClear(): ByteArray {
-  val charBuffer = CharBuffer.wrap(this)
-  val byteBuffer = Charsets.UTF_8.encode(charBuffer)
-  fill(0.toChar())
-  return byteBuffer.toByteArray(isClear = true)
 }

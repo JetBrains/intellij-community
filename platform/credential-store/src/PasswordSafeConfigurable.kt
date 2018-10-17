@@ -58,6 +58,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   private val pgp by lazy { Pgp() }
 
+  // https://youtrack.jetbrains.com/issue/IDEA-200188
+  // reuse to avoid delays - on Linux SecureRandom is quite slow
+  private val secureRandom = lazy { createSecureRandom() }
+
   override fun reset(settings: PasswordSafeSettings) {
     when (settings.providerType) {
       ProviderType.MEMORY_ONLY -> rememberPasswordsUntilClosing.isSelected = true
@@ -153,7 +157,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
     try {
       runModalTask("Saving KeePass database", cancellable = false) {
-        KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec()).useExisting()
+        KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
       }
     }
     catch (e: IncorrectMasterPasswordException) {
@@ -225,7 +229,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun createKeePassFileManager(): KeePassFileManager? {
-    return KeePassFileManager(getNewDbFile() ?: return null, getDefaultMasterPasswordFile(), getEncryptionSpec())
+    return KeePassFileManager(getNewDbFile() ?: return null, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom)
   }
 
   private fun getEncryptionSpec(): EncryptionSpec {
