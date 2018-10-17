@@ -105,6 +105,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
         .orElse(null);
       VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
       if (file != null) {
+        text = FileUtil.toSystemDependentName(text);
         String filePath = FileUtil.toSystemDependentName(file.getPath());
         if (basePath != null && FileUtil.isAncestor(basePath, filePath, true)) {
           text = ObjectUtils.notNull(FileUtil.getRelativePath(basePath, text, File.separatorChar), text);
@@ -112,6 +113,7 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
         else {
           String rootPath = Optional.ofNullable(GotoFileCellRenderer.getAnyRoot(file, project))
             .map(root -> FileUtil.toSystemDependentName(root.getPath()))
+            .filter(root -> basePath != null && FileUtil.isAncestor(basePath, root, true))
             .orElse(null);
           text = rootPath != null
                  ? ObjectUtils.notNull(FileUtil.getRelativePath(rootPath, text, File.separatorChar), text)
