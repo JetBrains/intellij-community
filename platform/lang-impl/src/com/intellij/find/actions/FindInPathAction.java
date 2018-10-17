@@ -21,7 +21,6 @@ import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,9 +43,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
       return;
     }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-      findManager.findInProject(dataContext, null);
-    });
+    findManager.findInProject(dataContext, null);
   }
 
   static void showNotAvailableMessage(AnActionEvent e, Project project) {
