@@ -51,6 +51,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.cls.ClsFormatException;
@@ -332,6 +333,8 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       synchronized (myMirrorLock) {
         mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
+          AstLoadingFilter.assertTreeLoadingAllowed(getVirtualFile());
+
           VirtualFile file = getVirtualFile();
           PsiClass[] classes = getClasses();
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + JavaFileType.DOT_DEFAULT_EXTENSION;
@@ -396,6 +399,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   public PsiFile getDecompiledPsiFile() {
     return (PsiFile)getMirror();
+  }
+
+  @Nullable
+  public PsiFile getCachedMirror() {
+    TreeElement mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
+    return mirrorTreeElement == null ? null : (PsiFile)mirrorTreeElement.getPsi();
   }
 
   @Override
@@ -505,7 +514,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
 
   @Override
   public boolean isContentsLoaded() {
-    return myStub != null;
+    return getCachedMirror() != null;
   }
 
   @Override

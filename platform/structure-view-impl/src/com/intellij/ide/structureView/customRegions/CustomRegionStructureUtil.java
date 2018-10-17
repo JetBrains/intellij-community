@@ -11,6 +11,7 @@ import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,8 +25,8 @@ public class CustomRegionStructureUtil {
 
   public static Collection<StructureViewTreeElement> groupByCustomRegions(@NotNull PsiElement rootElement,
                                                                           @NotNull Collection<StructureViewTreeElement> originalElements) {
-    if (rootElement instanceof StubBasedPsiElement &&
-        ((StubBasedPsiElement)rootElement).getStub() != null) {
+    if (rootElement instanceof PsiFileEx && !((PsiFileEx)rootElement).isContentsLoaded() ||
+        rootElement instanceof StubBasedPsiElement && ((StubBasedPsiElement)rootElement).getStub() != null) {
       return originalElements;
     }
     Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(originalElements, element -> {
