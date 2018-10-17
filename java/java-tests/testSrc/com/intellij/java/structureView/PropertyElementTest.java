@@ -23,7 +23,7 @@ import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PROTECTED;
 import static com.intellij.psi.util.PsiUtil.ACCESS_LEVEL_PUBLIC;
 import static org.junit.Assert.assertArrayEquals;
 
-public class PropertyElementTest extends JavaFileStructureTestCaseBase {
+public class PropertyElementTest extends LightJavaStructureViewTestCaseBase {
   @Language("JAVA")
   public static final String INTERFACE = "interface Interface {" + "\n" +
                                          " void setII(int ii);" + "\n" +

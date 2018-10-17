@@ -4,7 +4,7 @@ package com.intellij.java.structureView;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 
-public abstract class JavaFileStructureTestCaseBase extends LightCodeInsightFixtureTestCase {
+public abstract class LightJavaStructureViewTestCaseBase extends LightCodeInsightFixtureTestCase {
   @Language("JAVA")
   public static final String INTERFACE = "interface Interface {" + "\n" +
                                          " void g();" + "\n" +
