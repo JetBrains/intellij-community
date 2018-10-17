@@ -55,9 +55,11 @@ class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
 
     if (value instanceof String) {
       String text = (String)value;
-      PsiElement source = Objects.requireNonNull(element.getSourcePsi());
-      PsiReference reference = new PropertyReference(text, source, bundleName, soft);
-      return new PsiReference[]{reference};
+      if (text.indexOf('\n') == -1) {
+        PsiElement source = Objects.requireNonNull(element.getSourcePsi());
+        PsiReference reference = new PropertyReference(text, source, bundleName, soft);
+        return new PsiReference[]{reference};
+      }
     }
     return PsiReference.EMPTY_ARRAY;
   }
