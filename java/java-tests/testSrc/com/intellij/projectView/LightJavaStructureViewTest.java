@@ -114,15 +114,18 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
            "void toOverride(){}}\n" +
            "class aClass extends Abstract {\n" +
            "void toImplement(){};\n" +
-           "void toOverride(){};}", "Test.java\n" +
-                                    " Abstract\n" +
-                                    "  toImplement(): void\n" +
-                                    "  toOverride(): void\n" +
-                                    " aClass\n" +
-                                    "  Abstract\n" +
-                                    "   toImplement(): void\n" +
-                                    "  Abstract\n" +
-                                    "   toOverride(): void\n", true, false);
+           "void toOverride(){};}",
+
+           "-Test.java\n" +
+           " -Abstract\n" +
+           "  toImplement(): void\n" +
+           "  toOverride(): void\n" +
+           " -aClass\n" +
+           "  -Abstract\n" +
+           "   toImplement(): void\n" +
+           "  -Abstract\n" +
+           "   toOverride(): void"
+      , true, false);
   }
 
   public void testPropertiesGrouping() {
@@ -132,9 +135,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   setI(int): void\n" +
                      "   getI(): int\n" +
                      "   i: int\n");
@@ -144,9 +147,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   setI(int): void\n" +
                      "   getI(): int\n");
 
@@ -156,9 +159,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   setI(int): void\n" +
                      "   getI(): int\n" +
                      "  i: String\n");
@@ -168,9 +171,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   getI(): int\n" +
                      "   i: int\n");
 
@@ -178,9 +181,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  void setI(int i){}\n" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   setI(int): void\n");
 
 
@@ -189,20 +192,19 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: String\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: String\n" +
                      "   setI(String): void\n" +
-                     "  i: int\n" +
+                     "  -i: int\n" +
                      "   getI(): int\n");
-    //.hasModifierProperty(PsiModifier.STATIC)
 
     doPropertiesTest("class Foo { \n" +
                      "  int i: \n" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
                      "  i: int\n");
 
     doPropertiesTest("class Foo { \n" +
@@ -210,9 +212,9 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
                      "  int getI(){}" +
                      " }",
 
-                     "Test.java\n" +
-                     " Foo\n" +
-                     "  i: int\n" +
+                     "-Test.java\n" +
+                     " -Foo\n" +
+                     "  -i: int\n" +
                      "   setI(int): void\n" +
                      "   getI(): int\n");
   }
@@ -230,13 +232,14 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
            "    };\n" +
            "  }\n" +
            "}",
-           "Test.java\n" +
-           " Foo\n" +
-           "  foo(): void\n" +
-           "   Inner\n" +
+
+           "-Test.java\n" +
+           " -Foo\n" +
+           "  -foo(): void\n" +
+           "   -Inner\n" +
            "    run(): void\n" +
-           "   $1\n" +
-           "    run(): void\n" +
+           "   -$1\n" +
+           "    -run(): void\n" +
            "     Inner2");
   }
 
@@ -263,11 +266,11 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
       "    //endregion\n" +
       "}",
 
-      "Test.java\n" +
-      " Main\n" +
-      "  with empty row\n" +
+      "-Test.java\n" +
+      " -Main\n" +
+      "  -with empty row\n" +
       "   filter(String): String\n" +
-      "  without empty row\n" +
+      "  -without empty row\n" +
       "   foo(String): void"
     );
   }
