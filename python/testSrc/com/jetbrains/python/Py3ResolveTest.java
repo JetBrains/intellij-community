@@ -792,6 +792,28 @@ public class Py3ResolveTest extends PyResolveTestCase {
     );
   }
 
+  // PY-32286
+  public void testPartialStubPackageInsteadInlinePackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.pyi", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
   // PY-30942
   public void testNoInlinePackageInsteadStubPackage() {
     final String path = "resolve/" + getTestName(false);
