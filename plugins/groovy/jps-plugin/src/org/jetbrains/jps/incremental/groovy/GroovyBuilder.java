@@ -157,6 +157,11 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return myBuilderName;
   }
 
+  @Override
+  public long getExpectedBuildTime() {
+    return 100;
+  }
+
   private static class RecompileStubSources implements ClassPostProcessor {
 
     @Override
