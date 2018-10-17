@@ -35,7 +35,6 @@ import java.io.File
 import java.nio.file.Paths
 import javax.swing.JList
 import javax.swing.JPanel
-import kotlin.properties.Delegates.notNull
 
 internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                                                                          "Passwords",
@@ -49,7 +48,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val inKeychain = RadioButton("In native Keychain")
 
   private val inKeePass = RadioButton("In KeePass")
-  private var keePassDbFile: TextFieldWithBrowseButton by notNull()
+  private var keePassDbFile: TextFieldWithBrowseButton? = null
 
   private val pgpKeyModel = CollectionComboBoxModel<PgpKey?>()
 
@@ -68,7 +67,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     @Suppress("IfThenToElvis")
-    keePassDbFile.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
+    keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
     updateEnabledState()
 
     val secretKeys = pgp.listKeys()
@@ -81,6 +80,9 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
+    if (keePassDbFile == null) {
+      return false
+    }
     return getNewProviderType() != settings.providerType || isKeepassFileLocationChanged(settings) || isPgpKeyChanged(settings)
   }
 
@@ -154,7 +156,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   private fun getNewDbFile() = getNewDbFileAsString()?.let { Paths.get(it) }
 
-  private fun getNewDbFileAsString() = keePassDbFile.text.trim().nullize()
+  private fun getNewDbFileAsString() = keePassDbFile!!.text.trim().nullize()
 
   private fun updateEnabledState() {
     modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getNewProviderType() == ProviderType.KEEPASS
