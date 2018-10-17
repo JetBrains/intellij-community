@@ -504,26 +504,34 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     StructureViewFactoryEx.getInstanceEx(myProject).setActiveAction(name, state);
     ourSettingsModificationCount.incrementAndGet();
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      rebuild();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      waitForRebuildAndExpand();
     }
     else {
-      AtomicBoolean complete = new AtomicBoolean(false);
-      //noinspection TestOnlyProblems
-      Promise<Void> promise = rebuildAndUpdate().onProcessed(ignore -> complete.set(true));
-      while (!complete.get()) {
-        //noinspection TestOnlyProblems
-        UIUtil.dispatchAllInvocationEvents();
-        try {
-          promise.blockingGet(20, TimeUnit.MILLISECONDS);
-        }
-        catch (Exception ignore) {
-        }
-      }
+      rebuild();
+      TreeUtil.expand(getTree(), 2);
+    }
+  }
+
+  @SuppressWarnings("TestOnlyProblems")
+  private void waitForRebuildAndExpand() {
+    wait(rebuildAndUpdate());
+    UIUtil.dispatchAllInvocationEvents();
+    wait(TreeUtil.promiseExpand(getTree(), 2));
+  }
+
+  private static void wait(Promise<?> originPromise) {
+    AtomicBoolean complete = new AtomicBoolean(false);
+    Promise<?> promise = originPromise.onProcessed(ignore -> complete.set(true));
+    while (!complete.get()) {
       //noinspection TestOnlyProblems
       UIUtil.dispatchAllInvocationEvents();
+      try {
+        promise.blockingGet(10, TimeUnit.MILLISECONDS);
+      }
+      catch (Exception ignore) {
+      }
     }
-    TreeUtil.expand(getTree(), 2);
   }
 
   @Override
