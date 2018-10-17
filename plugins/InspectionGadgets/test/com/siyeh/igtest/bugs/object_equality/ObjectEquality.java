@@ -86,3 +86,28 @@ class Demo {
     A,B
   }
 }
+final class Test {
+
+  public void doSomething(Object other) {
+    if(this == other) {
+      // No Warning
+    }
+    if(other == this) {
+      // Warning
+    }
+  }
+
+}
+
+class Test2 {
+  private Test2() {}
+
+  public void doSomething(Object other) {
+    if(this == other) {
+      // No Warning
+    }
+    if(other == this) {
+      // Warning
+    }
+  }
+}
