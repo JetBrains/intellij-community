@@ -135,7 +135,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 

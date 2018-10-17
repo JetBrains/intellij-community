@@ -19,6 +19,7 @@ import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
@@ -33,7 +34,6 @@ import java.util.function.Function;
  */
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
-  private final Set<RenameHandler> myHandlers  = new HashSet<>();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
   private Function<Collection<RenameHandler>, RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
@@ -46,23 +46,17 @@ public class RenameHandlerRegistry {
     myDefaultElementRenameHandler = new PsiElementRenameHandler();
   }
 
-  public boolean hasAvailableHandler(DataContext dataContext) {
+  public boolean hasAvailableHandler(@NotNull DataContext dataContext) {
     for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
-      if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
-    }
-    for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isAvailableOnDataContext(dataContext)) return true;
     }
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
 
   @Nullable
-  public RenameHandler getRenameHandler(DataContext dataContext) {
+  public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
-      checkHandler(renameHandler, dataContext, availableHandlers);
-    }
-    for (RenameHandler renameHandler : myHandlers) {
       checkHandler(renameHandler, dataContext, availableHandlers);
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
