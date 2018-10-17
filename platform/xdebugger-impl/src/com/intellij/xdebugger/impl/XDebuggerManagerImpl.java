@@ -142,6 +142,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     }
   }
 
+  void updateExecutionPoint(GutterIconRenderer renderer) {
+    myExecutionPointHighlighter.updateGutterIcon(renderer);
+  }
+
   @Override
   @NotNull
   public XBreakpointManagerImpl getBreakpointManager() {
