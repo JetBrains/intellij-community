@@ -241,8 +241,17 @@ public class GitHistoryUtils {
     return ArrayUtil.toStringArray(parameters);
   }
 
-  // used externally
-  @SuppressWarnings("unused")
+  /**
+   * Load commit information in a form of {@link GitCommit} (containing commit details and changes to commit parents)
+   * in the repository using `git log` command.
+   *
+   * @param project        context project
+   * @param root           repository root
+   * @param commitConsumer consumer for commits
+   * @param parameters     additional parameters for `git log` command
+   * @throws VcsException
+   */
+  @SuppressWarnings("unused") // used externally
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
@@ -250,6 +259,15 @@ public class GitHistoryUtils {
     GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
   }
 
+  /**
+   * Load commit information in a form of {@link TimedVcsCommit} (containing hash, parents and commit time) in the repository using `git log` command.
+   *
+   * @param project        context project
+   * @param root           repository root
+   * @param commitConsumer consumer for commits
+   * @param parameters     additional parameters for `git log` command
+   * @throws VcsException
+   */
   public static void loadTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull Consumer<? super TimedVcsCommit> commitConsumer,
