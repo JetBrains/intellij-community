@@ -139,7 +139,7 @@ public final class IconLoader {
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
-    return findIcon(path, null, callerClass, callerClass.getClassLoader(), HandleNotFound.LOG_ERROR, false);
+    return findIcon(path, null, callerClass, callerClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
   }
 
   @Nullable
@@ -151,7 +151,7 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(true), true);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), STRICT ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.LOG_ERROR, true);
   }
 
   public static void activate() {
