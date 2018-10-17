@@ -1251,6 +1251,10 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  @Override
+  public long getExpectedBuildTime() {
+    return 100;
+  }
 
   private static final Key<Semaphore> COUNTER_KEY = Key.create("_async_task_counter_");
 }

@@ -100,6 +100,14 @@ public class BuildTargetsState {
     getTypeState(type).removeStaleTarget(targetId);
   }
 
+  public void setAverageBuildTime(BuildTargetType<?> type, long time) {
+    getTypeState(type).setAverageTargetBuildTime(time);
+  }
+
+  public long getAverageBuildTime(BuildTargetType<?> type) {
+    return getTypeState(type).getAverageTargetBuildTime();
+  }
+
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
     BuildTargetTypeState state = myTypeStates.get(type);
     if (state == null) {
