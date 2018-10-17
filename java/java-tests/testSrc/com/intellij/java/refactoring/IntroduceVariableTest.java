@@ -204,6 +204,21 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Node"));
   }
 
+  public void testCaseLabel() {
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "int"));
+  }
+
+  public void testCaseLabelEnum() {
+    try {
+      doTest(new MockIntroduceVariableHandler("temp", true, false, false, ""));
+    }
+    catch (RuntimeException e) {
+      assertEquals("Error message:Cannot perform refactoring.\nEnum constant in switch label cannot be extracted", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
   public void testIfConditionAndChain() {
     doTest(new MockIntroduceVariableHandler("temp", true, false, false, CommonClassNames.JAVA_LANG_STRING));
   }

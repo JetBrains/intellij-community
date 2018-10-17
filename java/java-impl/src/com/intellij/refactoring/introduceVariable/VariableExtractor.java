@@ -254,6 +254,12 @@ class VariableExtractor {
         return firstOccurrence;
       }
     }
+    if (anchor instanceof PsiSwitchLabelStatement) {
+      PsiSwitchStatement statement = ((PsiSwitchLabelStatement)anchor).getEnclosingSwitchStatement();
+      if (statement != null) {
+        return statement;
+      }
+    }
     if (RefactoringUtil.isLoopOrIf(anchor.getParent())) return anchor;
     PsiElement child = locateAnchor(anchor);
     if (IntroduceVariableBase.isFinalVariableOnLHS(expr)) {

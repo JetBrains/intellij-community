@@ -589,6 +589,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
     }
 
+    String enumInSwitchError = RefactoringUtil.checkEnumConstantInSwitchLabel(expr);
+    if (enumInSwitchError != null) {
+      showErrorMessage(project, editor, enumInSwitchError);
+      return false;
+    }
+
 
     final PsiType originalType = RefactoringUtil.getTypeByExpressionWithExpectedType(expr);
     if (originalType == null || LambdaUtil.notInferredType(originalType)) {
@@ -662,7 +668,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             getSettings(project, editor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor,
                         choice);
 
-          final boolean cantChangeFinalModifier = (hasWriteAccess || inFinalContext) && allChoice;
+          final boolean cantChangeFinalModifier = (hasWriteAccess && allChoice) || inFinalContext;
 
           PsiExpression[] allOccurrences = Arrays.stream(occurrences)
             .filter(occurrence -> allChoice || (noWriteChoice && !PsiUtil.isAccessedForWriting(occurrence)) || expr.equals(occurrence))
