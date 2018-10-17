@@ -53,8 +53,8 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         .forEach(operands -> process(expression, operands, and));
     }
 
-    private boolean isAllowed(PsiExpression expression) {
-      return ReorderingUtils.isSideEffectFree(myHolder.getFile(), expression, true);
+    private static boolean isAllowed(PsiExpression expression) {
+      return ReorderingUtils.isSideEffectFree(expression, true);
     }
 
     private void process(PsiPolyadicExpression context, List<PsiExpression> operands, boolean and) {

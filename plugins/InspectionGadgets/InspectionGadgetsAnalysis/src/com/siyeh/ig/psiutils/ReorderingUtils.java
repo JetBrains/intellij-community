@@ -2,13 +2,13 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -124,8 +124,7 @@ public class ReorderingUtils {
       throw new IndexOutOfBoundsException("operandIndex = "+operandIndex);
     }
     PsiExpression[] operands = Arrays.copyOfRange(expressionOperands, 0, operandIndex + 1);
-    PsiFile file = polyadicExpression.getContainingFile();
-    if (Arrays.stream(operands).allMatch(expression -> isSideEffectFree(file, expression, false))) {
+    if (Arrays.stream(operands).allMatch(expression -> isSideEffectFree(expression, false))) {
       return ThreeState.YES;
     }
     if (lastOperandImpliesPrevious(polyadicExpression, operands)) {
@@ -138,7 +137,7 @@ public class ReorderingUtils {
     assert operands.length > 1;
     boolean and = expression.getOperationTokenType() == JavaTokenType.ANDAND;
     PsiFile file = expression.getContainingFile();
-    if (Arrays.stream(operands).anyMatch(e -> !PsiTreeUtil.processElements(e, element -> !isErroneous(file, element)))) return false;
+    if (Arrays.stream(operands).anyMatch(e -> !PsiTreeUtil.processElements(e, element -> !isErroneous(element)))) return false;
     String expressionText = StreamEx.of(operands, 0, operands.length - 1).prepend(operands[operands.length - 1])
       .map(PsiExpression::getText).joining(and ? " && " : " || ");
     PsiPolyadicExpression expressionToAnalyze =
@@ -157,17 +156,17 @@ public class ReorderingUtils {
     return !computeOperandValues(expressionToAnalyze, false).values().contains(state);
   }
 
-  private static boolean isErroneous(PsiFile file, PsiElement element) {
+  private static boolean isErroneous(PsiElement element) {
     return element instanceof PsiErrorElement ||
            element instanceof PsiLiteralExpression &&
-           HighlightUtil.checkLiteralExpressionParsingError((PsiLiteralExpression)element, PsiUtil.getLanguageLevel(file), file) != null;
+           PsiLiteralUtil.isUnsafeLiteral((PsiLiteralExpression)element);
   }
 
-  public static boolean isSideEffectFree(PsiFile file, PsiExpression expression, boolean allowNpe) {
+  public static boolean isSideEffectFree(PsiExpression expression, boolean allowNpe) {
     // Disallow anything which may throw or produce side effect
     return PsiTreeUtil.processElements(expression, element -> {
       if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
-          element instanceof PsiTypeCastExpression || isErroneous(file, element)) {
+          element instanceof PsiTypeCastExpression || isErroneous(element)) {
         return false;
       }
       if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
