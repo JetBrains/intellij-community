@@ -18,6 +18,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.tree.TreeModel;
 import java.util.Collection;
 import java.util.List;
@@ -288,8 +289,10 @@ public class LightJavaStructureViewTest extends LightCodeInsightFixtureTestCase 
       svc.setActionActive(SuperTypesGrouper.ID, showInterfaces);
       svc.setActionActive(PropertiesGrouper.ID, showProperties);
       svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true);
-      TreeUtil.expandAll(svc.getTree());
-      PlatformTestUtil.assertTreeStructureEquals(svc.getTree().getModel(), expected);
+      JTree tree = svc.getTree();
+      PlatformTestUtil.waitWhileBusy(tree);
+      PlatformTestUtil.expandAll(tree);
+      PlatformTestUtil.assertTreeStructureEquals(tree.getModel(), expected);
     });
   }
 }
