@@ -58,6 +58,10 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiSwitchLabelStatement label = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchLabelStatement.class);
     if (label == null) return;
+    deleteLabel(label);
+  }
+
+  public static void deleteLabel(PsiSwitchLabelStatement label) {
     if (shouldRemoveBranch(label)) {
       PsiCodeBlock scope = ObjectUtils.tryCast(label.getParent(), PsiCodeBlock.class);
       if (scope == null) return;

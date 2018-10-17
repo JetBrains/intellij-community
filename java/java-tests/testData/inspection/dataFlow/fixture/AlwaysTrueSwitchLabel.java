@@ -1,39 +1,39 @@
 class Scratch {
   public static void main(String[] args) {
     switch("ping") {
-      case "ping":
+      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
         System.out.println("ping");
         break;
-      <warning descr="Switch label 'case \"pong\":' is unreachable">case "pong":</warning>
+      case "pong":
         System.out.println("pong");
         break;
-      <warning descr="Switch label 'case \"simple\":' is unreachable">case "simple":</warning>
+      case "simple":
         System.out.println("simple");
         break;
       default:
         break;
     }
     switch("ping") {
-      <warning descr="Switch label 'case \"pong\":' is unreachable">case "pong":</warning>
+      case "pong":
         System.out.println("pong");
         break;
-      case "ping":
+      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
         System.out.println("ping");
         break;
-      <warning descr="Switch label 'case \"simple\":' is unreachable">case "simple":</warning>
+      case "simple":
         System.out.println("simple");
         break;
       default:
         break;
     }
     switch("ping") {
-      <warning descr="Switch label 'case \"pong\":' is unreachable">case "pong":</warning>
+      case "pong":
         System.out.println("pong");
         break;
-      <warning descr="Switch label 'case \"simple\":' is unreachable">case "simple":</warning>
+      case "simple":
         System.out.println("simple");
         break;
-      case "ping":
+      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
         System.out.println("ping");
         break;
       default:

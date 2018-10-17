@@ -230,6 +230,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   @Nullable
+  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+    return null;
+  }
+
+  @Nullable
   protected LocalQuickFix createIntroduceVariableFix(PsiExpression expression) {
     return null;
   }
@@ -253,18 +258,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     ArrayList<Instruction> allProblems = new ArrayList<>();
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
-    allProblems.addAll(visitor.getClassCastExceptionInstructions());
-    allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), instruction1 -> instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1)));
+    StreamEx.of(runner.getInstructions()).select(InstanceofInstruction.class).filter(visitor::isInstanceofRedundant).into(allProblems);
 
     HashSet<PsiElement> reportedAnchors = new HashSet<>();
 
+    reportFailingCasts(holder, visitor, reportedAnchors);
+    reportUnreachableSwitchBranches(trueSet, falseSet, holder);
+
     for (Instruction instruction : allProblems) {
-      if (instruction instanceof TypeCastInstruction &&
-               reportedAnchors.add(((TypeCastInstruction)instruction).getExpression().getCastType())) {
-        reportCastMayFail(holder, (TypeCastInstruction)instruction);
-      }
-      else if (instruction instanceof BranchingInstruction) {
-        handleBranchingInstruction(holder, visitor, trueSet, falseSet, reportedAnchors, (BranchingInstruction)instruction);
+      if (instruction instanceof BranchingInstruction) {
+        handleBranchingInstruction(holder, visitor, trueSet, reportedAnchors, (BranchingInstruction)instruction);
       }
     }
 
@@ -298,6 +301,32 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportDuplicateAssignments(holder, reportedAnchors, visitor);
     reportPointlessSameArguments(holder, reportedAnchors, visitor);
+  }
+
+  private void reportUnreachableSwitchBranches(Set<Instruction> trueSet, Set<Instruction> falseSet, ProblemsHolder holder) {
+    Set<PsiSwitchStatement> coveredSwitches = new HashSet<>();
+    Set<PsiSwitchLabelStatement> trueLabels = StreamEx.of(trueSet).select(BranchingInstruction.class)
+      .map(BranchingInstruction::getPsiAnchor).select(PsiSwitchLabelStatement.class).toSet();
+    Set<PsiSwitchLabelStatement> falseLabels = StreamEx.of(falseSet).select(BranchingInstruction.class)
+      .map(BranchingInstruction::getPsiAnchor).select(PsiSwitchLabelStatement.class).toSet();
+
+    for (PsiSwitchLabelStatement label : trueLabels) {
+      PsiSwitchStatement statement = label.getEnclosingSwitchStatement();
+      if (statement == null) continue;
+      if (!StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatement.class))
+        .skip(1).allMatch(falseLabels::contains)) {
+        continue;
+      }
+      coveredSwitches.add(statement);
+      holder.registerProblem(label, InspectionsBundle.message("dataflow.message.only.switch.label"),
+                             createUnwrapSwitchLabelFix());
+    }
+    for (PsiSwitchLabelStatement label : falseLabels) {
+      if (!coveredSwitches.contains(label.getEnclosingSwitchStatement())) {
+        holder.registerProblem(label, InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
+                               new DeleteSwitchLabelFix(label));
+      }
+    }
   }
 
   private void reportConstants(ProblemsHolder holder, DataFlowInstructionVisitor visitor, HashSet<PsiElement> reportedAnchors) {
@@ -665,19 +694,22 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     holder.registerProblem(toHighlight, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
-  private static void reportCastMayFail(ProblemsHolder holder, TypeCastInstruction instruction) {
-    PsiTypeCastExpression typeCast = instruction.getExpression();
-    PsiExpression operand = typeCast.getOperand();
-    PsiTypeElement castType = typeCast.getCastType();
-    assert castType != null;
-    assert operand != null;
-    holder.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()));
+  private static void reportFailingCasts(ProblemsHolder holder, DataFlowInstructionVisitor visitor, HashSet<PsiElement> reportedAnchors) {
+    for (TypeCastInstruction instruction : visitor.getClassCastExceptionInstructions()) {
+      if (reportedAnchors.add(instruction.getExpression().getCastType())) {
+        PsiTypeCastExpression typeCast = instruction.getExpression();
+        PsiExpression operand = typeCast.getOperand();
+        PsiTypeElement castType = typeCast.getCastType();
+        assert castType != null;
+        assert operand != null;
+        holder.registerProblem(castType, InspectionsBundle.message("dataflow.message.cce", operand.getText()));
+      }
+    }
   }
 
   private void handleBranchingInstruction(ProblemsHolder holder,
                                           StandardInstructionVisitor visitor,
                                           Set<Instruction> trueSet,
-                                          Set<Instruction> falseSet,
                                           HashSet<PsiElement> reportedAnchors,
                                           BranchingInstruction instruction) {
     PsiElement psiAnchor = instruction.getPsiAnchor();
@@ -691,26 +723,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reportConstantBoolean(holder, psiAnchor, reportedAnchors, true);
       }
     }
-    else if (psiAnchor instanceof PsiSwitchLabelStatement) {
-      if (falseSet.contains(instruction)) {
-        holder.registerProblem(psiAnchor,
-                               InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
-                               new DeleteSwitchLabelFix((PsiSwitchLabelStatement)psiAnchor));
-      } else if (trueSet.contains(instruction)) {
-        // If switch branch is always reachable, then all the subsequent branches are unreachable (thus weren't analyzed)
-        PsiSwitchLabelStatement current = (PsiSwitchLabelStatement)psiAnchor;
-        while(true) {
-          current = PsiTreeUtil.getNextSiblingOfType(current, PsiSwitchLabelStatement.class);
-          if (current == null) break;
-          if (!current.isDefaultCase()) {
-            holder.registerProblem(current,
-                                   InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
-                                   new DeleteSwitchLabelFix(current));
-          }
-        }
-      }
-    }
-    else if (psiAnchor != null && !isFlagCheck(psiAnchor)) {
+    else if (psiAnchor != null && !(psiAnchor instanceof PsiSwitchLabelStatement) && !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
       final PsiElement parent = psiAnchor.getParent();
       if (parent instanceof PsiAssignmentExpression &&
