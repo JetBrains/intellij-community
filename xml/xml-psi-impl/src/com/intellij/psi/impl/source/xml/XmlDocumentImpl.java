@@ -43,6 +43,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
@@ -256,7 +257,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
                                 ? containingFile
                                 : XmlUtil.findNamespace(containingFile, namespace);
         if (xmlFile != null) {
-          final XmlDocument document = xmlFile.getDocument();
+          final XmlDocument document = AstLoadingFilter.forceAllowTreeLoading(xmlFile, () -> xmlFile.getDocument());
           if (document != null) {
             return (XmlNSDescriptor)document.getMetaData();
           }
