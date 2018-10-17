@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcsUtil.VcsUtil;
@@ -247,6 +248,13 @@ public class GitHistoryUtils {
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
     GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
+  }
+
+  public static void loadTimedCommits(@NotNull Project project,
+                                      @NotNull VirtualFile root,
+                                      @NotNull Consumer<? super TimedVcsCommit> commitConsumer,
+                                      @NotNull String... parameters) throws VcsException {
+    GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull VirtualFile root, @NotNull String commitsId) throws VcsException {

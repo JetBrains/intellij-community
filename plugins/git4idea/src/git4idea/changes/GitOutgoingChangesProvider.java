@@ -12,13 +12,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.history.GitHistoryUtils;
-import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,14 +90,15 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (base == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
-    final List<Pair<SHAHash, Date>> hashes = GitHistoryUtils.onlyHashesHistory(myProject,
-                                                                               VcsUtil.getFilePath(vcsRoot), vcsRoot, (base.asString() + "..HEAD"));
 
-    if (hashes.isEmpty()) return Collections.emptyList(); // no local commits
-    final String first = hashes.get(0).getFirst().getValue(); // optimization
-    final Set<String> localHashes = new HashSet<>();
-    for (Pair<SHAHash, Date> hash : hashes) {
-      localHashes.add(hash.getFirst().getValue());
+    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
+    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commits::add, base.asString() + "..HEAD");
+
+    if (commits.isEmpty()) return Collections.emptyList(); // no local commits
+    String first = commits.get(0).getId().asString(); // optimization
+    Set<String> localHashes = new HashSet<>();
+    for (TimedVcsCommit commit : commits) {
+      localHashes.add(commit.getId().asString());
     }
     final Collection<Change> result = new ArrayList<>();
     for (Change change : localChanges) {
