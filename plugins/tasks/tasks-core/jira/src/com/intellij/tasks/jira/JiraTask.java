@@ -2,6 +2,7 @@ package com.intellij.tasks.jira;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
+import com.intellij.ui.DeferredIconImpl;
 import icons.TasksCoreIcons;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,10 @@ import java.util.Date;
  */
 public abstract class JiraTask extends Task {
   protected final TaskRepository myRepository;
+  // Deferred icon must be stored as a field because otherwise it's going to initiate repainting 
+  // of the containing component and will be re-built anew indefinitely.
+  // It can be accessed not only in EDT, e.g. to get completion items for tasks.
+  private volatile Icon myIcon;
 
   protected JiraTask(@NotNull TaskRepository repository) {
     myRepository = repository;
@@ -64,7 +69,11 @@ public abstract class JiraTask extends Task {
   @Override
   @NotNull
   public final Icon getIcon() {
-    return getIconByUrl(getIconUrl());
+    if (myIcon == null) {
+      // getIconUrl() shouldn't be called before the instance is properly initialized
+      myIcon = new DeferredIconImpl<>(TasksCoreIcons.Jira, getIconUrl(), false, this::getIconByUrl);
+    }
+    return myIcon;
   }
 
   @Nullable
