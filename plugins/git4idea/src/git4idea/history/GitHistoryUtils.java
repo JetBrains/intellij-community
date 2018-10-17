@@ -138,40 +138,24 @@ public class GitHistoryUtils {
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
 
+  /**
+   * Collect commit information in a form of {@link VcsCommitMetadata} (containing commit details, but no changes) for the specified hashes or references
+   *
+   * @param project context project
+   * @param root    repository root
+   * @param hashes  hashes or references
+   * @return a list of {@link VcsCommitMetadata} (one for each specified hash or reference) or null if something went wrong
+   * @throws VcsException
+   */
   @Nullable
-  public static List<VcsCommitMetadata> readLastCommits(@NotNull Project project,
-                                                        @NotNull VirtualFile root,
-                                                        @NotNull String... refs)
+  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
+                                                                  @NotNull VirtualFile root,
+                                                                  @NotNull String... hashes)
     throws VcsException {
-    final VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
-    if (factory == null) {
-      return null;
-    }
-
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME, SUBJECT, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, RAW_BODY, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
-
-    h.setSilent(true);
-    // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
-    h.addParameters("--no-walk");
-    h.addParameters(parser.getPretty(), "--encoding=UTF-8");
-    h.addParameters(refs);
-    h.endOptions();
-
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    List<GitLogRecord> records = parser.parse(output);
-    if (records.size() != refs.length) return null;
-
-    return ContainerUtil.map(records,
-                             record -> factory.createCommitMetadata(factory.createHash(record.getHash()),
-                                                                    GitLogUtil.getParentHashes(factory, record),
-                                                                    record.getCommitTime(),
-                                                                    root, record.getSubject(), record.getAuthorName(),
-                                                                    record.getAuthorEmail(),
-                                                                    record.getFullMessage(), record.getCommitterName(),
-                                                                    record.getCommitterEmail(),
-                                                                    record.getAuthorTimeStamp()));
+    List<? extends VcsCommitMetadata> result = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), root,
+                                                                              Arrays.asList(hashes));
+    if (result.size() != hashes.length) return null;
+    return result;
   }
 
   /**

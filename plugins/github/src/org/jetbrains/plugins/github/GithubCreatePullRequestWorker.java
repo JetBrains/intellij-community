@@ -392,8 +392,8 @@ public class GithubCreatePullRequestWorker {
     return myProgressManager.runProcessWithProgressSynchronously(() -> {
       String targetBranch = branch.getForkInfo().getRemoteName() + "/" + branch.getRemoteName();
       try {
-        List<VcsCommitMetadata> commits =
-          GitHistoryUtils.readLastCommits(myProject, myGitRepository.getRoot(), myCurrentBranch, targetBranch);
+        List<? extends VcsCommitMetadata> commits = GitHistoryUtils.readLastCommits(myProject, myGitRepository.getRoot(),
+                                                                                    myCurrentBranch, targetBranch);
         if (commits == null) return getSimpleDefaultDescriptionMessage(branch);
 
         VcsCommitMetadata localCommit = commits.get(0);
