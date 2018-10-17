@@ -1000,6 +1000,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void checkResult(@NotNull String text, boolean stripTrailingSpaces) {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      policy.beforeCheckResult(getFile());
+    }
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
@@ -1009,6 +1013,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void checkResult(@NotNull String filePath, @NotNull String text, boolean stripTrailingSpaces) {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      policy.beforeCheckResult(getFile());
+    }
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       PsiFile psiFile = getFileToCheck(filePath);
@@ -1443,6 +1451,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private void checkResultByFile(@NotNull String expectedFile, @NotNull PsiFile originalFile, boolean stripTrailingSpaces) {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      policy.beforeCheckResult(getFile());
+    }
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     if (!stripTrailingSpaces) {
       EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
@@ -1458,10 +1470,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                            boolean stripTrailingSpaces,
                            @NotNull SelectionAndCaretMarkupLoader loader,
                            @NotNull String actualText) {
-    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
-    if (policy != null) {
-      policy.beforeCheckResult(getFile());
-    }
     assertInitialized();
     Project project = getProject();
     Editor editor = getEditor();
