@@ -54,21 +54,23 @@ fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
   // check that stub packages are allowed and dir is lib root
   if (!withoutStubs &&
       containingFile != null &&
-      LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37) &&
-      dir.virtualFile.let { it == getClassOrContentOrSourceRoot(containingFile.project, it) }) {
+      LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37)) {
+    if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
 
-    val stubPackageName = "${resolvedSubdir.name}$STUBS_SUFFIX"
-    val subdirectory = dir.findSubdirectory(stubPackageName)
+    if (dir.virtualFile.let { it == getClassOrContentOrSourceRoot(containingFile.project, it) }) {
+      val stubPackageName = "${resolvedSubdir.name}$STUBS_SUFFIX"
+      val subdirectory = dir.findSubdirectory(stubPackageName)
 
-    // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
-    if (subdirectory?.name == stubPackageName) {
-      subdirectory.putUserData(STUB_PACKAGE_KEY, true)
+      // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
+      if (subdirectory?.name == stubPackageName) {
+        subdirectory.putUserData(STUB_PACKAGE_KEY, true)
 
-      return if (stubPackageIsPartial(subdirectory)) {
-        ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
-      }
-      else {
-        ResolveResultList.to(subdirectory)
+        return if (stubPackageIsPartial(subdirectory)) {
+          ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
+        }
+        else {
+          ResolveResultList.to(subdirectory)
+        }
       }
     }
   }
