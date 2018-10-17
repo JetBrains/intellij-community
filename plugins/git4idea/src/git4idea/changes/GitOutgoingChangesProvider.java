@@ -46,8 +46,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (base == null) {
       return new Pair<>(null, Collections.emptyList());
     }
-    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
-                                                                                handler -> handler.addParameters(base.asString() + "..HEAD"));
+    List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
+                                                                          handler -> handler.addParameters(base.asString() + "..HEAD"));
     return new Pair<>(base, map(lists, identity()));
   }
 
@@ -73,7 +73,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
   }
 
   @Override
-  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot) throws VcsException {
+  public Collection<Change> filterLocalChangesBasedOnLocalCommits(final Collection<Change> localChanges, final VirtualFile vcsRoot)
+    throws VcsException {
     final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
@@ -81,7 +82,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     final GitRevisionNumber base;
     try {
       base = getMergeBase(myProject, vcsRoot, searcher.getLocal(), searcher.getRemote());
-    } catch (VcsException e) {
+    }
+    catch (VcsException e) {
       LOG.info(e);
       return new ArrayList<>(localChanges);
     }
