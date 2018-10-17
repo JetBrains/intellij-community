@@ -22,7 +22,7 @@ interface WindowInfo {
 
   val floatingBounds: Rectangle?
 
-  val isMaximized : Boolean
+  val isMaximized: Boolean
 
   val isSplit: Boolean
 
