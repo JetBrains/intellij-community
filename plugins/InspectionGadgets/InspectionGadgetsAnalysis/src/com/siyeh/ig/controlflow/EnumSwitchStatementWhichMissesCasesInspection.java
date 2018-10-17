@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInspection.ElementAwareLocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -147,7 +148,7 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
   }
 
 
-  private static class CreateMissingSwitchBranchesFix extends InspectionGadgetsFix {
+  private static class CreateMissingSwitchBranchesFix extends InspectionGadgetsFix implements ElementAwareLocalQuickFix {
     private final Set<String> myNames;
 
     private CreateMissingSwitchBranchesFix(Set<String> names) {
@@ -224,6 +225,13 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
           addSwitchLabelStatementBefore(missingEnumElement, lastChild);
         }
       }
+    }
+
+    @Override
+    public boolean isAvailable(Project project, ProblemDescriptor descriptor, PsiElement element) {
+      PsiSwitchStatement fromDescriptor = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
+      PsiSwitchStatement fromCurrentElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiSwitchStatement.class);
+      return fromDescriptor == fromCurrentElement;
     }
 
     private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
