@@ -126,7 +126,7 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       , true, false);
   }
 
-  public void testPropertiesGrouping() {
+  public void testPropertiesGrouping1() {
     doPropertiesTest("class Foo { \n" +
                      "  int i;\n" +
                      "  void setI(int i){}\n" +
@@ -139,7 +139,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "   setI(int): void\n" +
                      "   getI(): int\n" +
                      "   i: int\n");
+  }
 
+  public void testPropertiesGrouping2() {
     doPropertiesTest("class Foo { \n" +
                      "  void setI(int i){}\n" +
                      "  int getI(){}" +
@@ -150,7 +152,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "  -i: int\n" +
                      "   setI(int): void\n" +
                      "   getI(): int\n");
+  }
 
+  public void testPropertiesGrouping3() {
     doPropertiesTest("class Foo { \n" +
                      "  String i;\n" +
                      "  void setI(int i){}\n" +
@@ -163,7 +167,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "   setI(int): void\n" +
                      "   getI(): int\n" +
                      "  i: String\n");
+  }
 
+  public void testPropertiesGrouping4() {
     doPropertiesTest("class Foo { \n" +
                      "  int i;\n" +
                      "  int getI(){}" +
@@ -174,7 +180,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "  -i: int\n" +
                      "   getI(): int\n" +
                      "   i: int\n");
+  }
 
+  public void testPropertiesGrouping5() {
     doPropertiesTest("class Foo { \n" +
                      "  void setI(int i){}\n" +
                      " }",
@@ -183,8 +191,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      " -Foo\n" +
                      "  -i: int\n" +
                      "   setI(int): void\n");
+  }
 
-
+  public void testPropertiesGrouping6() {
     doPropertiesTest("class Foo { \n" +
                      "  void setI(String i){}\n" +
                      "  int getI(){}" +
@@ -196,7 +205,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "   setI(String): void\n" +
                      "  -i: int\n" +
                      "   getI(): int\n");
+  }
 
+  public void testPropertiesGrouping7() {
     doPropertiesTest("class Foo { \n" +
                      "  int i: \n" +
                      " }",
@@ -204,7 +215,9 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
                      "-Test.java\n" +
                      " -Foo\n" +
                      "  i: int\n");
+  }
 
+  public void testPropertiesGrouping8() {
     doPropertiesTest("class Foo { \n" +
                      "  static void setI(int i){}\n" +
                      "  int getI(){}" +
@@ -565,5 +578,4 @@ public class JavaStructureViewTest extends LightJavaStructureViewTestCaseBase {
       PlatformTestUtil.assertTreeEqual(tree, expected);
     });
   }
-
 }
