@@ -286,19 +286,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         panelSize.width *= 1.15;
       }
       w.setSize(prev != null ? prev : panelSize);
-      w.addWindowFocusListener(new WindowAdapter() {
-        @Override
-        public void windowLostFocus(WindowEvent e) {
-          Window oppositeWindow = e.getOppositeWindow();
-          if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
-            return;
-          }
-          if (canBeClosed() || (!myIsPinned.get() && oppositeWindow != null)) {
-            //closeImmediately();
-            myDialog.doCancelAction();
-          }
-        }
-      });
 
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       if (showPoint != null) {
@@ -307,6 +294,26 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         w.setLocationRelativeTo(parent);
       }
       myDialog.show();
+
+      w.addWindowListener(new WindowAdapter() {
+        @Override
+        public void windowOpened(WindowEvent e) {
+          w.addWindowFocusListener(new WindowAdapter() {
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+              Window oppositeWindow = e.getOppositeWindow();
+              if (oppositeWindow == w || oppositeWindow != null && oppositeWindow.getOwner() == w) {
+                return;
+              }
+              if (canBeClosed() || (!myIsPinned.get() && oppositeWindow != null)) {
+                //closeImmediately();
+                myDialog.doCancelAction();
+              }
+            }
+          });
+        }
+      });
+
       JRootPane rootPane = getRootPane();
       if (rootPane != null) {
         if (myHelper.isReplaceState()) {
