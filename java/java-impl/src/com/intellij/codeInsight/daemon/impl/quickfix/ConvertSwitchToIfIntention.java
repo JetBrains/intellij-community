@@ -150,9 +150,9 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
       }
     }
     boolean unwrapDefault = false;
-    if (defaultBranch != null && defaultBranch.hasStatements()) {
+    if (defaultBranch != null) {
       unwrapDefault = defaultBranch.isAlwaysExecuted() || (switchStatement.getParent() instanceof PsiCodeBlock && !mayCompleteNormally);
-      if (!unwrapDefault) {
+      if (!unwrapDefault && defaultBranch.hasStatements()) {
         ifStatementBuilder.append("else ");
         dumpBody(defaultBranch, ifStatementBuilder, commentTracker);
       }
