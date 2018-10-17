@@ -59,10 +59,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     myPositionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
     mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
-  }
-
-  void initCarets() {
-    myCarets.add(new CaretImpl(myEditor));
+    myCarets.add(new CaretImpl(myEditor, this));
   }
 
   void onBulkDocumentUpdateStarted() {
@@ -269,7 +266,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   public Caret addCaret(@NotNull VisualPosition pos, boolean makePrimary) {
     EditorImpl.assertIsDispatchThread();
-    CaretImpl caret = new CaretImpl(myEditor);
+    CaretImpl caret = new CaretImpl(myEditor, this);
     caret.doMoveToVisualPosition(pos, false);
     if (addCaret(caret, makePrimary)) {
       return caret;
@@ -279,6 +276,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   boolean addCaret(@NotNull CaretImpl caretToAdd, boolean makePrimary) {
+    EditorImpl.assertIsDispatchThread();
     for (CaretImpl caret : myCarets) {
       if (caretsOverlap(caret, caretToAdd)) {
         return false;
@@ -361,6 +359,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   private void mergeOverlappingCaretsAndSelections() {
+    EditorImpl.assertIsDispatchThread();
     if (myCarets.size() <= 1) {
       return;
     }
@@ -429,6 +428,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   }
 
   void doWithCaretMerging(@NotNull Runnable runnable) {
+    EditorImpl.assertIsDispatchThread();
     if (myPerformCaretMergingAfterCurrentOperation) {
       runnable.run();
     }
@@ -472,7 +472,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           }
         }
         else {
-          caret = new CaretImpl(myEditor);
+          caret = new CaretImpl(myEditor, this);
           if (caretState != null && caretState.getCaretPosition() != null) {
             caret.moveToLogicalPosition(caretState.getCaretPosition(), false, null, false, false);
           }
