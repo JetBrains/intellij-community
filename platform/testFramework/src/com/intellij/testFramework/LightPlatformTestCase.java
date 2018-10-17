@@ -14,6 +14,8 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.ide.structureView.StructureViewFactory;
+import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.mock.MockApplication;
@@ -428,6 +430,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
       append(() -> TemplateDataLanguageMappings.getInstance(project).cleanupForNextTest()).
       append(() -> ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest()).
+      append(() -> ((StructureViewFactoryImpl)StructureViewFactory.getInstance(project)).cleanupForNextTest()).
       append(() -> ProjectManagerEx.getInstanceEx().closeTestProject(project)).
       append(() -> application.setDataProvider(null)).
       append(() -> ourTestCase = null).
