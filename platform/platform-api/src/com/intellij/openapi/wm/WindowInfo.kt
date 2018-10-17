@@ -22,6 +22,8 @@ interface WindowInfo {
 
   val floatingBounds: Rectangle?
 
+  val isMaximized : Boolean
+
   val isSplit: Boolean
 
   val type: ToolWindowType
