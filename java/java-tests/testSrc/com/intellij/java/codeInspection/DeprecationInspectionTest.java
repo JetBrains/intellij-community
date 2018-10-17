@@ -69,6 +69,10 @@ public class DeprecationInspectionTest extends InspectionTestCase {
     doTest();
   }
 
+  public void testDeprecatedAnnotationProperty() {
+    doTest();
+  }
+
   public void testMethodsOfDeprecatedClass() {
     final DeprecationInspection tool = new DeprecationInspection();
     tool.IGNORE_METHODS_OF_DEPRECATED = false;

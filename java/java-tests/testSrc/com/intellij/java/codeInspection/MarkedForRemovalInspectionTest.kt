@@ -50,6 +50,8 @@ class MarkedForRemovalInspectionTest : LightCodeInsightFixtureTestCase() {
 
   fun testSameOutermostClass() = doTest()
 
+  fun testAnnotationProperty() = doTest()
+
   fun testSameOutermostClassOff() {
     val oldIgnore = inspection.IGNORE_IN_SAME_OUTERMOST_CLASS
     try {

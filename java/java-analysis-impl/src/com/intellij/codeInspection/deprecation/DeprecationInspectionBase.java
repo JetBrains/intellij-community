@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -194,6 +195,32 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
         String key = myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol";
         String description = JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(target));
         myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      }
+    }
+
+    @Override
+    public void visitNameValuePair(PsiNameValuePair pair) {
+      String name = pair.getName();
+      PsiIdentifier identifier = pair.getNameIdentifier();
+      if (name != null && identifier != null) {
+        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
+        if (annotation != null) {
+          PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
+          if (reference != null) {
+            PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiClass) {
+              for (JvmMethod method : ((PsiClass)resolved).findMethodsByName(name)) {
+                if (method instanceof PsiMethod &&
+                    isMarkedForRemoval((PsiMethod)method, myForRemoval) &&
+                    ((PsiMethod)method).isDeprecated()) {
+                  String description = JavaErrorMessages.message(myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol", name);
+                  myHolder.registerProblem(identifier, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+                  break;
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
