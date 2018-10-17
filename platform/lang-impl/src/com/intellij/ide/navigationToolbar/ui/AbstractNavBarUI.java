@@ -172,7 +172,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     if (!floating || !item.isLastElement()) {
       if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
         Icon icon = AllIcons.Ide.NavBarSeparator;
-        icon.paintIcon(item, g2, w - icon.getIconWidth(), h2 - icon.getIconHeight() / 2);
+        icon.paintIcon(item, g2, w - icon.getIconWidth() - JBUI.scale(1), h2 - icon.getIconHeight() / 2);
       }
     }
 
