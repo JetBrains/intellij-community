@@ -148,9 +148,9 @@ public class GitHistoryUtils {
    * @throws VcsException
    */
   @Nullable
-  public static List<? extends VcsCommitMetadata> readLastCommits(@NotNull Project project,
-                                                                  @NotNull VirtualFile root,
-                                                                  @NotNull String... hashes)
+  public static List<? extends VcsCommitMetadata> collectCommitsMetadata(@NotNull Project project,
+                                                                         @NotNull VirtualFile root,
+                                                                         @NotNull String... hashes)
     throws VcsException {
     List<? extends VcsCommitMetadata> result = GitLogUtil.collectShortDetails(project, GitVcs.getInstance(project), root,
                                                                               Arrays.asList(hashes));
