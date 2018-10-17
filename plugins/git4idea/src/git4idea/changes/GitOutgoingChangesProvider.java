@@ -12,8 +12,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
@@ -91,20 +89,14 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
       return new ArrayList<>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
 
-    List<TimedVcsCommit> commits = ContainerUtil.newArrayList();
-    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commits::add, base.asString() + "..HEAD");
-
-    if (commits.isEmpty()) return Collections.emptyList(); // no local commits
-    String first = commits.get(0).getId().asString(); // optimization
     Set<String> localHashes = new HashSet<>();
-    for (TimedVcsCommit commit : commits) {
-      localHashes.add(commit.getId().asString());
-    }
-    final Collection<Change> result = new ArrayList<>();
+    GitHistoryUtils.loadTimedCommits(myProject, vcsRoot, commit -> localHashes.add(commit.getId().asString()), base.asString() + "..HEAD");
+    if (localHashes.isEmpty()) return Collections.emptyList();
+
+    Collection<Change> result = new ArrayList<>();
     for (Change change : localChanges) {
       if (change.getBeforeRevision() != null) {
-        final String changeBeforeRevision = change.getBeforeRevision().getRevisionNumber().asString().trim();
-        if (first.equals(changeBeforeRevision) || localHashes.contains(changeBeforeRevision)) {
+        if (localHashes.contains(change.getBeforeRevision().getRevisionNumber().asString().trim())) {
           result.add(change);
         }
       }
