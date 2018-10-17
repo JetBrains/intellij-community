@@ -4,7 +4,9 @@ package com.intellij.credentialStore
 import com.intellij.credentialStore.gpg.Pgp
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.io.toByteArray
 import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import java.security.Key
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
@@ -91,4 +93,11 @@ internal fun createBuiltInOrCrypt32EncryptionSupport(isCrypt32: Boolean): Encryp
     }
     else -> AesEncryptionSupport(builtInEncryptionKey)
   }
+}
+
+internal fun CharArray.toByteArrayAndClear(): ByteArray {
+  val charBuffer = CharBuffer.wrap(this)
+  val byteBuffer = Charsets.UTF_8.encode(charBuffer)
+  fill(0.toChar())
+  return byteBuffer.toByteArray(isClear = true)
 }

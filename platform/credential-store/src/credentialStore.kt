@@ -96,6 +96,7 @@ fun createSecureRandom(): SecureRandom {
   }
 }
 
+@Synchronized
 internal fun SecureRandom.generateBytes(size: Int): ByteArray {
   val result = ByteArray(size)
   nextBytes(result)

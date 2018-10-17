@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.credentialStore.createSecureRandom
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.inputStream
@@ -12,18 +11,18 @@ import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.security.SecureRandom
 import java.util.*
 import java.util.zip.GZIPInputStream
 
 // https://gist.github.com/lgg/e6ccc6e212d18dd2ecd8a8c116fb1e45
 
 @Throws(IncorrectMasterPasswordException::class)
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
-  return file.inputStream().buffered().use { readKeePassDatabase(credentials, it) }
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials, random: SecureRandom): KeePassDatabase {
+  return file.inputStream().buffered().use { readKeePassDatabase(credentials, it, random) }
 }
 
-private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: InputStream): KeePassDatabase {
-  val random = createSecureRandom()
+private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: InputStream, random: SecureRandom): KeePassDatabase {
   val kdbxHeader = KdbxHeader(random)
   kdbxHeader.readKdbxHeader(inputStream)
   val decryptedInputStream = kdbxHeader.createDecryptedStream(credentials.key, inputStream)
@@ -45,6 +44,14 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
 }
 
 internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
+  companion object {
+    fun createAndClear(value: ByteArray): KeePassCredentials {
+      val result = KdbxPassword(value)
+      value.fill(0)
+      return result
+    }
+  }
+
   override val key: ByteArray
 
   init {

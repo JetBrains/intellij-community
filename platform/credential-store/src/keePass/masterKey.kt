@@ -35,7 +35,7 @@ internal class MasterKey(value: ByteArray,
   }
 }
 
-internal class MasterKeyFileStorage(private val passwordFile: Path) {
+internal class MasterKeyFileStorage(val passwordFile: Path) {
   fun load(): ByteArray? {
     var data: ByteArray
     var isOld = false

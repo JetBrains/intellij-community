@@ -10,15 +10,24 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.*
 import org.junit.Assume.assumeTrue
+import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
 import java.awt.Component
 import java.nio.file.Path
+import java.security.SecureRandom
 import java.util.*
 
 private val testCredentialAttributes = CredentialAttributes("foo", "u")
 
 internal class KeePassFileManagerTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val secureRandomHolder = SecureRandomRule()
+  }
+
   @JvmField
   @Rule
   val fsRule = InMemoryFsRule()
@@ -155,7 +164,7 @@ internal class KeePassFileManagerTest {
   }
 
   private fun checkStoreAfterSuccessfulImport(store: KeePassCredentialStore) {
-    store.reload()
+    store.reload(secureRandomHolder.secureRandom)
 
     assertThat(store.dbFile).exists()
     assertThat(store.masterKeyFile).exists()
@@ -178,7 +187,7 @@ internal class KeePassFileManagerTest {
 
     // assert that other store not corrupted
     fsRule.fs.getPath("/other/otherKey").move(fsRule.fs.getPath("/other/${MASTER_KEY_FILE_NAME}"))
-    otherStore.reload()
+    otherStore.reload(secureRandomHolder.secureRandom)
     assertThat(otherStore.get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }
 
@@ -232,14 +241,14 @@ internal class KeePassFileManagerTest {
     }
 
     val kdbxPassword = KdbxPassword("foo".toByteArray())
-    var db = loadKdbx(dbFile, kdbxPassword)
+    var db = loadKdbx(dbFile, kdbxPassword, secureRandomHolder.secureRandom)
     checkEntry(db)
 
     dbFile.outputStream().use {
       db.save(kdbxPassword, it)
     }
 
-    db = loadKdbx(dbFile, kdbxPassword)
+    db = loadKdbx(dbFile, kdbxPassword, secureRandomHolder.secureRandom)
     checkEntry(db)
   }
 
@@ -271,7 +280,7 @@ private class TestKeePassFileManager(
   private val masterPasswordRequestAnswer: String? = null,
   private val oldMasterPasswordRequestAnswer: String? = null,
   masterKeyEncryptionSpec: EncryptionSpec = defaultEncryptionSpec
-) : KeePassFileManager(file, masterKeyFile, masterKeyEncryptionSpec) {
+) : KeePassFileManager(file, masterKeyFile, masterKeyEncryptionSpec, lazyOf(KeePassFileManagerTest.secureRandomHolder.secureRandom)) {
   constructor(store: KeePassCredentialStore,
               masterPasswordRequestAnswer: String? = null,
               oldMasterPasswordRequestAnswer: String? = null,
@@ -293,5 +302,16 @@ private class TestKeePassFileManager(
   override fun requestCurrentAndNewKeys(contextComponent: Component?): Boolean {
     doSetNewMasterPassword(oldMasterPasswordRequestAnswer!!.toCharArray(), masterPasswordRequestAnswer!!.toCharArray())
     return true
+  }
+}
+
+internal class SecureRandomRule : ExternalResource() {
+  private var _secureRandom: SecureRandom? = createSecureRandom()
+
+  val secureRandom: SecureRandom
+    get() = _secureRandom!!
+
+  override fun after() {
+    _secureRandom = null
   }
 }
