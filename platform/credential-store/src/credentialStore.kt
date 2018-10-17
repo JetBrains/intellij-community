@@ -3,15 +3,12 @@ package com.intellij.credentialStore
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.EncryptionSupport
-import com.intellij.util.generateAesKey
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.util.*
-import javax.crypto.spec.SecretKeySpec
 
 internal val LOG = Logger.getInstance(CredentialStore::class.java)
 
@@ -53,7 +50,7 @@ fun splitData(data: String?): Credentials? {
 
 private const val ESCAPING_CHAR = '\\'
 
-private fun parseString(data: String, delimiter: Char): List<String> {
+private fun parseString(data: String, @Suppress("SameParameterValue") delimiter: Char): List<String> {
   val part = StringBuilder()
   val result = ArrayList<String>(2)
   var i = 0
@@ -88,34 +85,19 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 @JvmOverloads
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
-@Suppress("FunctionName")
-internal fun SecureString(value: CharSequence): SecureString = SecureStringImpl(value)
-
-interface SecureString {
-  fun get(clearable: Boolean = true): OneTimeString
-}
-
-internal class SecureStringImpl(value: ByteArray) : SecureString {
-  constructor(value: CharSequence) : this(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
-
-  companion object {
-    private val encryptionSupport = EncryptionSupport(SecretKeySpec(generateAesKey(), "AES"))
-  }
-
-  private val data = encryptionSupport.encrypt(value)
-
-  override fun get(clearable: Boolean) = OneTimeString(getAsByteArray(), clearable = clearable)
-
-  fun getAsByteArray() = encryptionSupport.decrypt(data)
-}
-
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
 
-internal fun createSecureRandom(): SecureRandom {
+fun createSecureRandom(): SecureRandom {
   try {
     return SecureRandom.getInstanceStrong()
   }
   catch (e: NoSuchAlgorithmException) {
     return SecureRandom()
   }
+}
+
+internal fun SecureRandom.generateBytes(size: Int): ByteArray {
+  val result = ByteArray(size)
+  nextBytes(result)
+  return result
 }

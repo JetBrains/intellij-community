@@ -1,17 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
-import com.google.common.io.LittleEndianDataOutputStream
+import com.intellij.credentialStore.OneTimeString
+import com.intellij.credentialStore.createSecureRandom
+import com.intellij.credentialStore.generateBytes
 import com.intellij.util.getOrCreate
+import com.intellij.util.io.toByteArray
 import com.intellij.util.loadElement
+import org.bouncycastle.crypto.SkippingStreamCipher
+import org.bouncycastle.crypto.engines.ChaCha7539Engine
+import org.bouncycastle.crypto.params.KeyParameter
+import org.bouncycastle.crypto.params.ParametersWithIV
 import org.jdom.Element
 import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.security.SecureRandom
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.*
-import java.util.zip.GZIPOutputStream
 
 internal object KdbxDbElementNames {
   const val group = "Group"
@@ -34,9 +42,21 @@ internal val EXPIRY_TIME_ELEMENT_NAME = arrayOf("Times", "ExpiryTime")
 
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
+private fun createRandomlyInitializedChaCha7539Engine(secureRandom: SecureRandom): ChaCha7539Engine {
+  val engine = ChaCha7539Engine()
+  val keyParameter = KeyParameter(secureRandom.generateBytes(32))
+  engine.init(true, ParametersWithIV(keyParameter, secureRandom.generateBytes(12)))
+  return engine
+}
+
 // we should on each save change protectedStreamKey for security reasons (as KeeWeb also does)
 // so, this requirement (is it really required?) can force us to re-encrypt all passwords on save
-internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase(), secureRandom: SecureRandom? = null /* reuse SecureRandom if possible because it is not cheap to create new one */) {
+  private val secureStringCipher: SkippingStreamCipher by when (secureRandom) {
+    null -> lazy { createRandomlyInitializedChaCha7539Engine(createSecureRandom()) }
+    else -> lazyOf(createRandomlyInitializedChaCha7539Engine(secureRandom))
+  }
+
   @Volatile
   var isDirty: Boolean = false
     internal set
@@ -56,24 +76,19 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
     }
   }
 
+  internal fun protectValue(value: CharSequence) = StringProtectedByStreamCipher(value, secureStringCipher)
+
   @Synchronized
   fun save(credentials: KeePassCredentials, outputStream: OutputStream) {
-    val kdbxHeader = KdbxHeader()
+    val random = createSecureRandom()
+    val kdbxHeader = KdbxHeader(random)
     kdbxHeader.writeKdbxHeader(outputStream)
 
     val metaElement = rootElement.getOrCreate("Meta")
     metaElement.getOrCreate("HeaderHash").text = Base64.getEncoder().encodeToString(kdbxHeader.headerHash)
     metaElement.getOrCreate("MemoryProtection").getOrCreate("ProtectPassword").text = "True"
 
-    val encryptedOutputStream = kdbxHeader.createEncryptedStream(credentials.key, outputStream)
-    LittleEndianDataOutputStream(encryptedOutputStream).write(kdbxHeader.streamStartBytes)
-
-    var kdbxOutput: OutputStream = HashedBlockOutputStream(encryptedOutputStream)
-    if (kdbxHeader.compressionFlags == KdbxHeader.CompressionFlags.GZIP) {
-      kdbxOutput = GZIPOutputStream(kdbxOutput, 8 * 1024)
-    }
-
-    kdbxOutput.writer().use {
+    kdbxHeader.createEncryptedStream(credentials.key, outputStream).writer().use {
       ProtectedXmlWriter(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
     }
 
@@ -187,4 +202,33 @@ private fun createEmptyDatabase(): Element {
       <CustomData/>
     </Meta>
   </KeePassFile>""")
+}
+
+internal class StringProtectedByStreamCipher(value: ByteArray, private val cipher: SkippingStreamCipher) : SecureString {
+  private val position: Long
+  private val data: ByteArray
+
+  constructor(value: CharSequence, cipher: SkippingStreamCipher) : this(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray(), cipher)
+
+  init {
+    var position = 0L
+    data = ByteArray(value.size)
+    synchronized(cipher) {
+      position = cipher.position
+      cipher.processBytes(value, 0, value.size, data, 0)
+    }
+
+    this.position = position
+  }
+
+  override fun get(clearable: Boolean) = OneTimeString(getAsByteArray(), clearable = clearable)
+
+  fun getAsByteArray(): ByteArray {
+    val value = ByteArray(data.size)
+    synchronized(cipher) {
+      cipher.seekTo(position)
+      cipher.processBytes(data, 0, data.size, value, 0)
+    }
+    return value
+  }
 }

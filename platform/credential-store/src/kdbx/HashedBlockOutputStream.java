@@ -44,7 +44,7 @@ import java.security.MessageDigest;
  * @author Jo
  */
 final class HashedBlockOutputStream extends OutputStream {
-  private static final int BLOCK_SIZE = 8 * 1024;
+  static final int BLOCK_SIZE = 8 * 1024;
   private static final int HASH_SIZE = 32;
   private static final byte[] ZERO_HASH = new byte[HASH_SIZE];
 
