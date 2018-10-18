@@ -1145,11 +1145,15 @@ public class PluginManagerCore {
 
     loadDescriptorsFromClassPath(result, PluginManagerCore.class.getClassLoader(), fromSources ? progress : null);
 
-    // Android Studio: if we are running unit tests or running Studio from within the IDE, we
+    // Android Studio: if we are running Studio internally (i.e., from a non-release build), we
     // must load the Kotlin plugin with the same "core" UrlClassLoader that the platform uses.
     // This is because the platform requires using a single class loader for all plugins when running internally.
-    // Note that `application == null` can happen during certain tests (anecdotally, some UI tests).
-    if (application == null || application.isUnitTestMode() || application.isInternal()) {
+    // Note that `application` can be null during UI tests, so we cannot use methods like application.isInternal().
+    // Instead (as a proxy) we check whether the Android plugin is being loaded using the core class loader.
+    boolean androidUsesCoreClassLoader = result.stream().anyMatch(descriptor ->
+      "org.jetbrains.android".equals(descriptor.getPluginId().getIdString()) && descriptor.isUseCoreClassLoader()
+    );
+    if (isUnitTestMode() || androidUsesCoreClassLoader) {
       result.stream()
             .filter(descriptor -> "org.jetbrains.kotlin".equals(descriptor.getPluginId().getIdString()))
             .findFirst()
