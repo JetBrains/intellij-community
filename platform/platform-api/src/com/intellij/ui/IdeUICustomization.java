@@ -46,4 +46,8 @@ public class IdeUICustomization {
   public String getNonProjectFilesScopeTitle() {
     return "Non-" + StringUtil.capitalize(getProjectConceptName()) + " Files";
   }
+
+  public String getSelectAutopopupByCharsText() {
+    return "Insert selected suggestion by pressing space, dot, or other context-dependent keys";
+  }
 }

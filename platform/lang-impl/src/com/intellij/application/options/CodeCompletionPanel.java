@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -71,6 +72,7 @@ public class CodeCompletionPanel {
     myBasicShortcut.setForeground(JBColor.GRAY);
     mySmartShortcut.setForeground(JBColor.GRAY);
 
+    myCbSelectByChars.setText(IdeUICustomization.getInstance().getSelectAutopopupByCharsText());
     myCbAutocompletion.addActionListener(
      new ActionListener() {
        @Override
