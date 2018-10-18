@@ -145,7 +145,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.php.workshop",
       "intellij.shortcutPromoter",
       "intellij.flex.profiler",
-      "intellij.kotlinNative.platformDeps"
+      "intellij.kotlinNative.platformDeps",
+      "intellij.idea-clion"
     ]
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
