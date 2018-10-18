@@ -170,9 +170,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     settings.keepassDb = newDbFile.toString()
 
     try {
-      runModalTask("Saving KeePass database", cancellable = false) {
-        KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
-      }
+      KeePassFileManager(newDbFile, getDefaultMasterPasswordFile(), getEncryptionSpec(), secureRandom).useExisting()
     }
     catch (e: IncorrectMasterPasswordException) {
       throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
