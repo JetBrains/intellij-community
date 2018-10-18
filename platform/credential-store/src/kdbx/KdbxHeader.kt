@@ -18,6 +18,7 @@ package com.intellij.credentialStore.kdbx
 import com.google.common.io.LittleEndianDataInputStream
 import com.google.common.io.LittleEndianDataOutputStream
 import com.intellij.credentialStore.generateBytes
+import com.intellij.util.ArrayUtilRt
 import org.bouncycastle.crypto.engines.AESEngine
 import org.bouncycastle.crypto.io.CipherInputStream
 import org.bouncycastle.crypto.io.CipherOutputStream
@@ -76,7 +77,17 @@ private fun verifyFileVersion(input: LittleEndianDataInputStream): Boolean {
   return input.readInt() and FILE_VERSION_CRITICAL_MASK <= FILE_VERSION_32 and FILE_VERSION_CRITICAL_MASK
 }
 
-internal class KdbxHeader(random: SecureRandom) {
+internal class KdbxHeader() {
+  constructor(inputStream: InputStream) : this() {
+    readKdbxHeader(inputStream)
+  }
+
+  constructor(random: SecureRandom) : this() {
+    masterSeed = random.generateBytes(32)
+    transformSeed = random.generateBytes(32)
+    encryptionIv = random.generateBytes(16)
+    protectedStreamKey = createProtectedStreamKey(random)
+  }
   /**
    * The ordinal 0 represents uncompressed and 1 GZip compressed
    */
@@ -98,11 +109,12 @@ internal class KdbxHeader(random: SecureRandom) {
   var compressionFlags = CompressionFlags.GZIP
     private set
 
-  private var masterSeed: ByteArray
-  private var transformSeed: ByteArray
+  private var masterSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+  private var transformSeed: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
   private var transformRounds: Long = 6000
-  private var encryptionIv: ByteArray
-  var protectedStreamKey: ByteArray
+  private var encryptionIv: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+  var protectedStreamKey: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+    private set
   private var protectedStreamAlgorithm = ProtectedStreamAlgorithm.SALSA_20
 
   /* these bytes appear in cipher text immediately following the header */
@@ -111,13 +123,6 @@ internal class KdbxHeader(random: SecureRandom) {
   /* not transmitted as part of the header, used in the XML payload, so calculated
    * on transmission or receipt */
   var headerHash: ByteArray? = null
-
-  init {
-    masterSeed = random.generateBytes(32)
-    transformSeed = random.generateBytes(32)
-    encryptionIv = random.generateBytes(16)
-    protectedStreamKey = createProtectedStreamKey(random)
-  }
 
   /**
    * Create a decrypted input stream using supplied digest and this header
@@ -155,7 +160,7 @@ internal class KdbxHeader(random: SecureRandom) {
   /**
    * Populate a KdbxHeader from the input stream supplied
    */
-  internal fun readKdbxHeader(inputStream: InputStream) {
+  private fun readKdbxHeader(inputStream: InputStream) {
     val digest = sha256MessageDigest()
     // we do not close this stream, otherwise we lose our place in the underlying stream
     val digestInputStream = DigestInputStream(inputStream, digest)

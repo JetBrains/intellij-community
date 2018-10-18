@@ -6,7 +6,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
 import java.security.SecureRandom
 import java.util.*
 
@@ -88,12 +87,10 @@ fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
 
 fun createSecureRandom(): SecureRandom {
-  try {
-    return SecureRandom.getInstanceStrong()
-  }
-  catch (e: NoSuchAlgorithmException) {
-    return SecureRandom()
-  }
+  // do not use SecureRandom.getInstanceStrong()
+  // https://tersesystems.com/blog/2015/12/17/the-right-way-to-use-securerandom/
+  // it leads to blocking without any advantages
+  return SecureRandom()
 }
 
 @Synchronized

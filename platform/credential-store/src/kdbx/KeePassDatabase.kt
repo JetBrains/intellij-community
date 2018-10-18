@@ -42,19 +42,22 @@ internal val EXPIRY_TIME_ELEMENT_NAME = arrayOf("Times", "ExpiryTime")
 
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
-private fun createRandomlyInitializedChaCha7539Engine(secureRandom: SecureRandom): ChaCha7539Engine {
+private fun createRandomlyInitializedChaCha7539Engine(secureRandom: SecureRandom): SkippingStreamCipher {
   val engine = ChaCha7539Engine()
+  initCipherRandomly(secureRandom, engine)
+  return engine
+}
+
+private fun initCipherRandomly(secureRandom: SecureRandom, engine: SkippingStreamCipher) {
   val keyParameter = KeyParameter(secureRandom.generateBytes(32))
   engine.init(true, ParametersWithIV(keyParameter, secureRandom.generateBytes(12)))
-  return engine
 }
 
 // we should on each save change protectedStreamKey for security reasons (as KeeWeb also does)
 // so, this requirement (is it really required?) can force us to re-encrypt all passwords on save
-internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase(), secureRandom: SecureRandom? = null /* reuse SecureRandom if possible because it is not cheap to create new one */) {
-  private val secureStringCipher: SkippingStreamCipher by when (secureRandom) {
-    null -> lazy { createRandomlyInitializedChaCha7539Engine(createSecureRandom()) }
-    else -> lazyOf(createRandomlyInitializedChaCha7539Engine(secureRandom))
+internal class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
+  private var secureStringCipher = lazy {
+    createRandomlyInitializedChaCha7539Engine(createSecureRandom())
   }
 
   @Volatile
@@ -76,12 +79,12 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
     }
   }
 
-  internal fun protectValue(value: CharSequence) = StringProtectedByStreamCipher(value, secureStringCipher)
+  internal fun protectValue(value: CharSequence) = StringProtectedByStreamCipher(value, secureStringCipher.value)
 
   @Synchronized
   fun save(credentials: KeePassCredentials, outputStream: OutputStream) {
-    val random = createSecureRandom()
-    val kdbxHeader = KdbxHeader(random)
+    val secureRandom = createSecureRandom()
+    val kdbxHeader = KdbxHeader(secureRandom)
     kdbxHeader.writeKdbxHeader(outputStream)
 
     val metaElement = rootElement.getOrCreate("Meta")
@@ -90,6 +93,17 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
 
     kdbxHeader.createEncryptedStream(credentials.key, outputStream).writer().use {
       ProtectedXmlWriter(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).printElement(it, rootElement, 0)
+    }
+
+    // should we init secureStringCipher if now we have secureRandom?
+    // on first glance yes, because creating SkippingStreamCipher is very fast and not memory hungry, and creating SecureRandom is a cost operation,
+    // but no - no need to init because if save called, it means that database is dirty for some reasons already...
+    // but yes - because maybe database is dirty due to change some unprotected value (url, user name).
+    if (secureStringCipher.isInitialized()) {
+      initCipherRandomly(secureRandom, secureStringCipher.value)
+    }
+    else {
+      secureStringCipher = lazyOf(createRandomlyInitializedChaCha7539Engine(secureRandom))
     }
 
     isDirty = false
