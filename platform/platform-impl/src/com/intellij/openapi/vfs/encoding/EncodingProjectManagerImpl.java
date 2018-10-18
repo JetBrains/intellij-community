@@ -84,6 +84,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     if (myDefaultCharsetForPropertiesFiles != null) {
       element.setAttribute("defaultCharsetForPropertiesFiles", myDefaultCharsetForPropertiesFiles.name());
     }
+    if (myBOMForNewUTF8Files != null) {
+      element.setAttribute("addBOMForNewFiles", myBOMForNewUTF8Files.name);
+    }
+
     return element;
   }
 
@@ -116,6 +120,12 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
 
     myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
+    String addBOMForNewFiles = element.getAttributeValue("addBOMForNewFiles");
+    if(addBOMForNewFiles != null) {
+      BOMForNewUTF8Files bomForNewUTF8Files = BOMForNewUTF8Files.tryFindKnown(addBOMForNewFiles);
+      if(bomForNewUTF8Files != null)
+        myBOMForNewUTF8Files = bomForNewUTF8Files;
+    }
 
     myModificationTracker.incModificationCount();
   }
@@ -438,6 +448,14 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     @Override
     public String toString() {
       return name;
+    }
+
+    public static BOMForNewUTF8Files tryFindKnown(String name) {
+      for (BOMForNewUTF8Files value : values()) {
+        if(value.name.equalsIgnoreCase(name))
+          return value;
+      }
+      return null;
     }
   }
 
