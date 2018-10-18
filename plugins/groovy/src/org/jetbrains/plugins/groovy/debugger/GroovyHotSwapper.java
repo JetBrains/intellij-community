@@ -26,11 +26,11 @@ import com.intellij.execution.runners.JavaProgramPatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FileTypeIndex;
@@ -101,8 +101,8 @@ public class GroovyHotSwapper extends JavaProgramPatcher {
     if (configuration instanceof ModuleBasedConfiguration) {
       final Module module = ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule();
       if (module != null) {
-        final LanguageLevel level = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-        if (level != null && !level.isAtLeast(LanguageLevel.JDK_1_5)) {
+        final LanguageLevel level = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        if (!level.isAtLeast(LanguageLevel.JDK_1_5)) {
           return;
         }
       }
