@@ -3,35 +3,32 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
-import com.intellij.psi.PsiPolyVariantReferenceBase
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyDependentReference
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyReferenceBase
 
-abstract class GroovyReferenceBase<T : PsiElement>(element: T) : PsiPolyVariantReferenceBase<T>(element), GroovyReference {
-
-  final override fun resolve(): PsiElement? = super<GroovyReference>.resolve()
+abstract class GroovyCachingReference<T : PsiElement>(element: T) : GroovyReferenceBase<T>(element) {
 
   final override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val resolver = if (this is GroovyDependentReference) DefaultDependentResolver else DefaultResolver
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, resolver)
   }
 
-  private object DefaultResolver : GroovyResolver<GroovyReferenceBase<*>> {
+  private object DefaultResolver : GroovyResolver<GroovyCachingReference<*>> {
 
-    override fun resolve(ref: GroovyReferenceBase<*>, incomplete: Boolean) = ref.doResolve(incomplete)
+    override fun resolve(ref: GroovyCachingReference<*>, incomplete: Boolean) = ref.doResolve(incomplete)
   }
 
-  private object DefaultDependentResolver : DependentResolver<GroovyReferenceBase<*>>() {
+  private object DefaultDependentResolver : DependentResolver<GroovyCachingReference<*>>() {
 
-    override fun doResolve(ref: GroovyReferenceBase<*>, incomplete: Boolean): Collection<GroovyResolveResult> {
+    override fun doResolve(ref: GroovyCachingReference<*>, incomplete: Boolean): Collection<GroovyResolveResult> {
       return ref.doResolve(incomplete)
     }
 
-    override fun collectDependencies(ref: GroovyReferenceBase<*>): Collection<PsiPolyVariantReference>? {
+    override fun collectDependencies(ref: GroovyCachingReference<*>): Collection<PsiPolyVariantReference>? {
       return (ref as GroovyDependentReference).collectDependencies()
     }
   }

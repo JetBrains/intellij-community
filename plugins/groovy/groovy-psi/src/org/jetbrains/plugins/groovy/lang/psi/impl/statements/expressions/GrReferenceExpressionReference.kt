@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCachingReference
 
 class GrReferenceExpressionReference(
   ref: GrReferenceExpressionImpl,
   private val forceRValue: Boolean
-) : GroovyReferenceBase<GrReferenceExpressionImpl>(ref) {
+) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     return element.doPolyResolve(incomplete, forceRValue)
