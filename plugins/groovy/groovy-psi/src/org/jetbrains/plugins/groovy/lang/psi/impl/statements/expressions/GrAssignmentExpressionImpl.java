@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
@@ -14,10 +12,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import java.util.Objects;
 
@@ -29,8 +29,16 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
 
+  private final GroovyReference myReference = new GrOperatorReference(this);
+
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Nullable
+  @Override
+  public GroovyReference getReference() {
+    return isOperatorAssignment() ? myReference : null;
   }
 
   @Override
@@ -74,11 +82,6 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
-  }
-
-  @Override
-  public PsiReference getReference() {
-    return isOperatorAssignment() ? this : null;
   }
 
   @Nullable

@@ -359,7 +359,7 @@ public class GroovyExpectedTypesProvider {
 
       if (otherType == null) return;
 
-      final GroovyResolveResult[] callVariants = expression.multiResolve(true);
+      final GroovyResolveResult[] callVariants = expression.getReference().multiResolve(true);
       if (myExpression == left || callVariants.length == 0) {
         if (type == GroovyTokenTypes.mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
