@@ -47,7 +47,7 @@
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
-    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert Commit"
             description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
