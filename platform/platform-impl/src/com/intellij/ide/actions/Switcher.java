@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -925,11 +926,12 @@ public class Switcher extends AnAction implements DumbAware {
                 }
               }
               else {
-                boolean oldValue = UISettings.getInstance().getReuseNotModifiedTabs();
-                UISettings.getInstance().setReuseNotModifiedTabs(false);
+                UISettingsState settings = UISettings.getInstance().getState();
+                boolean oldValue = settings.getReuseNotModifiedTabs();
+                settings.setReuseNotModifiedTabs(false);
                 manager.openFile(file, true, true);
                 if (oldValue) {
-                  CommandProcessor.getInstance().executeCommand(project, () -> UISettings.getInstance().setReuseNotModifiedTabs(true), "", null);
+                  CommandProcessor.getInstance().executeCommand(project, () -> settings.setReuseNotModifiedTabs(true), "", null);
                 }
               }
             }

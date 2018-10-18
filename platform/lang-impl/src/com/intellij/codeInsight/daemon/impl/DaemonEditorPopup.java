@@ -62,11 +62,11 @@ public class DaemonEditorPopup extends PopupHandler {
       component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
     });
 
-    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getShowEditorToolTip());
+    final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getState().getShowEditorToolTip());
     popupMenu.addSeparator();
     popupMenu.add(previewCheckbox);
     previewCheckbox.addActionListener(__ -> {
-      UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
+      UISettings.getInstance().getState().setShowEditorToolTip(previewCheckbox.isSelected());
       UISettings.getInstance().fireUISettingsChanged();
     });
 

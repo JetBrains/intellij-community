@@ -5,10 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UIThemeProvider;
+import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
@@ -711,7 +708,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     //    uiDefaults.put(entry.getKey(), entry.getValue());
     //  }
     //} else
-    UISettings uiSettings = UISettings.getInstance();
+    UISettingsState uiSettings = UISettings.getInstance().getState();
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, UIUtil.getFontWithFallback(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));

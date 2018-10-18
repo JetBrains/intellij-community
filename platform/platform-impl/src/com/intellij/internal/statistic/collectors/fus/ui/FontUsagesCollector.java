@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsState;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -30,7 +30,7 @@ public class FontUsagesCollector extends ApplicationUsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    UISettings settings = UISettings.getShadowInstance();
+    UISettingsState settings = UISettings.getShadowInstance().getState();
 
     FUSUsageContext context = FUSUsageContext.create(FUSUsageContext.getOSNameContextData(),
                                                      Integer.toString(settings.getFontSize()), settings.getFontFace());
