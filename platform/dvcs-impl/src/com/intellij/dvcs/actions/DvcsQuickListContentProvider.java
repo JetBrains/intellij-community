@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Separator;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,25 +19,17 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
   @Nullable
   public List<AnAction> getVcsActions(@Nullable Project project, @Nullable AbstractVcs activeVcs,
                                       @Nullable DataContext dataContext) {
-
-    if (activeVcs == null || !getVcsName().equals(activeVcs.getName())) {
-      return null;
-    }
+    if (activeVcs == null || !replaceVcsActionsFor(activeVcs, dataContext)) return null;
 
     final ActionManager manager = ActionManager.getInstance();
     final List<AnAction> actions = new ArrayList<>();
 
-    actions.add(new Separator(activeVcs.getDisplayName()));
-    add("CheckinProject", manager, actions);
-    add("CheckinFiles", manager, actions);
-    add("ChangesView.Revert", manager, actions);
+    // Can be modified via Vcs.Operations.Popup
+    CustomActionsSchema schema = CustomActionsSchema.getInstance();
+    ActionGroup vcsAwareGroup = (ActionGroup)schema.getCorrectedAction("Vcs.Operations.Popup.VcsAware");
+    ContainerUtil.addAll(actions, vcsAwareGroup.getChildren(null));
 
-    addSeparator(actions);
-    add("Vcs.ShowTabbedFileHistory", manager, actions);
-    add("Annotate", manager, actions);
-    add("Compare.SameVersion", manager, actions);
-
-    addSeparator(actions);
+    actions.add(Separator.getInstance());
     addVcsSpecificActions(manager, actions);
     return actions;
   }
@@ -51,10 +42,6 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
   @Override
   public boolean replaceVcsActionsFor(@NotNull AbstractVcs activeVcs, @Nullable DataContext dataContext) {
     return getVcsName().equals(activeVcs.getName());
-  }
-
-  protected static void addSeparator(@NotNull final List<? super AnAction> actions) {
-    actions.add(new Separator());
   }
 
   protected static void add(String actionName, ActionManager manager, List<? super AnAction> actions) {

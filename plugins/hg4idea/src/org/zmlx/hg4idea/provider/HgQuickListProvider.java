@@ -30,7 +30,6 @@ public class HgQuickListProvider extends DvcsQuickListContentProvider {
     add("hg4idea.pull", manager, actions);
     add("Vcs.Push", manager, actions);
     add("hg4idea.updateTo", manager, actions);
-    add("ChangesView.AddUnversioned", manager, actions);
   }
 
   @Override

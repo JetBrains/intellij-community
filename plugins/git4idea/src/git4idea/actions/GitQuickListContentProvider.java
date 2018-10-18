@@ -27,7 +27,6 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
 
-    add("ChangesView.AddUnversioned", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
   }
 
