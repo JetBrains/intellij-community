@@ -108,6 +108,7 @@ ReserveFile "DeleteSettings.ini"
     ${EndIf}
   FunctionEnd
 
+
   Function ${un}compareFileInstallationTime
     StrCpy $9 ""
   get_first_file:
@@ -187,19 +188,37 @@ loop:
   Goto loop
 FunctionEnd
 
-Function ${un}DeleteDirIfEmpty
+
+Function ${un}deleteFiles
+  ClearErrors
+  FindFirst $2 $1 $0\*.*
+loop:
+  StrCmp $1 "." next 0
+  StrCmp $1 ".." next 0
+  StrCmp $1 "" done
+  DetailPrint "delete file: $1"
+  Delete $1
+next:
+  FindNext $2 $1
+  Goto loop
+done:
+  FindClose $2
+FunctionEnd
+
+
+Function ${un}deleteDirIfEmpty
+  ClearErrors
   FindFirst $R0 $R1 "$0\*.*"
-  strcmp $R1 "." 0 NoDelete
-   FindNext $R0 $R1
-   strcmp $R1 ".." 0 NoDelete
-    ClearErrors
-    FindNext $R0 $R1
-    IfErrors 0 NoDelete
-     FindClose $R0
-     Sleep 1000
-     RMDir "$0"
-  NoDelete:
-   FindClose $R0
+  StrCmp $R1 "." 0 done
+  FindNext $R0 $R1
+  StrCmp $R1 ".." 0 done
+  ClearErrors
+  FindNext $R0 $R1
+  IfErrors 0 done
+  Sleep 1000
+  RMDir "$0"
+done:
+  FindClose $R0
 FunctionEnd
 !macroend
 
@@ -344,6 +363,7 @@ get_next_element:
   FindNext $1 $2
   IfErrors 0 next_elemement
 done:
+  ClearErrors
   FindClose $1
   Pop $2
   Pop $1
@@ -714,7 +734,7 @@ saveProperties:
   Goto complete
 fullRemove:
   StrCpy $0 $3
-  Call DeleteDirIfEmpty
+  Call deleteDirIfEmpty
 complete:
 FunctionEnd
 
@@ -1255,7 +1275,7 @@ SectionEnd
 
 Function .onInit
   SetRegView 32
-  Call CreateLog
+  Call createLog
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
   Call getInstallationOptionsPositions
   IfSilent silent_mode uac_elevate
@@ -1451,9 +1471,6 @@ UAC_Admin:
 UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
-
-  Call un.CreateLog
-  ${LogText} "un.onInit"
 FunctionEnd
 
 
@@ -1738,11 +1755,11 @@ skip_delete_settings:
   IfFileExists "$INSTDIR\jre32\*.*" 0 no_jre32
     Delete "$INSTDIR\jre32\bin\server\classes.jsa"
     StrCpy $0 "$INSTDIR\jre32\lib\applet"
-    Call un.DeleteDirIfEmpty
+    Call un.deleteDirIfEmpty
 no_jre32:
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR"
-  Call un.DeleteDirIfEmpty
+  Call un.deleteDirIfEmpty
 
 ; remove desktop shortcuts
 desktop_shortcut_launcher32:

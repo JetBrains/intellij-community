@@ -3,7 +3,7 @@
 var logFile
 
 !macro INST_UNINST_LOGGING_SWITCH un
-  Function ${un}CreateLog
+  Function ${un}createLog
     Push $R0
     Push $R1
     Push $R2
