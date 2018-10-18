@@ -310,7 +310,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else {
       myDisabledIcon = null;
-      Logger.getInstance(ActionButton.class).error("invalid icon for action " + myAction);
+      Logger.getInstance(ActionButton.class).error("invalid icon (" + myIcon + ") for action " + myAction.getClass());
     }
   }
 
