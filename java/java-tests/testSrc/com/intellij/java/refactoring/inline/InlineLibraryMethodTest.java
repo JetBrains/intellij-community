@@ -30,7 +30,6 @@ import java.io.IOException;
 
 /**
  * @author anna
- * @since 11/4/11
  */
 public class InlineLibraryMethodTest extends RefactoringTestCase {
   @Override

@@ -34,7 +34,6 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * @author cdr
- * @since Nov 13, 2002
  */
 public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(ChangeTypeArgumentsFix.class);

@@ -51,7 +51,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/10/2014
  */
 public class ExternalSystemViewDefaultContributor extends ExternalSystemViewContributor {
 

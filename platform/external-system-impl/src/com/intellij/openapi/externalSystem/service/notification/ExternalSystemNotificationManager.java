@@ -76,7 +76,6 @@ import java.util.Set;
  * Thread-safe.
  *
  * @author Denis Zhdanov, Vladislav Soroka
- * @since 3/21/12 4:04 PM
  */
 public class ExternalSystemNotificationManager implements Disposable {
 

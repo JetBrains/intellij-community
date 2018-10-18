@@ -60,7 +60,6 @@ import java.util.*;
 
 /**
  * @author cdr
- * @since Nov 13, 2002
  */
 public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, HighPriorityAction*/ {
   final PsiMethod myTargetMethod;

@@ -22,7 +22,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public class DefaultExternalSourceDirectorySet implements ExternalSourceDirectorySet {
   private static final long serialVersionUID = 1L;

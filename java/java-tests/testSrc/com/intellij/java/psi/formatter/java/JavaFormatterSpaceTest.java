@@ -10,7 +10,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
  * Is intended to hold specific java formatting tests for 'spacing' settings.
  *
  * @author Denis Zhdanov
- * @since Apr 29, 2010
  */
 public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override

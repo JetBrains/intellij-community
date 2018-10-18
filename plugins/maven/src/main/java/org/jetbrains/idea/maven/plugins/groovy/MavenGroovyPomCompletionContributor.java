@@ -42,7 +42,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/30/2016
  */
 public class MavenGroovyPomCompletionContributor extends CompletionContributor {
   public static final Key<VirtualFile> ORIGINAL_POM_FILE = Key.create("ORIGINAL_POM_FILE");

@@ -13,7 +13,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/11 12:11 PM
  */
 public class ModuleData extends AbstractNamedData implements Named, ExternalConfigPathAware, Identifiable {
 

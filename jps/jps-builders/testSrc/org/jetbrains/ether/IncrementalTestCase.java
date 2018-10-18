@@ -43,7 +43,6 @@ import java.util.*;
 
 /**
  * @author db
- * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
 

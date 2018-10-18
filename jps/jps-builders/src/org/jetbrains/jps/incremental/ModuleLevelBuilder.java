@@ -35,7 +35,6 @@ import java.util.Map;
  * the same category is not determined).
  *
  * @author Eugene Zhuravlev
- * @since 9/17/11
  * @see BuilderService#createModuleLevelBuilders()
  */
 public abstract class ModuleLevelBuilder extends Builder {

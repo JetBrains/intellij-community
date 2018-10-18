@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:53 PM
  */
 public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemServiceWrapper<S, RemoteExternalSystemTaskManager<S>>

@@ -35,7 +35,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 11/7/2014
  */
 public class RunConfigurationNode extends ExternalSystemNode {
   private final RunnerAndConfigurationSettings mySettings;

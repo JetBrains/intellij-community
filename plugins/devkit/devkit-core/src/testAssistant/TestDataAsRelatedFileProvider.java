@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 5/24/11 4:52 PM
  */
 public class TestDataAsRelatedFileProvider extends GotoRelatedProvider {
 

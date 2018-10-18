@@ -17,7 +17,6 @@ package com.intellij.openapi.editor.actions;
 
 /**
  * @author Denis Zhdanov
- * @since 2/14/13 7:23 PM
  */
 public class NextWordInDifferentHumpsModeWithSelectionAction extends TextComponentEditorAction {
   public NextWordInDifferentHumpsModeWithSelectionAction() {

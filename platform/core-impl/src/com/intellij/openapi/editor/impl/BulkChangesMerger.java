@@ -29,7 +29,6 @@ import java.util.List;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 12/22/10 12:02 PM
  */
 public class BulkChangesMerger {
 

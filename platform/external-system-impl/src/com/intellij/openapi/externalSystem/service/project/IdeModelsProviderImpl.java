@@ -46,7 +46,6 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/6/2015
  */
 public class IdeModelsProviderImpl implements IdeModelsProvider {
 

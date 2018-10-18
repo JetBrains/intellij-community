@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author ik
- * @since 17.02.2003
  */
 public class ModifierChooser {
   private static final String[][] CLASS_MODIFIERS = {

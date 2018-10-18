@@ -41,7 +41,6 @@ import java.util.List;
  * (e.g. imports missing libraries).
  *
  * @author Denis Zhdanov
- * @since 1/23/12 3:48 PM
  */
 public class RefreshAllExternalProjectsAction extends AnAction implements AnAction.TransparentUpdate {
 

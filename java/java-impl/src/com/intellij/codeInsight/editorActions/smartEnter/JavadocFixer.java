@@ -19,7 +19,6 @@ import java.util.List;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 5/31/11 1:22 PM
  */
 public class JavadocFixer {
 

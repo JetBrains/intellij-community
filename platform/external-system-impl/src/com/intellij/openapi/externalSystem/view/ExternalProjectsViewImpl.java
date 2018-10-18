@@ -59,7 +59,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/19/2014
  */
 public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);

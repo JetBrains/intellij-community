@@ -9,7 +9,6 @@ import java.io.ObjectInputStream;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/11 6:41 PM
  */
 public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData, Named, OrderAware

@@ -16,7 +16,6 @@ import java.util.StringTokenizer;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/7/11 11:58 AM
  */
 public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
 

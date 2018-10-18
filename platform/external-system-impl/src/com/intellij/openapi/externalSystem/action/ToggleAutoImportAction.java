@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class ToggleAutoImportAction extends ExternalSystemToggleAction {
 

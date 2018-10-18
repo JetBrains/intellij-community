@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 6/5/13 8:17 PM
  */
 public class GradleRuntimeConfigurationProducer extends AbstractExternalSystemRunConfigurationProducer {
 

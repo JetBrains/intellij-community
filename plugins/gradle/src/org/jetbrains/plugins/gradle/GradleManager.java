@@ -93,7 +93,6 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Denis Zhdanov
- * @since 4/10/13 1:19 PM
  */
 public class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<

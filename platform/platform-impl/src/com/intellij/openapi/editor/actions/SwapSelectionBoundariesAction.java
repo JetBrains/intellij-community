@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Setting-Mark.html">exchange-point-and-mark</a>.
  * 
  * @author Denis Zhdanov
- * @since 3/18/12 3:14 PM
  */
 public class SwapSelectionBoundariesAction extends EditorAction {
 

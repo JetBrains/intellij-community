@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/21/2015
  */
 public class ExternalProjectStructureCustomizerImpl extends ExternalProjectStructureCustomizer {
   private final Set<? extends Key<? extends AbstractNamedData>> myKeys = ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);

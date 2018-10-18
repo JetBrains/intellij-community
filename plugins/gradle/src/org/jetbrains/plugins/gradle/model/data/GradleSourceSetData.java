@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public class GradleSourceSetData extends ModuleData {
 

@@ -48,7 +48,6 @@ import java.util.Set;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/8/12 10:06 AM
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 

@@ -48,7 +48,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 25-May-2007
  */
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);

@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/7/2014
  */
 @Order(ExternalSystemNode.BUILTIN_MODULE_DATA_NODE_ORDER)
 public class ModuleNode extends ExternalSystemNode<ModuleData> {

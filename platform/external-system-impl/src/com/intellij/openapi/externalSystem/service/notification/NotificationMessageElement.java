@@ -30,7 +30,6 @@ import static com.intellij.util.ui.EmptyIcon.ICON_16;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/24/2014
  */
 public class NotificationMessageElement extends NavigatableMessageElement {
   public static final String MSG_STYLE = "messageStyle";

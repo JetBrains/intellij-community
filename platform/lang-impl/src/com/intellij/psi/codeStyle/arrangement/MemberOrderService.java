@@ -23,7 +23,6 @@ import java.util.*;
  * This service provides utility methods for that.
  * 
  * @author Denis Zhdanov
- * @since 9/4/12 11:12 AM
  */
 public class MemberOrderService {
   

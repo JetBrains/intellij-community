@@ -32,7 +32,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 7:02 PM
  */
 public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 

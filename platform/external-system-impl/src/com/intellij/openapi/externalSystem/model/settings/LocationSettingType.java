@@ -13,7 +13,6 @@ import java.util.Arrays;
  * Enumerates possible types of external project location setting.
  *
  * @author Denis Zhdanov
- * @since 9/2/11 3:58 PM
  */
 public enum LocationSettingType {
 

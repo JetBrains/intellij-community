@@ -19,7 +19,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/17/2014
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ExternalProjectDataService extends AbstractProjectDataService<ExternalProject, Project> {

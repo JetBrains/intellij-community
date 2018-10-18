@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 1/24/12 7:03 AM
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 

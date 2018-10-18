@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/13/2014
  */
 public class EditExternalSystemRunConfigurationAction extends ExternalSystemAction {
 

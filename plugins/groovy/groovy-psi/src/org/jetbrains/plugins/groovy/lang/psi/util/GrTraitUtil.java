@@ -39,7 +39,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 
 /**
  * @author Max Medvedev
- * @since 16.05.2014
  */
 public class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);

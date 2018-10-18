@@ -24,7 +24,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleResourcesTarget extends ModuleBasedTarget<GradleResourceRootDescriptor> {
 

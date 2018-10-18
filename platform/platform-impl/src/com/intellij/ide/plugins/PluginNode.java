@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * @author stathik
- * @since Mar 27, 2003
  */
 public class PluginNode implements IdeaPluginDescriptor {
   public static final int STATUS_UNKNOWN = 0;

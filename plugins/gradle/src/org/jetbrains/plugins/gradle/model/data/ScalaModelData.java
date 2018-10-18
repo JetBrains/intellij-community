@@ -26,7 +26,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public class ScalaModelData extends AbstractExternalEntityData {
   private static final long serialVersionUID = 1L;

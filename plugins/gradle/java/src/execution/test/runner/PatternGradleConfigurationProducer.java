@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/19/2015
  */
 public class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 

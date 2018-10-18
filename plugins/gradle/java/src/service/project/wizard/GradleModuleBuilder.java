@@ -64,7 +64,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 6/26/13 11:10 AM
  */
 public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 

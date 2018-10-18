@@ -35,7 +35,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author stathik
- * @since Nov 29, 2003
  */
 public class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);

@@ -44,7 +44,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 

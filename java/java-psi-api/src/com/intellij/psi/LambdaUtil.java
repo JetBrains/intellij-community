@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 
 /**
  * @author anna
- * @since 17.07.2012
  */
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");

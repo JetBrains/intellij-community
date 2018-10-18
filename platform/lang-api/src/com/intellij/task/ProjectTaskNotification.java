@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/29/2016
  */
 public interface ProjectTaskNotification {
   /**

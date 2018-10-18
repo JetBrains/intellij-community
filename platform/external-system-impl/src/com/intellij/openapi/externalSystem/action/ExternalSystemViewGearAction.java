@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/2014
  */
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 

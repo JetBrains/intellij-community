@@ -43,7 +43,6 @@ import java.util.List;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/11/11 2:31 PM
  */
 public class PyEmacsHandler implements EmacsProcessingHandler {
 

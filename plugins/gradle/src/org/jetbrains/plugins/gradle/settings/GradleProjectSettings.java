@@ -19,7 +19,6 @@ import java.util.Optional;
 
 /**
  * @author Denis Zhdanov
- * @since 4/24/13 11:57 AM
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleHome;

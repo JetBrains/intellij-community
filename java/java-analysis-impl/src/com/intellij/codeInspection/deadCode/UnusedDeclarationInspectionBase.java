@@ -36,7 +36,6 @@ import java.util.*;
 
 /**
  * @author max
- * @since Oct 12, 2001
  */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);

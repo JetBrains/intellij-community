@@ -39,7 +39,6 @@ import java.util.*;
  * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
  *  
  * @author Denis Zhdanov
- * @since 4/3/13 4:04 PM
  */
 public abstract class AbstractExternalSystemSettings<
   SS extends AbstractExternalSystemSettings<SS, PS, L>,

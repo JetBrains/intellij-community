@@ -29,7 +29,6 @@ import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*;
 
 /**
  * @author Roman.Shein
- * @since 15.09.2015.
  */
 public class CodeStyleSettingPresentation {
 

@@ -29,7 +29,6 @@ import java.io.IOException;
 
 /**
  * @author Denis Zhdanov
- * @since 04/19/2011
  */
 public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
 

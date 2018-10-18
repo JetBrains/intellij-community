@@ -35,7 +35,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class JpsGradleModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";

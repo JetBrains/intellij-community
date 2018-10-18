@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author mike
- * @since Sep 16, 2002
  */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {

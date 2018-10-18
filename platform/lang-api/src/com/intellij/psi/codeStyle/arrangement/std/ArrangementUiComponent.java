@@ -33,7 +33,6 @@ import java.util.Set;
  * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
  * 
  * @author Denis Zhdanov
- * @since 3/11/13 10:22 AM
  */
 public interface ArrangementUiComponent {
 

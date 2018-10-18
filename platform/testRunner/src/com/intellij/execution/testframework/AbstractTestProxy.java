@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 23-May-2007
  */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");

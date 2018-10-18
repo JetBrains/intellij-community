@@ -8,7 +8,6 @@ import javax.swing.Icon;
 
 /**
  * @author anna
- * @since 16-Jan-2008
  */
 public class ScopeDescriptor {
   private final SearchScope myScope;

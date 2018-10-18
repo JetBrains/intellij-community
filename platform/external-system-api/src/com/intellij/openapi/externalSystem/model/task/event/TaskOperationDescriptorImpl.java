@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/16/2015
  */
 public class TaskOperationDescriptorImpl extends OperationDescriptorImpl implements TaskOperationDescriptor {
   private static final long serialVersionUID = 1L;

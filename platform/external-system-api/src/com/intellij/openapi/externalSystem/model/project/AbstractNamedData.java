@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/25/11 5:38 PM
  */
 public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
 

@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since Jan 20, 2003
  */
 public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
   private final Set<VirtualFile> myRootFiles = new HashSet<>();

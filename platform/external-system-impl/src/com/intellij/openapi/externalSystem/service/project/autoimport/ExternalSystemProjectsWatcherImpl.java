@@ -67,7 +67,6 @@ import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/30/2017
  */
 public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotificationListenerAdapter
   implements ExternalSystemProjectsWatcher {

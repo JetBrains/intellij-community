@@ -26,7 +26,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/18/2015
  */
 public abstract class AbstractExternalDependency implements ExternalDependency {
 

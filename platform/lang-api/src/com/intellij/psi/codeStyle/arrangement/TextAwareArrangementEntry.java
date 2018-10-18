@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * Implementations of this interface are not obliged to be thread-safe.
  *
  * @author Svetlana Zemlyanskaya
- * @since 25/04/14 08:17 PM
  */
 public interface TextAwareArrangementEntry extends ArrangementEntry {
   @Nullable

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 10/24/12 11:10 AM
  */
 public class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {

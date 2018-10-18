@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
 public class ProjectNode extends ExternalSystemNode<ProjectData> {
   private String myTooltipCache;

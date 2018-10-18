@@ -24,7 +24,6 @@ import java.io.Serializable;
  * Holds information about target class.
  * 
  * @author Denis Zhdanov
- * @since 8/15/13 2:52 PM
  */
 public class ClassHolder<T> implements Serializable {
 

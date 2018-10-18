@@ -62,7 +62,6 @@ import static org.junit.Assume.assumeThat;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/29/13
  */
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {

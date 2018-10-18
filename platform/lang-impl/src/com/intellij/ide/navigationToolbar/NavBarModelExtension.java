@@ -32,7 +32,6 @@ import java.util.Collection;
  * method, for which the order is reverse.
  *
  * @author anna
- * @since 04-Feb-2008
  */
 public interface NavBarModelExtension {
   ExtensionPointName<NavBarModelExtension> EP_NAME = ExtensionPointName.create("com.intellij.navbar");

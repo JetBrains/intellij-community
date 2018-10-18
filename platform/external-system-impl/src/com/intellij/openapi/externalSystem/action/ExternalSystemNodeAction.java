@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
 public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
 

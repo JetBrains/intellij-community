@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 24-Dec-2008
  */
 public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);

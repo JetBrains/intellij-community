@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
  * and allows to resume the processing any time.
  * 
  * @author Denis Zhdanov
- * @since 2/14/11 9:15 AM
  */
 public interface SequentialTask {
 

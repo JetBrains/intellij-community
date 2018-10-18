@@ -27,7 +27,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
  * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:42:00 PM
  */
 public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 

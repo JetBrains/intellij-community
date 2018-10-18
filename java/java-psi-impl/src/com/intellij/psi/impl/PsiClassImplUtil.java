@@ -57,7 +57,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ik
- * @since 24.10.2003
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");

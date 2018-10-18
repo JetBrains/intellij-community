@@ -29,7 +29,6 @@ import java.io.StringReader;
  * {@link TestEventXmlXPathView} utility class for query of XML using XPath expressions.
  *
  * @author Vladislav.Soroka
- * @since 2/20/14
  */
 public class TestEventXmlXPathView implements TestEventXmlView {
   private final XPath xpath;

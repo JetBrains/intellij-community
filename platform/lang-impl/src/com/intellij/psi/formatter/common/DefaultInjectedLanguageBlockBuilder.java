@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 9/6/12 9:22 AM
  */
 public class DefaultInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilder {
   

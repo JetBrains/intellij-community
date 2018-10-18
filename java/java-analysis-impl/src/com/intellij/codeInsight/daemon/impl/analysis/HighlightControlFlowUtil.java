@@ -32,7 +32,6 @@ import java.util.Map;
 
 /**
  * @author cdr
- * @since Aug 8, 2002
  */
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();

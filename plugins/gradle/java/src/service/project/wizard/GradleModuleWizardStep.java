@@ -25,7 +25,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class GradleModuleWizardStep extends ModuleWizardStep {
   private static final Icon WIZARD_ICON = null;

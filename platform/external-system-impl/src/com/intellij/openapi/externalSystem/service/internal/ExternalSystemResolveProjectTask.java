@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 1/24/12 7:21 AM
  */
 public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask {
 

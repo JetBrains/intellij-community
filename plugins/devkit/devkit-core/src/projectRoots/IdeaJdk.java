@@ -61,7 +61,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author anna
- * @since Nov 22, 2004
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 

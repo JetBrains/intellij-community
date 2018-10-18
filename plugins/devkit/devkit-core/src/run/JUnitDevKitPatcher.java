@@ -45,7 +45,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since Mar 4, 2005
  */
 public class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);

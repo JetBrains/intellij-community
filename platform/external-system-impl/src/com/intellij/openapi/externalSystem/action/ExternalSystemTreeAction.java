@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   @Override

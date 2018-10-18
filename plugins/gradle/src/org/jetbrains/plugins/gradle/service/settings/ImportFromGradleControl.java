@@ -17,7 +17,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
  * @author Denis Zhdanov
- * @since 4/30/13 4:58 PM
  */
 public class ImportFromGradleControl
   extends AbstractImportFromExternalSystemControl<GradleProjectSettings, GradleSettingsListener, GradleSettings>

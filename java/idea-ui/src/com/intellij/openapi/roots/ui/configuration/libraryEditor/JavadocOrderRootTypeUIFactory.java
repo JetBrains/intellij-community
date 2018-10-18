@@ -31,7 +31,6 @@ import java.util.stream.Stream;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override

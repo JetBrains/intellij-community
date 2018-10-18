@@ -31,7 +31,6 @@ import java.awt.*;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override

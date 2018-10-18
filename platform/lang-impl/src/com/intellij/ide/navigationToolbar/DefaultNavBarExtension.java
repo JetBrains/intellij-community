@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 04-Feb-2008
  */
 public class DefaultNavBarExtension extends AbstractNavBarModelExtension {
   @Override

@@ -18,7 +18,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 6.03.2003
  */
 public class PluginClassLoader extends UrlClassLoader {
   private final ClassLoader[] myParents;

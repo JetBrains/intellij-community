@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Denis Zhdanov
- * @since 3/14/13 5:11 PM
  */
 public class GradleExecutionHelper {
 

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/3/14
  */
 public enum NotificationCategory {
   ERROR(MessageCategory.ERROR),

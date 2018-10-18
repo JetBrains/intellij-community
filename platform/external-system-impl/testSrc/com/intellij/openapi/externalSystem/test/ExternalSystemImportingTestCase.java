@@ -85,7 +85,6 @@ import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 

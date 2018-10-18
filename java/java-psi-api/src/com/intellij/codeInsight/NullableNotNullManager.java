@@ -24,7 +24,6 @@ import static com.intellij.codeInsight.AnnotationUtil.*;
 
 /**
  * @author anna
- * @since 25.01.2011
  */
 public abstract class NullableNotNullManager {
   protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);

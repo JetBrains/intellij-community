@@ -33,7 +33,6 @@ import static java.util.Arrays.asList;
 
 /**
  * @author Denis Zhdanov
- * @since 4/27/11 3:07 PM
  */
 public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor, DumbAware {
 

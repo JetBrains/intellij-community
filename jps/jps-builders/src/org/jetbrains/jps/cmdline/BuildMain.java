@@ -48,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
- * @since 16.04.2012
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {

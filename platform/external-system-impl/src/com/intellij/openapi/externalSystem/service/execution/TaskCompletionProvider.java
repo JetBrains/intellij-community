@@ -44,7 +44,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/26/2014
  */
 public class TaskCompletionProvider extends CommandLineCompletionProvider {
 

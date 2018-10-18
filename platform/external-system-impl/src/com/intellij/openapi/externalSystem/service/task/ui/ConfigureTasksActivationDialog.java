@@ -77,7 +77,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 2/16/2015
  */
 public class ConfigureTasksActivationDialog extends DialogWrapper {
 

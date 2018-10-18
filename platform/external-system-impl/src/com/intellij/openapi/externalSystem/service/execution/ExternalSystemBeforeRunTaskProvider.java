@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/30/2014
  */
 public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskProvider<ExternalSystemBeforeRunTask> {
   @NotNull private final ProjectSystemId mySystemId;

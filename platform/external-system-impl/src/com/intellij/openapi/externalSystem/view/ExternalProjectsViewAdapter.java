@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class ExternalProjectsViewAdapter implements ExternalProjectsView {
   @NotNull

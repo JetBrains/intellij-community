@@ -44,7 +44,6 @@ import java.util.Set;
  *
  * @author Denis Zhdanov, Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
- * @since 4/17/13 11:24 AM
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
 

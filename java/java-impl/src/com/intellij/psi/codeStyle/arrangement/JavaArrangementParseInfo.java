@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Denis Zhdanov
- * @since 9/18/12 11:11 AM
  */
 public class JavaArrangementParseInfo {
 

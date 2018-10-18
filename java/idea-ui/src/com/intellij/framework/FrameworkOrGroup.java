@@ -24,7 +24,6 @@ import javax.swing.*;
  * in the New Project dialog or the tree displayed in the "Add Framework Support" dialog).
  *
  * @author Dmitry Avdeev
- * @since 09.10.13
  */
 public interface FrameworkOrGroup {
   @NotNull

@@ -57,7 +57,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/13/13
  */
 public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
                                                                                                                           DumbAware {

@@ -26,7 +26,6 @@ import static com.intellij.openapi.roots.DependencyScope.COMPILE;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/20/2017
  */
 public class GradleCompositeImportingTest extends GradleImportingTestCase {
   @Test

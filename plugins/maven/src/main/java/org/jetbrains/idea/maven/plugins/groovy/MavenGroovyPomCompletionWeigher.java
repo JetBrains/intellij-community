@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/30/2016
  */
 public class MavenGroovyPomCompletionWeigher extends CompletionWeigher {
 

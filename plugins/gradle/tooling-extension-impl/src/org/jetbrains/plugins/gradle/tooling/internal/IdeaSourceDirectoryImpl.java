@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/15/13
  */
 public class IdeaSourceDirectoryImpl implements IdeaSourceDirectory, Serializable {
 

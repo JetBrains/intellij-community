@@ -39,7 +39,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since 28-Nov-2005
  */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {

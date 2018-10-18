@@ -23,7 +23,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public class DefaultExternalProject implements ExternalProject, ExternalProjectPreview {
 
