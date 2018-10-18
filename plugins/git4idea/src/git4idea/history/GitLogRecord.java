@@ -91,7 +91,7 @@ class GitLogRecord {
   private String lookup(@NotNull GitLogParser.GitLogOption key) {
     String value = myOptions.get(key);
     if (value == null) {
-      LOG.error("Missing value for option " + key);
+      LOG.error("Missing value for option " + key + ", while executing " + myHandler);
       return "";
     }
     return shortBuffer(value);
