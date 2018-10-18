@@ -39,10 +39,10 @@ import java.beans.PropertyChangeListener;
 /**
  * @author cdr
  */
-public class InsertOverwritePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
+public class ColumnSelectionModePanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget, PropertyChangeListener {
   private final TextPanel myTextPanel = new TextPanel();
 
-  public InsertOverwritePanel(Project project) {
+  public ColumnSelectionModePanel(Project project) {
     super(project);
     myTextPanel.setRightPadding(7);
   }
@@ -50,7 +50,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
   @Override
   @NotNull
   public String ID() {
-    return StatusBar.StandardWidgets.INSERT_OVERWRITE_PANEL;
+    return StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL;
   }
 
   @Override
@@ -60,7 +60,7 @@ public class InsertOverwritePanel extends EditorBasedWidget implements StatusBar
 
   @Override
   public StatusBarWidget copy() {
-    return new InsertOverwritePanel(getProject());
+    return new ColumnSelectionModePanel(getProject());
   }
 
   @Override
