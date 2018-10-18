@@ -44,19 +44,21 @@ public class ArrayUtilRt {
    *         {@code equals} of arrays elements to compare {@code obj} with
    *         these elements.
    */
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static <T> int find(@NotNull final T[] src, @Nullable final T obj) {
-    for (int i = 0; i < src.length; i++) {
-      final T o = src[i];
-      if (o == null) {
-        if (obj == null) {
-          return i;
-        }
+    return indexOf(src, obj, 0, src.length);
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
+    if (object == null) {
+      for (int i = start; i < end; i++) {
+        if (objects[i] == null) return i;
       }
-      else {
-        if (o.equals(obj)) {
-          return i;
-        }
+    }
+    else {
+      for (int i = start; i < end; i++) {
+        if (object.equals(objects[i])) return i;
       }
     }
     return -1;
