@@ -95,13 +95,11 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       String string = StringUtil.repeat(String.valueOf(utf8character), 1024 * 10);
       typeInText(editor, string);
       typeInText(editor2, string);
-      WriteCommandAction
-        .runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
       undo(editor);
       UIUtil.dispatchAllInvocationEvents();
       assertEquals((int)utf8character, (int)editor.getDocument().getText().charAt(0));
-      WriteCommandAction
-        .runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
       undo(editor2);
       UIUtil.dispatchAllInvocationEvents();
       assertEquals((int)utf8character, (int)editor2.getDocument().getText().charAt(0));
