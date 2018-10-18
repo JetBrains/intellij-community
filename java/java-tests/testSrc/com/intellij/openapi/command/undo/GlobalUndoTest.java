@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.concurrent.FutureTask;
 
@@ -317,23 +316,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertNotNull(myRoot.findChild("f.xxx"));
   }
 
-  public void _testDeletionOfBigFile() throws IOException {
-    VirtualFile f = createChildData(myRoot, "f.java");
-    f.setBinaryContent(new byte[2 * 1024 * 1024]);
-
-    deleteInCommand(f);
-    assertGlobalUndoNotAvailable();
-  }
-
-  public void _testDeletionOfDirectoryContainingBigFile() {
-    VirtualFile dir = createChildDirectory(myRoot, "dir");
-    VirtualFile f = createChildData(dir, "f.java");
-    setBinaryContent(f, new byte[2 * 1024 * 1024]);
-
-    deleteInCommand(dir);
-    assertGlobalUndoNotAvailable();
-  }
-
   public void testUndoDeleteDir() {
     createDirectory(myDirName);
     checkDirExists();
@@ -551,43 +533,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     // todo
     //redo(editor);
     //assertEquals("external", getDocumentText(f));
-  }
-
-  public void _testCanUndoAfterFileWasDeletedExternallyAndWhenCreatedExternally() throws IOException {
-    VirtualFile f = createChildData(myRoot, "f.txt");
-
-    final VirtualFile finalF = f;
-    executeCommand(() -> setDocumentText(finalF, "doc"));
-
-    File ioFile = new File(f.getPath());
-
-    ioFile.delete();
-    LocalFileSystem.getInstance().refresh(false);
-    f = myRoot.findChild("f.txt");
-    assertNull(f);
-
-    FileUtil.writeToFile(ioFile, "external".getBytes());
-    LocalFileSystem.getInstance().refresh(false);
-
-    f = myRoot.findChild("f.txt");
-    assertNotNull(f);
-
-    assertEquals("external", getDocumentText(f));
-
-    Editor editor = getEditor(f);
-    assertUndoIsAvailable(editor);
-
-    undo(editor);
-    assertEquals("doc", getDocumentText(f));
-    undo(editor);
-    assertEquals("", getDocumentText(f));
-
-    redo(editor);
-    assertEquals("doc", getDocumentText(f));
-
-    // todo
-    redo(editor);
-    assertEquals("external", getDocumentText(f));
   }
 
   public void testDoNotRecordDocumentChangesWhenFileChangedExternallyAndNoChangesRecordedYet() throws IOException {
@@ -1189,21 +1134,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     VirtualFileManager.getInstance().syncRefresh();
   }
 
-  public void skippedtestModificationTimeStamp() throws Exception {
-    createClass("Class");
-    VirtualFile virtualFile = myClass.getContainingFile().getVirtualFile();
-    long modificationStamp = virtualFile.getModificationStamp();
-
-    OutputStream stream = virtualFile.getOutputStream(this, -1, -1);
-    stream.close();
-
-    assertTrue(virtualFile.getModificationStamp() != modificationStamp);
-
-    globalUndo();
-
-    assertEquals(virtualFile.getModificationStamp(), modificationStamp);
-  }
-
   private void deleteInCommand(final VirtualFile f) {
     executeCommand((Command)() -> delete(f), "Delete file");
   }
@@ -1426,196 +1356,6 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertEquals("text1", getDocumentText(files[0]));
     assertEquals("text2", getDocumentText(files[1]));
     assertEquals("text3", getDocumentText(files[2]));
-  }
-
-  public void _testCommandWithAllDocumentsAffected() {
-    final VirtualFile[] files = new VirtualFile[2];
-    files[0] = createChildData(myRoot, "f1.txt");
-    files[1] = createChildData(myRoot, "f2.txt");
-
-    assertGlobalUndoNotAvailable();
-    assertUndoNotAvailable(getEditor(files[0]));
-    assertUndoNotAvailable(getEditor(files[1]));
-
-    executeCommand(() -> myManager.undoableActionPerformed(new UndoableAction() {
-      @Override
-      public void undo() {
-      }
-
-      @Override
-      public void redo() {
-      }
-
-      @Override
-      public DocumentReference[] getAffectedDocuments() {
-        return null;
-      }
-
-      @Override
-      public boolean isGlobal() {
-        return true;
-      }
-    }));
-
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(files[0]));
-    assertUndoIsAvailable(getEditor(files[1]));
-
-    globalUndo();
-
-    assertGlobalUndoNotAvailable();
-    assertUndoNotAvailable(getEditor(files[0]));
-    assertUndoNotAvailable(getEditor(files[1]));
-
-    assertGlobalRedoIsAvailable();
-    assertRedoIsAvailable(getEditor(files[0]));
-    assertRedoIsAvailable(getEditor(files[1]));
-  }
-
-  public void _testCommandWithAllDocumentsAffectedWhenFileChangedAfterIt() {
-    final VirtualFile f = createChildData(myRoot, "f1.txt");
-
-    final String[] log = {""};
-    executeCommand(() -> myManager.undoableActionPerformed(new UndoableAction() {
-      @Override
-      public void undo() {
-        log[0] += "undo ";
-      }
-
-      @Override
-      public void redo() {
-        log[0] += "redo ";
-      }
-
-      @Override
-      public DocumentReference[] getAffectedDocuments() {
-        return null;
-      }
-
-      @Override
-      public boolean isGlobal() {
-        return true;
-      }
-    }));
-
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(f));
-
-    executeCommand(() -> setDocumentText(f, "doc"));
-
-    globalUndo();
-    assertEquals("undo ", log[0]);
-    assertEquals("doc", getDocumentText(f));
-    assertGlobalUndoNotAvailable();
-    assertUndoIsAvailable(getEditor(f));
-    assertGlobalRedoIsAvailable();
-    assertRedoIsAvailable(getEditor(f));
-
-    redo(getEditor(f));
-    assertEquals("undo redo ", log[0]);
-    assertEquals("doc", getDocumentText(f));
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(f));
-    assertGlobalRedoNotAvailable();
-    assertRedoNotAvailable(getEditor(f));
-
-    undo(getEditor(f));
-    assertEquals("undo redo undo ", log[0]);
-    assertEquals("doc", getDocumentText(f));
-    assertGlobalUndoNotAvailable();
-    assertUndoIsAvailable(getEditor(f));
-    assertGlobalRedoIsAvailable();
-    assertRedoIsAvailable(getEditor(f));
-
-    undo(getEditor(f));
-    assertEquals("undo redo undo ", log[0]);
-    assertEquals("", getDocumentText(f));
-    assertGlobalUndoNotAvailable();
-    assertUndoNotAvailable(getEditor(f));
-    assertGlobalRedoIsAvailable();
-    assertRedoIsAvailable(getEditor(f));
-
-    globalRedo();
-    assertEquals("undo redo undo redo ", log[0]);
-    assertEquals("", getDocumentText(f));
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(f));
-    assertGlobalRedoNotAvailable();
-    assertRedoIsAvailable(getEditor(f));
-
-    redo(getEditor(f));
-    assertEquals("undo redo undo redo ", log[0]);
-    assertEquals("doc", getDocumentText(f));
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(f));
-    assertGlobalRedoNotAvailable();
-    assertRedoNotAvailable(getEditor(f));
-  }
-
-  public void _testCommandWithAllDocumentsAffectedWhenFileCreatedAfterIt() {
-    final String[] log = {""};
-    executeCommand(() -> myManager.undoableActionPerformed(new UndoableAction() {
-      @Override
-      public void undo() {
-        log[0] += "undo ";
-      }
-
-      @Override
-      public void redo() {
-        log[0] += "redo ";
-      }
-
-      @Override
-      public DocumentReference[] getAffectedDocuments() {
-        return null;
-      }
-
-      @Override
-      public boolean isGlobal() {
-        return true;
-      }
-    }));
-
-    assertGlobalUndoIsAvailable();
-
-    final VirtualFile[] f = new VirtualFile[1];
-    executeCommand(() -> f[0] = createChildData(myRoot, "f.txt"));
-
-    assertGlobalUndoIsAvailable();
-    assertUndoIsAvailable(getEditor(f[0]));
-
-    globalUndo();
-    assertNull(myRoot.findChild("f.txt"));
-    assertEquals("", log[0]);
-    assertGlobalUndoIsAvailable();
-    assertGlobalRedoIsAvailable();
-
-    globalUndo();
-    assertNull(myRoot.findChild("f.txt"));
-    assertEquals("undo ", log[0]);
-    assertGlobalUndoNotAvailable();
-    assertGlobalRedoIsAvailable();
-
-    globalRedo();
-    assertNull(myRoot.findChild("f.txt"));
-    assertEquals("undo redo ", log[0]);
-    assertGlobalUndoIsAvailable();
-    assertGlobalRedoIsAvailable();
-
-    globalRedo();
-    f[0] = myRoot.findChild("f.txt");
-    assertNotNull(f[0]);
-    assertEquals("undo redo ", log[0]);
-    assertGlobalUndoIsAvailable();
-    assertGlobalRedoNotAvailable();
-    assertUndoIsAvailable(getEditor(f[0]));
-    assertRedoNotAvailable(getEditor(f[0]));
-
-    undo(getEditor(f[0]));
-    assertNull(myRoot.findChild("f.txt"));
-    assertEquals("undo redo ", log[0]);
-    assertGlobalUndoIsAvailable();
-    assertGlobalRedoIsAvailable();
   }
 
   public void testUndoConfirmationPolicy() {
