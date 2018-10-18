@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,10 +15,36 @@ import java.util.List;
 /**
  * @author Maxim.Mossienko
  */
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "LanguageMismatch"})
 public class StructuralSearchTest extends StructuralSearchTestCase {
+  @Override
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
+    return super.findMatchesCount(in, pattern, fileType);
+  }
+
+  @Override
+  protected List<MatchResult> findMatches(@Language("JAVA") String in,
+                                          String pattern,
+                                          FileType patternFileType,
+                                          com.intellij.lang.Language patternLanguage,
+                                          FileType sourceFileType,
+                                          String sourceExtension,
+                                          boolean physicalSourceFile) {
+    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, sourceExtension, physicalSourceFile);
+  }
+
+  @Override
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, FileType patternFileType) {
+    return super.findMatches(in, pattern, patternFileType);
+  }
+
+  @Override
+  protected int findMatchesCount(@Language("JAVA") String in, String pattern) {
+    return super.findMatchesCount(in, pattern);
+  }
+
   private static final String s1 = "class X {{" +
-                                   "debug(\"In action performed:\"+event);"+
+                                   "debug(\"In action performed:\"+event);" +
                                    "project = (Project)event.getDataContext().getData(DataConstants.PROJECT);" +
                                    "CodeEditorManager.getInstance(project).commitAllToPsiFile();" +
                                    "file = (PsiFile) event.getDataContext().getData(\"psi.File\"); " +
@@ -28,6 +56,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   private static final String s2 = "class X {{ ((dialog==null)? (dialog = new SearchDialog()): dialog).show(); }}";
 
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
   private static final String s4 = " do { " +
                                    "  pattern = pattern.getNextSibling(); " +
                                    " } " +
@@ -52,6 +81,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                    "}" +
                                    "}";
 
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
   private static final String s6 = " do { " +
                                    "  pattern.getNextSibling(); " +
                                    " } " +
@@ -64,12 +94,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                    " }" +
                                    "}}";
 
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
   private static final String s8 = " if (true) { " +
                                    "   throw new UnsupportedPatternException(statement.toString());" +
                                    " } ";
 
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
   private static final String s9 = " if (true) throw new UnsupportedPatternException(statement.toString());";
 
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
   private static final String s10 = "listener.add(new Runnable() { public void run() {} });";
 
   private static final String s12 = "class X {{" +
@@ -77,7 +110,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                     "  public void run() {" +
                                     "   matchContext.getSink().matchingFinished();" +
                                     "   } " +
-                                    "}" +
+                                    "};" +
                                     "}}";
 
   private static final String s14_1 = "class X {{ if (true) { aaa(var); }}}";
@@ -171,7 +204,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   private static final String s71 = " class A { " +
                                     "class D { D() { c(); } }" +
-                                    "void a() { c(); new MouseListener() { void b() { c(); } } }" +
+                                    "void a() { c(); new MouseListener() { void b() { c(); } }; }" +
                                     " }";
 
   private static final String s73 = " class A { int A; static int B=5; public abstract void a(int c); void q() { ind d=7; } }";
@@ -179,7 +212,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                     "/** */ class B {}\n" +
                                     "/** @class aClass */ class C {}";
 
-  private static final String s77 = " new ActionListener() {} ";
+  @Language(value = "JAVA", prefix="class X {{", suffix = "}}")
+  private static final String s77 = " new ActionListener() {}; ";
 
   private static final String s79 = " class A { static { int c; } void a() { int b; b=1; }} ";
 
@@ -276,7 +310,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  new ArrayList() {};" +
                     "  new ArrayList();" +
                     "  new ArrayList<String>();" +
-                    "  new ArrayList<String>() {}" +
+                    "  new ArrayList<String>() {};" +
                     "}}";
     assertEquals("search for parameterized anonymous class", 1, findMatchesCount(source, "new '_A<'_B>() {}"));
     assertEquals("expr in def initializer", 3, findMatchesCount(s53, "System.getProperty('T)"));
@@ -314,7 +348,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "    public void run() {\n" +
                 "        // do stuff\n" +
                 "    }\n" +
-                "}" +
+                "};" +
                 "}}";
     assertEquals("Find inner class parameters", 2, findMatchesCount(s1, "new Thread('args+) { '_Other* }"));
 
@@ -408,9 +442,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "Object[] c = new Object[] { \"\", null};\n" +
                 "Object[] d = {null, null};\n" +
                 "Object[] e = {};\n" +
-                "Object[] f = new Object[]{}\n" +
-                "String[] g = new String[]{}\n" +
-                "String[] h = new String[]{new String()}" +
+                "Object[] f = new Object[]{};\n" +
+                "String[] g = new String[]{};\n" +
+                "String[] h = new String[]{new String()};" +
                 "}}";
 
     assertEquals("Find new array expressions, but no array initializer expressions", 5,
@@ -439,7 +473,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String arrays = "class X {{" +
                     "int[] a = new int[20];\n" +
-                    "byte[] b = new byte[30]" +
+                    "byte[] b = new byte[30];" +
                     "}}";
     assertEquals("Improper array search", 1, findMatchesCount(arrays, "new int['_a]"));
 
@@ -447,7 +481,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                               "  String[] s1 = {};\n" +
                               "  String[] s2 = new String[]{};\n" +
                               "  String[][] s3 = new String[][]{};" +
-                              "}";
+                              "}}";
     assertEquals("Find 2 dimensional array", 1, findMatchesCount(multiDimensional, "new String[][]{}"));
     assertEquals("Find 1 dimensional arrays", 2, findMatchesCount(multiDimensional, "new String[]{}"));
   }
@@ -480,7 +514,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "  int i = 0x20;" +
                 "  char c = 'a';" +
                 "  char d = 'A';" +
-                "  char e = 'z'" +
+                "  char e = 'z';" +
                 "}";
     assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
     assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
@@ -809,7 +843,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s139_2 = "class My { boolean equals(Object o); }";
     assertEquals("reject field with 0 max occurence", 1, findMatchesCount(s139_2,s140));
 
-    final String s141 = "class A { static { a = 10 } }\n" +
+    final String s141 = "class A { static { a = 10; } }\n" +
                         "class B { { a = 10; } }\n" +
                         "class C { { a = 10; } }";
     assertEquals("static block search", 1, findMatchesCount(s141, "class '_ { static { a = 10; } } "));
@@ -1012,7 +1046,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s129 = "class X {{ A a = new A(); }}";
     assertEquals("case sensitive match", 2, findMatchesCount(s129, "'Sym:A"));
 
-    final String s133 = "class C { int a; int A() { a = 1; }} void c(int a) { a = 2; }";
+    final String s133 = "class C { int a; int A() { a = 1; } void c(int a) { a = 2; } }";
     final String s134 = "a";
     assertEquals("find sym finds declaration", 4, findMatchesCount(s133, s134));
 
@@ -1408,7 +1442,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Literal content", 2, findMatchesCount(s4, "\"'test:[regex( .*test.* )]\""));
     assertEquals("Literal content with escaping", 1, findMatchesCount(s4, "\"''test\""));
 
-    String s7 = "class X {{ String s = \"aaa\" }}";
+    String s7 = "class X {{ String s = \"aaa\"; }}";
     assertEquals("Simple literal content", 1, findMatchesCount(s7, "\"'test:[regex( aaa )]\""));
 
     String s9 = "class X {{ java.util.Arrays.asList(\" aaa \",\" bbb \",\" ccc ccc aaa\"); }}";
@@ -1622,7 +1656,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "public class TestBean3 {}\n" +
                 "@MyBean(\"a\")\n" +
                 "@MyBean2(\"a\")\n" +
-                "public class TestBean4";
+                "public class TestBean4{}";
     String s2 = "@MyBean(\"\")\n" +
                 "@MyBean2(\"\")\n" +
                 "public class '_a {}\n";
@@ -1750,7 +1784,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String source2 = "@X\n" +
                      "class A {\n" +
                      "  @Y int value;" +
-                     "  @Y int void m(@Z int i) {\n" +
+                     "  @Y int m(@Z int i) {\n" +
                      "    return 1;\n" +
                      "  }\n" +
                      "}\n";
@@ -1766,6 +1800,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find all annotations 2", 8, findMatchesCount(source3, "@'_Annotation"));
 
     // package-info.java
+
     final String source4 = "/**\n" +
                            " * documentation\n" +
                            " */\n" +
@@ -1924,9 +1959,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String in2 = "class A {}" +
                  "class B extends A {{" +
-                 "  new Object() {}" +
-                 "  new A() {}" +
-                 "  new B() {}" +
+                 "  new Object() {};" +
+                 "  new A() {};" +
+                 "  new B() {};" +
                  "  new B();" +
                  "  new Object();" +
                  "}}";
@@ -2071,7 +2106,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
   @SuppressWarnings("unused")
   public void _testContainsPredicate() {
-    String s1 = "{{\n" +
+    String s1 = "class X {{\n" +
                 "  int a;\n" +
                 "  a = 1;\n" +
                 "}\n" +
@@ -2132,7 +2167,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                 "            LOG.debug(6);\n" +
                 "        }\n" +
                 "        if (true) LOG.debug(7);\n" +
-                "        if (true) { int 1 = 1; } else { LOG.debug(8); }\n" +
+                "        if (true) { int L = 1; } else { LOG.debug(8); }\n" +
                 "        if (true) {\n" +
                 "          if (true) {}\n" +
                 "          if (true) {}\n" +
@@ -2506,7 +2541,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String source3 = "class X {" +
                      "  void m() {" +
                      "    System.out.println();" +
-                     "    // tokamak" +
+                     "    // tokamak\n" +
                      "  }" +
                      "}";
     String pattern3 = "'_st;" +
@@ -2665,7 +2700,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String source2 = "class ABC {" +
                      "    String u;" +
-                     "    String s,t," +
+                     "    String s,t;" +
                      "    void m() {}" +
                      "}";
     assertEquals("find incomplete code", 1, findMatchesCount(source2, "'_a '_b{2,100};"));
