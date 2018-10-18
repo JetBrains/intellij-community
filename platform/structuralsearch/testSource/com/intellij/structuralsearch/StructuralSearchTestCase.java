@@ -38,6 +38,7 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
   protected void tearDown() throws Exception {
     testMatcher = null;
     options = null;
+    PatternCompiler.cleanupForNextTest();
     super.tearDown();
   }
 
