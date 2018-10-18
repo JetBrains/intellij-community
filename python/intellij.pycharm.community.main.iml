@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.python.ipnb" />
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.python.terminal" />
+    <orderEntry type="module" module-name="intellij.python.copyright" />
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
