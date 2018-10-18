@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
@@ -40,7 +39,6 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
-  private static final Logger LOG = Logger.getInstance(GitCommit.class);
   private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
   @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
 
