@@ -113,12 +113,14 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
     for (Collection<String> ids : suppressedScopes.values()) {
       for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
         String suppressId = iterator.next().trim();
-        InspectionToolWrapper toolWrapper = findReportingTool(toolWrappers, suppressId);
-        if (toolWrapper == null) {
+        List<InspectionToolWrapper> reportingWrappers = findReportingTools(toolWrappers, suppressId);
+        if (reportingWrappers.isEmpty()) {
           iterator.remove();
         }
         else {
-          suppressedTools.put(toolWrapper, suppressId);
+          for (InspectionToolWrapper toolWrapper : reportingWrappers) {
+            suppressedTools.put(toolWrapper, suppressId);
+          }
         }
       }
     }
@@ -201,7 +203,8 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
     return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
-  private static InspectionToolWrapper findReportingTool(InspectionToolWrapper[] toolWrappers, String suppressedId) {
+  private static List<InspectionToolWrapper> findReportingTools(InspectionToolWrapper[] toolWrappers, String suppressedId) {
+    List<InspectionToolWrapper> wrappers = Collections.emptyList();
     String mergedToolName = InspectionElementsMerger.getMergedToolName(suppressedId);
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       String toolWrapperShortName = toolWrapper.getShortName();
@@ -210,25 +213,21 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
           (((LocalInspectionToolWrapper)toolWrapper).getTool().getID().equals(suppressedId) ||
            suppressedId.equals(alternativeID) ||
            toolWrapperShortName.equals(mergedToolName))) {
-        if (((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
-          return null;
-        }
-        else {
-          return toolWrapper;
+        if (!((LocalInspectionToolWrapper)toolWrapper).isUnfair()) {
+          if (wrappers.isEmpty()) wrappers = new ArrayList<>();
+          wrappers.add(toolWrapper);
         }
       }
       else if (toolWrapperShortName.equals(suppressedId) || toolWrapperShortName.equals(mergedToolName) || suppressedId.equals(alternativeID)) {
         //ignore global unused as it won't be checked anyway
         if (toolWrapper instanceof LocalInspectionToolWrapper ||
             toolWrapper instanceof GlobalInspectionToolWrapper && !((GlobalInspectionToolWrapper)toolWrapper).getTool().isGraphNeeded()) {
-          return toolWrapper;
-        }
-        else {
-          return null;
+          if (wrappers.isEmpty()) wrappers = new ArrayList<>();
+          wrappers.add(toolWrapper);
         }
       }
     }
-    return null;
+    return wrappers;
   }
 
   private static boolean collectSuppressions(@NotNull PsiElement element,
