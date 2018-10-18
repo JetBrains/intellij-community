@@ -17,9 +17,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -806,7 +804,13 @@ public class Py3ResolveTest extends PyResolveTestCase {
         runWithAdditionalClassEntryInSdkRoots(
           libDir,
           () -> {
-            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+            assertInstanceOf(reference, PsiPolyVariantReference.class);
+
+            final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+            assertSize(1, results);
+
+            final PsiElement element = results[0].getElement();
             assertInstanceOf(element, PyFunction.class);
             assertEquals("foo.pyi", element.getContainingFile().getName());
           }
