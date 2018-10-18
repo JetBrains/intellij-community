@@ -1,7 +1,7 @@
 // "Remove 'unchecked' suppression" "false"
 public class SampleInjected {
     void foo() {
-        @SuppressWarnings({"unu<caret>sed"})
+        @SuppressWarnings({"unch<caret>ecked"})
         String java = "import java.util.*;\n" +
                       "class A {" +
                       "   void a(List l) {\n" +
