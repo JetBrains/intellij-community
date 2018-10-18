@@ -253,7 +253,6 @@
     <module old-name="python-community-plugin-resources" new-name="intellij.python.community.plugin.resources" />
     <module old-name="python-community-tests" new-name="intellij.python.community.tests" />
     <module old-name="python-community-tools" new-name="intellij.python.tools" />
-    <module old-name="python-copyright" new-name="intellij.python.copyright" />
     <module old-name="python-edu-build" new-name="intellij.pycharm.edu.build" />
     <module old-name="python-helpers" new-name="intellij.python.helpers" />
     <module old-name="python-openapi" new-name="intellij.python.community" />
