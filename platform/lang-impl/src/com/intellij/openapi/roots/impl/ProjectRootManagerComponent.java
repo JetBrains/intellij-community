@@ -309,6 +309,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (--myInsideRefresh == 0) {
         if (myPointerChangesDetected) {
           myPointerChangesDetected = false;
+          incModificationCount();
           myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).rootsChanged(new ModuleRootEventImpl(myProject, false));
 
           doSynchronizeRoots();
