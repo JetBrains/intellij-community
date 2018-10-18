@@ -3,6 +3,7 @@ package com.intellij.tasks.jira;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.ui.DeferredIconImpl;
+import com.intellij.util.ObjectUtils;
 import icons.TasksCoreIcons;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,13 @@ public abstract class JiraTask extends Task {
   public final Icon getIcon() {
     if (myIcon == null) {
       // getIconUrl() shouldn't be called before the instance is properly initialized
-      myIcon = new DeferredIconImpl<>(TasksCoreIcons.Jira, getIconUrl(), false, this::getIconByUrl);
+      final String iconUrl = getIconUrl();
+      if (StringUtil.isEmpty(iconUrl)) {
+        myIcon = TasksCoreIcons.Jira;
+      }
+      else {
+        myIcon = new DeferredIconImpl<>(TasksCoreIcons.Jira, iconUrl, false, JiraTask::getIconByUrl);
+      }
     }
     return myIcon;
   }
@@ -100,12 +107,8 @@ public abstract class JiraTask extends Task {
    * @return task con.
    */
   @NotNull
-  protected final Icon getIconByUrl(@Nullable String iconUrl) {
-    if (StringUtil.isEmpty(iconUrl)) {
-      return TasksCoreIcons.Jira;
-    }
-    Icon icon = CachedIconLoader.getIcon(iconUrl);
-    return icon != null ? icon : TasksIcons.Other;
+  protected static Icon getIconByUrl(@Nullable String iconUrl) {
+    return ObjectUtils.notNull(CachedIconLoader.getIcon(iconUrl), TasksIcons.Other);
   }
 
   /**
