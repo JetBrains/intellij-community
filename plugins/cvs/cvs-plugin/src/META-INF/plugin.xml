@@ -48,12 +48,12 @@
 
     <search.topHitProvider implementation="com.intellij.cvsSupport2.config.CvsOptionsTopHitProvider"/>
     <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
-    <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>
   </extensions>
 
   <actions>
     <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction">

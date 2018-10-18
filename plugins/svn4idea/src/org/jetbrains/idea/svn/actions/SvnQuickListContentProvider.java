@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,13 +30,6 @@ public class SvnQuickListContentProvider implements VcsQuickListContentProvider 
     add("Subversion.Copy", manager, actions);
     add("Subversion.Clenaup", manager, actions);
     return actions;
-  }
-
-  @Override
-  public List<AnAction> getNotInVcsActions(@Nullable Project project, @Nullable DataContext dataContext) {
-    final AnAction action = ActionManager.getInstance().getAction("Subversion.ImportToSVNRepository");
-    assert action != null;
-    return Collections.singletonList(action);
   }
 
   private void add(String actionName, ActionManager manager, List<AnAction> actions) {

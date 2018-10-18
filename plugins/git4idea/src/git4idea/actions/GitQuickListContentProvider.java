@@ -4,13 +4,9 @@ package git4idea.actions;
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
@@ -28,11 +24,5 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Git.Unstash", manager, actions);
 
     add("Git.ResolveConflicts", manager, actions);
-  }
-
-  @Override
-  public List<AnAction> getNotInVcsActions(@Nullable Project project, @Nullable DataContext dataContext) {
-    final AnAction action = ActionManager.getInstance().getAction("Git.Init");
-    return Collections.singletonList(action);
   }
 }
