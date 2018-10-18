@@ -11,8 +11,6 @@ import gnu.trove.TIntObjectHashMap
 val isMacOsCredentialStoreSupported: Boolean
   get() = SystemInfo.isMacIntel64 && SystemInfo.isMacOSLeopard
 
-private val LIBRARY by lazy { Native.loadLibrary("Security", MacOsKeychainLibrary::class.java) }
-
 private const val errSecSuccess = 0
 private const val errSecItemNotFound = -25300
 private const val errSecInvalidRecord = -67701
@@ -24,6 +22,69 @@ private const val kSecFormatUnknown = 0
 private const val kSecAccountItemAttr = (('a'.toInt() shl 8 or 'c'.toInt()) shl 8 or 'c'.toInt()) shl 8 or 't'.toInt()
 
 internal class KeyChainCredentialStore : CredentialStore {
+  companion object {
+    private val library = Native.loadLibrary("Security", MacOsKeychainLibrary::class.java)
+
+    private fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
+      val accountNameBytes = accountName?.toByteArray()
+      val passwordSize = IntArray(1)
+      val passwordRef = PointerByReference()
+      val itemRef = PointerByReference()
+      val errorCode = checkForError("find", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
+      if (errorCode == errSecUserCanceled) {
+        return ACCESS_TO_KEY_CHAIN_DENIED
+      }
+
+      val pointer = passwordRef.value ?: return null
+      val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
+      library.SecKeychainItemFreeContent(null, pointer)
+
+      var effectiveAccountName = accountName
+      if (effectiveAccountName == null) {
+        val attributes = PointerByReference()
+        checkForError("SecKeychainItemCopyAttributesAndData", library.SecKeychainItemCopyAttributesAndData(itemRef.value!!, SecKeychainAttributeInfo(kSecAccountItemAttr), null, attributes, null, null))
+        val attributeList = SecKeychainAttributeList(attributes.value)
+        try {
+          attributeList.read()
+          effectiveAccountName = readAttributes(attributeList).get(kSecAccountItemAttr)
+        }
+        finally {
+          library.SecKeychainItemFreeAttributesAndData(attributeList, null)
+        }
+      }
+      return Credentials(effectiveAccountName, password)
+    }
+
+    private fun checkForError(message: String, code: Int): Int {
+      if (code == errSecSuccess || code == errSecItemNotFound) {
+        return code
+      }
+
+      val translated = library.SecCopyErrorMessageString(code, null)
+      val builder = StringBuilder(message).append(": ")
+      if (translated == null) {
+        builder.append(code)
+      }
+      else {
+        val buf = CharArray(library.CFStringGetLength(translated).toInt())
+        for (i in 0 until buf.size) {
+          buf[i] = library.CFStringGetCharacterAtIndex(translated, i.toLong())
+        }
+        library.CFRelease(translated)
+        builder.append(buf).append(" (").append(code).append(')')
+      }
+
+      if (code == errUserNameNotCorrect || code == errSecUserCanceled || code == -25299 /* The specified item already exists in the keychain */) {
+        LOG.warn(builder.toString())
+      }
+      else {
+        LOG.error(builder.toString())
+      }
+
+      return code
+    }
+  }
+
   override fun get(attributes: CredentialAttributes): Credentials? {
     return findGenericPassword(attributes.serviceName.toByteArray(), attributes.userName)
   }
@@ -33,15 +94,15 @@ internal class KeyChainCredentialStore : CredentialStore {
     if (credentials.isEmpty()) {
       val itemRef = PointerByReference()
       val userName = attributes.userName?.toByteArray()
-      val code = LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, null, null, itemRef)
+      val code = library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, userName?.size ?: 0, userName, null, null, itemRef)
       if (code == errSecItemNotFound || code == errSecInvalidRecord) {
         return
       }
 
       checkForError("find (for delete)", code)
       itemRef.value?.let {
-        checkForError("delete", LIBRARY.SecKeychainItemDelete(it))
-        LIBRARY.CFRelease(it)
+        checkForError("delete", library.SecKeychainItemDelete(it))
+        library.CFRelease(it)
       }
       return
     }
@@ -49,7 +110,7 @@ internal class KeyChainCredentialStore : CredentialStore {
     val userName = (attributes.userName ?: credentials!!.userName)?.toByteArray()
     val searchUserName = if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null
     val itemRef = PointerByReference()
-    val library = LIBRARY
+    val library = library
     checkForError("find (for save)", library.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, searchUserName?.size ?: 0, searchUserName, null, null, itemRef))
 
     val password = if (attributes.isPasswordMemoryOnly || credentials!!.password == null) null else credentials.password!!.toByteArray(false)
@@ -77,36 +138,6 @@ internal class KeyChainCredentialStore : CredentialStore {
 
     password?.fill(0)
   }
-}
-
-private fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
-  val accountNameBytes = accountName?.toByteArray()
-  val passwordSize = IntArray(1)
-  val passwordRef = PointerByReference()
-  val itemRef = PointerByReference()
-  val errorCode = checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
-  if (errorCode == errSecUserCanceled) {
-    return ACCESS_TO_KEY_CHAIN_DENIED
-  }
-
-  val pointer = passwordRef.value ?: return null
-  val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
-  LIBRARY.SecKeychainItemFreeContent(null, pointer)
-
-  var effectiveAccountName = accountName
-  if (effectiveAccountName == null) {
-    val attributes = PointerByReference()
-    checkForError("SecKeychainItemCopyAttributesAndData", LIBRARY.SecKeychainItemCopyAttributesAndData(itemRef.value!!, SecKeychainAttributeInfo(kSecAccountItemAttr), null, attributes, null, null))
-    val attributeList = SecKeychainAttributeList(attributes.value)
-    try {
-      attributeList.read()
-      effectiveAccountName = readAttributes(attributeList).get(kSecAccountItemAttr)
-    }
-    finally {
-      LIBRARY.SecKeychainItemFreeAttributesAndData(attributeList, null)
-    }
-  }
-  return Credentials(effectiveAccountName, password)
 }
 
 // https://developer.apple.com/library/mac/documentation/Security/Reference/keychainservices/index.html
@@ -150,7 +181,7 @@ private interface MacOsKeychainLibrary : Library {
   fun SecKeychainItemFreeContent(/*SecKeychainAttributeList*/attrList: Pointer?, data: Pointer?)
 }
 
-internal class SecKeychainAttributeInfo : Structure() {
+private class SecKeychainAttributeInfo : Structure() {
   @JvmField
   var count: Int = 0
   @JvmField
@@ -161,37 +192,8 @@ internal class SecKeychainAttributeInfo : Structure() {
   override fun getFieldOrder() = listOf("count", "tag", "format")
 }
 
-private fun checkForError(message: String, code: Int): Int {
-  if (code == errSecSuccess || code == errSecItemNotFound) {
-    return code
-  }
-
-  val translated = LIBRARY.SecCopyErrorMessageString(code, null)
-  val builder = StringBuilder(message).append(": ")
-  if (translated == null) {
-    builder.append(code)
-  }
-  else {
-    val buf = CharArray(LIBRARY.CFStringGetLength(translated).toInt())
-    for (i in 0 until buf.size) {
-      buf[i] = LIBRARY.CFStringGetCharacterAtIndex(translated, i.toLong())
-    }
-    LIBRARY.CFRelease(translated)
-    builder.append(buf).append(" (").append(code).append(')')
-  }
-
-  if (code == errUserNameNotCorrect || code == errSecUserCanceled || code == -25299 /* The specified item already exists in the keychain */) {
-    LOG.warn(builder.toString())
-  }
-  else {
-    LOG.error(builder.toString())
-  }
-
-  return code
-}
-
 @Suppress("FunctionName")
-internal fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo {
+private fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo {
   val info = SecKeychainAttributeInfo()
   val length = ids.size
   info.count = length
@@ -209,7 +211,7 @@ internal fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo
   return info
 }
 
-internal class SecKeychainAttributeList : Structure {
+private class SecKeychainAttributeList : Structure {
   @JvmField
   var count = 0
   @JvmField
@@ -222,7 +224,7 @@ internal class SecKeychainAttributeList : Structure {
   override fun getFieldOrder() = listOf("count", "attr")
 }
 
-internal class SecKeychainAttribute : Structure, Structure.ByReference {
+private class SecKeychainAttribute : Structure, Structure.ByReference {
   @JvmField
   var tag = 0
   @JvmField
