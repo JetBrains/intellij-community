@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
@@ -1295,7 +1295,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
     Balloon existing = myWindow2Balloon.get(toolWindowId);
     if (existing != null) {
-      existing.hide();
+      Disposer.dispose(existing);
     }
 
     final Stripe stripe = myToolWindowsPane.getStripeFor(toolWindowId);
@@ -1330,7 +1330,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
-    FrameStateManager.getInstance().getApplicationActive().doWhenDone(() -> {
+    NotificationsManagerImpl.frameActivateBalloonListener(balloon, () -> {
       final Alarm alarm = new Alarm();
       alarm.addRequest(() -> {
         ((BalloonImpl)balloon).setHideOnClickOutside(true);
