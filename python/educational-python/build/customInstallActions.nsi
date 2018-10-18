@@ -211,9 +211,8 @@ FunctionEnd
 Function un.customUninstallActions
   DetailPrint "customUninstallActions"
   StrCpy $0 "$INSTDIR\..\python"
-  DetailPrint "install dir: $0"
   IfFileExists "$0\*.*" 0 no_python
-    DetailPrint "delete python installer"
+    DetailPrint "install python dir: $0"
     Call un.deleteFiles
     Call un.deleteDirIfEmpty
 no_python:
