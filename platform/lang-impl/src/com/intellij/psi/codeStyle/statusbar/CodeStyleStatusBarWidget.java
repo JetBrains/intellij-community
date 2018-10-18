@@ -119,16 +119,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
         allActions.addAll(Arrays.asList(actions));
       }
     }
-    Language fileLanguage = psiFile.getLanguage();
-    LanguageCodeStyleSettingsProvider codeStyleSettingsProvider = LanguageCodeStyleSettingsProvider.forLanguageOrParent(fileLanguage);
-    String configurableDisplayName = codeStyleSettingsProvider != null
-                                     ? codeStyleSettingsProvider.getConfigurableDisplayName()
-                                     : fileLanguage.getDisplayName();
     allActions.add(
       DumbAwareAction.create(
-        ApplicationBundle.message("code.style.widget.configure.indents", configurableDisplayName),
+        ApplicationBundle.message("code.style.widget.configure.indents",psiFile.getLanguage().getDisplayName()),
         event -> {
-          String id = findCodeStyleConfigurableId(psiFile.getProject(), codeStyleSettingsProvider);
+          String id = findCodeStyleConfigurableId(psiFile);
           ShowSettingsUtilImpl.showSettingsDialog(psiFile.getProject(), id, "Tab,Indent");
         }
       )
@@ -227,10 +222,12 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   }
 
   @NotNull
-  private static String findCodeStyleConfigurableId(@NotNull Project project,
-                                                    @Nullable LanguageCodeStyleSettingsProvider codeStyleSettingsProvider) {
-    if (codeStyleSettingsProvider != null && codeStyleSettingsProvider.getIndentOptionsEditor() != null) {
-      String name = codeStyleSettingsProvider.getConfigurableDisplayName();
+  private static String findCodeStyleConfigurableId(@NotNull PsiFile file) {
+    final Project project = file.getProject();
+    final Language language = file.getLanguage();
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (provider != null && provider.getIndentOptionsEditor() != null) {
+      String name = provider.getConfigurableDisplayName();
       if (name != null) {
         CodeStyleSchemesConfigurable topConfigurable = new CodeStyleSchemesConfigurable(project);
         SearchableConfigurable result = topConfigurable.findSubConfigurable(name);
