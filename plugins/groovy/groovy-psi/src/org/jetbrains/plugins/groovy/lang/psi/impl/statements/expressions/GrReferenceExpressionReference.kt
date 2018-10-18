@@ -10,6 +10,10 @@ class GrReferenceExpressionReference(
 ) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    val staticResults = element.staticReference.resolve(incomplete)
+    if (staticResults.isNotEmpty()) {
+      return staticResults
+    }
     return element.doPolyResolve(incomplete, forceRValue)
   }
 }

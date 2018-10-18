@@ -24,6 +24,9 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   @Nullable
   PsiElement getDotToken();
 
+  @NotNull
+  GroovyReference getStaticReference();
+
   boolean hasAt();
 
   boolean hasMemberPointer();
