@@ -164,7 +164,7 @@ internal class KeePassFileManagerTest {
   }
 
   private fun checkStoreAfterSuccessfulImport(store: KeePassCredentialStore) {
-    store.reload(secureRandomHolder.secureRandom)
+    store.reload()
 
     assertThat(store.dbFile).exists()
     assertThat(store.masterKeyFile).exists()
@@ -187,7 +187,7 @@ internal class KeePassFileManagerTest {
 
     // assert that other store not corrupted
     fsRule.fs.getPath("/other/otherKey").move(fsRule.fs.getPath("/other/${MASTER_KEY_FILE_NAME}"))
-    otherStore.reload(secureRandomHolder.secureRandom)
+    otherStore.reload()
     assertThat(otherStore.get(testCredentialAttributes)!!.password!!.toString()).isEqualTo("p")
   }
 
@@ -241,14 +241,14 @@ internal class KeePassFileManagerTest {
     }
 
     val kdbxPassword = KdbxPassword("foo".toByteArray())
-    var db = loadKdbx(dbFile, kdbxPassword, secureRandomHolder.secureRandom)
+    var db = loadKdbx(dbFile, kdbxPassword)
     checkEntry(db)
 
     dbFile.outputStream().use {
       db.save(kdbxPassword, it)
     }
 
-    db = loadKdbx(dbFile, kdbxPassword, secureRandomHolder.secureRandom)
+    db = loadKdbx(dbFile, kdbxPassword)
     checkEntry(db)
   }
 

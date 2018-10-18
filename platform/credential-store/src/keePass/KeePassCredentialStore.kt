@@ -81,7 +81,7 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path,
       db = when {
         !isMemoryOnly && dbFile.exists() -> {
           val masterPassword = masterKeyStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true)
-          loadKdbx(dbFile, KdbxPassword.createAndClear(masterPassword), createSecureRandom())
+          loadKdbx(dbFile, KdbxPassword.createAndClear(masterPassword))
         }
         else -> KeePassDatabase()
       }
@@ -94,13 +94,13 @@ internal class KeePassCredentialStore constructor(internal val dbFile: Path,
 
   @Synchronized
   @TestOnly
-  fun reload(secureRandom: SecureRandom) {
+  fun reload() {
     LOG.assertTrue(!isMemoryOnly)
 
     val key = masterKeyStorage.load()!!
     val kdbxPassword = KdbxPassword(key)
     key.fill(0)
-    db = loadKdbx(dbFile, kdbxPassword, secureRandom)
+    db = loadKdbx(dbFile, kdbxPassword)
     isNeedToSave.set(false)
   }
 

@@ -11,20 +11,18 @@ import org.bouncycastle.crypto.params.ParametersWithIV
 import java.io.InputStream
 import java.nio.file.Path
 import java.security.MessageDigest
-import java.security.SecureRandom
 import java.util.*
 import java.util.zip.GZIPInputStream
 
 // https://gist.github.com/lgg/e6ccc6e212d18dd2ecd8a8c116fb1e45
 
 @Throws(IncorrectMasterPasswordException::class)
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials, random: SecureRandom): KeePassDatabase {
-  return file.inputStream().buffered().use { readKeePassDatabase(credentials, it, random) }
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
+  return file.inputStream().buffered().use { readKeePassDatabase(credentials, it) }
 }
 
-private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: InputStream, random: SecureRandom): KeePassDatabase {
-  val kdbxHeader = KdbxHeader(random)
-  kdbxHeader.readKdbxHeader(inputStream)
+private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: InputStream): KeePassDatabase {
+  val kdbxHeader = KdbxHeader(inputStream)
   val decryptedInputStream = kdbxHeader.createDecryptedStream(credentials.key, inputStream)
 
   val startBytes = FileUtilRt.loadBytes(decryptedInputStream, 32)
@@ -40,7 +38,7 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
   element.getChild(KdbxDbElementNames.root)?.let { rootElement ->
     XmlProtectedValueTransformer(createSalsa20StreamCipher(kdbxHeader.protectedStreamKey)).processEntries(rootElement)
   }
-  return KeePassDatabase(element, random)
+  return KeePassDatabase(element)
 }
 
 internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
