@@ -288,7 +288,7 @@ fun parseKeyword(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(K
 
 fun parsePrimitiveType(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(primitiveTypes)
 
-fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENT_OPERATORS)
+fun assignmentOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(ASSIGNMENTS)
 
 fun equalityOperator(builder: PsiBuilder, level: Int): Boolean = builder.advanceIf(EQUALITY_OPERATORS)
 

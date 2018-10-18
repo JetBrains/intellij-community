@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import java.util.Objects;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENT_OPERATORS;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.ASSIGNMENTS;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.getLeastUpperBoundNullable;
 
 /**
@@ -65,7 +65,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @NotNull
   @Override
   public PsiElement getOperationToken() {
-    return findNotNullChildByType(ASSIGNMENT_OPERATORS);
+    return findNotNullChildByType(ASSIGNMENTS);
   }
 
   @Nullable
