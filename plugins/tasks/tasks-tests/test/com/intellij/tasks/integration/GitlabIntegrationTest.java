@@ -1,6 +1,7 @@
 package com.intellij.tasks.integration;
 
 import com.google.gson.Gson;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
@@ -11,8 +12,11 @@ import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jdom.Element;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Mikhail Golubev
@@ -88,6 +92,18 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertEquals("#1: First issue with iid = 1", task.toString());
     myRepository.setShouldFormatCommitMessage(true);
     assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
+  }
+
+  // PY-198199
+  public void testUnspecifiedProjectIdSerialized() {
+    myRepository.setCurrentProject(GitlabRepository.UNSPECIFIED_PROJECT);
+    final List<Element> options = XmlSerializer.serialize(myRepository).getChildren("option");
+    final String serializedId = StreamEx.of(options)
+      .findFirst(elem -> "currentProject".equals(elem.getAttributeValue("name")))
+      .map(elem -> elem.getChild("GitlabProject"))
+      .map(elem -> elem.getAttributeValue("id"))
+      .orElse(null);
+    assertEquals("-1", serializedId);
   }
 
   @Override
