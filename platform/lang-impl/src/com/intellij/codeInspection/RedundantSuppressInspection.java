@@ -5,9 +5,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.codeInspection.reference.RefManagerImpl;
-import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -29,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class RedundantSuppressInspection extends GlobalInspectionTool {
+public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
   public static final String SHORT_NAME = "RedundantSuppression";
   public boolean IGNORE_ALL;
@@ -67,33 +65,32 @@ public class RedundantSuppressInspection extends GlobalInspectionTool {
   }
 
   @Override
-  public void runInspection(@NotNull final AnalysisScope scope,
-                            @NotNull final InspectionManager manager,
-                            @NotNull final GlobalInspectionContext globalContext,
-                            @NotNull final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    globalContext.getRefManager().iterate(new RefVisitor() {
-      @Override
-      public void visitFile(@NotNull RefFile refElement) {
-        if (!globalContext.shouldCheck(refElement, RedundantSuppressInspection.this)) return;
-        final PsiFile file = refElement.getPsiElement();
-        if (file == null) return;
-        InspectionSuppressor extension = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage());
-        if (!(extension instanceof RedundantSuppressionDetector)) return;
-        final CommonProblemDescriptor[] descriptors = checkElement(file, (RedundantSuppressionDetector)extension, manager);
-        for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor) {
-            final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-            final PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
-            final RefElement reference = globalContext.getRefManager().getReference(member);
-            if (reference != null) {
-              problemDescriptionsProcessor.addProblemElement(reference, descriptor);
-              continue;
-            }
+  public void checkFile(@NotNull PsiFile file,
+                        @NotNull InspectionManager manager,
+                        @NotNull ProblemsHolder problemsHolder,
+                        @NotNull GlobalInspectionContext globalContext,
+                        @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
+    if (!((GlobalInspectionContextBase)globalContext).isToCheckFile(file, this)) return;
+    InspectionSuppressor extension = LanguageInspectionSuppressors.INSTANCE.forLanguage(file.getLanguage());
+    if (!(extension instanceof RedundantSuppressionDetector)) return;
+    final CommonProblemDescriptor[] descriptors = checkElement(file, (RedundantSuppressionDetector)extension, manager);
+    for (CommonProblemDescriptor descriptor : descriptors) {
+      if (descriptor instanceof ProblemDescriptor) {
+        final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+        if (psiElement != null) {
+          final PsiElement member = globalContext.getRefManager().getContainerElement(psiElement);
+          final RefElement reference = globalContext.getRefManager().getReference(member);
+          if (reference != null) {
+            problemDescriptionsProcessor.addProblemElement(reference, descriptor);
           }
-          problemDescriptionsProcessor.addProblemElement(refElement, descriptor);
+          else {
+            problemsHolder.registerProblem(psiElement, descriptor.getDescriptionTemplate());
+          }
+          continue;
         }
       }
-    });
+      problemsHolder.registerProblem(file, descriptor.getDescriptionTemplate());
+    }
   }
 
   @NotNull
