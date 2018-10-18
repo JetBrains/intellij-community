@@ -196,7 +196,6 @@ loop:
   StrCmp $1 "." next 0
   StrCmp $1 ".." next 0
   StrCmp $1 "" done
-  DetailPrint "delete file: $0/$1"
   Delete "$0\$1"
 next:
   FindNext $2 $1
