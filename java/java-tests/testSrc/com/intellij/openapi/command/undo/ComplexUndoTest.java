@@ -90,8 +90,8 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
-      final Editor editor = getEditor(virtualFile);
-      final Editor editor2 = getEditor(virtualFile2);
+      Editor editor = getEditor(virtualFile);
+      Editor editor2 = getEditor(virtualFile2);
       String string = StringUtil.repeat(String.valueOf(utf8character), 1024 * 10);
       typeInText(editor, string);
       typeInText(editor2, string);
