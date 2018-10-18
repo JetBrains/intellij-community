@@ -9,7 +9,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -100,13 +100,12 @@ public class ParameterInfoComponent extends JPanel {
       myWidthLimit = layeredPane.getWidth();
     }
 
-    Font font = UIUtil.getLabelFont();
-    if (Registry.is("parameter.info.editor.font")) {
-      String name = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
-      if (name != null) font = new Font(name, Font.PLAIN, font.getSize());
-    }
-    NORMAL_FONT = font;
-    BOLD_FONT = NORMAL_FONT.deriveFont(Font.BOLD);
+    NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                  ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
+                  : UIUtil.getLabelFont();
+    BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
+                ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
+                : NORMAL_FONT.deriveFont(Font.BOLD);
 
     myObjects = objects;
 
