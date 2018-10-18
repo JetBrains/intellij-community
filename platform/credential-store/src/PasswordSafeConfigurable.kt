@@ -17,7 +17,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
