@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCachingReference
 import org.jetbrains.plugins.groovy.lang.resolve.impl.resolveImpl
 
 abstract class GroovyMethodCallReferenceBase<T : PsiElement>(element: T) : GroovyCachingReference<T>(element), GroovyMethodCallReference {

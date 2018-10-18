@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyCachingReference
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 
 class GrReferenceExpressionReference(
   ref: GrReferenceExpressionImpl,

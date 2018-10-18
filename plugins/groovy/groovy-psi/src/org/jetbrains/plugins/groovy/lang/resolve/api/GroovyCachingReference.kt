@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.psi.impl
+package org.jetbrains.plugins.groovy.lang.resolve.api
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyReferenceBase
 
 abstract class GroovyCachingReference<T : PsiElement>(element: T) : GroovyReferenceBase<T>(element) {
 
