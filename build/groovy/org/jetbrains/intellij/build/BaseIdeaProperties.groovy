@@ -139,6 +139,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.akka",
       "intellij.changesManager",
       "intellij.cidr.externalSystem",
+      "intellij.chronon",
       "intellij.flex.uiDesigner.tests",
       "intellij.griffon",
       "intellij.php.workshop",
