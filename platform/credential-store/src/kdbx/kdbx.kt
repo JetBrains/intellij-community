@@ -43,6 +43,7 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
 
 internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
   companion object {
+    // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when master password exposed in memory)
     fun createAndClear(value: ByteArray): KeePassCredentials {
       val result = KdbxPassword(value)
       value.fill(0)
