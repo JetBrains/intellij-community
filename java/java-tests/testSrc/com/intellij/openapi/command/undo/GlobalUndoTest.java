@@ -23,7 +23,7 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.FutureTask;
 
 public class GlobalUndoTest extends UndoTestCase implements TestDialog {
@@ -63,10 +63,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
   @Override
   protected void tearDown() throws Exception {
-    Messages.setTestDialog(myOldTestDialogValue);
-    myContainingFile = null;
-    myClass = null;
-    super.tearDown();
+    try {
+      Messages.setTestDialog(myOldTestDialogValue);
+      myContainingFile = null;
+      myClass = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -444,7 +448,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private File createFileOnTheDirToMovePlaceWithTheSameName() throws IOException {
-    File ioDir = new File(VfsUtil.virtualToIoFile(myDir1), DIR_NAME);
+    File ioDir = new File(VfsUtilCore.virtualToIoFile(myDir1), DIR_NAME);
     ioDir.createNewFile();
 
     refreshFileSystem();
@@ -452,7 +456,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private File createDirOnTheDirToMovePlaceWithTheSameName() {
-    File ioDir = new File(VfsUtil.virtualToIoFile(myDir1), DIR_NAME);
+    File ioDir = new File(VfsUtilCore.virtualToIoFile(myDir1), DIR_NAME);
     ioDir.mkdir();
 
     refreshFileSystem();
@@ -787,13 +791,9 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     final VirtualFile f2 = createChildData(myRoot, "f2.java");
     final VirtualFile f3 = createChildData(myRoot, "f3.java");
 
-    WriteAction.runAndWait(() -> {
-      f2.setWritable(false);
-    });
+    WriteAction.runAndWait(() -> f2.setWritable(false));
 
-    executeCommand(() -> {
-      setDocumentText(f1, "initial");
-    });
+    executeCommand(() -> setDocumentText(f1, "initial"));
     assertUndoNotAvailable(null);
     assertUndoIsAvailable(getEditor(f1));
     assertUndoNotAvailable(getEditor(f2));
@@ -801,9 +801,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     myEditor = openEditor(f2);
 
-    executeCommand(() -> {
-      setDocumentText(f1, "new content");
-    });
+    executeCommand(() -> setDocumentText(f1, "new content"));
     assertUndoIsAvailable(null);
     assertUndoIsAvailable(getEditor(f1));
     assertUndoIsAvailable(getEditor(f2));
@@ -832,7 +830,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     File file = new File(f2.getPath());
     FileUtil.writeToFile(file, "reloaded");
     file.setLastModified(file.lastModified() + 10000);
-    LocalFileSystem.getInstance().refreshIoFiles(Arrays.asList(file));
+    LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(file));
 
     assertUndoNotAvailable(null);
     assertUndoIsAvailable(getEditor(f1));
@@ -975,11 +973,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     createClass("TestClass1");
     Editor editor = openEditor("TestClass1.java");
 
-    WriteAction.runAndWait(() -> {
-      executeCommand(() -> {
-        editor.getDocument().insertString(27, "public class Aaa {}");
-      });
-    });
+    WriteAction.runAndWait(() -> executeCommand(() -> editor.getDocument().insertString(27, "public class Aaa {}")));
 
     PsiDocumentManager instance = PsiDocumentManager.getInstance(myProject);
     instance.commitAllDocuments();
@@ -987,11 +981,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     PsiClass aaaClass = (PsiClass)(file.getViewProvider().findElementAt(41).getParent());
 
     IntentionAction fix = QuickFixFactory.getInstance().createMoveClassToSeparateFileFix(aaaClass);
-    WriteAction.runAndWait(() -> {
-      executeCommand(() -> {
-        fix.invoke(myProject, editor, file);
-      });
-    });
+    WriteAction.runAndWait(() -> executeCommand(() -> fix.invoke(myProject, editor, file)));
     instance.commitAllDocuments();
 
     VirtualFile aaaFile = file.getVirtualFile().getParent().findChild("Aaa.java");
@@ -1062,7 +1052,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path[0]);
     assertNotNull(f);
-    assertEquals("initial", VfsUtil.loadText(f));
+    assertEquals("initial", VfsUtilCore.loadText(f));
     Document doc = FileDocumentManager.getInstance().getDocument(f);
     assertEquals("document", doc.getText());
   }
@@ -1088,18 +1078,18 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path[0]);
     assertNotNull(f);
-    assertEquals("initial1", VfsUtil.loadText(f));
+    assertEquals("initial1", VfsUtilCore.loadText(f));
     Document doc = FileDocumentManager.getInstance().getDocument(f);
     assertEquals("document1", doc.getText());
 
     f = LocalFileSystem.getInstance().findFileByPath(path[1]);
     assertNotNull(f);
-    assertEquals("initial2", VfsUtil.loadText(f));
+    assertEquals("initial2", VfsUtilCore.loadText(f));
     doc = FileDocumentManager.getInstance().getDocument(f);
     assertEquals("document2", doc.getText());
   }
 
-  private void setDocumentText(final Document doc, final String document2) {
+  private static void setDocumentText(final Document doc, final String document2) {
     ApplicationManager.getApplication().runWriteAction(() -> doc.setText(document2));
   }
 
@@ -1128,14 +1118,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     assertNotNull(f[0]);
     assertNotNull(dir[0]);
     assertEquals(dir[0], f[0].getParent());
-    assertEquals("moved", VfsUtil.loadText(f[0]));
+    assertEquals("moved", VfsUtilCore.loadText(f[0]));
     Document doc = FileDocumentManager.getInstance().getDocument(f[0]);
     assertEquals("moved", doc.getText());
 
     globalUndo();
 
     assertEquals(myRoot, f[0].getParent());
-    assertEquals("moved", VfsUtil.loadText(f[0]));
+    assertEquals("moved", VfsUtilCore.loadText(f[0]));
     doc = FileDocumentManager.getInstance().getDocument(f[0]);
     assertEquals("document", doc.getText());
 
@@ -1146,14 +1136,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
     dir[0] = LocalFileSystem.getInstance().findFileByPath(dir[0].getPath());
 
     assertEquals(myRoot, f[0].getParent());
-    assertEquals("initial", VfsUtil.loadText(f[0]));
+    assertEquals("initial", VfsUtilCore.loadText(f[0]));
     doc = FileDocumentManager.getInstance().getDocument(f[0]);
     assertEquals("document", doc.getText());
 
     globalRedo();
 
     assertEquals(dir[0], f[0].getParent());
-    assertEquals("initial", VfsUtil.loadText(f[0]));
+    assertEquals("initial", VfsUtilCore.loadText(f[0]));
     doc = FileDocumentManager.getInstance().getDocument(f[0]);
     assertEquals("moved", doc.getText());
   }
@@ -1175,14 +1165,14 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
   }
 
   private File createDirOnTheDirToRenamePlaceWithTheSameName() {
-    File result = new File(VfsUtil.virtualToIoFile(myDirToRename.getParent()), DIR_TO_RENAME_NAME);
+    File result = new File(VfsUtilCore.virtualToIoFile(myDirToRename.getParent()), DIR_TO_RENAME_NAME);
     result.mkdir();
     refreshFileSystem();
     return result;
   }
 
   private File createFileOnTheDirToRenamePlaceWithTheSameName() throws IOException {
-    File result = new File(VfsUtil.virtualToIoFile(myDirToRename.getParent()), DIR_TO_RENAME_NAME);
+    File result = new File(VfsUtilCore.virtualToIoFile(myDirToRename.getParent()), DIR_TO_RENAME_NAME);
     result.createNewFile();
     refreshFileSystem();
     return result;
@@ -1211,7 +1201,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
     globalUndo();
 
-    assertTrue(virtualFile.getModificationStamp() == modificationStamp);
+    assertEquals(virtualFile.getModificationStamp(), modificationStamp);
   }
 
   private void deleteInCommand(final VirtualFile f) {
@@ -1722,8 +1712,7 @@ public class GlobalUndoTest extends UndoTestCase implements TestDialog {
 
   private Editor openEditor(VirtualFile file) {
     assertNotNull(file);
-    Editor editor = FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file), false);
-    return editor;
+    return FileEditorManager.getInstance(myProject).openTextEditor(new OpenFileDescriptor(myProject, file), false);
   }
 
   protected void deleteClass() {

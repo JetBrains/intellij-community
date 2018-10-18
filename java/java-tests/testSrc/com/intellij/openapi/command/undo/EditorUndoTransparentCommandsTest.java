@@ -230,9 +230,8 @@ public class EditorUndoTransparentCommandsTest extends EditorUndoTestCase {
   public void testNoConfirmationForTransparentAction() {
     Messages.setTestDialog(TestDialog.DEFAULT); // throw an exception if there's a need to request confirmation from user
 
-    executeTransparentlyInWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      typeInChar(' ');
-    }, "", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION));
+    executeTransparentlyInWriteAction(() -> CommandProcessor.getInstance()
+      .executeCommand(myProject, () -> typeInChar(' '), "", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION));
 
     undo(getFirstEditor());
     checkEditorText("test");

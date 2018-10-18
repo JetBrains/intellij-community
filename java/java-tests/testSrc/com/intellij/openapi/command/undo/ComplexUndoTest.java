@@ -79,35 +79,33 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   public void testDoesNotLoseCharset() {
     char utf8character = '\u00e9';
-    doEncodingTest(myProject, null, WINDOWS_1251.name(), () -> {
-      PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
-        assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
-        assertEquals(WINDOWS_1251, Charset.defaultCharset());
-        VirtualFile virtualFile = createFileInCommand("f.java");
-        VirtualFile virtualFile2 = createFileInCommand("g.java");
-        assertEquals(WINDOWS_1251, virtualFile.getCharset());
-        assertEquals(WINDOWS_1251, virtualFile2.getCharset());
-        EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, CharsetToolkit.UTF8_CHARSET);
-        UIUtil.dispatchAllInvocationEvents();
-        assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
-        assertEquals(WINDOWS_1251, virtualFile2.getCharset());
-        final Editor editor = getEditor(virtualFile);
-        final Editor editor2 = getEditor(virtualFile2);
-        String string = StringUtil.repeat(String.valueOf(utf8character), 1024 * 10);
-        typeInText(editor, string);
-        typeInText(editor2, string);
-        WriteCommandAction
-          .runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
-        undo(editor);
-        UIUtil.dispatchAllInvocationEvents();
-        assertEquals((int)utf8character, (int)editor.getDocument().getText().charAt(0));
-        WriteCommandAction
-          .runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
-        undo(editor2);
-        UIUtil.dispatchAllInvocationEvents();
-        assertEquals((int)utf8character, (int)editor2.getDocument().getText().charAt(0));
-      });
-    });
+    doEncodingTest(myProject, null, WINDOWS_1251.name(), () -> PlatformTestUtil.withEncoding(WINDOWS_1251.name(), () -> {
+      assertEquals(CharsetToolkit.UTF8, EncodingManager.getInstance().getDefaultCharsetName());
+      assertEquals(WINDOWS_1251, Charset.defaultCharset());
+      VirtualFile virtualFile = createFileInCommand("f.java");
+      VirtualFile virtualFile2 = createFileInCommand("g.java");
+      assertEquals(WINDOWS_1251, virtualFile.getCharset());
+      assertEquals(WINDOWS_1251, virtualFile2.getCharset());
+      EncodingProjectManager.getInstance(myProject).setEncoding(virtualFile, CharsetToolkit.UTF8_CHARSET);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals(CharsetToolkit.UTF8_CHARSET, virtualFile.getCharset());
+      assertEquals(WINDOWS_1251, virtualFile2.getCharset());
+      final Editor editor = getEditor(virtualFile);
+      final Editor editor2 = getEditor(virtualFile2);
+      String string = StringUtil.repeat(String.valueOf(utf8character), 1024 * 10);
+      typeInText(editor, string);
+      typeInText(editor2, string);
+      WriteCommandAction
+        .runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));
+      undo(editor);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals((int)utf8character, (int)editor.getDocument().getText().charAt(0));
+      WriteCommandAction
+        .runWriteCommandAction(getProject(), () -> editor2.getDocument().deleteString(0, editor2.getDocument().getTextLength()));
+      undo(editor2);
+      UIUtil.dispatchAllInvocationEvents();
+      assertEquals((int)utf8character, (int)editor2.getDocument().getText().charAt(0));
+    }));
   }
 
   public void testUndoDoesntRestorePositionInWrongEditor() {

@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
@@ -108,16 +109,13 @@ public abstract class UndoTestCase extends CodeInsightTestCase {
   }
 
   protected VirtualFile createFileInCommand(final String name) {
-    final VirtualFile[] f = new VirtualFile[1];
-
     try {
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> f[0] = myRoot.createChildData(this, name));
+      return WriteCommandAction
+        .runWriteCommandAction(getProject(), (ThrowableComputable<VirtualFile, IOException>)() -> myRoot.createChildData(this, name));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-
-    return f[0];
   }
 
   protected void addContentRoot() throws IOException {

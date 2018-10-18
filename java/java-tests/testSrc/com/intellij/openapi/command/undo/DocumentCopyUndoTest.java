@@ -44,7 +44,7 @@ public class DocumentCopyUndoTest extends UndoTestCase {
     }
   }
 
-  private EditorFactory getEditorFactory() {
+  private static EditorFactory getEditorFactory() {
     return EditorFactory.getInstance();
   }
 
