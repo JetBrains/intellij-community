@@ -246,6 +246,9 @@ class RetypeSession(
   private fun logThreadDump() {
     if (editor.isProcessingTypedAction) {
       threadDumps.add(ThreadDumper.dumpThreadsToString())
+      if (threadDumps.size > 200) {
+        threadDumps.subList(0, 100).clear()
+      }
       synchronized(disposeLock) {
         if (!threadDumpAlarm.isDisposed) {
           threadDumpAlarm.addRequest({ logThreadDump() }, 100)
