@@ -112,9 +112,23 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
         }
 
         ProviderType.KEYCHAIN -> {
-          // create here to ensure that user will get any error during native store creation.
-          // well, unlikely will be any native error since usage is lazy, but at least ensure that created store is not null
-          passwordSafe.currentProvider = createPersistentCredentialStore()!!
+          // create here to ensure that user will get any error during native store creation
+          try {
+            val store = createPersistentCredentialStore()
+            if (store == null) {
+              throw ConfigurationException("Internal error, no available credential store implementation.")
+            }
+            passwordSafe.currentProvider = store
+          }
+          catch (e: UnsatisfiedLinkError) {
+            LOG.warn(e)
+            if (SystemInfo.isLinux) {
+              throw ConfigurationException("Package libsecret-1-0 is not installed (to install: sudo apt-get install libsecret-1-0 gnome-keyring).")
+            }
+            else {
+              throw ConfigurationException(e.message)
+            }
+          }
         }
 
         ProviderType.KEEPASS -> createAndSaveKeePassDatabaseWithNewOptions(settings)
