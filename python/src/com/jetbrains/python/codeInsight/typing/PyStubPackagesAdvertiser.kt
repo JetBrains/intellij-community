@@ -24,6 +24,7 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.sdk.PythonSdkType
@@ -54,6 +55,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
     override fun visitPyFile(node: PyFile) {
+      if (node.languageLevel.isOlderThan(LanguageLevel.PYTHON37)) return
+
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
       val sdk = PythonSdkType.findPythonSdk(module) ?: return
 
