@@ -398,12 +398,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private void assertConsistency(boolean caseSensitive, @NotNull Object details) {
     if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
+    if (childrenIds.length == 0) return;
+    CharSequence prevName = mySegment.vfsData.getNameByFileId(childrenIds[0]);
     for (int i = 1; i < childrenIds.length; i++) {
       int id = childrenIds[i];
       int prev = childrenIds[i - 1];
       CharSequence name = mySegment.vfsData.getNameByFileId(id);
-      CharSequence prevName = mySegment.vfsData.getNameByFileId(prev);
       int cmp = compareNames(name, prevName, caseSensitive);
+      prevName = name;
       if (cmp <= 0) {
         error(verboseToString(mySegment.vfsData.getFileById(prev, this)) +
               " is wrongly placed before " +
