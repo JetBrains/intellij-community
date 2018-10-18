@@ -86,7 +86,7 @@ internal open class KeePassFileManager(private val file: Path,
       }
     }
     else {
-      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage)
+      saveDatabase(file, KeePassDatabase(), generateRandomMasterKey(masterKeyEncryptionSpec, secureRandom.value), masterKeyFileStorage, secureRandom.value)
     }
   }
 
@@ -130,9 +130,8 @@ internal open class KeePassFileManager(private val file: Path,
     val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
-    val store = try {
-      val db = if (file.exists()) loadKdbx(file, KdbxPassword(this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true))) else KeePassDatabase()
-      KeePassCredentialStore(file, this.masterKeyFileStorage, db)
+    val db = try {
+      if (file.exists()) loadKdbx(file, KdbxPassword(this.masterKeyFileStorage.load() ?: throw IncorrectMasterPasswordException(isFileMissed = true))) else KeePassDatabase()
     }
     catch (e: IncorrectMasterPasswordException) {
       // ok, old key is required
@@ -140,7 +139,7 @@ internal open class KeePassFileManager(private val file: Path,
     }
 
     return requestMasterPassword("Set Master Password", contextComponent = contextComponent) {
-      store.setMasterPassword(createMasterKey(it))
+      saveDatabase(file, db, createMasterKey(it), masterKeyFileStorage, secureRandom.value)
       null
     }
   }
@@ -183,7 +182,7 @@ internal open class KeePassFileManager(private val file: Path,
   @Suppress("MemberVisibilityCanBePrivate")
   protected fun doSetNewMasterPassword(current: CharArray, new: CharArray): Boolean {
     val db = loadKdbx(file, createAndClear(current.toByteArrayAndClear()))
-    saveDatabase(file, db, createMasterKey(new), masterKeyFileStorage)
+    saveDatabase(file, db, createMasterKey(new), masterKeyFileStorage, secureRandom.value)
     return false
   }
 
