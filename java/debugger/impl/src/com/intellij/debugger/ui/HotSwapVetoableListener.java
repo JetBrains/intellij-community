@@ -19,10 +19,13 @@ package com.intellij.debugger.ui;
 import com.intellij.openapi.compiler.CompileContext;
 
 /**
- * @author nik
+ * Allows plugins to cancel hotswap after a particular compilation session.
+ * @see HotSwapUI#addListener(HotSwapVetoableListener)
  */
 public interface HotSwapVetoableListener {
-
+  /**
+   * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
+   */
   boolean shouldHotSwap(CompileContext finishedCompilationContext);
 
 }
