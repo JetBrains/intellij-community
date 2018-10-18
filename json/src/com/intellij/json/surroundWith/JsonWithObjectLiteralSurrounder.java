@@ -2,7 +2,6 @@ package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.*;
-import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Mikhail Golubev
  */
-public class JsonWithObjectLiteralSurrounder implements Surrounder {
+public class JsonWithObjectLiteralSurrounder extends JsonSurrounderBase {
   @Override
   public String getTemplateDescription() {
     return JsonBundle.message("surround.with.object.literal.desc");
@@ -43,7 +42,7 @@ public class JsonWithObjectLiteralSurrounder implements Surrounder {
 
   @Override
   public boolean isApplicable(@NotNull PsiElement[] elements) {
-    return !JsonPsiUtil.isPropertyKey(elements[0]);
+    return !JsonPsiUtil.isPropertyKey(elements[0]) && (elements[0] instanceof JsonProperty || elements.length == 1);
   }
 
   @Nullable
@@ -62,26 +61,25 @@ public class JsonWithObjectLiteralSurrounder implements Surrounder {
     final JsonElement newNameElement;
     if (firstElement instanceof JsonValue) {
       assert elements.length == 1 : "Only single JSON value can be wrapped in object literal";
-      JsonObject replacement = generator.createValue("{\n\"property\": " + firstElement.getText() + "\n}");
+      JsonObject replacement = generator.createValue(createReplacementText(firstElement.getText()));
       replacement = (JsonObject)firstElement.replace(replacement);
       newNameElement = replacement.getPropertyList().get(0).getNameElement();
     }
     else {
       assert firstElement instanceof JsonProperty;
-      final JsonProperty firstProperty = (JsonProperty)elements[0];
-      final JsonProperty lastProperty = (JsonProperty)elements[elements.length - 1];
-      final TextRange replacedRange = new TextRange(firstProperty.getTextOffset(), lastProperty.getTextRange().getEndOffset());
-      final String propertiesText = replacedRange.substring(firstProperty.getContainingFile().getText());
-      if (firstProperty != lastProperty) {
-        final PsiElement parent = firstProperty.getParent();
-        parent.deleteChildRange(firstProperty.getNextSibling(), lastProperty);
-      }
-      final JsonObject tempJsonObject = generator.createValue("{\"property\": {\n" + propertiesText + "\n}}");
+      final String propertiesText = getTextAndRemoveMisc(firstElement, elements[elements.length - 1]);
+      final JsonObject tempJsonObject = generator.createValue(createReplacementText("{\n" + propertiesText) + "\n}");
       JsonProperty replacement = tempJsonObject.getPropertyList().get(0);
-      replacement = (JsonProperty)firstProperty.replace(replacement);
+      replacement = (JsonProperty)firstElement.replace(replacement);
       newNameElement = replacement.getNameElement();
     }
     final TextRange rangeWithQuotes = newNameElement.getTextRange();
     return new TextRange(rangeWithQuotes.getStartOffset() + 1, rangeWithQuotes.getEndOffset() - 1);
+  }
+
+  @NotNull
+  @Override
+  protected String createReplacementText(@NotNull String textInRange) {
+    return "{\n\"property\": " + textInRange + "\n}";
   }
 }

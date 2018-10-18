@@ -3,10 +3,9 @@ package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonWithQuotesSurrounder extends JsonSingleValueSurrounderBase {
+public class JsonWithQuotesSurrounder extends JsonSurrounderBase {
   @Override
   public String getTemplateDescription() {
     return JsonBundle.message("surround.with.quotes.desc");
@@ -14,7 +13,7 @@ public class JsonWithQuotesSurrounder extends JsonSingleValueSurrounderBase {
 
   @NotNull
   @Override
-  protected String createReplacementText(@NotNull PsiElement firstElement) {
-    return "\"" + StringUtil.escapeStringCharacters(firstElement.getText()) + "\"";
+  protected String createReplacementText(@NotNull String firstElement) {
+    return "\"" + StringUtil.escapeStringCharacters(firstElement) + "\"";
   }
 }

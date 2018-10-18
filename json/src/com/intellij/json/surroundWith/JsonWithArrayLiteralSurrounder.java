@@ -2,10 +2,9 @@
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonBundle;
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonWithArrayLiteralSurrounder extends JsonSingleValueSurrounderBase {
+public class JsonWithArrayLiteralSurrounder extends JsonSurrounderBase {
   @Override
   public String getTemplateDescription() {
     return JsonBundle.message("surround.with.array.literal.desc");
@@ -13,7 +12,7 @@ public class JsonWithArrayLiteralSurrounder extends JsonSingleValueSurrounderBas
 
   @NotNull
   @Override
-  protected String createReplacementText(@NotNull PsiElement firstElement) {
-    return "[" + firstElement.getText() + "]";
+  protected String createReplacementText(@NotNull String firstElement) {
+    return "[" + firstElement + "]";
   }
 }
