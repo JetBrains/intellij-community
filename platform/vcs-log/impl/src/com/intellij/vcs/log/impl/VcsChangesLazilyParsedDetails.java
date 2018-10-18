@@ -134,6 +134,7 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
   protected abstract class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
+    // without interner each commit will have it's own instance of this string
     @NotNull private final String myRootPrefix = ourPathsInterner.intern(getRoot().getPath() + "/");
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
     @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
