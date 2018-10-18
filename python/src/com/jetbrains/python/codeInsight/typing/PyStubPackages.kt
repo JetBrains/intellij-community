@@ -114,7 +114,22 @@ fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?): List<
   }
 }
 
-fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): VirtualFile? {
+fun removeRuntimeModulesForWhomStubModulesFound(resolved: List<RatedResolveResult>): List<RatedResolveResult> {
+  val stubPkgModules = mutableSetOf<String>()
+
+  resolved.forEach {
+    val stubPkgModule = it.element
+    if (stubPkgModule is PyiFile && stubPkgModule.getUserData(STUB_PACKAGE_KEY) == true) stubPkgModules += stubPkgModule.name
+  }
+
+  return if (stubPkgModules.isEmpty()) resolved
+  else resolved.filterNot {
+    val runtimePkgModule = it.element
+    runtimePkgModule is PyFile && runtimePkgModule !is PyiFile && stubPkgModules.contains(runtimePkgModule.name + "i") // py -> pyi
+  }
+}
+
+private fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): VirtualFile? {
   val index = ProjectFileIndex.getInstance(project)
 
   index.getClassRootForFile(file)?.let { return it }
@@ -124,7 +139,7 @@ fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): VirtualF
   return null
 }
 
-fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
+private fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
   val pyTyped = stubPackageDirectory.findFile("py.typed") ?: return false
 
   return pyTyped.textLength < "partial".length + 5 &&
