@@ -110,8 +110,10 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
       if (parent != null) {
         int parentStart = parent.getTextRange().getStartOffset();
         int startOffset = rangeStart.getTextRange().getStartOffset();
-        registerErrorAtOffset(parent, startOffset - parentStart, omittedBodyBounds.getFirst().getTextRange().getStartOffset() - startOffset,
-                              keywordText);
+        int length = omittedBodyBounds.getFirst().getTextRange().getStartOffset() - startOffset;
+        if (length > 0) {
+          registerErrorAtOffset(parent, startOffset - parentStart, length, keywordText);
+        }
       }
     }
 
@@ -122,8 +124,11 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
         if (parent != null) {
           int parentStart = parent.getTextRange().getStartOffset();
           int startOffset = afterOmitted.getTextRange().getEndOffset();
-          registerErrorAtOffset(parent, startOffset - parentStart, rangeEnd.getTextRange().getEndOffset() - startOffset,
-                                keywordText);
+          int length = rangeEnd.getTextRange().getEndOffset() - startOffset;
+          if (length > 0) {
+            registerErrorAtOffset(parent, startOffset - parentStart, length,
+                                  keywordText);
+          }
         }
       }
     }
