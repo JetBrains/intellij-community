@@ -146,7 +146,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public void apply() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
     int _presentationFontSize = getIntValue(myComponent.myPresentationModeFontSize, settings.getPresentationModeFontSize());
     boolean update = false;
@@ -165,8 +166,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType()) {
-      settings.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
+    if (myComponent.myAntialiasingInIDE.getSelectedItem() != settingsManager.getIdeAAType()) {
+      settingsManager.setIdeAAType((AntialiasingType)myComponent.myAntialiasingInIDE.getSelectedItem());
       for (Window w : Window.getWindows()) {
         for (JComponent c : UIUtil.uiTraverser(w).filter(JComponent.class)) {
           GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent());
@@ -175,8 +176,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
       shouldUpdateUI = true;
     }
 
-    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType()) {
-      settings.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
+    if (myComponent.myAntialiasingInEditor.getSelectedItem() != settingsManager.getEditorAAType()) {
+      settingsManager.setEditorAAType((AntialiasingType)myComponent.myAntialiasingInEditor.getSelectedItem());
       shouldUpdateUI = true;
     }
 
@@ -294,7 +295,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
 
     if (update) {
-      settings.fireUISettingsChanged();
+      settingsManager.fireUISettingsChanged();
     }
     myComponent.updateCombo();
 
@@ -328,7 +329,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
 
     if (settings.getOverrideLafFonts()) {
       myComponent.myFontCombo.setFontName(settings.getFontFace());
@@ -339,8 +341,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     //myComponent.myAntialiasingCheckBox.setSelected(settings.ANTIALIASING_IN_IDE);
     //myComponent.myLCDRenderingScopeCombo.setSelectedItem(settings.LCD_RENDERING_SCOPE);
 
-    myComponent.myAntialiasingInIDE.setSelectedItem(settings.getIdeAAType());
-    myComponent.myAntialiasingInEditor.setSelectedItem(settings.getEditorAAType());
+    myComponent.myAntialiasingInIDE.setSelectedItem(settingsManager.getIdeAAType());
+    myComponent.myAntialiasingInEditor.setSelectedItem(settingsManager.getEditorAAType());
 
     myComponent.myFontSizeCombo.setSelectedItem(Integer.toString(settings.getFontSize()));
     myComponent.myPresentationModeFontSize.setSelectedItem(Integer.toString(settings.getPresentationModeFontSize()));
@@ -412,14 +414,15 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   @Override
   public boolean isModified() {
     initComponent();
-    UISettings settings = UISettings.getInstance();
+    UISettings settingsManager = UISettings.getInstance();
+    UISettingsState settings = settingsManager.getState();
 
     boolean isModified = false;
     isModified |= !Comparing.equal(myComponent.myFontCombo.getFontName(), settings.getFontFace()) && myComponent.myOverrideLAFFonts.isSelected();
     isModified |= !Comparing.equal(myComponent.myFontSizeCombo.getEditor().getItem(), Integer.toString(settings.getFontSize()));
 
-    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settings.getIdeAAType();
-    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settings.getEditorAAType();
+    isModified |= myComponent.myAntialiasingInIDE.getSelectedItem() != settingsManager.getIdeAAType();
+    isModified |= myComponent.myAntialiasingInEditor.getSelectedItem() != settingsManager.getEditorAAType();
 
     isModified |= myComponent.myAnimateWindowsCheckBox.isSelected() != settings.getAnimateWindows();
     isModified |= myComponent.myWindowShortcutsCheckBox.isSelected() != settings.getShowToolWindowsNumbers();

@@ -132,7 +132,6 @@ public class PyCharmEduInitialConfigurator {
                                        final PropertiesComponent propertiesComponent,
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
-    final UISettings uiSettings = UISettings.getInstance();
 
     if (!propertiesComponent.getBoolean(CONFIGURED_V4)) {
       propertiesComponent.setValue(CONFIGURED_V4, true);
@@ -146,7 +145,7 @@ public class PyCharmEduInitialConfigurator {
     }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
-      uiSettings.setShowNavigationBar(false);
+      UISettings.getInstance().setShowNavigationBar(false);
       propertiesComponent.setValue(CONFIGURED_V1, true);
       propertiesComponent.setValue("ShowDocumentationInToolWindow", true);
     }
@@ -155,11 +154,6 @@ public class PyCharmEduInitialConfigurator {
       propertiesComponent.setValue(CONFIGURED, "true");
       propertiesComponent.setValue("toolwindow.stripes.buttons.info.shown", "true");
 
-      uiSettings.setHideToolStripes(false);
-      uiSettings.setShowMemoryIndicator(false);
-      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
-      uiSettings.setShowMainToolbar(false);
-
       codeInsightSettings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
 
       GeneralSettings.getInstance().setShowTipsOnStartup(false);
@@ -167,8 +161,6 @@ public class PyCharmEduInitialConfigurator {
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
       EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN = true;
       CodeStyle.getDefaultSettings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      uiSettings.setShowDirectoryForNonUniqueFilenames(true);
-      uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
       ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;

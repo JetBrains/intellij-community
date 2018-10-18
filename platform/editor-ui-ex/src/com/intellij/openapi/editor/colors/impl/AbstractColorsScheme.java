@@ -541,7 +541,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
     }
-    
+
     if (!myMetaInfo.isEmpty()) {
       parentNode.addContent(metaInfoToElement());
     }
@@ -561,7 +561,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
       writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
     }
-    
+
     if (!(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
@@ -595,7 +595,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (!attrElements.getChildren().isEmpty()) {
       parentNode.addContent(attrElements);
     }
-    
+
     myIsSaveNeeded = false;
   }
 
@@ -699,7 +699,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
 
-  
+
   @NotNull
   private Element metaInfoToElement() {
     Element metaInfoElement = new Element(META_INFO_ELEMENT);
@@ -772,7 +772,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public FontPreferences getConsoleFontPreferences() {
     return myConsoleFontPreferences;
   }
-  
+
   @Override
   public void setUseEditorFontPreferencesInConsole() {
     myConsoleFontPreferences = new DelegatingFontPreferences(() -> myFontPreferences);
@@ -906,7 +906,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public void setSaveNeeded(boolean value) {
     myIsSaveNeeded = value;
   }
-  
+
   public boolean isReadOnly() { return  false; }
 
   @NotNull
@@ -914,15 +914,15 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public Properties getMetaProperties() {
     return myMetaInfo;
   }
-  
+
   public boolean canBeDeleted() {
     return myCanBeDeleted;
   }
-  
+
   public void setCanBeDeleted(boolean canBeDeleted) {
     myCanBeDeleted = canBeDeleted;
   }
-  
+
   public boolean isVisible() {
     return true;
   }
@@ -960,7 +960,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public boolean settingsEqual(Object other, @Nullable Predicate<ColorKey> colorKeyFilter) {
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
-    
+
     // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
@@ -974,7 +974,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           propertyName.equals(META_INFO_ORIGINAL)
         ) {
         continue;
-      }                                                                                                               
+      }
 
       if (!Comparing.equal(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
         return false;
@@ -1019,11 +1019,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     EditorColorsScheme parent = ((AbstractColorsScheme)scheme).myParentScheme;
     return parent != null ? getBaseDefaultScheme(parent) : null;
   }
-  
+
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
     private static final Logger LOG = Logger.getInstance(TemporaryParent.class);
-    
+
     private final String myParentName;
     private boolean isErrorReported;
 

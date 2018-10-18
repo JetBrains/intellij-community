@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -68,7 +66,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //    myUseLCDRendering.setEnabled(myAntialiasingInEditorCheckBox.isSelected());
     //  }
     //});
-    
+
     myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
     myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
 
@@ -117,7 +115,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowIntentionBulbCheckBox.setSelected(editorSettings.isShowIntentionBulb());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
-    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowEditorToolTip());
+    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getState().getShowEditorToolTip());
 
     updateWhitespaceCheckboxesState();
 
@@ -164,12 +162,12 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //  uiSettingsModified = true;
     //}
 
-    if (uiSettings.getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
-      uiSettings.setShowEditorToolTip(myShowCodeLensInEditorCheckBox.isSelected());
+    if (uiSettings.getState().getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
+      uiSettings.getState().setShowEditorToolTip(myShowCodeLensInEditorCheckBox.isSelected());
       uiSettingsModified = true;
       lafSettingsModified = true;
     }
-    
+
     if (lafSettingsModified) {
       LafManager.getInstance().repaintUI();
     }
@@ -203,9 +201,9 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
-    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getShowEditorToolTip();
+    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getState().getShowEditorToolTip();
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
-    
+
     return isModified;
   }
 
