@@ -85,6 +85,11 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     myToolWindow = toolWindow;
     JComponent component = toolWindow.getComponent();
 
+    //noinspection TestOnlyProblems
+    if (ProjectManagerImpl.isLight(project)) {
+      LOG.error("StructureViewWrapperImpl must be not created for light project.");
+    }
+
     myUpdateQueue = new MergingUpdateQueue("StructureView", REBUILD_TIME, false, component, this, component);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
@@ -100,6 +105,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       boolean successful = loggedRun("check if update needed", this::checkUpdate);
       if (successful) myActivityCount = count; // to check on the next turn
     });
+
     LOG.debug("timer to check if update needed: add");
     timer.start();
     Disposer.register(this, new Disposable() {
