@@ -1,153 +1,124 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.impl;
+package com.intellij.openapi.vcs.impl
 
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.project.Project
+import com.intellij.ui.GuiUtils.invokeLaterIfNeeded
+import com.intellij.util.ui.UIUtil
+import java.util.*
+import javax.swing.event.HyperlinkEvent
 
-import javax.swing.event.HyperlinkEvent;
-import java.util.*;
+abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Project,
+                                           private val myGroupId: String,
+                                           private val myTitle: String,
+                                           private val myType: NotificationType) {
+  private val myState = HashMap<Key, MyNotification>()
+  private val myListener = MyListener()
+  private val myLock = Any()
 
-import static com.intellij.ui.GuiUtils.invokeLaterIfNeeded;
+  protected val allCurrentKeys: Collection<Key>
+    get() = synchronized(myLock) {
+      return ArrayList(myState.keys)
+    }
 
-public abstract class GenericNotifierImpl<T, Key> {
-  protected final Project myProject;
-  @NotNull private final String myGroupId;
-  @NotNull private final String myTitle;
-  @NotNull private final NotificationType myType;
-  @NotNull private final Map<Key, MyNotification> myState = new HashMap<>();
-  private final MyListener myListener = new MyListener();
-  private final Object myLock = new Object();
+  val isEmpty: Boolean
+    get() = synchronized(myLock) {
+      return myState.isEmpty()
+    }
 
-  protected GenericNotifierImpl(final Project project, @NotNull String groupId, @NotNull String title, final @NotNull NotificationType type) {
-    myGroupId = groupId;
-    myTitle = title;
-    myType = type;
-    myProject = project;
-  }
+  protected abstract fun ask(obj: T, description: String?): Boolean
+  protected abstract fun getKey(obj: T): Key
+  protected abstract fun getNotificationContent(obj: T): String
 
-  protected abstract boolean ask(final T obj, String description);
-  @NotNull
-  protected abstract Key getKey(final T obj);
-  @NotNull
-  protected abstract String getNotificationContent(final T obj);
-
-  protected Collection<Key> getAllCurrentKeys() {
-    synchronized (myLock) {
-      return new ArrayList<>(myState.keySet());
+  protected fun getStateFor(key: Key): Boolean {
+    synchronized(myLock) {
+      return myState.containsKey(key)
     }
   }
 
-  protected boolean getStateFor(final Key key) {
-    synchronized (myLock) {
-      return myState.containsKey(key);
+  fun clear() {
+    val notifications = synchronized(myLock) {
+      val currentNotifications = myState.values.toList()
+      myState.clear()
+      currentNotifications
     }
-  }
-
-  public void clear() {
-    final List<MyNotification> notifications;
-    synchronized (myLock) {
-      notifications = new ArrayList<>(myState.values());
-      myState.clear();
-    }
-    invokeLaterIfNeeded(() -> {
-      for (MyNotification notification : notifications) {
-        notification.expire();
+    invokeLaterIfNeeded(Runnable {
+      for (notification in notifications) {
+        notification.expire()
       }
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.NON_MODAL, myProject.disposed)
   }
 
-  private void expireNotification(final MyNotification notification) {
-    UIUtil.invokeLaterIfNeeded(() -> notification.expire());
+  private fun expireNotification(notification: MyNotification) {
+    UIUtil.invokeLaterIfNeeded { notification.expire() }
   }
 
-  public boolean ensureNotify(final T obj) {
-    final MyNotification notification;
-    synchronized (myLock) {
-      final Key key = getKey(obj);
+  open fun ensureNotify(obj: T): Boolean {
+    val notification = synchronized(myLock) {
+      val key = getKey(obj)
       if (myState.containsKey(key)) {
-        return false;
+        return false
       }
-      notification = new MyNotification(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj);
-      myState.put(key, notification);
+      val objNotification = MyNotification(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj)
+      myState[key] = objNotification
+      objNotification
     }
-    final boolean state = onFirstNotification(obj);
+    val state = onFirstNotification(obj)
     if (state) {
-      removeLazyNotification(obj);
-      return true;
+      removeLazyNotification(obj)
+      return true
     }
-    Notifications.Bus.notify(notification, myProject);
-    return false;
+    Notifications.Bus.notify(notification, myProject)
+    return false
   }
 
-  protected boolean onFirstNotification(T obj) {
-    return false;
+  protected open fun onFirstNotification(obj: T): Boolean {
+    return false
   }
 
-  public void removeLazyNotificationByKey(final Key key) {
-    final MyNotification notification;
-    synchronized (myLock) {
-      notification = myState.remove(key);
+  fun removeLazyNotificationByKey(key: Key) {
+    val notification = synchronized(myLock) {
+      myState.remove(key)
     }
     if (notification != null) {
-      expireNotification(notification);
+      expireNotification(notification)
     }
   }
 
-  public void removeLazyNotification(final T obj) {
-    removeLazyNotificationByKey(getKey(obj));
+  fun removeLazyNotification(obj: T) {
+    removeLazyNotificationByKey(getKey(obj))
   }
 
-  private class MyListener implements NotificationListener {
-    @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      final MyNotification concreteNotification = (MyNotification) notification;
-      final T obj = concreteNotification.getObj();
-      final boolean state = ask(obj, event.getDescription());
+  private inner class MyListener : NotificationListener {
+    override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
+      val concreteNotification = notification as GenericNotifierImpl<T, Key>.MyNotification
+      val obj = concreteNotification.obj
+      val state = ask(obj, event.description)
       if (state) {
-        synchronized (myLock) {
-          myState.remove(getKey(obj));
+        synchronized(myLock) {
+          myState.remove(getKey(obj))
         }
-        expireNotification(concreteNotification);
+        expireNotification(concreteNotification)
       }
     }
   }
 
-  protected class MyNotification extends Notification {
-    private final T myObj;
+  protected inner class MyNotification(groupId: String,
+                                       title: String,
+                                       content: String,
+                                       type: NotificationType,
+                                       listener: NotificationListener?,
+                                       val obj: T) : Notification(groupId, title, content, type, listener) {
 
-    protected MyNotification(@NotNull String groupId,
-                             @NotNull String title,
-                             @NotNull String content,
-                             @NotNull NotificationType type,
-                             @Nullable NotificationListener listener,
-                             @NotNull final T obj) {
-      super(groupId, title, content, type, listener);
-      myObj = obj;
-    }
-
-    public T getObj() {
-      return myObj;
-    }
-
-    @Override
-    public void expire() {
-      super.expire();
-      synchronized (myLock) {
-        myState.remove(getKey(myObj));
+    override fun expire() {
+      super.expire()
+      synchronized(myLock) {
+        myState.remove(getKey(obj))
       }
-    }
-  }
-
-  public boolean isEmpty() {
-    synchronized (myLock) {
-      return myState.isEmpty();
     }
   }
 }
