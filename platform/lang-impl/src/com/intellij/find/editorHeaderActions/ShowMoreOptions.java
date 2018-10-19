@@ -7,17 +7,22 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 
 public class ShowMoreOptions extends AnAction implements DumbAware {
-  public static final Shortcut SHORT_CUT = new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK), null);
 
   private final ActionToolbarImpl myToolbarComponent;
 
+  //placeholder for keymap
+  public ShowMoreOptions() {
+    myToolbarComponent = null;
+  }
+
   public ShowMoreOptions(ActionToolbarImpl toolbarComponent, JComponent shortcutHolder) {
     this.myToolbarComponent = toolbarComponent;
-    registerCustomShortcutSet(new CustomShortcutSet(SHORT_CUT), shortcutHolder);
+    KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut("ShowFilterPopup");
+    if (keyboardShortcut != null) {
+      registerCustomShortcutSet(new CustomShortcutSet(keyboardShortcut), shortcutHolder);
+    }
   }
 
   @Override
@@ -26,5 +31,10 @@ public class ShowMoreOptions extends AnAction implements DumbAware {
     if (secondaryActions != null) {
       secondaryActions.click();
     }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabled(myToolbarComponent != null && myToolbarComponent.getSecondaryActionsButton() != null);
   }
 }
