@@ -91,7 +91,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
 
   private static void fixLeadingComma(@NotNull RangeMarker bounds, @NotNull PsiFile psiFile, @NotNull PsiDocumentManager manager) {
     final PsiElement startElement = skipWhitespaces(psiFile.findElementAt(bounds.getStartOffset()));
-    PsiElement propertyOrArrayItem = getParentPropertyOrArrayItem(startElement);
+    PsiElement propertyOrArrayItem = startElement instanceof JsonProperty ? startElement : getParentPropertyOrArrayItem(startElement);
 
     if (propertyOrArrayItem == null) return;
 
@@ -118,19 +118,25 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   }
 
   private static void fixTrailingComma(@NotNull RangeMarker bounds, @NotNull PsiFile psiFile, @NotNull PsiDocumentManager manager) {
-    final PsiElement endElement = skipWhitespaces(psiFile.findElementAt(bounds.getEndOffset() - 1));
+    PsiElement endElement = skipWhitespaces(psiFile.findElementAt(bounds.getEndOffset() - 1));
+    if (endElement != null && endElement.getTextOffset() >= bounds.getEndOffset()) {
+      endElement = PsiTreeUtil.skipWhitespacesBackward(endElement);
+    }
 
     if (endElement instanceof LeafPsiElement && ((LeafPsiElement)endElement).getElementType() == JsonElementTypes.COMMA) {
       final PsiElement nextNext = skipWhitespaces(endElement.getNextSibling());
       if (nextNext instanceof LeafPsiElement && (((LeafPsiElement)nextNext).getElementType() == JsonElementTypes.R_CURLY ||
                                                   ((LeafPsiElement)nextNext).getElementType() == JsonElementTypes.R_BRACKET)) {
-        ApplicationManager.getApplication().runWriteAction(() -> endElement.delete());
+        PsiElement finalEndElement = endElement;
+        ApplicationManager.getApplication().runWriteAction(() -> finalEndElement.delete());
       }
     }
     else {
       final PsiElement property = getParentPropertyOrArrayItem(endElement);
-      if (property != null && skipWhitespaces(property.getNextSibling()) instanceof PsiErrorElement) {
-        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(property.getTextRange().getEndOffset(), ","));
+      if (endElement instanceof PsiErrorElement || property != null && skipWhitespaces(property.getNextSibling()) instanceof PsiErrorElement) {
+        PsiElement finalEndElement1 = endElement;
+        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(property != null ? property.getTextRange().getEndOffset()
+                                                                                                                    : finalEndElement1.getTextOffset(), ","));
         manager.commitDocument(bounds.getDocument());
       }
     }
