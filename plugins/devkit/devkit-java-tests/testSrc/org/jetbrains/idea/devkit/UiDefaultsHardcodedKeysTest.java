@@ -21,7 +21,7 @@ public class UiDefaultsHardcodedKeysTest extends LightPlatformTestCase {
 
     Set<String> absentKeys = new HashSet<>();
     keys.forEach(k -> {
-      if (!UiDefaultsHardcodedKeys.UI_DEFAULTS_KEYS.contains(k)) {
+      if (!UiDefaultsHardcodedKeys.ALL_KEYS.contains(k)) {
         absentKeys.add(k);
       }
     });
