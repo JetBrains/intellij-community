@@ -32,7 +32,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
       settings.state.isRememberPasswordByDefault = value
     }
 
-  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) SynchronizedClearableLazy { computeProvider(settings) } else lazyOf(provider)
+  private val _currentProvider = SynchronizedClearableLazy { computeProvider(settings) }
 
   protected val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
@@ -40,13 +40,13 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
   internal var currentProvider: CredentialStore
     get() = _currentProvider.value
     set(value) {
-      _currentProvider = lazyOf(value)
+      _currentProvider.value = value
     }
 
   internal fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
     val store = currentProviderIfComputed ?: return
     if (isEvenMemoryOnly || store !is InMemoryCredentialStore) {
-      (_currentProvider as SynchronizedClearableLazy).drop()
+      _currentProvider.drop()
       if (isSave && store is KeePassCredentialStore) {
         try {
           store.save(createMasterKeyEncryptionSpec())
@@ -71,6 +71,12 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
+
+  init {
+    provider?.let {
+      currentProvider = it
+    }
+  }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
