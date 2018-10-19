@@ -28,7 +28,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
   override fun getDelegatesToInfo(closableBlock: GrClosableBlock): DelegatesToInfo? {
     val call = getContainingCall(closableBlock) ?: return null
-    val result = resolveActualCall(call)
+    val result = call.advancedResolve()
     val method = result.element as? PsiMethod ?: return null
 
     if (GdkMethodUtil.isWithOrIdentity(method)) {
