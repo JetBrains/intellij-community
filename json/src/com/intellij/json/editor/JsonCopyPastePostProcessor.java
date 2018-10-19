@@ -3,15 +3,18 @@ package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,8 +81,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   private static void fixCommasOnPaste(@NotNull Project project, @NotNull Editor editor, @NotNull RangeMarker bounds) {
     if (!JsonEditorOptions.getInstance().COMMA_ON_PASTE) return;
 
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    if (file == null || !(file.getFileType() instanceof JsonFileType)) return;
+    if (!isJsonEditor(project, editor)) return;
 
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     manager.commitDocument(editor.getDocument());
@@ -87,6 +89,16 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     if (psiFile == null) return;
     fixTrailingComma(bounds, psiFile, manager);
     fixLeadingComma(bounds, psiFile, manager);
+  }
+
+  private static boolean isJsonEditor(@NotNull Project project,
+                                      @NotNull Editor editor) {
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (file == null) return false;
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof JsonFileType) return true;
+    if (!(fileType instanceof ScratchFileType)) return false;
+    return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) instanceof JsonFile;
   }
 
   private static void fixLeadingComma(@NotNull RangeMarker bounds, @NotNull PsiFile psiFile, @NotNull PsiDocumentManager manager) {
