@@ -853,4 +853,33 @@ public class Py3ResolveTest extends PyResolveTestCase {
         )
     );
   }
+
+  // PY-31354
+  public void testStubPackageInOtherRoot() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile lib1Dir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib1");
+    assertNotNull(lib1Dir);
+
+    final VirtualFile lib2Dir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib2");
+    assertNotNull(lib2Dir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          lib1Dir,
+          () ->
+            runWithAdditionalClassEntryInSdkRoots(
+              lib2Dir,
+              () -> {
+                final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+                assertInstanceOf(element, PyFunction.class);
+                assertEquals("foo.pyi", element.getContainingFile().getName());
+              }
+            )
+        )
+    );
+  }
 }
