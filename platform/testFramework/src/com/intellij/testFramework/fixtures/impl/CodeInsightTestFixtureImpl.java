@@ -704,6 +704,22 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public void testRenameUsingHandler(@NotNull String fileBefore,
+                                     @NotNull String fileAfter,
+                                     @NotNull String newName,
+                                     @NotNull String... additionalFiles) {
+    assertInitialized();
+    configureByFiles(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)));
+    testRenameUsingHandler(fileAfter, newName);
+  }
+
+  @Override
+  public void testRenameUsingHandler(@NotNull final String fileAfter, @NotNull final String newName) {
+    renameElementAtCaretUsingHandler(newName);
+    checkResultByFile(fileAfter);
+  }
+
+  @Override
   public void testRename(@NotNull final String fileAfter, @NotNull final String newName) {
     renameElementAtCaret(newName);
     checkResultByFile(fileAfter);

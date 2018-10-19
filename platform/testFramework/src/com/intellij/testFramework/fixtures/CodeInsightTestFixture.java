@@ -418,7 +418,22 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                   @NotNull String newName,
                   @TestDataFile @NotNull String... additionalFiles);
 
+  /**
+   * Launches renaming refactoring using the rename handler and checks the result.
+   *
+   * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
+   * @param fileAfter  result file to be checked against.
+   * @param newName    new name for the element.
+   * @see #testRename(String, String)
+   */
+  void testRenameUsingHandler(@NotNull @TestDataFile String fileBefore,
+                              @NotNull @TestDataFile String fileAfter,
+                              @NotNull String newName,
+                              @TestDataFile @NotNull String... additionalFiles);
+
   void testRename(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
+
+  void testRenameUsingHandler(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
   @NotNull
   Collection<UsageInfo> testFindUsages(@TestDataFile @NotNull String... fileNames);
