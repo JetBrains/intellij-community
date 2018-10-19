@@ -32,7 +32,7 @@ public abstract class FileAccessorCache<K, T> implements com.intellij.util.conta
   public FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
     myCache = new SLRUMap<K, Handle<T>>(protectedQueueSize, probationalQueueSize, this) {
       @Override
-      protected final void onDropFromCache(K key, Handle<T> value) {
+      protected final void onDropFromCache(K key, @NotNull Handle<T> value) {
         value.release();
       }
     };
