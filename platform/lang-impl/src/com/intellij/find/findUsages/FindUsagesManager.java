@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -155,9 +156,14 @@ public class FindUsagesManager {
 
   @Nullable
   public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages) {
+    return getFindUsagesHandler(element, forHighlightUsages ? OperationMode.HIGHLIGHT_USAGES : OperationMode.DEFAULT);
+  }
+
+  @Nullable
+  public FindUsagesHandler getFindUsagesHandler(@NotNull PsiElement element, OperationMode operationMode) {
     for (FindUsagesHandlerFactory factory : FindUsagesHandlerFactory.EP_NAME.getExtensions(myProject)) {
       if (factory.canFindUsages(element)) {
-        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, forHighlightUsages);
+        final FindUsagesHandler handler = factory.createFindUsagesHandler(element, operationMode);
         if (handler == FindUsagesHandler.NULL_HANDLER) return null;
         if (handler != null) {
           return handler;
@@ -185,7 +191,7 @@ public class FindUsagesManager {
   }
 
   public void findUsages(@NotNull PsiElement psiElement, @Nullable PsiFile scopeFile, final FileEditor editor, boolean showDialog, @Nullable("null means default (stored in options)") SearchScope searchScope) {
-    FindUsagesHandler handler = getFindUsagesHandler(psiElement, false);
+    FindUsagesHandler handler = getFindUsagesHandler(psiElement, showDialog ? OperationMode.DEFAULT : OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;

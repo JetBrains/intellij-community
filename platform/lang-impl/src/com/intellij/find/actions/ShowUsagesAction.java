@@ -9,6 +9,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.UsagesPreviewPanelProvider;
 import com.intellij.find.findUsages.*;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -187,7 +188,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   public void startFindUsages(@NotNull PsiElement element, @NotNull RelativePoint popupPosition, Editor editor, int maxUsages) {
     Project project = element.getProject();
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
-    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, OperationMode.USAGES_WITH_DEFAULT_OPTIONS);
     if (handler == null) return;
     if (myShowSettingsDialogBefore) {
       showDialogAndFindUsages(handler, popupPosition, editor, maxUsages);

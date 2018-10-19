@@ -58,19 +58,25 @@ public class SuperMethodWarningUtil {
   }
 
   @NotNull
-  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+  public static PsiMethod[] getTargetMethodCandidates(@NotNull PsiMethod method, @NotNull Collection<PsiElement> ignore) {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return new PsiMethod[]{method};
 
     final Collection<PsiMethod> superMethods = getSuperMethods(method, aClass, ignore);
     if (superMethods.isEmpty()) return new PsiMethod[]{method};
-
+    return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+  
+  @NotNull
+  public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString, @NotNull Collection<PsiElement> ignore) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    PsiMethod[] methodTargetCandidates = getTargetMethodCandidates(method, ignore);
+    if (methodTargetCandidates.length == 1 && methodTargetCandidates[0] == method) return methodTargetCandidates;
 
     Set<String> superClasses = new HashSet<>();
     boolean superAbstract = false;
     boolean parentInterface = false;
-    for (final PsiMethod superMethod : superMethods) {
+    for (final PsiMethod superMethod : methodTargetCandidates) {
       final PsiClass containingClass = superMethod.getContainingClass();
       superClasses.add(containingClass.getQualifiedName());
       final boolean isInterface = containingClass.isInterface();
@@ -80,11 +86,11 @@ public class SuperMethodWarningUtil {
 
     SuperMethodWarningDialog dialog =
         new SuperMethodWarningDialog(method.getProject(), DescriptiveNameUtil.getDescriptiveName(method), actionString, superAbstract,
-                                     parentInterface, aClass.isInterface(), ArrayUtil.toStringArray(superClasses));
+                                     parentInterface, method.getContainingClass().isInterface(), ArrayUtil.toStringArray(superClasses));
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
+      return methodTargetCandidates;
     }
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
       return new PsiMethod[]{method};
