@@ -176,7 +176,7 @@ public class GroovyTraitMethodsFileIndex extends SingleEntryFileBasedIndexExtens
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
     if (helperFile == null) return Collections.emptyList();
 
-    int key = FileBasedIndex.getFileId(helperFile);
+    int key = getFileKey(helperFile);
 
     List<ByteArraySequence> byteSequences = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
     if (byteSequences.isEmpty()) return Collections.emptyList();
