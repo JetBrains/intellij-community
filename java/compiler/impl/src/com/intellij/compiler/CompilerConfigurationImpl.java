@@ -5,9 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
-import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -49,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
@@ -248,7 +247,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
   private void updateModuleNames(Map<String, String> moduleNameMap) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     boolean updated = false;
     for (Map.Entry<String, String> entry : moduleNameMap.entrySet()) {
       String targetLevel = myModuleBytecodeTarget.remove(entry.getKey());
@@ -362,7 +361,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @NotNull
   @Override
   public List<String> getAdditionalOptions(@NotNull Module module) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
       if (!StringUtil.isEmptyOrSpaces(options)) {
@@ -374,7 +373,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
-    JpsJavaCompilerOptions settings = getCompilerSettings();
+    JpsJavaCompilerOptions settings = getJavaCompilerSettings();
     if (settings != null) {
       setAdditionalOptions(settings, module, options);
     }
@@ -389,19 +388,9 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  private JpsJavaCompilerOptions getCompilerSettings() {
-    BackendCompiler compiler = getDefaultCompiler();
-    if (compiler != null) {
-      String id = compiler.getId();
-      if (id == JavaCompilers.JAVAC_ID) {
-        return JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
-      }
-      else if (JavaCompilers.ECLIPSE_ID == id) {
-        return EclipseCompilerConfiguration.getOptions(myProject, EclipseCompilerConfiguration.class);
-      }
-    }
-
-    return null;
+  private JpsJavaCompilerOptions getJavaCompilerSettings() {
+    CompilerOptions compilerOptions = getDefaultCompiler().getOptions();
+    return compilerOptions instanceof JpsJavaCompilerOptions ? (JpsJavaCompilerOptions)compilerOptions : null;
   }
 
   public static String getTestsExternalCompilerHome() {

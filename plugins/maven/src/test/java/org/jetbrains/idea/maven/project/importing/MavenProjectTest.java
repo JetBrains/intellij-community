@@ -2,6 +2,8 @@
 
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -524,6 +526,33 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertEquals("7", getMavenProject().getReleaseLevel());
     assertEquals(LanguageLevel.JDK_1_7, LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel());
+  }
+
+  public void testCompilerPluginErrorProneConfiguration() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <compilerId>javac-with-errorprone</compilerId>" +
+                     "        <compilerArgs>" +
+                     "          <arg>-XepAllErrorsAsWarnings</arg>" +
+                     "        </compilerArgs>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    importProject();
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("error-prone", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-XepAllErrorsAsWarnings");
   }
 
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
