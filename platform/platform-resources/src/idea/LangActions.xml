@@ -1169,6 +1169,8 @@
         <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
+          <reference ref="EvaluateExpression"/>
+          <separator text="type.flexible"/>
           <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">
             <reference ref="RunToCursor"/>
             <reference ref="ForceStepOver"/>
