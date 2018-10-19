@@ -8,13 +8,14 @@ import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.ui.treeStructure.SimpleTree
+import com.intellij.ui.treeStructure.treetable.TreeTable
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.driver.ComponentPreconditions
 import org.fest.swing.driver.JTreeDriver
-import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
@@ -77,9 +78,25 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.scrollToTreePathExt(path: TreePath): Point {
-    val boundsAndCoordinates = JTreeLocation().pathBoundsAndCoordinates(this, path)
-    this.scrollRectToVisible(boundsAndCoordinates.first as Rectangle)
-    return boundsAndCoordinates.second!!
+    val bounds = this.getPathBounds(path)
+    val clickY = bounds.y + bounds.height / 2
+    val boundsWithExpander = if(this is SimpleTree || this is TreeTable){
+      // expand/collapse symbol is located inside path bounds
+      bounds
+    }
+    else {
+      // in other trees the expand/collapse symbol is located out of the path bounds
+      // so we have to expand the bounds to the left
+      // width of the expand/collapse symbol is set empirically equal to the half of the height of the row
+      val newLeft = if(bounds.x < (bounds.height / 2))
+        x
+      else
+        bounds.x - (bounds.height / 2)
+      Rectangle(newLeft, bounds.y, bounds.width, bounds.height)
+    }
+    val clickPoint = Point(boundsWithExpander.x + 1, clickY)
+    this.scrollRectToVisible(boundsWithExpander)
+    return clickPoint
   }
 
   private fun JTree.makeVisible(path: TreePath, expandWhenFound: Boolean): Boolean {
