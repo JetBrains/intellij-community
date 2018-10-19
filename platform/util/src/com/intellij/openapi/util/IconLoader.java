@@ -139,7 +139,7 @@ public final class IconLoader {
   public static Icon findIcon(@NonNls @NotNull String path) {
     Class callerClass = ReflectionUtil.getGrandCallerClass();
     if (callerClass == null) return null;
-    return findIcon(path, null, callerClass, callerClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
+    return findIcon(path, callerClass);
   }
 
   @Nullable
@@ -151,7 +151,11 @@ public final class IconLoader {
 
   @NotNull
   public static Icon getIcon(@NotNull String path, @NotNull final Class aClass) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), STRICT ? HandleNotFound.THROW_EXCEPTION : HandleNotFound.LOG_ERROR, true);
+    Icon icon = findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT), true, true);
+    if (icon == null) {
+      LOG.error("Icon cannot be found in '" + path + "', aClass='" + aClass + "'");
+    }
+    return icon; // [tav] todo: can't fix it
   }
 
   public static void activate() {
@@ -178,27 +182,33 @@ public final class IconLoader {
    */
   @Nullable
   public static Icon findIcon(@NotNull final String path, @NotNull final Class aClass) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
+    return findIcon(path, aClass, false);
   }
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull final Class aClass, boolean computeNow) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(STRICT), false);
+    return findIcon(path, aClass, computeNow, STRICT);
   }
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull Class aClass, boolean computeNow, boolean strict) {
-    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(strict), false);
+    return findIcon(path, null, aClass, aClass.getClassLoader(), HandleNotFound.strict(strict), false, true);
   }
 
-  private static Icon findReflectiveIcon(@NotNull String path, @Nullable ClassLoader classLoader) {
+  private static boolean findReflectiveIcon(@NotNull String path, @Nullable ClassLoader classLoader, /*OUT*/ @NotNull Ref<Icon> reflectiveIconResult) {
     Pair<String, ClassLoader> patchedPath = patchPath(path, classLoader);
     path = patchedPath.first;
     if (patchedPath.second != null) {
       classLoader = patchedPath.second;
     }
-    if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
-    return null;
+    if (isReflectivePath(path)) {
+      reflectiveIconResult.set(getReflectiveIcon(path, classLoader));
+      return true;
+    }
+    else {
+      reflectiveIconResult.set(null);
+      return false;
+    }
   }
 
   @NotNull
@@ -273,17 +283,20 @@ public final class IconLoader {
     return icon;
   }
 
-  @Contract("_, _, _, _, _, true -> !null")
+  @Nullable
   private static Icon findIcon(@NotNull String originalPath,
                                @Nullable String pathToResolve,
                                @Nullable Class clazz,
                                @NotNull ClassLoader classLoader,
                                HandleNotFound handleNotFound,
-                               boolean deferResolve)
+                               boolean deferResolve,
+                               boolean findReflectiveIcon)
   {
-    Icon icon = findReflectiveIcon(originalPath, classLoader);
-    if (icon != null) {
-      return icon;
+    if (findReflectiveIcon) {
+      Ref<Icon> reflectiveIcon = new Ref<Icon>(null);
+      if (findReflectiveIcon(originalPath, classLoader, reflectiveIcon)) {
+        return reflectiveIcon.get(); // @Nullable
+      }
     }
     Pair<String, Object> key = Pair.create(originalPath, (Object)classLoader);
     CachedImageIcon cachedIcon = ourIconsCache.get(key);
@@ -299,12 +312,12 @@ public final class IconLoader {
 
   @Nullable
   public static Icon findIcon(@NotNull String path, @NotNull ClassLoader classLoader) {
-    Icon icon = findReflectiveIcon(path, classLoader);
-    if (icon != null) {
-      return icon;
+    Ref<Icon> reflectiveIcon = new Ref<Icon>(null);
+    if (findReflectiveIcon(path, classLoader, reflectiveIcon)) {
+      return reflectiveIcon.get(); // @Nullable
     }
     if (!StringUtil.startsWithChar(path, '/')) return null;
-    return findIcon(path, path.substring(1), null, classLoader, HandleNotFound.strict(false), false);
+    return findIcon(path, path.substring(1), null, classLoader, HandleNotFound.strict(false), false, false);
   }
 
   @Nullable
