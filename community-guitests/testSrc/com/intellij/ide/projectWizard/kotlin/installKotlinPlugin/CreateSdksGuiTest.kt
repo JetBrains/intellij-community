@@ -46,8 +46,8 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
     logTestStep("Create a Kotlin SDK")
     welcomeFrame {
       actionLink("Configure").click()
-      popupMenu("Project Defaults").clickSearchedItem()
-      popupMenu("Project Structure").clickSearchedItem()
+      // starting from 191
+      popupMenu("Structure for New Projects").clickSearchedItem()
       logUIStep("Open `$dialogName` dialog")
       dialog(dialogName) {
         jList("SDKs").clickItem("SDKs")
