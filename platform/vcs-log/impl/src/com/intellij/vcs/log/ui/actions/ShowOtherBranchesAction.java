@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -28,13 +29,12 @@ import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsLogUtil;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
 
   public ShowOtherBranchesAction() {
-    super("Show All Branches", "Switch between showing only current branch and all branches", VcsLogIcons.ShowOtherBranches);
+    super("Show All Branches", "Switch between showing only current branch and all branches", AllIcons.Vcs.Branch);
   }
 
   @Override

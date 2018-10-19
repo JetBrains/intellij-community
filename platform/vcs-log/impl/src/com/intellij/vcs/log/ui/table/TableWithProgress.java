@@ -67,7 +67,6 @@ public class TableWithProgress extends JBTable {
       super(TableWithProgress.this.toString(),
             new Icon[]{VcsLogIcons.Process.Dots_2, VcsLogIcons.Process.Dots_3, VcsLogIcons.Process.Dots_4, VcsLogIcons.Process.Dots_5},
             VcsLogIcons.Process.Dots_1);
-      setUseMask(false);
     }
 
     @NotNull
