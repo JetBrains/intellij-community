@@ -33,7 +33,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
     }
 
     override fun load(promise: AsyncPromise<OSProcessHandler>): Promise<OSProcessHandler> {
-      val port = NetUtils.findAvailableSocketPort()
+      val port = getAvailableSocketPort()
       val processHandler = doGetProcessHandler(port)
       if (processHandler == null) {
         promise.setError("rejected")
@@ -77,6 +77,8 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
       }
     }
   }
+
+  open fun getAvailableSocketPort() = NetUtils.findAvailableSocketPort()
 
   @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
