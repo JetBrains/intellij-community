@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -82,6 +83,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     final JPanel verticalContainer = rightCustomComponent != null ? createVerticalContainer() : this;
     JPanel controlsPanel = createControlsPanel();
     verticalContainer.add(controlsPanel);
+    IdeUICustomization.getInstance().customizeSchemePanel(this, verticalContainer);
     verticalContainer.add(Box.createRigidArea(new JBDimension(0, 12)));
     if (rightCustomComponent != null) {
       JPanel horizontalContainer = new JPanel();
