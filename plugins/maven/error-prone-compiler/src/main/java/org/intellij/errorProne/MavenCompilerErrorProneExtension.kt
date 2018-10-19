@@ -6,7 +6,6 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.importing.MavenCompilerExtension
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
  * @author Vladislav.Soroka
@@ -17,10 +16,6 @@ class MavenCompilerErrorProneExtension : MavenCompilerExtension {
   override fun getCompiler(project: Project): BackendCompiler {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
     return compilerConfiguration.registeredJavaCompilers.find { it is ErrorProneJavaBackendCompiler }!!
-  }
-
-  override fun getOptions(project: Project): JpsJavaCompilerOptions {
-    return ErrorProneCompilerConfiguration.getOptions(project)
   }
 }
 

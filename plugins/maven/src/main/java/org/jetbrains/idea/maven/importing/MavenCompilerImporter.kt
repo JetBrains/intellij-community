@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import org.jdom.Element
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
  * @author Vladislav.Soroka
@@ -63,6 +64,8 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                                           compilerMavenConfiguration: Element,
                                           extension: MavenCompilerExtension,
                                           useAsDefault: Boolean) {
+    val compilerOptions = extension.getCompiler(module.project).options as? JpsJavaCompilerOptions ?: return
+
     val options = mutableListOf<String>()
     val parameters = compilerMavenConfiguration.getChild("parameters")
 
@@ -90,7 +93,6 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       }
     }
 
-    val compilerOptions = extension.getOptions(module.project)
     val compilerConfiguration = CompilerConfiguration.getInstance(module.project) as CompilerConfigurationImpl
     compilerConfiguration.setAdditionalOptions(compilerOptions, module, options)
 
