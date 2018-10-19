@@ -254,7 +254,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class ParentStrategy extends ConverterStrategy {
     private final MavenDomParent myParent;
 
-    public ParentStrategy(MavenDomParent parent) {
+    ParentStrategy(MavenDomParent parent) {
       myParent = parent;
     }
 
@@ -272,7 +272,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class DependencyStrategy extends ConverterStrategy {
     private final MavenDomDependency myDependency;
 
-    public DependencyStrategy(MavenDomDependency dependency) {
+    DependencyStrategy(MavenDomDependency dependency) {
       myDependency = dependency;
     }
 
@@ -350,7 +350,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   private class PluginOrExtensionStrategy extends ConverterStrategy {
     private final boolean myPlugin;
 
-    public PluginOrExtensionStrategy(boolean isPlugin) {
+    PluginOrExtensionStrategy(boolean isPlugin) {
       myPlugin = isPlugin;
     }
 

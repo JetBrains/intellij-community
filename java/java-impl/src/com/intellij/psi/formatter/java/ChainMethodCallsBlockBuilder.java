@@ -40,7 +40,7 @@ class ChainMethodCallsBlockBuilder {
 
   private final FormattingMode myFormattingMode;
 
-  public ChainMethodCallsBlockBuilder(Alignment alignment,
+  ChainMethodCallsBlockBuilder(Alignment alignment,
                                       Wrap wrap,
                                       Indent indent,
                                       CommonCodeStyleSettings settings,

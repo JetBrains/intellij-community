@@ -64,16 +64,21 @@ class FileLoggerTest : PlatformTestCase() {
     }
 
     val watchService = FileSystems.getDefault().newWatchService()
-    val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE)
+    val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY)
 
     logger.completionStarted(lookup, true, 2)
 
     logger.completionCancelled()
     loggerProvider.dispose()
 
-    watchService.poll(15, TimeUnit.SECONDS)
+    var attemps = 0
+    while (!logFile.exists() && attemps < 5) {
+      watchService.poll(15, TimeUnit.SECONDS)
+      attemps += 1
+    }
+
     key.cancel()
-    assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
     watchService.close()
+    assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
   }
 }

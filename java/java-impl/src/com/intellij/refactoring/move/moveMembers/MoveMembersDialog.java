@@ -406,7 +406,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     PsiClass myTargetClass;
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 

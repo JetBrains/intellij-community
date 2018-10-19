@@ -5,7 +5,7 @@ class LinearTransformation implements Transformation {
   private final int myK;
   private final int myX0;
 
-  public LinearTransformation(int offset, int lineHeight) {
+  LinearTransformation(int offset, int lineHeight) {
     myK = lineHeight;
     myX0 = -offset;
   }

@@ -5,6 +5,7 @@ import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.impl.waitForGradleReimport
+import com.intellij.testGuiFramework.util.logInfo
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
 import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
@@ -12,6 +13,17 @@ import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenar
 import org.junit.Test
 
 class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
+  /**
+   * Kotlin Multiplatform - Web project available in Kotlin version started from 1.3
+   * */
+  override fun isIdeFrameRun(): Boolean {
+    return if (versionFromPlugin.toString() < "1.3") true
+    else {
+      logInfo("Project 'Kotlin Multiplatform - Experimental' is not available in the Kotlin since version 1.3 (tested version $versionFromPlugin)")
+      false
+    }
+  }
+
   @Test
   @JvmName("kotlin_mpp_hierarchical")
   fun createKotlinMppProjectCommonRoot() {
@@ -21,6 +33,9 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
+
+    if (!isIdeFrameRun()) return
+
     createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,
@@ -76,13 +91,15 @@ class CreateKotlinMPProjectGuiTestDeprecated : KotlinGuiTestCase() {
   @Test
   @JvmName("kotlin_mpp_flat")
   fun createKotlinMppProjectEmptyRoot() {
-    val extraTimeOut = 4000L
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
     val setOfMPPModules = MPPModules.mppFullSet()
     val module_common = "$projectName-common"
     val module_jvm = "$projectName-jvm"
     val module_js = "$projectName-js"
+
+    if (!isIdeFrameRun()) return
+
     createKotlinMPProjectDeprecated(
       projectPath = projectFolder,
       moduleName = projectName,

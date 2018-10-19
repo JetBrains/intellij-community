@@ -370,7 +370,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   private static class PsiElementFindProcessor<T extends PsiClass> implements Processor<T> {
     private final T myElement;
 
-    public PsiElementFindProcessor(T t) {
+    PsiElementFindProcessor(T t) {
       myElement = t;
     }
 

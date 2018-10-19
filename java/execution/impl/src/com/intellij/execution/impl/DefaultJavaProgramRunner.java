@@ -242,8 +242,9 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     @SuppressWarnings("unchecked")
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (myConnection == null) {
-        myConnection = e.getProject().getMessageBus().connect();
+      Project project = e.getProject();
+      if (project != null && myConnection == null) {
+        myConnection = project.getMessageBus().connect();
         myConnection.subscribe(XDebuggerManager.TOPIC, new XDebuggerManagerListener() {
           @Override
           public void processStarted(@NotNull XDebugProcess debugProcess) {
@@ -292,7 +293,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     private final ProcessHandler myProcessHandler;
     private final CapturingProcessAdapter myListener;
 
-    public WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
+    WiseDumpThreadsListener(Project project, ProcessHandler processHandler) {
       myProject = project;
       myProcessHandler = processHandler;
       myListener = new CapturingProcessAdapter();

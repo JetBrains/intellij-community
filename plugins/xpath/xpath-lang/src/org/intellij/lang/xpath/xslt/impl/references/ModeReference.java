@@ -44,7 +44,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   private final boolean myIsDeclaration;
   private final ImplicitModeElement myImplicitModeElement;
 
-  public ModeReference(XmlAttribute attribute, boolean isDeclaration) {
+  ModeReference(XmlAttribute attribute, boolean isDeclaration) {
     super(attribute);
     if (isDeclaration) {
       myIsDeclaration = true;
@@ -166,11 +166,11 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   private static class MyModeMatcher extends MatchTemplateMatcher {
-    public MyModeMatcher(XmlDocument document, QName mode) {
+    MyModeMatcher(XmlDocument document, QName mode) {
       super(document, mode);
     }
 
-    public MyModeMatcher(XmlElement element, QName mode) {
+    MyModeMatcher(XmlElement element, QName mode) {
       super(XsltCodeInsightUtil.getDocument(element), mode);
     }
 
@@ -211,7 +211,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
   }
 
   private static class MyPrefixReference extends PrefixReference implements LocalQuickFixProvider {
-    public MyPrefixReference(XmlAttribute attribute) {
+    MyPrefixReference(XmlAttribute attribute) {
       super(attribute);
     }
 

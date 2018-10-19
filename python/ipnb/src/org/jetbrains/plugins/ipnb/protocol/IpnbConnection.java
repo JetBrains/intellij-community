@@ -856,7 +856,7 @@ public class IpnbConnection {
     String path;
     String type = "notebook";
 
-    public SessionWrapper(String kernelName, String path, String type) {
+    SessionWrapper(String kernelName, String path, String type) {
       this.kernel = new KernelWrapper(kernelName);
       this.name = "";
       this.path = path;
@@ -868,7 +868,7 @@ public class IpnbConnection {
     NotebookWrapper notebook;
     KernelWrapper kernel;
 
-    public OldFormatSessionWrapper(String interpreterName, String filePath) {
+    OldFormatSessionWrapper(String interpreterName, String filePath) {
       kernel = new KernelWrapper(interpreterName);
       notebook = new NotebookWrapper(filePath);
     }
@@ -878,7 +878,7 @@ public class IpnbConnection {
     String id;
     String name;
 
-    public KernelWrapper(String name) {
+    KernelWrapper(String name) {
       this.name = name;
     }
   }
@@ -886,7 +886,7 @@ public class IpnbConnection {
   private static class NotebookWrapper {
     String path;
 
-    public NotebookWrapper(String path) {
+    NotebookWrapper(String path) {
       this.path = path;
     }
   }

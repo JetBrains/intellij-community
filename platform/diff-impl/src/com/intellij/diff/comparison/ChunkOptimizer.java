@@ -43,7 +43,7 @@ abstract class ChunkOptimizer<T> {
 
   @NotNull private final List<Range> myRanges;
 
-  public ChunkOptimizer(@NotNull List<T> data1,
+  ChunkOptimizer(@NotNull List<T> data1,
                         @NotNull List<T> data2,
                         @NotNull FairDiffIterable iterable,
                         @NotNull ProgressIndicator indicator) {

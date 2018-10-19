@@ -39,7 +39,7 @@ class AntBuilderMethod extends LightMethodBuilder implements GrBuilderMethod {
   private final PsiFile myPlace;
   @Nullable private final Class myAntClass;
 
-  public AntBuilderMethod(PsiFile place, String name, PsiType closureType, @Nullable Class antClass, final PsiType stringType) {
+  AntBuilderMethod(PsiFile place, String name, PsiType closureType, @Nullable Class antClass, final PsiType stringType) {
     super(place.getManager(), GroovyLanguage.INSTANCE, name);
     myPlace = place;
     myAntClass = antClass;

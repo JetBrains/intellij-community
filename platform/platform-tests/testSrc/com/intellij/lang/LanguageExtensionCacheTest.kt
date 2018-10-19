@@ -6,9 +6,9 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ExtensionsArea
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.extensions.impl.ExtensionComponentAdapterTest.readElement
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.PlatformTestCase
 
 class LanguageExtensionCacheTest : PlatformTestCase() {
@@ -28,7 +28,7 @@ class LanguageExtensionCacheTest : PlatformTestCase() {
   }
 
   private fun registerLanguageEP() {
-    val extensionPointElement = readElement("""
+    val extensionPointElement = JDOMUtil.load("""
 <extensionPoint qualifiedName ="$myExtensionPointName" beanClass = "com.intellij.lang.LanguageExtensionPoint">
   <with attribute ="implementationClass" implements = "$myExtensionPointClass"/>
 </extensionPoint>
@@ -40,7 +40,7 @@ class LanguageExtensionCacheTest : PlatformTestCase() {
   }
 
   private fun registerExtension(languageID: String, implementationFqn: String) {
-    val element = readElement(
+    val element = JDOMUtil.load(
       """<extension point="$myExtensionPointName" language="$languageID" implementationClass="$implementationFqn"/>"""
     )
     myArea.registerExtension(myDescriptor, element, null)

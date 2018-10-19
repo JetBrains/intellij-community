@@ -136,7 +136,7 @@ public class Util {
   public static String toJavaName(String xmlName) {
     xmlName = xmlName.substring(xmlName.lastIndexOf(':') + 1);
     StringTokenizer st = new StringTokenizer(xmlName, "-");
-    StringBuffer sb = new StringBuffer(st.nextToken());
+    StringBuilder sb = new StringBuilder(st.nextToken());
     while (st.hasMoreTokens()) {
       sb.append(capitalize(st.nextToken()));
     }

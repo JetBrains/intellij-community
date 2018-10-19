@@ -136,7 +136,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+    BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
                                     @NotNull StaticPathDescription description,
                                     @Nullable Long timestamp) {
       myRevision = revision;
@@ -176,7 +176,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public TextAirContentRevision(@NotNull ContentRevision revision,
+    TextAirContentRevision(@NotNull ContentRevision revision,
                                   @NotNull StaticPathDescription description,
                                   @Nullable Long timestamp) {
       myRevision = revision;
@@ -233,7 +233,7 @@ public class IdeaTextPatchBuilder {
   private static class PartialTextAirContentRevision extends TextAirContentRevision {
     @NotNull private final String myContent;
 
-    public PartialTextAirContentRevision(@NotNull String content,
+    PartialTextAirContentRevision(@NotNull String content,
                                          @NotNull ContentRevision delegateRevision,
                                          @NotNull StaticPathDescription description,
                                          @Nullable Long timestamp) {

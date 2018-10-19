@@ -21,7 +21,7 @@ final class UseConsoleInputAction extends ToggleAction implements DumbAware {
   private final String processInputStateKey;
   private boolean useProcessStdIn;
 
-  public UseConsoleInputAction(@NotNull String processInputStateKey) {
+  UseConsoleInputAction(@NotNull String processInputStateKey) {
     super("Use Console Input", null, AllIcons.Debugger.Console);
 
     this.processInputStateKey = processInputStateKey;

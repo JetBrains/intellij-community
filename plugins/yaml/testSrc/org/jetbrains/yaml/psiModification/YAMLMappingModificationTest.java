@@ -48,8 +48,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
   }
   
   public void testReplaceValueScalarCompound() {
-    doValueTest("someKey: - bla\n" +
-                "         - bla");
+    doValueTest("someKey:\n" +
+                "- bla\n" +
+                "- bla");
   }
   
   public void testSetValueScalar() {
@@ -57,8 +58,9 @@ public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixture
   }
   
   public void testSetValueCompound() {
-    doValueTest("someKey: - bla\n" +
-                "         - bla");
+    doValueTest("someKey:\n" +
+                "- bla\n" +
+                "- bla");
   }
   
   private void doValueTest(final String valueText) {

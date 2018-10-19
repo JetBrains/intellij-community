@@ -159,7 +159,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
     private final Iterable<LookupElement> mySource;
     private final THashSet<LookupElement> myLifted;
 
-    public LiftingIterable(Set<LookupElement> srcSet,
+    LiftingIterable(Set<LookupElement> srcSet,
                            ProcessingContext context,
                            Iterable<LookupElement> source,
                            THashSet<LookupElement> lifted) {

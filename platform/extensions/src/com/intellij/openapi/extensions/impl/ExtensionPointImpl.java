@@ -521,7 +521,7 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     private final LoadingOrder myLoadingOrder;
 
     private ObjectComponentAdapter(@NotNull Object extension, @NotNull LoadingOrder loadingOrder) {
-      super(extension.getClass().getName(), null, null, null, false);
+      super(extension.getClass().getName(), null, null, null);
       myExtension = extension;
       myLoadingOrder = loadingOrder;
     }

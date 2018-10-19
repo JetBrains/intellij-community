@@ -323,7 +323,7 @@ public class DebuggerUIUtil {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
+    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 

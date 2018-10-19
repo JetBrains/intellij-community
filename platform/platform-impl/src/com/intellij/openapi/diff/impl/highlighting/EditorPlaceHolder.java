@@ -29,7 +29,7 @@ class EditorPlaceHolder extends DiffMarkup implements DiffVersionComponent {
   private FileEditor myFileEditor;
   private FileEditorProvider myFileEditorProvider;
 
-  public EditorPlaceHolder(FragmentSide side, Project project, @NotNull Disposable parentDisposable) {
+  EditorPlaceHolder(FragmentSide side, Project project, @NotNull Disposable parentDisposable) {
     super(project, parentDisposable);
     mySide = side;
     resetHighlighters();

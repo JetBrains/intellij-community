@@ -143,7 +143,7 @@ public class PyPackageManagerUI {
     @NotNull protected final Sdk mySdk;
     @Nullable protected final Listener myListener;
 
-    public PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
+    PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
       super(project, title);
       mySdk = sdk;
       myListener = listener;
@@ -215,7 +215,7 @@ public class PyPackageManagerUI {
 
     private static class PackagingNotification extends Notification{
 
-      public PackagingNotification(@NotNull String groupDisplayId,
+      PackagingNotification(@NotNull String groupDisplayId,
                                    @NotNull String title,
                                    @NotNull String content,
                                    @NotNull NotificationType type, @Nullable NotificationListener listener) {
@@ -228,7 +228,7 @@ public class PyPackageManagerUI {
     @Nullable private final List<PyRequirement> myRequirements;
     @NotNull private final List<String> myExtraArgs;
 
-    public InstallTask(@Nullable Project project,
+    InstallTask(@Nullable Project project,
                        @NotNull Sdk sdk,
                        @Nullable List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
@@ -307,7 +307,7 @@ public class PyPackageManagerUI {
 
   private static class InstallManagementTask extends InstallTask {
 
-    public InstallManagementTask(@Nullable Project project,
+    InstallManagementTask(@Nullable Project project,
                                  @NotNull Sdk sdk,
                                  @Nullable Listener listener) {
       super(project, sdk, Collections.emptyList(), Collections.emptyList(), listener);
@@ -340,7 +340,7 @@ public class PyPackageManagerUI {
   private static class UninstallTask extends PackagingTask {
     @NotNull private final List<PyPackage> myPackages;
 
-    public UninstallTask(@Nullable Project project,
+    UninstallTask(@Nullable Project project,
                          @NotNull Sdk sdk,
                          @Nullable Listener listener,
                          @NotNull List<PyPackage> packages) {

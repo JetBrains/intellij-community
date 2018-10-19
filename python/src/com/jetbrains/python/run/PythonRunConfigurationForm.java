@@ -296,7 +296,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private class MyComboBox extends JBComboBoxLabel implements UserActivityProviderComponent {
     private final List<ChangeListener> myListeners = Lists.newArrayList();
 
-    public MyComboBox() {
+    MyComboBox() {
       this.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {

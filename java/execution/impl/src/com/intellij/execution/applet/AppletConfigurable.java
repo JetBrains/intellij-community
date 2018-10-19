@@ -292,7 +292,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private static abstract class MyColumnInfo extends ColumnInfo<AppletParameter, String> {
-    public MyColumnInfo(final String name) {
+    MyColumnInfo(final String name) {
       super(name);
     }
 

@@ -50,7 +50,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   private class ColumnInfoWrapper extends ColumnInfo<Item, Object> {
     private final ColumnInfo<Item, Object> myDelegate;
 
-    public ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
+    ColumnInfoWrapper(ColumnInfo<Item, Object> delegate) {
       super(delegate.getName());
       myDelegate = delegate;
     }
@@ -126,7 +126,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   protected abstract Item createItem();
 
   private class IconColumn extends ColumnInfo<Item, Object> implements RowHeightProvider {
-    public IconColumn() {
+    IconColumn() {
       super(" ");
     }
 
@@ -382,7 +382,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
   private static class WarningIconCellRenderer extends DefaultTableCellRenderer {
     private final NullableComputable<String> myWarningProvider;
 
-    public WarningIconCellRenderer(NullableComputable<String> warningProvider) {
+    WarningIconCellRenderer(NullableComputable<String> warningProvider) {
       myWarningProvider = warningProvider;
     }
 

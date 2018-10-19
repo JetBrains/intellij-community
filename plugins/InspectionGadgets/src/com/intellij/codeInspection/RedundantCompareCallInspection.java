@@ -52,7 +52,7 @@ public class RedundantCompareCallInspection extends AbstractBaseJavaLocalInspect
   private static class InlineCompareCallFix implements LocalQuickFix {
     private @NotNull final DfaRelationValue.RelationType myRelationType;
 
-    public InlineCompareCallFix(@NotNull DfaRelationValue.RelationType relationType) {
+    InlineCompareCallFix(@NotNull DfaRelationValue.RelationType relationType) {
       myRelationType = relationType;
     }
 

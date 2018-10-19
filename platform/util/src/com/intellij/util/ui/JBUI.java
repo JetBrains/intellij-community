@@ -653,7 +653,7 @@ public class JBUI {
 
     @NotNull
     public static JBFont toolbarSmallComboBoxFont() {
-      return UIUtil.isUnderGTKLookAndFeel() ? label() : label(11);
+      return label(11);
     }
   }
 
@@ -1518,8 +1518,18 @@ public class JBUI {
       }
 
       @NotNull
+      public static Color pressedBorder() {
+        return JBColor.namedColor("ActionButton.pressedBorderColor", Gray.xCF);
+      }
+
+      @NotNull
       public static Color hoverBackground() {
         return JBColor.namedColor("ActionButton.hoverBackground", Gray.xDF);
+      }
+
+      @NotNull
+      public static Color hoverBorder() {
+        return JBColor.namedColor("ActionButton.hoverBorderColor", Gray.xDF);
       }
     }
 
@@ -1632,8 +1642,8 @@ public class JBUI {
 
       @NotNull
       public static Icon comboTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
-                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
       }
     }
 
@@ -1735,6 +1745,10 @@ public class JBUI {
 
       public static Color selectedTabColor() {
         return JBColor.namedColor("SearchEverywhere.Tab.selected.background", 0xdedede);
+      }
+
+      public static Color selectedTabTextColor() {
+        return JBColor.namedColor("SearchEverywhere.Tab.selected.foreground", 0x000000);
       }
 
       public static Color searchFieldBackground() {

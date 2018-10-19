@@ -101,7 +101,7 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
   private static class MyByteSource extends ByteSource {
     private final ImageInputStream myStream;
 
-    public MyByteSource(final ImageInputStream stream) {
+    MyByteSource(final ImageInputStream stream) {
       super(stream.toString());
       myStream = stream;
     }

@@ -66,10 +66,10 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     @Tag("remoteActivityEnabled")
     public boolean myIsRemoteActivityEnabled = true;
 
-    public MyState() {
+    MyState() {
     }
 
-    public MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled) {
+    MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled) {
       myIsCatalogEnabled = isCatalogEnabled;
       myIsRemoteActivityEnabled = isRemoteActivityEnabled;
     }

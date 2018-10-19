@@ -306,7 +306,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
   private class MoveToStandardViewAction extends AnAction {
 
-    public MoveToStandardViewAction() {
+    MoveToStandardViewAction() {
       super("Move to standard view", "Move to standard view", AllIcons.Actions.MoveTo2);
     }
 
@@ -358,7 +358,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   private static class EmptyStatePanel extends JPanel {
-    public EmptyStatePanel() {
+    EmptyStatePanel() {
       setOpaque(true);
     }
 

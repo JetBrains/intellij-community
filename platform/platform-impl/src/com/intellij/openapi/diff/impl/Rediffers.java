@@ -69,7 +69,7 @@ public class Rediffers {
     private final Document myDocument;
     private boolean myLinstening = false;
 
-    public Rediff(Document document) {
+    Rediff(Document document) {
       myDocument = document;
     }
 

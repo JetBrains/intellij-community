@@ -330,7 +330,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
   private class EnabledCellRenderer extends DefaultTableCellRenderer {
     private final TableCellRenderer myDelegate;
 
-    public EnabledCellRenderer(TableCellRenderer delegate) {
+    EnabledCellRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
     }
 

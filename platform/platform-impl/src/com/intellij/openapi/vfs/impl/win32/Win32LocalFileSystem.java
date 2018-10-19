@@ -33,12 +33,7 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     return IdeaWin32.isAvailable();
   }
 
-  private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = new ThreadLocal<Win32LocalFileSystem>() {
-    @Override
-    protected Win32LocalFileSystem initialValue() {
-      return new Win32LocalFileSystem();
-    }
-  };
+  private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = ThreadLocal.withInitial(Win32LocalFileSystem::new);
 
   public static Win32LocalFileSystem getWin32Instance() {
     if (!isAvailable()) throw new RuntimeException("Native filesystem for Windows is not loaded");

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 class ReplaceAssertEqualsFix extends InspectionGadgetsFix {
   private final String myMethodName;
 
-  public ReplaceAssertEqualsFix(String methodName) {
+  ReplaceAssertEqualsFix(String methodName) {
     myMethodName = methodName;
   }
 

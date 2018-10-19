@@ -28,7 +28,7 @@ class BekBranchMerger {
 
   @NotNull private final List<Integer> myInverseResultList = ContainerUtil.newArrayList();
 
-  public BekBranchMerger(@NotNull List<BekBranch> bekBranches,
+  BekBranchMerger(@NotNull List<BekBranch> bekBranches,
                          @NotNull BekEdgeRestrictions edgeRestrictions,
                          @NotNull TimestampGetter timestampGetter) {
     myBekBranches = bekBranches;

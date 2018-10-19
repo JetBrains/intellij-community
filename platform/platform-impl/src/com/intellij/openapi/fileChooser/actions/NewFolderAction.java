@@ -59,7 +59,7 @@ public class NewFolderAction extends FileChooserAction {
     private final VirtualFile myDirectory;
     private String myErrorText;
 
-    public NewFolderValidator(VirtualFile directory) {
+    NewFolderValidator(VirtualFile directory) {
       myDirectory = directory;
     }
 

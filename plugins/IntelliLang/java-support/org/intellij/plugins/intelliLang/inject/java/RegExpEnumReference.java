@@ -36,7 +36,7 @@ import java.util.Set;
 final class RegExpEnumReference extends StringLiteralReference {
   private final String myPattern;
 
-  public RegExpEnumReference(PsiLiteralExpression expression, @NotNull String pattern) {
+  RegExpEnumReference(PsiLiteralExpression expression, @NotNull String pattern) {
     super(expression);
     myPattern = pattern;
   }

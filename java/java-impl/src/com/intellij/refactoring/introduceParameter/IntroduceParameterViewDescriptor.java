@@ -26,7 +26,7 @@ class IntroduceParameterViewDescriptor extends UsageViewDescriptorAdapter {
 
   private final PsiMethod myMethodToSearchFor;
 
-  public IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
+  IntroduceParameterViewDescriptor(PsiMethod methodToSearchFor
   ) {
     super();
     myMethodToSearchFor = methodToSearchFor;

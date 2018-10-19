@@ -27,7 +27,7 @@ public class LineStartAction extends TextComponentEditorAction {
   }
 
   private static class Handler extends EditorActionHandler {
-    public Handler() {
+    Handler() {
       super(true);
     }
 

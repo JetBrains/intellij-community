@@ -383,7 +383,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       private PsiElement myEntryElement = null;
       private boolean myHasErrors = false;
 
-      public ReadStateMachine(@NotNull PsiElement current,
+      ReadStateMachine(@NotNull PsiElement current,
                               @NotNull SortingStrategy strategy,
                               @NotNull Sortable block) {
         // Expect that current element is
@@ -501,7 +501,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     private final TIntArrayList myEntryCountOnLines = new TIntArrayList();
     private int myCurrent = 0;
 
-    public LineLayout() {
+    LineLayout() {
       myEntryCountOnLines.add(0);
     }
 
@@ -552,7 +552,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     static class ElementContext<T extends PsiElement> {
       private final @NotNull T myElement;
 
-      public ElementContext(@NotNull T element) {
+      ElementContext(@NotNull T element) {
         myElement = element;
       }
     }
@@ -904,10 +904,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         }
       }
       StringBuilder sb = new StringBuilder();
-      sortableList.generate(sb);
-      SortableEntry lastItem = ContainerUtil.getLastItem(sortableList.myEntries);
-      assert lastItem != null;
-      if (!lastItem.myBeforeSeparator.isEmpty()) {
+      if (sortableList.generate(sb)) {
         sb.append("\n");
       }
       PsiElement elementToPreserve = lastElement.getNextSibling();

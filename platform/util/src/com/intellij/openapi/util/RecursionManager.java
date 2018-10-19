@@ -159,7 +159,7 @@ public class RecursionManager {
     private final int myHashCode;
     private final boolean myCallEquals;
 
-    public MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
+    MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
       this.guardId = guardId;
       this.userObject = userObject;
       // remember user object hashCode to ensure our internal maps consistency

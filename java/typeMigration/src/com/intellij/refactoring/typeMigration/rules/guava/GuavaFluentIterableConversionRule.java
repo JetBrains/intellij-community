@@ -48,11 +48,11 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
     private final boolean myChainedMethod;
     private final boolean myFluentIterableReturnType;
 
-    public TypeConversionDescriptorFactory(String stringToReplace, String replaceByString, boolean withLambdaParameter) {
+    TypeConversionDescriptorFactory(String stringToReplace, String replaceByString, boolean withLambdaParameter) {
       this(stringToReplace, replaceByString, withLambdaParameter, false, false);
     }
 
-    public TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
+    TypeConversionDescriptorFactory(@NonNls final String stringToReplace,
                                            @NonNls final String replaceByString,
                                            boolean withLambdaParameter,
                                            boolean chainedMethod,

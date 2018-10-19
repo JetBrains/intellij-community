@@ -519,7 +519,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private final ActionCallback myTypeAheadDone;
     private final ActionCallback myTypeAheadCallback;
 
-    public MyDialog(Window owner,
+    MyDialog(Window owner,
                     DialogWrapper dialogWrapper,
                     Project project,
                     @NotNull ActionCallback focused,

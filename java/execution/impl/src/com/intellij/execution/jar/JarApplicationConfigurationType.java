@@ -9,6 +9,11 @@ import com.intellij.util.LazyUtil;
 import org.jetbrains.annotations.NotNull;
 
 public final class JarApplicationConfigurationType extends ConfigurationTypeBase implements ConfigurationType {
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JarApplication";
+  }
+
   @NotNull
   public static JarApplicationConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(JarApplicationConfigurationType.class);

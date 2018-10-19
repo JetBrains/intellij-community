@@ -243,7 +243,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class NoCoverageAction extends DialogWrapperAction {
-    public NoCoverageAction() {
+    NoCoverageAction() {
       super("&No Coverage");
     }
 
@@ -255,7 +255,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class AddExternalSuiteAction extends AnAction {
-    public AddExternalSuiteAction() {
+    AddExternalSuiteAction() {
       super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, mySuitesTree);
     }
@@ -324,7 +324,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   }
 
   private class DeleteSuiteAction extends AnAction {
-    public DeleteSuiteAction() {
+    DeleteSuiteAction() {
       super("Delete", "Delete", PlatformIcons.DELETE_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), mySuitesTree);
     }

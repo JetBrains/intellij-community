@@ -532,7 +532,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     private boolean myFastMode = true;
 
-    public SubclassGotoClassModel(@NotNull final Project project,
+    SubclassGotoClassModel(@NotNull final Project project,
                                   @NotNull final AbstractTreeClassChooserDialog<T> treeClassChooserDialog,
                                   @NotNull BaseClassInheritorsProvider<T> inheritorsProvider) {
       super(project, treeClassChooserDialog);

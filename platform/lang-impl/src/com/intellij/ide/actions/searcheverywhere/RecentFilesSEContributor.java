@@ -14,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,13 +52,13 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   }
 
   @Override
-  public int getElementPriority(Object element, String searchPattern) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return super.getElementPriority(element, searchPattern) + 1;
   }
 
   @Override
-  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<FileType> filter,
-                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<FileType> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     String searchString = filterControlSymbols(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());

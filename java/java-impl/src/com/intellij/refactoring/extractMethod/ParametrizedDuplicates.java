@@ -651,7 +651,7 @@ public class ParametrizedDuplicates {
     @NotNull private final ExtractedParameter myParameter;
     private final int myFirstOffset;
 
-    public ClusterOfUsages(@NotNull ExtractedParameter parameter) {
+    ClusterOfUsages(@NotNull ExtractedParameter parameter) {
       myPatterns = parameter.myPatternUsages;
       myParameters = new THashMap<>();
       myParameter = parameter;

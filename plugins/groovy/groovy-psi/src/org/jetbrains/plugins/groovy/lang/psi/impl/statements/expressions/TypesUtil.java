@@ -296,9 +296,6 @@ public class TypesUtil implements TypeConstants {
       return true;
     }
 
-    lType = optionalUnbox(lType);
-    rType = optionalUnbox(rType);
-
     return TypeConversionUtil.isAssignable(lType, rType);
   }
 

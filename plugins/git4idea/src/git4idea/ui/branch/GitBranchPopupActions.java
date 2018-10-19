@@ -363,7 +363,7 @@ class GitBranchPopupActions {
       @NotNull private final List<GitRepository> myRepositories;
       @NotNull private final String myCurrentBranchName;
 
-      public RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
+      RenameBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String currentBranchName) {
         super("Rename...");
         myProject = project;
         myRepositories = repositories;
@@ -418,7 +418,7 @@ class GitBranchPopupActions {
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.Favorite,
                AllIcons.Nodes.NotFavoriteOnHover);
     }
 
@@ -478,7 +478,7 @@ class GitBranchPopupActions {
       private final List<GitRepository> myRepositories;
       private final String myRemoteBranchName;
 
-      public CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
+      CheckoutRemoteBranchAction(@NotNull Project project, @NotNull List<GitRepository> repositories,
                                         @NotNull String remoteBranchName) {
         super("Checkout As...");
         myProject = project;
@@ -538,9 +538,9 @@ class GitBranchPopupActions {
     private final String myBranchName;
     private final GitRepository mySelectedRepository;
 
-    public CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    CompareAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
-      super("Compare With...");
+      super("Compare with Current");
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
@@ -555,6 +555,14 @@ class GitBranchPopupActions {
       brancher.compare(myBranchName, myRepositories, mySelectedRepository);
       reportUsage(myProject, "git.branch.compare");
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      String description = String.format("Compare commits in %1$s and %2$s, and the file tree in %1$s and its current state",
+                                         getBranchPresentation(myBranchName),
+                                         getCurrentBranchPresentation(myRepositories));
+      e.getPresentation().setDescription(description);
+    }
   }
 
   private static class MergeAction extends DumbAwareAction {
@@ -564,7 +572,7 @@ class GitBranchPopupActions {
     private final String myBranchName;
     private final boolean myLocalBranch;
 
-    public MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
+    MergeAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        boolean localBranch) {
       super("Merge into Current");
       myProject = project;
@@ -601,7 +609,7 @@ class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
 
-    public RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    RebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
       super("Rebase Current onto Selected");
       myProject = project;
       myRepositories = repositories;
@@ -634,7 +642,7 @@ class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
     private final String myBranchName;
 
-    public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
+    CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
       super("Checkout and Rebase onto Current");
       myProject = project;
       myRepositories = repositories;

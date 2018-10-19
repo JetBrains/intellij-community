@@ -60,7 +60,7 @@ class RecentTestRunnerImpl implements RecentTestRunner {
     }
   }
 
-  public RecentTestRunnerImpl(TestLocator testLocator) {
+  RecentTestRunnerImpl(TestLocator testLocator) {
     myTestLocator = testLocator;
   }
 

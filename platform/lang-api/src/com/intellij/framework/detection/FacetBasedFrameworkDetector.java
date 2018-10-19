@@ -111,7 +111,7 @@ public abstract class FacetBasedFrameworkDetector<F extends Facet, C extends Fac
     private final FacetType<?, ?> myFacetType;
     private final Icon myIcon;
 
-    public FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {
+    FacetBasedFrameworkType(@NotNull FacetType<?, ?> facetType) {
       super(facetType.getStringId());
       myFacetType = facetType;
       final Icon icon = myFacetType.getIcon();

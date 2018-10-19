@@ -132,7 +132,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
   private static class RenameAttributeFix implements LocalQuickFix, HighPriorityAction {
     private final String name;
 
-    public RenameAttributeFix(XmlAttributeDescriptor attr) {
+    RenameAttributeFix(XmlAttributeDescriptor attr) {
       name = attr.getName();
     }
 

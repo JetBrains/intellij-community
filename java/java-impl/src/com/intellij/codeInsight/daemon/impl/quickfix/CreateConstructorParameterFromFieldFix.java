@@ -380,7 +380,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static class FieldParameterComparator implements Comparator<PsiVariable> {
     private final PsiParameterList myParameterList;
 
-    public FieldParameterComparator(PsiParameterList parameterList) {
+    FieldParameterComparator(PsiParameterList parameterList) {
       myParameterList = parameterList;
     }
 

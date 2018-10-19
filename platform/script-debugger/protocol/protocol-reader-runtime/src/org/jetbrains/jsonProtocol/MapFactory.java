@@ -8,7 +8,7 @@ import java.util.Map;
 final class MapFactory<T> extends ObjectFactory<Map<String, T>> {
   private final ObjectFactory<T> valueFactory;
 
-  public MapFactory(@NotNull ObjectFactory<T> valueFactory) {
+  MapFactory(@NotNull ObjectFactory<T> valueFactory) {
     this.valueFactory = valueFactory;
   }
 

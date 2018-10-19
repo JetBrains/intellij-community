@@ -89,7 +89,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
     private final List<SpockVariableReference> myReferences;
     private final GrMethod myMethod;
 
-    public SpockVariableReference(PsiElement element, TextRange range, List<SpockVariableReference> references, GrMethod method) {
+    SpockVariableReference(PsiElement element, TextRange range, List<SpockVariableReference> references, GrMethod method) {
       super(element, range);
       myReferences = references;
       myMethod = method;

@@ -3,6 +3,7 @@
 import java.util.Arrays;
 import java.util.List;
 import java.util.LongSummaryStatistics;
+import java.util.stream.IntStream;
 
 public class Main {
   public static int test(List<String> list) {
@@ -23,6 +24,12 @@ public class Main {
           stat.accept(length);
       }
       return stat;
+  }
+
+  void peekThrows() {
+    final int sum = IntStream.of(1, 2, 3, 4).peek(x -> {
+      throw new RuntimeException();
+    }).reduce(0, (l, r) -> l + r);
   }
 
   public static void main(String[] args) {

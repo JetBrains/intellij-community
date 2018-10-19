@@ -27,6 +27,7 @@ public interface YAMLTokenTypes {
   YAMLElementType TAG = new YAMLElementType("tag");
 
   YAMLElementType SCALAR_KEY = new YAMLElementType("scalar key");
+  // sequential TEXT tokens will merge for parser into one token
   YAMLElementType TEXT = new YAMLElementType("text");
 
   YAMLElementType SCALAR_STRING = new YAMLElementType("scalar string");

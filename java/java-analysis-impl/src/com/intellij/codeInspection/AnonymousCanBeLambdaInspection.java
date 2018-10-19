@@ -505,7 +505,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     private final PsiMethod myMethod;
     private final PsiAnonymousClass myAnonymClass;
 
-    public ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
+    ForbiddenRefsChecker(PsiMethod method, PsiAnonymousClass aClass) {
       myMethod = method;
       myAnonymClass = aClass;
     }

@@ -442,7 +442,7 @@ public class ExternalJavacManager {
     private volatile Channel channel;
     private final Semaphore myDone = new Semaphore();
 
-    public JavacProcessDescriptor(@NotNull UUID sessionId,
+    JavacProcessDescriptor(@NotNull UUID sessionId,
                                   @NotNull ExternalJavacMessageHandler handler,
                                   @NotNull JavacRemoteProto.Message.Request request) {
       this.sessionId = sessionId;

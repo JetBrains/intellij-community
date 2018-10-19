@@ -394,7 +394,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     protected void paintComponent(@NotNull Graphics graphics) {
     }
 
-    public ReplacementView(@Nullable String replacement) {
+    ReplacementView(@Nullable String replacement) {
       String textToShow = replacement;
       if (replacement == null) {
         textToShow = MALFORMED_REPLACEMENT_STRING;

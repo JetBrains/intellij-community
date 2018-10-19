@@ -48,7 +48,7 @@ class VcsPreviewPanel implements PreviewPanel {
 
   private final EditorEx myEditor;
 
-  public VcsPreviewPanel() {
+  VcsPreviewPanel() {
     DocumentImpl document = new DocumentImpl("", true);
     myEditor = (EditorEx)EditorFactory.getInstance().createViewer(document);
     myEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
@@ -155,7 +155,7 @@ class VcsPreviewPanel implements PreviewPanel {
     @NotNull private final List<Color> myBackgroundColors;
     @NotNull private final List<Integer> myAnchorIndexes;
 
-    public MyTextAnnotationGutterProvider(@NotNull List<Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
+    MyTextAnnotationGutterProvider(@NotNull List<Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
       myBackgroundColors = backgroundColors;
       myAnchorIndexes = anchorIndexes;
     }

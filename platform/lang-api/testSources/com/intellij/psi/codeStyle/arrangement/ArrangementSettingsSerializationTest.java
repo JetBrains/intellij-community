@@ -439,7 +439,7 @@ public class ArrangementSettingsSerializationTest {
 
   private static class TestArrangementSettingsSerializer extends DefaultArrangementSettingsSerializer {
 
-    public TestArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
+    TestArrangementSettingsSerializer(@NotNull StdArrangementSettings defaultSettings) {
       super(defaultSettings);
     }
   }

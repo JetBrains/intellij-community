@@ -141,7 +141,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final Alarm myUpdateCoverageAlarm;
 
-    public MyTreeSelectionListener() {
+    MyTreeSelectionListener() {
       myUpdateCoverageAlarm = new Alarm(myModel);
     }
 

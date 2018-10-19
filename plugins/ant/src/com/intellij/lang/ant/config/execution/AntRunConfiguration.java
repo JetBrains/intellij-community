@@ -291,7 +291,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     }
 
     private abstract static class TableColumn extends ElementsColumnInfoBase<BuildFileProperty> {
-      public TableColumn(final String name) {
+      TableColumn(final String name) {
         super(name);
       }
 

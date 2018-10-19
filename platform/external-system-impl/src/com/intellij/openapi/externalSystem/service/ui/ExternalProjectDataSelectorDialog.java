@@ -666,14 +666,14 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     boolean isRequiredSelectionEnabled;
     @Nullable String message;
 
-    public SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
+    SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;
       this.message = message;
     }
   }
 
   private class SelectAllButton extends AnActionButton {
-    public SelectAllButton() {
+    SelectAllButton() {
       super("Select All", AllIcons.Actions.Selectall);
     }
 
@@ -696,7 +696,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class UnselectAllButton extends AnActionButton {
-    public UnselectAllButton() {
+    UnselectAllButton() {
       super("Unselect All", AllIcons.Actions.Unselectall);
     }
 
@@ -721,7 +721,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private class ShowSelectedOnlyButton extends ToggleActionButton {
 
-    public ShowSelectedOnlyButton() {
+    ShowSelectedOnlyButton() {
       super("Show Selected Only", AllIcons.Actions.ShowHiddens);
     }
 
@@ -738,7 +738,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class SelectRequiredButton extends AnActionButton {
-    public SelectRequiredButton() {
+    SelectRequiredButton() {
       super("Select Required", "select modules depended on currently selected modules", AllIcons.Actions.IntentionBulb);
 
       addCustomUpdater(new AnActionButtonUpdater() {

@@ -29,7 +29,7 @@ IntelliJ IDEA Community Edition requires additional Android modules from separat
 _**Note:**_ Always `git checkout` the `intellij-community`, `android`, and `android/tools-base` Git repositories to the same branches/tags. 
 
 ## Building IntelliJ Community Edition
-Versions 2017.3 and newer of IntelliJ IDEA Community Edition or IntelliJ
+Versions 2018.2 and newer of IntelliJ IDEA Community Edition or IntelliJ
 IDEA Ultimate Edition are required to build and develop for the IntelliJ
 Platform.
 

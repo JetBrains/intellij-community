@@ -9,60 +9,60 @@ public class UnnecessaryParenthesesInspection
     public int foo()
     {
         final String s = "foo" + (3 + 4); // do not warn here
-        final String t = ("foo" + 3) + 4; // but warn here
-        return (3); // warn
+        final String t = <warning descr="Parentheses around '(\"foo\" + 3)' are unnecessary">("foo" + 3)</warning> + 4; // but warn here
+        return <warning descr="Parentheses around '(3)' are unnecessary">(3)</warning>; // warn
     }
 
     public void bar()
     {
         final int x = (3 + 4)*5; // no warn
-        final int q = (3 + 4)-5; // warn
-        final int p = 3 + (4-5); // warn!
-        final int y = 3 + (4*5); // warn
-        final int z = 3 + (4*(3*5)); // 2 warnings
-        final int k = 4 * (3 * 5); // warn
-        final int hash = ((this).hashCode()); // 2 warnings
-        final int hash2 = (("x" + "y").hashCode()); // 1 warning
+        final int q = <warning descr="Parentheses around '(3 + 4)' are unnecessary">(3 + 4)</warning>-5; // warn
+        final int p = 3 + <warning descr="Parentheses around '(4-5)' are unnecessary">(4-5)</warning>; // warn!
+        final int y = 3 + <warning descr="Parentheses around '(4*5)' are unnecessary">(4*5)</warning>; // warn
+        final int z = 3 + <warning descr="Parentheses around '(4*(3*5))' are unnecessary">(4*<warning descr="Parentheses around '(3*5)' are unnecessary">(3*5)</warning>)</warning>; // 2 warnings
+        final int k = 4 * <warning descr="Parentheses around '(3 * 5)' are unnecessary">(3 * 5)</warning>; // warn
+        final int hash = <warning descr="Parentheses around '((this).hashCode())' are unnecessary">(<warning descr="Parentheses around '(this)' are unnecessary">(this)</warning>.hashCode())</warning>; // 2 warnings
+        final int hash2 = <warning descr="Parentheses around '((\"x\" + \"y\").hashCode())' are unnecessary">(("x" + "y").hashCode())</warning>; // 1 warning
         List list = new ArrayList();
-        (list.subList(1, 2)).get(0); // warn
+        <warning descr="Parentheses around '(list.subList(1, 2))' are unnecessary">(list.subList(1, 2))</warning>.get(0); // warn
     }
 
     public boolean testParenRedundancy(boolean a, boolean b, boolean c) {
-        return a || (b || c); // warn
+        return a || <warning descr="Parentheses around '(b || c)' are unnecessary">(b || c)</warning>; // warn
     }
 
     public int arg(int i,int j, int k) {
         int result = 4 - (3 - 1); // no warn!
-        return i + (j + k); // warn
+        return i + <warning descr="Parentheses around '(j + k)' are unnecessary">(j + k)</warning>; // warn
     }
 
     public boolean is(int value) {
-        int i = (new Integer(33)).intValue(); // warn
+        int i = <warning descr="Parentheses around '(new Integer(33))' are unnecessary">(new Integer(33))</warning>.intValue(); // warn
         return value < 0 || value > 10
-                || (value != 5); // warn 
+                || <warning descr="Parentheses around '(value != 5)' are unnecessary">(value != 5)</warning>; // warn 
     }
 
     public void commutative() {
         final int a = 1 - (2 - 3); // no warn;
-        final int b = (1 - 2) - 3; // warn;
+        final int b = <warning descr="Parentheses around '(1 - 2)' are unnecessary">(1 - 2)</warning> - 3; // warn;
         System.out.println(1 << (1 << 2)); // no warn
     }
 
     public void instanceofTest(Object o) {
         boolean b;
-        b = (o instanceof String);
-        final boolean b1 = (b) ? (true) : false;
+        b = <warning descr="Parentheses around '(o instanceof String)' are unnecessary">(o instanceof String)</warning>;
+        final boolean b1 = (b) ? <warning descr="Parentheses around '(true)' are unnecessary">(true)</warning> : false;
     }
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-34926
-    class ParenBug extends javax.swing.JPanel {
+    class ParenBug extends <error descr="Cannot resolve symbol 'javax'">javax</error>.swing.JPanel {
         private int resolution;
         private float pageWidth;  // in cm.
         private float pageHeight; // in cm.
 
         public void foo() {
-            final float width = getSize().width; // actual width in dots
-            final float height = getSize().height; // actual height in dots
+            final float width = <error descr="Cannot resolve method 'getSize()'">getSize</error>().width; // actual width in dots
+            final float height = <error descr="Cannot resolve method 'getSize()'">getSize</error>().height; // actual height in dots
 
             // to determine the ratio, do the following:
             final float ratio;
@@ -80,10 +80,10 @@ public class UnnecessaryParenthesesInspection
     }
 
     class ParenthesesAroundLambda {
-      interface I {
+      <error descr="Inner classes cannot have static declarations">interface I</error> {
         void foo(int x, int y);
       }
-      interface J {
+      <error descr="Inner classes cannot have static declarations">interface J</error> {
         void foo(int x);
       }
 
@@ -91,7 +91,7 @@ public class UnnecessaryParenthesesInspection
         I i = (x, y) -> {};
         I i1 = (int x, int y) -> {};
   
-        J j = (x) -> {};
+        J j = <warning descr="Parentheses around '(x)' are unnecessary">(x)</warning> -> {};
         J j1 = (int x) -> {};
         J j2 = x -> {};
       }
@@ -100,12 +100,12 @@ public class UnnecessaryParenthesesInspection
   void foo(Object a, boolean b) {
     final boolean c = b == (a != null);
     String s = "asdf" + (1 + 2 + "asdf");
-    boolean d = c == (1 < 3);
+    boolean d = c == <warning descr="Parentheses around '(1 < 3)' are unnecessary">(1 < 3)</warning>;
   }
 
   private static boolean placeEqualsLastArg(Object place, Object[] args) {
-    final Object[] objects = {(args.length - 1), 1};
-    return args.length > 0 && place.equals(args[(args.length - 1)]);// here are unnecessary parentheses inside args[...]
+    final Object[] objects = {<warning descr="Parentheses around '(args.length - 1)' are unnecessary">(args.length - 1)</warning>, 1};
+    return args.length > 0 && place.equals(args[<warning descr="Parentheses around '(args.length - 1)' are unnecessary">(args.length - 1)</warning>]);// here are unnecessary parentheses inside args[...]
   }
 
   void uu() {
@@ -122,10 +122,10 @@ public class UnnecessaryParenthesesInspection
   }
 
   void lambda() {
-      Runnable r = (()->true) ? () -> {} : () -> {}; // no warn
+      Runnable r = (<error descr="boolean is not a functional interface">()->true</error>) ? () -> {} : () -> {}; // no warn
   }
 
   public java.util.function.IntFunction context() {
-    return (a -> a)=1;
+    return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
   }
 }

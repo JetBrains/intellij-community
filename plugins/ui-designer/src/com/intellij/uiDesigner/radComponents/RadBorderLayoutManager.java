@@ -246,7 +246,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     private final RadContainer myContainer;
     private final String myQuadrant;
 
-    public MyDropLocation(final RadContainer container, final String quadrant) {
+    MyDropLocation(final RadContainer container, final String quadrant) {
       myQuadrant = quadrant;
       myContainer = container;
     }
@@ -341,7 +341,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
     public static BorderSideProperty INSTANCE = new BorderSideProperty();
 
-    public BorderSideProperty() {
+    BorderSideProperty() {
       super(null, "Border Side");
     }
 
@@ -379,7 +379,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
   }
 
   private static class BorderSideEditor extends ComboBoxPropertyEditor<String> {
-    public BorderSideEditor() {
+    BorderSideEditor() {
       String[] sides = new String[] {
         BorderLayout.CENTER, BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.WEST, BorderLayout.EAST,
         BorderLayout.PAGE_START, BorderLayout.PAGE_END, BorderLayout.LINE_START, BorderLayout.LINE_END

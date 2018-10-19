@@ -1140,7 +1140,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private static class MyTable extends JBTable implements DataProvider {
     private static final int MARGIN = 2;
 
-    public MyTable() {
+    MyTable() {
       ScrollingUtil.installActions(this);
       HintUpdateSupply.installDataContextHintUpdateSupply(this);
     }

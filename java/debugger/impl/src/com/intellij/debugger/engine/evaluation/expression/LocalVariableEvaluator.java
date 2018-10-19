@@ -52,7 +52,7 @@ class LocalVariableEvaluator implements Evaluator {
   private DecompiledLocalVariable myEvaluatedDecompiledVariable;
   private final boolean myCanScanFrames;
 
-  public LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
+  LocalVariableEvaluator(String localVariableName, boolean canScanFrames) {
     myLocalVariableName = localVariableName;
     myCanScanFrames = canScanFrames;
   }

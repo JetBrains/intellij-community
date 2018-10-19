@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 final class AddToWatchesAction extends XDebuggerActionBase {
   private static final XAddToWatchesTreeAction TREE_ACTION = new XAddToWatchesTreeAction();
 
-  public AddToWatchesAction() {
+  AddToWatchesAction() {
     super(true);
   }
 

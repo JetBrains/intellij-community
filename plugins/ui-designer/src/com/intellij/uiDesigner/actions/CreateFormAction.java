@@ -109,7 +109,7 @@ public class CreateFormAction extends AbstractCreateFormAction {
     private final Project myProject;
     private final MyInputValidator myValidator;
 
-    public MyDialog(final Project project,
+    MyDialog(final Project project,
                     final MyInputValidator validator) {
       super(project, true);
       myProject = project;

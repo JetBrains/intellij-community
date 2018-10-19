@@ -205,7 +205,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
   
   private class MyExtractMethodProcessor extends ExtractMethodProcessor {
 
-    public MyExtractMethodProcessor(Project project,
+    MyExtractMethodProcessor(Project project,
                                     Editor editor,
                                     PsiElement[] elements,
                                     PsiType forcedReturnType,

@@ -362,7 +362,7 @@ public class RenameUtil {
     final int endOffset;
     final String newText;
 
-    public UsageOffset(int startOffset, int endOffset, String newText) {
+    UsageOffset(int startOffset, int endOffset, String newText) {
       this.startOffset = startOffset;
       this.endOffset = endOffset;
       this.newText = newText;

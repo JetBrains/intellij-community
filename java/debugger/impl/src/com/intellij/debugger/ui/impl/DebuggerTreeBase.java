@@ -276,7 +276,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
   private static class HideTooltip extends MouseAdapter {
     private final JToolTip myToolTip;
 
-    public HideTooltip(JToolTip toolTip) {
+    HideTooltip(JToolTip toolTip) {
       myToolTip = toolTip;
     }
 

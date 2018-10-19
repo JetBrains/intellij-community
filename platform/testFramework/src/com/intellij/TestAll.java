@@ -2,6 +2,7 @@
 
 package com.intellij;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.RecordExecution;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,6 +156,8 @@ public class TestAll implements Test {
 
   @Override
   public int countTestCases() {
+    // counting test cases involves parallel directory scan now
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     int count = 0;
     for (Object aClass : myTestCaseLoader.getClasses()) {
       Test test = getTest((Class)aClass);
@@ -535,7 +538,7 @@ public class TestAll implements Test {
   private static class ExplodedBomb extends TestCase {
     private final Bombed myBombed;
 
-    public ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
+    ExplodedBomb(@NotNull String testName, @NotNull Bombed bombed) {
       super(testName);
       myBombed = bombed;
     }

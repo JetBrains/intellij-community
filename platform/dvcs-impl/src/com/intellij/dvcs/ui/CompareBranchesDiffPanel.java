@@ -64,7 +64,7 @@ class CompareBranchesDiffPanel extends JPanel {
   private final JEditorPane myLabel;
   private final MyChangesBrowser myChangesBrowser;
 
-  public CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
+  CompareBranchesDiffPanel(CompareBranchesHelper helper, String branchName, String currentBranchName, CommitCompareInfo compareInfo) {
     myHelper = helper;
     myProject = helper.getProject();
     myCurrentBranchName = currentBranchName;
@@ -110,7 +110,7 @@ class CompareBranchesDiffPanel extends JPanel {
   }
 
   private class MyChangesBrowser extends SimpleChangesBrowser {
-    public MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
+    MyChangesBrowser(@NotNull Project project, @NotNull List<Change> changes) {
       super(project, false, true);
       setChangesToDisplay(changes);
     }
@@ -142,7 +142,7 @@ class CompareBranchesDiffPanel extends JPanel {
   }
 
   private class MyCopyChangesAction extends DumbAwareAction {
-    public MyCopyChangesAction() {
+    MyCopyChangesAction() {
       super("Get from Branch", "Replace file content with its version from branch " + myBranchName, AllIcons.Actions.Download);
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
     }

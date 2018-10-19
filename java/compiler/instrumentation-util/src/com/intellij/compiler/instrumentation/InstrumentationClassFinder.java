@@ -466,7 +466,7 @@ public class InstrumentationClassFinder {
     private final List<Loader> myLoaders = new ArrayList<Loader>();
     private final Map<URL,Loader> myLoadersMap = new HashMap<URL, Loader>();
 
-    public ClassFinderClasspath(URL[] urls) {
+    ClassFinderClasspath(URL[] urls) {
       if (urls.length > 0) {
         for (int i = urls.length - 1; i >= 0; i--) {
           myUrls.push(urls[i]);

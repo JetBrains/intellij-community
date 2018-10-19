@@ -902,7 +902,7 @@ public class NestedClassProcessor {
     public String fieldKey;
     public VarVersionPair varPair;
 
-    public VarFieldPair(String field, VarVersionPair varPair) {
+    VarFieldPair(String field, VarVersionPair varPair) {
       this.fieldKey = field;
       this.varPair = varPair;
     }

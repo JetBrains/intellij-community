@@ -265,7 +265,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
 
   private class PrevConflictAction extends DumbAwareAction {
-    public PrevConflictAction() {
+    PrevConflictAction() {
       ActionUtil.copyFrom(this, "Diff.PreviousConflict");
     }
 
@@ -277,7 +277,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   private class NextConflictAction extends DumbAwareAction {
-    public NextConflictAction() {
+    NextConflictAction() {
       ActionUtil.copyFrom(this, "Diff.NextConflict");
     }
 

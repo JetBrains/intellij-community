@@ -1,15 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
@@ -38,6 +40,33 @@ public class MutationSignature {
 
   public boolean preservesArg(int n) {
     return this != UNKNOWN && !mutatesArg(n);
+  }
+
+  /**
+   * Returns a stream of expressions which are mutated by given signature assuming that supplied call
+   * resolves to the method with this signature.
+   *
+   * @param call a call which resolves to the method with this mutation signature
+   * @return a stream of expressions which are mutated by this call. If qualifier is omitted, but mutated,
+   * a non-physical {@link PsiThisExpression} might be returned.
+   */
+  public Stream<PsiExpression> mutatedExpressions(PsiMethodCallExpression call) {
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    StreamEx<PsiExpression> elements =
+      IntStreamEx.range(Math.min(myParameters.length, MethodCallUtils.isVarArgCall(call) ? args.length - 1 : args.length))
+        .filter(idx -> myParameters[idx]).elements(args);
+    return myThis ? elements.prepend(ExpressionUtils.getQualifierOrThis(call.getMethodExpression())) : elements;
+  }
+
+  /**
+   * @return true if known to mutate any parameter or receiver; false if pure or not known
+   */
+  public boolean mutatesAnything() {
+    if (myThis) return true;
+    for (boolean parameter : myParameters) {
+      if (parameter) return true;
+    }
+    return false;
   }
 
   /**

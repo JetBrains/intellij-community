@@ -57,7 +57,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     @Nullable private final File myCopyFrom;
     private final boolean myRecursive;
 
-    public AddedFileInfo(final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
+    AddedFileInfo(final VirtualFile dir, final String name, @Nullable final File copyFrom, boolean recursive) {
       myDir = dir;
       myName = name;
       myCopyFrom = copyFrom;

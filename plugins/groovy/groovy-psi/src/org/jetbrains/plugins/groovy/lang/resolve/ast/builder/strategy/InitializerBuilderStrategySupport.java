@@ -184,7 +184,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
 
   private static class InitializerTypeParameter extends LightTypeParameterBuilder {
 
-    public InitializerTypeParameter(PsiTypeParameterListOwner owner, int index) {
+    InitializerTypeParameter(PsiTypeParameterListOwner owner, int index) {
       super("T" + index, owner, index);
     }
   }

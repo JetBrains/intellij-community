@@ -454,7 +454,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
     public final int ELEMENT_COLUMN_INDEX;
     private final boolean myElementsCanBeMarked;
 
-    public MyTableModel(final boolean elementsCanBeMarked) {
+    MyTableModel(final boolean elementsCanBeMarked) {
       myElementsCanBeMarked = elementsCanBeMarked;
       if (elementsCanBeMarked) {
         CHECK_MARK_COLUM_INDEX = 0;
@@ -663,7 +663,7 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   private class CheckMarkColumnCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
-    public CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
+    CheckMarkColumnCellRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
     }
 

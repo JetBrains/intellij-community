@@ -467,11 +467,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
-    public BooleanOptionKey(String fieldName,
+    BooleanOptionKey(String fieldName,
                             String groupName,
                             String title,
                             @Nullable OptionAnchor anchor,
@@ -533,7 +533,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String fieldName,
+    CustomBooleanOptionKey(String fieldName,
                                   String groupName,
                                   String title,
                                   OptionAnchor anchor,
@@ -568,7 +568,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    public MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, String text) {
       myKey = key;
       myText = text;
     }

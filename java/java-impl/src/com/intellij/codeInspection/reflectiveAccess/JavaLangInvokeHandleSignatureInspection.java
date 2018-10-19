@@ -331,7 +331,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
   private static class FieldTypeQuickFix implements LocalQuickFix {
     private final String myFieldTypeText;
 
-    public FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
+    FieldTypeQuickFix(String fieldTypeText) {myFieldTypeText = fieldTypeText;}
 
     @Nls
     @NotNull
@@ -366,7 +366,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
 
     private final String myReplacementName;
 
-    public SwitchStaticnessQuickFix(@NotNull String replacementName) {
+    SwitchStaticnessQuickFix(@NotNull String replacementName) {
       myReplacementName = replacementName;
     }
 
@@ -398,7 +398,7 @@ public class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJavaLoc
     private final List<? extends ReflectiveSignature> mySignatures;
     private final boolean myIsConstructor;
 
-    public ReplaceSignatureQuickFix(@Nullable PsiElement element,
+    ReplaceSignatureQuickFix(@Nullable PsiElement element,
                                     @NotNull String name,
                                     @NotNull List<? extends ReflectiveSignature> signatures,
                                     boolean isConstructor) {

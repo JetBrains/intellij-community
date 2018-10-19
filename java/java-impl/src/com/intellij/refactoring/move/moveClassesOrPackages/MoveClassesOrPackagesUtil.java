@@ -368,7 +368,7 @@ public class MoveClassesOrPackagesUtil {
         final PsiDirectory subdirectory = currentDirectory.findSubdirectory(shortName);
         if (subdirectory == null) {
           targetDirectories.add(currentDirectory);
-          final StringBuffer postfix = new StringBuffer();
+          final StringBuilder postfix = new StringBuilder();
           for (int k = j; k < shortNames.length; k++) {
             String name = shortNames[k];
             postfix.append(File.separatorChar);

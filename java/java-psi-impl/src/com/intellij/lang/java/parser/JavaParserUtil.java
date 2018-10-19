@@ -41,7 +41,7 @@ public class JavaParserUtil {
   private static class PrecedingWhitespacesAndCommentsBinder implements WhitespacesAndCommentsBinder {
     private final boolean myAfterEmptyImport;
 
-    public PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
+    PrecedingWhitespacesAndCommentsBinder(final boolean afterImport) {
       this.myAfterEmptyImport = afterImport;
     }
 

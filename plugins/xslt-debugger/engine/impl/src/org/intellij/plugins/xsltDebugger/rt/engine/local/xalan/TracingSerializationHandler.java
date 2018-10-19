@@ -19,7 +19,7 @@ class TracingSerializationHandler implements SerializationHandler {
   private final LocalDebugger myDebugger;
   private final SerializationHandler mySerializationHandler;
 
-  public TracingSerializationHandler(LocalDebugger debugger, SerializationHandler handler) {
+  TracingSerializationHandler(LocalDebugger debugger, SerializationHandler handler) {
     myDebugger = debugger;
     mySerializationHandler = handler;
 

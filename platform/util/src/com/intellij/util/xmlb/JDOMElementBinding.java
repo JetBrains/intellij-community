@@ -13,7 +13,7 @@ import java.util.List;
 class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
   private final String myTagName;
 
-  public JDOMElementBinding(@NotNull MutableAccessor accessor) {
+  JDOMElementBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     Tag tag = myAccessor.getAnnotation(Tag.class);

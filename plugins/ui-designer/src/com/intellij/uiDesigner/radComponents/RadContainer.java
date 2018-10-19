@@ -698,7 +698,7 @@ public class RadContainer extends RadComponent implements IContainer {
   private final class MyBorderTitleProperty extends Property<RadContainer, StringDescriptor> {
     private final StringEditor myEditor;
 
-    public MyBorderTitleProperty() {
+    MyBorderTitleProperty() {
       super(null, "Title");
       myEditor = new StringEditor(getProject());
     }

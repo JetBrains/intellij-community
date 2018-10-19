@@ -31,7 +31,7 @@ class GotoTestDataAction extends AnAction implements Comparable {
   private final String myFilePath;
   private final Project myProject;
 
-  public GotoTestDataAction(String filePath, Project project, Icon icon) {
+  GotoTestDataAction(String filePath, Project project, Icon icon) {
     super("Go to " + FilePathSplittingPolicy.SPLIT_BY_SEPARATOR.getPresentableName(new File(filePath), 50), null, icon);
     myFilePath = filePath;
     myProject = project;

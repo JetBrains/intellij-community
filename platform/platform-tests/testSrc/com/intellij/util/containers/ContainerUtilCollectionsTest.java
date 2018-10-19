@@ -18,12 +18,15 @@ package com.intellij.util.containers;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -31,6 +34,9 @@ import java.util.concurrent.ConcurrentMap;
 // tests various ContainerUtil.create* and ContainerUtil.new* collections for being really weak/soft/concurrent
 @RunFirst
 public class ContainerUtilCollectionsTest extends Assert {
+  @Rule
+  public TestRule watcher = TestLoggerFactory.createTestWatcher();
+
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
   private static final TObjectHashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new TObjectHashingStrategy<String>() {

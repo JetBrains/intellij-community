@@ -112,7 +112,7 @@ public class ReplacePromptDialog extends DialogWrapper {
   private class DoAction extends AbstractAction {
     private final int myExitCode;
 
-    public DoAction(String name,int exitCode) {
+    DoAction(String name,int exitCode) {
       putValue(Action.NAME, name);
       myExitCode = exitCode;
     }

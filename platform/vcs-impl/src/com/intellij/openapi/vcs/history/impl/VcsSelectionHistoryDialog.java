@@ -458,7 +458,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private class MyDiffAction extends DumbAwareAction {
-    public MyDiffAction() {
+    MyDiffAction() {
       super(VcsBundle.message("action.name.compare"), VcsBundle.message("action.description.compare"), AllIcons.Actions.Diff);
       setShortcutSet(CommonShortcuts.getDiff());
     }
@@ -488,7 +488,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
   }
 
   private class MyDiffAfterWithLocalAction extends DumbAwareAction {
-    public MyDiffAfterWithLocalAction() {
+    MyDiffAfterWithLocalAction() {
       ActionUtil.copyFrom(this, "Vcs.ShowDiffWithLocal");
     }
 
@@ -526,7 +526,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     private boolean myIsLoading = true;
     private VcsFileRevision myCurrentLoadingRevision;
 
-    public BlockLoader(@NotNull List<VcsFileRevision> revisions,
+    BlockLoader(@NotNull List<VcsFileRevision> revisions,
                        @NotNull VirtualFile file,
                        @NotNull Document document,
                        int selectionStart,
@@ -618,7 +618,7 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     @Nullable private final VcsException myException;
     @Nullable private final VcsFileRevision myCurrentLoadingRevision;
 
-    public BlockData(boolean isLoading,
+    BlockData(boolean isLoading,
                      @NotNull List<Block> blocks,
                      @Nullable VcsException exception,
                      @Nullable VcsFileRevision currentLoadingRevision) {

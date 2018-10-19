@@ -34,7 +34,7 @@ class ExternalSystemRunManagerListener implements RunManagerListener {
   private final ExternalProjectsManagerImpl myManager;
   private final ConcurrentIntObjectMap<Pair<String, RunnerAndConfigurationSettings>> myMap;
 
-  public ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
+  ExternalSystemRunManagerListener(ExternalProjectsManager manager) {
     myManager = (ExternalProjectsManagerImpl)manager;
     myMap = ContainerUtil.createConcurrentIntObjectMap();
   }

@@ -99,7 +99,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   private class GoForwardAction extends AnAction {
-    public GoForwardAction() {
+    GoForwardAction() {
       super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
     }
 
@@ -118,7 +118,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   private class GoBackwardAction extends AnAction {
-    public GoBackwardAction() {
+    GoBackwardAction() {
       super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
     }
 
@@ -140,7 +140,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   private class SetAsRootAction extends AnAction {
     private final Tree myTree;
 
-    public SetAsRootAction(Tree tree) {
+    SetAsRootAction(Tree tree) {
       super(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
             XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot);
       myTree = tree;

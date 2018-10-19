@@ -240,7 +240,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   private static class AcceptSuggested implements LocalQuickFix {
     private final RefManager myManager;
 
-    public AcceptSuggested(final RefManager manager) {
+    AcceptSuggested(final RefManager manager) {
       myManager = manager;
     }
 

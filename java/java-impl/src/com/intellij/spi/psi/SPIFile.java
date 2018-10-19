@@ -84,7 +84,7 @@ public class SPIFile extends PsiFileBase {
   private static class SPIFileName2ClassReference extends PsiReferenceBase<PsiFile> {
     private final PsiClass myClass;
 
-    public SPIFileName2ClassReference(PsiFile file, PsiClass aClass) {
+    SPIFileName2ClassReference(PsiFile file, PsiClass aClass) {
       super(file, new TextRange(0, 0), false);
       myClass = aClass;
     }
@@ -122,7 +122,7 @@ public class SPIFile extends PsiFileBase {
   private static class SPIFileName2PackageReference extends PsiReferenceBase<PsiFile> {
     private final PsiElement myPackageOrContainingClass;
 
-    public SPIFileName2PackageReference(PsiFile file, @NotNull PsiElement psiPackage) {
+    SPIFileName2PackageReference(PsiFile file, @NotNull PsiElement psiPackage) {
       super(file, new TextRange(0, 0), false);
       myPackageOrContainingClass = psiPackage;
     }

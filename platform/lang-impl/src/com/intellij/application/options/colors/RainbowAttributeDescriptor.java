@@ -29,7 +29,7 @@ class RainbowAttributeDescriptor implements EditorSchemeAttributeDescriptorWithP
   private final Language myLanguage;
   private final RainbowColorsInSchemeState myRainbowColorsInSchemaState;
 
-  public RainbowAttributeDescriptor(@Nullable Language language,
+  RainbowAttributeDescriptor(@Nullable Language language,
                                     @NotNull String group,
                                     @NotNull String displayNameWithPath,
                                     @NotNull EditorColorsScheme scheme,

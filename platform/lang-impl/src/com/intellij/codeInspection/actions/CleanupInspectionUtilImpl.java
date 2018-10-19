@@ -62,7 +62,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
     private final List<ProblemDescriptor> myBatchModeDescriptors = new ArrayList<>();
     private boolean myApplied = false;
 
-    public PerformBatchFixesTask(@NotNull Project project,
+    PerformBatchFixesTask(@NotNull Project project,
                                  @NotNull CommonProblemDescriptor[] descriptors,
                                  @NotNull Class quickfixClass) {
       super(project, descriptors, quickfixClass);
@@ -99,7 +99,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
   }
 
   private static class PerformFixesTask extends AbstractPerformFixesTask {
-    public PerformFixesTask(@NotNull Project project,
+    PerformFixesTask(@NotNull Project project,
                             @NotNull CommonProblemDescriptor[] descriptors,
                             @Nullable Class quickFixClass) {
       super(project, descriptors, quickFixClass);

@@ -254,7 +254,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private static class InsertBorder extends LineBorder {
     private final int myMode;
 
-    public InsertBorder(int mode) {
+    InsertBorder(int mode) {
       super(Color.BLACK, 2);
       myMode = mode;
     }

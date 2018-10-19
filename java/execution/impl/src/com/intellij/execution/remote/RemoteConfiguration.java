@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 
 public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
-                                 implements RunConfigurationWithSuppressedDefaultRunAction, RemoteRunProfile {
+  implements RunConfigurationWithSuppressedDefaultRunAction, RemoteRunProfile {
   @Override
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);

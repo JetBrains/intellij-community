@@ -294,7 +294,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private class GotoPreviousCoveredLineAction extends BaseGotoCoveredLineAction {
 
-    public GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
+    GotoPreviousCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_OCCURENCE));
       getTemplatePresentation().setText("Previous Coverage Mark");
@@ -318,7 +318,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
   private class GotoNextCoveredLineAction extends BaseGotoCoveredLineAction {
 
-    public GotoNextCoveredLineAction(final Editor editor, final int lineNumber) {
+    GotoNextCoveredLineAction(final Editor editor, final int lineNumber) {
       super(editor, lineNumber);
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_OCCURENCE));
       getTemplatePresentation().setText("Next Coverage Mark");
@@ -344,7 +344,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     private final Editor myEditor;
     private final int myLineNumber;
 
-    public BaseGotoCoveredLineAction(final Editor editor, final int lineNumber) {
+    BaseGotoCoveredLineAction(final Editor editor, final int lineNumber) {
       myEditor = editor;
       myLineNumber = lineNumber;
     }

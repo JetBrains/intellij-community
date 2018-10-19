@@ -251,7 +251,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     private final int myCurrentStamp;
     private final String myText;
 
-    public ShowErrorsUpdate(int currentStamp, String text) {
+    ShowErrorsUpdate(int currentStamp, String text) {
       super(currentStamp);
       myCurrentStamp = currentStamp;
       myText = text;

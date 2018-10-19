@@ -57,7 +57,7 @@ public class YAMLDuplicatedKeysInspection extends LocalInspectionTool {
   private static class RemoveDuplicatedKeyQuickFix implements LocalQuickFix {
     private final SmartPsiElementPointer<YAMLKeyValue> myKeyValueHolder;
 
-    public RemoveDuplicatedKeyQuickFix(@NotNull final YAMLKeyValue keyValue) {
+    RemoveDuplicatedKeyQuickFix(@NotNull final YAMLKeyValue keyValue) {
       myKeyValueHolder = SmartPointerManager.getInstance(keyValue.getProject()).createSmartPsiElementPointer(keyValue);
     }
 

@@ -222,7 +222,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private static class IntContainedInBranchCondition<CommitId> implements Condition<CommitId> {
     private final TIntHashSet myBranchNodes;
 
-    public IntContainedInBranchCondition(TIntHashSet branchNodes) {
+    IntContainedInBranchCondition(TIntHashSet branchNodes) {
       myBranchNodes = branchNodes;
     }
 
@@ -235,7 +235,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private static class ContainedInBranchCondition<CommitId> implements Condition<CommitId> {
     private final Set<CommitId> myBranchNodes;
 
-    public ContainedInBranchCondition(Set<CommitId> branchNodes) {
+    ContainedInBranchCondition(Set<CommitId> branchNodes) {
       myBranchNodes = branchNodes;
     }
 

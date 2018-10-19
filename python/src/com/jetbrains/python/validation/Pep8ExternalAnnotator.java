@@ -425,7 +425,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   private static class IgnoreErrorFix implements IntentionAction {
     private final String myCode;
 
-    public IgnoreErrorFix(String code) {
+    IgnoreErrorFix(String code) {
       myCode = code;
     }
 

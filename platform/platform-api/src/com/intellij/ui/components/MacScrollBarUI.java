@@ -318,7 +318,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   private static abstract class Native<T> implements Callback, Runnable, Producer<T> {
     private T myValue;
 
-    public Native() {
+    Native() {
       Logger.getInstance(MacScrollBarUI.class).debug("initialize ", this);
       callMac(() -> initialize());
       UIUtil.invokeLaterIfNeeded(this);

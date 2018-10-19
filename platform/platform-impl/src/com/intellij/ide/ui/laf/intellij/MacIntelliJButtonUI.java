@@ -3,11 +3,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.LafIconLookup;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -135,6 +131,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     } else {
       g.setColor(UIManager.getColor("Button.disabledText"));
     }
-    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
+    UIUtilities.drawStringUnderlineCharAt(c, g, text, -1, x, y);
   }
 }

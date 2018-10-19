@@ -21,7 +21,7 @@ package com.intellij.compiler.server;
 class PreloadedProcessMessageHandler extends DelegatingMessageHandler {
   private volatile BuilderMessageHandler myDelegateHandler;
 
-  public PreloadedProcessMessageHandler() {
+  PreloadedProcessMessageHandler() {
   }
 
   @Override

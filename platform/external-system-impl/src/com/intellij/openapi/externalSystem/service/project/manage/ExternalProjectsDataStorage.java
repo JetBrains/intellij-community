@@ -472,10 +472,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     @XCollection(elementName = "id")
     public final Set<String> set = ContainerUtil.newConcurrentSet();
 
-    public ModuleState() {
+    ModuleState() {
     }
 
-    public ModuleState(Collection<String> values) {
+    ModuleState(Collection<String> values) {
       set.addAll(values);
     }
   }
@@ -484,7 +484,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     private final Project myProject;
     private final Collection<InternalExternalProjectInfo> myExternalProjects;
 
-    public MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
+    MySaveTask(Project project, Collection<InternalExternalProjectInfo> externalProjects) {
       myProject = project;
       myExternalProjects = ContainerUtil.map(externalProjects, info -> (InternalExternalProjectInfo)info.copy());
     }

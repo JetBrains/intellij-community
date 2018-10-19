@@ -750,7 +750,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   private class MyTableColumnModel extends DefaultTableColumnModel {
     @NotNull private final VcsLogUiProperties myProperties;
 
-    public MyTableColumnModel(@NotNull VcsLogUiProperties properties) {
+    MyTableColumnModel(@NotNull VcsLogUiProperties properties) {
       myProperties = properties;
     }
 

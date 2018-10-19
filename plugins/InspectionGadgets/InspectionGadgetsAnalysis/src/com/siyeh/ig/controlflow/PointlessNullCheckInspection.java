@@ -109,7 +109,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
 
     private final String myExpressionText;
 
-    public PointlessNullCheckFix(String expressionText) {
+    PointlessNullCheckFix(String expressionText) {
       myExpressionText = expressionText;
     }
 

@@ -184,7 +184,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   private class SdkRemoveHandler extends RemoveConfigurableHandler<Sdk> {
-    public SdkRemoveHandler() {
+    SdkRemoveHandler() {
       super(JdkConfigurable.class);
     }
 

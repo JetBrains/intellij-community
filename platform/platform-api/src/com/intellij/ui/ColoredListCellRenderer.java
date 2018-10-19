@@ -14,7 +14,6 @@ import java.awt.*;
  */
 public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent implements ListCellRenderer<T> {
   private final @Nullable JComboBox myComboBox;
-  private final @Nullable ListCellRenderer<? super T> myDefaultGtkRenderer;
 
   protected boolean mySelected;
   protected Color myForeground;
@@ -26,8 +25,6 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
 
   public ColoredListCellRenderer(@Nullable JComboBox comboBox) {
     myComboBox = comboBox;
-    //noinspection UndesirableClassUsage
-    myDefaultGtkRenderer = UIUtil.isUnderGTKLookAndFeel() ? new JComboBox<T>().getRenderer() : null;
     setFocusBorderAroundIcon(true);
     getIpad().left = getIpad().right = UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(UIUtil.getListCellHPadding());
   }
@@ -45,18 +42,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     myForeground = isEnabled() ? list.getForeground() : UIManager.getColor("Label.disabledForeground");
     mySelectionForeground = list.getSelectionForeground();
 
-    if (UIUtil.isWinLafOnVista()) {
-      // the system draws a gradient background on the combobox selected item - don't overdraw it with our solid background
-      if (index == -1) {
-        setOpaque(false);
-        mySelected = false;
-      }
-      else {
-        setOpaque(true);
-        setBackground(selected ? list.getSelectionBackground() : null);
-      }
-    }
-    else if (UIUtil.isUnderWin10LookAndFeel()) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
       setBackground(selected ? list.getSelectionBackground() : list.getBackground());
     }
     else {
@@ -64,15 +50,7 @@ public abstract class ColoredListCellRenderer<T> extends SimpleColoredComponent 
     }
 
     setPaintFocusBorder(hasFocus);
-
     customizeCellRenderer(list, value, index, selected, hasFocus);
-
-    if (myDefaultGtkRenderer != null && list.getModel() instanceof ComboBoxModel) {
-      Component component = myDefaultGtkRenderer.getListCellRendererComponent(list, value, index, selected, hasFocus);
-      if (component instanceof JLabel) {
-        return formatToLabel((JLabel)component);
-      }
-    }
 
     return this;
   }

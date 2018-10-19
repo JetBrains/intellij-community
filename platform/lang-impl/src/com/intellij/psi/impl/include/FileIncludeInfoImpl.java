@@ -27,7 +27,7 @@ class FileIncludeInfoImpl extends FileIncludeInfo {
 
   public final String providerId;
 
-  public FileIncludeInfoImpl(@NotNull String path, int offset, boolean runtimeOnly, String providerId) {
+  FileIncludeInfoImpl(@NotNull String path, int offset, boolean runtimeOnly, String providerId) {
     super(new File(path).getName(), path, offset, runtimeOnly);
     this.providerId = providerId;
   }

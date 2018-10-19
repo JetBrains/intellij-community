@@ -243,7 +243,7 @@ public class AntDomPattern extends AntDomRecursiveVisitor {
   private class PrefixItem {
     private final String myStrPattern;
     private Pattern myCompiledPattern;
-    public PrefixItem(String strPattern) {
+    PrefixItem(String strPattern) {
       myStrPattern = strPattern;
     }
 

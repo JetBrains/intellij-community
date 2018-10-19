@@ -45,7 +45,7 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
     @NotNull private final PsiManager myPsiManager;
     @NotNull private final DummyHolder myDummyHolder;
 
-    public LiveTemplateElement(@NotNull TemplateImpl template, @NotNull PsiManager psiManager) {
+    LiveTemplateElement(@NotNull TemplateImpl template, @NotNull PsiManager psiManager) {
       myTemplate = template;
       myPsiManager = psiManager;
       myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);

@@ -588,7 +588,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
     private final Set<T> myDelegate;
 
-    public SetWithToString(@NotNull Set<T> delegate) {
+    SetWithToString(@NotNull Set<T> delegate) {
       myDelegate = delegate;
     }
 

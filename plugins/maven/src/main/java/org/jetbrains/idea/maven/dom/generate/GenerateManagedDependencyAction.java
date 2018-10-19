@@ -48,7 +48,7 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   }
 
   private static class MavenOverridingDependencyGenerateProvider extends MavenGenerateProvider<MavenDomDependency> {
-    public MavenOverridingDependencyGenerateProvider() {
+    MavenOverridingDependencyGenerateProvider() {
       super(MavenDomBundle.message("generate.managed.dependency"), MavenDomDependency.class);
     }
 

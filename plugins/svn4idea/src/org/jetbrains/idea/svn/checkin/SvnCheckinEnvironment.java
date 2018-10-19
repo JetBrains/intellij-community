@@ -270,7 +270,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     @NotNull private final JPanel myPanel;
     @NotNull private final JCheckBox myAutoUpdate;
 
-    public KeepLocksComponent() {
+    KeepLocksComponent() {
 
       myPanel = new JPanel(new BorderLayout());
       myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));

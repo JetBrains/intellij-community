@@ -10,17 +10,18 @@ import org.apache.log4j.Logger
 import org.junit.runners.model.RunnerBuilder
 
 class GuiDTTestSuiteRunner(suiteClass: Class<*>, builder: RunnerBuilder) : GuiTestSuiteRunner(suiteClass, builder) {
-  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestSuiteRunner")!!
+  companion object {
+    private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.dtrace.GuiDTTestSuiteRunner")!!
+  }
 
   override fun firstStart() {
     if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
-    LOG.info("IDE is configuring for the first time...")
+    GuiDTTestSuiteRunner.LOG.info("IDE is configuring for the first time...")
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
     isFirstStart = false
   }
 
   override fun createGuiTestLocalRunner(testClass:Class<*>, suiteClass:Class<*>, myIde: Ide): GuiTestLocalRunner {
-    IdeProcessControlManager.killIdeProcess()
     return GuiDTTestLocalRunner(testClass, suiteClass, myIde)
   }
 

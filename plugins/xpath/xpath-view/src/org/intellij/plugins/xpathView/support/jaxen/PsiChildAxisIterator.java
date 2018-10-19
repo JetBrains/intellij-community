@@ -22,7 +22,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlToken;
 
 class PsiChildAxisIterator extends NodeIterator {
-    public PsiChildAxisIterator(Object contextNode) {
+    PsiChildAxisIterator(Object contextNode) {
         super((PsiElement)contextNode);
     }
 

@@ -19,7 +19,7 @@ class GrMethodSignatureImpl implements GrClosureSignature {
   private final PsiSubstitutor mySubstitutor;
   private final boolean myEraseParameterTypes;
 
-  public GrMethodSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean eraseParameterTypes) {
+  GrMethodSignatureImpl(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean eraseParameterTypes) {
     myMethod = method;
     mySubstitutor = substitutor;
     myEraseParameterTypes = eraseParameterTypes;

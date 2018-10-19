@@ -66,7 +66,7 @@ public final class OutputPathMacro extends Macro {
       return null;
     }
     String[] paths = CompilerPathsEx.getOutputPaths(allModules);
-    final StringBuffer outputPath = new StringBuffer();
+    final StringBuilder outputPath = new StringBuilder();
     for (int idx = 0; idx < paths.length; idx++) {
       String path = paths[idx];
       if (idx > 0) {

@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -95,7 +94,7 @@ public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalI
   }
 
   private void collectSettings() {
-    ignoredClassNamesString = ignoredClassNames.stream().collect(Collectors.joining(","));
+    ignoredClassNamesString = String.join(",", ignoredClassNames);
   }
 
   @NotNull

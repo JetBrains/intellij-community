@@ -68,7 +68,7 @@ class InlineToAnonymousConstructorProcessor {
   private PsiExpression[] myConstructorArguments;
   private PsiParameterList myConstructorParameters;
 
-  public InlineToAnonymousConstructorProcessor(final PsiClass aClass, final PsiNewExpression psiNewExpression,
+  InlineToAnonymousConstructorProcessor(final PsiClass aClass, final PsiNewExpression psiNewExpression,
                                                final PsiType superType) {
     myClass = aClass;
     myNewExpression = psiNewExpression;

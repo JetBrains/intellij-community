@@ -219,7 +219,7 @@ public class PyDataView implements DumbAware {
   private class NewViewerAction extends AnAction {
     private final PyFrameAccessor myFrameAccessor;
 
-    public NewViewerAction(PyFrameAccessor frameAccessor) {
+    NewViewerAction(PyFrameAccessor frameAccessor) {
       super("View New Container", "Open new container viewer", AllIcons.General.Add);
       myFrameAccessor = frameAccessor;
     }
@@ -235,7 +235,7 @@ public class PyDataView implements DumbAware {
     private final TabInfo myInfo;
     private final PyFrameAccessor myFrameAccessor;
 
-    public CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
+    CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
       super("Close Viewer", "Close selected viewer", AllIcons.Actions.Close);
       myInfo = info;
       myFrameAccessor = frameAccessor;
@@ -251,7 +251,7 @@ public class PyDataView implements DumbAware {
   }
 
   private class ColoredAction extends ToggleAction {
-    public ColoredAction() {
+    ColoredAction() {
       super("Colored");
     }
 

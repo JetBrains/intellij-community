@@ -286,7 +286,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
   }
 
   private class MyLogFileColumnInfo extends ColumnInfo<LogFileOptions, LogFileOptions> {
-    public MyLogFileColumnInfo() {
+    MyLogFileColumnInfo() {
       super(DiagnosticBundle.message("log.monitor.log.file.column"));
     }
 
@@ -400,7 +400,7 @@ public class LogConfigurationPanel<T extends RunConfigurationBase> extends Setti
     private final CellEditorComponentWithBrowseButton<JTextField> myComponent;
     private final LogFileOptions myLogFileOptions;
 
-    public LogFileCellEditor(LogFileOptions options) {
+    LogFileCellEditor(LogFileOptions options) {
       myLogFileOptions = options;
       myComponent = new CellEditorComponentWithBrowseButton<>(new TextFieldWithBrowseButton(), this);
       getChildComponent().setEditable(false);

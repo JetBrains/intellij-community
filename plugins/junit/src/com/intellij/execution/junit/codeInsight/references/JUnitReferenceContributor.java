@@ -57,7 +57,7 @@ public class JUnitReferenceContributor extends PsiReferenceContributor {
     private final String myAnnotation;
     private final String myParameterName;
 
-    public TestAnnotationFilter(String annotation, @NotNull @NonNls String parameterName) {
+    TestAnnotationFilter(String annotation, @NotNull @NonNls String parameterName) {
       myAnnotation = annotation;
       myParameterName = parameterName;
     }

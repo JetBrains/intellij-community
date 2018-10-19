@@ -74,7 +74,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection imple
 
     private final String myMethodName;
 
-    public SimplifiableEqualsExpressionFix(String methodName) {
+    SimplifiableEqualsExpressionFix(String methodName) {
       myMethodName = methodName;
     }
 

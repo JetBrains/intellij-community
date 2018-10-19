@@ -176,7 +176,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     boolean activateToolWindowWhenAdded;
     boolean activateToolWindowWhenFailed = true;
 
-    public BuildInfo(@NotNull Object id,
+    BuildInfo(@NotNull Object id,
                      @NotNull String title,
                      @NotNull String workingDir,
                      long startTime) {
@@ -233,7 +233,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private static class PinBuildViewAction extends DumbAwareAction implements Toggleable {
     private final Content myContent;
 
-    public PinBuildViewAction(MultipleBuildsView buildsView) {
+    PinBuildViewAction(MultipleBuildsView buildsView) {
       myContent = buildsView.getContent();
     }
 

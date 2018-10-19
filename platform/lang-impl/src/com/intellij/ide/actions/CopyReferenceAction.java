@@ -217,7 +217,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   private static class MyTransferable implements Transferable {
     private final String fqn;
 
-    public MyTransferable(String fqn) {
+    MyTransferable(String fqn) {
       this.fqn = fqn;
     }
 

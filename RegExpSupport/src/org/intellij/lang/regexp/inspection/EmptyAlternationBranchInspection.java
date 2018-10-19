@@ -33,7 +33,7 @@ public class EmptyAlternationBranchInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public EmptyAlternationBranchVisitor(ProblemsHolder holder) {
+    EmptyAlternationBranchVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 

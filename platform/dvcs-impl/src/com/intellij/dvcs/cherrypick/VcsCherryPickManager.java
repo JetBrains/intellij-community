@@ -81,7 +81,7 @@ public class VcsCherryPickManager {
     @NotNull private final List<VcsFullCommitDetails> myAllDetailsInReverseOrder;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
-    public CherryPickingTask(@NotNull List<VcsFullCommitDetails> detailsInReverseOrder) {
+    CherryPickingTask(@NotNull List<VcsFullCommitDetails> detailsInReverseOrder) {
       super(VcsCherryPickManager.this.myProject, "Cherry-Picking");
       myAllDetailsInReverseOrder = detailsInReverseOrder;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);

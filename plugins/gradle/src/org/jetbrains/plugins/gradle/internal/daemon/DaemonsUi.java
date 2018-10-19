@@ -229,7 +229,7 @@ public class DaemonsUi implements Disposable {
 
       private final int myWidth;
 
-      public TableColumn(final String name, int width) {
+      TableColumn(final String name, int width) {
         super(name);
         myWidth = width;
       }
@@ -253,7 +253,7 @@ public class DaemonsUi implements Disposable {
   }
 
   private class RefreshAction extends AbstractAction {
-    public RefreshAction() {
+    RefreshAction() {
       super("Refresh", AllIcons.Actions.Refresh);
     }
 
@@ -271,7 +271,7 @@ public class DaemonsUi implements Disposable {
   }
 
   private class StopAllAction extends AbstractAction {
-    public StopAllAction() {
+    StopAllAction() {
       super("Stop All");
       setEnabled(false);
     }
@@ -291,7 +291,7 @@ public class DaemonsUi implements Disposable {
   }
 
   private class StopSelectedAction extends AbstractAction {
-    public StopSelectedAction() {
+    StopSelectedAction() {
       super("Stop Selected");
       setEnabled(false);
     }
@@ -328,7 +328,7 @@ public class DaemonsUi implements Disposable {
 
     private AbstractAction myCloseAction;
 
-    public MyDialogWrapper() {super(true);}
+    MyDialogWrapper() {super(true);}
 
     @Nullable
     @Override

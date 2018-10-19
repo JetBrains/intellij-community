@@ -161,7 +161,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private class MoveFocusAction extends AbstractAction {
     private final boolean moveDown;
 
-    public MoveFocusAction(boolean moveDown) {
+    MoveFocusAction(boolean moveDown) {
       this.moveDown = moveDown;
     }
 
@@ -195,7 +195,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
   private class ExpandAction extends AbstractAction {
     private final boolean expand;
 
-    public ExpandAction(boolean expand) {
+    ExpandAction(boolean expand) {
       this.expand = expand;
     }
 

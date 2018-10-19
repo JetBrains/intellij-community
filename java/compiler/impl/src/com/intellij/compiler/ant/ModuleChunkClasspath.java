@@ -250,7 +250,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value primary value of the element
      */
-    public ClasspathItem(String value) {
+    ClasspathItem(String value) {
       myValue = value;
     }
 
@@ -275,7 +275,7 @@ public class ModuleChunkClasspath extends Path {
      * @param value     primary value of the element
      * @param generator a generator to use
      */
-    public GeneratorItem(String value, final Generator generator) {
+    GeneratorItem(String value, final Generator generator) {
       super(value);
       myGenerator = generator;
     }
@@ -295,7 +295,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value a referenced location
      */
-    public PathElementItem(String value) {
+    PathElementItem(String value) {
       super(value);
     }
 
@@ -331,7 +331,7 @@ public class ModuleChunkClasspath extends Path {
      *
      * @param value an indentifier of referenced classpath
      */
-    public PathRefItem(String value) {
+    PathRefItem(String value) {
       super(value);
     }
 

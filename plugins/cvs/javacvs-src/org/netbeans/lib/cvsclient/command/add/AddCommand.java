@@ -89,7 +89,7 @@ public final class AddCommand extends AbstractCommand {
 
 	// Fields =================================================================
 
-	private final Map repositoryPathToDirectoryObject = new HashMap();
+	private final Map<String, DirectoryObject> repositoryPathToDirectoryObject = new HashMap<>();
 
 	private KeywordSubstitution keywordSubst;
 

@@ -19,7 +19,7 @@ class CoverageTableModel extends AbstractTableModel implements AbstractListBuild
 
   final List myElements = new ArrayList();
 
-  public CoverageTableModel(@NotNull CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean, Project project) {
+  CoverageTableModel(@NotNull CoverageSuitesBundle suitesBundle, CoverageViewManager.StateBean stateBean, Project project) {
     final CoverageEngine coverageEngine = suitesBundle.getCoverageEngine();
     COLUMN_INFOS = coverageEngine.createCoverageViewExtension(project, suitesBundle, stateBean).createColumnInfos();
   }

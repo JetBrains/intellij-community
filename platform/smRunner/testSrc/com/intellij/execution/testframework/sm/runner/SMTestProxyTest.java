@@ -1088,7 +1088,7 @@ public class SMTestProxyTest extends BaseSMTRunnerTestCase {
     private final Location myLocation;
     private final List<GlobalSearchScope> myCalledSearchScopes = ContainerUtil.newArrayList();
 
-    public MockTestLocator(@NotNull Location location) {
+    MockTestLocator(@NotNull Location location) {
       myLocation = location;
     }
 

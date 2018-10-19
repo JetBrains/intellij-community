@@ -58,6 +58,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -288,6 +290,12 @@ public class MadTestingUtil {
     try {
       String path = FileUtil.getRelativePath(FileUtil.toCanonicalPath(rootPath),  FileUtil.toSystemIndependentName(ioFile.getPath()), '/');
       assert path != null;
+
+      Matcher rootPackageMatcher = Pattern.compile("/com/|/org/").matcher(path);
+      if (rootPackageMatcher.find()) {
+        path = path.substring(rootPackageMatcher.start() + 1);
+      }
+
       VirtualFile existing = fixture.getTempDirFixture().getFile(path);
       if (existing != null) {
         WriteAction.run(() -> existing.delete(fixture));

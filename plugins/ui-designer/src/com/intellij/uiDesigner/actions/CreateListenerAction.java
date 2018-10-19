@@ -112,7 +112,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     @NonNls private static final String LISTENER_SUFFIX = "Listener";
     @NonNls private static final String ADAPTER_SUFFIX = "Adapter";
 
-    public MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
+    MyCreateListenerAction(final List<? extends RadComponent> selection, EventSetDescriptor descriptor) {
       super(descriptor.getListenerType().getSimpleName());
       mySelection = selection;
       myDescriptor = descriptor;

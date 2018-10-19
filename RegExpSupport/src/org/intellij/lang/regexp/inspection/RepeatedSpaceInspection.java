@@ -53,7 +53,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     private RegExpChar myFirstChar = null;
     private boolean quoted = false;
 
-    public RepeatedSpaceVisitor(ProblemsHolder holder) {
+    RepeatedSpaceVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -108,7 +108,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
   private static class RepeatedSpaceFix implements LocalQuickFix {
     private final int myCount;
 
-    public RepeatedSpaceFix(int count) {
+    RepeatedSpaceFix(int count) {
       myCount = count;
     }
 

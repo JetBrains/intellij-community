@@ -313,7 +313,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     private final String comment;
     private final boolean valid;
 
-    public JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
+    JdkComboBoxItem(String jdkName, String label, String comment, boolean valid) {
       this.jdkName = jdkName;
       this.label = label;
       this.comment = comment;

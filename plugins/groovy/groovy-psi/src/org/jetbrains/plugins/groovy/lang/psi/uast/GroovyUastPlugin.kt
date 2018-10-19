@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.strictParents
 import org.jetbrains.plugins.groovy.GroovyLanguage
@@ -94,7 +95,7 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
 }
 
 class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner {
+                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 
@@ -102,6 +103,8 @@ class GrUAnnotation(val grElement: GrAnnotation,
     get() = grElement.qualifiedName
 
   override fun resolve(): PsiClass? = grElement.nameReferenceElement?.resolve() as PsiClass?
+  override fun multiResolve(): Iterable<ResolveResult> =
+    grElement.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override val uastAnchor: UIdentifier?
     get() = grElement.classReference.referenceNameElement?.let { UIdentifier(it, this) }

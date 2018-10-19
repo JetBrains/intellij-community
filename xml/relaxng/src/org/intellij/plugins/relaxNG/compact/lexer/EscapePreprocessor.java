@@ -37,7 +37,7 @@ class EscapePreprocessor extends FilterReader {
 
   private int myOffset;
 
-  public EscapePreprocessor(Reader reader, int startOffset, TIntIntHashMap map) {
+  EscapePreprocessor(Reader reader, int startOffset, TIntIntHashMap map) {
     super(reader);
     myOffset = startOffset;
     myQueuedChars = new TIntArrayList();

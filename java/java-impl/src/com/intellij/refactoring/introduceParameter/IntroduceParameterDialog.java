@@ -303,7 +303,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   }
 
   private class IntroduceParameterSettingsPanel extends IntroduceParameterSettingsUI {
-    public IntroduceParameterSettingsPanel(PsiLocalVariable onLocalVariable,
+    IntroduceParameterSettingsPanel(PsiLocalVariable onLocalVariable,
                                            PsiExpression onExpression,
                                            PsiMethod methodToReplaceIn, TIntArrayList parametersToRemove) {
       super(onLocalVariable, onExpression, methodToReplaceIn, parametersToRemove);

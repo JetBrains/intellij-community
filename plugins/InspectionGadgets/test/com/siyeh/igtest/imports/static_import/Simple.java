@@ -1,6 +1,6 @@
 package com.siyeh.igtest.imports.static_import;
 
-import static java.lang.Math.sin;
+<warning descr="Static import 'import static java.lang.Math.sin;'">import static java.lang.Math.sin;</warning>
 import static java.util.Map.Entry;
 
 class Simple {

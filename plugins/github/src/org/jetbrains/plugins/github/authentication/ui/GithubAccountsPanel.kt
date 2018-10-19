@@ -20,6 +20,7 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -221,7 +222,7 @@ internal class GithubAccountsPanel(private val project: Project,
 
       override fun run(indicator: ProgressIndicator) {
         val executor = executorFactory.create(token)
-        val details = accountInformationProvider.getInformation(executor, indicator, account)
+        val details = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
         val image = details.avatarUrl?.let {
           accountInformationProvider.getAvatar(executor, indicator, account, it)
         }

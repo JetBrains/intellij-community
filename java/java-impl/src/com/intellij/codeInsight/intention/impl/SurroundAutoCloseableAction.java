@@ -265,7 +265,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   private static class NamesExpression extends Expression {
     private final String[] myNames;
 
-    public NamesExpression(String[] names) {
+    NamesExpression(String[] names) {
       myNames = names;
     }
 

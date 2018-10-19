@@ -345,7 +345,7 @@ public final class LanguageConsoleBuilder {
         }
       };
 
-      public GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
+      GutterUpdateScheduler(@NotNull ConsoleGutterComponent lineStartGutter, @NotNull ConsoleGutterComponent lineEndGutter) {
         this.lineStartGutter = lineStartGutter;
         this.lineEndGutter = lineEndGutter;
 
@@ -432,7 +432,7 @@ public final class LanguageConsoleBuilder {
         private int start;
         private int end;
 
-        public Task(int start, int end) {
+        Task(int start, int end) {
           this.start = start;
           this.end = end;
         }

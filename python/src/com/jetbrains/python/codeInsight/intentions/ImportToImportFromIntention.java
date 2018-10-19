@@ -45,7 +45,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
       // is anything that resolves to our imported module is just an exact reference to that module
     private int myRelativeLevel; // true if "from ... import"
 
-    public IntentionState(@NotNull Editor editor, @NotNull PsiFile file) {
+    IntentionState(@NotNull Editor editor, @NotNull PsiFile file) {
       boolean available = false;
       myImportElement = findImportElement(editor, file);
       if (myImportElement != null) {

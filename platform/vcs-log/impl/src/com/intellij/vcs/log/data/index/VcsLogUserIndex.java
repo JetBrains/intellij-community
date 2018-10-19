@@ -98,7 +98,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsFullCommitD
     @NotNull private final VcsUserRegistryImpl myRegistry;
     @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
 
-    public UserIndexer(@NotNull VcsUserRegistryImpl registry) {
+    UserIndexer(@NotNull VcsUserRegistryImpl registry) {
       myRegistry = registry;
     }
 

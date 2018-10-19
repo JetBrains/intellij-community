@@ -176,7 +176,7 @@ class JarLoader extends Loader {
     private final URL myUrl;
     private final ZipEntry myEntry;
 
-    public MyResource(URL url, ZipEntry entry) throws IOException {
+    MyResource(URL url, ZipEntry entry) throws IOException {
       myUrl = new URL(url, entry.getName());
       myEntry = entry;
     }

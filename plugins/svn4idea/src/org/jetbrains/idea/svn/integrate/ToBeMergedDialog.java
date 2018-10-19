@@ -436,7 +436,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private List<SvnChangeList> myLists;
     private boolean myIsLastListLoaded;
 
-    public LoadChangeListsTask(long startNumber, int quantity) {
+    LoadChangeListsTask(long startNumber, int quantity) {
       super(myMergeContext.getProject(), "Loading recent " + myMergeContext.getBranchName() + " revisions", true);
       myStartNumber = startNumber;
       myQuantity = quantity;

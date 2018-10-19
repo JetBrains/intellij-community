@@ -140,7 +140,7 @@ public class OutdatedVersionNotifier {
   private static class OutdatedRevisionPanel extends EditorNotificationPanel {
     private CommittedChangeList myChangeList;
 
-    public OutdatedRevisionPanel(CommittedChangeList changeList, final Change c) {
+    OutdatedRevisionPanel(CommittedChangeList changeList, final Change c) {
       super();
       createActionLabel(VcsBundle.message("outdated.version.show.diff.action"), "Compare.LastVersion");
       createActionLabel(VcsBundle.message("outdated.version.update.project.action"), "Vcs.UpdateProject");

@@ -48,7 +48,7 @@ class GithubConnectionBuilder {
   @NotNull private final GithubAuthData myAuth;
   @NotNull private final String myApiURL;
 
-  public GithubConnectionBuilder(@NotNull GithubAuthData auth, @NotNull String apiURL) {
+  GithubConnectionBuilder(@NotNull GithubAuthData auth, @NotNull String apiURL) {
     myAuth = auth;
     myApiURL = apiURL;
   }
@@ -140,7 +140,7 @@ class GithubConnectionBuilder {
   private static class PreemptiveBasicAuthInterceptor implements HttpRequestInterceptor {
     @NotNull private final AuthScope myBasicAuthScope;
 
-    public PreemptiveBasicAuthInterceptor(@NotNull AuthScope basicAuthScope) {
+    PreemptiveBasicAuthInterceptor(@NotNull AuthScope basicAuthScope) {
       myBasicAuthScope = basicAuthScope;
     }
 

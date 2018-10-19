@@ -195,7 +195,7 @@ public class ParameterInfoComponent extends JPanel {
     private Function<String, String> myEscapeFunction;
     private final ParameterInfoController.Model result = new ParameterInfoController.Model();
     
-    public MyParameterContext(boolean singleParameterInfo) {
+    MyParameterContext(boolean singleParameterInfo) {
       mySingleParameterInfo = singleParameterInfo;
     }
 
@@ -360,7 +360,7 @@ public class ParameterInfoComponent extends JPanel {
   private class OneElementComponent extends JPanel {
     private OneLineComponent[] myOneLineComponents;
 
-    public OneElementComponent() {
+    OneElementComponent() {
       super(new GridBagLayout());
       myOneLineComponents = new OneLineComponent[0]; //TODO ???
     }

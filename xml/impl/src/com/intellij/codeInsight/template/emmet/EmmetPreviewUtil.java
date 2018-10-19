@@ -99,7 +99,7 @@ public class EmmetPreviewUtil {
     @NotNull private final PsiFile myFile;
     private final boolean myExpandPrimitiveAbbreviations;
 
-    public TemplateTextProducer(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
+    TemplateTextProducer(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
       myEditor = editor;
       myFile = file;
       myExpandPrimitiveAbbreviations = expandPrimitiveAbbreviations;

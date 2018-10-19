@@ -46,7 +46,7 @@ class OverridingMethodsDialog extends DialogWrapper {
   private Table myTable;
    private final UsagePreviewPanel myUsagePreviewPanel;
 
-  public OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
+  OverridingMethodsDialog(Project project, List<UsageInfo> overridingMethods) {
     super(project, true);
     myOverridingMethods = overridingMethods;
     myChecked = new boolean[myOverridingMethods.size()];

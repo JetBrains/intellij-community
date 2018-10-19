@@ -118,9 +118,8 @@ public class PackageNode extends PackageDependenciesNode {
   @Override
   public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
     Set<PsiFile> files = deps.keySet();
-    String packageName = myPackageQName;
     for (PsiFile file : files) {
-      if (file instanceof PsiJavaFile && Comparing.equal(packageName, ((PsiJavaFile)file).getPackageName())) {
+      if (file instanceof PsiJavaFile && Comparing.equal(myPackageQName, ((PsiJavaFile)file).getPackageName())) {
         return true;
       }
     }

@@ -160,7 +160,7 @@ public class JBTableWithRowHeaders extends JBTable {
 
 
     private class RowNumberRenderer extends DefaultTableCellRenderer {
-      public RowNumberRenderer() {
+      RowNumberRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
       }
 

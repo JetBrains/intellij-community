@@ -11,8 +11,10 @@ import com.intellij.testGuiFramework.util.logUIStep
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.itemLibrary
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuArtifacts
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuFacets
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuLibraries
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuModules
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.menuSDKs
 import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel.Constants.projectStructureTitle
 import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
@@ -33,6 +35,7 @@ class ProjectStructureDialogModel(val testCase: GuiTestCase) : TestUtilsClass(te
     const val menuArtifacts = "Artifacts"
     const val itemArtifact = "Artifact"
     const val menuSDKs = "SDKs"
+    const val itemSDK = "SDK"
     const val menuGlobalLibraries = "Global Libraries"
     const val menuProblems = "Problems"
 
@@ -70,20 +73,27 @@ fun ProjectStructureDialogModel.checkLibraryPresent(vararg library: String){
   }
 }
 
-fun ProjectStructureDialogModel.checkModule(checks: JDialogFixture.()->Unit){
+private fun ProjectStructureDialogModel.checkPage(page: String, checks: JDialogFixture.()->Unit){
   with(guiTestCase){
-    logUIStep("Click $menuModules")
+    logUIStep("Click $page")
     val dialog = connectDialog()
-    dialog.jList(menuModules).clickItem(menuModules)
+    dialog.jList(page).clickItem(page)
     dialog.checks()
   }
 }
 
+fun ProjectStructureDialogModel.checkModule(checks: JDialogFixture.()->Unit){
+  checkPage(menuModules, checks)
+}
+
 fun ProjectStructureDialogModel.checkArtifact(checks: JDialogFixture.()->Unit){
-  with(guiTestCase){
-    logUIStep("Click $menuArtifacts")
-    val dialog = connectDialog()
-    dialog.jList(menuArtifacts).clickItem(menuArtifacts)
-    dialog.checks()
-  }
+  checkPage(menuArtifacts, checks)
+}
+
+fun ProjectStructureDialogModel.checkSDK(checks: JDialogFixture.()->Unit){
+  checkPage(menuSDKs, checks)
+}
+
+fun ProjectStructureDialogModel.checkFacet(checks: JDialogFixture.()->Unit){
+  checkPage(menuFacets, checks)
 }

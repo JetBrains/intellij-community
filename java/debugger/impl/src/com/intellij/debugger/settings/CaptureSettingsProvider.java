@@ -99,7 +99,7 @@ public class CaptureSettingsProvider {
 
     private static final String SEPARATOR = " ";
 
-    public AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
+    AgentPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       assert !className.contains(".") : "Classname should not contain . here";
       myClassName = className;
       myMethodName = methodName;
@@ -116,7 +116,7 @@ public class CaptureSettingsProvider {
   }
 
   private static class AgentCapturePoint extends AgentPoint {
-    public AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
+    AgentCapturePoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
     }
 
@@ -127,7 +127,7 @@ public class CaptureSettingsProvider {
   }
 
   private static class AgentInsertPoint extends AgentPoint {
-    public AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
+    AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
     }
 
@@ -148,7 +148,7 @@ public class CaptureSettingsProvider {
   private static class StringKeyProvider implements KeyProvider {
     private final String myValue;
 
-    public StringKeyProvider(String value) {
+    StringKeyProvider(String value) {
       myValue = value;
     }
 
@@ -162,7 +162,7 @@ public class CaptureSettingsProvider {
     private final String myClassName;
     private final String myFieldName;
 
-    public FieldKeyProvider(String className, String fieldName) {
+    FieldKeyProvider(String className, String fieldName) {
       myClassName = className;
       myFieldName = fieldName;
     }

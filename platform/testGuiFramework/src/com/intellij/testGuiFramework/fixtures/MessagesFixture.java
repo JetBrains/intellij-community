@@ -263,7 +263,7 @@ public class MessagesFixture<C extends Container> implements ContainerFixture<C>
 
   private static class MacMessageFixture extends MessagesFixture<JPanel> {
 
-    public MacMessageFixture(@NotNull Robot robot, @NotNull JPanel target) {
+    MacMessageFixture(@NotNull Robot robot, @NotNull JPanel target) {
       super(robot, target);
     }
 

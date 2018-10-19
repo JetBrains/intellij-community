@@ -430,7 +430,7 @@ public class GitConfig {
     private final String myName;
     private final BranchBean myBean;
 
-    public BranchConfig(String name, BranchBean bean) {
+    BranchConfig(String name, BranchBean bean) {
       myName = name;
       myBean = bean;
     }

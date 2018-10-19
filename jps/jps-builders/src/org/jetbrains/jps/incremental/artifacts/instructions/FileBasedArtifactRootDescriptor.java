@@ -97,7 +97,7 @@ public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
     private final SourceFileFilter myBaseFilter;
     private final FileFilter myFilter;
 
-    public CompositeSourceFileFilter(SourceFileFilter baseFilter, FileFilter filter) {
+    CompositeSourceFileFilter(SourceFileFilter baseFilter, FileFilter filter) {
       myBaseFilter = baseFilter;
       myFilter = filter;
     }

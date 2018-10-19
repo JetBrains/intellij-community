@@ -81,7 +81,7 @@ public class SyncScrollSupport implements Disposable {
     private ScrollingContext[] myScrollContexts;
     @NotNull private final Editor myEditor;
 
-    public ScrollListener(@NotNull ScrollingContext[] scrollContexts, @NotNull Editor editor) {
+    ScrollListener(@NotNull ScrollingContext[] scrollContexts, @NotNull Editor editor) {
       myScrollContexts = scrollContexts;
       myEditor = editor;
     }
@@ -204,7 +204,7 @@ public class SyncScrollSupport implements Disposable {
     @NotNull private final FragmentSide myMasterSide;
     @NotNull private final FragmentSide myMasterDiffSide;
 
-    public ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer, @NotNull FragmentSide masterDiffSide) {
+    ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer, @NotNull FragmentSide masterDiffSide) {
       mySidesContainer = sidesContainer;
       myMasterSide = masterSide;
       myMasterDiffSide = masterDiffSide;

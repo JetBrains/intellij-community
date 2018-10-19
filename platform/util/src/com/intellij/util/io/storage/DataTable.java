@@ -43,7 +43,7 @@ class DataTable implements Disposable, Forceable {
   private static final int HEADER_WASTE_SIZE_OFFSET = 4;
   private boolean myIsDirty = false;
 
-  public DataTable(final File filePath, final PagePool pool) throws IOException {
+  DataTable(final File filePath, final PagePool pool) throws IOException {
     myFile = new RandomAccessDataFile(filePath, pool);
     if (myFile.length() == 0) {
       markDirty();

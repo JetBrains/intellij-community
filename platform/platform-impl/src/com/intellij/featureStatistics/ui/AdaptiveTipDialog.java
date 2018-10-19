@@ -67,7 +67,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
   }
 
   private class NextAction extends AbstractAction{
-    public NextAction() {
+    NextAction() {
       super(FeatureStatisticsBundle.message("feature.statistics.action.next.tip"));
     }
 
@@ -82,7 +82,7 @@ public class AdaptiveTipDialog extends DialogWrapper {
   }
 
   private class PrevAction extends AbstractAction{
-    public PrevAction() {
+    PrevAction() {
       super(FeatureStatisticsBundle.message("feature.statistics.action.prev.tip"));
     }
 

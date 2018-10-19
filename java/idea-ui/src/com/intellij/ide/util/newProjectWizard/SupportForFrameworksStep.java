@@ -114,7 +114,7 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
   private static class FrameworkSupportModelInWizard extends FrameworkSupportModelBase {
     private final ModuleBuilder myBuilder;
 
-    public FrameworkSupportModelInWizard(LibrariesContainer librariesContainer, ModuleBuilder builder) {
+    FrameworkSupportModelInWizard(LibrariesContainer librariesContainer, ModuleBuilder builder) {
       super(librariesContainer.getProject(), builder, librariesContainer);
       myBuilder = builder;
     }

@@ -1,6 +1,3 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <title>folder</title>
-  <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.8">
-    <path d="M1,13H15V4H7.98457L6.69633,2.71149A2.79907,2.79907,0,0,0,4.97888,2H1.05128A.05128.05128,0,0,0,1,2.05128Z" fill="#9aa7b0"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <path fill="#9AA7B0" fill-opacity=".8" fill-rule="evenodd" d="M1,13 L15,13 L15,4 L7.98457,4 L6.69633,2.71149 C6.22161957,2.28559443 5.61570121,2.03457993 4.97888,2 L1.05128,2 C1.02295884,2 1,2.02295884 1,2.05128 L1,13 Z"/>
 </svg>

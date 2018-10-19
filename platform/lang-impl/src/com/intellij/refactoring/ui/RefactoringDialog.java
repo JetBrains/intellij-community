@@ -159,7 +159,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   private class RefactorAction extends AbstractAction {
-    public RefactorAction() {
+    RefactorAction() {
       super(RefactoringBundle.message("refactor.button"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
@@ -171,7 +171,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
   }
 
   private class PreviewAction extends AbstractAction {
-    public PreviewAction() {
+    PreviewAction() {
       super(RefactoringBundle.message("preview.button"));
       if (SystemInfo.isMac) {
         putValue(FOCUSED_ACTION, Boolean.TRUE);

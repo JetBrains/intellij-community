@@ -105,7 +105,7 @@ public class JavaFxModuleUtil {
     private static final Key<ModificationTracker> KEY = Key.create("fxml.presence.modification.tracker");
     private final SimpleModificationTracker myModificationTracker;
 
-    public FxmlPresenceListener(@NotNull Project project) {
+    FxmlPresenceListener(@NotNull Project project) {
       myModificationTracker = new SimpleModificationTracker();
       project.putUserData(KEY, myModificationTracker);
     }

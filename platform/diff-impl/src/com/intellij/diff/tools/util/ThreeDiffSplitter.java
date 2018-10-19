@@ -159,7 +159,7 @@ public class ThreeDiffSplitter extends JPanel {
     @NotNull private final Side mySide;
     @Nullable private Painter myPainter;
 
-    public Divider(@NotNull Side side) {
+    Divider(@NotNull Side side) {
       super(new GridBagLayout());
       mySide = side;
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);

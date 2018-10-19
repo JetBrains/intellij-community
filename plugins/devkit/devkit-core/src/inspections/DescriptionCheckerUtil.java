@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,12 @@ public class DescriptionCheckerUtil {
       () -> GlobalSearchScope.EMPTY_SCOPE,
       module::getModuleScope,
       module::getModuleWithDependenciesScope,
-      () -> ModuleUtilCore.getAllDependentModules(module).stream().map(Module::getModuleContentWithDependenciesScope)
-        .reduce(GlobalSearchScope::uniteWith).orElse(GlobalSearchScope.EMPTY_SCOPE),
+      () -> {
+        GlobalSearchScope[] scopes = ContainerUtil.map2Array(ModuleUtilCore.getAllDependentModules(module),
+                                                             GlobalSearchScope.EMPTY_ARRAY,
+                                                             Module::getModuleContentWithDependenciesScope);
+        return scopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(scopes);
+      },
       () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
     ).takeWhile(supplier -> !module.isDisposed())
       .map(Supplier::get)

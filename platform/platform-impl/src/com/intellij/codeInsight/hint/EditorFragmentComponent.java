@@ -317,7 +317,7 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   private static class MyComponentHint extends LightweightHint {
-    public MyComponentHint(JComponent component) {
+    MyComponentHint(JComponent component) {
       super(component);
       setForceLightweightPopup(true);
     }

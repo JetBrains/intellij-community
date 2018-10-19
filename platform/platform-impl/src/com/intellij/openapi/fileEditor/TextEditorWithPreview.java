@@ -211,7 +211,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
     private final FileEditorState myFirstState;
     private final FileEditorState mySecondState;
 
-    public MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
+    MyFileEditorState(Layout layout, FileEditorState firstState, FileEditorState secondState) {
       mySplitLayout = layout;
       myFirstState = firstState;
       mySecondState = secondState;
@@ -414,7 +414,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   private class ChangeViewModeAction extends ToggleAction implements DumbAware {
     private final Layout myActionLayout;
 
-    public ChangeViewModeAction(Layout layout) {
+    ChangeViewModeAction(Layout layout) {
       super(layout.getName(), layout.getName(), layout.getIcon());
       myActionLayout = layout;
     }

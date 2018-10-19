@@ -32,7 +32,7 @@ class MultiFilePainter extends BasePainter {
   private TextPainter myTextPainter = null;
   private int myLargestPrintedPage = -1;
 
-  public MultiFilePainter(List<? extends PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
+  MultiFilePainter(List<? extends PsiFile> filesList, boolean evenNumberOfPagesPerFile) {
     myFilesList = filesList;
     myEvenNumberOfPagesPerFile = evenNumberOfPagesPerFile;
   }

@@ -69,7 +69,7 @@ public class PatternPackageSetParserExtension implements PackageSetParserExtensi
   }
 
   private static String parseAspectJPattern(Lexer lexer) throws ParsingException {
-    StringBuffer pattern = new StringBuffer();
+    StringBuilder pattern = new StringBuilder();
     boolean wasIdentifier = false;
     while (true) {
       if (lexer.getTokenType() == ScopeTokenTypes.DOT) {

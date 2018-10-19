@@ -32,7 +32,7 @@ public class CvsChangeListsBuilder {
   @NonNls private static final String INITIALLY_ADDED_ON_BRANCH = "was initially added on branch";
 
   private static class ChangeListKey extends Trinity<String, String, String> {
-    public ChangeListKey(final String branch, final String author, final String message) {
+    ChangeListKey(final String branch, final String author, final String message) {
       super(branch, author, message);
     }
   }

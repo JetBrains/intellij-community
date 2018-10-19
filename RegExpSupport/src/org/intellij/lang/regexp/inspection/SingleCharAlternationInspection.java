@@ -38,7 +38,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public SingleCharAlternationVisitor(ProblemsHolder holder) {
+    SingleCharAlternationVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -65,7 +65,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
       private final String myText;
 
-      public SingleCharAlternationFix(String text) {
+      SingleCharAlternationFix(String text) {
         myText = text;
       }
 

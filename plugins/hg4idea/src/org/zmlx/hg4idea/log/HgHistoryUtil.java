@@ -493,7 +493,7 @@ public class HgHistoryUtil {
     @NotNull private final StringBuilder myOutput;
     private final Consumer<StringBuilder> myConsumer;
 
-    public HgLogOutputSplitter(Consumer<StringBuilder> consumer) {
+    HgLogOutputSplitter(Consumer<StringBuilder> consumer) {
       myConsumer = consumer;
       myOutput = new StringBuilder();
     }

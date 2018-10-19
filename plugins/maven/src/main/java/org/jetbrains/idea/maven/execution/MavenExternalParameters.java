@@ -583,7 +583,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -598,7 +598,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -613,7 +613,7 @@ public class MavenExternalParameters {
 
     private final MavenRunConfiguration myRunConfiguration;
 
-    public RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
+    RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
       super(s);
       myRunConfiguration = runConfiguration;
     }
@@ -629,7 +629,7 @@ public class MavenExternalParameters {
   private static abstract class WithHyperlinkExecutionException extends ExecutionException
     implements HyperlinkListener, NotificationListener {
 
-    public WithHyperlinkExecutionException(String s) {
+    WithHyperlinkExecutionException(String s) {
       super(s);
     }
 

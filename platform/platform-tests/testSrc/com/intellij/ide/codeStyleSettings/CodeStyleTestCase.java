@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
@@ -28,27 +29,18 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 
 public abstract class CodeStyleTestCase extends LightPlatformTestCase {
 
   protected static final String BASE_PATH = PathManagerEx.getTestDataPath("/../../../platform/platform-tests/testData/codeStyle/");
 
-  @SuppressWarnings("Duplicates")
   public static void assertXmlOutputEquals(String expected, Element root) throws IOException {
-    StringWriter writer = new StringWriter();
-    Format format = Format.getPrettyFormat();
-    format.setLineSeparator("\n");
-    new XMLOutputter(format).output(root, writer);
-    String actual = writer.toString();
-    assertEquals(expected, actual);
+    EditorColorSchemeTestCase.assertXmlOutputEquals(expected, root);
   }
 
   protected static Element createOption(String name, String value) {

@@ -44,7 +44,7 @@ public class EntryTest extends LocalHistoryTestCase {
   }
 
   private class MyEntry extends Entry {
-    public MyEntry() {
+    MyEntry() {
       super((String)null);
     }
 

@@ -161,7 +161,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     private final ArtifactEditorImpl myArtifactsEditor;
     private SourceItemsTreeRoot myRoot;
 
-    public SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
+    SourceItemsTreeStructure(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
       myEditorContext = editorContext;
       myArtifactsEditor = artifactsEditor;
     }

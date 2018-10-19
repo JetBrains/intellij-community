@@ -76,10 +76,10 @@ object KotlinTestProperties {
     get() = getPropertyValue("kotlin.plugin.install.path")
 
   /**
-   * @return Kotlin plugin version with IDE marker, e.g. `1.2.41-release-IJ2018.2-1`. This value is shown in Plugins dialog.
+   * @return Kotlin plugin version with IDE marker, e.g. `v1.2.41-release-IJ2018.2-1`. This value is shown in Plugins dialog.
    */
   val kotlin_plugin_version_full: String
-    get() = getPropertyValue("kotlin.plugin.version.full")
+    get() = "v${getPropertyValue("kotlin.plugin.version.full")}"
 
   /**
    * @return path where the Java is installed

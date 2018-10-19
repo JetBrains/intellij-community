@@ -217,12 +217,12 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     private final Map<TemplateImpl, String> myTemplate2Argument;
     private final PsiFile myFile;
 
-    public MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
+    MyLookupAdapter(@Nullable Map<TemplateImpl, String> template2Argument) {
       myTemplate2Argument = template2Argument;
       myFile = null;
     }
 
-    public MyLookupAdapter(@Nullable PsiFile file) {
+    MyLookupAdapter(@Nullable PsiFile file) {
       myTemplate2Argument = null;
       myFile = file;
     }

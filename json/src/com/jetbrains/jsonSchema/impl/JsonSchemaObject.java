@@ -983,7 +983,7 @@ public class JsonSchemaObject {
     @Nullable private final String myPatternError;
     @NotNull private final Map<String, Boolean> myValuePatternCache;
 
-    public PropertyNamePattern(@NotNull String pattern) {
+    PropertyNamePattern(@NotNull String pattern) {
       myPattern = StringUtil.unescapeBackSlashes(pattern);
       final Pair<Pattern, String> pair = compilePattern(pattern);
       myPatternError = pair.getSecond();
@@ -1017,7 +1017,7 @@ public class JsonSchemaObject {
     @NotNull private final Map<String, String> myCachedPatternProperties;
     @NotNull private final Map<String, String> myInvalidPatterns;
 
-    public PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
+    PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
       mySchemasMap = new HashMap<>();
       schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
       myCachedPatterns = new HashMap<>();

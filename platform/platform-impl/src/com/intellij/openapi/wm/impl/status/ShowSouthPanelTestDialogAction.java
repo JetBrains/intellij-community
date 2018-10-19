@@ -53,7 +53,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     private final JCheckBox myMoveErrorTextToButtons = new JCheckBox("Move error text to the buttons", false);
     private final JCheckBox myCenterButtons = new JCheckBox("Center buttons", false);
 
-    public MyDialogWrapper(Project project) {
+    MyDialogWrapper(Project project) {
       super(project);
       ORIGINAL_ALLOW_MERGE_BUTTONS = UISettings.getShadowInstance().getAllowMergeButtons();
       init();
@@ -142,7 +142,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     private static class MyOptionAction extends MyAction implements OptionAction {
       private final Action[] myActions;
 
-      public MyOptionAction() {
+      MyOptionAction() {
         super("Option Button");
         myActions = new Action[]{
           new MyAction("Option #1"),
@@ -159,7 +159,7 @@ public class ShowSouthPanelTestDialogAction extends AnAction implements DumbAwar
     }
 
     private static class MyAction extends AbstractAction {
-      public MyAction(String name) {
+      MyAction(String name) {
         super(name);
       }
 

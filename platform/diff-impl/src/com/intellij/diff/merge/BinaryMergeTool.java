@@ -140,7 +140,7 @@ public class BinaryMergeTool implements MergeTool {
     //
 
     private static class MyThreesideViewer extends ThreesideBinaryDiffViewer {
-      public MyThreesideViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
+      MyThreesideViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
         super(context, request);
       }
 

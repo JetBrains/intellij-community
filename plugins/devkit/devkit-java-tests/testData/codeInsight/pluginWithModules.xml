@@ -1,6 +1,8 @@
 <idea-plugin>
   <id>com.intellij</id>
   <name>IDEA CORE</name>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
 
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>

@@ -158,7 +158,7 @@ public class IntroduceTargetChooser {
     private final NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
     private final Function<? super T, String> myRenderer;
 
-    public MyIntroduceTarget(@NotNull T psi,
+    MyIntroduceTarget(@NotNull T psi,
                              @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> ranger,
                              @NotNull Function<? super T, String> renderer) {
       super(psi);

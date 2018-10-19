@@ -270,7 +270,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
   }
 
   private static class MyRootNode extends DefaultMutableTreeNode {
-    public MyRootNode() {
+    MyRootNode() {
       super("ROOT");
     }
   }

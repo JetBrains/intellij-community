@@ -197,7 +197,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
   }
 
   private static class BalloonPanel extends NonOpaquePanel {
-    public BalloonPanel() {
+    BalloonPanel() {
       super(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(Container parent) {

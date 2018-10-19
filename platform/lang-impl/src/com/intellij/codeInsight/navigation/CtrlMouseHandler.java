@@ -393,12 +393,12 @@ public class CtrlMouseHandler {
   private static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
-    public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
+    InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
       super(elementAtPointer);
       myTargetElement = targetElement;
     }
 
-    public InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
+    InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
       super(ref.getElement(), ReferenceRange.getAbsoluteRanges(ref));
       myTargetElement = targetElement;
     }
@@ -431,11 +431,11 @@ public class CtrlMouseHandler {
   }
 
   private static class InfoMultiple extends Info {
-    public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
+    InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
 
-    public InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
+    InfoMultiple(@NotNull final PsiElement elementAtPointer, @NotNull PsiReference ref) {
       super(elementAtPointer, ReferenceRange.getAbsoluteRanges(ref));
     }
 

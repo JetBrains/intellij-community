@@ -249,7 +249,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   private static class Singleton<E> extends ImmutableList<E> {
     private final E element;
 
-    public Singleton(E e) {
+    Singleton(E e) {
       element = e;
     }
 

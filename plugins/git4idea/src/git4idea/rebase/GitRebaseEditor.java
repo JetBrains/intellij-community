@@ -396,7 +396,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class SetActionAction extends DumbAwareAction {
     private final GitRebaseEntry.Action myAction;
 
-    public SetActionAction(GitRebaseEntry.Action action) {
+    SetActionAction(GitRebaseEntry.Action action) {
       super(action.toString());
       myAction = action;
       KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.getExtendedKeyCodeForChar(action.getMnemonic()), InputEvent.ALT_MASK);
@@ -415,7 +415,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class MoveUpDownActionListener implements AnActionButtonRunnable {
     private final MoveDirection direction;
 
-    public MoveUpDownActionListener(@NotNull MoveDirection direction) {
+    MoveUpDownActionListener(@NotNull MoveDirection direction) {
       this.direction = direction;
     }
 

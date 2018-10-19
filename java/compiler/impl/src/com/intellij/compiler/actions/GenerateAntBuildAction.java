@@ -166,7 +166,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                CompilerBundle.message("generate.ant.build.title"));
     }
     else {
-      StringBuffer filesString = new StringBuffer();
+      StringBuilder filesString = new StringBuilder();
       for (int idx = 0; idx < _generated.size(); idx++) {
         final File file = _generated.get(idx);
         if (idx > 0) {

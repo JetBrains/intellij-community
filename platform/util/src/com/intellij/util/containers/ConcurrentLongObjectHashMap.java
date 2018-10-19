@@ -341,7 +341,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    *                                  elements is negative or the load factor is nonpositive
    * @since 1.6
    */
-  public ConcurrentLongObjectHashMap(int initialCapacity, float loadFactor) {
+  ConcurrentLongObjectHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
   }
 
@@ -363,7 +363,7 @@ class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V> {
    *                                  negative or the load factor or concurrencyLevel are
    *                                  nonpositive
    */
-  public ConcurrentLongObjectHashMap(int initialCapacity,
+  ConcurrentLongObjectHashMap(int initialCapacity,
                                      float loadFactor, int concurrencyLevel) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();

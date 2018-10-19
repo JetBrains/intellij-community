@@ -146,6 +146,8 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     @Override
     public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       super.visitLiteralExpression(expression);
+      if (expression.getNextSibling() instanceof PsiErrorElement) return;
+
       final PsiType type = expression.getType();
       if (TypeUtils.isJavaLangString(type)) {
         final String value = (String)expression.getValue();

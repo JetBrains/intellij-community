@@ -54,11 +54,10 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.Icon;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.util.List;
+import java.awt.Color;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -67,8 +66,9 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon;
 import static com.intellij.ide.projectView.impl.ShowModulesAction.hasModules;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
-import static com.intellij.openapi.vfs.VfsUtilCore.*;
-import static com.intellij.ui.tree.project.ProjectFileNode.findArea;
+import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
+import static com.intellij.openapi.vfs.VfsUtilCore.getRelativePath;
+import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static java.util.Collections.emptyList;
 
 public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> implements InvokerSupplier {
@@ -283,7 +283,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
   private void find(@NotNull VirtualFile file, @Nullable List<? super Node> list, @NotNull Consumer<Object> consumer) {
     model.onValidThread(() -> {
-      AreaInstance area = findArea(file, root.getProject());
+      AreaInstance area = ProjectFileNode.findArea(file, root.getProject());
       if (area != null) {
         TreeVisitor visitor = new TreeVisitor.ByComponent<VirtualFile, AbstractTreeNode>(file, AbstractTreeNode.class) {
           @Override
@@ -411,7 +411,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     @Override
     public final boolean contains(@NotNull VirtualFile file) {
       // may be called from unexpected thread
-      AreaInstance area = findArea(file, getProject());
+      AreaInstance area = ProjectFileNode.findArea(file, getProject());
       return area != null && contains(file, area);
     }
 
@@ -782,8 +782,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @NotNull
     private String getLocation(boolean allowEmpty) {
-      Project project = getProject();
-      VirtualFile dir = project == null || project.isDisposed() ? null : project.getBaseDir();
+      VirtualFile dir = ProjectFileNode.findBaseDir(getProject());
       String location = dir == null ? null : getRelativePath(getVirtualFile(), dir);
       if (location != null && (allowEmpty || !location.isEmpty())) return location;
       return getLocationRelativeToUserHome(getVirtualFile().getPresentableUrl());

@@ -200,16 +200,16 @@ public class MigrationMapSet {
     copyPredefinedMaps(dir);
 
     File[] files = getMapFiles(dir);
-    for(int i = 0; i < files.length; i++){
-      try{
-        MigrationMap map = readMap(files[i]);
-        if (map != null){
-          map.setFileName(FileUtil.getNameWithoutExtension(files[i]));
+    for (File file : files) {
+      try {
+        MigrationMap map = readMap(file);
+        if (map != null) {
+          map.setFileName(FileUtil.getNameWithoutExtension(file));
           myMaps.add(map);
         }
       }
-      catch(InvalidDataException | JDOMException e){
-        LOG.error("Invalid data in file: " + files[i].getAbsolutePath());
+      catch (InvalidDataException | JDOMException e) {
+        LOG.error("Invalid data in file: " + file.getAbsolutePath());
       }
       catch (IOException e) {
         LOG.error(e);
@@ -229,41 +229,40 @@ public class MigrationMapSet {
 
     MigrationMap map = new MigrationMap();
 
-    for(Iterator i = root.getChildren().iterator(); i.hasNext(); ){
-      Element node = (Element)i.next();
-      if (NAME.equals(node.getName())){
+    for (Element node : root.getChildren()) {
+      if (NAME.equals(node.getName())) {
         String name = node.getAttributeValue(VALUE);
         map.setName(name);
       }
-      if (DESCRIPTION.equals(node.getName())){
+      if (DESCRIPTION.equals(node.getName())) {
         String description = node.getAttributeValue(VALUE);
         map.setDescription(description);
       }
 
-      if (ENTRY.equals(node.getName())){
+      if (ENTRY.equals(node.getName())) {
         MigrationMapEntry entry = new MigrationMapEntry();
         String oldName = node.getAttributeValue(OLD_NAME);
-        if (oldName == null){
+        if (oldName == null) {
           throw new InvalidDataException();
         }
         entry.setOldName(oldName);
         String newName = node.getAttributeValue(NEW_NAME);
-        if (newName == null){
+        if (newName == null) {
           throw new InvalidDataException();
         }
         entry.setNewName(newName);
         String typeStr = node.getAttributeValue(TYPE);
-        if (typeStr == null){
+        if (typeStr == null) {
           throw new InvalidDataException();
         }
         entry.setType(MigrationMapEntry.CLASS);
-        if (typeStr.equals(PACKAGE_TYPE)){
+        if (typeStr.equals(PACKAGE_TYPE)) {
           entry.setType(MigrationMapEntry.PACKAGE);
           @NonNls String isRecursiveStr = node.getAttributeValue(RECURSIVE);
-          if (isRecursiveStr != null && isRecursiveStr.equals("true")){
+          if (isRecursiveStr != null && isRecursiveStr.equals("true")) {
             entry.setRecursive(true);
           }
-          else{
+          else {
             entry.setRecursive(false);
           }
         }

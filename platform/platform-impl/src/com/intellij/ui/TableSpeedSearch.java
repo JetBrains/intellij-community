@@ -113,7 +113,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
     private int myCursor;
 
-    public MyListIterator(int startingIndex) {
+    MyListIterator(int startingIndex) {
       final int total = getElementCount();
       myCursor = startingIndex < 0 ? total : startingIndex;
     }
@@ -185,7 +185,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     @NotNull private final JTable myTable;
     @NotNull private final TableSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
+    MySelectAllAction(@NotNull JTable table, @NotNull TableSpeedSearch search) {
       myTable = table;
       mySearch = search;
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));

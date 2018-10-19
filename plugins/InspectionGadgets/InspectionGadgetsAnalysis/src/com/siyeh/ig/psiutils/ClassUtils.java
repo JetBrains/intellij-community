@@ -384,7 +384,7 @@ public class ClassUtils {
     private boolean newOnlyAssignedToField = true;
     private final PsiField field;
 
-    public NewOnlyAssignedToFieldProcessor(PsiField field) {
+    NewOnlyAssignedToFieldProcessor(PsiField field) {
       this.field = field;
     }
 

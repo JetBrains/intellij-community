@@ -14,7 +14,7 @@ import javax.swing.*;
 
 /**
  * Factory for run configuration instances.
- * @see com.intellij.execution.configurations.ConfigurationType#getConfigurationFactories()
+ * @see ConfigurationType#getConfigurationFactories()
  */
 public abstract class ConfigurationFactory {
   private final ConfigurationType myType;
@@ -34,7 +34,8 @@ public abstract class ConfigurationFactory {
    * @param template the template from which the run configuration is copied
    * @return the new run configuration.
    */
-  public RunConfiguration createConfiguration(String name, RunConfiguration template) {
+  @NotNull
+  public RunConfiguration createConfiguration(@Nullable String name, @NotNull RunConfiguration template) {
     RunConfiguration newConfiguration = template.clone();
     newConfiguration.setName(name);
     return newConfiguration;

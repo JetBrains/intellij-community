@@ -327,7 +327,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
                                                                                           ProjectModelElement {
     private final Module module;
 
-    public DeprecatedModuleOptionManager(@NotNull Module module) {
+    DeprecatedModuleOptionManager(@NotNull Module module) {
       this.module = module;
     }
 

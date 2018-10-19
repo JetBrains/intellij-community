@@ -23,7 +23,7 @@ final class LightBulbComponentImpl extends JComponent{
   private final QuickFixManager myManager;
   private final Icon myIcon;
 
-  public LightBulbComponentImpl(@NotNull final QuickFixManager manager, @NotNull final Icon icon) {
+  LightBulbComponentImpl(@NotNull final QuickFixManager manager, @NotNull final Icon icon) {
     myManager = manager;
     myIcon = icon;
 

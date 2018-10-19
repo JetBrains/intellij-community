@@ -168,7 +168,7 @@ public class JVMNameUtil {
   private static class JVMRawText implements JVMName {
     private String myText;
 
-    public JVMRawText(String text) {
+    JVMRawText(String text) {
       myText = text;
     }
 
@@ -199,7 +199,7 @@ public class JVMNameUtil {
   private static class JVMClassAt implements JVMName {
     private final SourcePosition mySourcePosition;
 
-    public JVMClassAt(SourcePosition sourcePosition) {
+    JVMClassAt(SourcePosition sourcePosition) {
       mySourcePosition = sourcePosition;
     }
 

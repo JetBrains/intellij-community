@@ -243,7 +243,7 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     final PsiClass myRenamedClass;
     private final String myRenamedClassQualifiedName;
 
-    public ClassCollisionsDetector(PsiClass renamedClass) {
+    ClassCollisionsDetector(PsiClass renamedClass) {
       myRenamedClass = renamedClass;
       myRenamedClassQualifiedName = myRenamedClass.getQualifiedName();
     }

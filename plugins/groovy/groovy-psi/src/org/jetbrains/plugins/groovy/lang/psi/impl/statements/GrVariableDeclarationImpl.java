@@ -228,7 +228,7 @@ public class GrVariableDeclarationImpl extends GrStubElementBase<GrVariableDecla
   }
 
   private class GrTypeReference extends PsiReferenceBase<GrVariableDeclaration> {
-    public GrTypeReference(TextRange range) {
+    GrTypeReference(TextRange range) {
       super(GrVariableDeclarationImpl.this, range, true);
     }
 

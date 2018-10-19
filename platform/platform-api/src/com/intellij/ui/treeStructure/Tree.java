@@ -119,7 +119,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
     }
@@ -404,21 +404,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
         e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
                             true, MouseEvent.BUTTON3);
-      }
-    }
-    else if (UIUtil.isUnderGTKLookAndFeel()) {
-      if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
-        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          Rectangle bounds = getPathBounds(path);
-          if (bounds != null &&
-              e.getY() > bounds.y && e.getY() < bounds.y + bounds.height &&
-              (e.getX() >= bounds.x + bounds.width ||
-               e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
-            int newX = bounds.x + bounds.width - 2;
-            e2 = MouseEventAdapter.convert(e, e.getComponent(), newX, e.getY());
-          }
-        }
       }
     }
 

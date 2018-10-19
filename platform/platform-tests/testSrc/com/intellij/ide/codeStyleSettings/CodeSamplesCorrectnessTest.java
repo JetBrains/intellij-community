@@ -125,7 +125,7 @@ class CodeSampleInfo {
   public final SettingsType correspondingSetting;
   public final String codeSample;
 
-  public CodeSampleInfo(SettingsType setting, String code) {
+  CodeSampleInfo(SettingsType setting, String code) {
     correspondingSetting = setting;
     codeSample = code;
   }
@@ -137,7 +137,7 @@ class CodeErrorReport {
   private final SettingsType mySettingsType;
   private final Collection<PsiErrorElement> myErrors;
 
-  public CodeErrorReport(@NotNull CodeSampleInfo codeSampleInfo,
+  CodeErrorReport(@NotNull CodeSampleInfo codeSampleInfo,
                          @NotNull Language lang,
                          @NotNull Collection<PsiErrorElement> errors) {
     myLang = lang;

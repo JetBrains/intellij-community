@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCom
   @Override
   protected boolean isEnabled(@NotNull FileHistoryUi ui, @Nullable VcsFullCommitDetails detail, @NotNull AnActionEvent e) {
     if (detail != null) {
-      VirtualFile file = ui.createVcsVirtualFile(detail);
+      VirtualFile file = FileHistoryUtil.createVcsVirtualFile(ui.createRevision(detail));
       if (file == null) return false;
     }
     return true;
@@ -40,7 +41,7 @@ public class OpenRepositoryVersionFromHistoryAction extends FileHistorySingleCom
                                @NotNull FileHistoryUi ui,
                                @NotNull VcsFullCommitDetails detail,
                                @NotNull AnActionEvent e) {
-    VirtualFile file = ui.createVcsVirtualFile(detail);
+    VirtualFile file = FileHistoryUtil.createVcsVirtualFile(ui.createRevision(detail));
     if (file != null) {
       OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, file));
     }

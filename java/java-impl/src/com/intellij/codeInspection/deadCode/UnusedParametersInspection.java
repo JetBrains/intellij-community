@@ -181,7 +181,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     private final String myHint;
     private final ProblemDescriptionsProcessor myProcessor;
 
-    public AcceptSuggested(@Nullable RefManager manager,
+    AcceptSuggested(@Nullable RefManager manager,
                            @Nullable ProblemDescriptionsProcessor processor,
                            final String hint) {
       myManager = manager;

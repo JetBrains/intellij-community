@@ -147,7 +147,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
     private final Externalizer<T> myItemExternalizer;
     private final String myItemTagName;
 
-    public ListExternalizer(Externalizer<T> itemExternalizer, String itemTagName) {
+    ListExternalizer(Externalizer<T> itemExternalizer, String itemTagName) {
       myItemExternalizer = itemExternalizer;
       myItemTagName = itemTagName;
     }

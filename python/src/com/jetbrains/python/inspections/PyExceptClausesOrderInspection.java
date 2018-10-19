@@ -47,7 +47,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
+    Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
 

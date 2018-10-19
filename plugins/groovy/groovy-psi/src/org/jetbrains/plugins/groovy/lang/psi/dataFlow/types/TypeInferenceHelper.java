@@ -50,8 +50,6 @@ public class TypeInferenceHelper {
     ourInferenceContext.set(new InferenceContext.PartialContext(bindings, getCurrentContext()));
     try {
       return computation.compute();
-    } catch(Throwable e) {
-      throw e;
     }
     finally {
       ourInferenceContext.set(old);

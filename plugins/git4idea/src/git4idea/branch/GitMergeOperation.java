@@ -330,7 +330,7 @@ class GitMergeOperation extends GitBranchOperation {
   }
 
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
-    public MyMergeConflictResolver() {
+    MyMergeConflictResolver() {
       super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
             GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(GitMergeOperation.this.myProject), true);
     }

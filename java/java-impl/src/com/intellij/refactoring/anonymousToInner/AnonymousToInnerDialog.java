@@ -37,7 +37,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<>();
   private JCheckBox myCbMakeStatic;
 
-  public AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,
+  AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos,
                                 boolean showCanBeStatic) {
     super(project, true);
     myProject = project;

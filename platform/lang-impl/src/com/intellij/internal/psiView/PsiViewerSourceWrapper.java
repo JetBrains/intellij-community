@@ -38,12 +38,12 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
   final FileType myFileType;
   final PsiViewerExtension myExtension;
 
-  public PsiViewerSourceWrapper(@NotNull final FileType fileType) {
+  PsiViewerSourceWrapper(@NotNull final FileType fileType) {
     myFileType = fileType;
     myExtension = null;
   }
 
-  public PsiViewerSourceWrapper(final PsiViewerExtension extension) {
+  PsiViewerSourceWrapper(final PsiViewerExtension extension) {
     myFileType = null;
     myExtension = extension;
   }

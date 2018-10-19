@@ -38,7 +38,7 @@ public class GitShowCommitInLogAnnotationGutterActionProvider implements Annotat
     private final FileAnnotation myAnnotation;
     private int myLineNumber;
 
-    public MyShowCommitInLogAction(@NotNull FileAnnotation annotation) {
+    MyShowCommitInLogAction(@NotNull FileAnnotation annotation) {
       myAnnotation = annotation;
     }
 

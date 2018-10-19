@@ -323,7 +323,7 @@ public class PathsVerifier {
     protected final FilePatch myPatch;
     private String myErrorMessage;
 
-    public CheckPath(final FilePatch path) {
+    CheckPath(final FilePatch path) {
       myPatch = path;
       myBeforeName = path.getBeforeName();
       myAfterName = path.getAfterName();

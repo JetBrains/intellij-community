@@ -60,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -283,8 +284,8 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   public final void onContentReload() {
     List<PsiFile> files = getCachedPsiFiles();
-    List<PsiTreeChangeEventImpl> events = ContainerUtil.newArrayList();
-    List<PsiTreeChangeEventImpl> genericEvents = ContainerUtil.newArrayList();
+    List<PsiTreeChangeEventImpl> events = new ArrayList<>(files.size());
+    List<PsiTreeChangeEventImpl> genericEvents = new ArrayList<>(files.size());
     for (PsiFile file : files) {
       genericEvents.add(createChildrenChangeEvent(file, true));
       events.add(createChildrenChangeEvent(file, false));

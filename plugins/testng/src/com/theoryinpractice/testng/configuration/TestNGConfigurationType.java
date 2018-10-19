@@ -24,7 +24,7 @@ public final class TestNGConfigurationType extends SimpleConfigurationType {
   @NotNull
   @Override
   public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-    return new TestNGConfiguration("", project, this);
+    return new TestNGConfiguration(project, this);
   }
 
   @NotNull
@@ -33,6 +33,12 @@ public final class TestNGConfigurationType extends SimpleConfigurationType {
     return "testNg";
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.TestNG";
+  }
+
+  @NotNull
   public static TestNGConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(TestNGConfigurationType.class);
   }

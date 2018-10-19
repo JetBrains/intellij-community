@@ -837,7 +837,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private class DiffNavigatable implements Navigatable {
     private final DiffSideView mySide;
 
-    public DiffNavigatable(DiffSideView side) {
+    DiffNavigatable(DiffSideView side) {
       mySide = side;
     }
 

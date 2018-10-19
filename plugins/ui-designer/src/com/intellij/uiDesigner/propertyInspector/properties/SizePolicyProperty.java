@@ -77,7 +77,7 @@ public abstract class SizePolicyProperty extends Property<RadComponent, Integer>
     private final BooleanEditor myEditor;
     private final int myPropertyMask;
 
-    public MyBooleanProperty(@NonNls final String name, final int propertyMask) {
+    MyBooleanProperty(@NonNls final String name, final int propertyMask) {
       super(SizePolicyProperty.this, name);
       myPropertyMask = propertyMask;
       myRenderer=new BooleanRenderer();

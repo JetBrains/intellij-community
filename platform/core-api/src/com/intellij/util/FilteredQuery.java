@@ -66,7 +66,7 @@ public class FilteredQuery<T> implements Query<T> {
   private class MyProcessor implements Processor<T> {
     private final Processor<? super T> myConsumer;
 
-    public MyProcessor(@NotNull Processor<? super T> consumer) {
+    MyProcessor(@NotNull Processor<? super T> consumer) {
       myConsumer = consumer;
     }
 

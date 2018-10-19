@@ -117,7 +117,7 @@ public final class Entry implements Cloneable {
    * Create the standard CVS 1.10 entry line format.
    */
   public String toString() {
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     if (directory) {
       buf.append(DIRECTORY_PREFIX);
     }
@@ -456,7 +456,7 @@ public final class Entry implements Cloneable {
   }
 
   public String getStickyData() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     if (stickyTag != null) {
       buf.append(STICKY_TAG_REVISION_PREFIX);
       buf.append(stickyTag);

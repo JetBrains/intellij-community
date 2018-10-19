@@ -73,8 +73,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -174,7 +174,7 @@ public abstract class PluginManagerMain implements Disposable {
     JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
-    mySortLabel.setIcon(AllIcons.General.SplitDown);
+    mySortLabel.setIcon(AllIcons.General.ArrowDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
     myTablePanel.add(header, BorderLayout.NORTH);
@@ -577,7 +577,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable> {
-    public MySpeedSearchBar(PluginTable cmp) {
+    MySpeedSearchBar(PluginTable cmp) {
       super(cmp);
     }
 

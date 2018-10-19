@@ -373,7 +373,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private class FacetRemoveHandler extends RemoveConfigurableHandler<Facet> {
-    public FacetRemoveHandler() {
+    FacetRemoveHandler() {
       super(FacetConfigurable.class);
     }
 
@@ -391,7 +391,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private class FacetConfigurableNode extends MyNode {
-    public FacetConfigurableNode(final FacetConfigurable facetConfigurable) {
+    FacetConfigurableNode(final FacetConfigurable facetConfigurable) {
       super(facetConfigurable);
     }
 

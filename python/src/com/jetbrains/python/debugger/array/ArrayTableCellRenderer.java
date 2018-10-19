@@ -25,7 +25,7 @@ class ArrayTableCellRenderer extends DefaultTableCellRenderer implements Colored
   private boolean myColored = true;
   private final String myType;
 
-  public ArrayTableCellRenderer(double min, double max, String type) {
+  ArrayTableCellRenderer(double min, double max, String type) {
     setHorizontalAlignment(CENTER);
     setHorizontalTextPosition(LEFT);
     setVerticalAlignment(BOTTOM);

@@ -50,15 +50,13 @@ public class XmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSetti
   }
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings xmlSettings = new CommonCodeStyleSettings(getLanguage());
-    CommonCodeStyleSettings.IndentOptions indentOptions = xmlSettings.initIndentOptions();
-    xmlSettings.setForceArrangeMenuAvailable(true);
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
+    commonSettings.setForceArrangeMenuAvailable(true);
     // HACK [yole]
     if (PlatformUtils.isRubyMine()) {
       indentOptions.INDENT_SIZE = 2;
     }
-    return xmlSettings;
   }
 
   @Override

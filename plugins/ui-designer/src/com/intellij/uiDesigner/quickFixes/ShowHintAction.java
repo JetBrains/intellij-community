@@ -16,7 +16,7 @@ import javax.swing.*;
 final class ShowHintAction extends AnAction {
   private final QuickFixManager myManager;
 
-  public ShowHintAction(@NotNull final QuickFixManager manager, @NotNull final JComponent component) {
+  ShowHintAction(@NotNull final QuickFixManager manager, @NotNull final JComponent component) {
     myManager = manager;
     registerCustomShortcutSet(
       ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),

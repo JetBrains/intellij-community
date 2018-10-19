@@ -226,7 +226,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     private Boolean isOverridden;
     private String overrideText;
 
-    public PathOverrider(final LabeledComponent<TextFieldWithBrowseButton> component,
+    PathOverrider(final LabeledComponent<TextFieldWithBrowseButton> component,
                          final JCheckBox checkBox,
                          DocumentListener docListener,
                          PathProvider pathProvider) {

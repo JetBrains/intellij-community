@@ -379,7 +379,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     private final static int MAX_NAME_LEN = 35;
     @NotNull private final ComboBox<LocalChangeList> myChooser = new ComboBox<>();
 
-    public ChangeListChooser() {
+    ChangeListChooser() {
       myChooser.setEditable(false);
       myChooser.setRenderer(new ColoredListCellRenderer<LocalChangeList>() {
         @Override
@@ -452,7 +452,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   }
 
   private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
-    public ToggleChangeDiffAction() {
+    ToggleChangeDiffAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }
 
@@ -501,7 +501,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   private class MyChangesBrowserTreeList extends ChangesBrowserTreeList {
     private final MyStateHolder myStateHolder;
 
-    public MyChangesBrowserTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems,
+    MyChangesBrowserTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems,
                                     @NotNull String changelistId, @NotNull Disposable disposable) {
       super(MultipleLocalChangeListsBrowser.this, project, showCheckboxes, highlightProblems);
 
@@ -592,7 +592,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
 
     private class MyStateHolder extends PartiallyExcludedFilesStateHolder<Object> {
-      public MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
+      MyStateHolder(@NotNull Project project, @NotNull String changelistId) {
         super(project, changelistId);
       }
 

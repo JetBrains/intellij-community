@@ -452,7 +452,7 @@ public class NewMappings {
   private static class MyVcsActivator {
     private final Set<String> myOld;
 
-    public MyVcsActivator(final Set<String> old) {
+    MyVcsActivator(final Set<String> old) {
       myOld = old;
     }
 

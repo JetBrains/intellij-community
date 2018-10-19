@@ -458,7 +458,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   private static class DebuggerTreeNodeMock implements DebuggerTreeNode {
     private final JavaValue value;
 
-    public DebuggerTreeNodeMock(JavaValue value) {
+    DebuggerTreeNodeMock(JavaValue value) {
       this.value = value;
     }
 

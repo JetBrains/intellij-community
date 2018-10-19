@@ -69,7 +69,7 @@ public class CustomModelValidator extends DefaultModelValidator {
     private final ModelProblemCollector myDelegate;
     private boolean myHasFatalErrors = false;
 
-    public ProxyModelProblemCollector(ModelProblemCollector delegate) {
+    ProxyModelProblemCollector(ModelProblemCollector delegate) {
       myDelegate = delegate;
     }
 
@@ -89,7 +89,7 @@ public class CustomModelValidator extends DefaultModelValidator {
 
   private static class AbortOnFirstErrorProblemsCollector extends ProxyModelProblemCollector {
 
-    public AbortOnFirstErrorProblemsCollector(ModelProblemCollector delegate) {
+    AbortOnFirstErrorProblemsCollector(ModelProblemCollector delegate) {
       super(delegate);
     }
 

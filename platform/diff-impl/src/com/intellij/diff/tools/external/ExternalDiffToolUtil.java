@@ -357,7 +357,7 @@ public class ExternalDiffToolUtil {
   }
 
   private static class LocalOutputFile extends LocalInputFile implements OutputFile {
-    public LocalOutputFile(@NotNull VirtualFile file) {
+    LocalOutputFile(@NotNull VirtualFile file) {
       super(file);
     }
 
@@ -370,7 +370,7 @@ public class ExternalDiffToolUtil {
   private static class NonLocalOutputFile extends TempInputFile implements OutputFile {
     @NotNull private final VirtualFile myFile;
 
-    public NonLocalOutputFile(@NotNull VirtualFile file, @NotNull File localFile) {
+    NonLocalOutputFile(@NotNull VirtualFile file, @NotNull File localFile) {
       super(localFile);
       myFile = file;
     }
@@ -386,7 +386,7 @@ public class ExternalDiffToolUtil {
     @NotNull private final Document myDocument;
     @NotNull private final Charset myCharset;
 
-    public DocumentOutputFile(@NotNull Document document, @NotNull Charset charset, @NotNull File localFile) {
+    DocumentOutputFile(@NotNull Document document, @NotNull Charset charset, @NotNull File localFile) {
       super(localFile);
       myDocument = document;
       myCharset = charset;
@@ -404,7 +404,7 @@ public class ExternalDiffToolUtil {
   private static class LocalInputFile implements InputFile {
     @NotNull protected final VirtualFile myFile;
 
-    public LocalInputFile(@NotNull VirtualFile file) {
+    LocalInputFile(@NotNull VirtualFile file) {
       myFile = file;
     }
 
@@ -422,7 +422,7 @@ public class ExternalDiffToolUtil {
   private static class TempInputFile implements InputFile {
     @NotNull protected final File myLocalFile;
 
-    public TempInputFile(@NotNull File localFile) {
+    TempInputFile(@NotNull File localFile) {
       myLocalFile = localFile;
     }
 
@@ -442,7 +442,7 @@ public class ExternalDiffToolUtil {
     @NotNull public final String prefix;
     @NotNull public final String name;
 
-    public FileNameInfo(@NotNull String prefix, @NotNull String name) {
+    FileNameInfo(@NotNull String prefix, @NotNull String name) {
       this.prefix = prefix;
       this.name = name;
     }

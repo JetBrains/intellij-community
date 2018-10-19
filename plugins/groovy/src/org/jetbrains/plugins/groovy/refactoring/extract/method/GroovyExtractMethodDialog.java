@@ -329,7 +329,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     ExtractMethodInfoHelper myHelper;
     String myEnteredName;
 
-    public MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
+    MyExtractMethodSettings(GroovyExtractMethodDialog dialog) {
       myHelper = dialog.getHelper();
       myEnteredName = dialog.getEnteredName();
     }

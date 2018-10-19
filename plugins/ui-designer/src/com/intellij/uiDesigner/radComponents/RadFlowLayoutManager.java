@@ -72,7 +72,7 @@ public class RadFlowLayoutManager extends RadAbstractIndexedLayoutManager {
     private IntEnumEditor myEditor;
     private IntEnumEditor.Pair[] myPairs;
 
-    public MyAlignProperty() {
+    MyAlignProperty() {
       super(null, "Alignment");
     }
 

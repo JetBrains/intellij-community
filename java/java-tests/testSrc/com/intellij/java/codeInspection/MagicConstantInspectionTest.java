@@ -18,28 +18,15 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiClassImpl;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MagicConstantInspectionTest extends LightCodeInsightFixtureTestCase {
-  private static final LightProjectDescriptor DESCRIPTOR = new LightProjectDescriptor() {
-    @Nullable
-    @Override
-    public Sdk getSdk() {
-      // has to have JFrame and sources
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
-    }
-  };
-
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/magic/";
@@ -48,7 +35,8 @@ public class MagicConstantInspectionTest extends LightCodeInsightFixtureTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return DESCRIPTOR;
+    // has to have JFrame and sources
+    return JAVA_1_7_ANNOTATED;
   }
 
   public void testSimple() { doTest(); }

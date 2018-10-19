@@ -153,7 +153,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     private final boolean mySearchInComments;
     private final boolean mySearchInNonJava;
 
-    public MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
+    MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
                            boolean searchInNonJava,
                            String packageName) {
       myInnerClassName = innerClassName;

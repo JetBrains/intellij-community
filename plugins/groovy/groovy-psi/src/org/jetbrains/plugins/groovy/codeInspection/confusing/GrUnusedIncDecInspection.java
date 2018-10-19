@@ -129,7 +129,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     private static class RemoveIncOrDecFix implements LocalQuickFix {
       private final String myMessage;
 
-      public RemoveIncOrDecFix(GrUnaryExpression expression) {
+      RemoveIncOrDecFix(GrUnaryExpression expression) {
         myMessage = GroovyInspectionBundle.message("remove.0", expression.getOperationToken().getText());
       }
 
@@ -151,7 +151,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     private static class ReplacePostfixIncWithPrefixFix implements LocalQuickFix {
       private final String myMessage;
 
-      public ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
+      ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
         myMessage = GroovyInspectionBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
       }
 
@@ -176,7 +176,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
     private static class ReplaceIncDecWithBinary implements LocalQuickFix {
       private final String myMessage;
 
-      public ReplaceIncDecWithBinary(GrUnaryExpression expression) {
+      ReplaceIncDecWithBinary(GrUnaryExpression expression) {
         String opToken = expression.getOperationToken().getText();
         myMessage = GroovyInspectionBundle.message("replace.0.with.1", opToken, opToken.substring(0, 1));
       }

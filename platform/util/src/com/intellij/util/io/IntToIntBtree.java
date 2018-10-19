@@ -320,7 +320,7 @@ public class IntToIntBtree {
     protected boolean myHasFullPagesAlongPath;
     protected boolean myIsDirty;
 
-    public BtreePage(IntToIntBtree btree) {
+    BtreePage(IntToIntBtree btree) {
       this.btree = btree;
       myChildrenCount = -1;
     }
@@ -331,7 +331,7 @@ public class IntToIntBtree {
       syncWithStore();
     }
 
-    private final void setAddressInternal(int _address) {
+    private void setAddressInternal(int _address) {
       if (doSanityCheck) myAssert(_address % btree.pageSize == 0);
       address = _address;
     }

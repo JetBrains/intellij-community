@@ -33,8 +33,8 @@ public class MigrateToNewDiffUtil {
     String[] titles = oldRequest.getContentTitles();
     List<DiffContent> newContents = new ArrayList<>(contents.length);
 
-    for (int i = 0; i < contents.length; i++) {
-      newContents.add(convertContent(oldRequest.getProject(), contents[i]));
+    for (com.intellij.openapi.diff.DiffContent content : contents) {
+      newContents.add(convertContent(oldRequest.getProject(), content));
     }
 
     return new SimpleDiffRequest(oldRequest.getWindowTitle(), newContents, Arrays.asList(titles));

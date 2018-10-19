@@ -27,7 +27,7 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
   }
 
   private static class JsonPropertyName2SchemaRefReference extends JsonSchemaBaseReference<JsonStringLiteral> {
-    public JsonPropertyName2SchemaRefReference(JsonStringLiteral element) {
+    JsonPropertyName2SchemaRefReference(JsonStringLiteral element) {
       super(element, ElementManipulators.getValueTextRange(element));
     }
 

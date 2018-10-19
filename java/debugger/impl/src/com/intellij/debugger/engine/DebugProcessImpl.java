@@ -1516,7 +1516,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class StepOutCommand extends StepCommand {
     private final int myStepSize;
 
-    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+    StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
       super(suspendContext);
       myStepSize = stepSize;
     }
@@ -1545,7 +1545,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     private final StepIntoBreakpoint myBreakpoint;
     private final int myStepSize;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
+    StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter,
                            int stepSize) {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
@@ -1688,7 +1688,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private abstract class StepCommand extends ResumeCommand {
-    public StepCommand(SuspendContextImpl suspendContext) {
+    StepCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
     }
 
@@ -1754,7 +1754,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private class PauseCommand extends DebuggerCommandImpl {
-    public PauseCommand() {
+    PauseCommand() {
     }
 
     @Override
@@ -1773,7 +1773,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class ResumeThreadCommand extends SuspendContextCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
+    ResumeThreadCommand(SuspendContextImpl suspendContext, @NotNull ThreadReferenceProxyImpl thread) {
       super(suspendContext);
       myThread = thread;
     }
@@ -1802,7 +1802,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class FreezeThreadCommand extends DebuggerCommandImpl {
     private final ThreadReferenceProxyImpl myThread;
 
-    public FreezeThreadCommand(ThreadReferenceProxyImpl thread) {
+    FreezeThreadCommand(ThreadReferenceProxyImpl thread) {
       myThread = thread;
     }
 
@@ -1821,7 +1821,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private class PopFrameCommand extends DebuggerContextCommandImpl {
     private final StackFrameProxyImpl myStackFrame;
 
-    public PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
+    PopFrameCommand(DebuggerContextImpl context, StackFrameProxyImpl frameProxy) {
       super(context, frameProxy.threadProxy());
       myStackFrame = frameProxy;
     }

@@ -171,7 +171,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     private final T myItem;
     private final UnnamedConfigurable myConfigurable;
 
-    public ItemConfigurable(T item) {
+    ItemConfigurable(T item) {
       super(myNamer.canRename(item), TREE_UPDATER);
       myItem = item;
       myConfigurable = createConfigurable(item);
@@ -268,7 +268,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
 
   private class CopyAction extends DumbAwareAction {
-    public CopyAction() {
+    CopyAction() {
       super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
     }
@@ -297,7 +297,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   private class AddAction extends DumbAwareAction {
-    public AddAction() {
+    AddAction() {
       super("Add", "Add", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }

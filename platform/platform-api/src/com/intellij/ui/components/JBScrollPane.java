@@ -276,7 +276,7 @@ public class JBScrollPane extends JScrollPane {
   private static class Corner extends JPanel {
     private final String myPos;
 
-    public Corner(String pos) {
+    Corner(String pos) {
       myPos = pos;
       ScrollColorProducer.setBackground(this);
       ScrollColorProducer.setForeground(this);
@@ -290,7 +290,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class ViewportBorder extends LineBorder {
-    public ViewportBorder(int thickness) {
+    ViewportBorder(int thickness) {
       super(null, thickness);
     }
 

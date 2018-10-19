@@ -504,7 +504,7 @@ public class RegistryUi implements Disposable {
   }
 
   private class RestoreDefaultsAction extends AbstractAction {
-    public RestoreDefaultsAction() {
+    RestoreDefaultsAction() {
       super("Restore Defaults");
     }
 

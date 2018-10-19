@@ -126,7 +126,7 @@ public abstract class JBListTable {
   private class MyCellEditor extends AbstractTableCellEditor {
     private final JBTableRowEditor myEditor;
 
-    public MyCellEditor(JBTableRowEditor editor) {
+    MyCellEditor(JBTableRowEditor editor) {
       myEditor = editor;
     }
 
@@ -214,7 +214,7 @@ public abstract class JBListTable {
     private final Timer myAnimationTimer = UIUtil.createNamedTimer("JBListTableTimer",ANIMATION_STEP_MILLIS, this);
     private final JTable myTable;
 
-    public RowResizeAnimator(JTable table) {
+    RowResizeAnimator(JTable table) {
       myTable = table;
     }
 
@@ -270,7 +270,7 @@ public abstract class JBListTable {
       private final int myTargetHeight;
       private long myLastUpdateTime;
 
-      public RowAnimationState(int row, int targetHeight) {
+      RowAnimationState(int row, int targetHeight) {
         myRow = row;
         myTargetHeight = targetHeight;
         myLastUpdateTime = System.currentTimeMillis();
@@ -299,7 +299,7 @@ public abstract class JBListTable {
 
   private class MyTable extends JBTable {
 
-    public MyTable() {
+    MyTable() {
       super(new MyTableModel(myInternalTable.getModel()));
     }
 

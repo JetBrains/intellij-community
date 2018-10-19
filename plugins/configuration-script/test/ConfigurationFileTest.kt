@@ -1,7 +1,7 @@
 package com.intellij.configurationScript
 
 import com.google.gson.Gson
-import com.intellij.execution.application.ApplicationConfigurationOptions
+import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -47,7 +47,7 @@ class ConfigurationFileTest {
 
   @Test
   fun empty() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
     """)
     assertThat(result).isEmpty()
@@ -55,7 +55,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `empty rc type group`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
     """)
@@ -64,7 +64,7 @@ class ConfigurationFileTest {
 
   @Test
   fun `empty rc`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         -
@@ -74,32 +74,54 @@ class ConfigurationFileTest {
 
   @Test
   fun `one jvmMainMethod`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         isAlternativeJrePathEnabled: true
     """)
-    val options = ApplicationConfigurationOptions()
+    val options = JvmMainMethodRunConfigurationOptions()
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }
 
   @Test
   fun `one jvmMainMethod as list`() {
-    val result = parse("""
+    val result = readRunConfigurations("""
     runConfigurations:
       jvmMainMethod:
         - isAlternativeJrePathEnabled: true
     """)
-    val options = ApplicationConfigurationOptions()
+    val options = JvmMainMethodRunConfigurationOptions()
     options.isAlternativeJrePathEnabled = true
     assertThat(result).containsExactly(options)
   }
+
+  @Test
+  fun `one jvmMainMethod as list - template`() {
+    val result = readRunConfigurations("""
+    runConfigurations:
+      templates:
+        jvmMainMethod:
+          - isAlternativeJrePathEnabled: true
+    """, isTemplatesOnly = true)
+    val options = JvmMainMethodRunConfigurationOptions()
+    options.isAlternativeJrePathEnabled = true
+    assertThat(result).containsExactly(options)
+  }
+
+  @Test
+  fun `templates as invalid node type`() {
+    val result = readRunConfigurations("""
+    runConfigurations:
+      templates: foo
+    """, isTemplatesOnly = true)
+    assertThat(result).isEmpty()
+  }
 }
 
-private fun parse(@Language("YAML") data: String): List<Any> {
+internal fun readRunConfigurations(@Language("YAML") data: String, isTemplatesOnly: Boolean = false): List<Any> {
   val list = SmartList<Any>()
-  parseConfigurationFile(data.trimIndent().reader()) { _, state ->
+  com.intellij.configurationScript.providers.readRunConfigurations(doRead(data.trimIndent().reader())!!, isTemplatesOnly) { _, state ->
     list.add(state)
   }
   return list

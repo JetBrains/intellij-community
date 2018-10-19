@@ -80,7 +80,7 @@ class AbstractValues {
   static final class NthParamValue extends BasicValue {
     final int n;
 
-    public NthParamValue(Type type, int n) {
+    NthParamValue(Type type, int n) {
       super(type);
       this.n = n;
     }

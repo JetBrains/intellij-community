@@ -188,7 +188,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
   private static class SdkAsJreItem implements JreComboBoxItem {
     private final Sdk mySdk;
 
-    public SdkAsJreItem(Sdk sdk) {
+    SdkAsJreItem(Sdk sdk) {
       mySdk = sdk;
     }
 
@@ -216,7 +216,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
 
-    public CustomJreItem(String path) {
+    CustomJreItem(String path) {
       myPath = path;
     }
 

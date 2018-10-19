@@ -51,7 +51,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
-    public RemoveExcessiveLambdaFix(LambdaAndExplicitMethodPair info, String name) {
+    RemoveExcessiveLambdaFix(LambdaAndExplicitMethodPair info, String name) {
       myInfo = info;
       myName = name;
     }

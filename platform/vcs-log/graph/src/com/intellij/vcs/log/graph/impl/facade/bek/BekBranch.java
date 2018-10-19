@@ -38,7 +38,7 @@ class BekBranch {
 
   @Nullable private List<Integer> myPrepareForInsertPart = null;
 
-  public BekBranch(@NotNull LinearGraph permanentGraph, @NotNull List<Integer> nodeIndexes) {
+  BekBranch(@NotNull LinearGraph permanentGraph, @NotNull List<Integer> nodeIndexes) {
     myPermanentGraph = permanentGraph;
     myNodeIndexes = nodeIndexes;
     myNoInsertSize = myNodeIndexes.size();

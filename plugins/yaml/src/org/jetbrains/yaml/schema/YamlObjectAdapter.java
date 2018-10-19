@@ -2,15 +2,18 @@
 package org.jetbrains.yaml.schema;
 
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLMapping;
+import org.jetbrains.yaml.psi.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -88,8 +91,40 @@ public class YamlObjectAdapter implements JsonObjectValueAdapter {
     Collection<YAMLKeyValue> keyValues = myObject.getKeyValues();
     List<JsonPropertyAdapter> adapters = ContainerUtil.newArrayListWithCapacity(keyValues.size());
     for (YAMLKeyValue value : keyValues) {
+      if (addPropertiesFromReferencedObject(adapters, value)) continue;
       adapters.add(new YamlPropertyAdapter(value));
     }
     return adapters;
+  }
+
+  private boolean addPropertiesFromReferencedObject(List<JsonPropertyAdapter> adapters, YAMLKeyValue value) {
+    String keyText = value.getKeyText();
+    if (!"<<".equals(keyText)) return false;
+    YAMLValue yamlValue = value.getValue();
+    PsiElement resolved = resolveYamlAlias(yamlValue);
+    if (resolved != null) {
+      YAMLMapping mapping = ObjectUtils.tryCast(resolved, YAMLMapping.class);
+      if (mapping == null) return false;
+      List<JsonPropertyAdapter> propertyAdapters =
+        RecursionManager.doPreventingRecursion(myObject, false, () -> new YamlObjectAdapter(mapping).getPropertyList());
+      if (propertyAdapters != null) {
+        adapters.addAll(propertyAdapters);
+        return true;
+      }
+    }
+    if (yamlValue instanceof YAMLMapping) {
+      if (PsiTreeUtil.getChildOfType(yamlValue, YAMLAnchor.class) == null) return false;
+      adapters.addAll(new YamlObjectAdapter((YAMLMapping)yamlValue).getPropertyList());
+      return true;
+    }
+    return false;
+  }
+
+  @Nullable
+  static PsiElement resolveYamlAlias(YAMLValue yamlValue) {
+    PsiReference reference = yamlValue instanceof YAMLAlias ? yamlValue.getReference() : null;
+    PsiElement resolved = reference == null ? null : reference.resolve();
+    resolved = resolved == null ? null : resolved.getParent();
+    return resolved;
   }
 }

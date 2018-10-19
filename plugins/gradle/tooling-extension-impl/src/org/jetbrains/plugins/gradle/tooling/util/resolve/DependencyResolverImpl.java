@@ -601,9 +601,8 @@ public class DependencyResolverImpl implements DependencyResolver {
         File artifactDir = parents.get(parents.size() - 2);
         File versionDir = parents.get(parents.size() - 3);
 
-        File parentFile = versionDir;
-        if (parentFile != null) {
-          File[] hashDirs = parentFile.listFiles();
+        if (versionDir != null) {
+          File[] hashDirs = versionDir.listFiles();
           if (hashDirs != null) {
             for (File hashDir : hashDirs) {
               File[] sourcesJars = hashDir.listFiles(new FilenameFilter() {

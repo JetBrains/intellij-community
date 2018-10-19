@@ -515,7 +515,7 @@ public class CopiesPanel {
   private static class MyLinkLabel extends LinkLabel {
     private final int myHeight;
 
-    public MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
+    MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
       super(text, null, linkListener);
       myHeight = height;
     }

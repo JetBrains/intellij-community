@@ -23,7 +23,7 @@ final class CommitParser extends DefaultEntryParser {
 
 	// Setup ==================================================================
 
-	public CommitParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
+	CommitParser(IEventSender eventManager, ICvsFileSystem cvsFileSystem) {
 		super(eventManager, cvsFileSystem);
 	}
 }

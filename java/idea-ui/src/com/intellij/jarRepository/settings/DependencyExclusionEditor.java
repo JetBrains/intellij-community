@@ -21,7 +21,7 @@ class DependencyExclusionEditor {
   private final CheckedTreeNode myRootNode;
   private final JPanel myMainPanel;
 
-  public DependencyExclusionEditor(ArtifactDependencyNode root, JPanel parentComponent) {
+  DependencyExclusionEditor(ArtifactDependencyNode root, JPanel parentComponent) {
     myMainPanel = parentComponent;
     myRootNode = createDependencyTreeNode(root);
     CheckboxTreeBase.CheckPolicy policy = new CheckboxTreeBase.CheckPolicy(false, true, true, false);

@@ -42,7 +42,7 @@ abstract class ChangeCorrector {
 
   @NotNull protected final DiffIterableUtil.ChangeBuilder myBuilder;
 
-  public ChangeCorrector(int length1,
+  ChangeCorrector(int length1,
                          int length2,
                          @NotNull FairDiffIterable changes,
                          @NotNull ProgressIndicator indicator) {

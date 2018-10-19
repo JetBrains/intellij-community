@@ -131,7 +131,7 @@ public final class SimpleStringPattern
 	}
 
 	private static class MatchExactSubPattern extends SubPattern {
-		public MatchExactSubPattern(String match) {
+		MatchExactSubPattern(String match) {
 			super(match);
 		}
 

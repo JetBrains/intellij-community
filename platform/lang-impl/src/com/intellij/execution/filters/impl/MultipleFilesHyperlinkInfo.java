@@ -46,7 +46,7 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
   private final int myLineNumber;
   private final Project myProject;
 
-  public MultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> virtualFiles, int lineNumber, @NotNull Project project) {
+  MultipleFilesHyperlinkInfo(@NotNull List<VirtualFile> virtualFiles, int lineNumber, @NotNull Project project) {
     myVirtualFiles = virtualFiles;
     myLineNumber = lineNumber;
     myProject = project;

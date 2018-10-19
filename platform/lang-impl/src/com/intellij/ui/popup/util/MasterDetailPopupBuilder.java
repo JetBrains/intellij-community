@@ -373,7 +373,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   }
 
   private class MyPopupChooserBuilder extends PopupChooserBuilder {
-    public MyPopupChooserBuilder(@NotNull JList list) {
+    MyPopupChooserBuilder(@NotNull JList list) {
       super(list);
     }
 

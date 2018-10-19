@@ -130,7 +130,7 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
     if (configuration == null) return;
 
     RunManager runManager = RunManager.getInstance(project);
-    final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByName(configuration.getName());
+    final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByTypeAndName(configuration.getType(), configuration.getName());
     if (existingConfiguration == null) {
       runManager.setTemporaryConfiguration(configuration);
     }

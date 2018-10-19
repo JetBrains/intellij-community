@@ -309,7 +309,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private Label myAfter;
     private LocalHistoryAction myLocalHistoryAction;
 
-    public Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
+    Updater(final Project project, final FilePath[] roots, final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles) {
       super(project, getTemplatePresentation().getText(), true, VcsConfiguration.getInstance(project).getUpdateOption());
       myProject = project;
       myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project);

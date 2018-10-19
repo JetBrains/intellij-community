@@ -281,7 +281,7 @@ public abstract class TestNGTestObject {
   }
 
   private static class UnknownTestNGTestObject extends TestNGTestObject {
-    public UnknownTestNGTestObject(TestNGConfiguration config) {
+    UnknownTestNGTestObject(TestNGConfiguration config) {
       super(config);
     }
 

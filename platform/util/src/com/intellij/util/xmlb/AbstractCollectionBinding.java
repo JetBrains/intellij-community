@@ -32,7 +32,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Serializer serializer;
 
-  public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
+  AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
 
     itemType = elementType;

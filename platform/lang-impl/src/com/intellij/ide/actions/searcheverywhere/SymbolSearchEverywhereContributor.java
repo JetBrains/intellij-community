@@ -43,7 +43,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
   }
 
   @Override
-  public int getElementPriority(Object element, String searchPattern) {
+  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return super.getElementPriority(element, searchPattern) + 3;
   }
 

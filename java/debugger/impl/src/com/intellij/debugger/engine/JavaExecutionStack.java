@@ -163,7 +163,7 @@ public class JavaExecutionStack extends XExecutionStack {
     private final int mySkip;
     private final List<StackFrameItem> myAsyncStack;
 
-    public AppendFrameCommand(SuspendContextImpl suspendContext,
+    AppendFrameCommand(SuspendContextImpl suspendContext,
                               Iterator<StackFrameProxyImpl> stackFramesIterator,
                               XStackFrameContainer container,
                               int added,

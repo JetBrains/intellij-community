@@ -26,7 +26,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,8 +34,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -46,7 +48,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Queue;
 import java.util.*;
 
 import static com.intellij.util.PlatformUtils.*;
@@ -89,12 +90,6 @@ public class ExternalSystemApiUtil {
   };
 
   @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
-
-  @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<>("External System queue", runnable -> {
-      runnable.run();
-      return true;
-    }, Conditions.alwaysFalse());
 
   private ExternalSystemApiUtil() {
   }
@@ -416,7 +411,7 @@ public class ExternalSystemApiUtil {
       runnable.run();
     }
     else {
-      TRANSFER_TO_EDT_QUEUE.offer(runnable);
+      EdtExecutorService.getInstance().execute(runnable);
     }
   }
 

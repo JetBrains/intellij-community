@@ -260,7 +260,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   private class MyRefreshingDownloadingListener extends FileDownloadingAdapter {
     private final Runnable myPostRunnable;
 
-    public MyRefreshingDownloadingListener(final Runnable postRunnable) {
+    MyRefreshingDownloadingListener(final Runnable postRunnable) {
       myPostRunnable = postRunnable;
     }
 

@@ -739,7 +739,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8MapForEachInspection"
-                     displayName="Replace with Map.forEach"/>
+                     displayName="Map.forEach can be used"/>
     -->
     <!-- Android Studio: disabled by Change I8d8ec30f / commit a32d8a2
     Replaced with subclass in the Android plugin which filters based on API level

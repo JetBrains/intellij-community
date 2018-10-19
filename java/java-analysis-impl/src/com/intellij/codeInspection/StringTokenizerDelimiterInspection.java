@@ -64,7 +64,7 @@ public class StringTokenizerDelimiterInspection extends AbstractBaseJavaLocalIns
   }
 
   private final static class ReplaceDelimitersWithUnique extends LocalQuickFixOnPsiElement {
-    public ReplaceDelimitersWithUnique(@NotNull PsiElement element) {
+    ReplaceDelimitersWithUnique(@NotNull PsiElement element) {
       super(element);
     }
 

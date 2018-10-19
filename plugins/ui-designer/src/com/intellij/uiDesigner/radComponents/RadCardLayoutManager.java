@@ -182,7 +182,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
     private final RadContainer myContainer;
     @NonNls private static final String CARD_NAME_PREFIX = "Card";
 
-    public CardDropLocation(final RadContainer container) {
+    CardDropLocation(final RadContainer container) {
       myContainer = container;
     }
 
@@ -286,7 +286,7 @@ public class RadCardLayoutManager extends RadLayoutManager {
 
     static DefaultCardProperty INSTANCE = new DefaultCardProperty();
 
-    public DefaultCardProperty() {
+    DefaultCardProperty() {
       super(null, NAME);
     }
 

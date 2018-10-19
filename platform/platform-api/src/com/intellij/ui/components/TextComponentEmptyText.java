@@ -33,7 +33,7 @@ class TextComponentEmptyText extends StatusText {
   private final JTextComponent myOwner;
   private String myStatusTriggerText = "";
 
-  public TextComponentEmptyText(JTextComponent owner) {
+  TextComponentEmptyText(JTextComponent owner) {
     super(owner);
     myOwner = owner;
     clear();

@@ -175,7 +175,7 @@ public class VcsFileStatusProvider implements FileStatusProvider, VcsBaseContent
   private class BaseContentImpl implements BaseContent {
     @NotNull private final ContentRevision myContentRevision;
 
-    public BaseContentImpl(@NotNull ContentRevision contentRevision) {
+    BaseContentImpl(@NotNull ContentRevision contentRevision) {
       myContentRevision = contentRevision;
     }
 

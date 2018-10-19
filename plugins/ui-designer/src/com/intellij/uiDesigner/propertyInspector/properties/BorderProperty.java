@@ -110,7 +110,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   private final class MyTypeProperty extends Property<RadContainer, BorderType> {
     BorderTypeEditor myEditor;
 
-    public MyTypeProperty() {
+    MyTypeProperty() {
       super(BorderProperty.this, "type");
     }
 
@@ -161,7 +161,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private StringRenderer myRenderer;
     private StringEditor myEditor;
 
-    public MyTitleProperty() {
+    MyTitleProperty() {
       super(BorderProperty.this, "title");
     }
 
@@ -234,7 +234,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private IntEnumEditor myEditor;
     private final boolean myJustification;
 
-    public MyTitleIntEnumProperty(final Property parent, @NonNls final String name, final boolean isJustification) {
+    MyTitleIntEnumProperty(final Property parent, @NonNls final String name, final boolean isJustification) {
       super(parent, name);
       myJustification = isJustification;
     }
@@ -286,7 +286,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private FontRenderer myRenderer;
     private FontEditor myEditor;
 
-    public MyTitleFontProperty(final Property parent) {
+    MyTitleFontProperty(final Property parent) {
       super(parent, "title font");
     }
 
@@ -333,7 +333,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
     private ColorEditor myEditor;
     private final boolean myTitleColor;
 
-    public MyBorderColorProperty(final Property parent, final boolean titleColor) {
+    MyBorderColorProperty(final Property parent, final boolean titleColor) {
       super(parent, titleColor ? "title color" : "color");
       myTitleColor = titleColor;
     }
@@ -383,7 +383,7 @@ public final class BorderProperty extends Property<RadContainer, BorderType> {
   }
 
   private static class MySizeProperty extends AbstractInsetsProperty<RadContainer> {
-    public MySizeProperty(final Property parent) {
+    MySizeProperty(final Property parent) {
       super(parent, "size");
     }
 

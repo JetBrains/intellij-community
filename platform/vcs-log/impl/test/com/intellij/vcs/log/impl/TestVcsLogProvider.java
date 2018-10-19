@@ -289,7 +289,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
   private static class ReducibleSemaphore extends Semaphore {
     private volatile boolean myBlocked;
 
-    public ReducibleSemaphore() {
+    ReducibleSemaphore() {
       super(1);
     }
 

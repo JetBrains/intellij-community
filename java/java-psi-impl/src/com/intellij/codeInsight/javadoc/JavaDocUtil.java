@@ -236,7 +236,7 @@ public class JavaDocUtil {
     else if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       String name = method.getName();
-      StringBuffer buffer = new StringBuffer();
+      StringBuilder buffer = new StringBuilder();
       PsiClass aClass = method.getContainingClass();
       if (aClass != null) {
         buffer.append(getReferenceText(project, aClass));
@@ -369,7 +369,7 @@ public class JavaDocUtil {
     if (parenthIndex < 0) return memberText;
     if (!StringUtil.endsWithChar(memberText, ')')) return memberText;
     String parms = memberText.substring(parenthIndex + 1, memberText.length() - 1);
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     boolean spaceBeforeComma = JavaDocCodeStyle.getInstance(project).spaceBeforeComma();
     boolean spaceAfterComma = JavaDocCodeStyle.getInstance(project).spaceAfterComma();
     StringTokenizer tokenizer = new StringTokenizer(parms, ",");

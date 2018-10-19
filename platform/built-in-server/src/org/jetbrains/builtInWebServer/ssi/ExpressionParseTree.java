@@ -50,7 +50,7 @@ final class ExpressionParseTree {
   /**
    * Creates a new parse tree for the specified expression.
    */
-  public ExpressionParseTree(String expr, SsiProcessingState ssiProcessingState)
+  ExpressionParseTree(String expr, SsiProcessingState ssiProcessingState)
     throws ParseException {
     this.ssiProcessingState = ssiProcessingState;
     parseExpression(expr);
@@ -219,7 +219,7 @@ final class ExpressionParseTree {
     String resolved = null;
 
 
-    public StringNode(String value) {
+    StringNode(String value) {
       this.value = new StringBuilder(value);
     }
 

@@ -104,7 +104,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
   private static class Description extends Comment {
     private final String myDescription;
 
-    public Description(String description) {
+    Description(String description) {
       myDescription = description;
     }
 

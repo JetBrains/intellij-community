@@ -139,7 +139,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
-    public DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
+    DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
       super(xmlFile.getProject(),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }

@@ -35,7 +35,7 @@ class ToggleAssociationAction extends ToggleAction {
     private final PsiFile myPsiFile;
     private final PsiFile myAssoc;
 
-    public ToggleAssociationAction(FileAssociationsManager fileAssociationsManager, PsiFile psiFile, PsiFile assoc) {
+    ToggleAssociationAction(FileAssociationsManager fileAssociationsManager, PsiFile psiFile, PsiFile assoc) {
         super(getPath(assoc, psiFile), "Remove Association to " + assoc.getName(), null);
         myFileAssociationsManager = fileAssociationsManager;
         myPsiFile = psiFile;

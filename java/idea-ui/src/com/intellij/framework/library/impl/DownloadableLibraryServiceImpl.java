@@ -78,7 +78,7 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
     private final String myGroupId;
     private final String myVersionId;
 
-    public FrameworkLibraryAvailabilityCondition(String groupId, String versionId) {
+    FrameworkLibraryAvailabilityCondition(String groupId, String versionId) {
       myGroupId = groupId;
       myVersionId = versionId;
     }

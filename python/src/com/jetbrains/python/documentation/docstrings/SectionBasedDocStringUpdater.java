@@ -369,7 +369,7 @@ public abstract class SectionBasedDocStringUpdater extends DocStringUpdater<Sect
     @NotNull final String name;
     @Nullable final String type;
 
-    public AddParameter(@NotNull String name, @Nullable String type) {
+    AddParameter(@NotNull String name, @Nullable String type) {
       this.name = name;
       this.type = type;
     }

@@ -21,7 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 
 class MemberHidesOuterMemberUsageInfo extends ResolvableCollisionUsageInfo {
-  public MemberHidesOuterMemberUsageInfo(PsiElement ref, PsiMember member) {
+  MemberHidesOuterMemberUsageInfo(PsiElement ref, PsiMember member) {
     super(ref, member);
   }
 }

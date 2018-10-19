@@ -44,7 +44,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   private ItemListener myReplaceAllListener;
   private ItemListener myFinalListener;
 
-  public IntroduceVariableDialog(Project project,
+  IntroduceVariableDialog(Project project,
                                  PsiExpression expression, int occurrencesCount, boolean anyLValueOccurrences,
                                  boolean declareFinalIfAll, TypeSelectorManager typeSelectorManager,
                                  IntroduceVariableHandler.Validator validator) {

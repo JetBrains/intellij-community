@@ -48,7 +48,8 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiElement element = descriptor.getPsiElement();
+    PsiElement initialElement = descriptor.getPsiElement();
+    PsiElement element = myQuickFixAdapter.adjustValue(initialElement);
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(element.getContainingFile().getVirtualFile());
     boolean whitespaceBefore = false;
     if (element.getPrevSibling() instanceof PsiWhiteSpace) {
@@ -57,7 +58,7 @@ public class SuggestEnumValuesFix implements LocalQuickFix, BatchQuickFix<Common
     WriteAction.run(() -> element.delete());
     EditorEx editor = EditorUtil.getEditorEx(fileEditor);
     assert editor != null;
-    if (myQuickFixAdapter.fixWhitespaceBefore() && whitespaceBefore) {
+    if (myQuickFixAdapter.fixWhitespaceBefore(initialElement, element) && whitespaceBefore) {
       WriteAction.run(() -> {
         int offset = editor.getCaretModel().getOffset();
         editor.getDocument().insertString(offset, " ");

@@ -405,7 +405,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
         @NotNull
         private PyFunction getFunction(@NotNull final String folder) {
-          final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_test.py", folder));
+          final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_foo.py", folder));
           assert file != null;
           final PyFunction function = file.findTopLevelFunction("test_test");
           assert function != null;

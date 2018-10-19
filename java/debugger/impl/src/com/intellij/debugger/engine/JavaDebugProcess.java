@@ -423,7 +423,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private static class AutoVarsSwitchAction extends ToggleAction {
     private volatile boolean myAutoModeEnabled;
 
-    public AutoVarsSwitchAction() {
+    AutoVarsSwitchAction() {
       super(DebuggerBundle.message("action.auto.variables.mode"), DebuggerBundle.message("action.auto.variables.mode.description"), null);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
@@ -445,7 +445,7 @@ public class JavaDebugProcess extends XDebugProcess {
     private final String myText;
     private final String myTextUnavailable;
 
-    public WatchLastMethodReturnValueAction() {
+    WatchLastMethodReturnValueAction() {
       super("", DebuggerBundle.message("action.watch.method.return.value.description"), null);
       myText = DebuggerBundle.message("action.watches.method.return.value.enable");
       myTextUnavailable = DebuggerBundle.message("action.watches.method.return.value.unavailable.reason");

@@ -14,7 +14,7 @@ class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
   private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<>();
   private final CollectionFactory<V> myCollectionFactory;
 
-  public IntObjectTransientMultiMaplet(CollectionFactory<V> collectionFactory) {
+  IntObjectTransientMultiMaplet(CollectionFactory<V> collectionFactory) {
     myCollectionFactory = collectionFactory;
   }
 

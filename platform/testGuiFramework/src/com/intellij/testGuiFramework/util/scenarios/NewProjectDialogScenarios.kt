@@ -84,3 +84,11 @@ fun NewProjectDialogScenarios.createAndCheckAppServer(serverKind: String, server
     newProjectDialogModel.checkAppServerExists(expectedServerName)
   }
 }
+
+fun NewProjectDialogScenarios.createSpringProjectScenario(projectPath: String, createSpringConfig: Boolean, libs: LibrariesSet = emptySet()) {
+  with(testCase) {
+    fileSystemUtils.assertProjectPathExists(projectPath)
+    welcomePageDialogModel.createNewProject()
+    newProjectDialogModel.createSpringProject(projectPath, createSpringConfig, libs)
+  }
+}

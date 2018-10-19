@@ -411,7 +411,7 @@ public class GithubConnection {
     @Nullable private final String myNextPage;
     @NotNull private final Header[] myHeaders;
 
-    public ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
+    ResponsePage(@Nullable JsonElement response, @Nullable String next, @NotNull Header[] headers) {
       myResponse = response;
       myNextPage = next;
       myHeaders = headers;

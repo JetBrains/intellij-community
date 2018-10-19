@@ -49,7 +49,7 @@ public class HighlightModeAction extends DiffPanelComboBoxAction<HighlightMode> 
   private static class HighlightingModeAction extends DiffPanelAction {
     private final HighlightMode myHighlightMode;
 
-    public HighlightingModeAction(String text, HighlightMode highlightMode) {
+    HighlightingModeAction(String text, HighlightMode highlightMode) {
       super(text);
       myHighlightMode = highlightMode;
     }

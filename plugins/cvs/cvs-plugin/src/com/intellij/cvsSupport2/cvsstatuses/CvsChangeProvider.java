@@ -592,7 +592,7 @@ public class CvsChangeProvider implements ChangeProvider {
   }
 
   private class CvsUpToDateBinaryRevision extends CvsUpToDateRevision implements BinaryContentRevision {
-    public CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
+    CvsUpToDateBinaryRevision(final FilePath path, final VcsRevisionNumber revisionNumber) {
       super(path, revisionNumber);
     }
 

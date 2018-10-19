@@ -165,7 +165,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State> {
     private final String myId;
 
-    public MyVcsLogUiPropertiesImpl(String id) {
+    MyVcsLogUiPropertiesImpl(String id) {
       super(myAppSettings);
       myId = id;
     }

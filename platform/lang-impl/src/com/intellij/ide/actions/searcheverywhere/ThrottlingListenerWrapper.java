@@ -72,7 +72,7 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     final int type;
     final List<SESearcher.ElementInfo> items;
 
-    public Event(int type, List<SESearcher.ElementInfo> items) {
+    Event(int type, List<SESearcher.ElementInfo> items) {
       this.type = type;
       this.items = items;
     }

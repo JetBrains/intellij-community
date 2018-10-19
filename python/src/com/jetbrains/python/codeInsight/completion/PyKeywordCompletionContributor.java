@@ -47,7 +47,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
    */
   private static class StatementFitFilter implements ElementFilter {
 
-    public StatementFitFilter() {
+    StatementFitFilter() {
     }
 
 
@@ -176,7 +176,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static class LanguageLevelAtLeastFilter implements ElementFilter {
     @NotNull private final LanguageLevel myLevel;
 
-    public LanguageLevelAtLeastFilter(@NotNull LanguageLevel level) {
+    LanguageLevelAtLeastFilter(@NotNull LanguageLevel level) {
       myLevel = level;
     }
 

@@ -58,7 +58,7 @@ public class ShowShortenNames extends ActionGroup implements DumbAware {
   private static class SetShortNameTypeAction extends ToggleAction implements DumbAware {
     private final ShortNameType myType;
 
-    public SetShortNameTypeAction(ShortNameType type) {
+    SetShortNameTypeAction(ShortNameType type) {
       super(type.getDescription());
       myType = type;
     }

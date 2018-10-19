@@ -233,7 +233,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
 
-    public EnabledPluginInfo() {
+    EnabledPluginInfo() {
       super(/*IdeBundle.message("plugin.manager.enable.column.title")*/"");
     }
 
@@ -374,7 +374,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
-    public MyPluginManagerColumnInfo() {
+    MyPluginManagerColumnInfo() {
       super(PluginManagerColumnInfo.COLUMN_NAME, InstalledPluginsTableModel.this);
     }
 

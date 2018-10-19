@@ -31,7 +31,7 @@ final class ExpandedModules implements ICvsListener, IModuleExpansionListener {
 
   // Setup ==================================================================
 
-  public ExpandedModules() {
+  ExpandedModules() {
   }
 
   // Implemented ============================================================

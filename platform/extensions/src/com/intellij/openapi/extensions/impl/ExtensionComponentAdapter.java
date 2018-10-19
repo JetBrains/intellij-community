@@ -33,17 +33,25 @@ public class ExtensionComponentAdapter implements LoadingOrder.Orderable, Assign
   private final LoadingOrder myOrder;
 
   public ExtensionComponentAdapter(@NotNull String implementationClassName,
-                                   @Nullable Element extensionElement,
-                                   PicoContainer container,
-                                   PluginDescriptor pluginDescriptor,
-                                   boolean deserializeInstance) {
+                                   @Nullable PicoContainer container,
+                                   @Nullable PluginDescriptor pluginDescriptor,
+                                   @Nullable String orderId,
+                                   @NotNull LoadingOrder order,
+                                   @Nullable Element extensionElement) {
     myImplementationClassOrName = implementationClassName;
     myContainer = container;
     myPluginDescriptor = pluginDescriptor;
-    myExtensionElement = deserializeInstance ? extensionElement : null;
+    myExtensionElement = extensionElement;
 
-    myOrderId = extensionElement == null ? null : extensionElement.getAttributeValue("id");
-    myOrder = extensionElement == null ? null : LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    myOrderId = orderId;
+    myOrder = order;
+  }
+
+  public ExtensionComponentAdapter(@NotNull String implementationClassName,
+                                   @Nullable Element extensionElement,
+                                   PicoContainer container,
+                                   PluginDescriptor pluginDescriptor) {
+    this(implementationClassName, container, pluginDescriptor, null, LoadingOrder.ANY, extensionElement);
   }
 
   @Override

@@ -27,7 +27,7 @@ abstract class AbstractLookup implements DeferredUserLookupValue, LookupValueWit
     protected final String myName;
     protected final String myPresentation;
 
-    public AbstractLookup(String name, String presentation) {
+    AbstractLookup(String name, String presentation) {
         this.myName = name;
         this.myPresentation = presentation;
     }

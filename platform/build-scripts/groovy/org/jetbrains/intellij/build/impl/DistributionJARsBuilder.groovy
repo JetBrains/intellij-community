@@ -159,7 +159,8 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.keySet().collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.allBundledPluginsModules + pluginsToPublish.keySet().
+      collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -202,6 +203,7 @@ class DistributionJARsBuilder {
   void buildJARs() {
     buildLib()
     buildBundledPlugins()
+    buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
     buildThirdPartyLibrariesList()
 
@@ -321,6 +323,19 @@ class DistributionJARsBuilder {
     def layoutBuilder = createLayoutBuilder()
     buildPlugins(layoutBuilder, getPluginsByModules(buildContext, productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
+  }
+
+  private void buildOsSpecificBundledPlugins() {
+    def productLayout = buildContext.productProperties.productLayout
+    for (osFamily in OsFamily.values()) {
+      def osSpecificPluginModules = productLayout.bundledOsPluginModules[osFamily]
+      if (osSpecificPluginModules) {
+        def layoutBuilder = createLayoutBuilder()
+        buildPlugins(layoutBuilder, getPluginsByModules(buildContext, osSpecificPluginModules),
+                     "$buildContext.paths.buildOutputRoot/dist.$osFamily.distSuffix/plugins")
+        usedModules.addAll(layoutBuilder.usedModules)
+      }
+    }
   }
 
   void buildNonBundledPlugins() {

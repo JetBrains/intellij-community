@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -81,9 +67,13 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
 
   private static boolean isStarting(Project project, RunnerAndConfigurationSettings configurationSettings, String executorId, String runnerId) {
     ExecutorRegistry executorRegistry = ExecutorRegistry.getInstance();
-    if (executorRegistry.isStarting(project, executorId, runnerId)) return true;
+    if (executorRegistry.isStarting(project, executorId, runnerId)) {
+      return true;
+    }
 
-    if (!configurationSettings.isSingleton()) return false;
+    if (configurationSettings.getConfiguration().isAllowRunningInParallel()) {
+      return false;
+    }
 
     for (Executor executor : executorRegistry.getRegisteredExecutors()) {
       if (executor.getId().equals(executorId)) continue;

@@ -31,7 +31,7 @@ class SeeDocTagInfo implements JavadocTagInfo {
   private final String myName;
   private final boolean myInline;
 
-  public SeeDocTagInfo(String name, boolean isInline) {
+  SeeDocTagInfo(String name, boolean isInline) {
     myName = name;
     myInline = isInline;
   }

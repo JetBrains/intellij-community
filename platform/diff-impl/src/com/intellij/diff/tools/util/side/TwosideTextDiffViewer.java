@@ -304,7 +304,7 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   //
 
   private class MyFocusOppositePaneAction extends FocusOppositePaneAction {
-    public MyFocusOppositePaneAction(boolean scrollToPosition) {
+    MyFocusOppositePaneAction(boolean scrollToPosition) {
       super(scrollToPosition);
     }
 

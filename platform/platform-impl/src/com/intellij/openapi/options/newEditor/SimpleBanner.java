@@ -20,7 +20,7 @@ class SimpleBanner extends JPanel {
   protected Component myLeftComponent;
   protected Component myCenterComponent;
 
-  public SimpleBanner() {
+  SimpleBanner() {
     super(new BorderLayout(10, 0));
     myLeftPanel.add(myProgress);
     add(BorderLayout.WEST, myLeftPanel);

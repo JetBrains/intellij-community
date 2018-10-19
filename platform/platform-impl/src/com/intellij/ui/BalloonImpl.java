@@ -1898,7 +1898,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     private final int myTargetSide;
     private final BalloonImpl myBalloon;
 
-    public Shaper(BalloonImpl balloon, Rectangle bounds, Point targetPoint, @JdkConstants.TabPlacement int targetSide) {
+    Shaper(BalloonImpl balloon, Rectangle bounds, Point targetPoint, @JdkConstants.TabPlacement int targetSide) {
       myBalloon = balloon;
       myBounds = bounds;
       myTargetSide = targetSide;

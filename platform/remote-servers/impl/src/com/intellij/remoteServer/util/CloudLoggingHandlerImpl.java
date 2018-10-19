@@ -125,7 +125,7 @@ public class CloudLoggingHandlerImpl implements CloudAgentLoggingHandler {
 
     private final LoggingHandler myLoggingHandler;
 
-    public LogListenerImpl(LoggingHandler loggingHandler) {
+    LogListenerImpl(LoggingHandler loggingHandler) {
       myLoggingHandler = loggingHandler;
     }
 

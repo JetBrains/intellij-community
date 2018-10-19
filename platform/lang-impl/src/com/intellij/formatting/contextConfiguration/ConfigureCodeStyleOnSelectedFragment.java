@@ -107,7 +107,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     private final CodeStyleSettings mySettings;
 
 
-    public FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
+    FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
                                            @NotNull SelectedTextFormatter selectedTextFormatter,
                                            @NotNull Language language,
                                            CodeStyleSettings settings,
@@ -187,7 +187,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       private final int myEditorComponentWidth;
       private final int myEditorComponentHeight;
 
-      public DialogPositionProvider() {
+      DialogPositionProvider() {
         myContentComponent = myEditor.getContentComponent();
         myEditorComponent = myEditor.getComponent();
 
@@ -326,7 +326,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     }
 
     private class ApplyToSettingsAndReformat extends AbstractAction {
-      public ApplyToSettingsAndReformat() {
+      ApplyToSettingsAndReformat() {
         super("Save and Reformat File");
       }
 

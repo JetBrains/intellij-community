@@ -22,15 +22,15 @@ final class ConfigurableWebBrowser extends WebBrowser {
   private BrowserSpecificSettings specificSettings;
 
   @SuppressWarnings("UnusedDeclaration")
-  public ConfigurableWebBrowser() {
+  ConfigurableWebBrowser() {
     this(UUID.randomUUID(), BrowserFamily.CHROME);
   }
 
-  public ConfigurableWebBrowser(@NotNull UUID id, @NotNull BrowserFamily family) {
+  ConfigurableWebBrowser(@NotNull UUID id, @NotNull BrowserFamily family) {
     this(id, family, family.getName(), family.getExecutionPath(), true, family.createBrowserSpecificSettings());
   }
 
-  public ConfigurableWebBrowser(@NotNull UUID id,
+  ConfigurableWebBrowser(@NotNull UUID id,
                                 @NotNull BrowserFamily family,
                                 @NotNull String name,
                                 @Nullable String path,

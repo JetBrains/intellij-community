@@ -282,7 +282,7 @@ public class SimpleDiffChange {
   }
 
   private class AcceptGutterOperation extends GutterOperation {
-    public AcceptGutterOperation(@NotNull Side side) {
+    AcceptGutterOperation(@NotNull Side side) {
       super(side);
     }
 

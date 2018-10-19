@@ -210,7 +210,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private class MappingItemColumnInfo extends ColumnInfo<UserDefinedJsonSchemaConfiguration.Item, String> {
-    public MappingItemColumnInfo() {super("");}
+    MappingItemColumnInfo() {super("");}
 
     @Nullable
     @Override
@@ -262,7 +262,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   class MyAddActionButtonRunnable implements AnActionButtonRunnable {
-    public MyAddActionButtonRunnable() {
+    MyAddActionButtonRunnable() {
       super();
     }
 
@@ -305,7 +305,7 @@ public class JsonSchemaMappingsView implements Disposable {
   }
 
   private class MyEditActionButtonRunnableImpl implements AnActionButtonRunnable {
-    public MyEditActionButtonRunnableImpl() {
+    MyEditActionButtonRunnableImpl() {
       super();
     }
 

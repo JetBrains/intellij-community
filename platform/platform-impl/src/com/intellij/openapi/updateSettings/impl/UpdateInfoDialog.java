@@ -312,7 +312,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     private JEditorPane myLicenseArea;
     private JBScrollPane myScrollPane;
 
-    public UpdateInfoPanel() {
+    UpdateInfoPanel() {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 

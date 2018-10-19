@@ -724,7 +724,6 @@ public class PyQuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  @SuppressWarnings("Duplicates")
   protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,

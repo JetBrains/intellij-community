@@ -27,7 +27,7 @@ public final class GlobalOptions
 	private boolean useGzip;
 	private boolean noHistoryLogging;
 	private boolean someQuiet;
-	private Map myEnvVariables;
+	private Map<String, String> myEnvVariables;
 
 	// Setup ==================================================================
 
@@ -85,11 +85,11 @@ public final class GlobalOptions
 	}
 
 	@Override
-        public Map getEnvVariables() {
+        public Map<String, String> getEnvVariables() {
 		return myEnvVariables;
 	}
 
-	public void setEnvVariables(Map myEnvVariables) {
+	public void setEnvVariables(Map<String, String> myEnvVariables) {
 		this.myEnvVariables = myEnvVariables;
 	}
 	// Actions ================================================================

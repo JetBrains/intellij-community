@@ -97,7 +97,7 @@ public class GoToChangePopupBuilder {
   private static class SimpleGoToChangePopupAction extends BaseGoToChangePopupAction<DiffRequestChain> {
     @NotNull protected final Consumer<Integer> myOnSelected;
 
-    public SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
+    SimpleGoToChangePopupAction(@NotNull DiffRequestChain chain, @NotNull Consumer<Integer> onSelected) {
       super(chain);
       myOnSelected = onSelected;
     }
@@ -109,7 +109,7 @@ public class GoToChangePopupBuilder {
     }
 
     private class MyListPopupStep extends BaseListPopupStep<DiffRequestProducer> {
-      public MyListPopupStep() {
+      MyListPopupStep() {
         super("Go To Change", myChain.getRequests());
         setDefaultOptionIndex(myChain.getIndex());
       }

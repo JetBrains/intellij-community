@@ -15,7 +15,7 @@ import java.nio.channels.ClosedChannelException;
 class WebSocketClient extends Client {
   private final WebSocketServerHandshaker handshaker;
 
-  public WebSocketClient(@NotNull Channel channel, @NotNull WebSocketServerHandshaker handshaker) {
+  WebSocketClient(@NotNull Channel channel, @NotNull WebSocketServerHandshaker handshaker) {
     super(channel);
 
     this.handshaker = handshaker;

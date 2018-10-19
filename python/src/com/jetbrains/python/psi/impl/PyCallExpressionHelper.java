@@ -1208,7 +1208,7 @@ public class PyCallExpressionHelper {
     @NotNull private final List<PyExpression> componentsOfVariadicPositionalArguments;
     @NotNull private final List<PyExpression> variadicPositionalArguments;
 
-    public PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
+    PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
                                               @NotNull List<PyExpression> componentsOfVariadicPositionalArguments,
                                               @NotNull List<PyExpression> variadicPositionalArguments) {
       this.allPositionalArguments = allPositionalArguments;
@@ -1331,7 +1331,7 @@ public class PyCallExpressionHelper {
 
     private final boolean myIsConstructor;
 
-    public ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
+    ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
                                   @NotNull PsiElement clarifiedResolved,
                                   @Nullable PyFunction.Modifier wrappedModifier,
                                   boolean isConstructor) {

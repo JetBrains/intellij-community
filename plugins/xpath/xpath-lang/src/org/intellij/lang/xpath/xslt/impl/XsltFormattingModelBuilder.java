@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 class XsltFormattingModelBuilder implements CustomFormattingModelBuilder {
   private final FormattingModelBuilder myBuilder;
 
-  public XsltFormattingModelBuilder(FormattingModelBuilder builder) {
+  XsltFormattingModelBuilder(FormattingModelBuilder builder) {
     myBuilder = builder;
   }
 

@@ -651,13 +651,13 @@ public class ScrollingUtil {
     private final JComponent myComponent;
     private final Boolean myCycleScrolling;
 
-    public MoveAction(String id, JComponent component, Boolean cycleScrolling) {
+    MoveAction(String id, JComponent component, Boolean cycleScrolling) {
       myId = id;
       myComponent = component;
       myCycleScrolling = cycleScrolling;
     }
 
-    public MoveAction(String id, JComponent component) {
+    MoveAction(String id, JComponent component) {
       this(id, component, null);
     }
 

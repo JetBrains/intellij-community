@@ -23,7 +23,7 @@ public class SshPublicKeyAuthentication implements SshAuthentication {
   }
 
   @Override
-  public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
+  public void authenticate(final Connection connection) throws AuthenticationException {
     char[] keyChars;
     try {
       keyChars = FileUtil.loadFileText(myFile);

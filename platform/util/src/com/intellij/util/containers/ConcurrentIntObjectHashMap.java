@@ -353,7 +353,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @throws IllegalArgumentException if the initial capacity of
    *                                  elements is negative
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity) {
+  ConcurrentIntObjectHashMap(int initialCapacity) {
     if (initialCapacity < 0) {
       throw new IllegalArgumentException();
     }
@@ -378,7 +378,7 @@ class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *                                  elements is negative or the load factor is nonpositive
    * @since 1.6
    */
-  public ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
+  ConcurrentIntObjectHashMap(int initialCapacity, float loadFactor) {
     this(initialCapacity, loadFactor, 1);
   }
 

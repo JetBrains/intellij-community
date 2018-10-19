@@ -533,7 +533,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   private class MyList extends JBList implements DataProvider {
-    public MyList() {
+    MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
     }

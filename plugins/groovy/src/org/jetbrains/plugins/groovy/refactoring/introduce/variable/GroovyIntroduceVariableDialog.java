@@ -193,7 +193,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
     boolean myIsDeclareFinal;
     PsiType mySelectedType;
 
-    public MyGroovyIntroduceVariableSettings(GroovyIntroduceVariableDialog dialog) {
+    MyGroovyIntroduceVariableSettings(GroovyIntroduceVariableDialog dialog) {
       myEnteredName = dialog.getEnteredName();
       myIsReplaceAllOccurrences = dialog.isReplaceAllOccurrences();
       myIsDeclareFinal = dialog.isDeclareFinal();

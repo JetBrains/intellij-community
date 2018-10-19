@@ -115,7 +115,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     private boolean hasLocalScopeDependencies = false;
     private final ScopeOwner myScope;
 
-    public ResolvingVisitor(ScopeOwner scope) {
+    ResolvingVisitor(ScopeOwner scope) {
       myScope = scope;
     }
 
@@ -318,7 +318,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     private final IntroduceOperation myOperation;
     private final PyIntroduceFieldPanel myPanel;
 
-    public PyInplaceFieldIntroducer(PyTargetExpression target,
+    PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",

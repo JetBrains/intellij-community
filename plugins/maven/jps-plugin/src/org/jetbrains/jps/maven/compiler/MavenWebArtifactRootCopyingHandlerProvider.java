@@ -108,7 +108,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     private final ResourceRootConfiguration myWarRootConfig;
     private final MavenModuleResourceConfiguration myModuleResourceConfig;
 
-    public MavenWebArtifactCopyingHandler(@NotNull MavenWebArtifactConfiguration artifactConfig,
+    MavenWebArtifactCopyingHandler(@NotNull MavenWebArtifactConfiguration artifactConfig,
                                           @NotNull MavenModuleResourceConfiguration moduleResourceConfig,
                                           @Nullable String relativeDirectoryPath) {
       this(getWarRootConfig(artifactConfig, moduleResourceConfig), moduleResourceConfig, relativeDirectoryPath);
@@ -160,7 +160,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     private final File myTargetDir;
     private final List<ResourceRootConfiguration> myWebResources;
 
-    public MavenClassesCopyingHandler(@NotNull File targetDir,
+    MavenClassesCopyingHandler(@NotNull File targetDir,
                                       @NotNull MavenWebArtifactConfiguration artifactConfig,
                                       @NotNull MavenModuleResourceConfiguration moduleResourceConfig) {
       this(targetDir, getWarRootConfig(artifactConfig, moduleResourceConfig),
@@ -213,7 +213,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       private final File myTargetDir;
       private final Map<ResourceRootConfiguration, FileFilter> myWebResourcesMap = ContainerUtil.newHashMap();
 
-      public ClassesFilter(@NotNull File targetDir,
+      ClassesFilter(@NotNull File targetDir,
                            @NotNull ResourceRootConfiguration warRootConfig,
                            @NotNull List<ResourceRootConfiguration> webResources) {
         super(targetDir, warRootConfig);

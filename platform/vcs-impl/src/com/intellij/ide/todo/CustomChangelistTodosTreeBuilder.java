@@ -83,8 +83,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
             }
           }
         }
-        for (Iterator<PsiFile> iterator = myIncludedFiles.iterator(); iterator.hasNext(); ) {
-          final PsiFile next = iterator.next();
+        for (final PsiFile next : myIncludedFiles) {
           final Change change = allChanges.get(next.getVirtualFile());
           if (change != null) {
             changes.add(change);
@@ -166,7 +165,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       }
     }
     final Collection<TodoItem> todoItems = myMap.get(file);
-    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
+    return todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
   @NotNull
@@ -180,9 +179,8 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
     Set<VirtualFile> files = new HashSet<>();
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= myPsiTodoSearchHelper.findFilesWithTodoItems();
-    for(int i=0;i<psiFiles.length;i++){
-      PsiFile psiFile=psiFiles[i];
-      if(myPsiTodoSearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)){
+    for (PsiFile psiFile : psiFiles) {
+      if (myPsiTodoSearchHelper.getTodoItemsCount(psiFile) > 0 && treeStructure.accept(psiFile)) {
         files.add(psiFile.getVirtualFile());
       }
     }

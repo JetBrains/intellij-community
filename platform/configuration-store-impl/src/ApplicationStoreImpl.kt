@@ -3,7 +3,6 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
@@ -11,8 +10,6 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader
 
 private class ApplicationPathMacroManager : PathMacroManager(null)
@@ -32,20 +29,6 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
     // app config must be first, because collapseMacros collapse from fist to last, so, at first we must replace APP_CONFIG because it overlaps ROOT_CONFIG value
     storageManager.addMacro(APP_CONFIG, "$path/${FILE_STORAGE_DIR}")
     storageManager.addMacro(ROOT_CONFIG, path)
-
-    val configDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(path)
-    if (configDir != null) {
-      invokeAndWaitIfNeed {
-        // not recursive, config directory contains various data - for example, ICS or shelf should not be refreshed,
-        // but we refresh direct children to avoid refreshAndFindFile in SchemeManager (to find schemes directory)
-        VfsUtil.markDirtyAndRefresh(false, false, true, configDir)
-        val optionsDir = configDir.findChild(FILE_STORAGE_DIR)
-        if (optionsDir != null) {
-          // not recursive, options directory contains only files
-          VfsUtil.markDirtyAndRefresh(false, false, true, optionsDir)
-        }
-      }
-    }
   }
 
   override fun saveAdditionalComponents(isForce: Boolean) {
@@ -54,18 +37,14 @@ class ApplicationStoreImpl(private val application: Application, pathMacroManage
   }
 }
 
-class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null) : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
+class ApplicationStorageManager(application: Application, pathMacroManager: PathMacroManager? = null)
+  : StateStorageManagerImpl("application", pathMacroManager?.createTrackingSubstitutor(), application) {
 
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? {
-    return if (component is NamedJDOMExternalizable) {
-      "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}"
-    }
-    else {
-      DEFAULT_STORAGE_SPEC
-    }
-  }
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String? =
+    if (component is NamedJDOMExternalizable) "${component.externalFileName}${FileStorageCoreUtil.DEFAULT_EXT}" else DEFAULT_STORAGE_SPEC
 
-  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? = if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
+  override fun getMacroSubstitutor(fileSpec: String): TrackingPathMacroSubstitutor? =
+    if (fileSpec == JpsGlobalLoader.PathVariablesSerializer.STORAGE_FILE_NAME) null else super.getMacroSubstitutor(fileSpec)
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -75,21 +54,14 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
 
   override fun providerDataStateChanged(storage: FileBasedStorage, writer: DataWriter?, type: DataStateChanged) {
     // IDEA-144052 When "Settings repository" is enabled changes in 'Path Variables' aren't saved to default path.macros.xml file causing errors in build process
-    if (storage.fileSpec != "path.macros.xml") {
-      return
-    }
-
-    LOG.runAndLogException {
-      writer.writeTo(storage.file)
+    if (storage.fileSpec == "path.macros.xml") {
+      LOG.runAndLogException {
+        writer.writeTo(storage.file)
+      }
     }
   }
 
   override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), APP_CONFIG)
 
-  override fun expandMacros(path: String): String = if (path[0] == '$') {
-    super.expandMacros(path)
-  }
-  else {
-    "${expandMacro(APP_CONFIG)}/$path"
-  }
+  override fun expandMacros(path: String): String = if (path[0] == '$') super.expandMacros(path) else "${expandMacro(APP_CONFIG)}/$path"
 }

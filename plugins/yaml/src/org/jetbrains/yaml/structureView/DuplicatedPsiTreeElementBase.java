@@ -124,7 +124,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
     @NotNull
     private final String myDetails;
 
-    public StoredData(@NotNull T element, @NotNull String details) {
+    StoredData(@NotNull T element, @NotNull String details) {
       myElement = element;
       myDetails = details;
     }

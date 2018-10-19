@@ -231,7 +231,7 @@ class ExportToHTMLManager {
     private final String myOutputDirectoryName;
     private final Project myProject;
 
-    public ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
+    ExportRunnable(ExportToHTMLSettings exportToHTMLSettings,
                           PsiDirectory psiDirectory,
                           String outputDirectoryName,
                           Project project) {

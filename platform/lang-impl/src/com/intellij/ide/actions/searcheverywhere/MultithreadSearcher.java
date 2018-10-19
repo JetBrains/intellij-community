@@ -36,7 +36,7 @@ class MultithreadSearcher implements SESearcher {
    * @param listener {@link Listener} to get notifications about searching process
    * @param notificationExecutor searcher guarantees that all listener methods will be called only through this executor
    */
-  public MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
+  MultithreadSearcher(@NotNull Listener listener, @NotNull Executor notificationExecutor) {
     myListener = listener;
     myNotificationExecutor = notificationExecutor;
   }
@@ -47,7 +47,7 @@ class MultithreadSearcher implements SESearcher {
    * @param listener {@link Listener} to get notifications about searching process
    */
   @SuppressWarnings("unused")
-  public MultithreadSearcher(@NotNull Listener listener) {
+  MultithreadSearcher(@NotNull Listener listener) {
     this(listener, Runnable::run);
   }
 
@@ -71,12 +71,13 @@ class MultithreadSearcher implements SESearcher {
       protected void onRunningChange() {
         if (isCanceled()) {
           accumulator.stop();
+          phaser.forceTermination();
         }
       }
     };
     indicator.start();
 
-    Runnable finisherTask = createFinisherTask(phaser, accumulator);
+    Runnable finisherTask = createFinisherTask(phaser, accumulator, indicator);
     for (SearchEverywhereContributor<?> contributor : contributorsAndLimits.keySet()) {
       SearchEverywhereContributorFilter<?> filter = filterSupplier.apply(contributor);
       phaser.register();
@@ -121,12 +122,15 @@ class MultithreadSearcher implements SESearcher {
     return ConcurrencyUtil.underThreadNameRunnable("SE-SearchTask", task);
   }
 
-  private static Runnable createFinisherTask(Phaser phaser, FullSearchResultsAccumulator accumulator) {
+  private static Runnable createFinisherTask(Phaser phaser, FullSearchResultsAccumulator accumulator, ProgressIndicator indicator) {
     phaser.register();
 
     return ConcurrencyUtil.underThreadNameRunnable("SE-FinisherTask", () -> {
       phaser.arriveAndAwaitAdvance();
-      accumulator.searchFinished();
+      if (!indicator.isCanceled()) {
+        accumulator.searchFinished();
+      }
+      indicator.stop();
     });
   }
 
@@ -175,6 +179,10 @@ class MultithreadSearcher implements SESearcher {
                                         return false;
                                       }
                                     });
+        if (myIndicator.isCanceled()) {
+          return;
+        }
+
         myAccumulator.contributorFinished(myContributor);
       } finally {
         finishCallback.run();
@@ -216,7 +224,7 @@ class MultithreadSearcher implements SESearcher {
     private final int myNewLimit;
     private volatile boolean hasMore;
 
-    public ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SearchEverywhereContributor<?> contributor,
+    ShowMoreResultsAccumulator(Map<SearchEverywhereContributor<?>, Collection<ElementInfo>> alreadyFound, SearchEverywhereContributor<?> contributor,
                                       int newLimit, Listener listener, Executor notificationExecutor) {
       super(new ConcurrentHashMap<>(alreadyFound), listener, notificationExecutor);
       myExpandedContributor = contributor;

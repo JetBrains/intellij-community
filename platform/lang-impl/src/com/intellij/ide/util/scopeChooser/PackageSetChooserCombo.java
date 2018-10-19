@@ -165,7 +165,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     private PackageSet myScope;
     private final ScopeEditorPanel myPanel;
 
-    public EditUnnamedScopesDialog(final NamedScope scope) {
+    EditUnnamedScopesDialog(final NamedScope scope) {
       super(PackageSetChooserCombo.this, false);
       myScope = scope.getValue();
       myPanel = new ScopeEditorPanel(myProject, DependencyValidationManager.getInstance(myProject));

@@ -31,8 +31,8 @@ import java.util.List;
 public class WatchersOperation extends CvsOperationOnFiles{
   private final List<WatcherInfo> myWatchers = new ArrayList<>();
   public WatchersOperation(VirtualFile[] files){
-    for (int i = 0; i < files.length; i++) {
-      addFile(files[i]);
+    for (VirtualFile file : files) {
+      addFile(file);
     }
 
   }

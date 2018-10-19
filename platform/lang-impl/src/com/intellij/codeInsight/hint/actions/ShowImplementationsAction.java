@@ -404,7 +404,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private ImplementationViewComponent myComponent;
     private PsiElement myElement;
 
-    public ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
+    ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
       myComponent = component;
       myElement = element;
     }

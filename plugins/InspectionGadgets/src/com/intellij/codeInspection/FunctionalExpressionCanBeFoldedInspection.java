@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -72,14 +73,17 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element != null ? element.getParent() : null;
+      PsiElement parent = element != null ? element.getParent() : null;
       if (parent instanceof PsiMethodReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();
         if (qualifierExpression != null) {
           parent.replace(qualifierExpression);
         }
       }
-      else if (parent instanceof PsiLambdaExpression) {
+      if (parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) {
+        parent = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      }
+      if (parent instanceof PsiLambdaExpression) {
         PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)parent).getBody());
         if (expression instanceof PsiMethodCallExpression) {
           PsiExpression qualifierExpression = ((PsiMethodCallExpression)expression).getMethodExpression().getQualifierExpression();

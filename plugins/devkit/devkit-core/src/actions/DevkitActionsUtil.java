@@ -156,7 +156,7 @@ public final class DevkitActionsUtil {
 
 
   private static class ChoosePluginModuleDialog extends ChooseModulesDialog {
-    public ChoosePluginModuleDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
+    ChoosePluginModuleDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
       super(project, items, title, description);
     }
 

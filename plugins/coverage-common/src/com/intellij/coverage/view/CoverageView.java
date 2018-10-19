@@ -296,7 +296,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     private final CoverageViewTreeStructure myTreeStructure;
 
-    public GoUpAction(CoverageViewTreeStructure treeStructure) {
+    GoUpAction(CoverageViewTreeStructure treeStructure) {
       super("Go Up", "Go to Upper Level", AllIcons.Nodes.UpLevel);
       myTreeStructure = treeStructure;
       registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, myTable);
@@ -314,7 +314,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    public MyAutoScrollFromSourceHandler() {
+    MyAutoScrollFromSourceHandler() {
       super(CoverageView.this.myProject, CoverageView.this, CoverageView.this);
     }
 

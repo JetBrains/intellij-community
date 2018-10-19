@@ -86,7 +86,7 @@ public class FoldedChangesTest extends FoldingTestCase {
   private class MyEditingSides implements EditingSides {
     private final FragmentSide myLeft;
 
-    public MyEditingSides(FragmentSide left) {
+    MyEditingSides(FragmentSide left) {
       myLeft = left;
     }
 

@@ -23,7 +23,7 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
     }
 
     val librariesWithLicenses = licenses.flatMapTo(THashSet()) { it.libraryNames }
-    val unusedLibrariesWithLicenses = licenses.filter { it.libraryName != null }.mapNotNullTo(THashSet()) { it.libraryName }
+    val unusedLibrariesWithLicenses = licenses.mapNotNullTo(THashSet()) {it.libraryName }
 
     // what for?
     unusedLibrariesWithLicenses.remove("Servlets")
@@ -42,16 +42,15 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
         // transitive deps
         val files = jpsLibrary.getFiles(JpsOrderRootType.COMPILED)
         for (file in files) {
-          val nameWithoutExtension = file.nameWithoutExtension
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension.substringBefore('-'))
-          unusedLibrariesWithLicenses.remove(nameWithoutExtension)
           unusedLibrariesWithLicenses.remove(file.name)
         }
       }
     }
 
     if (unusedLibrariesWithLicenses.isNotEmpty()) {
-      collector.addError(AssertionFailedError("License specified for unknown libraries:\n\n${unusedLibrariesWithLicenses.joinToString("\n")}"))
+      for (item in unusedLibrariesWithLicenses) {
+        collector.addError(AssertionFailedError("License specified for unknown library: $item"))
+      }
     }
   }
 }

@@ -63,7 +63,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
 
     private final boolean deepHashCode;
 
-    public ArrayHashCodeFix(boolean deepHashCode) {
+    ArrayHashCodeFix(boolean deepHashCode) {
       this.deepHashCode = deepHashCode;
     }
 

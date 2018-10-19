@@ -35,7 +35,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
   public final int SEARCH_DEPTH = Registry.intValue("debugger.variablesView.rss.depth");
 
-  public XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
+  XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree, toStringConvertor, true);
     setComparator(new SpeedSearchComparator(false, false) {
 

@@ -111,7 +111,7 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
   }
 
   private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
-    public UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
+    UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
       super(null, actionGroup, dataContext, null, false);
       setMinimumSize(new JBDimension(200, 0));
     }
@@ -133,6 +133,6 @@ public class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<
   }
 
   private class SpeedsearchPredefinedValueAction extends PredefinedValueAction implements FlatSpeedSearchPopup.SpeedsearchAction {
-    public SpeedsearchPredefinedValueAction(String user) {super(user);}
+    SpeedsearchPredefinedValueAction(String user) {super(user);}
   }
 }

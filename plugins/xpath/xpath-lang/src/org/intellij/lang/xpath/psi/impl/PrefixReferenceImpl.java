@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 class PrefixReferenceImpl extends ReferenceBase implements PrefixReference {
 
-  public PrefixReferenceImpl(QNameElement element, ASTNode nameNode) {
+  PrefixReferenceImpl(QNameElement element, ASTNode nameNode) {
     super(element, nameNode);
   }
 

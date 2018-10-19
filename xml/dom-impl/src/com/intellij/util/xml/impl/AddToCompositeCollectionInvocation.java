@@ -30,7 +30,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
   private final Set<? extends CollectionChildDescriptionImpl> myQnames;
   private final Type myType;
 
-  public AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<? extends CollectionChildDescriptionImpl> qnames, final Type type) {
+  AddToCompositeCollectionInvocation(final CollectionChildDescriptionImpl tagName, final Set<? extends CollectionChildDescriptionImpl> qnames, final Type type) {
     myMainDescription = tagName;
     myQnames = qnames;
     myType = type;

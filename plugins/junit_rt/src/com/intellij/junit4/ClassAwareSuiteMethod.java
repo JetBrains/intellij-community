@@ -20,7 +20,7 @@ import org.junit.internal.runners.SuiteMethod;
 class ClassAwareSuiteMethod extends SuiteMethod {
   private final Class myKlass;
 
-  public ClassAwareSuiteMethod(Class klass) throws Throwable {
+  ClassAwareSuiteMethod(Class klass) throws Throwable {
     super(klass);
     myKlass = klass;
   }

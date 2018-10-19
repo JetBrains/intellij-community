@@ -32,7 +32,7 @@ class RecursionVisitor extends GroovyRecursiveElementVisitor {
   private final GrMethod method;
   private final String methodName;
 
-  public RecursionVisitor(@NotNull GrMethod method) {
+  RecursionVisitor(@NotNull GrMethod method) {
     super();
     this.method = method;
     methodName = method.getName();

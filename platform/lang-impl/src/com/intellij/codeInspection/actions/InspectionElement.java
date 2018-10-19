@@ -19,7 +19,7 @@ class InspectionElement extends FakePsiElement {
   @NotNull private final PsiManager myPsiManager;
   @NotNull private final DummyHolder myDummyHolder;
 
-  public InspectionElement(@NotNull InspectionToolWrapper wrapper, @NotNull PsiManager psiManager) {
+  InspectionElement(@NotNull InspectionToolWrapper wrapper, @NotNull PsiManager psiManager) {
     myWrapper = wrapper;
     myPsiManager = psiManager;
     myDummyHolder = DummyHolderFactory.createHolder(myPsiManager, null);

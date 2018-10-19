@@ -333,7 +333,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class MyPackageFilter extends FilterComponent {
-    public MyPackageFilter() {
+    MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
         @Override
@@ -362,7 +362,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
     protected List<RepoPackage> myView = new ArrayList<>();
 
-    public PackagesModel(List<RepoPackage> packages) {
+    PackagesModel(List<RepoPackage> packages) {
       super(packages);
       myView = packages;
     }

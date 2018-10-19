@@ -34,7 +34,7 @@ class FilterDialog extends DialogWrapper {
    * @param filters     all already configured filters. This parameter is used to
    * @param patterns    all patterns available in this filter.
    */
-  public FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<? extends TodoFilter> filters, List<TodoPattern> patterns) {
+  FilterDialog(Component parent, TodoFilter filter, int filterIndex, List<? extends TodoFilter> filters, List<TodoPattern> patterns) {
     super(parent, true);
     setTitle(IdeBundle.message("title.add.todo.filter"));
     myFilter = filter;

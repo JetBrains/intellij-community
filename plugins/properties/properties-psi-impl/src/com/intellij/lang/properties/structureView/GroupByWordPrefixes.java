@@ -175,7 +175,7 @@ public class GroupByWordPrefixes implements Grouper, Sorter {
     final List<String> words;
     final TreeElement node;
 
-    public Key(final List<String> words, final TreeElement node) {
+    Key(final List<String> words, final TreeElement node) {
       this.words = words;
       this.node = node;
     }

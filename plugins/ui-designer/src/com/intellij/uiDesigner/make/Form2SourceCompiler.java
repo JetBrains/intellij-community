@@ -231,7 +231,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     private final VirtualFile myFormFile;
     private final TimestampValidityState myState;
 
-    public MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
+    MyInstrumentationItem(@NotNull final VirtualFile sourceFile, final VirtualFile formFile) {
       mySourceFile = sourceFile;
       myFormFile = formFile;
       myState = new TimestampValidityState(formFile.getTimeStamp());

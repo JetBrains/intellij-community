@@ -102,7 +102,7 @@ public class FramelessNotificationPopup {
   private class ContentComponent extends JPanel {
     private final MouseAdapter myMouseListener;
 
-    public ContentComponent(JComponent content) {
+    ContentComponent(JComponent content) {
       super(new BorderLayout());
       add(content, BorderLayout.CENTER);
       setBackground(myBackgroud);

@@ -108,7 +108,7 @@ public class StdErrorReporter extends ErrorReporter {
     private final Content myContent;
     private final MessageView myMessageView;
 
-    public MyContentDisposer(final Content content, final MessageView messageView) {
+    MyContentDisposer(final Content content, final MessageView messageView) {
       myContent = content;
       myMessageView = messageView;
     }
@@ -142,7 +142,7 @@ public class StdErrorReporter extends ErrorReporter {
     private Content myContent;
     private final ContentManager myContentManager;
 
-    public CloseListener(Content content, ContentManager contentManager) {
+    CloseListener(Content content, ContentManager contentManager) {
       myContent = content;
       myContentManager = contentManager;
     }

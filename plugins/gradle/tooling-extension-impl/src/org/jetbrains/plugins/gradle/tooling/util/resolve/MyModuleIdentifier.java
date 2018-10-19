@@ -5,7 +5,7 @@ class MyModuleIdentifier {
   String name;
   String group;
 
-  public MyModuleIdentifier(String name, String group) {
+  MyModuleIdentifier(String name, String group) {
     this.name = name;
     this.group = group;
   }

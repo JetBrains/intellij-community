@@ -1066,7 +1066,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     private final String myParentName;
     private boolean isErrorReported;
 
-    public TemporaryParent(@NotNull String parentName) {
+    TemporaryParent(@NotNull String parentName) {
       super(EmptyColorScheme.INSTANCE);
       myParentName = parentName;
     }

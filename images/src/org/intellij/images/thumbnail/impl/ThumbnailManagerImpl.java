@@ -31,7 +31,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
   private final Project project;
   private ThumbnailView thumbnailView;
 
-  public ThumbnailManagerImpl(Project project) {
+  ThumbnailManagerImpl(Project project) {
     this.project = project;
   }
 

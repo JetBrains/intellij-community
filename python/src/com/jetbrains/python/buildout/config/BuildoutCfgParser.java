@@ -28,7 +28,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
   private class Parsing {
     private final PsiBuilder myBuilder;
 
-    public Parsing(PsiBuilder builder) {
+    Parsing(PsiBuilder builder) {
       myBuilder = builder;
     }
 

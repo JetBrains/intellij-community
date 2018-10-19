@@ -90,8 +90,8 @@ public class ProjectListBuilder extends AbstractListBuilder {
   protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
 
-    for (int i = 0; i < childElements.length; i++) {
-      ProjectViewNode childElement = (ProjectViewNode)childElements[i];
+    for (Object childElement1 : childElements) {
+      ProjectViewNode childElement = (ProjectViewNode)childElement1;
       if (childElement.contains(file)) result.add(childElement);
     }
 

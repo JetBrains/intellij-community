@@ -843,12 +843,12 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
 
   private abstract class PyUnitTestProcessWithConsoleTestTask extends PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
-    public PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
                                                 @NotNull String scriptName) {
       super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner);
     }
 
-    public PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
+    PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
                                                 @NotNull String scriptName,
                                                 int rerunFailedTests) {
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);

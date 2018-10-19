@@ -621,7 +621,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private class ModuleNode extends MyNode implements ModuleGroupNode {
     private final ModuleGroup myModuleAsGroup;
 
-    public ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
+    ModuleNode(@NotNull ModuleConfigurable configurable, @Nullable ModuleGroup moduleAsGroup) {
       super(configurable);
       myModuleAsGroup = moduleAsGroup;
     }

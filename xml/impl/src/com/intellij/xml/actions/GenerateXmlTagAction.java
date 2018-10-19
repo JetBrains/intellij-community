@@ -302,7 +302,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     private final JLabel myNameLabel;
     private final JLabel myNSLabel;
 
-    public MyListCellRenderer() {
+    MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());
       myPanel.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
       myNameLabel = new JLabel();

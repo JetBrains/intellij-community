@@ -19,6 +19,7 @@ package com.intellij.find.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.search.SearchScope;
@@ -160,7 +161,9 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       if (isOriginUsage && column == USAGE_TEXT_COL) {
         SimpleColoredComponent origin = new SimpleColoredComponent();
         origin.setIconTextGap(JBUI.scale(5)); // for this particular icon it looks better
-        origin.setIcon(isSelected ? slightlyDifferentColor(AllIcons.General.ComboArrowLeftPassive) : AllIcons.General.ComboArrowLeftPassive);
+
+        Icon arrowLeftIcon = ObjectUtils.assertNotNull(IconLoader.getDisabledIcon(AllIcons.General.ArrowLeft));
+        origin.setIcon(isSelected ? slightlyDifferentColor(arrowLeftIcon) : arrowLeftIcon);
         // use attributes of "line number" to show "Current" word
         SimpleTextAttributes attributes =
           text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :

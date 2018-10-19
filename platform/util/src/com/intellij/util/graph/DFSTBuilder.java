@@ -105,7 +105,7 @@ public class DFSTBuilder<Node> {
     private final boolean[] isOnStack = new boolean[index.length];
 
     private class Frame {
-      public Frame(int nodeI) {
+      Frame(int nodeI) {
         this.nodeI = nodeI;
         Iterator<Node> outNodes = myGraph.getOut(myAllNodes[nodeI]);
         TIntArrayList list = new TIntArrayList();

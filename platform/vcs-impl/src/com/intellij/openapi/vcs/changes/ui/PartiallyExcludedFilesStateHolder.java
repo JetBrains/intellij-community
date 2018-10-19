@@ -114,7 +114,7 @@ public abstract class PartiallyExcludedFilesStateHolder<T> implements Disposable
     @NotNull private final PartialLocalLineStatusTracker.Listener myTrackerListener;
     @NotNull private final Disposable myDisposable;
 
-    public MyTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener listener, @NotNull Disposable disposable) {
+    MyTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener listener, @NotNull Disposable disposable) {
       myTrackerListener = listener;
       myDisposable = disposable;
     }

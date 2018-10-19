@@ -28,10 +28,10 @@ final class WslDistributionDescriptor {
   /**
    * Necessary for serializer
    */
-  public WslDistributionDescriptor() {
+  WslDistributionDescriptor() {
   }
 
-  public WslDistributionDescriptor(@NotNull String id,
+  WslDistributionDescriptor(@NotNull String id,
                                    @NotNull String msId,
                                    @NotNull String executablePath,
                                    @NotNull String presentableName) {

@@ -10,7 +10,7 @@ class DifferenceImpl extends Difference{
 
   private final Difference myDelegate;
 
-  public DifferenceImpl(@NotNull Difference delegate) {
+  DifferenceImpl(@NotNull Difference delegate) {
     myDelegate = delegate;
   }
 

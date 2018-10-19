@@ -283,7 +283,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     private final PtyProcess myProcess;
     private final ProcessWaitFor myWaitFor;
 
-    public PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
+    PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
       myProcess = process;
       myWaitFor = new ProcessWaitFor(process, this, presentableName);
     }

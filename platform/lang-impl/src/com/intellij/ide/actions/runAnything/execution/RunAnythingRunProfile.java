@@ -28,6 +28,7 @@ public class RunAnythingRunProfile implements RunProfile {
     return new RunAnythingRunProfileState(environment, myOriginalCommand);
   }
 
+  @NotNull
   @Override
   public String getName() {
     return myOriginalCommand;

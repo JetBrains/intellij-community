@@ -78,7 +78,7 @@ class XsltElementFactoryImpl extends XsltElementFactory {
     }
 
     private static class DummyElementImpl extends XsltElementImpl {
-        public DummyElementImpl(XmlTag target) {
+        DummyElementImpl(XmlTag target) {
             super(target);
         }
 

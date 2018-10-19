@@ -90,7 +90,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
     private final boolean myYodaCondition;
     private final RelationType myRelation;
 
-    public ComparatorComparisonFix(boolean yodaCondition, RelationType relation) {
+    ComparatorComparisonFix(boolean yodaCondition, RelationType relation) {
       myYodaCondition = yodaCondition;
       myRelation = relation;
     }

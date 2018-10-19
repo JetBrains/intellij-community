@@ -77,7 +77,7 @@ class PrintDialog extends DialogWrapper {
   }
 
 
-  public PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
+  PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(CodeEditorBundle.message("print.print.button"));
@@ -480,7 +480,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyTailPanel extends JPanel {
-    public MyTailPanel(){
+    MyTailPanel(){
       setFocusable(false);
     }
 
@@ -641,7 +641,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private class ApplyAction extends AbstractAction{
-    public ApplyAction(){
+    ApplyAction(){
       putValue(Action.NAME, CodeEditorBundle.message("print.apply.button"));
     }
 
@@ -652,7 +652,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyTextField extends JTextField {
-    public MyTextField(int size) {
+    MyTextField(int size) {
      super(size);
     }
 
@@ -663,7 +663,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyLabel extends JLabel {
-    public MyLabel(String text) {
+    MyLabel(String text) {
      super(text);
     }
 

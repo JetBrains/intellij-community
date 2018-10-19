@@ -662,7 +662,7 @@ public abstract class LineStatusMarkerRenderer {
     public final byte type;
     private final boolean isIgnored;
 
-    public ChangedLines(int line1, int line2, byte type, boolean isIgnored) {
+    ChangedLines(int line1, int line2, byte type, boolean isIgnored) {
       this.line1 = line1;
       this.line2 = line2;
       this.type = type;

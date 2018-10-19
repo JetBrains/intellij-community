@@ -101,7 +101,7 @@ public class IdTableBuilding {
   private static class WordsScannerFileTypeIdIndexerAdapter implements IdIndexer {
     private final WordsScanner myScanner;
 
-    public WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner) {
+    WordsScannerFileTypeIdIndexerAdapter(@NotNull final WordsScanner scanner) {
       myScanner = scanner;
     }
 

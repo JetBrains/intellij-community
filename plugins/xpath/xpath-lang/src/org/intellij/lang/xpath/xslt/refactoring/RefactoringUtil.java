@@ -143,7 +143,7 @@ public class RefactoringUtil {
         private final XPathExpression myExpression;
         private final Set<XPathExpression> myList;
 
-        public ExpressionCollector(XPathExpression expression) {
+        ExpressionCollector(XPathExpression expression) {
             myExpression = expression;
             myList = new HashSet<>();
         }

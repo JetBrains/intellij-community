@@ -162,7 +162,7 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   }
 
   private static class EmptyAction extends AnAction {
-    public EmptyAction() {
+    EmptyAction() {
       setEnabledInModalContext(true);
     }
 

@@ -232,7 +232,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     private final Alarm myUpdateAlarm;
 
-    public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
+    InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
       myUpdateRunnable = () -> {

@@ -261,8 +261,7 @@ public class LwContainer extends LwComponent implements IContainer{
    */
   protected final void readChildren(final Element element, final PropertiesProvider provider) throws Exception{
     final Element childrenElement = LwXmlReader.getRequiredChild(element, "children");
-    for(Iterator i=childrenElement.getChildren().iterator(); i.hasNext();){
-      final Element child = (Element)i.next();
+    for (final Element child : childrenElement.getChildren()) {
       final LwComponent component = createComponentFromTag(child);
       addComponent(component);
       component.read(child, provider);

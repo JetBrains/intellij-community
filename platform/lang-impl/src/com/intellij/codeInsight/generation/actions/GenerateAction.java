@@ -99,7 +99,7 @@ public class GenerateAction extends DumbAwareAction {
     private final AnAction myAction;
     private final AnAction myEditTemplateAction;
 
-    public GenerateWrappingGroup(AnAction action, AnAction editTemplateAction) {
+    GenerateWrappingGroup(AnAction action, AnAction editTemplateAction) {
       myAction = action;
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);

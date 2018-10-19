@@ -30,7 +30,7 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
   private final AtomicBoolean myNeedReValidate = new AtomicBoolean(false);
   private final Alarm myUpdateQueue;
 
-  public InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
+  InspectionViewChangeAdapter(@NotNull InspectionResultsView view) {
     myView = view;
     myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, view);
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, view);

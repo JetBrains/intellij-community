@@ -371,7 +371,7 @@ abstract class SourceOperation extends Operation {
     private final String myElementType;
     private PsiMethodCallExpression myCall;
 
-    public StreamIteratorSource(PsiMethodCallExpression call, PsiType type) {
+    StreamIteratorSource(PsiMethodCallExpression call, PsiType type) {
       myCall = call;
       myElementType = type.getCanonicalText();
     }

@@ -99,7 +99,7 @@ public class GitExternalLogTabsProperties implements PersistentStateComponent<Gi
   private class MyVcsLogUiProperties extends VcsLogUiPropertiesImpl<TabState> {
     @NotNull private final String myId;
 
-    public MyVcsLogUiProperties(@NotNull String id) {
+    MyVcsLogUiProperties(@NotNull String id) {
       super(myAppSettings);
       myId = id;
     }

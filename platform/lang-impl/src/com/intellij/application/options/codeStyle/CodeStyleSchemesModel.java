@@ -276,7 +276,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private class ProjectScheme extends CodeStyleSchemeImpl {
-    public ProjectScheme() {
+    ProjectScheme() {
       super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
       CodeStyleSettings perProjectSettings = getProjectSettings().getMainProjectCodeStyle();
       if (perProjectSettings != null) setCodeStyleSettings(perProjectSettings);

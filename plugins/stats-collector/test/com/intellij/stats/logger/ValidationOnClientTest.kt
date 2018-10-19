@@ -91,6 +91,9 @@ class ValidationOnClientTest : PlatformTestCase() {
             override fun println(message: String) {
                 onLogCallback(LogEventSerializer.fromString(message))
             }
+
+            override fun flush() {
+            }
         }, DefaultValidator())
     }
 }

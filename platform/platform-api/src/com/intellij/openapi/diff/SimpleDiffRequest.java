@@ -75,7 +75,7 @@ public class SimpleDiffRequest extends DiffRequest {
     private final String[] myContentTitles = new String[2];
     private final VirtualFile[] myVirtualFiles = new VirtualFile[2];
 
-    public FileDiffRequest(Project project, String title) {
+    FileDiffRequest(Project project, String title) {
       super(project, title);
     }
 

@@ -327,7 +327,6 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       final List<JsonSchemaObject> oneOf = new SmartList<>();
@@ -356,7 +355,6 @@ public class JsonSchemaVariantsTreeBuilder {
       myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       for (Operation op : myChildOperations) {

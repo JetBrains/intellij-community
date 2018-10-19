@@ -11,7 +11,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
@@ -273,5 +275,17 @@ public class VcsLogUtil {
   public static VcsRef findBranch(@NotNull RefsModel refs, @NotNull VirtualFile root, @NotNull String branchName) {
     Stream<VcsRef> branches = refs.getAllRefsByRoot().get(root).streamBranches();
     return branches.filter(vcsRef -> vcsRef.getName().equals(branchName)).findFirst().orElse(null);
+  }
+
+  @NotNull
+  public static List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList,
+                                            @NotNull Function<VcsFullCommitDetails, Collection<Change>> getChanges) {
+    List<Change> changes = ContainerUtil.newArrayList();
+    List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
+    for (VcsFullCommitDetails details : detailsListReversed) {
+      changes.addAll(getChanges.fun(details));
+    }
+
+    return CommittedChangesTreeBrowser.zipChanges(changes);
   }
 }

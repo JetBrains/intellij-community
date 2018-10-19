@@ -81,7 +81,7 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     if (!(context instanceof ScopeOwner)) {
       context = PsiTreeUtil.getParentOfType(context, ScopeOwner.class);
     }
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuilder buffer = new StringBuilder();
     try {
       final CodeFragment fragment = PyCodeFragmentUtil.createCodeFragment((ScopeOwner)context, startElement, endElement);
       if (fragment.isReturnInstructionInside()) {

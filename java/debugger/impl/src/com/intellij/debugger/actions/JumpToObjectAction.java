@@ -134,7 +134,7 @@ public class JumpToObjectAction extends DebuggerAction{
   }
 
   private static class EnableCommand extends SourcePositionCommand {
-    public EnableCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
+    EnableCommand(final DebuggerContextImpl debuggerContext, final ValueDescriptor descriptor, final DebugProcessImpl debugProcess, final AnActionEvent e) {
       super(debuggerContext, descriptor, debugProcess, e);
     }
     @Override

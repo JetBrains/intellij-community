@@ -96,7 +96,7 @@ public abstract class VcsLogPathsForwardIndex
   static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
     @Nullable private final List<? extends Collection<Integer>> myOldData;
 
-    public VcsLogPathsDiffBuilder(int id, @Nullable List<? extends Collection<Integer>> oldData) {
+    VcsLogPathsDiffBuilder(int id, @Nullable List<? extends Collection<Integer>> oldData) {
       super(id);
       myOldData = oldData;
     }

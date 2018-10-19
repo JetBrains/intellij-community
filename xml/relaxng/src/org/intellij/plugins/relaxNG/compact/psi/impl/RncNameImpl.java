@@ -162,7 +162,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     private final Kind myKind;
     private PsiElement myResult;
 
-    public MyResolver(String prefix, Kind kind) {
+    MyResolver(String prefix, Kind kind) {
       myPrefix = prefix;
       myKind = kind;
     }

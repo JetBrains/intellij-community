@@ -3,7 +3,7 @@ package com.siyeh.igtest.controlflow.for_loop_replaceable_by_while;
 public class ForLoopReplaceableByWhile {
 
     void foo(int i) {
-        for (; i < 10;) {
+        <warning descr="'for' loop statement may be replace by 'while' loop">for</warning> (; i < 10;) {
             i++;
         }
     }

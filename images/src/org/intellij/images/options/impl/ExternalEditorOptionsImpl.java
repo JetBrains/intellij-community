@@ -17,7 +17,7 @@ final class ExternalEditorOptionsImpl implements ExternalEditorOptions, JDOMExte
   private final PropertyChangeSupport propertyChangeSupport;
   private String executablePath;
 
-  public ExternalEditorOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
+  ExternalEditorOptionsImpl(PropertyChangeSupport propertyChangeSupport) {
     this.propertyChangeSupport = propertyChangeSupport;
   }
 

@@ -24,7 +24,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 abstract class AntNodeDescriptor extends NodeDescriptor implements CellAppearanceEx {
-  public AntNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+  AntNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
     super(project, parentDescriptor);
   }
 

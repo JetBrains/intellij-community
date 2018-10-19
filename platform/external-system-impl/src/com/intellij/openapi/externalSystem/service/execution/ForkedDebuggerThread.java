@@ -60,7 +60,7 @@ class ForkedDebuggerThread extends Thread {
   @Nullable
   private final ExecutionConsole myMainExecutionConsole;
 
-  public ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
+  ForkedDebuggerThread(@NotNull ProcessHandler mainProcessHandler,
                               @NotNull RunContentDescriptor mainRunContentDescriptor,
                               @NotNull ServerSocket socket,
                               @NotNull Project project) {
@@ -218,7 +218,7 @@ class ForkedDebuggerThread extends Thread {
     @NotNull private final String myProcessName;
     @Nullable private RangeHighlighter myHyperlink;
 
-    public MyForkedProcessListener(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
+    MyForkedProcessListener(@NotNull RunContentDescriptor descriptor, @NotNull String processName) {
       myDescriptor = descriptor;
       myProcessName = processName;
     }

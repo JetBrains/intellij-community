@@ -291,7 +291,7 @@ public final class ExecutionHandler {
     private final OSProcessHandler myProcessHandler;
     private volatile boolean myCanceled;
 
-    public CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
+    CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
       myProgressIndicator = progressIndicator;
       myProcessHandler = process;
     }

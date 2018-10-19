@@ -84,7 +84,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         private final ThumbnailView myView;
         private final TagFilter myFilter;
 
-        public MyToggleAction(ThumbnailView view, TagFilter filter) {
+        MyToggleAction(ThumbnailView view, TagFilter filter) {
             super(filter.getDisplayName());
             myView = view;
             myFilter = filter;

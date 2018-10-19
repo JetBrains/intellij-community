@@ -166,7 +166,7 @@ public class XPathCompletionContributor extends CompletionContributor {
   }
 
   private static class MyLookup extends AbstractLookup {
-    public MyLookup(String name) {
+    MyLookup(String name) {
       super(name, name);
     }
   }

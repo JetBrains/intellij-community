@@ -182,7 +182,7 @@ public class XDependentBreakpointManager {
     private final Collection<XDependentBreakpointInfo> myDependencies = new SmartList<>();
     private final XBreakpointBase myBreakpoint;
 
-    public DependenciesData(XBreakpointBase breakpoint) {
+    DependenciesData(XBreakpointBase breakpoint) {
       myBreakpoint = breakpoint;
       ContainerUtil.addIfNotNull(myDependencies, mySlave2Info.get(breakpoint));
       Collection<XDependentBreakpointInfo> infos = myMaster2Info.get(breakpoint);

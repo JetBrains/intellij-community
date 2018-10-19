@@ -236,7 +236,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
   private static class WithAutoDetectCombo<S extends ServerConfiguration> extends RemoteServerCombo<S> {
     private AutoDetectedItem myAutoDetectedItem;
 
-    public WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
+    WithAutoDetectCombo(@NotNull ServerType<S> serverType) {
       super(serverType);
     }
 
@@ -294,7 +294,7 @@ public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration
       private volatile RemoteServer<S> myServerInstance;
       private volatile long myLastStartedTestConnectionMillis = -1;
 
-      public AutoDetectedItem() {
+      AutoDetectedItem() {
         super(null);
       }
 

@@ -432,7 +432,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     private final Configurable myConfigurable;
     private JComponent myComponent;
 
-    public ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+    ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
 

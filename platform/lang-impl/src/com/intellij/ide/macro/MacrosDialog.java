@@ -182,7 +182,7 @@ public final class MacrosDialog extends DialogWrapper {
   private static final class MacroWrapper {
     private final Macro myMacro;
 
-    public MacroWrapper(Macro macro) {
+    MacroWrapper(Macro macro) {
       myMacro = macro;
     }
 

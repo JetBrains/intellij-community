@@ -421,7 +421,7 @@ public class MiscImportingTest extends MavenImportingTestCase {
   private static class NameSettingMavenImporter extends MavenImporter {
     private final String myName;
 
-    public NameSettingMavenImporter(String name) {
+    NameSettingMavenImporter(String name) {
       super("gid", "id");
       myName = name;
     }

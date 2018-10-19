@@ -32,8 +32,10 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
 
   public MoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
+    PsiClass classToExtendFromPointer = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
     myName = QuickFixBundle.message("move.bound.class.to.front.fix.text",
-                                    HighlightUtil.formatClass(myClassToExtendFrom),
+                                    classToExtendFromPointer == null ? "<null>" : HighlightUtil.formatClass(classToExtendFromPointer),
                                     HighlightUtil.formatClass(aClass));
   }
 
@@ -74,10 +76,12 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
+    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
     return
       myClass.getManager().isInProject(myClass)
-      && myClassToExtendFrom != null
-      && myClassToExtendFrom.isValid()
+      && classToExtendFrom != null
+      && classToExtendFrom.isValid()
     ;
   }
 }

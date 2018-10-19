@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 
 class Jdk5StringConcatenationPredicate extends SimpleStringConcatenationPredicate {
 
-  public Jdk5StringConcatenationPredicate() {
+  Jdk5StringConcatenationPredicate() {
     super(true);
   }
 

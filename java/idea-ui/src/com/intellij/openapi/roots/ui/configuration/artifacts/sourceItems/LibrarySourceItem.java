@@ -82,7 +82,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
     private final Library myLibrary;
     private final ArtifactEditorContext myContext;
 
-    public LibrarySourceItemPresentation(Library library, ArtifactEditorContext context) {
+    LibrarySourceItemPresentation(Library library, ArtifactEditorContext context) {
       myLibrary = library;
       myContext = context;
     }

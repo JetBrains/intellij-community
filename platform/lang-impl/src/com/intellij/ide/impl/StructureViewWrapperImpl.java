@@ -11,7 +11,6 @@ import com.intellij.ide.structureView.impl.StructureViewComposite;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -239,6 +238,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       @Override
       public void run() {
         if (myProject.isDisposed()) return;
+        if (!getApplication().isDispatchThread()) {
+          LOG.error("EDT-based MergingUpdateQueue on background thread");
+        }
         loggedRun("rebuild a structure: ", StructureViewWrapperImpl.this::rebuild);
       }
     });
@@ -404,7 +406,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private class ContentPanel extends JPanel implements DataProvider {
-    public ContentPanel() {
+    ContentPanel() {
       super(new BorderLayout());
     }
 
@@ -418,14 +420,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   private static boolean loggedRun(@NotNull String message, @NotNull Runnable task) {
     try {
       if (LOG.isTraceEnabled()) LOG.trace(message + ": started");
-      Application application = getApplication();
-      if (application == null || application.isReadAccessAllowed()) {
-        task.run();
-      }
-      else {
-        LOG.debug(new IllegalStateException("called from unexpected place"));
-        application.runReadAction(task);
-      }
+      task.run();
       return true;
     }
     catch (ProcessCanceledException exception) {

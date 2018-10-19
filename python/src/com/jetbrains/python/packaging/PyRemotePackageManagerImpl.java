@@ -193,7 +193,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
     @NotNull private final String myVagrantFolder;
     @Nullable private final String myMachineName;
 
-    public LaunchVagrantFix(@NotNull String vagrantFolder, @Nullable String machineName) {
+    LaunchVagrantFix(@NotNull String vagrantFolder, @Nullable String machineName) {
       myVagrantFolder = vagrantFolder;
       myMachineName = machineName;
     }

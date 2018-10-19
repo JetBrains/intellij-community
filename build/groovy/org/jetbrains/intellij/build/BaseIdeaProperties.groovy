@@ -42,6 +42,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.terminal",
     "intellij.editorconfig",
     "intellij.settingsRepository",
+    "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
     "intellij.tasks.java",

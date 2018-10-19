@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
+import com.intellij.psi.impl.source.resolve.reference.impl.JavaLangClassMemberReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author ven
@@ -201,6 +203,10 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private void inlineExpressionUsage(PsiExpression expr,
                                      PsiExpression initializer1,
                                      Set<PsiAssignmentExpression> assignments) throws IncorrectOperationException {
+    if (expr instanceof PsiLiteralExpression) {
+      // Possible reflective usage
+      return;
+    }
     if (myField.isWritable()) {
       myField.normalizeDeclaration();
     }
@@ -267,6 +273,10 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
           if (!PsiTreeUtil.isAncestor(myField, element, false)) {
             conflicts.putValue(element, "Inlined field is used in javadoc");
           }
+        }
+        if (element instanceof PsiLiteralExpression &&
+            Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
+          conflicts.putValue(element, "Inlined field is used reflectively");
         }
       }
     }

@@ -108,7 +108,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
 
   private class ToggleChangeDiffAction extends CheckboxAction implements DumbAware {
-    public ToggleChangeDiffAction() {
+    ToggleChangeDiffAction() {
       super("&Include");
     }
 

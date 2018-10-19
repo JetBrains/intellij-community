@@ -56,7 +56,7 @@ public class TestInClassConfigurationProducer extends JUnitConfigurationProducer
 
   private static class JUnitInClassConfigurationProducerDelegate
     extends AbstractInClassConfigurationProducer<JUnitConfiguration> {
-    public JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
+    JUnitInClassConfigurationProducerDelegate() {super(JUnitConfigurationType.getInstance());}
 
     @Override
     protected boolean isApplicableTestType(String type, ConfigurationContext context) {

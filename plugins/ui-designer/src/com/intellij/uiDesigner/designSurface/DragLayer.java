@@ -11,7 +11,7 @@ import java.awt.*;
  * @author Vladimir Kondratyev
  */
 final class DragLayer extends PassiveDecorationLayer {
-  public DragLayer(final GuiEditor editor) {
+  DragLayer(final GuiEditor editor) {
     super(editor);
   }
 

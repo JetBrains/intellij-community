@@ -181,7 +181,7 @@ public class LayoutTree extends SimpleDnDAwareTree implements AdvancedDnDSource 
   }
 
   private class LayoutTreeCellEditor extends DefaultCellEditor {
-    public LayoutTreeCellEditor() {
+    LayoutTreeCellEditor() {
       super(new JTextField());
     }
 

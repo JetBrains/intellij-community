@@ -18,6 +18,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.delete
+import com.intellij.util.io.exists
 import com.intellij.util.io.getDirectoryTree
 import com.intellij.util.io.move
 import org.junit.ClassRule
@@ -40,15 +41,17 @@ internal class DoNotSaveDefaultsTest {
   @Test
   fun testApp() {
     val configDir = Paths.get(PathManager.getConfigPath())!!
-    val newConfigDir = Paths.get(PathManager.getConfigPath() + "__old")!!
-    newConfigDir.delete()
-    configDir.move(newConfigDir)
+    val newConfigDir = if (configDir.exists()) Paths.get(PathManager.getConfigPath() + "__old") else null
+    if (newConfigDir != null) {
+      newConfigDir.delete()
+      configDir.move(newConfigDir)
+    }
     try {
       doTest(ApplicationManager.getApplication() as ApplicationImpl)
     }
     finally {
       configDir.delete()
-      newConfigDir.move(configDir)
+      newConfigDir?.move(configDir)
     }
   }
 

@@ -734,7 +734,7 @@ public class CvsUtil {
   private static class ReverseFileCondition implements FileCondition {
     private final FileCondition myCondition;
 
-    public ReverseFileCondition(FileCondition condition) {
+    ReverseFileCondition(FileCondition condition) {
       myCondition = condition;
     }
 

@@ -268,7 +268,7 @@ public class PyCustomMember extends UserDataHolderBase {
     private final PyClass myClass;
     private final PsiElement myContext;
 
-    public MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
+    MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
       myContext = context;

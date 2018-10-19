@@ -113,7 +113,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       return myRight;
     }
 
-    public MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
+    MyWrapperRenderer(final TreeCellRenderer left, final TreeCellRenderer right) {
       myLeft = left;
       myRight = right;
 
@@ -165,7 +165,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     private class MyPanel extends JPanel implements Accessible {
       private AccessibleContext myDefaultAccessibleContext;
 
-      public MyPanel(LayoutManager layout) {
+      MyPanel(LayoutManager layout) {
         super(layout);
       }
 

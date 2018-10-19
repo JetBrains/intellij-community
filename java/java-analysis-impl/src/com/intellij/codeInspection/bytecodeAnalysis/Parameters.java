@@ -70,12 +70,12 @@ abstract class PResults {
   };
   static final class ConditionalNPE implements PResult {
     final Set<Set<EKey>> sop;
-    public ConditionalNPE(Set<Set<EKey>> sop) throws AnalyzerException {
+    ConditionalNPE(Set<Set<EKey>> sop) throws AnalyzerException {
       this.sop = sop;
       checkLimit(sop);
     }
 
-    public ConditionalNPE(EKey key) {
+    ConditionalNPE(EKey key) {
       sop = new HashSet<>();
       Set<EKey> prod = new HashSet<>();
       prod.add(key);

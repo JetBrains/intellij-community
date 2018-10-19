@@ -257,7 +257,7 @@ public class ImageComponent extends JComponent {
             return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
         });
 
-        public ImageDocumentImpl(Component component) {
+        ImageDocumentImpl(Component component) {
             myComponent = component;
             myComponent.addPropertyChangeListener(new PropertyChangeListener() {
                 @Override

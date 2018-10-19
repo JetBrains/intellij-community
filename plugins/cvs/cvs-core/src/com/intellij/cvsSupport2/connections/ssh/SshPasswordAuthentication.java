@@ -24,7 +24,7 @@ public class SshPasswordAuthentication implements SshAuthentication {
   }
 
   @Override
-  public void authenticate(final Connection connection) throws AuthenticationException, SolveableAuthenticationException {
+  public void authenticate(final Connection connection) throws AuthenticationException {
     final String password = myPasswordProvider.getPasswordForCvsRoot(myCvsRootAsString);
     if (password == null) {
       throw new SolveableAuthenticationException("Authentication rejected.");

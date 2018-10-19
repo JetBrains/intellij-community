@@ -544,7 +544,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private static class BuiltinComponent {
     private final Map<String, String> myAttributes;
 
-    public BuiltinComponent(Map<String, String> attributes) {
+    BuiltinComponent(Map<String, String> attributes) {
       myAttributes = attributes;
     }
 
@@ -559,7 +559,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     private final String myModule;
     private final Map<String, String> myAttributes;
 
-    public CustomComponent(@NotNull String name,
+    CustomComponent(@NotNull String name,
                            @NotNull String qualifiedName,
                            @Nullable String module,
                            @NotNull Map<String, String> attributes) {
@@ -604,7 +604,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private static class CustomLibrary extends Library {
     private static final String CUSTOM_SECTION = "Custom";
 
-    public CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
+    CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
       classLoaderProperty.set(classLoader);
 
       getItems().setAll(BuiltinLibrary.getLibrary().getItems());

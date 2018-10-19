@@ -14,7 +14,7 @@ class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
 
   private final ExperimentalFeature myFeature;
 
-  public ExperimentalFeatureRegistryValueWrapper(@NotNull ExperimentalFeature feature) {
+  ExperimentalFeatureRegistryValueWrapper(@NotNull ExperimentalFeature feature) {
     super(Registry.getInstance(), feature.id, null);
     myFeature = feature;
   }

@@ -137,7 +137,7 @@ abstract class Operation {
   }
 
   static class FilterOperation extends LambdaIntermediateOperation {
-    public FilterOperation(FunctionHelper fn) {
+    FilterOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -148,7 +148,7 @@ abstract class Operation {
   }
 
   static class TakeWhileOperation extends LambdaIntermediateOperation {
-    public TakeWhileOperation(FunctionHelper fn) {
+    TakeWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -160,7 +160,7 @@ abstract class Operation {
   }
 
   static class DropWhileOperation extends LambdaIntermediateOperation {
-    public DropWhileOperation(FunctionHelper fn) {
+    DropWhileOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -175,7 +175,7 @@ abstract class Operation {
   }
 
   static class PeekOperation extends LambdaIntermediateOperation {
-    public PeekOperation(FunctionHelper fn) {
+    PeekOperation(FunctionHelper fn) {
       super(fn);
     }
 
@@ -186,7 +186,7 @@ abstract class Operation {
   }
 
   static class MapOperation extends LambdaIntermediateOperation {
-    public MapOperation(FunctionHelper fn) {
+    MapOperation(FunctionHelper fn) {
       super(fn);
     }
 

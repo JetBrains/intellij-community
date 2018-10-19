@@ -88,6 +88,12 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
+  protected Lexer getInlineScriptHighlightingLexer() {
+    SyntaxHighlighter syntaxHighlighter =
+      ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
+    return syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
+  }
+
   private void setEmbeddedLexer() {
     if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
     try {
@@ -137,9 +143,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
             }
           }
           else if (hasSeenAttribute()) {
-            SyntaxHighlighter syntaxHighlighter =
-              ourInlineScriptFileType != null ? SyntaxHighlighterFactory.getSyntaxHighlighter(ourInlineScriptFileType, null, null) : null;
-            scriptLexer = syntaxHighlighter != null ? syntaxHighlighter.getHighlightingLexer() : null;
+           scriptLexer = getInlineScriptHighlightingLexer();
           }
           scriptLexers.put(scriptType, scriptLexer);
         }

@@ -113,10 +113,9 @@ public class MultiLevelDiffTool implements DiffTool, DiscloseMultiRequest {
   public static boolean canShowRequest(DiffRequest request) {
     boolean isFile = false;
     DiffContent[] contents = request.getContents();
-    for (int i = 0; i < contents.length; i++) {
-      DiffContent content = contents[i];
+    for (DiffContent content : contents) {
       VirtualFile file = content.getFile();
-      if (file != null && file.isInLocalFileSystem() && ! file.isDirectory()) {
+      if (file != null && file.isInLocalFileSystem() && !file.isDirectory()) {
         isFile = true;
         break;
       }

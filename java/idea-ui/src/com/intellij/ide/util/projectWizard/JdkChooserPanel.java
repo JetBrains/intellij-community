@@ -365,7 +365,7 @@ public class JdkChooserPanel extends JPanel {
     }
 
     private final class ConfigureAction extends AbstractAction {
-      public ConfigureAction() {
+      ConfigureAction() {
         super(IdeBundle.message("button.configure.e"));
         putValue(Action.MNEMONIC_KEY, new Integer('E'));
       }

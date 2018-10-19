@@ -1,6 +1,6 @@
 package com.siyeh.igtest.classmetrics.field_count;
 
-public class FieldCount {
+public class <warning descr="'FieldCount' has too many fields (field count = 14)">FieldCount</warning> {
 
     public static final int CONSTANT = 3;
     public static final int CONSTANT1 = 3;

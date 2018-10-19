@@ -55,7 +55,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     private final DebugProcessImpl myDebugProcess;
     int invokesN;
 
-    public InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
+    InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
       myDebuggerCommand = debuggerCommand;
       myDebugProcess = debugProcess;
     }
@@ -479,7 +479,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
-    public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
+    DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
     }
 

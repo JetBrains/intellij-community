@@ -57,7 +57,7 @@ public final class ArrayItemData extends DescriptorData<ArrayElementDescriptorIm
   private static class ArrayItemDisplayKeyImpl implements DisplayKey<ArrayElementDescriptorImpl> {
     private final int myIndex;
 
-    public ArrayItemDisplayKeyImpl(int index) {
+    ArrayItemDisplayKeyImpl(int index) {
       myIndex = index;
     }
 

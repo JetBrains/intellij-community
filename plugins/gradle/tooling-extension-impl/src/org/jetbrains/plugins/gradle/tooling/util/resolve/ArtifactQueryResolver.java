@@ -36,7 +36,7 @@ class ArtifactQueryResolver {
   private final boolean myDownloadJavadoc;
   private final SourceSetCachedFinder mySourceSetFinder;
 
-  public ArtifactQueryResolver(@NotNull final Configuration configuration,
+  ArtifactQueryResolver(@NotNull final Configuration configuration,
                                @Nullable final String scope,
                                @NotNull final Project project,
                                final boolean downloadJavadoc,

@@ -42,7 +42,7 @@ public class JsonRequiredPropsReferenceProvider extends PsiReferenceProvider {
   }
 
   private static class JsonRequiredPropReference extends JsonSchemaBaseReference<JsonStringLiteral> {
-    public JsonRequiredPropReference(JsonStringLiteral element) {
+    JsonRequiredPropReference(JsonStringLiteral element) {
       super(element, ElementManipulators.getValueTextRange(element));
     }
 

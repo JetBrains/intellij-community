@@ -1282,7 +1282,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     boolean myHasWriteAccess;
     final String myChainMethodName;
 
-    public OccurrencesInfo(PsiExpression[] occurrences) {
+    OccurrencesInfo(PsiExpression[] occurrences) {
       myOccurrences = Arrays.asList(occurrences);
       myNonWrite = new ArrayList<>();
       myCantReplaceAll = false;

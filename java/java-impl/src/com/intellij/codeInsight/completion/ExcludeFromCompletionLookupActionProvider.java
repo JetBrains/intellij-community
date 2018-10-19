@@ -65,7 +65,7 @@ public class ExcludeFromCompletionLookupActionProvider implements LookupActionPr
     private final Project myProject;
     private final String myToExclude;
 
-    public ExcludeFromCompletionAction(Project project, String s) {
+    ExcludeFromCompletionAction(Project project, String s) {
       super(null, "Exclude '" + s + "' from completion");
       myProject = project;
       myToExclude = s;

@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
+import com.intellij.vcs.log.history.FileHistoryUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,7 +32,7 @@ public class ShowAllAffectedFromHistoryAction extends FileHistorySingleCommitAct
                                @NotNull FileHistoryUi ui,
                                @NotNull VcsFullCommitDetails detail,
                                @NotNull AnActionEvent e) {
-    VirtualFile file = ui.createVcsVirtualFile(ui.createRevision(detail));
+    VirtualFile file = FileHistoryUtil.createVcsVirtualFile(ui.createRevision(detail));
     AbstractVcsHelper.getInstance(project).showChangesListBrowser(VcsLogUtil.createCommittedChangeList(detail), file,
                                                                   "Paths affected by commit " + detail.getId().toShortString());
   }

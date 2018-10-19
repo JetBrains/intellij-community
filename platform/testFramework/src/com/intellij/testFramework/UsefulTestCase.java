@@ -295,6 +295,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
 
     Runnable runnable = () -> {
       try {
+        TestLoggerFactory.onTestStarted();
         super.runTest();
         TestLoggerFactory.onTestFinished(true);
       }

@@ -35,6 +35,9 @@ public interface RunManagerListener extends EventListener {
   default void endUpdate() {
   }
 
+  /**
+   * Called also in case when RunManager doesn't have state.
+   */
   default void stateLoaded(@NotNull RunManager runManager, boolean isFirstLoadState) {
   }
 }

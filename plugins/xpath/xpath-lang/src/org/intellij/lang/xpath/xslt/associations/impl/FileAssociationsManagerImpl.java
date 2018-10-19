@@ -46,7 +46,7 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Dis
   private final Map<VirtualFilePointer, VirtualFilePointerContainer> myAssociations;
   private boolean myTempCopy;
 
-  public FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
+  FileAssociationsManagerImpl(Project project, VirtualFilePointerManager filePointerManager) {
     myProject = project;
     myFilePointerManager = filePointerManager;
     myAssociations = new LinkedHashMap<>();

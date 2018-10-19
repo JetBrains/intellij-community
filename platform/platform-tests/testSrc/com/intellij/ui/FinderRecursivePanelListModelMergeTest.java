@@ -125,7 +125,7 @@ public class FinderRecursivePanelListModelMergeTest extends LightPlatformTestCas
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
     private final String[] myInitialItems;
 
-    public StringFinderRecursivePanel(String[] initialItems) {
+    StringFinderRecursivePanel(String[] initialItems) {
       super(FinderRecursivePanelListModelMergeTest.this.getProject(), null);
       myInitialItems = initialItems;
     }

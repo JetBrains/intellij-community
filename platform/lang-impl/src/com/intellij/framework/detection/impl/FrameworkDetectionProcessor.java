@@ -126,7 +126,7 @@ public class FrameworkDetectionProcessor {
     private final ElementPattern<FileContent> myFilePattern;
     private final List<VirtualFile> mySuitableFiles = new ArrayList<>();
 
-    public FrameworkDetectorData(FrameworkDetector detector) {
+    FrameworkDetectorData(FrameworkDetector detector) {
       myDetector = detector;
       myFilePattern = detector.createSuitableFilePattern();
     }

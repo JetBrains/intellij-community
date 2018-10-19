@@ -22,7 +22,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 
 final class PathMappingTable extends ListTableWithButtons<PathMappingSettings.PathMapping> {
-  public PathMappingTable() {
+  PathMappingTable() {
     getTableView().getEmptyText().setText("No mappings");
   }
 

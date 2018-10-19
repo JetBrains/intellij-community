@@ -33,7 +33,7 @@ class SimplifyQuantifierAction implements IntentionAction {
     private final RegExpQuantifier myQuantifier;
     private final String myReplacement;
 
-    public SimplifyQuantifierAction(RegExpQuantifier quantifier, String s) {
+    SimplifyQuantifierAction(RegExpQuantifier quantifier, String s) {
         myQuantifier = quantifier;
         myReplacement = s;
     }

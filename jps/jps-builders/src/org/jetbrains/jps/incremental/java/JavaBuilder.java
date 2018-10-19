@@ -590,7 +590,11 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    // compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
+    if (compilerSdkVersion <= 11) {
+      // java versions from 9 till 11 are definitely known to support source/target 1.6 and later (IDEA-197550)
+      return chunkLanguageLevel < 6;
+    }
+    // Default: compilerSdkVersion is 9+ here, so applying JEP 182 "Retiring javac 'one plus three back'" policy
     return Math.abs(compilerSdkVersion - chunkLanguageLevel) > 3;
   }
 

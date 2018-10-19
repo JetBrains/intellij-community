@@ -78,10 +78,13 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
   @Override
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
+    if (element instanceof AbstractTreeNode) {
+      element = ((AbstractTreeNode)element).getValue();
+    }
     if(element==myFile){
       return true;
     }else{
-      return super.isAutoExpandNode(descriptor);
+      return element == getRootElement() || element == mySummaryElement;
     }
   }
 

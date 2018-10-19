@@ -8,7 +8,7 @@ public class ConstructorCount {
   @Deprecated
   ConstructorCount(int i) {}
 
-  class A {
+  class <warning descr="'A' has too many constructors (constructor count = 3)">A</warning> {
     A() {}
     A(int i) {}
     A(String s) {}

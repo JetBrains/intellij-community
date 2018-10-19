@@ -278,7 +278,7 @@ public class ConsoleHistoryController {
     @NotNull
     private final Collection<KeyStroke> myUpDownKeystrokes;
 
-    public MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
+    MyAction(final boolean next, @NotNull Collection<KeyStroke> upDownKeystrokes) {
       myNext = next;
       myUpDownKeystrokes = upDownKeystrokes;
       getTemplatePresentation().setVisible(false);

@@ -409,7 +409,7 @@ public class MatchPatchPaths {
     @NotNull public final VirtualFile file;
     public final int score;
 
-    public FileBaseMatch(@NotNull VirtualFile file, int score) {
+    FileBaseMatch(@NotNull VirtualFile file, int score) {
       this.file = file;
       this.score = score;
     }

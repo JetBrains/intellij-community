@@ -21,7 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 abstract class InnerClassMethod {
   final PsiMethod myMethod;
 
-  public InnerClassMethod(PsiMethod method) {
+  InnerClassMethod(PsiMethod method) {
     myMethod = method;
   }
 

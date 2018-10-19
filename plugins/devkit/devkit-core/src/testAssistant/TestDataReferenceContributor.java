@@ -83,7 +83,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   }
 
   private static class TestDataReferenceSet extends FileReferenceSet {
-    public TestDataReferenceSet(@NotNull String str,
+    TestDataReferenceSet(@NotNull String str,
                                 @NotNull PsiElement element,
                                 int startInElement,
                                 @Nullable PsiReferenceProvider provider,

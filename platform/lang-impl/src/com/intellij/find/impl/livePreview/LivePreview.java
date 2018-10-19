@@ -479,7 +479,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
-    public ReplacementBalloonPositionTracker(Editor editor) {
+    ReplacementBalloonPositionTracker(Editor editor) {
       super(editor.getContentComponent());
       myEditor = editor;
 

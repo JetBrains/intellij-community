@@ -57,8 +57,8 @@ public class PrefixedPath extends Path {
     }
 
     String[] dirsList = list();
-    for (int j = 0, listLength = dirsList.length; j < listLength; j++) {
-      String fullPath = ensureEndsWithSlash(dirsList[j]) + relativePath;
+    for (String aDirsList : dirsList) {
+      String fullPath = ensureEndsWithSlash(aDirsList) + relativePath;
       File file = new File(fullPath.replace('/', File.separatorChar));
       if (file.isFile()) {
         return file;

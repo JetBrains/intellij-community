@@ -140,7 +140,7 @@ public class ExtractedParameter {
     private final Set<PsiField> myFields;
     private boolean myModified;
 
-    public FieldModificationVisitor(Set<PsiField> fields) {
+    FieldModificationVisitor(Set<PsiField> fields) {
       myFields = fields;
     }
 

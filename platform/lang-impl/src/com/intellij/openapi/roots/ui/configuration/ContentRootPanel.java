@@ -302,7 +302,7 @@ public abstract class ContentRootPanel extends JPanel {
     private static final float[] DASH = {0, 2, 0, 2};
     private static final Color DASH_LINE_COLOR = new JBColor(Gray._201, Gray._100);
 
-    public UnderlinedPathLabel(JLabel wrappedComponent) {
+    UnderlinedPathLabel(JLabel wrappedComponent) {
       super(wrappedComponent);
       FilePathClipper.install(wrappedComponent, this);
     }

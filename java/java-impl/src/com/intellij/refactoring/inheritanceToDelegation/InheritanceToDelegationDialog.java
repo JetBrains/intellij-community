@@ -271,7 +271,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private class MyMemberInfoModel implements MemberInfoModel<PsiMember, MemberInfo> {
     final HashMap<PsiClass,InterfaceMemberDependencyGraph<PsiMember, MemberInfo>> myGraphs;
 
-    public MyMemberInfoModel() {
+    MyMemberInfoModel() {
       myGraphs = new HashMap<>();
       for (PsiClass superClass : mySuperClasses) {
         myGraphs.put(superClass, new InterfaceMemberDependencyGraph<>(superClass));

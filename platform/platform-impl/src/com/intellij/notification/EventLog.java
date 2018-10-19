@@ -579,7 +579,7 @@ public class EventLog {
     private final Notification myNotification;
     private final String myHref;
 
-    public NotificationHyperlinkInfo(Notification notification, String href) {
+    NotificationHyperlinkInfo(Notification notification, String href) {
       myNotification = notification;
       myHref = href;
     }
@@ -599,7 +599,7 @@ public class EventLog {
     private final Notification myNotification;
     private RangeHighlighter myRangeHighlighter;
 
-    public ShowBalloon(Notification notification) {
+    ShowBalloon(Notification notification) {
       myNotification = notification;
     }
 

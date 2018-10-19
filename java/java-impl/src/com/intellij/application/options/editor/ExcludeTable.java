@@ -124,7 +124,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   };
   private final Project myProject;
 
-  public ExcludeTable(@NotNull Project project) {
+  ExcludeTable(@NotNull Project project) {
     myProject = project;
     getTableView().getEmptyText().setText(ApplicationBundle.message("exclude.from.imports.no.exclusions"));
   }

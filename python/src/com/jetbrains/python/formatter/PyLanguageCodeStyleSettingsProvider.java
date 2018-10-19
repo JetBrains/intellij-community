@@ -156,17 +156,15 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
   }
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(PythonLanguage.getInstance());
-    CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
+  protected void customizeDefaults(@NotNull CommonCodeStyleSettings commonSettings,
+                                   @NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
     indentOptions.INDENT_SIZE = 4;
-    defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-    defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
     // Don't set it to 2 -- this setting is used implicitly in a lot of methods related to spacing,
     // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
     // behavior
-    defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
-    return defaultSettings;
+    commonSettings.KEEP_BLANK_LINES_IN_CODE = 1;
   }
 
   @SuppressWarnings("FieldCanBeLocal")

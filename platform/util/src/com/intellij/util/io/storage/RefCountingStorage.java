@@ -99,7 +99,7 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   private static class CustomInflaterInputStream extends InflaterInputStream {
-    public CustomInflaterInputStream(byte[] compressedData) {
+    CustomInflaterInputStream(byte[] compressedData) {
       super(new UnsyncByteArrayInputStream(compressedData), new Inflater(), 1);
       // force to directly use compressed data, this ensures less round trips with native extraction code and copy streams
       this.buf = compressedData;

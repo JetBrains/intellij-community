@@ -499,7 +499,7 @@ public class ResolveImportUtil {
     private final boolean myAbsolute;
     private final int myLevel;
 
-    public ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file, boolean importIsAbsolute, int relativeLevel) {
+    ResolveModuleParams(@NotNull QualifiedName qualifiedName, @NotNull PsiFile file, boolean importIsAbsolute, int relativeLevel) {
       myName = qualifiedName;
       myFile = file;
       myAbsolute = importIsAbsolute;

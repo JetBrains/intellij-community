@@ -26,7 +26,7 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;
 
-  public JpsEclipseClasspathReader(String rootPath,
+  JpsEclipseClasspathReader(String rootPath,
                                    @Nullable List<String> currentRoots,
                                    @Nullable Set<String> moduleNames,
                                    Map<String, String> levels) {

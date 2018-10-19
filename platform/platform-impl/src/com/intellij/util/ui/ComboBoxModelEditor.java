@@ -38,7 +38,7 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
     private T item = null;
     private boolean mutated;
 
-    public NameEditor() {
+    NameEditor() {
       getField().getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

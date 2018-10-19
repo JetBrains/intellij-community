@@ -713,7 +713,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
     private final StructureConfigurableContext myContext;
 
-    public TableItemRenderer(StructureConfigurableContext context) {
+    TableItemRenderer(StructureConfigurableContext context) {
       myContext = context;
     }
 
@@ -734,7 +734,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     private final TableCellRenderer myDelegate;
     private final JPanel myBlankPanel;
 
-    public ExportFlagRenderer(TableCellRenderer delegate) {
+    ExportFlagRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
       myBlankPanel = new JPanel();
     }

@@ -320,16 +320,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (classes != null) {
       int i = ArrayUtil.indexOf(classes, index);
       if (i != -1) {
-        classes = ArrayUtil.remove(classes, i);
-        myIdToEqClassesIndices.put(id, classes);
+        if (classes.length == 1) {
+          myIdToEqClassesIndices.remove(id);
+        } else {
+          classes = ArrayUtil.remove(classes, i);
+          myIdToEqClassesIndices.put(id, classes);
+        }
       }
     }
-  }
-
-  private void removeAllFromMap(int id) {
-    if (id < 0) return;
-    id = unwrap(myFactory.getValue(id)).getID();
-    myIdToEqClassesIndices.remove(id);
   }
 
   /**
@@ -1374,14 +1372,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myCachedHash = null;
   }
 
-  void removeEquivalenceRelations(@NotNull DfaVariableValue varPlain) {
-    final int idPlain = varPlain.getID();
+  void removeEquivalenceRelations(@NotNull DfaVariableValue var) {
+    final int varID = var.getID();
 
-    int[] result = ObjectUtils.notNull(myIdToEqClassesIndices.get(idPlain), ArrayUtil.EMPTY_INT_ARRAY);
+    int[] classes = myIdToEqClassesIndices.get(varID);
+    if (classes == null) return;
 
     int interruptCount = 0;
 
-    for (int varClassIndex : result) {
+    for (int varClassIndex : classes) {
       EqClass varClass = myEqClasses.get(varClassIndex);
       if ((++interruptCount & 0xf) == 0) {
         ProgressManager.checkCanceled();
@@ -1391,7 +1390,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue previousCanonical = varClass.getCanonicalVariable();
       myEqClasses.set(varClassIndex, varClass);
       for (int id : varClass.toNativeArray()) {
-        if (id == idPlain || unwrap(myFactory.getValue(id)).getID() == idPlain) {
+        if (id == varID || unwrap(myFactory.getValue(id)).getID() == varID) {
           varClass.removeValue(id);
         }
       }
@@ -1425,10 +1424,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           assert successfullyConverted;
         }
       }
+      removeFromMap(varID, varClassIndex);
+      checkInvariants();
     }
 
-    removeAllFromMap(idPlain);
-    checkInvariants();
     myCachedNonTrivialEqClasses = null;
     myCachedHash = null;
   }

@@ -269,7 +269,7 @@ public class JavaModuleInsight extends ModuleInsight {
   private static class ModuleInfoVisitor extends JavaRecursiveElementVisitor {
     private final ModuleInfo myInfo;
 
-    public ModuleInfoVisitor(ModuleInfo info) {
+    ModuleInfoVisitor(ModuleInfo info) {
       myInfo = info;
     }
 

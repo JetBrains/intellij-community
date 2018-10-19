@@ -60,7 +60,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
   private final QuickListPanel itemPanel;
   private final JPanel itemPanelWrapper;
 
-  public QuickListsUi() {
+  QuickListsUi() {
     keymapListener = ApplicationManager.getApplication().getMessageBus().syncPublisher(KeymapListener.CHANGE_TOPIC);
 
     final CardLayout cardLayout = new CardLayout();

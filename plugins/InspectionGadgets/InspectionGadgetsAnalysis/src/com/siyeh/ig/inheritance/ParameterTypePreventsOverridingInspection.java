@@ -62,7 +62,7 @@ public class ParameterTypePreventsOverridingInspection extends BaseInspection {
 
     private final String myNewTypeText;
 
-    public ParameterTypePreventsOverridingFix(String newTypeText) {
+    ParameterTypePreventsOverridingFix(String newTypeText) {
       myNewTypeText = newTypeText;
     }
 

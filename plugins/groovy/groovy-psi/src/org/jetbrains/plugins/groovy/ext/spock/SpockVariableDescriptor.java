@@ -116,7 +116,7 @@ public class SpockVariableDescriptor {
   }
 
   private static class SpockVariable extends GrLightVariable {
-    public SpockVariable(PsiManager manager,
+    SpockVariable(PsiManager manager,
                          @NonNls String name,
                          @NotNull PsiType type,
                          @NotNull PsiElement navigationElement) {

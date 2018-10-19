@@ -47,7 +47,7 @@ public class YAMLUnusedAnchorInspection extends LocalInspectionTool {
   private static class RemoveAnchorQuickFix implements LocalQuickFix {
     private final SmartPsiElementPointer<YAMLAnchor> myAnchorHolder;
 
-    public RemoveAnchorQuickFix(@NotNull final YAMLAnchor anchor) {
+    RemoveAnchorQuickFix(@NotNull final YAMLAnchor anchor) {
       myAnchorHolder = SmartPointerManager.getInstance(anchor.getProject()).createSmartPsiElementPointer(anchor);
     }
 

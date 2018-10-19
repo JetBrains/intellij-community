@@ -169,7 +169,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
 
     private final String myClassName;
 
-    public ThrowsRuntimeExceptionFix(String className) {
+    ThrowsRuntimeExceptionFix(String className) {
       myClassName = className;
     }
 

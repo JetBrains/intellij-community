@@ -150,7 +150,7 @@ public class GriffonToolWindowFactory extends MvcToolWindowDescriptor {
     public final Icon icon;
     public final int weight;
 
-    public GriffonDirectoryMetadata(String description, Icon icon, int weight) {
+    GriffonDirectoryMetadata(String description, Icon icon, int weight) {
       this.description = description;
       this.icon = icon;
       this.weight = weight;

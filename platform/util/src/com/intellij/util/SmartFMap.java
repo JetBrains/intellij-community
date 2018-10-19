@@ -19,6 +19,7 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Generated;
 import java.util.*;
 
 /**
@@ -261,6 +262,7 @@ public class SmartFMap<K,V> implements Map<K,V> {
   }
 
   // copied from AbstractMap
+  @Generated("from AbstractMap")
   public String toString() {
     Iterator<Entry<K,V>> i = entrySet().iterator();
     if (! i.hasNext())

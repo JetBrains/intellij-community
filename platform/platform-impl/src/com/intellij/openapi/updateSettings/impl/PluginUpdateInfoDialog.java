@@ -84,7 +84,7 @@ class PluginUpdateInfoDialog extends AbstractUpdateDialog {
     private JPanel myPluginsPanel;
     private JEditorPane myMessageArea;
 
-    public PluginUpdateInfoPanel() {
+    PluginUpdateInfoPanel() {
       myPluginsToUpdateLabel.setVisible(true);
       myPluginsPanel.setVisible(true);
 

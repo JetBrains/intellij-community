@@ -282,7 +282,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       PsiElement comment = method.getFirstChild();
       if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
-        StringBuffer buf = new StringBuffer();
+        StringBuilder buf = new StringBuilder();
         for (int i = 0; i < commentLines.length; i++) {
           String commentLine = commentLines[i];
           // last line, append our new comment entry
@@ -304,7 +304,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       else {
         String commentString;
 
-        StringBuffer commentBuffer = new StringBuffer();
+        StringBuilder commentBuffer = new StringBuilder();
         commentBuffer.append("/**\n");
         commentBuffer.append(javaDocLine);
         commentBuffer.append('\n');

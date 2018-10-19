@@ -291,7 +291,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final String myGroup;
     private final TaskData myTaskData;
 
-    public ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
+    ExternalSystemTaskAction(Project project, String group, TaskData taskData) {
       myGroup = group;
       myTaskData = taskData;
       myId = getActionPrefix(project, taskData.getLinkedExternalProjectPath()) + taskData.getName();
@@ -365,7 +365,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
     private final RunnerAndConfigurationSettings myConfigurationSettings;
     private final ProjectSystemId systemId;
 
-    public ExternalSystemRunConfigurationAction(Project project, RunnerAndConfigurationSettings configurationSettings) {
+    ExternalSystemRunConfigurationAction(Project project, RunnerAndConfigurationSettings configurationSettings) {
       myConfigurationSettings = configurationSettings;
       ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)configurationSettings.getConfiguration();
       systemId = runConfiguration.getSettings().getExternalSystemId();

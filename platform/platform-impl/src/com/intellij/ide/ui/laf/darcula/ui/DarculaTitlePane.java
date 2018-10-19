@@ -405,7 +405,7 @@ public class DarculaTitlePane extends JPanel {
   }
 
   private class CloseAction extends AbstractAction {
-    public CloseAction() {
+    CloseAction() {
       super("Close", AllIcons.Windows.CloseSmall);
     }
 
@@ -417,7 +417,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class IconifyAction extends AbstractAction {
-    public IconifyAction() {
+    IconifyAction() {
       super("Minimize", AllIcons.Windows.MinimizeSmall);
     }
 
@@ -429,7 +429,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class RestoreAction extends AbstractAction {
-    public RestoreAction() {
+    RestoreAction() {
       super("Restore", AllIcons.Windows.RestoreSmall);
     }
 
@@ -441,7 +441,7 @@ public class DarculaTitlePane extends JPanel {
 
 
   private class MaximizeAction extends AbstractAction {
-    public MaximizeAction() {
+    MaximizeAction() {
       super("Maximize", AllIcons.Windows.MaximizeSmall);
     }
 

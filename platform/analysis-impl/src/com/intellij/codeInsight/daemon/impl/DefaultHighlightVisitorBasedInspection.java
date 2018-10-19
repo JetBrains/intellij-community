@@ -147,7 +147,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     private final boolean runAnnotators;
     private final List<Pair<PsiFile, HighlightInfo>> result = new ArrayList<>();
 
-    public MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
+    MyPsiElementVisitor(boolean highlightErrorElements, boolean runAnnotators, boolean isOnTheFly) {
       this.highlightErrorElements = highlightErrorElements;
       this.runAnnotators = runAnnotators;
     }

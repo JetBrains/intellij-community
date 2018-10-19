@@ -137,7 +137,7 @@ public class GitRefDialog extends DialogWrapper {
   }
 
   private static class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
-    public MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
+    MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
                                       @NotNull Collection<VirtualFile> roots,
                                       @NotNull Comparator<VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));
@@ -160,7 +160,7 @@ public class GitRefDialog extends DialogWrapper {
     @NotNull private final List<GitBranch> myBranches;
     @NotNull private final FutureResult<Collection<GitTag>> myTagsFuture;
 
-    public MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
+    MySimpleCompletionListProvider(@NotNull List<GitBranch> branches,
                                           @NotNull FutureResult<Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;

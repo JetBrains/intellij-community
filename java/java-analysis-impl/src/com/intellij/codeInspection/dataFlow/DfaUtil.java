@@ -5,10 +5,7 @@ import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.inference.InferenceFromSourceUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -365,6 +362,23 @@ public class DfaUtil {
       }
     }
     return null;
+  }
+
+  public static DfaValue boxUnbox(DfaValue value, PsiType type) {
+    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
+      if (value instanceof DfaConstValue || value instanceof DfaUnboxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(((DfaVariableValue)value).getVariableType()))) {
+        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value);
+        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
+      }
+    }
+    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
+      if (value instanceof DfaBoxedValue ||
+          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(((DfaVariableValue)value).getVariableType()))) {
+        return value.getFactory().getBoxedFactory().createUnboxed(value);
+      }
+    }
+    return value;
   }
 
   private static class ValuableInstructionVisitor extends StandardInstructionVisitor {

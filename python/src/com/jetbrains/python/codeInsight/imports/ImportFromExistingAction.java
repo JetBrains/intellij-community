@@ -221,7 +221,7 @@ public class ImportFromExistingAction implements QuestionAction {
     private final Font FONT;
     private final String myName;
 
-    public CellRenderer(String name) {
+    CellRenderer(String name) {
       myName = name;
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
       FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());

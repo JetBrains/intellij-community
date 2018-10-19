@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 class FrameworkTypeNode extends DetectedFrameworkTreeNodeBase {
   private final FrameworkType myFrameworkType;
 
-  public FrameworkTypeNode(@NotNull FrameworkType frameworkType) {
+  FrameworkTypeNode(@NotNull FrameworkType frameworkType) {
     super(frameworkType);
     myFrameworkType = frameworkType;
   }

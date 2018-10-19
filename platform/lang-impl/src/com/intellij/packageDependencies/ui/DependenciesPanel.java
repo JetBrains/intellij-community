@@ -486,7 +486,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private final class CloseAction extends AnAction implements DumbAware {
-    public CloseAction() {
+    CloseAction() {
       super(CommonBundle.message("action.close"), AnalysisScopeBundle.message("action.close.dependency.description"),
             AllIcons.Actions.Cancel);
     }
@@ -649,7 +649,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private final class EditDependencyRulesAction extends AnAction {
-    public EditDependencyRulesAction() {
+    EditDependencyRulesAction() {
       super(AnalysisScopeBundle.message("action.edit.rules"), AnalysisScopeBundle.message("action.edit.rules.description"),
             AllIcons.General.Settings);
     }
@@ -712,7 +712,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
 
 
   private class RerunAction extends AnAction {
-    public RerunAction(JComponent comp) {
+    RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), AnalysisScopeBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
     }
@@ -885,7 +885,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private class SelectInLeftTreeAction extends AnAction {
-    public SelectInLeftTreeAction() {
+    SelectInLeftTreeAction() {
       super(AnalysisScopeBundle.message("action.select.in.left.tree"), AnalysisScopeBundle.message("action.select.in.left.tree.description"), null);
     }
 
@@ -925,7 +925,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   }
 
   private class MarkAsIllegalAction extends AnAction {
-    public MarkAsIllegalAction() {
+    MarkAsIllegalAction() {
       super(AnalysisScopeBundle.message("mark.dependency.illegal.text"), AnalysisScopeBundle.message("mark.dependency.illegal.text"),
             AllIcons.Actions.Lightning);
     }

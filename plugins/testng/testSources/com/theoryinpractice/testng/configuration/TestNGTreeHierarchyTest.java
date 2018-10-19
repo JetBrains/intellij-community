@@ -406,7 +406,7 @@ public class TestNGTreeHierarchyTest {
     private final Throwable myThrowable;
     private final Object[]  myParams;
 
-    public MockTestNGResult(String className, String methodName, Throwable throwable, Object[] params) {
+    MockTestNGResult(String className, String methodName, Throwable throwable, Object[] params) {
       myClassName = className;
       myMethodName = methodName;
       myThrowable = throwable;

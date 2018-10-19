@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.SpeedSearchFilter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseStep<T> implements PopupStep<T>, SpeedSearchFilter<T>, MnemonicNavigationFilter<T> {
   private Runnable myFinalRunnable;
@@ -50,11 +51,12 @@ public abstract class BaseStep<T> implements PopupStep<T>, SpeedSearchFilter<T>,
   }
 
   @Override
+  @Nullable
   public Runnable getFinalRunnable() {
     return myFinalRunnable;
   }
 
-  public PopupStep doFinalStep(Runnable runnable) {
+  public PopupStep doFinalStep(@Nullable Runnable runnable) {
     myFinalRunnable = runnable;
     return FINAL_CHOICE;
   }

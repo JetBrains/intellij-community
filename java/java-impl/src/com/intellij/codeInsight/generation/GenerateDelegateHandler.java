@@ -108,7 +108,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
 
     clearModifiers(method);
 
-    @NonNls StringBuffer call = new StringBuffer();
+    @NonNls StringBuilder call = new StringBuilder();
 
     PsiModifierList modifierList = null;
 

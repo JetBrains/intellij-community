@@ -442,7 +442,6 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     }
 
     if (!(param instanceof PsiClassType)) return null;
-    PsiManager manager = myManager;
     if (arg instanceof PsiPrimitiveType) {
       if (!JavaVersionService.getInstance().isAtLeast(typeParam, JavaSdkVersion.JDK_1_7) && !isContraVariantPosition) return null;
       arg = ((PsiPrimitiveType)arg).getBoxedType(typeParam);
@@ -477,7 +476,7 @@ public class PsiOldInferenceHelper implements PsiInferenceHelper {
     PsiClass argClass = (PsiClass)argResult.getElement();
     if (argClass == null) return null;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
     PsiType patternType = factory.createType(typeParam);
     if (isContraVariantPosition) {
       PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(paramClass, argClass, argResult.getSubstitutor());

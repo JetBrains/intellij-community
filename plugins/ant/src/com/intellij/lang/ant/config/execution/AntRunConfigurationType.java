@@ -14,6 +14,11 @@ public final class AntRunConfigurationType extends SimpleConfigurationType {
     super("AntRunConfiguration", "Ant Target", "Run Ant Target", LazyUtil.create(() -> AntIcons.Build));
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.AntRunConfiguration";
+  }
+
   @NotNull
   public static AntRunConfigurationType getInstance() {
     return ConfigurationTypeUtil.findConfigurationType(AntRunConfigurationType.class);

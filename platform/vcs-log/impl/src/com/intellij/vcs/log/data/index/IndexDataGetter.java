@@ -343,7 +343,7 @@ public class IndexDataGetter {
   }
 
   private static class CorruptedDataException extends RuntimeException {
-    public CorruptedDataException(@NotNull String message) {
+    CorruptedDataException(@NotNull String message) {
       super(message);
     }
   }

@@ -42,10 +42,13 @@ public class BranchContextTracker implements BranchChangeListener {
     if (!vcsConfiguration.RELOAD_CONTEXT) return;
 
     // check if the task is already switched
-    LocalTask task = TaskManager.getManager(myProject).getActiveTask();
-    List<BranchInfo> branches = task.getBranches(false);
-    if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
-      return;
+    TaskManager manager = TaskManager.getManager(myProject);
+    if (manager != null) {
+      LocalTask task = manager.getActiveTask();
+      List<BranchInfo> branches = task.getBranches(false);
+      if (branches.stream().anyMatch(info -> branchName.equals(info.name)))
+        return;
+    }
 
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;

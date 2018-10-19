@@ -507,7 +507,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     @NotNull private final PsiVariable variable;
     private final PsiElement skipContext;
 
-    public VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {
+    VariableUsedOutsideContextVisitor(@NotNull PsiVariable variable, PsiElement skipContext) {
       this.variable = variable;
       this.skipContext = skipContext;
     }

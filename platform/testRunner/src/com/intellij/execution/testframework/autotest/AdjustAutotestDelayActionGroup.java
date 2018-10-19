@@ -64,7 +64,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   private static class SetAutoTestDelayAction extends ToggleAction {
     private final int myDelay;
 
-    public SetAutoTestDelayAction(int delay) {
+    SetAutoTestDelayAction(int delay) {
       super(delay + "s");
       myDelay = delay * 1000;
     }

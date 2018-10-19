@@ -145,7 +145,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
   }
 
   private static class ModuleListRenderer extends ListCellRendererWrapper<Module> {
-    public ModuleListRenderer(JComboBox comboBox) {
+    ModuleListRenderer(JComboBox comboBox) {
       super();
     }
 

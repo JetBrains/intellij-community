@@ -78,7 +78,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     private final VcsLogUi myUI;
     private final VcsLogUiProperties myProperties;
 
-    public SelectIntelliSortTypeAction(@NotNull VcsLogUi ui,
+    SelectIntelliSortTypeAction(@NotNull VcsLogUi ui,
                                        @NotNull VcsLogUiProperties properties,
                                        @NotNull PermanentGraph.SortType sortType) {
       super(sortType.getName(), sortType.getDescription() + ".", null);

@@ -71,7 +71,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     boolean myNull;
     boolean myReturnsParameter;
 
-    public NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
+    NullCheckParameter(int index, boolean aNull, boolean returnsParameter) {
       myIndex = index;
       myNull = aNull;
       myReturnsParameter = returnsParameter;

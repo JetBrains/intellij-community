@@ -624,7 +624,7 @@ public class ProjectStructureConfigurable implements SearchableConfigurable, Pla
   }
 
   private class MyPanel extends JPanel implements DataProvider {
-    public MyPanel() {
+    MyPanel() {
       super(new BorderLayout());
     }
 

@@ -85,7 +85,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
 
-    public MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
+    MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();

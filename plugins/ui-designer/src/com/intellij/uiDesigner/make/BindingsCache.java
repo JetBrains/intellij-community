@@ -25,7 +25,7 @@ final class BindingsCache {
   private static final String BINDINGS_FILE_NAME = "formbinding.dat";
   private StateCache<MyState> myCache;
 
-  public BindingsCache(final Project project) {
+  BindingsCache(final Project project) {
     final File cacheStoreDirectory = CompilerPaths.getCacheStoreDirectory(project);
     try {
       if (cacheStoreDirectory != null) {
@@ -131,7 +131,7 @@ final class BindingsCache {
     private final long myFormTimeStamp;
     private final String myClassName;
 
-    public MyState(final long formTimeStamp, final String className){
+    MyState(final long formTimeStamp, final String className){
       myFormTimeStamp = formTimeStamp;
       myClassName = className;
     }

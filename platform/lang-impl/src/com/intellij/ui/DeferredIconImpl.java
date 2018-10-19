@@ -31,8 +31,8 @@ import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
@@ -65,11 +65,9 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
-  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor
-    .createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
+  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
 
   private final IconListener<T> myEvalListener;
-  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator");
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
     super(icon);
@@ -189,7 +187,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
       final boolean shouldRevalidate =
         Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
 
-      ourLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
         setDone(result);
         if (equalIcons(result, myDelegateIcon)) return;
 

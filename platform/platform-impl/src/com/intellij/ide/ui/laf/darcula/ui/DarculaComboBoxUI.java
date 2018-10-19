@@ -31,7 +31,6 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
   private static final Color NON_EDITABLE_BACKGROUND = JBColor.namedColor("ComboBox.darcula.nonEditableBackground", new JBColor(0xfcfcfc, 0x3c3f41));

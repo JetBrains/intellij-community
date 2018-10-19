@@ -477,7 +477,7 @@ public class XPathEvalAction extends XPathAction {
         private final XPath myXPath;
         private final XmlElement myContextNode;
 
-        public MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
+        MyUsageSearcher(List<?> result, XPath xPath, XmlElement contextNode) {
             myResult = result;
             myXPath = xPath;
             myContextNode = contextNode;

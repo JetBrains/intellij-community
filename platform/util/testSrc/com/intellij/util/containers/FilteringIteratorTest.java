@@ -92,7 +92,7 @@ public class FilteringIteratorTest extends TestCase {
     public int myHasNextCalls = 0;
     private final Iterator myIterator;
 
-    public MockIterator(Iterator iterator) {
+    MockIterator(Iterator iterator) {
       myIterator = iterator;
     }
 
@@ -117,7 +117,7 @@ public class FilteringIteratorTest extends TestCase {
     private final Condition myCondition;
     public int myValueCalls = 0;
 
-    public MockCondition(Condition condition) {
+    MockCondition(Condition condition) {
       myCondition = condition;
     }
 

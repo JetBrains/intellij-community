@@ -47,7 +47,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final Project myProject;
   private final ArrayList<? super UsageInfo> myResult;
 
-  public SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<? super UsageInfo> result) {
+  SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<? super UsageInfo> result) {
     super(method, project, "Select Methods To Propagate Parameter Deletion", null, EmptyConsumer.getInstance());
     myMethod = method;
     myProject = project;
@@ -222,7 +222,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
 
     private final int myParameterIdx;
 
-    public SafeDeleteJavaMethodNode(PsiMethod currentMethod,
+    SafeDeleteJavaMethodNode(PsiMethod currentMethod,
                                     HashSet<PsiMethod> called,
                                     Runnable cancelCallback,
                                     int idx,

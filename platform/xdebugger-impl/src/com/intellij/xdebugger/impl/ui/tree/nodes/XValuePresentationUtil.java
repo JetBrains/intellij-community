@@ -95,7 +95,7 @@ public class XValuePresentationUtil {
   private static class XValuePresentationTextExtractor extends XValueTextRendererBase {
     private final StringBuilder myBuilder;
 
-    public XValuePresentationTextExtractor() {
+    XValuePresentationTextExtractor() {
       myBuilder = new StringBuilder();
     }
 

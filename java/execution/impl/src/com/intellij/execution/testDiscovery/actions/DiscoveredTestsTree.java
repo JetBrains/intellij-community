@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 class DiscoveredTestsTree extends Tree implements DataProvider {
   private final DiscoveredTestsTreeModel myModel;
 
-  public DiscoveredTestsTree(String title) {
+  DiscoveredTestsTree(String title) {
     myModel = new DiscoveredTestsTreeModel();
     setModel(new AsyncTreeModel(myModel));
     HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);

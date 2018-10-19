@@ -298,7 +298,7 @@ public final class SocketLock {
     private final String myToken;
     private State myState = State.HEADER;
 
-    public MyChannelInboundHandler(@NotNull String[] lockedPaths,
+    MyChannelInboundHandler(@NotNull String[] lockedPaths,
                                    @NotNull AtomicReference<? extends Consumer<List<String>>> activateListener,
                                    @NotNull String token) {
       myLockedPaths = lockedPaths;

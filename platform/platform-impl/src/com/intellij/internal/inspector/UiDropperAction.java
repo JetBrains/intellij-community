@@ -409,7 +409,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
       setFont(UIUtil.getLabelFont());
     }
 
-    public MyLabel(String text, JComponent glassPane, int width) {
+    MyLabel(String text, JComponent glassPane, int width) {
       super(text);
       myText = text;
       myGlasspane = glassPane;
@@ -986,7 +986,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     Component lastComponent;
     MyLabel myLabel;
 
-    public UiDropper() {
+    UiDropper() {
       Toolkit.getDefaultToolkit()
         .addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
       UiDropperActionExtension[] extensions = Extensions.getExtensions(UiDropperActionExtension.EP_NAME);

@@ -211,7 +211,7 @@ public class DuplicatesIndex extends FileBasedIndexExtension<Integer, TIntArrayL
     private final DuplicatesProfile myProfile;
     private final DuplocatorState myDuplocatorState;
 
-    public MyFragmentsCollector(DuplicatesProfile profile, Language language) {
+    MyFragmentsCollector(DuplicatesProfile profile, Language language) {
       myProfile = profile;
       myDuplocatorState = profile.getDuplocatorState(language);
     }

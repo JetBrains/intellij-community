@@ -34,7 +34,7 @@ public abstract class YamlNonEditableKeysInspectionBase extends YamlMetaTypeInsp
     private final ProblemsHolder myProblemsHolder;
     private final StripNonEditableKeysQuickFix myQuickFix;
 
-    public StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
+    StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
       myProblemsHolder = problemsHolder;
       myMetaTypeProvider = metaTypeProvider;
       myQuickFix = new StripNonEditableKeysQuickFix(myMetaTypeProvider);

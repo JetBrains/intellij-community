@@ -49,7 +49,7 @@ class CopyClassDialog extends DialogWrapper{
   };
   protected MoveDestination myDestination;
 
-  public CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
+  CopyClassDialog(PsiClass aClass, PsiDirectory defaultTargetDirectory, Project project, boolean doClone) {
     super(project, true);
     myProject = project;
     myDefaultTargetDirectory = defaultTargetDirectory;

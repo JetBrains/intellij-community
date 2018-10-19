@@ -187,7 +187,7 @@ public abstract class ConnectionOnProcess implements IConnection {
     private boolean myIsProcessTerminated = false;
     private final char[] myBuffer = new char[8192];
 
-    public ReadProcessThread(final Reader reader) {
+    ReadProcessThread(final Reader reader) {
       myReader = reader;
     }
 

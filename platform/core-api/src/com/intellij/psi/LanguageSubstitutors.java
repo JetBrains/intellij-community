@@ -137,7 +137,7 @@ public final class LanguageSubstitutors extends LanguageExtension<LanguageSubsti
     private final Language myPrevLang;
     private final Language mySubstitutedLang;
 
-    public SubstitutionInfo(@NotNull Language prevLang, @NotNull Language substitutedLang) {
+    SubstitutionInfo(@NotNull Language prevLang, @NotNull Language substitutedLang) {
       myPrevLang = prevLang;
       mySubstitutedLang = substitutedLang;
     }

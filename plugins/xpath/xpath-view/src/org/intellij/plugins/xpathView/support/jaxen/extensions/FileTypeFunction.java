@@ -20,7 +20,7 @@ import org.intellij.lang.xpath.context.functions.Parameter;
 import org.intellij.lang.xpath.psi.XPathType;
 
 class FileTypeFunction extends BasicFileInfoFunction {
-    public FileTypeFunction() {
+    FileTypeFunction() {
         super("file-type", XPathType.STRING, new Parameter(XPathType.NODESET, Parameter.Kind.OPTIONAL));
     }
 

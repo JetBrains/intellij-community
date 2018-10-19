@@ -22,7 +22,7 @@ import java.util.*;
  * to determine the run classpath.
  */
 public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
+  private static final Logger LOG = Logger.getInstance(ModuleBasedConfiguration.class);
 
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
@@ -134,6 +134,14 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       RunConfigurationModule configurationModule = configuration.getConfigurationModule();
       String moduleName = StringUtil.nullize(configurationModule.getModuleName());
       configuration.readExternal(element);
+
+      // we don't call super.clone(), but writeExternal doesn't copy transient fields in the options like isAllowRunningInParallel
+      // so, we have to call copyFrom to ensure that state is fully cloned
+      // MUST BE AFTER readExternal because readExternal set options to a new instance
+      ModuleBasedConfigurationOptions clonedOptions = configuration.getOptions();
+      clonedOptions.copyFrom(getOptions());
+      clonedOptions.resetModificationCount();
+
       if (moduleName != null && StringUtil.nullize(configurationModule.getModuleName()) == null) {
         configurationModule.setModuleName(moduleName);
       }

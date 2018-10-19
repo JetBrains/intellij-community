@@ -75,7 +75,7 @@ public class PluginDescriptorTest {
       private final URL myUrl;
       private boolean hasMoreElements = true;
 
-      public SingleUrlEnumeration(URL url) {
+      SingleUrlEnumeration(URL url) {
         myUrl = url;
       }
 
@@ -95,7 +95,7 @@ public class PluginDescriptorTest {
     class TestLoader extends UrlClassLoader {
       private final URL myUrl;
 
-      public TestLoader(String prefix, String suffix) throws MalformedURLException {
+      TestLoader(String prefix, String suffix) throws MalformedURLException {
         super(build());
         myUrl = new URL(prefix + new File(getTestDataPath()).toURI().toURL().toString() + suffix + "META-INF/plugin.xml");
       }

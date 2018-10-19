@@ -10,7 +10,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
 class CollectionBinding extends AbstractCollectionBinding  {
-  public CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
+  CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
     super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
 

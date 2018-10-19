@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 final class EvaluateAction extends XDebuggerActionBase {
-  public EvaluateAction() {
+  EvaluateAction() {
     super(true);
   }
 

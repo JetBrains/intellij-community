@@ -38,15 +38,7 @@ public class TopAnomaliesAction extends ActionGroup {
     if (i != 0) {
       return i;
     }
-    int h1 = o1.hashCode();
-    int h2 = o2.hashCode();
-    if (h1 > h2) {
-      return 1;
-    }
-    if (h1 < h2) {
-      return -1;
-    }
-    return 0;
+    return Integer.compare(o1.hashCode(), o2.hashCode());
   };
   private static final int LIMIT = 10;
 

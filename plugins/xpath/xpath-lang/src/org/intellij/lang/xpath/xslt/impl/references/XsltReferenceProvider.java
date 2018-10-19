@@ -168,7 +168,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       private final XsltParameter myParam;
       private final XmlTag myTag;
 
-      public MySelfReference(XmlAttribute attribute, XsltParameter param) {
+      MySelfReference(XmlAttribute attribute, XsltParameter param) {
         super(attribute, param);
         myParam = param;
         myTag = param.getTag();

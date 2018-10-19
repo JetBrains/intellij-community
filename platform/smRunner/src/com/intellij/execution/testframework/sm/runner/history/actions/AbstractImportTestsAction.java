@@ -200,6 +200,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
       throw new ExecutionException("Unable to run the configuration: failed to detect test framework");
     }
 
+    @NotNull
     @Override
     public String getName() {
       return myImported && myConfiguration != null ? myConfiguration.getName() : myFile.getNameWithoutExtension();

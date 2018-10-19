@@ -231,7 +231,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
 
   private PsiMethod createMethodSignature(String createMethodName) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myProject);
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     final PsiMethod constructor = getWorkingConstructor();
     for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
       final String pureParamName = styleManager.variableNameToPropertyName(parameter.getName(), VariableKind.PARAMETER);

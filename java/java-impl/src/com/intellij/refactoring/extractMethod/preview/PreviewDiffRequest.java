@@ -34,7 +34,7 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   private CaretTracker myCaretTracker; // accessed in EDT
   private boolean myInitialized; // accessed in EDT
 
-  public PreviewDiffRequest(@NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
+  PreviewDiffRequest(@NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
                             @NotNull DiffContent content1,
                             @NotNull DiffContent content2,
                             @NotNull Consumer<? super FragmentNode> selectNode) {

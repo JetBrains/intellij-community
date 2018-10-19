@@ -258,7 +258,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       private final long myLoadedTimeStamp;
       @NotNull private final List<TextFilePatch> myTextFilePatches;
 
-      public PatchInfo(@NotNull List<TextFilePatch> patches, long loadedTimeStamp) {
+      PatchInfo(@NotNull List<TextFilePatch> patches, long loadedTimeStamp) {
         myTextFilePatches = patches;
         myLoadedTimeStamp = loadedTimeStamp;
       }
@@ -268,7 +268,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
   private static abstract class ShelveDiffRequestProducer implements ChangeDiffRequestChain.Producer {
     @NotNull protected final FilePath myFilePath;
 
-    public ShelveDiffRequestProducer(@NotNull FilePath filePath) {
+    ShelveDiffRequestProducer(@NotNull FilePath filePath) {
       myFilePath = filePath;
     }
 
@@ -299,7 +299,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @NotNull private final Project myProject;
     @NotNull private final ShelvedBinaryFile myBinaryChange;
 
-    public BinaryShelveDiffRequestProducer(@NotNull Project project,
+    BinaryShelveDiffRequestProducer(@NotNull Project project,
                                            @NotNull ShelvedBinaryFile change,
                                            @NotNull FilePath filePath) {
       super(filePath);
@@ -332,7 +332,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     private final PatchesPreloader myPreloader;
     private final CommitContext myCommitContext;
 
-    public PatchShelveDiffRequestProducer(@NotNull Project project,
+    PatchShelveDiffRequestProducer(@NotNull Project project,
                                           @NotNull ShelvedChange change,
                                           @NotNull FilePath filePath,
                                           @NotNull PatchesPreloader preloader,
@@ -363,7 +363,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @NotNull private final CommitContext myCommitContext;
     private final boolean myWithLocal;
 
-    public NewFileTextShelveDiffRequestProducer(@NotNull Project project,
+    NewFileTextShelveDiffRequestProducer(@NotNull Project project,
                                                 @NotNull ShelvedChange change,
                                                 @NotNull FilePath filePath,
                                                 @NotNull PatchesPreloader preloader,
@@ -407,7 +407,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @NotNull private final CommitContext myCommitContext;
     private final boolean myWithLocal;
 
-    public TextShelveDiffRequestProducer(@NotNull Project project,
+    TextShelveDiffRequestProducer(@NotNull Project project,
                                          @NotNull ShelvedChange change,
                                          @NotNull FilePath filePath,
                                          @NotNull VirtualFile file,
@@ -519,7 +519,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     @NotNull protected final Project myProject;
     @NotNull protected final ShelvedChange myChange;
 
-    public BaseTextShelveDiffRequestProducer(@NotNull Project project,
+    BaseTextShelveDiffRequestProducer(@NotNull Project project,
                                              @NotNull ShelvedChange change,
                                              @NotNull FilePath filePath) {
       super(filePath);

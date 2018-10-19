@@ -178,7 +178,8 @@ public class DirectoryMappingListTest extends PlatformTestCase {
   private void createFiles(final String[] paths) {
     for (String path : paths) {
       final File file = new File(FileUtil.toSystemDependentName(path));
-      assert file.mkdirs() || file.isDirectory() : file;
+      boolean created = file.mkdirs();
+      assert created || file.isDirectory() : file;
       myFilesToDelete.add(file);
     }
   }

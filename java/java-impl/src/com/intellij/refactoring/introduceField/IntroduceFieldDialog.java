@@ -46,7 +46,7 @@ class IntroduceFieldDialog extends DialogWrapper {
   private NameSuggestionsManager myNameSuggestionsManager;
   private static final String REFACTORING_NAME = RefactoringBundle.message("introduce.field.title");
 
-  public IntroduceFieldDialog(Project project,
+  IntroduceFieldDialog(Project project,
                               PsiClass parentClass,
                               PsiExpression initializerExpression,
                               PsiLocalVariable localVariable,

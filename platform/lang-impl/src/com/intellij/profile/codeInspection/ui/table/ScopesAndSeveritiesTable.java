@@ -186,7 +186,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     private ScopesAndSeveritiesTable myTable;
     private String[] myScopeNames;
 
-    public MyTableModel(final TableSettings tableSettings) {
+    MyTableModel(final TableSettings tableSettings) {
       myTableSettings = tableSettings;
       myProject = tableSettings.getProject();
       myInspectionProfile = tableSettings.getInspectionProfile();
@@ -449,7 +449,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     private final List<ScopeToolState> myExistedStates;
     private final List<String> myNonExistNames;
 
-    public ExistedScopesStatesAndNonExistNames(final List<ScopeToolState> existedStates, final List<String> nonExistNames) {
+    ExistedScopesStatesAndNonExistNames(final List<ScopeToolState> existedStates, final List<String> nonExistNames) {
       myExistedStates = existedStates;
       myNonExistNames = nonExistNames;
     }

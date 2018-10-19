@@ -96,7 +96,7 @@ public class RefactoringListeners {
     private final Accessor<T> myAccessor;
     private final String myPath;
 
-    public RenameElement(final Accessor<T> accessor, final String path) {
+    RenameElement(final Accessor<T> accessor, final String path) {
       myAccessor = accessor;
       myPath = path;
     }
@@ -129,7 +129,7 @@ public class RefactoringListeners {
   }
 
   private static class RefactorPackage extends RenameElement<PsiPackage> {
-    public RefactorPackage(final Accessor<PsiPackage> accessor, final String path) {
+    RefactorPackage(final Accessor<PsiPackage> accessor, final String path) {
       super(accessor, path);
     }
 
@@ -145,7 +145,7 @@ public class RefactoringListeners {
   }
 
   private static class RefactorClass extends RenameElement<PsiClass> {
-    public RefactorClass(final Accessor<PsiClass> accessor, final String path) {
+    RefactorClass(final Accessor<PsiClass> accessor, final String path) {
       super(accessor, path);
     }
 
@@ -196,7 +196,7 @@ public class RefactoringListeners {
     private final RefactoringListeners.Accessor<PsiClass> myAccessor;
     private final String myInpackageName;
 
-    public ClassPackageAccessor(final RefactoringListeners.Accessor<PsiClass> accessor) {
+    ClassPackageAccessor(final RefactoringListeners.Accessor<PsiClass> accessor) {
       myAccessor = accessor;
       PsiClass aClass = myAccessor.getPsiElement();
       aClass = (PsiClass)aClass.getOriginalElement();

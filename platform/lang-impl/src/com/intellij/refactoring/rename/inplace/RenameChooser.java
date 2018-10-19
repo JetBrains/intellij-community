@@ -44,7 +44,7 @@ abstract class RenameChooser {
   private final Editor myEditor;
   private final TextAttributes myAttributes;
 
-  public RenameChooser(Editor editor) {
+  RenameChooser(Editor editor) {
     myEditor = editor;
     myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }

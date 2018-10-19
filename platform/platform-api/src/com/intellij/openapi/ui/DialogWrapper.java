@@ -493,9 +493,6 @@ public abstract class DialogWrapper {
         actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
     }
-    else if (UIUtil.isUnderGTKLookAndFeel() && actions.remove(helpAction)) {
-      leftSideActions.add(helpAction);
-    }
 
     if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
       actions = flattenOptionsActions(actions);

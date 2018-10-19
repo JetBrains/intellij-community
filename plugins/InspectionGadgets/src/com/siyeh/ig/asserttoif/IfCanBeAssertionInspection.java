@@ -143,7 +143,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
     private final boolean myIsIfStatement;
 
-    public ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
+    ReplaceWithObjectsNonNullFix(boolean isIfStatement) {
       myIsIfStatement = isIfStatement;
     }
 

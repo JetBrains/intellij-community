@@ -181,7 +181,7 @@ abstract class GitImplBase implements Git {
     private int myExitCode = 0;
     private boolean myStartFailed = false;
 
-    public GitCommandResultListener(OutputCollector outputCollector) {
+    GitCommandResultListener(OutputCollector outputCollector) {
       myOutputCollector = outputCollector;
     }
 

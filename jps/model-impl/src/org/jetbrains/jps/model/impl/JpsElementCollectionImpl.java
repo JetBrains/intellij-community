@@ -132,7 +132,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   private class JpsElementIterable<X extends JpsTypedElement<P>, P extends JpsElement> implements Iterable<X> {
     private final JpsElementType<? extends JpsElement> myType;
 
-    public JpsElementIterable(JpsElementType<P> type) {
+    JpsElementIterable(JpsElementType<P> type) {
       myType = type;
     }
 

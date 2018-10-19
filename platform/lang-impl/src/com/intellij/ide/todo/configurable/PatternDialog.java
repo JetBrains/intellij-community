@@ -54,7 +54,7 @@ class PatternDialog extends DialogWrapper {
   private final int myPatternIndex;
   private final List<? extends TodoPattern> myExistingPatterns;
 
-  public PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<? extends TodoPattern> existingPatterns) {
+  PatternDialog(Component parent, TodoPattern pattern, int patternIndex, List<? extends TodoPattern> existingPatterns) {
     super(parent, true);
     myPatternIndex = patternIndex;
     myExistingPatterns = existingPatterns;

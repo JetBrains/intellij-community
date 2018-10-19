@@ -26,7 +26,7 @@ public final class EditorsFileInfoContainer {
 	// Fields =================================================================
 
 	private final File file;
-	private final List editors = new ArrayList();
+	private final List<Editor> editors = new ArrayList<>();
 
 	// Setup ==================================================================
 
@@ -46,7 +46,7 @@ public final class EditorsFileInfoContainer {
 		editors.add(new Editor(date, user, client, editDirectory));
 	}
 
-	public List getEditors() {
+	public List<Editor> getEditors() {
 		return Collections.unmodifiableList(editors);
 	}
 

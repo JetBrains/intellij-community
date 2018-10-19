@@ -4,10 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.LinuxDistributionCustomizer
+import org.jetbrains.intellij.build.*
 
 /**
  * @author nik
@@ -18,16 +15,21 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String iconPngPath
 
   LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer, File ideaProperties) {
-    super(BuildOptions.OS_LINUX, "Linux", buildContext)
+    super(buildContext)
     this.customizer = customizer
     this.ideaProperties = ideaProperties
     iconPngPath = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
   }
 
   @Override
+  OsFamily getTargetOs() {
+    return OsFamily.LINUX
+  }
+
+  @Override
   String copyFilesForOsDistribution() {
-    String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.unix"
-    buildContext.messages.progress("Building distributions for Linux")
+    String unixDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
+    buildContext.messages.progress("Building distributions for $targetOs.osName")
     buildContext.ant.copy(todir: "$unixDistPath/bin") {
       fileset(dir: "$buildContext.paths.communityHome/bin/linux")
       if (buildContext.productProperties.yourkitAgentBinariesDirectoryPath != null) {

@@ -196,7 +196,7 @@ public class AppEngineUploader {
     @Nullable private final ConsoleView myConsole;
     @Nullable private final LoggingHandler myLoggingHandler;
 
-    public MyProcessListener(ProcessHandler processHandler, @Nullable ConsoleView console, @Nullable LoggingHandler loggingHandler) {
+    MyProcessListener(ProcessHandler processHandler, @Nullable ConsoleView console, @Nullable LoggingHandler loggingHandler) {
       myProcessHandler = processHandler;
       myConsole = console;
       myLoggingHandler = loggingHandler;

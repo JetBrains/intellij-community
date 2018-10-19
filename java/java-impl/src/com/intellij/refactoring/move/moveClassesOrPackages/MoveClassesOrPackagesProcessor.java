@@ -327,7 +327,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final PsiNamedElement myElement;
     final PsiModifierListOwner myMember;
 
-    public ClassMemberWrapper(PsiNamedElement element) {
+    ClassMemberWrapper(PsiNamedElement element) {
       myElement = element;
       myMember = (PsiModifierListOwner) element;
     }
@@ -601,7 +601,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     private final HashMap<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<>();
     private final HashMap<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<>();
 
-    public MyClassInstanceReferenceVisitor(MultiMap<PsiElement, String> conflicts) {
+    MyClassInstanceReferenceVisitor(MultiMap<PsiElement, String> conflicts) {
       myConflicts = conflicts;
     }
 

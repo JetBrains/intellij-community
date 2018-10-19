@@ -32,7 +32,7 @@ class ConditionalExpressionEvaluator implements Evaluator {
   private final Evaluator myThenEvaluator;
   private final Evaluator myElseEvaluator;
 
-  public ConditionalExpressionEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
+  ConditionalExpressionEvaluator(Evaluator conditionEvaluator, Evaluator thenEvaluator, Evaluator elseEvaluator) {
     myConditionEvaluator = conditionEvaluator;
     myThenEvaluator = thenEvaluator;
     myElseEvaluator = elseEvaluator;

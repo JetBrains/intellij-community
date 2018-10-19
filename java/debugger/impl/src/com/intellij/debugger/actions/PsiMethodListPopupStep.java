@@ -22,7 +22,7 @@ class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
     void execute(SmartStepTarget stepTarget);
   }
 
-  public PsiMethodListPopupStep(Editor editor, final List<SmartStepTarget> targets, final OnChooseRunnable stepRunnable) {
+  PsiMethodListPopupStep(Editor editor, final List<SmartStepTarget> targets, final OnChooseRunnable stepRunnable) {
     myTargets = targets;
     myScopeHighlighter = new ScopeHighlighter(editor);
     myStepRunnable = stepRunnable;

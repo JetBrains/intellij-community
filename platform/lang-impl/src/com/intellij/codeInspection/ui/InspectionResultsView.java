@@ -481,8 +481,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
     final JPanel editorPanel = new JPanel();
     editorPanel.setLayout(new BorderLayout());
-    final JPanel toolsPanel = new JPanel(new BorderLayout());
-    editorPanel.add(toolsPanel, BorderLayout.NORTH);
+    final JPanel actionsPanel = new JPanel(new BorderLayout());
+    editorPanel.add(actionsPanel, BorderLayout.NORTH);
     final int problemCount = myTree.getSelectedProblemCount(true);
     JComponent previewPanel = null;
     final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
@@ -495,9 +495,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           CommonProblemDescriptor descriptor = ((ProblemDescriptionNode)last).getDescriptor();
           if (descriptor != null) {
             previewPanel = presentation.getCustomPreviewPanel(descriptor, this);
-            JComponent customTools = presentation.getCustomToolsPanel(descriptor, this);
-            if (customTools != null) {
-              toolsPanel.add(customTools, BorderLayout.EAST);
+            JComponent customActions = presentation.getCustomActionsPanel(descriptor, this);
+            if (customActions != null) {
+              actionsPanel.add(customActions, BorderLayout.EAST);
             }
           }
         }
@@ -524,7 +524,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
-        toolsPanel.add(fixToolbar, BorderLayout.WEST);
+        actionsPanel.add(fixToolbar, BorderLayout.WEST);
       }
     }
     if (previewEditor != null) {

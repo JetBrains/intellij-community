@@ -285,7 +285,7 @@ public abstract class LocalToFieldHandler {
     private final PsiExpression[] myOccurences;
     private PsiField myField;
 
-    public IntroduceFieldRunnable(boolean rebindNeeded,
+    IntroduceFieldRunnable(boolean rebindNeeded,
                                   PsiLocalVariable local,
                                   PsiClass aClass,
                                   BaseExpressionToFieldHandler.Settings settings,

@@ -36,7 +36,7 @@ class BekBranchCreator {
 
   @NotNull private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
 
-  public BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
+  BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
     myPermanentGraph = permanentGraph;
     myGraphLayout = graphLayout;
     myDoneNodes = new BitSetFlags(permanentGraph.nodesCount(), false);

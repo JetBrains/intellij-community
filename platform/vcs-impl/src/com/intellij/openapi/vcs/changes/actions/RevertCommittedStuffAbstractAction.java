@@ -38,7 +38,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
   private final Convertor<AnActionEvent, Change[]> myForPerformConvertor;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.actions.RevertCommittedStuffAbstractAction");
 
-  public RevertCommittedStuffAbstractAction(final Convertor<AnActionEvent, Change[]> forUpdateConvertor,
+  RevertCommittedStuffAbstractAction(final Convertor<AnActionEvent, Change[]> forUpdateConvertor,
                                             final Convertor<AnActionEvent, Change[]> forPerformConvertor) {
     myForUpdateConvertor = forUpdateConvertor;
     myForPerformConvertor = forPerformConvertor;

@@ -27,7 +27,7 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  public ComponentTreeStructure(@NotNull final GuiEditor editor){
+  ComponentTreeStructure(@NotNull final GuiEditor editor){
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }

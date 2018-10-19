@@ -87,7 +87,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     private final boolean inSameFile;
 
-    public UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
+    UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
       this.inSameFile = inSameFile;
     }
 

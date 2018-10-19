@@ -524,7 +524,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static class InferredAnonymousTypeVisitor extends PsiTypeVisitor<Boolean> {
     private final PsiElement myExpression;
 
-    public InferredAnonymousTypeVisitor(PsiElement expression) {
+    InferredAnonymousTypeVisitor(PsiElement expression) {
       myExpression = expression;
     }
 

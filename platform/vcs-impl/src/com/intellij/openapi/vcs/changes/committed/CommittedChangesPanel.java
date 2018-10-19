@@ -328,7 +328,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
     private final List<ChangeListener> myList = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("COMMITTED_CHANGES_FILTER_HISTORY", 20);
     }
 

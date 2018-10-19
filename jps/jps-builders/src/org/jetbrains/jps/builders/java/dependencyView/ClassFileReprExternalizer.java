@@ -18,7 +18,7 @@ class ClassFileReprExternalizer implements DataExternalizer<ClassFileRepr> {
   private final DataExternalizer<ClassRepr> myClassReprExternalizer;
   private final DataExternalizer<ModuleRepr> myModuleReprExternalizer;
 
-  public ClassFileReprExternalizer(DependencyContext context) {
+  ClassFileReprExternalizer(DependencyContext context) {
     myClassReprExternalizer = ClassRepr.externalizer(context);
     myModuleReprExternalizer = ModuleRepr.externalizer(context);
   }

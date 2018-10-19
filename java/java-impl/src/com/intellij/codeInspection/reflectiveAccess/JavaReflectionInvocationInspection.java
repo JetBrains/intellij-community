@@ -160,7 +160,7 @@ public class JavaReflectionInvocationInspection extends AbstractBaseJavaLocalIns
     final PsiExpression[] expressions;
     final boolean varargAsArray;
 
-    public Arguments(PsiExpression[] expressions, boolean varargAsArray) {
+    Arguments(PsiExpression[] expressions, boolean varargAsArray) {
       this.expressions = expressions;
       this.varargAsArray = varargAsArray;
     }

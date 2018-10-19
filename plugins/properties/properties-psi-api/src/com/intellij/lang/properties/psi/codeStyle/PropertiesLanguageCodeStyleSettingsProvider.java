@@ -4,10 +4,8 @@ package com.intellij.lang.properties.psi.codeStyle;
 import com.intellij.lang.Language;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
@@ -38,11 +36,4 @@ public class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeSty
            "last.key=some text here";
   }
 
-  @Nullable
-  @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(getLanguage());
-    defaultSettings.initIndentOptions();
-    return defaultSettings;
-  }
 }

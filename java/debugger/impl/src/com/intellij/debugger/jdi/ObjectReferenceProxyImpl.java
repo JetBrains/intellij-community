@@ -109,8 +109,7 @@ public class ObjectReferenceProxyImpl extends JdiProxy {
     }
     if(this == o) return true;
 
-    ObjectReference ref = myObjectReference;
-    return ref.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
+    return myObjectReference.equals(((ObjectReferenceProxyImpl)o).myObjectReference);
   }
 
 

@@ -403,7 +403,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class MyGroupByPackagesAction extends ToggleAction implements DumbAware {
-    public MyGroupByPackagesAction() {
+    MyGroupByPackagesAction() {
       super(VcsBundle.message("action.name.group.by.packages"), null, PlatformIcons.GROUP_BY_PACKAGES);
     }
 
@@ -426,7 +426,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class GroupByChangeListAction extends ToggleAction implements DumbAware {
-    public GroupByChangeListAction() {
+    GroupByChangeListAction() {
       super(VcsBundle.message("update.info.group.by.changelist"), null, AllIcons.Actions.ShowAsTree);
     }
 
@@ -492,7 +492,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   private class FilterAction extends ToggleAction implements DumbAware {
-    public FilterAction() {
+    FilterAction() {
       super("Scope Filter", VcsBundle.getString("settings.filter.update.project.info.by.scope"), AllIcons.General.Filter);
     }
 

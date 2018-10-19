@@ -305,7 +305,7 @@ public final class StringEditorDialog extends DialogWrapper{
     private JLabel myLblKey;
     private JLabel myLblBundleName;
 
-    public MyForm() {
+    MyForm() {
       myRbString.addActionListener(
         new ActionListener() {
           @Override

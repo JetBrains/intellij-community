@@ -120,7 +120,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     @NotNull private final JTree myTree;
     @NotNull private final TreeSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
+    MySelectAllAction(@NotNull JTree tree, @NotNull TreeSpeedSearch search) {
       myTree = tree;
       mySearch = search;
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));

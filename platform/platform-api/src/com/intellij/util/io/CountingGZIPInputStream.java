@@ -48,7 +48,7 @@ public class CountingGZIPInputStream extends GZIPInputStream {
     private final InputStream myInputStream;
     private long myBytesRead = 0;
 
-    public CountingInputStream(@NotNull InputStream inputStream) {
+    CountingInputStream(@NotNull InputStream inputStream) {
       myInputStream = inputStream;
     }
 

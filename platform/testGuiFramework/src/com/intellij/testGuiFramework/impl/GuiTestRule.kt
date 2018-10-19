@@ -101,7 +101,6 @@ class GuiTestRule : TestRule {
       if (screenRecorderJarUrl == null) return null
 
       val testsToRecord: List<String> = testsToRecord
-      if (testsToRecord.isEmpty()) return null
 
       val classLoader: ClassLoader = UrlClassLoader.build().urls(screenRecorderJarUrl).parent(javaClass.classLoader).get()
       return Class.forName("org.jetbrains.intellij.deps.screenrecorder.ScreenRecorderRule", true, classLoader)

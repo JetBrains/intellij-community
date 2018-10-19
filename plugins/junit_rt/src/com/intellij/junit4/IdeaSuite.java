@@ -34,12 +34,12 @@ import java.util.*;
 class IdeaSuite extends Suite {
   private final String myName;
 
-  public IdeaSuite(List runners, String name) throws InitializationError {
+  IdeaSuite(List runners, String name) throws InitializationError {
     super(null, runners);
     myName = name;
   }
 
-  public IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
+  IdeaSuite(final RunnerBuilder builder, Class[] classes, String name) throws InitializationError {
     super(builder, classes);
     myName = name;
   }

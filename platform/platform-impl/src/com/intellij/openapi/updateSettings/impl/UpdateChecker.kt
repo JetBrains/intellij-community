@@ -232,9 +232,8 @@ object UpdateChecker {
 
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
-    val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-    outer@ for (host in hosts) {
+    outer@ for (host in RepositoryHelper.getPluginHosts()) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
         val list = RepositoryHelper.loadPlugins(host, buildNumber, forceHttps, indicator)

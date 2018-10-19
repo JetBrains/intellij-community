@@ -53,7 +53,7 @@ public class RefactoringCompletionContributor extends CompletionContributor {
   private static class AppendModuleName extends LookupElementRenderer<LookupElementDecorator<LookupElement>> {
     private final Module myModule;
 
-    public AppendModuleName(Module module) {
+    AppendModuleName(Module module) {
       myModule = module;
     }
 

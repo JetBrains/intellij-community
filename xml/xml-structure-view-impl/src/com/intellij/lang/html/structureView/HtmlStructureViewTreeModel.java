@@ -86,7 +86,7 @@ class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements Pl
 
   private static final Sorter[] ourSorters = {HTML_ALPHA_SORTER};
 
-  public HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
+  HtmlStructureViewTreeModel(final XmlFile file, @Nullable Editor editor) {
     super(file, editor);
 
     myNodeProviders = Arrays.asList(new Html5SectionsNodeProvider());

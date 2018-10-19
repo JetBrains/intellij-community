@@ -285,7 +285,7 @@ public class ConsentsTest extends TestCase{
     String myDefaults = "";
     String myConfirmed = "";
 
-    public MemoryIOBackend(@NotNull String defs, @NotNull String bundled) {
+    MemoryIOBackend(@NotNull String defs, @NotNull String bundled) {
       myDefaults = defs;
       myBundled = bundled;
     }

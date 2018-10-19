@@ -18,8 +18,8 @@ enum class RunConfigurationSingletonPolicy {
   val isPolicyConfigurable: Boolean
     get() = this != SINGLE_INSTANCE_ONLY && this != MULTIPLE_INSTANCE_ONLY
 
-  val isSingleton: Boolean
-    get() = this == SINGLE_INSTANCE || this == SINGLE_INSTANCE_ONLY
+  val isAllowRunningInParallel: Boolean
+    get() = this == MULTIPLE_INSTANCE || this == MULTIPLE_INSTANCE_ONLY
 }
 
 inline fun <reified T : ConfigurationType> runConfigurationType(): T = ConfigurationTypeUtil.findConfigurationType(T::class.java)

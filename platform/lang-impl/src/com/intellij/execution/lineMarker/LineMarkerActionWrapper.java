@@ -115,7 +115,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   private class MyDataContext extends UserDataHolderBase implements DataContext {
     private final DataContext myDelegate;
 
-    public MyDataContext(DataContext delegate) {
+    MyDataContext(DataContext delegate) {
       myDelegate = delegate;
     }
 

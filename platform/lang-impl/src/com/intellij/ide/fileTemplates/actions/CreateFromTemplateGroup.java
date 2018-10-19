@@ -145,7 +145,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
 
-    public CreateFromTemplatesAction(String title){
+    CreateFromTemplatesAction(String title){
       super(title,null,null);
     }
 

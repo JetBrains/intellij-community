@@ -223,7 +223,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   private class MyShowDiffAction extends DumbAwareAction {
-    public MyShowDiffAction() {
+    MyShowDiffAction() {
       ActionUtil.copyFrom(this, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 

@@ -65,6 +65,36 @@
       <val name="intValues" val="{java.sql.Connection.TRANSACTION_NONE, java.sql.Connection.TRANSACTION_READ_UNCOMMITTED, java.sql.Connection.TRANSACTION_READ_COMMITTED, java.sql.Connection.TRANSACTION_REPEATABLE_READ, java.sql.Connection.TRANSACTION_SERIALIZABLE}" />
     </annotation>
   </item>
+  <item name='java.sql.ResultSet boolean absolute(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.sql.ResultSet boolean first()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.sql.ResultSet boolean last()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.sql.ResultSet boolean next()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.sql.ResultSet boolean previous()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.sql.ResultSet boolean relative(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
   <item name="java.sql.ResultSet int getFetchDirection()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.sql.ResultSet.FETCH_FORWARD, java.sql.ResultSet.FETCH_REVERSE, java.sql.ResultSet.FETCH_UNKNOWN}" />

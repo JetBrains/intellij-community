@@ -65,6 +65,11 @@ public final class XsltRunConfigType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.XSLT";
+  }
+
   private static class MyConfigurationFactory extends ConfigurationFactory {
     MyConfigurationFactory(XsltRunConfigType type) {
       super(type);

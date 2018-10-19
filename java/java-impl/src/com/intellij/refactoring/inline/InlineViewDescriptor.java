@@ -26,7 +26,7 @@ class InlineViewDescriptor implements UsageViewDescriptor{
 
   private final PsiElement myElement;
 
-  public InlineViewDescriptor(PsiElement element) {
+  InlineViewDescriptor(PsiElement element) {
     myElement = element;
   }
 

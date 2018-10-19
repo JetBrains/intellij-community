@@ -57,7 +57,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     private VirtualFile myVirtualFile;
     @NotNull private final List<PairProcessor<Project, VirtualFile>> myPatterns;
 
-    public MyProvider(@NotNull final Project project,
+    MyProvider(@NotNull final Project project,
                       @NotNull final JsonSchemaVersion version,
                       @NotNull final String name,
                       @NotNull final String file,

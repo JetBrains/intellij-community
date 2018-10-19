@@ -133,7 +133,7 @@ public class GitHandlerUtil {
      * @param handler       a handler instance
      * @param operationName an operation name
      */
-    public GitHandlerListenerBase(final GitHandler handler, final String operationName) {
+    GitHandlerListenerBase(final GitHandler handler, final String operationName) {
       this(handler, operationName, true);
     }
 
@@ -144,7 +144,7 @@ public class GitHandlerUtil {
      * @param operationName an operation name
      * @param showErrors    if true, the errors are shown when process is terminated
      */
-    public GitHandlerListenerBase(final GitHandler handler, final String operationName, boolean showErrors) {
+    GitHandlerListenerBase(final GitHandler handler, final String operationName, boolean showErrors) {
       myHandler = handler;
       myOperationName = operationName;
       myShowErrors = showErrors;
@@ -211,7 +211,7 @@ public class GitHandlerUtil {
      * @param operationName an operation name
      * @param showErrors    if true, the errors are shown when process is terminated
      */
-    public GitLineHandlerListenerBase(GitHandler handler, String operationName, boolean showErrors) {
+    GitLineHandlerListenerBase(GitHandler handler, String operationName, boolean showErrors) {
       super(handler, operationName, showErrors);
     }
 

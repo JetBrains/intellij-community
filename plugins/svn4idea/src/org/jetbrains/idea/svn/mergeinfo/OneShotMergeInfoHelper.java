@@ -131,7 +131,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     @NotNull private final String mySourceRelativePath;
     private final long myRevisionNumber;
 
-    public InfoProcessor(@NotNull String sourceRelativePath, @NotNull String repositoryRelativeSourcePath, long revisionNumber) {
+    InfoProcessor(@NotNull String sourceRelativePath, @NotNull String repositoryRelativeSourcePath, long revisionNumber) {
       mySourceRelativePath = sourceRelativePath;
       myRevisionNumber = revisionNumber;
       myRepositoryRelativeSourcePath = ensureStartSlash(repositoryRelativeSourcePath);

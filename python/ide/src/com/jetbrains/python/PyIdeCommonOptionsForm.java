@@ -343,7 +343,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     private final PyIdeCommonOptionsForm myForm;
     private final PyConfigurableInterpreterList myInterpreterList;
 
-    public MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
+    MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
       myForm = form;
       myInterpreterList = interpreterList;
     }

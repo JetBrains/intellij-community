@@ -78,7 +78,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     private final String myName2;
     private final Boolean myEquals;
 
-    public EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
+    EqualsReplaceableByObjectsCallFix(String name1, String name2, Boolean equals) {
       myName1 = name1;
       myName2 = name2;
       myEquals = equals;
@@ -324,7 +324,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression expression;
     final boolean isEqual;
 
-    public Negated(@NotNull PsiExpression expression, boolean isEqual) {
+    Negated(@NotNull PsiExpression expression, boolean isEqual) {
       this.expression = expression;
       this.isEqual = isEqual;
     }
@@ -348,7 +348,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression compared;
     final boolean isEqual;
 
-    public NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
+    NullCheck(@NotNull PsiExpression compared, boolean isEqual) {
       this.compared = compared;
       this.isEqual = isEqual;
     }
@@ -373,7 +373,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @NotNull final PsiExpression qualifier;
     final boolean isEqual;
 
-    public EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
+    EqualsCheck(@NotNull PsiExpression argument, @NotNull PsiExpression qualifier, boolean isEqual) {
       this.argument = argument;
       this.qualifier = qualifier;
       this.isEqual = isEqual;

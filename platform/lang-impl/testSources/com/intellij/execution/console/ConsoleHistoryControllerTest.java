@@ -144,7 +144,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
 
   private static class MockExecutionActionHandler extends BaseConsoleExecuteActionHandler {
 
-    public MockExecutionActionHandler() {
+    MockExecutionActionHandler() {
       super(true);
     }
   }

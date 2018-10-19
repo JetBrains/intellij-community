@@ -27,7 +27,7 @@ class ServersToolWindowMessagePanel implements ServersToolWindowContent.MessageP
   private JEditorPane myMessageArea;
   private String myCurrentText;
 
-  public ServersToolWindowMessagePanel() {
+  ServersToolWindowMessagePanel() {
     myMessageArea.setBackground(UIUtil.getPanelBackground());
     myMessageArea.setBorder(JBUI.Borders.empty());
     myMessageArea.setCaretPosition(0);

@@ -12,7 +12,7 @@ import java.awt.*;
 final class BeanPropertyTableCellEditor extends AbstractCellEditor implements TableCellEditor{
   private final JTextField myEditorComponent;
 
-  public BeanPropertyTableCellEditor() {
+  BeanPropertyTableCellEditor() {
     myEditorComponent = new JTextField();
     myEditorComponent.setBorder(null);
   }

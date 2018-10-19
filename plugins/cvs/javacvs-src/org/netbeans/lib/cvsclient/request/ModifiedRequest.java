@@ -46,7 +46,7 @@ public final class ModifiedRequest extends AbstractFileStateRequest {
          */
         @Override
         public String getRequestString() {
-                @NonNls final StringBuffer request = new StringBuffer();
+                @NonNls final StringBuilder request = new StringBuilder();
                 request.append("Modified ");
                 request.append(getFileName());
                 request.append('\n');

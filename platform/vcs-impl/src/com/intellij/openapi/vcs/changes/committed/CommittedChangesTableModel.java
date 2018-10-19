@@ -47,7 +47,7 @@ public class CommittedChangesTableModel extends ListTableModel<CommittedChangeLi
   private static class ColumnInfoAdapter extends ColumnInfo {
     private final ChangeListColumn myColumn;
 
-    public ColumnInfoAdapter(ChangeListColumn column) {
+    ColumnInfoAdapter(ChangeListColumn column) {
       super(column.getTitle());
       myColumn = column;
     }

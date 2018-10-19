@@ -424,7 +424,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   private static class LangTreeNode extends CheckedTreeNode {
     @NotNull private final String myLanguageId;
 
-    public LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
+    LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
       super(languageName);
       myLanguageId = languageId;
     }

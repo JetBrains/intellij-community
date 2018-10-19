@@ -265,7 +265,7 @@ public class ProcessListUtil {
     final String user;
     final String state;
 
-    public MacProcessInfo(int pid, String commandLine, String user, String state) {
+    MacProcessInfo(int pid, String commandLine, String user, String state) {
       this.pid = pid;
       this.commandLine = commandLine;
       this.user = user;

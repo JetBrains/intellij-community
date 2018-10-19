@@ -38,7 +38,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         for(PsiStatement statement : statements){
             statement.delete();
         }
-        @NonNls final StringBuffer delegation = new StringBuffer();
+        @NonNls final StringBuilder delegation = new StringBuilder();
         final PsiType returnType = method.getReturnType();
         if(!PsiType.VOID.equals(returnType))
         {

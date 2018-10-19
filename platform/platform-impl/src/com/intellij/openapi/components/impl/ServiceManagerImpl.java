@@ -159,7 +159,7 @@ public class ServiceManagerImpl implements Disposable {
     private final ComponentManagerEx myComponentManager;
     private volatile Object myInitializedComponentInstance;
 
-    public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
+    MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
       myPluginDescriptor = pluginDescriptor;
       myComponentManager = componentManager;

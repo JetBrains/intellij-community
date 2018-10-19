@@ -31,7 +31,7 @@ class ConflictChange extends TwoSideChange.SideChange<MergeConflict> {
 
   private boolean mySemiApplied;
 
-  public ConflictChange(@NotNull MergeConflict conflict,
+  ConflictChange(@NotNull MergeConflict conflict,
                         @NotNull FragmentSide mergeSide,
                         @NotNull TextRange versionRange,
                         @NotNull ChangeList changeList) {

@@ -43,7 +43,7 @@ class JumpFromRemoteFileToLocalAction extends AnAction {
   private final HttpVirtualFile myFile;
   private final Project myProject;
 
-  public JumpFromRemoteFileToLocalAction(HttpVirtualFile file, Project project) {
+  JumpFromRemoteFileToLocalAction(HttpVirtualFile file, Project project) {
     super("Find Local File", "", AllIcons.General.AutoscrollToSource);
 
     myFile = file;

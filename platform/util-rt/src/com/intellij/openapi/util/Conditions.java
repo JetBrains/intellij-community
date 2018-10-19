@@ -198,7 +198,7 @@ public class Conditions {
     private final HashMap<Integer, Pair<SoftReference<T>, Boolean>> myCache = new HashMap<Integer, Pair<SoftReference<T>, Boolean>>();
     private final Condition<? super T> myCondition;
 
-    public SoftRefCache(Condition<? super T> condition) {
+    SoftRefCache(Condition<? super T> condition) {
       myCondition = condition;
     }
 

@@ -42,6 +42,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
@@ -112,7 +114,8 @@ public class ShowAffectedTestsAction extends AnAction {
       if (DumbService.isDumb(project)) return;
       String className = ReadAction.compute(() -> getClassName(psiClass));
       if (className == null) return;
-      processTestDiscovery(project, createTreeProcessor(tree), className, null);
+      List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(className, null));
+      processTestDiscovery(project, createTreeProcessor(tree), classesAndMethods, Collections.emptyList());
       EdtInvocationManager.getInstance().invokeLater(() -> tree.setPaintBusy(false));
     });
   }
@@ -132,7 +135,7 @@ public class ShowAffectedTestsAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     String presentableName =
       PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, 0);
-    showDiscoveredTestsByMethods(project, dataContext, presentableName, method);
+    showDiscoveredTestsByMethods(project, dataContext, presentableName, Collections.emptyList(), method);
   }
 
   private static void showDiscoveredTestsByChanges(@NotNull AnActionEvent e) {
@@ -147,8 +150,9 @@ public class ShowAffectedTestsAction extends AnAction {
                                                   @NotNull String title,
                                                   @NotNull DataContext dataContext) {
     PsiMethod[] asJavaMethods = findMethods(project, changes);
+    List<String> filePaths = getRelativeAffectedPaths(project, Arrays.asList(changes));
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery.selected.changes");
-    showDiscoveredTestsByMethods(project, dataContext, title, asJavaMethods);
+    showDiscoveredTestsByMethods(project, dataContext, title, filePaths, asJavaMethods);
   }
 
   @NotNull
@@ -156,10 +160,9 @@ public class ShowAffectedTestsAction extends AnAction {
     UastMetaLanguage jvmLanguage = Language.findInstance(UastMetaLanguage.class);
 
     List<PsiElement> methods = FormatChangedTextUtil.getInstance().getChangedElements(project, changes, file -> {
+      if (DumbService.isDumb(project)) return null;
       PsiFile psiFile = PsiUtilCore.getPsiFile(project, file);
-      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) {
-        return null;
-      }
+      if (!jvmLanguage.matchesLanguage(psiFile.getLanguage())) return null;
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;
       UFile uFile = UastContextKt.toUElement(psiFile, UFile.class);
@@ -221,9 +224,10 @@ public class ShowAffectedTestsAction extends AnAction {
   private static void showDiscoveredTestsByMethods(@NotNull Project project,
                                                    @NotNull DataContext dataContext,
                                                    @NotNull String title,
+                                                   @NotNull List<String> filePaths,
                                                    @NotNull PsiMethod... methods) {
     DiscoveredTestsTree tree = showTree(project, dataContext, title);
-    processMethods(project, methods, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+    processMethods(project, methods, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
   }
 
   @NotNull
@@ -306,11 +310,12 @@ public class ShowAffectedTestsAction extends AnAction {
 
   public static void processMethods(@NotNull Project project,
                                     @NotNull PsiMethod[] methods,
+                                    @NotNull List<String> filePaths,
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor consumer,
                                     @Nullable Runnable doWhenDone) {
     if (DumbService.isDumb(project)) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      processMethodsInner(project, methods, consumer);
+      processMethodsInner(project, methods, consumer, filePaths);
       if (doWhenDone != null) {
         EdtInvocationManager.getInstance().invokeLater(doWhenDone);
       }
@@ -319,27 +324,24 @@ public class ShowAffectedTestsAction extends AnAction {
 
   private static void processMethodsInner(@NotNull Project project,
                                           @NotNull PsiMethod[] methods,
-                                          @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
+                                          @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
+                                          @NotNull List<String> filePaths) {
     if (DumbService.isDumb(project)) return;
-    for (PsiMethod method : methods) {
-      Couple<String> methodFqnName = ReadAction.compute(() -> getMethodKey(method));
-      if (methodFqnName == null) continue;
-      String fqn = methodFqnName.first;
-      String methodName = methodFqnName.second;
-      processTestDiscovery(project, processor, fqn, methodName);
-    }
+    List<Couple<String>> classesAndMethods =
+      Arrays.stream(methods).map(method -> ReadAction.compute(() -> getMethodKey(method))).filter(Objects::nonNull).collect(Collectors.toList());
+    processTestDiscovery(project, processor, classesAndMethods, filePaths);
   }
 
   private static void processTestDiscovery(@NotNull Project project,
                                            @NotNull TestDiscoveryProducer.PsiTestProcessor processor,
-                                           @NotNull String classFqn,
-                                           @Nullable String methodName) {
+                                           @NotNull List<Couple<String>> classesAndMethods,
+                                           @NotNull List<String> filePaths) {
     GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
     for (TestDiscoveryConfigurationProducer producer : getRunConfigurationProducers(project)) {
       byte frameworkId =
         ((JavaTestConfigurationWithDiscoverySupport)producer.getConfigurationFactory().createTemplateConfiguration(project))
           .getTestFrameworkId();
-      TestDiscoveryProducer.consumeDiscoveredTests(project, classFqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
+      TestDiscoveryProducer.consumeDiscoveredTests(project, classesAndMethods, frameworkId, filePaths, (testClass, testMethod, parameter) -> {
         PsiClass[] testClassPsi = {null};
         PsiMethod[] testMethodPsi = {null};
         ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
@@ -468,5 +470,13 @@ public class ShowAffectedTestsAction extends AnAction {
       .filter(producer -> producer instanceof TestDiscoveryConfigurationProducer)
       .map(producer -> (TestDiscoveryConfigurationProducer)producer)
       .collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static List<String> getRelativeAffectedPaths(@NotNull Project project, @NotNull Collection<Change> changes) {
+    return changes.stream().map(change -> {
+          VirtualFile file = change.getVirtualFile();
+          return file == null ? null : "/" + VfsUtilCore.getRelativePath(file, project.getBaseDir());
+        }).filter(Objects::nonNull).collect(Collectors.toList());
   }
 }

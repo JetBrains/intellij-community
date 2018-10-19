@@ -68,6 +68,7 @@ public class GitCommand {
   public static final GitCommand SHOW = read("show");
   public static final GitCommand STASH = write("stash");
   public static final GitCommand STATUS = write("status");
+  public static final GitCommand SUBMODULE = write("submodule"); // NB: it is write command in the submodule, not in the current root which is the submodule's parent
   public static final GitCommand TAG = read("tag");
   public static final GitCommand UPDATE_INDEX = write("update-index");
   public static final GitCommand UPDATE_REF = write("update-ref");

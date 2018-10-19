@@ -166,7 +166,7 @@ public class MismatchedStringBuilderQueryUpdateInspection extends BaseInspection
     private final PsiVariable variable;
     private boolean updated;
 
-    public StringBuilderUpdateCalledVisitor(PsiVariable variable) {
+    StringBuilderUpdateCalledVisitor(PsiVariable variable) {
       this.variable = variable;
     }
 

@@ -394,6 +394,9 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   private void performLaterWhenNoDeferredOutput(@NotNull Runnable runnable) {
     if (mySpareTimeAlarm.isDisposed()) return;
+    if (myJLayeredPane == null) {
+      getComponent();
+    }
     mySpareTimeAlarm.addRequest(
       () -> performWhenNoDeferredOutput(runnable),
       100,

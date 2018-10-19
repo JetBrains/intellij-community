@@ -79,7 +79,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     @NotNull
     private final UsageViewSettings myUsageViewSettings;
 
-    public MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
+    MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
       myName = PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY,

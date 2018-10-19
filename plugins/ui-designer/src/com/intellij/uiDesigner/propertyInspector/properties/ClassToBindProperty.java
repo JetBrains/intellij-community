@@ -83,7 +83,7 @@ public final class ClassToBindProperty extends Property<RadRootContainer, String
     private final Project myProject;
     private final ClassToBindProperty.MyEditor.MyActionListener myActionListener;
 
-    public MyEditor(final Project project) {
+    MyEditor(final Project project) {
       myProject = project;
       myEditorTextField = new EditorTextField("", project, StdFileTypes.JAVA) {
         @Override

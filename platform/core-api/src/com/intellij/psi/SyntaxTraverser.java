@@ -434,7 +434,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
         }
       };
 
-    public LighterASTApi(final PsiBuilder builder) {
+    LighterASTApi(final PsiBuilder builder) {
       this.builder = builder;
     }
 

@@ -191,7 +191,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    public AutoscrollToSourceAction() {
+    AutoscrollToSourceAction() {
       super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"),
             AllIcons.General.AutoscrollToSource);
     }

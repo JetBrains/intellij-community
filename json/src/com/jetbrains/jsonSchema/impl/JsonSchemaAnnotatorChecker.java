@@ -224,7 +224,7 @@ class JsonSchemaAnnotatorChecker {
             .anyMatch(s -> schema.getJsonObject().equals(s.getJsonObject()))) return;
 
       final JsonSchemaAnnotatorChecker checker = checkByMatchResult(value, result, myOptions);
-      if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
+      if (checker == null || checker.isCorrect()) error("Validates against 'not' schema", value.getDelegate(), JsonErrorPriority.NOT_SCHEMA);
     }
 
     if (schema.getIf() != null) {
@@ -661,6 +661,12 @@ class JsonSchemaAnnotatorChecker {
       if (JsonSchemaType._integer.equals(input) && matchTypes.contains(JsonSchemaType._number)) {
         return input;
       }
+      if (JsonSchemaType._string_number.equals(input) &&
+          (matchTypes.contains(JsonSchemaType._number)
+           || matchTypes.contains(JsonSchemaType._integer)
+           || matchTypes.contains(JsonSchemaType._string))) {
+        return input;
+      }
       //nothing matches, lets return one of the list so that other heuristics does not match
       return matchTypes.iterator().next();
     }
@@ -953,7 +959,8 @@ class JsonSchemaAnnotatorChecker {
     Light,
     MissingItems,
     Medium,
-    Hard
+    Hard,
+    NotSchema
   }
 
   @NotNull
@@ -961,6 +968,7 @@ class JsonSchemaAnnotatorChecker {
     int lowPriorityCount = 0;
     boolean hasMedium = false;
     boolean hasMissing = false;
+    boolean hasHard = false;
     Collection<JsonValidationError> values = checker.getErrors().values();
     for (JsonValidationError value: values) {
       switch (value.getPriority()) {
@@ -974,8 +982,15 @@ class JsonSchemaAnnotatorChecker {
           hasMedium = true;
           break;
         case TYPE_MISMATCH:
-          return AverageFailureAmount.Hard;
+          hasHard = true;
+          break;
+        case NOT_SCHEMA:
+          return AverageFailureAmount.NotSchema;
       }
+    }
+
+    if (hasHard) {
+      return AverageFailureAmount.Hard;
     }
 
     // missing props should win against other conditions

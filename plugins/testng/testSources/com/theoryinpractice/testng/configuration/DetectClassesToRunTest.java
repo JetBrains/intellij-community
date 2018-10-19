@@ -198,8 +198,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestMethodConfiguration(PsiClass aClass, PsiClass secondaryClass, PsiMethod configMethod, PsiMethod... expectedMethods) throws CantRunException {
-    final TestNGConfiguration configuration =
-      new TestNGConfiguration("testOne", getProject(), TestNGConfigurationType.getInstance());
+    final TestNGConfiguration configuration = new TestNGConfiguration("testOne", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.METHOD.getType();
     data.METHOD_NAME = "testOne";
@@ -222,7 +221,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
 
   private void doTestClassConfiguration(PsiClass aClass) throws CantRunException {
     final TestNGConfiguration configuration =
-      new TestNGConfiguration("TestA", getProject(), TestNGConfigurationType.getInstance());
+      new TestNGConfiguration("TestA", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.CLASS.getType();
     data.setScope(TestSearchScope.SINGLE_MODULE);
@@ -237,8 +236,7 @@ public class DetectClassesToRunTest extends LightCodeInsightFixtureTestCase {
   }
 
   private void doTestPackageConfiguration(PsiClass... containingClasses) throws CantRunException {
-    final TestNGConfiguration configuration =
-      new TestNGConfiguration("p", getProject(), TestNGConfigurationType.getInstance());
+    final TestNGConfiguration configuration = new TestNGConfiguration("p", getProject());
     final TestData data = configuration.getPersistantData();
     data.TEST_OBJECT = TestType.PACKAGE.getType();
     data.PACKAGE_NAME = "p";

@@ -280,7 +280,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   private class AnnotationExporter extends JavaRecursiveElementVisitor {
     private final GlobalSearchScope myScope;
 
-    public AnnotationExporter(GlobalSearchScope scope) {myScope = scope;}
+    AnnotationExporter(GlobalSearchScope scope) {myScope = scope;}
 
     @Override
     public void visitPackage(PsiPackage aPackage) {

@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -73,13 +74,26 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     final List<ScopeToolState> tools = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().getAllTools();
     return filter(tools.stream())
       .map(ScopeToolState::getTool)
-      .map(tool -> tool.getLanguage() + "." + tool.getID())
+      .map(this::getInspectionToolId)
       .map(UsageDescriptor::new)
       .collect(Collectors.toSet());
   }
 
   @NotNull
+  protected String getInspectionToolId(InspectionToolWrapper tool) {
+    return tool.getLanguage() + "." + tool.getID();
+  }
+
+  @NotNull
   protected abstract Stream<ScopeToolState> filter(@NotNull final Stream<ScopeToolState> tools);
+
+  protected static abstract class AbstractListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
+    @NotNull
+    @Override
+    protected String getInspectionToolId(InspectionToolWrapper tool) {
+      return tool.getLanguage() + "." + tool.getExtension().getPluginId() + "." + tool.getID();
+    }
+  }
 
   public static class AllBundledToolsUsagesCollector extends AbstractToolsUsagesCollector {
 
@@ -96,7 +110,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     }
   }
 
-  public static class AllListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
+  public static class AllListedToolsUsagesCollector extends AbstractListedToolsUsagesCollector {
 
     @NotNull
     @Override
@@ -127,7 +141,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     }
   }
 
-  public static class EnabledListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
+  public static class EnabledListedToolsUsagesCollector extends AbstractListedToolsUsagesCollector {
 
     @NotNull
     @Override
@@ -157,7 +171,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     }
   }
 
-  public static class DisabledListedToolsUsagesCollector extends AbstractToolsUsagesCollector {
+  public static class DisabledListedToolsUsagesCollector extends AbstractListedToolsUsagesCollector {
 
     @NotNull
     @Override

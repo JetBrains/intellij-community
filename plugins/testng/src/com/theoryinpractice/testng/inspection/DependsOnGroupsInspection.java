@@ -136,7 +136,7 @@ public class DependsOnGroupsInspection extends AbstractBaseJavaLocalInspectionTo
 
     String myGroupName;
 
-    public GroupNameQuickFix(@NotNull String groupName) {
+    GroupNameQuickFix(@NotNull String groupName) {
       myGroupName = groupName;
     }
 

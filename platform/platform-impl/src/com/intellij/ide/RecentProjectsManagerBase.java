@@ -760,7 +760,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   private static class MyIcon extends Pair<Icon, Long> {
-    public MyIcon(Icon icon, Long timestamp) {
+    MyIcon(Icon icon, Long timestamp) {
       super(icon, timestamp);
     }
 

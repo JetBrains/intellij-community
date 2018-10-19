@@ -172,11 +172,11 @@ public class FormsParsing {
     private String publicId;
     private String systemId;
 
-    public MyXMLReader(final Reader documentReader) {
+    MyXMLReader(final Reader documentReader) {
       super(documentReader);
     }
 
-    public MyXMLReader(InputStream stream) throws IOException {
+    MyXMLReader(InputStream stream) throws IOException {
       super(stream);
     }
 

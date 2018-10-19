@@ -190,7 +190,7 @@ public class ShelvedChange {
     private final FilePath myBeforeFilePath;
     private final FilePath myAfterFilePath;
 
-    public PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
+    PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
       myProject = project;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;

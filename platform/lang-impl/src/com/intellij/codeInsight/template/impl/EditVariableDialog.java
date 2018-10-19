@@ -35,7 +35,7 @@ class EditVariableDialog extends DialogWrapper {
   private final Editor myEditor;
   private final List<TemplateContextType> myContextTypes;
 
-  public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
+  EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
     super(parent, true);
     myContextTypes = contextTypes;
     myVariables = variables;
@@ -140,7 +140,7 @@ class EditVariableDialog extends DialogWrapper {
   private class VariablesModel extends AbstractTableModel implements EditableModel {
     private final String[] myNames;
 
-    public VariablesModel(String[] names) {
+    VariablesModel(String[] names) {
       myNames = names;
     }
 

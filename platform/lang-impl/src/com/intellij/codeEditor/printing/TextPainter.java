@@ -76,7 +76,7 @@ class TextPainter extends BasePainter {
   @NonNls private static final String DATE_FORMAT = "yyyy-MM-dd";
   @NonNls private static final String TIME_FORMAT = "HH:mm:ss";    
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
@@ -86,7 +86,7 @@ class TextPainter extends BasePainter {
          FileSeparatorProvider.getFileSeparators(psiFile, editorDocument), CodeStyle.getSettings(psiFile));
   }
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,

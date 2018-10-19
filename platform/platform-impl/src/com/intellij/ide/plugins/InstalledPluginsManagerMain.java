@@ -466,7 +466,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     private final String myVendor;
 
-    public BrowseRepoListener(String vendor) {
+    BrowseRepoListener(String vendor) {
       myVendor = vendor;
     }
 

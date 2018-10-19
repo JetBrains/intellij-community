@@ -422,7 +422,7 @@ public class JarRepositoryManager {
     @NotNull
     private final Collection<? extends RemoteRepositoryDescription> myRepositories;
 
-    public AetherJob(@NotNull Collection<? extends RemoteRepositoryDescription> repositories) {
+    AetherJob(@NotNull Collection<? extends RemoteRepositoryDescription> repositories) {
       myRepositories = repositories;
     }
 
@@ -517,7 +517,7 @@ public class JarRepositoryManager {
     @NotNull
     private final Set<ArtifactKind> myKinds;
 
-    public LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories) {
+    LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc, @NotNull Set<ArtifactKind> kinds, @NotNull Collection<RemoteRepositoryDescription> repositories) {
       super(repositories);
       myDesc = desc;
       myKinds = kinds;
@@ -590,7 +590,7 @@ public class JarRepositoryManager {
     @NotNull
     private final RepositoryLibraryDescription myDesc;
 
-    public VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
+    VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
       super(repositories);
       myDesc = repositoryLibraryDescription;
     }

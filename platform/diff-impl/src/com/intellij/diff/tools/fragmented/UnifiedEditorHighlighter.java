@@ -38,7 +38,7 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
   @NotNull private final Document myDocument;
   @NotNull private final List<Element> myPieces;
 
-  public UnifiedEditorHighlighter(@NotNull Document document,
+  UnifiedEditorHighlighter(@NotNull Document document,
                                   @NotNull EditorHighlighter highlighter1,
                                   @NotNull EditorHighlighter highlighter2,
                                   @NotNull List<HighlightRange> ranges,

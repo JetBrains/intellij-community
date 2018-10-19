@@ -14,14 +14,17 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -44,6 +47,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
@@ -220,12 +224,19 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
       @Override
       public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-        hasMoreContributors.forEach(myListModel::setHasMore);
-        myResultsList.setEmptyText(getEmptyText());
-        ScrollingUtil.ensureSelectionExists(myResultsList);
         if (myResultsList.isEmpty()) {
-          handleEmptyResults();
+          if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+            doSetUseNonProjectItems(true, true);
+            notFoundString = getSearchPattern();
+            return;
+          }
+
+          hideHint();
         }
+
+        myResultsList.setEmptyText(getSearchPattern().isEmpty() ? "" : getNotFoundText());
+        hasMoreContributors.forEach(myListModel::setHasMore);
+        ScrollingUtil.ensureSelectionExists(myResultsList);
       }
     };
 
@@ -322,8 +333,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       doSetUseNonProjectItems(false, true);
     }
 
-    myResultsList.getEmptyText().setText(getEmptyText());
-
     repaint();
     rebuildList();
   }
@@ -348,6 +357,10 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                                     .filter(i -> !myListModel.isMoreElement(i));
 
     //common data section---------------------
+    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
+      return getSearchPattern();
+    }
+
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> elements = indicesStream.mapToObj(i -> {
                                                   SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
@@ -515,7 +528,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private class SETab extends JLabel {
     private final SearchEverywhereContributor myContributor;
 
-    public SETab(SearchEverywhereContributor contributor) {
+    SETab(SearchEverywhereContributor contributor) {
       super(contributor == null ? IdeBundle.message("searcheverywhere.allelements.tab.name") : contributor.getGroupName());
       myContributor = contributor;
       Insets insets = JBUI.CurrentTheme.SearchEverywhere.tabInsets();
@@ -556,6 +569,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
              ? JBUI.CurrentTheme.SearchEverywhere.selectedTabColor()
              : super.getBackground();
     }
+
+    @Override
+    public Color getForeground() {
+      return mySelectedTab == this
+             ? JBUI.CurrentTheme.SearchEverywhere.selectedTabTextColor()
+             : super.getForeground();
+    }
   }
 
   private void rebuildList() {
@@ -567,6 +587,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       mySearchProgressIndicator = null;
     }
 
+    myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
     String pattern = getSearchPattern();
     updateViewType(pattern.isEmpty() ? ViewType.SHORT : ViewType.FULL);
     String matcherString = mySelectedTab.getContributor()
@@ -577,7 +598,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     MatcherHolder.associateMatcher(myResultsList, matcher);
 
     mySearchAlarm.addRequest(() -> {
-      myResultsList.setEmptyText(IdeBundle.message("label.choosebyname.searching"));
       myListModel.clear();
       Map<SearchEverywhereContributor<?>, Integer> contributorsMap = mySelectedTab.getContributor()
         .map(contributor -> Collections.singletonMap(((SearchEverywhereContributor<?>) contributor), SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT))
@@ -649,8 +669,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         String newSearchString = getSearchPattern();
         if (nonProjectCheckBoxAutoSet && isUseNonProjectItems() && !newSearchString.contains(notFoundString)) {
           doSetUseNonProjectItems(false, true);
+        } else {
+          rebuildList();
         }
-        rebuildList();
       }
     });
 
@@ -660,7 +681,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        boolean multiSelectMode = e.isShiftDown() || e.isControlDown();
+        boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
         if (e.getButton() == MouseEvent.BUTTON1 && !multiSelectMode) {
           e.consume();
           final int i = myResultsList.locationToIndex(e.getPoint());
@@ -703,7 +724,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private boolean isHintComponent(Component component) {
-    if (myHint != null && !myHint.isDisposed()) {
+    if (myHint != null && !myHint.isDisposed() && component != null) {
       return SwingUtilities.isDescendingFrom(component, myHint.getContent());
     }
     return false;
@@ -748,17 +769,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     if (mySearchProgressIndicator != null && !mySearchProgressIndicator.isCanceled()) {
       mySearchProgressIndicator.cancel();
     }
-  }
-
-  private void handleEmptyResults() {
-    assert EventQueue.isDispatchThread() : "Must be EDT";
-    if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
-      doSetUseNonProjectItems(true, true);
-      notFoundString = getSearchPattern();
-      return;
-    }
-
-    hideHint();
   }
 
   @NotNull
@@ -1007,7 +1017,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private class ShowInFindToolWindowAction extends DumbAwareAction {
 
-    public ShowInFindToolWindowAction() {
+    ShowInFindToolWindowAction() {
       super(IdeBundle.message("searcheverywhere.show.in.find.window.button.name"),
         IdeBundle.message("searcheverywhere.show.in.find.window.button.name"), AllIcons.General.Pin_tab);
     }
@@ -1045,7 +1055,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
       Collection<Object> cached = contributors.stream()
                                               .flatMap(contributor -> myListModel.getFoundItems(contributor).stream())
-                                              .collect(Collectors.toList());
+                                              .collect(Collectors.toSet());
       fillUsages(cached, usages, targets);
 
       Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
@@ -1060,14 +1070,44 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
+            progressIndicator.start();
+            TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(progressIndicator);
+
+            Collection<Object> foundElements = new ArrayList<>();
+            int alreadyFoundCount = cached.size();
             contributorsForAdditionalSearch.forEach(contributor -> {
               if (!progressIndicator.isCanceled()) {
-                //todo overflow #UX-1
-                List<Object> foundElements =
-                  contributor.search(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator);
-                fillUsages(foundElements, usages, targets);
+                try {
+                  contributor
+                    .fetchElements(searchText, everywhere, myContributorFilters.get(contributor.getSearchProviderId()), progressIndicator,
+                                   o -> {
+                                     if (progressIndicator.isCanceled()) {
+                                       return false;
+                                     }
+
+                                     if (cached.contains(o)) {
+                                       return true;
+                                     }
+
+                                     foundElements.add(o);
+                                     tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
+                                     if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.USAGES_LIMIT &&
+                                         tooManyUsagesStatus.switchTooManyUsagesStatus()) {
+                                       int usageCount = foundElements.size() + alreadyFoundCount;
+                                       UsageViewManagerImpl
+                                         .showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator,
+                                                                        presentation, usageCount, null);
+                                       return !progressIndicator.isCanceled();
+                                     }
+                                     return true;
+                                   });
+                }
+                catch (ProcessCanceledException e) {
+                  return;
+                }
               }
             });
+            fillUsages(foundElements, usages, targets);
           }
 
           @Override
@@ -1091,18 +1131,18 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
 
     private void fillUsages(Collection<Object> foundElements, Collection<Usage> usages, Collection<PsiElement> targets) {
-      foundElements.stream()
-                   .filter(o -> o instanceof PsiElement)
-                   .forEach(o -> {
-                     PsiElement element = (PsiElement)o;
-                     if (element.getTextRange() != null) {
-                       UsageInfo usageInfo = new UsageInfo(element);
-                       usages.add(new UsageInfo2UsageAdapter(usageInfo));
-                     }
-                     else {
-                       targets.add(element);
-                     }
-                   });
+      ReadAction.run(() -> foundElements.stream()
+        .filter(o -> o instanceof PsiElement)
+        .forEach(o -> {
+          PsiElement element = (PsiElement)o;
+          if (element.getTextRange() != null) {
+            UsageInfo usageInfo = new UsageInfo(element);
+            usages.add(new UsageInfo2UsageAdapter(usageInfo));
+          }
+          else {
+            targets.add(element);
+          }
+        }));
     }
 
     private void showInFindWindow(Collection<PsiElement> targets, Collection<Usage> usages, UsageViewPresentation presentation) {
@@ -1121,7 +1161,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private class ShowFilterAction extends ToggleAction implements DumbAware {
     private JBPopup myFilterPopup;
 
-    public ShowFilterAction() {
+    ShowFilterAction() {
       super("Filter", "Filter files by type", AllIcons.General.Filter);
     }
 
@@ -1268,7 +1308,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     return label;
   }
 
-  private String getEmptyText() {
+  private String getNotFoundText() {
     return mySelectedTab.getContributor()
                         .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));

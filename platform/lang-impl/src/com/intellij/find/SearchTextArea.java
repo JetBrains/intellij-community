@@ -181,11 +181,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
   private void updateFont() {
     if (myTextArea != null) {
-      if (UIUtil.isUnderWindowsLookAndFeel()) {
-        myTextArea.setFont(UIManager.getFont("TextField.font"));
-      } else {
-        Utils.setSmallerFont(myTextArea);
-      }
+      Utils.setSmallerFont(myTextArea);
     }
   }
 
@@ -322,22 +318,11 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       g.dispose();
     }
     super.paint(graphics);
-
-    if (UIUtil.isUnderGTKLookAndFeel()) {
-      graphics.setColor(myTextArea.getBackground());
-      Rectangle bounds = myScrollPane.getViewport().getBounds();
-      if (myScrollPane.getVerticalScrollBar().isVisible()) {
-        bounds.width -= myScrollPane.getVerticalScrollBar().getWidth();
-      }
-      bounds = SwingUtilities.convertRectangle(myScrollPane.getViewport()/*myTextArea*/, bounds, this);
-      JBInsets.addTo(bounds, new JBInsets(2, 2, -1, -1));
-      ((Graphics2D)graphics).draw(bounds);
-    }
   }
 
   private class ShowHistoryAction extends DumbAwareAction {
 
-    public ShowHistoryAction() {
+    ShowHistoryAction() {
       super((mySearchMode ? "Search" : "Replace") + " History",
             (mySearchMode ? "Search" : "Replace") + " history",
             myHelper.getShowHistoryIcon());
@@ -372,7 +357,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class ClearAction extends DumbAwareAction {
-    public ClearAction() {
+    ClearAction() {
       super(null, null, myHelper.getClearIcon());
     }
 
@@ -384,7 +369,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   }
 
   private class NewLineAction extends DumbAwareAction {
-    public NewLineAction() {
+    NewLineAction() {
       super(null, "New line (" + KeymapUtil.getKeystrokeText(NEW_LINE_KEYSTROKE) + ")",
             AllIcons.Actions.SearchNewLine);
     }

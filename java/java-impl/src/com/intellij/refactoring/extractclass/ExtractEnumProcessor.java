@@ -169,7 +169,7 @@ public class ExtractEnumProcessor {
   private static class EnumTypeMigrationUsageInfo extends FixableUsageInfo {
     private final UsageInfo myUsageInfo;
 
-    public EnumTypeMigrationUsageInfo(UsageInfo usageInfo) {
+    EnumTypeMigrationUsageInfo(UsageInfo usageInfo) {
       super(usageInfo.getElement());
       myUsageInfo = usageInfo;
     }
@@ -186,7 +186,7 @@ public class ExtractEnumProcessor {
   private static class ConflictUsageInfo extends FixableUsageInfo {
     private final String myDescription;
 
-    public ConflictUsageInfo(PsiElement expression, String description) {
+    ConflictUsageInfo(PsiElement expression, String description) {
       super(expression);
       myDescription = description;
     }

@@ -68,7 +68,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     private final String myText;
     private final String myValueText;
 
-    public ComputeConstantValueFix(PsiExpression expression, String valueText) {
+    ComputeConstantValueFix(PsiExpression expression, String valueText) {
       myText = PsiExpressionTrimRenderer.render(expression);
       myValueText = valueText;
     }

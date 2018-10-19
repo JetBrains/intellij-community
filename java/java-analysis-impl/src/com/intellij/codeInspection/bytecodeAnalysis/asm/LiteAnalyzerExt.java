@@ -92,9 +92,9 @@ public class LiteAnalyzerExt<V extends Value, Data, MyInterpreter extends Interp
       Type ctype = Type.getObjectType(owner);
       current.setLocal(local++, interpreter.newValue(ctype));
     }
-    for (int i = 0; i < args.length; ++i) {
-      current.setLocal(local++, interpreter.newValue(args[i]));
-      if (args[i].getSize() == 2) {
+    for (Type arg : args) {
+      current.setLocal(local++, interpreter.newValue(arg));
+      if (arg.getSize() == 2) {
         current.setLocal(local++, interpreter.newValue(null));
       }
     }

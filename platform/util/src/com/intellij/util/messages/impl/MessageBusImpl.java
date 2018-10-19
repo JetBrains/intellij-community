@@ -149,7 +149,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private static class DeliveryJob {
-    public DeliveryJob(final MessageBusConnectionImpl connection, final Message message) {
+    DeliveryJob(final MessageBusConnectionImpl connection, final Message message) {
       this.connection = connection;
       this.message = message;
     }

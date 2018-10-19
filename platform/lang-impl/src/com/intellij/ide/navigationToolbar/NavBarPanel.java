@@ -76,8 +76,8 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -793,7 +793,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     final JPanel panel = new JPanel(new BorderLayout());
     panel.add(this);
     panel.setOpaque(true);
-    panel.setBackground(UIUtil.isUnderGTKLookAndFeel() ? Color.WHITE : UIUtil.getListBackground());
+    panel.setBackground(UIUtil.getListBackground());
 
     myHint = new LightweightHint(panel) {
       @Override

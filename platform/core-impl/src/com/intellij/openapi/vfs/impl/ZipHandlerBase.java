@@ -190,7 +190,7 @@ public abstract class ZipHandlerBase extends ArchiveHandler {
     private final ResourceHandle<ZipFile> myZipRef;
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    public InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
+    InputStreamWrapper(InputStream stream, ResourceHandle<ZipFile> zipRef) {
       myStream = stream;
       myZipRef = zipRef;
     }

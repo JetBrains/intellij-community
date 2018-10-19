@@ -86,7 +86,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
     private Collection<PsiReference> myReferences;
     private Set<PsiFile> myFiles;
 
-    public SearchUsagesTask(@NotNull Project project,
+    SearchUsagesTask(@NotNull Project project,
                             @NotNull PropertyInfo property) {
       super(project, "Searching for usages of '" + property.myFieldName + "'", true);
       myProperty = property;

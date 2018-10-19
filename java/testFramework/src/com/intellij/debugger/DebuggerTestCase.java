@@ -504,11 +504,11 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     @Override
     public ConfigurationFactory getFactory() {
-      return UnknownConfigurationType.getFactory();
+      return UnknownConfigurationType.getInstance();
     }
 
     @Override
-    public void setName(String name) { }
+    public void setName(@NotNull String name) { }
 
     @NotNull
     @Override
@@ -531,6 +531,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       return null;
     }
 
+    @NotNull
     @Override
     public String getName() {
       return "";

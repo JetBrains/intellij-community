@@ -108,7 +108,7 @@ public class XsltStackFrame extends XStackFrame {
   private static class MyValue extends XValue {
     private final Debugger.Variable myVariable;
 
-    public MyValue(Debugger.Variable variable) {
+    MyValue(Debugger.Variable variable) {
       myVariable = variable;
     }
 
@@ -167,7 +167,7 @@ public class XsltStackFrame extends XStackFrame {
     private static class NodeValue extends XValue {
       private final Value.Node myNode;
 
-      public NodeValue(Value.Node n) {
+      NodeValue(Value.Node n) {
         myNode = n;
       }
 
@@ -186,7 +186,7 @@ public class XsltStackFrame extends XStackFrame {
   private static class MyEvaluator extends XDebuggerEvaluator {
     private final Debugger.StyleFrame myFrame;
 
-    public MyEvaluator(Debugger.StyleFrame frame) {
+    MyEvaluator(Debugger.StyleFrame frame) {
       myFrame = frame;
     }
 
@@ -210,7 +210,7 @@ public class XsltStackFrame extends XStackFrame {
     private static class ExpressionResult implements Debugger.Variable {
       private final Value myValue;
 
-      public ExpressionResult(Value value) {
+      ExpressionResult(Value value) {
         myValue = value;
       }
 

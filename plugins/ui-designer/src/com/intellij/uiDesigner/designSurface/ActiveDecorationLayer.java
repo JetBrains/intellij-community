@@ -33,7 +33,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private final FeedbackPainterPanel myFeedbackPainterPanel = new FeedbackPainterPanel();
   private final RectangleFeedbackPainter myRectangleFeedbackPainter = new RectangleFeedbackPainter();
 
-  public ActiveDecorationLayer(@NotNull final GuiEditor editor) {
+  ActiveDecorationLayer(@NotNull final GuiEditor editor) {
     myEditor = editor;
     myToolTip = new JToolTip();
   }
@@ -133,7 +133,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static class FeedbackPainterPanel extends JPanel {
     private FeedbackPainter myFeedbackPainter;
 
-    public FeedbackPainterPanel() {
+    FeedbackPainterPanel() {
       setOpaque(false);
     }
 
@@ -158,7 +158,7 @@ final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   }
 
   private class MyNavigateButtonSelectionWatcher extends SelectionWatcher {
-    public MyNavigateButtonSelectionWatcher(final GuiEditor editor) {
+    MyNavigateButtonSelectionWatcher(final GuiEditor editor) {
       super(editor);
     }
 

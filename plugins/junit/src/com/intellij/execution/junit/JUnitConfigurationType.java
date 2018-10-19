@@ -53,6 +53,11 @@ public class JUnitConfigurationType implements ConfigurationType {
   }
 
   @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.JUnit";
+  }
+
+  @Override
   @NotNull
   public String getId() {
     return "JUnit";

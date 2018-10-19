@@ -20,7 +20,13 @@ class EdtExecutorServiceImpl extends EdtExecutorService {
 
   @Override
   public void execute(@NotNull Runnable command) {
-    execute(command, ModalityState.any());
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      SwingUtilities.invokeLater(command);
+    }
+    else {
+      execute(command, application.getAnyModalityState());
+    }
   }
 
   @Override

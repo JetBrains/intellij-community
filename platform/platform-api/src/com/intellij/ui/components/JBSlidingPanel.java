@@ -100,7 +100,7 @@ public class JBSlidingPanel extends JBPanel {
   }
 
   private static class AddMethodIsNotSupportedException extends RuntimeException {
-    public AddMethodIsNotSupportedException() {
+    AddMethodIsNotSupportedException() {
       super("Use add(String, Component) method");
     }
   }

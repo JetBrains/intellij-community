@@ -213,7 +213,7 @@ public class CvsTree extends JPanel implements CvsTabbedWindow.DeactivateListene
     private int waitTime = 100;
     private TreePath mySelectionPath;
 
-    public MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project) {
+    MyGetContentCallback(CvsElement parentNode, ModalityState modalityState, Project project) {
       myParentNode = parentNode;
       myModalityState = modalityState;
       myProject = project;

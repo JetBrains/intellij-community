@@ -120,7 +120,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   }
 
   private static class OptionsPanel extends JPanel {
-    public OptionsPanel(final Set<? super String> headers) {
+    OptionsPanel(final Set<? super String> headers) {
       super(new BorderLayout(5, 5));
 
       add(new JLabel(ManifestBundle.message("inspection.header.ui.label")), BorderLayout.NORTH);

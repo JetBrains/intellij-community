@@ -59,8 +59,7 @@ public abstract class FixMethodJavadocTest extends FileSetTestCase {
   private void collectNewParameters(PsiMethod method, String[] names, Set<PsiParameter> newParameters) {
     Set<String> newNames = new HashSet<>(Arrays.asList(names));
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
+    for (PsiParameter parameter : parameters) {
       if (newNames.contains(parameter.getName())) {
         newParameters.add(parameter);
       }

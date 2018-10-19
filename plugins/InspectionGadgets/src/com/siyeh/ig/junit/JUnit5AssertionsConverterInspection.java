@@ -172,7 +172,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
   static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     private final String myBaseClassName;
 
-    public ReplaceObsoleteAssertsFix(String baseClassName) {
+    ReplaceObsoleteAssertsFix(String baseClassName) {
       myBaseClassName = baseClassName;
     }
 

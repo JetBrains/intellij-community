@@ -16,18 +16,17 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.spellchecker.xml.NoSpellchecking;
-import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.Required;
 import org.jetbrains.annotations.NotNull;
 
-public interface Vendor extends DomElement {
+public interface Vendor extends GenericDomValue<String> {
 
   @NotNull
   @NoSpellchecking
+  @Required
   String getValue();
-
-  void setValue(String value);
-
 
   @NotNull
   @NoSpellchecking

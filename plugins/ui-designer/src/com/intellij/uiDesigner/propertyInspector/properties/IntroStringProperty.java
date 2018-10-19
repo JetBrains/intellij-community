@@ -100,7 +100,7 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
       index = -1;
     }
 
-    final StringBuffer buffer = new StringBuffer(text);
+    final StringBuilder buffer = new StringBuilder(text);
     if(index != -1){
       buffer.insert(index, '&');
       // Quote all '&' except inserted one

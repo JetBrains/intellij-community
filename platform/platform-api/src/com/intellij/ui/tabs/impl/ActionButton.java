@@ -44,7 +44,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  public ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
+  ActionButton(JBTabsImpl tabs, TabInfo tabInfo, AnAction action, String place, Pass<MouseEvent> pass, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabs = tabs;
     myTabInfo = tabInfo;

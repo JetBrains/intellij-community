@@ -91,7 +91,7 @@ public class UnpredictableBigDecimalConstructorCallInspection
 
     private final String argumentText;
 
-    public ReplaceDoubleArgumentWithStringFix(String argumentText) {
+    ReplaceDoubleArgumentWithStringFix(String argumentText) {
       this.argumentText = argumentText;
     }
 

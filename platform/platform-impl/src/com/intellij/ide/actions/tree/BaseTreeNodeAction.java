@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 abstract class BaseTreeNodeAction extends AnAction implements DumbAware {
-  public BaseTreeNodeAction() {
+  BaseTreeNodeAction() {
     setEnabledInModalContext(true);
   }
 

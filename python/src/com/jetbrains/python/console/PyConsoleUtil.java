@@ -242,7 +242,7 @@ public class PyConsoleUtil {
     private final DataContext myOriginalDataContext;
     private final PythonConsoleView myConsoleView;
 
-    public ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
+    ConsoleDataContext(DataContext dataContext, PythonConsoleView consoleView) {
       myOriginalDataContext = dataContext;
       myConsoleView = consoleView;
     }

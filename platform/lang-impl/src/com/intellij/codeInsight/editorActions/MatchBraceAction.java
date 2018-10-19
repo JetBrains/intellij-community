@@ -27,7 +27,7 @@ public class MatchBraceAction extends EditorAction {
   }
 
   private static class MyHandler extends EditorActionHandler {
-    public MyHandler() {
+    MyHandler() {
       super(true);
     }
 

@@ -82,7 +82,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   }
 
   private class MyCopyAction extends AnAction {
-    public MyCopyAction() {
+    MyCopyAction() {
       super(ExecutionBundle.message("run.configuration.arguments.help.panel.copy.action.name"));
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     }

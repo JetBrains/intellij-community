@@ -55,7 +55,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
   private static class ReplaceWithComparatorQuickFix implements LocalQuickFix {
     private final boolean reverse;
 
-    public ReplaceWithComparatorQuickFix(boolean reverse) {
+    ReplaceWithComparatorQuickFix(boolean reverse) {
       this.reverse = reverse;
     }
 

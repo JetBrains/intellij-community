@@ -75,7 +75,7 @@ public class ArrayCreationWithoutNewKeywordInspection extends BaseInspection {
   private static class ArrayCreationExpressionFix extends InspectionGadgetsFix {
     private final String myType;
 
-    public ArrayCreationExpressionFix(String type) {
+    ArrayCreationExpressionFix(String type) {
       myType = type;
     }
 

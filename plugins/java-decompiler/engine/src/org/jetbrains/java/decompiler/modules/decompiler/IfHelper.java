@@ -678,7 +678,7 @@ public class IfHelper {
     public final List<IfNode> succs = new ArrayList<>();
     public final List<Integer> edgetypes = new ArrayList<>();
 
-    public IfNode(Statement value) {
+    IfNode(Statement value) {
       this.value = value;
     }
 

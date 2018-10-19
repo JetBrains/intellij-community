@@ -36,7 +36,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogge
         }
     }
 
-    fun flush() {
+    override fun flush() {
         synchronized(this) {
             if (storage.size > 0) {
                 flushImpl()

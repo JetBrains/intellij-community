@@ -3,10 +3,11 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 public abstract class SearchScope {
   private static int hashCodeCounter;
@@ -34,8 +35,14 @@ public abstract class SearchScope {
     return null;
   }
 
-  @NotNull public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
-  @NotNull public abstract SearchScope union(@NotNull SearchScope scope);
+  @NotNull
+  @Contract(pure = true)
+  public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
 
+  @NotNull
+  @Contract(pure = true)
+  public abstract SearchScope union(@NotNull SearchScope scope);
+
+  @Contract(pure = true)
   public abstract boolean contains(@NotNull VirtualFile file);
 }

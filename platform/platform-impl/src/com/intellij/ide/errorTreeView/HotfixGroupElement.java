@@ -49,7 +49,7 @@ public class HotfixGroupElement extends GroupingElement {
   private class MyRightRenderer extends CustomizeColoredTreeCellRenderer {
     private final HotfixGroupElement.MyRunner myRunner;
 
-    public MyRightRenderer() {
+    MyRightRenderer() {
       myRunner = new MyRunner();
     }
 

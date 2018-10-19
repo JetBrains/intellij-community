@@ -27,7 +27,7 @@ class JavaFxResourcePropertyReferenceProvider extends PsiReferenceProvider {
   }
 
   static class JavaFxResourcePropertyReference extends PropertyReference {
-    public JavaFxResourcePropertyReference(@NotNull String key, @NotNull XmlAttributeValue element) {
+    JavaFxResourcePropertyReference(@NotNull String key, @NotNull XmlAttributeValue element) {
       super(key, element, null, false, new TextRange(2, key.length() + 2)); // "%key" - shift by 2 because the quote also counts
     }
   }

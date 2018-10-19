@@ -484,7 +484,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
       final Function<? super E, ? extends Iterable<? extends T>> function;
       Iterator<? extends T> cur;
 
-      public FlattenIt(Iterator<? extends E> iterator, Function<? super E, ? extends Iterable<? extends T>> fun) {
+      FlattenIt(Iterator<? extends E> iterator, Function<? super E, ? extends Iterable<? extends T>> fun) {
         original = iterator;
         function = fun;
       }
@@ -542,7 +542,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     final JBIterable<E> original;
     private final Function<? super X, ? extends Iterator<T>> interceptor;
 
-    public Intercepted(@NotNull JBIterable<E> original, Function<? super X, ? extends Iterator<T>> interceptor) {
+    Intercepted(@NotNull JBIterable<E> original, Function<? super X, ? extends Iterator<T>> interceptor) {
       this.original = original;
       this.interceptor = interceptor;
     }

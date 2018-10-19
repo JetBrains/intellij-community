@@ -143,7 +143,7 @@ public class JDOMUtil {
     }
   }
 
-  private static class EmptyTextFilter implements Filter {
+  private static class EmptyTextFilter implements Filter<Content> {
     @Override
     public boolean matches(Object obj) {
       return !(obj instanceof Text) || !CharArrayUtil.containsOnlyWhiteSpaces(((Text)obj).getText());
@@ -545,7 +545,7 @@ public class JDOMUtil {
   }
 
   private final static class MyXMLOutputter extends XMLOutputter {
-    public MyXMLOutputter(@NotNull Format format) {
+    MyXMLOutputter(@NotNull Format format) {
       super(format);
     }
 
@@ -673,7 +673,7 @@ public class JDOMUtil {
   }
 
   public static boolean isEmpty(@Nullable Element element) {
-    return element == null || element.getAttributes().isEmpty() && element.getContent().isEmpty();
+    return element == null || (!element.hasAttributes() && element.getContent().isEmpty());
   }
 
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {

@@ -682,7 +682,7 @@ TODO(b/117718082): does not compile after commit 09d4e05 */
   }
 
   private static class MyFailOnApplyPatchAction extends PatchAction {
-    public MyFailOnApplyPatchAction(Patch patch) {
+    MyFailOnApplyPatchAction(Patch patch) {
       super(patch, "_dummy_file_", Digester.INVALID);
     }
 

@@ -92,10 +92,10 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
        public String name;
        public String url;
 
-       public Repo() {
+       Repo() {
        }
 
-       public Repo(String id, String name, String url) {
+       Repo(String id, String name, String url) {
          this.id = id;
          this.name = name;
          this.url = url;
@@ -129,11 +129,11 @@ public class RemoteRepositoriesConfiguration implements PersistentStateComponent
      @XCollection
      public final List<Repo> data = new SmartList<>();
 
-     public State() {
+     State() {
        this(RemoteRepositoryDescription.DEFAULT_REPOSITORIES);
      }
 
-     public State(List<? extends RemoteRepositoryDescription> repos) {
+     State(List<? extends RemoteRepositoryDescription> repos) {
        for (RemoteRepositoryDescription repository : repos) {
          data.add(new Repo(repository.getId(), repository.getName(), repository.getUrl()));
        }

@@ -84,7 +84,7 @@ public class RadXYLayoutManager extends RadLayoutManager {
     private final RadContainer myContainer;
     private final Point myLocation;
 
-    public MyDropLocation(final RadContainer container, @NotNull final Point location) {
+    MyDropLocation(final RadContainer container, @NotNull final Point location) {
       myContainer = container;
       myLocation = location;
     }

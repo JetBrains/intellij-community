@@ -22,7 +22,7 @@ class SelectEclipseImportedProjectsStep extends SelectImportedProjectsStep<Strin
 
   Set<String> duplicateNames;
 
-  public SelectEclipseImportedProjectsStep(WizardContext context) {
+  SelectEclipseImportedProjectsStep(WizardContext context) {
     super(context);
     fileChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override

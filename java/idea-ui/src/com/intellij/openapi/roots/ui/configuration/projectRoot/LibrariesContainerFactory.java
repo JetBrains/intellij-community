@@ -274,7 +274,7 @@ public class LibrariesContainerFactory {
   private static class StructureConfigurableLibrariesContainer extends LibrariesContainerBase {
     private final StructureConfigurableContext myContext;
 
-    public StructureConfigurableLibrariesContainer(final StructureConfigurableContext context) {
+    StructureConfigurableLibrariesContainer(final StructureConfigurableContext context) {
       myContext = context;
     }
 

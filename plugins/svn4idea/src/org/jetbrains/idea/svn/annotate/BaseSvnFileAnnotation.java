@@ -213,7 +213,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
 
   private abstract class SvnAnnotationAspect extends LineAnnotationAspectAdapter {
 
-    public SvnAnnotationAspect(String id, boolean showByDefault) {
+    SvnAnnotationAspect(String id, boolean showByDefault) {
       super(id, showByDefault);
     }
 

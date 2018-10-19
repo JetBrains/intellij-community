@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.util.IconLoader;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,9 +25,9 @@ import java.awt.*;
 public abstract class MoreIcon {
 
   private final ActiveIcon myLeft =
-    new ActiveIcon(AllIcons.General.ComboArrowLeft, AllIcons.General.ComboArrowLeftPassive);
+    new ActiveIcon(AllIcons.General.ArrowLeft, IconLoader.getDisabledIcon(AllIcons.General.ArrowLeft));
   private final ActiveIcon myRight =
-    new ActiveIcon(AllIcons.General.ComboArrowRight, AllIcons.General.ComboArrowRightPassive);
+    new ActiveIcon(AllIcons.General.ArrowRight, IconLoader.getDisabledIcon(AllIcons.General.ArrowRight));
 
   protected final int myGap = 2;
   protected boolean myLeftPainted;

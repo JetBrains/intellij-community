@@ -246,7 +246,7 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
       return myExtractExclusions;
     }
 
-    public ProcessData(MavenDomProjectModel model, Set<MavenDomDependency> usages, boolean extractExclusions) {
+    ProcessData(MavenDomProjectModel model, Set<MavenDomDependency> usages, boolean extractExclusions) {
       myModel = model;
       myUsages = usages;
       myExtractExclusions = extractExclusions;

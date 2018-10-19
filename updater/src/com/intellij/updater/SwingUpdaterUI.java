@@ -228,7 +228,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
 
     private final List<Item> myItems = new ArrayList<>();
 
-    public MyTableModel(List<? extends ValidationResult> validationResults) {
+    MyTableModel(List<? extends ValidationResult> validationResults) {
       for (ValidationResult each : validationResults) {
         myItems.add(new Item(each, each.options.get(0)));
       }
@@ -313,7 +313,7 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
   }
 
   private static class MyCellEditor extends DefaultCellEditor {
-    public MyCellEditor() {
+    MyCellEditor() {
       super(new JComboBox());
     }
 

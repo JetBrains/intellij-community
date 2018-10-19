@@ -1445,7 +1445,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private final LimitedPool<LazyParseableToken> myLazyPool;
     private final StartMarker myRoot;
 
-    public MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
+    MyTreeStructure(@NotNull StartMarker root, @Nullable final MyTreeStructure parentTree) {
       if (parentTree == null) {
         myPool = new LimitedPool<>(1000, new LimitedPool.ObjectFactory<Token>() {
           @Override

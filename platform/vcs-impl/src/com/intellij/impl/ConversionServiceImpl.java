@@ -359,7 +359,7 @@ public class ConversionServiceImpl extends ConversionService {
   private static class ConverterProvidersGraph implements InboundSemiGraph<ConverterProvider> {
     private final ConverterProvider[] myProviders;
 
-    public ConverterProvidersGraph(ConverterProvider[] providers) {
+    ConverterProvidersGraph(ConverterProvider[] providers) {
       myProviders = providers;
     }
 

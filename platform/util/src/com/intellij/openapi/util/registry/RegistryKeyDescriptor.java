@@ -9,7 +9,7 @@ class RegistryKeyDescriptor {
   @NotNull private final String myDescription;
   private final boolean myRestartRequired;
 
-  public RegistryKeyDescriptor(@NotNull String name, @NotNull String description, @NotNull String defaultValue,
+  RegistryKeyDescriptor(@NotNull String name, @NotNull String description, @NotNull String defaultValue,
                                boolean restartRequired) {
     myName = name;
     myDefaultValue = defaultValue;

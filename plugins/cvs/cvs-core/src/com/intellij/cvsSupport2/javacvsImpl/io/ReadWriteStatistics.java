@@ -69,7 +69,7 @@ public class ReadWriteStatistics {
   }
 
   private void showProgress(String mesasge) {
-    StringBuffer buffer = new StringBuffer();
+    StringBuilder buffer = new StringBuilder();
     buffer.append(mesasge);
     if ((myShownReadKBytes > 0) || (myShownSentKBytes > 0)) {
       buffer.append(": ");

@@ -64,7 +64,7 @@ public class SpacingBuilder {
   }
 
   private static class DependentLFSpacingRule extends SpacingRule {
-    public DependentLFSpacingRule(@NotNull RuleCondition condition,
+    DependentLFSpacingRule(@NotNull RuleCondition condition,
                                   int minSpaces,
                                   int maxSpaces,
                                   boolean keepLineBreaks,

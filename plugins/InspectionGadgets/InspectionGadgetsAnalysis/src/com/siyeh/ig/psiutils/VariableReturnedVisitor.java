@@ -25,7 +25,7 @@ class VariableReturnedVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private boolean returned = false;
 
-  public VariableReturnedVisitor(@NotNull PsiVariable variable, boolean builderPattern) {
+  VariableReturnedVisitor(@NotNull PsiVariable variable, boolean builderPattern) {
     this.variable = variable;
     myBuilderPattern = builderPattern;
   }

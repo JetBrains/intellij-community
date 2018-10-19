@@ -34,7 +34,7 @@ final class FileSystemScanner {
 
   // Setup ==================================================================
 
-  public FileSystemScanner(IClientEnvironment clientEnvironment, boolean recursive) {
+  FileSystemScanner(IClientEnvironment clientEnvironment, boolean recursive) {
     BugLog.getInstance().assertNotNull(clientEnvironment);
 
     this.clientEnvironment = clientEnvironment;

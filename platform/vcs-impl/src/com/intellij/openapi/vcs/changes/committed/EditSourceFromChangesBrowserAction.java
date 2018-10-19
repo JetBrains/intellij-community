@@ -23,7 +23,7 @@ import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 class EditSourceFromChangesBrowserAction extends EditSourceAction {
   private final Icon myEditSourceIcon;
 
-  public EditSourceFromChangesBrowserAction() {
+  EditSourceFromChangesBrowserAction() {
     myEditSourceIcon = AllIcons.Actions.EditSource;
   }
 

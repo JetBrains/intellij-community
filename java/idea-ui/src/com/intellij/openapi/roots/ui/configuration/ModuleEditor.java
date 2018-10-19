@@ -575,7 +575,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private class ModuleEditorPanel extends JPanel implements DataProvider{
-    public ModuleEditorPanel() {
+    ModuleEditorPanel() {
       super(new BorderLayout());
     }
 

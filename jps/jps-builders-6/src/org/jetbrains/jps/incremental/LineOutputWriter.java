@@ -180,7 +180,7 @@ public abstract class LineOutputWriter extends Writer {
     protected final int myStart;
     protected final int myEnd;
 
-    public CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
+    CharArrayCharSequence(@NotNull char[] chars, int start, int end) {
       if (start < 0 || end > chars.length || start > end) {
         throw new IndexOutOfBoundsException("chars.length:" + chars.length + ", start:" + start + ", end:" + end);
       }
@@ -215,7 +215,7 @@ public abstract class LineOutputWriter extends Writer {
   private static final class SingleCharSequence implements CharSequence {
     private final char myCh;
 
-    public SingleCharSequence(char ch) {
+    SingleCharSequence(char ch) {
       myCh = ch;
     }
 

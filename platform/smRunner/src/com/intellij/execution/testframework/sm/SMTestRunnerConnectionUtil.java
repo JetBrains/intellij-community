@@ -217,7 +217,7 @@ public class SMTestRunnerConnectionUtil {
   private static class CombinedTestLocator implements SMTestLocator, DumbAware {
     private final SMTestLocator myLocator;
 
-    public CombinedTestLocator(SMTestLocator locator) {
+    CombinedTestLocator(SMTestLocator locator) {
       myLocator = locator;
     }
 

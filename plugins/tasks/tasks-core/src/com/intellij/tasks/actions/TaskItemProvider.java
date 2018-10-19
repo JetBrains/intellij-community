@@ -37,7 +37,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
 
   private final AtomicReference<Future<List<Task>>> myFutureReference = new AtomicReference<>();
 
-  public TaskItemProvider(Project project) {
+  TaskItemProvider(Project project) {
     myProject = project;
   }
 

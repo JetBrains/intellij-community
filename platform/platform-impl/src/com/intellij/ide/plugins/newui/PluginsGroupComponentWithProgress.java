@@ -83,7 +83,7 @@ public class PluginsGroupComponentWithProgress extends PluginsGroupComponent {
   }
 
   private static class CenteredIcon extends AsyncProcessIcon.Big {
-    public CenteredIcon() {
+    CenteredIcon() {
       super("Loading");
     }
 

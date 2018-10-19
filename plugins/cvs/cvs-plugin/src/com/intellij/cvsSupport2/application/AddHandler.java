@@ -30,7 +30,7 @@ class AddHandler {
   private final Project myProject;
   private final CvsStorageSupportingDeletionComponent myCvsStorageComponent;
 
-  public AddHandler(@NotNull Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
+  AddHandler(@NotNull Project project, CvsStorageSupportingDeletionComponent cvsStorageComponent) {
     myProject = project;
     myCvsStorageComponent = cvsStorageComponent;
   }

@@ -19,7 +19,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
 
   private final PsiField myField;
 
-  public InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
+  InlineGroovyFieldDialog(Project project, PsiField field, boolean invokedOnReference) {
     super(project, true, field);
     myField = field;
     myInvokedOnReference = invokedOnReference;

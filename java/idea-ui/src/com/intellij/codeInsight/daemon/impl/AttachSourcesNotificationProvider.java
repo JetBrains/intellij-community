@@ -201,7 +201,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
   private static class AttachJarAsSourcesAction implements AttachSourcesProvider.AttachSourcesAction {
     private final VirtualFile myClassFile;
 
-    public AttachJarAsSourcesAction(VirtualFile classFile) {
+    AttachJarAsSourcesAction(VirtualFile classFile) {
       myClassFile = classFile;
     }
 
@@ -252,7 +252,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     private final Project myProject;
     private final JComponent myParentComponent;
 
-    public ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
+    ChooseAndAttachSourcesAction(Project project, JComponent parentComponent) {
       myProject = project;
       myParentComponent = parentComponent;
     }

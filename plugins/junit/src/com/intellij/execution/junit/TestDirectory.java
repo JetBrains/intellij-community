@@ -53,7 +53,7 @@ import java.util.Collections;
 import java.util.Set;
 
 class TestDirectory extends TestPackage {
-  public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

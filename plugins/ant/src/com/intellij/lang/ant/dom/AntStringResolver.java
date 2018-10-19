@@ -92,7 +92,7 @@ public class AntStringResolver extends PropertyProviderFinder{
     Set<String> allNames;
     private final Map<String, String> myCached;
 
-    public CachedPropertiesProvider(Map<String, String> cached) {
+    CachedPropertiesProvider(Map<String, String> cached) {
       myCached = cached;
     }
 

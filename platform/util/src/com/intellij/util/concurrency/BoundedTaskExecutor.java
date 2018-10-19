@@ -57,7 +57,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   /**
    * Constructor which automatically shuts down this executor when {@code parent} is disposed.
    */
-  public BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
+  BoundedTaskExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxSimultaneousTasks, @NotNull Disposable parent) {
     this(name, backendExecutor, maxSimultaneousTasks);
     Disposer.register(parent, new Disposable() {
       @Override

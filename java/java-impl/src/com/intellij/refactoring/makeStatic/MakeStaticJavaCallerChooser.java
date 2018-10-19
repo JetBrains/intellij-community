@@ -39,7 +39,7 @@ import java.util.Set;
 abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   private final Project myProject;
 
-  public MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
+  MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
     super(method, project, "Select Methods To Propagate Static", null, consumer);
     myProject = project;
   }
@@ -85,7 +85,7 @@ abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
   }
 
   private class MakeStaticJavaMethodNode extends JavaMethodNode {
-    public MakeStaticJavaMethodNode(PsiMethod currentMethod,
+    MakeStaticJavaMethodNode(PsiMethod currentMethod,
                                     HashSet<PsiMethod> called,
                                     Runnable cancelCallback,
                                     Project project) {

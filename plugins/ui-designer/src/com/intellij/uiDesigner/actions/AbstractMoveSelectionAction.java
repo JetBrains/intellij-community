@@ -28,7 +28,7 @@ abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware
   private final boolean myExtend;
   private final boolean myMoveToLast;
 
-  public AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend, final boolean moveToLast) {
+  AbstractMoveSelectionAction(@NotNull final GuiEditor editor, boolean extend, final boolean moveToLast) {
     myEditor = editor;
     myExtend = extend;
     myMoveToLast = moveToLast;

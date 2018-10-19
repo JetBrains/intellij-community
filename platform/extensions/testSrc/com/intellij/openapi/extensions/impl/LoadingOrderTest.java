@@ -167,7 +167,7 @@ public class LoadingOrderTest {
     private final String myOrderId;
     private final String myId;
 
-    public MyOrderable(LoadingOrder order, String orderId, String id) {
+    MyOrderable(LoadingOrder order, String orderId, String id) {
       myOrder = order;
       myOrderId = orderId;
       myId = id;

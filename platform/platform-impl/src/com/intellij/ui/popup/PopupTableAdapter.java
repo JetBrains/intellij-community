@@ -20,7 +20,7 @@ class PopupTableAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<
   private PopupChooserBuilder myBuilder;
   private final JTable myTable;
 
-  public PopupTableAdapter(PopupChooserBuilder builder, JTable table) {
+  PopupTableAdapter(PopupChooserBuilder builder, JTable table) {
     myBuilder = builder;
     myTable = table;
   }

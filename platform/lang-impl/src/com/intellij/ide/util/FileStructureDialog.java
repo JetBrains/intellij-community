@@ -362,7 +362,7 @@ public class FileStructureDialog extends DialogWrapper {
       return false;
     }
 
-    public MyCommanderPanel(Project _project) {
+    MyCommanderPanel(Project _project) {
       super(_project, false, true);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myListSpeedSearch.addChangeListener(new PropertyChangeListener() {
@@ -439,7 +439,7 @@ public class FileStructureDialog extends DialogWrapper {
   }
 
   private class MyStructureTreeStructure extends SmartTreeStructure {
-    public MyStructureTreeStructure() {
+    MyStructureTreeStructure() {
       super(FileStructureDialog.this.myProject, myTreeModel);
     }
 

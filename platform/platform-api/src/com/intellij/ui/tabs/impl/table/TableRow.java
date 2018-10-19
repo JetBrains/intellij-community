@@ -26,7 +26,7 @@ class TableRow {
   final List<TabInfo> myColumns = new ArrayList<>();
   int width;
 
-  public TableRow(final TablePassInfo data) {
+  TableRow(final TablePassInfo data) {
     myData = data;
   }
 

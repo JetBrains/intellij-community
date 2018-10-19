@@ -143,7 +143,7 @@ public class JavaFxAnnotator implements Annotator {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 
-    public ColorIconRenderer(ColorIcon icon, PsiElement element) {
+    ColorIconRenderer(ColorIcon icon, PsiElement element) {
       myIcon = icon;
       myElement = element;
     }

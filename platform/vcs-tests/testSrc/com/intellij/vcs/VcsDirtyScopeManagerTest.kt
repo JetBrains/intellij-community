@@ -31,27 +31,25 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private lateinit var dirtyScopeManager: VcsDirtyScopeManager
   private lateinit var vcs: MockAbstractVcs
-  private lateinit var baseRoot: VirtualFile
   private lateinit var basePath: FilePath
 
   override fun setUp() {
     super.setUp()
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
     vcs = MockAbstractVcs(project)
-    baseRoot = project.baseDir
-    basePath = getFilePath(baseRoot)
+    basePath = getFilePath(projectRoot)
 
     disableVcsDirtyScopeVfsListener()
     disableChangeListManager()
 
     vcsManager.registerVcs(vcs)
-    registerRootMapping(baseRoot)
+    registerRootMapping(projectRoot)
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#com.intellij.openapi.vcs.changes")
 
   fun `test simple case`() {
-    val file = createFile(baseRoot, "file.txt")
+    val file = createFile(projectRoot, "file.txt")
 
     dirtyScopeManager.fileDirty(file)
 
@@ -62,7 +60,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test recursively dirty directory makes files under it dirty`() {
-    val dir = createDir(baseRoot, "dir")
+    val dir = createDir(projectRoot, "dir")
     val file = createFile(dir, "file.txt")
 
     dirtyScopeManager.dirDirtyRecursively(dir)
@@ -76,21 +74,21 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   fun `test dirty files from different roots`() {
     val otherRoot = createSubRoot(testRootFile, "otherRoot")
-    val file = createFile(baseRoot, "file.txt")
+    val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
     dirtyScopeManager.filePathsDirty(listOf(file), listOf(otherRoot))
 
     val invalidated = retrieveDirtyScopes()
-    assertDirtiness(invalidated, file, otherRoot, subFile)
+    assertDirtiness(invalidated, file, subFile)
     val scope = assertOneScope(invalidated)
     assertTrue(scope.recursivelyDirtyDirectories.contains(otherRoot))
     assertTrue(scope.dirtyFiles.contains(file))
   }
 
   fun `test mark everything dirty should mark dirty all roots`() {
-    val subRoot = createSubRoot(baseRoot, "subroot")
-    val file = createFile(baseRoot, "file.txt")
+    val subRoot = createSubRoot(projectRoot, "subroot")
+    val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(subRoot, "sub.txt")
 
     dirtyScopeManager.markEverythingDirty()
@@ -102,14 +100,16 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   // this is already implicitly checked in several other tests, but better to have it explicit
   fun `test all roots from a single vcs belong to a single scope`() {
     val otherRoot = createSubRoot(testRootFile, "otherRoot")
-    val file = createFile(baseRoot, "file.txt")
+    val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
     dirtyScopeManager.filePathsDirty(listOf(), listOf(basePath, otherRoot))
 
     val invalidated = retrieveDirtyScopes()
-    assertOneScope(invalidated)
-    assertDirtiness(invalidated, file, otherRoot, subFile)
+    val scope = assertOneScope(invalidated)
+    assertDirtiness(invalidated, file, subFile)
+    assertTrue(scope.recursivelyDirtyDirectories.contains(basePath))
+    assertTrue(scope.recursivelyDirtyDirectories.contains(otherRoot))
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
@@ -123,8 +123,8 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test mark files from different VCSs dirty produce two dirty scopes`() {
-    val basePath = getFilePath(baseRoot)
-    val subRoot = createDir(baseRoot, "othervcs")
+    val basePath = getFilePath(projectRoot)
+    val subRoot = createDir(projectRoot, "othervcs")
     val otherVcs = MockAbstractVcs(project, "otherVCS")
     vcsManager.registerVcs(otherVcs)
     registerRootMapping(subRoot.virtualFile!!, otherVcs)
@@ -189,12 +189,12 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private fun assertOneScope(invalidated: VcsInvalidated): VcsDirtyScope {
     assertEquals(1, invalidated.scopes.size)
-    val scope = invalidated.scopes.first()
-    return scope
+    return invalidated.scopes.first()
   }
 
-  private fun assertDirtiness(invalidated: VcsInvalidated, vararg dirty: FilePath, clean: Collection<FilePath> = emptyList()) {
-    dirty.forEach { assertTrue(invalidated.isFileDirty(it)) }
-    clean.forEach { assertFalse(invalidated.isFileDirty(it)) }
+  private fun assertDirtiness(invalidated: VcsInvalidated, vararg dirty: FilePath) {
+    dirty.forEach {
+      assertTrue("File $it is not dirty", invalidated.isFileDirty(it))
+    }
   }
 }

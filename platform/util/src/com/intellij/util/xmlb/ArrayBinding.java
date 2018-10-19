@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.List;
 
 class ArrayBinding extends AbstractCollectionBinding  {
-  public ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
+  ArrayBinding(@NotNull Class<?> valueClass, @Nullable MutableAccessor accessor) {
     super(valueClass.getComponentType(), accessor);
   }
 

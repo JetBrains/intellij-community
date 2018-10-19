@@ -112,7 +112,7 @@ public class FrameworkSupportUtil {
   private static class ProvidersGraph implements InboundSemiGraph<FrameworkSupportInModuleProvider> {
     private final List<FrameworkSupportInModuleProvider> myFrameworkSupportProviders;
 
-    public ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
+    ProvidersGraph(final List<FrameworkSupportInModuleProvider> frameworkSupportProviders) {
       myFrameworkSupportProviders = new ArrayList<>(frameworkSupportProviders);
     }
 

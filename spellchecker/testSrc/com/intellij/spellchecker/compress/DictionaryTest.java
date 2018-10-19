@@ -143,7 +143,7 @@ public class DictionaryTest {
   private static class TestLoader implements Loader {
     private final Set<String> myWords;
 
-    public TestLoader(Set<String> words) {
+    TestLoader(Set<String> words) {
       myWords = words;
     }
 

@@ -124,7 +124,7 @@ public class FindByXPathAction extends AnAction {
         private final Project myProject;
         private final Module myModule;
 
-        public MyEditExpressionAction(Project project, Module module) {
+        MyEditExpressionAction(Project project, Module module) {
             myProject = project;
             myModule = module;
         }

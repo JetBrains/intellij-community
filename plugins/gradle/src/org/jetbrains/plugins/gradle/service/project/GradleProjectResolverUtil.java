@@ -528,7 +528,7 @@ public class GradleProjectResolverUtil {
           @Nullable ExternalSourceSet mySourceSet;
           Collection<File> dependencyArtifacts;
 
-          public ProjectDependencyInfo(@NotNull ModuleData moduleData,
+          ProjectDependencyInfo(@NotNull ModuleData moduleData,
                                        @Nullable ExternalSourceSet sourceSet,
                                        Collection<File> dependencyArtifacts) {
             this.myModuleData = moduleData;

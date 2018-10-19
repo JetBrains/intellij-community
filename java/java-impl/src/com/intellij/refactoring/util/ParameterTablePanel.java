@@ -188,7 +188,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
 
   private static class TypeColumnInfo extends ColumnInfo<VariableData, PsiType> {
 
-    public TypeColumnInfo() {
+    TypeColumnInfo() {
       super("Type");
     }
 

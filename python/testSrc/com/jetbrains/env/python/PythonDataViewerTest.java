@@ -94,7 +94,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
     private final Set<Integer> myLines;
 
-    public PyDataFrameDebuggerTask(@Nullable String relativeTestDataPath, String scriptName, Set<Integer> lines) {
+    PyDataFrameDebuggerTask(@Nullable String relativeTestDataPath, String scriptName, Set<Integer> lines) {
       super(relativeTestDataPath, scriptName);
       myLines = lines;
     }

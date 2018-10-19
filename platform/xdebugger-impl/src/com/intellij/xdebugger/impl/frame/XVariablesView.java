@@ -160,7 +160,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
       private final long myOffset;
       private final XValueNodeImpl myNode;
 
-      public Entry(long offset, @NotNull XValueNodeImpl node) {
+      Entry(long offset, @NotNull XValueNodeImpl node) {
         myOffset = offset;
         myNode = node;
       }

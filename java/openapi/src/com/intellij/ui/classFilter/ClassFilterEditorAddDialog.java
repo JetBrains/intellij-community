@@ -41,7 +41,7 @@ class ClassFilterEditorAddDialog extends DialogWrapper {
   @Nullable
   private final String myHelpId;
 
-  public ClassFilterEditorAddDialog(Project project, @Nullable String helpId) {
+  ClassFilterEditorAddDialog(Project project, @Nullable String helpId) {
     super(project, true);
     myProject = project;
     myHelpId = helpId;

@@ -273,7 +273,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
   
   private class HideAction extends DumbAwareAction {
-    public HideAction() {
+    HideAction() {
       copyFrom(ActionManager.getInstance().getAction(InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID));
       getTemplatePresentation().setIcon(AllIcons.General.HideToolWindow);
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));

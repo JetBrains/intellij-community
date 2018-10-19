@@ -14,6 +14,8 @@ import java.util.Set;
 import static com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKeyValidator.ensureProperKey;
 
 public final class ToolbarClicksUsagesCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
+  public static final String GROUP_ID = "statistics.ui.toolbar.clicks";
+
   @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
@@ -25,7 +27,7 @@ public final class ToolbarClicksUsagesCollector extends ApplicationUsagesCollect
   @Override
   @NotNull
   public String getGroupId() {
-    return "statistics.ui.toolbar.clicks";
+    return GROUP_ID;
   }
 
   @NotNull

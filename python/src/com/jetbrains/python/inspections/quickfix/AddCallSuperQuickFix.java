@@ -270,7 +270,7 @@ public class AddCallSuperQuickFix implements LocalQuickFix {
 
     private final Set<String> myAllParameterNames = new LinkedHashSet<>();
 
-    public ParametersInfo(@NotNull PyParameterList parameterList) {
+    ParametersInfo(@NotNull PyParameterList parameterList) {
       PyParameter positionalContainer = null;
       PyParameter singleStarParam = null;
       PyParameter keywordContainer = null;

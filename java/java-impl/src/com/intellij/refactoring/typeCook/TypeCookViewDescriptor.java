@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 class TypeCookViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElements;
 
-  public TypeCookViewDescriptor(PsiElement[] elements) {
+  TypeCookViewDescriptor(PsiElement[] elements) {
     myElements = elements;
   }
 

@@ -151,7 +151,7 @@ public abstract class XFetchValueActionBase extends AnAction {
     private final int myValueIndex;
     private final ValueCollector myValueCollector;
 
-    public CopyValueEvaluationCallback(@NotNull XValueNodeImpl node, @NotNull ValueCollector valueCollector) {
+    CopyValueEvaluationCallback(@NotNull XValueNodeImpl node, @NotNull ValueCollector valueCollector) {
       super(node);
 
       myValueCollector = valueCollector;

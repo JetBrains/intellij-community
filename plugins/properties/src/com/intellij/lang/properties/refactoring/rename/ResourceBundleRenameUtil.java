@@ -110,7 +110,7 @@ public class ResourceBundleRenameUtil {
     private final Project myProject;
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleBaseNameInputValidator(final Project project, final ResourceBundle resourceBundle) {
+    ResourceBundleBaseNameInputValidator(final Project project, final ResourceBundle resourceBundle) {
       myProject = project;
       myResourceBundle = resourceBundle;
     }

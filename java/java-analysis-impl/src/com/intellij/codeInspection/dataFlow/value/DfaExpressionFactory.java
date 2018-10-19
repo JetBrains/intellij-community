@@ -26,7 +26,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -287,7 +290,7 @@ public class DfaExpressionFactory {
     if (expression == null) return DfaUnknownValue.getInstance();
     DfaValue value = getExpressionDfaValue(expression);
     if (value != null) {
-      return boxUnbox(value, targetType);
+      return DfaUtil.boxUnbox(value, targetType);
     }
     if (expression instanceof PsiConditionalExpression) {
       return getAdvancedExpressionDfaValue(((PsiConditionalExpression)expression).getThenExpression(), targetType).union(
@@ -295,7 +298,7 @@ public class DfaExpressionFactory {
     }
     PsiType type = expression.getType();
     if (type instanceof PsiPrimitiveType) return DfaUnknownValue.getInstance();
-    return boxUnbox(myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression)), targetType);
+    return DfaUtil.boxUnbox(myFactory.createTypeValue(type, NullabilityUtil.getExpressionNullability(expression)), targetType);
   }
 
   @NotNull
@@ -323,23 +326,6 @@ public class DfaExpressionFactory {
                 .takeWhileInclusive(value -> value != DfaUnknownValue.getInstance())
                 .reduce((a, b) -> b)
                 .orElse(DfaUnknownValue.getInstance());
-  }
-
-  DfaValue boxUnbox(DfaValue value, PsiType type) {
-    if (TypeConversionUtil.isPrimitiveWrapper(type)) {
-      if (value instanceof DfaConstValue || value instanceof DfaUnboxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(((DfaVariableValue)value).getVariableType()))) {
-        DfaValue boxed = myFactory.getBoxedFactory().createBoxed(value);
-        return boxed == null ? DfaUnknownValue.getInstance() : boxed;
-      }
-    }
-    if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
-      if (value instanceof DfaBoxedValue ||
-          (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveWrapper(((DfaVariableValue)value).getVariableType()))) {
-        return myFactory.getBoxedFactory().createUnboxed(value);
-      }
-    }
-    return value;
   }
 
   @Contract("null, _ -> null")

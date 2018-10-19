@@ -118,7 +118,7 @@ public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     private final String myPath;
     private final String myDescription;
 
-    public RemoteProjectTemplate(String name,
+    RemoteProjectTemplate(String name,
                                  Element element,
                                  ModuleType moduleType,
                                  String path, String description) {

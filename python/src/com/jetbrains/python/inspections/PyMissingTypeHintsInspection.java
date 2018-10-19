@@ -94,7 +94,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   private static class AddTypeHintsQuickFix implements LocalQuickFix {
     private final String myName;
 
-    public AddTypeHintsQuickFix(@NotNull String name) {
+    AddTypeHintsQuickFix(@NotNull String name) {
       myName = name;
     }
 

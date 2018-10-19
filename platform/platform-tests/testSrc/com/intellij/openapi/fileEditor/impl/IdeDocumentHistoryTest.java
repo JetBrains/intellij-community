@@ -212,7 +212,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
     private final boolean myCanBeMerged;
     private final String myName;
 
-    public MyState(boolean canBeMerged, String name) {
+    MyState(boolean canBeMerged, String name) {
       myCanBeMerged = canBeMerged;
       myName = name;
     }

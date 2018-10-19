@@ -36,7 +36,7 @@ class XalanStyleFrame extends AbstractFrame<Debugger.StyleFrame> implements Debu
   private final String myURI;
   private final String myInstr;
 
-  public XalanStyleFrame(TracerEvent ev, Debugger.StyleFrame currentFrame, boolean withSourceFrame) {
+  XalanStyleFrame(TracerEvent ev, Debugger.StyleFrame currentFrame, boolean withSourceFrame) {
     super(currentFrame);
     myWithSourceFrame = withSourceFrame;
 

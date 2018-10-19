@@ -82,7 +82,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private static class PendingCommentToken extends PendingToken {
     private final int myIndent;
 
-    public PendingCommentToken(IElementType type, int start, int end, int indent) {
+    PendingCommentToken(IElementType type, int start, int end, int indent) {
       super(type, start, end);
       myIndent = indent;
     }

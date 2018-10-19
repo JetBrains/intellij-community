@@ -384,7 +384,7 @@ public class SpellCheckerManager implements Disposable {
   private class CustomDictFileListener implements VirtualFileListener {
     private final SpellCheckerSettings mySettings;
 
-    public CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
+    CustomDictFileListener(@NotNull SpellCheckerSettings settings) {mySettings = settings;}
 
     @Override
     public void fileDeleted(@NotNull VirtualFileEvent event) {

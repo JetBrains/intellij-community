@@ -356,7 +356,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   private static class AllowedUsagesProcessor implements Processor<PsiReference> {
     private final PsiElement myPsiElement;
 
-    public AllowedUsagesProcessor(final PsiElement psiElement) {
+    AllowedUsagesProcessor(final PsiElement psiElement) {
       myPsiElement = psiElement;
     }
 

@@ -62,7 +62,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
   private static class SimplifiableIfStatementFix implements LocalQuickFix {
     private final String myOperator;
 
-    public SimplifiableIfStatementFix(String operator) {
+    SimplifiableIfStatementFix(String operator) {
       myOperator = operator;
     }
 

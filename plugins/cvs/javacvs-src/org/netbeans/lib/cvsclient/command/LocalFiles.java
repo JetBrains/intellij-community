@@ -30,7 +30,7 @@ final class LocalFiles {
 
   // Setup ==================================================================
 
-  public LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
+  LocalFiles(DirectoryObject directoryObject, IClientEnvironment clientEnvironment) {
     BugLog.getInstance().assertNotNull(directoryObject);
     BugLog.getInstance().assertNotNull(clientEnvironment);
 

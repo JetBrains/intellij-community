@@ -20,7 +20,7 @@
 package com.intellij.util.io;
 
 class PoolPageKey extends FileChunkKey<RandomAccessDataFile> {
-  public PoolPageKey(final RandomAccessDataFile owner, final long offset) {
+  PoolPageKey(final RandomAccessDataFile owner, final long offset) {
     super(owner, offset);
   }
 }

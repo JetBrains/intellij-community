@@ -667,7 +667,7 @@ public class MavenIndex {
 
     private final int indexId;
 
-    public IndexData(File dir) throws MavenIndexException {
+    IndexData(File dir) throws MavenIndexException {
       try {
         groupToArtifactMap = createPersistentMap(new File(dir, ARTIFACT_IDS_MAP_FILE));
         groupWithArtifactToVersionMap = createPersistentMap(new File(dir, VERSIONS_MAP_FILE));

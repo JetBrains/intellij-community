@@ -511,7 +511,7 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JButton myBackgroundImageButton;
     private JBCheckBox myDarkWindowHeaders;
 
-    public MyComponent() {
+    MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());
       if (!Registry.is("ide.transparency.mode.for.windows")) {
         myTransparencyPanel.getParent().remove(myTransparencyPanel);

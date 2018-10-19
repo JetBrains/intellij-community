@@ -56,6 +56,11 @@ public final class PythonConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[]{myFactory};
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.PythonConfigurationType";
+  }
+
   public PythonConfigurationFactory getFactory() {
     return myFactory;
   }

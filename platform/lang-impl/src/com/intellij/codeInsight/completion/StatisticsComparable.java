@@ -46,6 +46,6 @@ public class StatisticsComparable implements Comparable<StatisticsComparable> {
 
   @Override
   public int compareTo(StatisticsComparable o) {
-    return myScalar < o.myScalar ? -1 : myScalar == o.myScalar ? 0 : 1;
+    return Integer.compare(myScalar, o.myScalar);
   }
 }

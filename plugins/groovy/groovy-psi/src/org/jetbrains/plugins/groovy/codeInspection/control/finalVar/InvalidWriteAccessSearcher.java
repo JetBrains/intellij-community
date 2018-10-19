@@ -97,14 +97,14 @@ public class InvalidWriteAccessSearcher {
     private final Set<String> myInitialized = ContainerUtil.newHashSet();
     private final Set<String> myOverInitialized = ContainerUtil.newHashSet();
 
-    public MyData(List<? extends MyData> ins) {
+    MyData(List<? extends MyData> ins) {
       for (MyData data : ins) {
         myInitialized.addAll(data.myInitialized);
         myOverInitialized.addAll(data.myOverInitialized);
       }
     }
 
-    public MyData() {
+    MyData() {
     }
 
     public void add(String var) {

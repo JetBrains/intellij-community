@@ -327,7 +327,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     private final PsiElement myReplacement;
     private final PsiVariable myVariable;
 
-    public LocalReplacementUsageInfo(@NotNull PsiReference element, @NotNull PsiElement replacement) {
+    LocalReplacementUsageInfo(@NotNull PsiReference element, @NotNull PsiElement replacement) {
       super(element);
       final PsiElement resolved = element.resolve();
       myVariable = resolved instanceof PsiVariable ? (PsiVariable)resolved : null;
@@ -348,7 +348,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   private class InaccessibleExpressionsDetector extends JavaRecursiveElementWalkingVisitor {
     private final MultiMap<PsiElement, String> myConflicts;
 
-    public InaccessibleExpressionsDetector(MultiMap<PsiElement, String> conflicts) {
+    InaccessibleExpressionsDetector(MultiMap<PsiElement, String> conflicts) {
       myConflicts = conflicts;
     }
 

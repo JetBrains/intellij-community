@@ -17,7 +17,6 @@ import org.netbeans.lib.cvsclient.file.FileObject;
 import org.netbeans.lib.cvsclient.util.BugLog;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -28,12 +27,12 @@ final class CvsFiles
 
 	// Fields =================================================================
 
-	private final List cvsFiles = new ArrayList();
+	private final List<CvsFile> cvsFiles = new ArrayList<>();
 	private CvsFile currentCvsDirectory;
 
 	// Setup ==================================================================
 
-	public CvsFiles() {
+	CvsFiles() {
 	}
 
 	// Implemented ============================================================
@@ -42,8 +41,7 @@ final class CvsFiles
         public void visit(ICvsFilesVisitor visitor) {
 		BugLog.getInstance().assertNotNull(visitor);
 
-		for (Iterator it = cvsFiles.iterator(); it.hasNext();) {
-			final CvsFile cvsFile = (CvsFile)it.next();
+		for (CvsFile cvsFile : cvsFiles) {
 			if (cvsFile.isDirectory()) {
 				visitor.handleDirectory((DirectoryObject)cvsFile.getFileObject());
 			}

@@ -36,7 +36,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private ThemeFilter myFilter;
   private TagFilter[] myTagFilters;
 
-  public ThumbnailViewImpl(Project project) {
+  ThumbnailViewImpl(Project project) {
     this.project = project;
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);

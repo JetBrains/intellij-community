@@ -189,7 +189,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     private final boolean myAddOnSpinWait;
     private final boolean myAddVolatile;
 
-    public SpinLoopFix(PsiField field, boolean addOnSpinWait) {
+    SpinLoopFix(PsiField field, boolean addOnSpinWait) {
       myFieldPointer = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
       myFieldName = field.getName();
       myAddOnSpinWait = addOnSpinWait;

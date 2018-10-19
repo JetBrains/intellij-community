@@ -1200,7 +1200,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private static class ImageRef extends SoftReference<BufferedImage> {
     private @Nullable BufferedImage myStrongRef;
 
-    public ImageRef(@NotNull BufferedImage image) {
+    ImageRef(@NotNull BufferedImage image) {
       super(image);
       myStrongRef = image;
     }
@@ -1217,7 +1217,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static class ImageCache extends ScaleContext.Cache<ImageRef> {
-    public ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
+    ImageCache(@NotNull Function<ScaleContext, ImageRef> imageProvider) {
       super(imageProvider);
     }
 

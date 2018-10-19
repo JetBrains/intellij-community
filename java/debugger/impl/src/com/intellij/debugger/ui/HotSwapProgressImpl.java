@@ -111,7 +111,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
   private static class HotSwapNotificationListener implements NotificationListener {
     final WeakReference<XDebugSession> mySessionRef;
 
-    public HotSwapNotificationListener(WeakReference<XDebugSession> sessionRef) {
+    HotSwapNotificationListener(WeakReference<XDebugSession> sessionRef) {
       mySessionRef = sessionRef;
     }
 

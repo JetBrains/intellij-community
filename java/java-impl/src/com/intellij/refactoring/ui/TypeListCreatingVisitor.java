@@ -28,7 +28,7 @@ class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisit
   private final PsiElementFactory myFactory;
   private final HashSet<PsiType> mySet;
 
-  public TypeListCreatingVisitor(ArrayList<PsiType> result, PsiElementFactory factory) {
+  TypeListCreatingVisitor(ArrayList<PsiType> result, PsiElementFactory factory) {
     myList = result;
     myFactory = factory;
     mySet = new HashSet<>();

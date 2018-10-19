@@ -72,8 +72,7 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
       val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
       val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       session.addConstraint(MethodCallConstraint(ref, candidate))
-      val left = left
-      left ?: return session
+      val left = left ?: return session
 
       val returnType = PsiUtil.getSmartReturnType(candidate.method)
       if (returnType == null || PsiType.VOID == returnType) return session

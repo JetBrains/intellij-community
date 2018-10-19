@@ -313,7 +313,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
 
   private class SelectAllAction extends SelectUnselectAllAction {
 
-    public SelectAllAction() {
+    SelectAllAction() {
       super(CvsBundle.message("action.name.select.all"), AllIcons.Actions.Selectall);
     }
 
@@ -324,7 +324,7 @@ public class AddMultipleFilesOptionsDialog extends AbstractAddOptionsDialog {
   }
 
   private class UnselectAllAction extends SelectUnselectAllAction {
-    public UnselectAllAction() {
+    UnselectAllAction() {
       super(CvsBundle.message("action.name.unselect.all"), AllIcons.Actions.Unselectall);
     }
 

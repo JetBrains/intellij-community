@@ -85,7 +85,7 @@ public class LazyPatchContentRevision implements ContentRevision {
     @Nullable public final String content;
     public final boolean patchApplyFailed;
 
-    public Data(@Nullable String content, boolean patchApplyFailed) {
+    Data(@Nullable String content, boolean patchApplyFailed) {
       this.content = content;
       this.patchApplyFailed = patchApplyFailed;
     }

@@ -110,7 +110,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     private final String myType;
     private final boolean myOnTheFly;
 
-    public CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
+    CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
       myOnTheFly = onTheFly;

@@ -23,7 +23,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -75,12 +75,11 @@ public class GradleScriptType extends GroovyRunnableScriptType {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return baseScope;
     GlobalSearchScope result = GlobalSearchScope.EMPTY_SCOPE;
     final Project project = module.getProject();
-    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-      if (entry instanceof JdkOrderEntry) {
-        GlobalSearchScope scopeForSdk = LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry);
-        result = result.uniteWith(scopeForSdk);
-      }
-    }
+    GlobalSearchScope[] jdkScopes = Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
+      .filter(entry -> entry instanceof JdkOrderEntry)
+      .map(entry -> LibraryScopeCache.getInstance(project).getScopeForSdk((JdkOrderEntry)entry))
+      .toArray(GlobalSearchScope[]::new);
+    result = jdkScopes.length == 0 ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScope.union(jdkScopes);
 
     String modulePath = ExternalSystemApiUtil.getExternalProjectPath(module);
     if (modulePath == null) return result;

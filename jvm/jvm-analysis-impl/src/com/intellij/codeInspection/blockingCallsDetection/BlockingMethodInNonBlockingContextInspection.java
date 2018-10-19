@@ -132,7 +132,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     private final List<BlockingMethodChecker> myBlockingMethodCheckers;
     private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
 
-    public BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
+    BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
                                                      List<BlockingMethodChecker> blockingMethodCheckers,
                                                      List<NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;

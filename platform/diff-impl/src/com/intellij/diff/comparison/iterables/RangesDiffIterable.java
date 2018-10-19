@@ -23,7 +23,7 @@ import java.util.List;
 class RangesDiffIterable extends ChangeDiffIterableBase {
   @NotNull private final List<? extends Range> myRanges;
 
-  public RangesDiffIterable(@NotNull List<? extends Range> ranges, int length1, int length2) {
+  RangesDiffIterable(@NotNull List<? extends Range> ranges, int length1, int length2) {
     super(length1, length2);
     myRanges = ranges;
   }

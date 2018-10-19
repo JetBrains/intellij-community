@@ -71,7 +71,7 @@ public class ChooseLocaleAction extends ComboBoxAction {
     private final Locale myLocale;
     private final boolean myUpdateText;
 
-    public SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
+    SetLocaleAction(final GuiEditor editor, final Locale locale, final boolean updateText) {
       super(locale.getDisplayName().length() == 0
             ? UIDesignerBundle.message("choose.locale.default")
             : locale.getDisplayName());

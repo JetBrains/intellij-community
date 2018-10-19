@@ -507,7 +507,7 @@ public class GenerationUtil {
 
     private boolean myResult = false;
 
-    public CheckProcessElement(@NotNull PsiElement member) {
+    CheckProcessElement(@NotNull PsiElement member) {
       myMember = member;
       myManager = member.getManager();
     }

@@ -729,7 +729,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerProgressIndicator extends MavenRemoteObject implements MavenServerProgressIndicator {
     private final MavenProgressIndicator myProcess;
 
-    public RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
+    RemoteMavenServerProgressIndicator(MavenProgressIndicator process) {
       myProcess = process;
     }
 
@@ -762,7 +762,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   private static class RemoteMavenServerConsole extends MavenRemoteObject implements MavenServerConsole {
     private final MavenConsole myConsole;
 
-    public RemoteMavenServerConsole(MavenConsole console) {
+    RemoteMavenServerConsole(MavenConsole console) {
       myConsole = console;
     }
 

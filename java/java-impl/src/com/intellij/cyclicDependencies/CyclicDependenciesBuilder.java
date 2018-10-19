@@ -207,14 +207,13 @@ public class CyclicDependenciesBuilder{
       myGraph = buildGraph();
     }
     final HashMap<PsiPackage, Set<List<PsiPackage>>> result = new HashMap<>();
-    for (Iterator<PsiPackage> iterator = packages.iterator(); iterator.hasNext();) {
-      PsiPackage psiPackage = iterator.next();
-        Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
-        if (paths2Pack == null) {
-          paths2Pack = new HashSet<>();
-          result.put(psiPackage, paths2Pack);
-        }
-        paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
+    for (PsiPackage psiPackage : packages) {
+      Set<List<PsiPackage>> paths2Pack = result.get(psiPackage);
+      if (paths2Pack == null) {
+        paths2Pack = new HashSet<>();
+        result.put(psiPackage, paths2Pack);
+      }
+      paths2Pack.addAll(GraphAlgorithms.getInstance().findCycles(myGraph, psiPackage));
     }
     return result;
   }

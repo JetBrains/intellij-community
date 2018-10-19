@@ -278,7 +278,7 @@ public class FrameworkDetectionManager implements FrameworkDetectionIndexListene
   private class FrameworkDetectionHighlightingPass extends TextEditorHighlightingPass {
     private final Collection<Integer> myDetectors;
 
-    public FrameworkDetectionHighlightingPass(Editor editor, Collection<Integer> detectors) {
+    FrameworkDetectionHighlightingPass(Editor editor, Collection<Integer> detectors) {
       super(FrameworkDetectionManager.this.myProject, editor.getDocument(), false);
       myDetectors = detectors;
     }

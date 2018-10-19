@@ -39,7 +39,7 @@ class StableInvocationHandler<T> implements InvocationHandler, StableElement {
   private final Factory<? extends T> myProvider;
   private final Condition<? super T> myValidator;
 
-  public StableInvocationHandler(final T initial, final Factory<? extends T> provider, Condition<? super T> validator) {
+  StableInvocationHandler(final T initial, final Factory<? extends T> provider, Condition<? super T> validator) {
     myProvider = provider;
     myCachedValue = initial;
     myOldValue = initial;

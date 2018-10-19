@@ -63,7 +63,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   private static class JavadocPathsEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
-    public JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
+    JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
       super(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), descriptor);
       mySdk = sdk;
     }

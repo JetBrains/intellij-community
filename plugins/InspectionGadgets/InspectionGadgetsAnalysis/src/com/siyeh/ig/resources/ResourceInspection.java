@@ -445,7 +445,7 @@ public abstract class ResourceInspection extends BaseInspection {
     private final PsiVariable boundVariable;
     private boolean escaped;
 
-    public EscapeVisitor(@NotNull PsiVariable boundVariable) {
+    EscapeVisitor(@NotNull PsiVariable boundVariable) {
       this.boundVariable = boundVariable;
     }
 

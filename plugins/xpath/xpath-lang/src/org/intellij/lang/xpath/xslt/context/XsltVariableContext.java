@@ -131,7 +131,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     }
 
     static abstract class VariableProcessor extends ElementProcessor<XmlTag> {
-        public VariableProcessor(XmlTag context) {
+        VariableProcessor(XmlTag context) {
             super(context);
         }
 
@@ -161,7 +161,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
     static class VariantsProcessor extends VariableProcessor {
         private final List<XsltVariable> myNames = new ArrayList<>();
 
-        public VariantsProcessor(XmlTag context) {
+        VariantsProcessor(XmlTag context) {
             super(context);
         }
 
@@ -186,7 +186,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         private final String myName;
         private PsiElement myResult = null;
 
-        public VariableResolveProcessor(final String name, XmlTag context) {
+        VariableResolveProcessor(final String name, XmlTag context) {
             super(context);
             myName = name;
         }

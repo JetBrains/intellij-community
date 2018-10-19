@@ -63,7 +63,7 @@ public class PublicFieldInspection extends BaseInspection {
     final PsiField field = (PsiField)infos[0];
     fixes.add(new EncapsulateVariableFix(field.getName()));
     AddToIgnoreIfAnnotatedByListQuickFix.build(field, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[0]);
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override

@@ -3,8 +3,8 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.util.ui.JBInsets;
-import sun.swing.MenuItemLayoutHelper;
-import sun.swing.SwingUtilities2;
+import com.intellij.util.ui.UIUtilities;
+import com.intellij.util.ui.MenuItemLayoutHelper;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -129,16 +129,16 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
         // *** paint the accText disabled
         if (disabledForeground != null) {
           g.setColor(disabledForeground);
-          SwingUtilities2.drawString(lh.getMenuItem(), g,
-              lh.getAccText(), lr.getAccRect().x,
+          UIUtilities.drawString(lh.getMenuItem(), g,
+                                 lh.getAccText(), lr.getAccRect().x,
               lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
         } else {
           g.setColor(lh.getMenuItem().getBackground().brighter());
-          SwingUtilities2.drawString(lh.getMenuItem(), g,
+          UIUtilities.drawString(lh.getMenuItem(), g,
               lh.getAccText(), lr.getAccRect().x,
               lr.getAccRect().y + lh.getAccFontMetrics().getAscent());
           g.setColor(lh.getMenuItem().getBackground().darker());
-          SwingUtilities2.drawString(lh.getMenuItem(), g,
+          UIUtilities.drawString(lh.getMenuItem(), g,
               lh.getAccText(), lr.getAccRect().x - 1,
               lr.getAccRect().y + lh.getFontMetrics().getAscent() - 1);
         }
@@ -151,7 +151,7 @@ public class DarculaMenuItemUIBase extends BasicMenuItemUI {
         } else {
           g.setColor(acceleratorForeground);
         }
-        SwingUtilities2.drawString(lh.getMenuItem(), g, lh.getAccText(),
+        UIUtilities.drawString(lh.getMenuItem(), g, lh.getAccText(),
                                    lr.getAccRect().x, lr.getAccRect().y +
                                                       lh.getAccFontMetrics().getAscent());
       }

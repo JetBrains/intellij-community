@@ -424,7 +424,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
     private final MultiProcessDebugger myMultiProcessDebugger;
     private ServerSocket myServerSocket;
 
-    public DebuggerProcessAcceptor(@NotNull MultiProcessDebugger multiProcessDebugger, @NotNull ServerSocket serverSocket) {
+    DebuggerProcessAcceptor(@NotNull MultiProcessDebugger multiProcessDebugger, @NotNull ServerSocket serverSocket) {
       myMultiProcessDebugger = multiProcessDebugger;
       myServerSocket = serverSocket;
     }

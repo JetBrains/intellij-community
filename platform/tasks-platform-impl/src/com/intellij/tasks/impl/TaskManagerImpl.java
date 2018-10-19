@@ -990,7 +990,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     @Nullable
     protected TaskRepository.CancellableConnection myConnection;
 
-    public TestConnectionTask(String title) {
+    TestConnectionTask(String title) {
       super(TaskManagerImpl.this.myProject, title, true);
     }
 

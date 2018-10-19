@@ -327,7 +327,7 @@ public final class DesktopLayout {
   private final class MyStripeButtonComparator implements Comparator<StripeButton> {
     private final Map<String, WindowInfoImpl> myIdToInfo = new THashMap<>();
 
-    public MyStripeButtonComparator(@NotNull ToolWindowAnchor anchor) {
+    MyStripeButtonComparator(@NotNull ToolWindowAnchor anchor) {
       for (WindowInfoImpl info : getInfos()) {
         if (anchor == info.getAnchor()) {
           myIdToInfo.put(info.getId(), info.copy());

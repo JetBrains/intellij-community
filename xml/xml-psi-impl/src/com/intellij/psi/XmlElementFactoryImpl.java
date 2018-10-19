@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -49,10 +50,8 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @Override
   @NotNull
   public XmlTag createTagFromText(@NotNull @NonNls CharSequence text, @NotNull Language language) throws IncorrectOperationException {
-    assert language instanceof XMLLanguage:"Tag can be created only for xml language";
-    FileType type = language.getAssociatedFileType();
-    if (type == null) type = XmlFileType.INSTANCE;
-    final XmlDocument document = createXmlDocument(text, "dummy."+ type.getDefaultExtension(), type);
+    final FileType type = getFileType(language);
+    final XmlDocument document = createXmlDocument(text, "dummy." + type.getDefaultExtension(), type);
     final XmlTag tag = document.getRootTag();
     if (tag == null) throw new IncorrectOperationException("Incorrect tag text");
     return tag;
@@ -72,8 +71,9 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
 
   @NotNull
   @Override
-  public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context) throws IncorrectOperationException {
-    return createAttribute(name, value, PsiTreeUtil.getParentOfType(context, XmlTag.class, false) instanceof HtmlTag ? HtmlFileType.INSTANCE : XmlFileType.INSTANCE);
+  public XmlAttribute createAttribute(@NotNull @NonNls String name, @NotNull String value, @Nullable PsiElement context)
+    throws IncorrectOperationException {
+    return createAttribute(name, value, getFileType(context));
   }
 
   @NotNull
@@ -81,13 +81,16 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     final char quoteChar;
     if (!value.contains("\"")) {
       quoteChar = '"';
-    } else if (!value.contains("'")) {
+    }
+    else if (!value.contains("'")) {
       quoteChar = '\'';
-    } else {
+    }
+    else {
       quoteChar = '"';
       value = StringUtil.replace(value, "\"", "&quot;");
     }
-    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>", "dummy.xml", fileType);
+    final XmlDocument document = createXmlDocument("<tag " + name + "=" + quoteChar + value + quoteChar + "/>",
+                                                   "dummy." + fileType.getDefaultExtension(), fileType);
     XmlTag tag = document.getRootTag();
     assert tag != null;
     XmlAttribute[] attributes = tag.getAttributes();
@@ -136,6 +139,24 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     XmlDocument document = xmlFile.getDocument();
     assert document != null;
     return document;
+  }
+
+  @NotNull
+  private static FileType getFileType(@Nullable PsiElement context) {
+    if (context == null) {
+      return XmlFileType.INSTANCE;
+    }
+    if (context.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
+      return getFileType(context.getLanguage());
+    }
+    return PsiTreeUtil.getParentOfType(context, XmlTag.class, false) instanceof HtmlTag
+           ? HtmlFileType.INSTANCE : XmlFileType.INSTANCE;
+  }
+
+  private static FileType getFileType(@NotNull Language language) {
+    assert language instanceof XMLLanguage : "Tag can be created only for xml language";
+    FileType type = language.getAssociatedFileType();
+    return type == null ? XmlFileType.INSTANCE : type;
   }
 
   private static final Logger LOG = Logger.getInstance(XmlElementFactoryImpl.class);

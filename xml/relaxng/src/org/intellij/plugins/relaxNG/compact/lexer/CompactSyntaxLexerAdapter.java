@@ -251,7 +251,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     private final int myEndOffset;
     private int myCurPos;
 
-    public CharSequenceReader(final CharSequence text, int startOffset, int endOffset) {
+    CharSequenceReader(final CharSequence text, int startOffset, int endOffset) {
       myText = text;
       myEndOffset = endOffset;
       myCurPos = startOffset;

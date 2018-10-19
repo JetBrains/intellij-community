@@ -91,7 +91,7 @@ public class JBPopupMenu extends JPopupMenu {
     int myScrollDirection = 0;
     Timer myTimer;
 
-    public MyLayout(final JPopupMenu target) {
+    MyLayout(final JPopupMenu target) {
       super(target, BoxLayout.PAGE_AXIS);
       myTarget = target;
       myTimer = UIUtil.createNamedTimer("PopupTimer", 40, this);
@@ -196,7 +196,7 @@ public class JBPopupMenu extends JPopupMenu {
           g.setColor(dim[i]);
           g.drawLine(0, i, myTarget.getWidth(), i);
         }
-        AllIcons.General.SplitUp.paintIcon(myTarget, g, myTarget.getWidth() / 2 - AllIcons.General.SplitUp.getIconWidth() / 2, 0);
+        AllIcons.General.ArrowUp.paintIcon(myTarget, g, myTarget.getWidth() / 2 - AllIcons.General.ArrowUp.getIconWidth() / 2, 0);
       }
       if (super.preferredLayoutSize(myTarget).height - getMaxHeight() - myShift > 0) {
         for (int i = 0; i < dim.length; i++) {
@@ -204,8 +204,8 @@ public class JBPopupMenu extends JPopupMenu {
           g.drawLine(0, myTarget.getHeight() - i, myTarget.getWidth(),
                      myTarget.getHeight() - i);
         }
-        AllIcons.General.SplitDown.paintIcon(myTarget, g, myTarget.getWidth() / 2 - AllIcons.General.SplitDown.getIconWidth() / 2,
-                                             myTarget.getHeight() - AllIcons.General.SplitDown.getIconHeight());
+        AllIcons.General.ArrowDown.paintIcon(myTarget, g, myTarget.getWidth() / 2 - AllIcons.General.ArrowDown.getIconWidth() / 2,
+                                             myTarget.getHeight() - AllIcons.General.ArrowDown.getIconHeight());
       }
     }
 

@@ -75,8 +75,7 @@ public class FragmentListImpl implements FragmentList {
   public static ArrayList<Fragment> shift(ArrayList<Fragment> fragments, TextRange rangeShift1, TextRange rangeShift2,
                                      int startLine1, int startLine2) {
     ArrayList<Fragment> newFragments = new ArrayList<Fragment>(fragments.size());
-    for (Iterator<Fragment> iterator = fragments.iterator(); iterator.hasNext();) {
-      Fragment fragment = iterator.next();
+    for (Fragment fragment : fragments) {
       newFragments.add(fragment.shift(rangeShift1, rangeShift2, startLine1, startLine2));
     }
     return newFragments;

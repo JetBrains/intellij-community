@@ -35,11 +35,11 @@ public class TextToIconPaintTest extends CompositeIconPaintTestHelper {
   private static final Map<ScaleContext, Integer> CTX_TO_SIZE = new HashMap<>();
 
   static {
-    for (int i=0; i<SCALES_TO_SIZE.length; i++) {
-      CTX_TO_SIZE.put(ScaleContext.create(USR_SCALE.of(SCALES_TO_SIZE[i][0]),
-                                          SYS_SCALE.of(SCALES_TO_SIZE[i][1]),
-                                          OBJ_SCALE.of(SCALES_TO_SIZE[i][2])),
-                      SCALES_TO_SIZE[i][3]);
+    for (int[] scaleData : SCALES_TO_SIZE) {
+      CTX_TO_SIZE.put(ScaleContext.create(USR_SCALE.of(scaleData[0]),
+                                          SYS_SCALE.of(scaleData[1]),
+                                          OBJ_SCALE.of(scaleData[2])),
+                      scaleData[3]);
     }
   }
 

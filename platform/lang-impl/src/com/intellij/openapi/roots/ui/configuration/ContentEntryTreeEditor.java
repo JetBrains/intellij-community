@@ -285,7 +285,7 @@ public class ContentEntryTreeEditor {
   }
 
   private static class MyFileTreeBuilder extends FileTreeBuilder {
-    public MyFileTreeBuilder(JTree tree,
+    MyFileTreeBuilder(JTree tree,
                              DefaultTreeModel treeModel,
                              AbstractTreeStructure treeStructure,
                              Comparator<NodeDescriptor> comparator,

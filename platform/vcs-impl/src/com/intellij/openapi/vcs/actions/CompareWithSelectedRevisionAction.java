@@ -316,7 +316,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   private static class TreeNodeAdapter extends DefaultMutableTreeNode {
     private final TreeItem<VcsFileRevision> myRevision;
 
-    public TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
+    TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
       if (parent != null) {
         parent.add(this);
       }

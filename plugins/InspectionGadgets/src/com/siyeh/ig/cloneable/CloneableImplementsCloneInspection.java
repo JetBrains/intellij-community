@@ -90,7 +90,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
     private final boolean myGenerateThrows;
 
-    public CreateCloneMethodFix(boolean generateThrows) {
+    CreateCloneMethodFix(boolean generateThrows) {
       myGenerateThrows = generateThrows;
     }
 

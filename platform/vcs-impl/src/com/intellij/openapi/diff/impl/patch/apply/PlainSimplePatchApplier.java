@@ -173,7 +173,7 @@ public class PlainSimplePatchApplier {
   }
 
   private static class PatchApplyException extends RuntimeException {
-    public PatchApplyException(String message) {
+    PatchApplyException(String message) {
       super(message);
     }
   }

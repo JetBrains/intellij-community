@@ -483,7 +483,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private class GearActionGroup extends DefaultActionGroup {
-    public GearActionGroup() {
+    GearActionGroup() {
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
       getTemplatePresentation().setText("Show Options Menu");
       if (myInfo == null) return;
@@ -593,7 +593,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final class ChangeAnchorAction extends AnAction implements DumbAware {
     @NotNull private final ToolWindowAnchor myAnchor;
 
-    public ChangeAnchorAction(@NotNull String title, @NotNull ToolWindowAnchor anchor) {
+    ChangeAnchorAction(@NotNull String title, @NotNull ToolWindowAnchor anchor) {
       super(title);
       myAnchor = anchor;
     }
@@ -605,7 +605,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class TogglePinnedModeAction extends ToggleAction implements DumbAware {
-    public TogglePinnedModeAction() {
+    TogglePinnedModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_PINNED_MODE_ACTION_ID));
     }
 
@@ -627,7 +627,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ToggleDockModeAction extends ToggleAction implements DumbAware {
-    public ToggleDockModeAction() {
+    ToggleDockModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_DOCK_MODE_ACTION_ID));
     }
 
@@ -648,7 +648,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ToggleFloatingModeAction extends ToggleAction implements DumbAware {
-    public ToggleFloatingModeAction() {
+    ToggleFloatingModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_FLOATING_MODE_ACTION_ID));
     }
 
@@ -669,7 +669,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ToggleWindowedModeAction extends ToggleAction implements DumbAware {
-    public ToggleWindowedModeAction() {
+    ToggleWindowedModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_WINDOWED_MODE_ACTION_ID));
     }
 
@@ -690,7 +690,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class ToggleSideModeAction extends ToggleAction implements DumbAware {
-    public ToggleSideModeAction() {
+    ToggleSideModeAction() {
       copyFrom(ActionManager.getInstance().getAction(TOGGLE_SIDE_MODE_ACTION_ID));
     }
 
@@ -706,7 +706,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   }
 
   private final class RemoveStripeButtonAction extends AnAction implements DumbAware {
-    public RemoveStripeButtonAction() {
+    RemoveStripeButtonAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(ActionsBundle.message("action.RemoveStripeButton.text"));
       presentation.setDescription(ActionsBundle.message("action.RemoveStripeButton.description"));
@@ -726,7 +726,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
   private final class HideAction extends AnAction implements DumbAware {
     @NonNls public static final String HIDE_ACTIVE_WINDOW_ACTION_ID = InternalDecorator.HIDE_ACTIVE_WINDOW_ACTION_ID;
 
-    public HideAction() {
+    HideAction() {
       copyFrom(ActionManager.getInstance().getAction(HIDE_ACTIVE_WINDOW_ACTION_ID));
       getTemplatePresentation().setText(UIBundle.message("tool.window.hide.action.name"));
     }

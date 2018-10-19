@@ -319,7 +319,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @Nullable private final JComponent myEditorComponent;
     @NotNull private final Editor myEditor;
 
-    public PopupPanel(@NotNull Editor editor,
+    PopupPanel(@NotNull Editor editor,
                       @NotNull ActionToolbar toolbar,
                       @Nullable JComponent editorComponent,
                       @Nullable JComponent additionalInfo) {

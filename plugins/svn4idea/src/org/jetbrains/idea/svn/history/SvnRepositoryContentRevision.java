@@ -130,7 +130,7 @@ public class SvnRepositoryContentRevision extends SvnBaseContentRevision impleme
     private final OutputStream myDst;
     private Exception myException;
 
-    public ContentLoader(String path, OutputStream dst, long revision) {
+    ContentLoader(String path, OutputStream dst, long revision) {
       myPath = path;
       myDst = dst;
       myRevision = revision;

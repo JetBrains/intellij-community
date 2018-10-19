@@ -57,7 +57,7 @@ public final class TestProxyPrinterProvider {
     private final Condition<ConsoleViewContentType> myContentTypeCondition;
     private final Filter myFilter;
 
-    public HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
+    HyperlinkPrinter(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
                             @NotNull Condition<ConsoleViewContentType> contentTypeCondition,
                             @NotNull Filter filter) {
       super(testsOutputConsoleView, testsOutputConsoleView.getProperties(), null);

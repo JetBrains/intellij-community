@@ -268,7 +268,7 @@ public class ClassPath {
     private final String myShortName;
     private final List<Loader> myLoaders;
 
-    public MyEnumeration(String name) {
+    MyEnumeration(String name) {
       myName = name;
       myShortName = ClasspathCache.transformName(name);
       List<Loader> loaders = null;

@@ -75,7 +75,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     private final List<JCheckBox> myCheckBoxesList;
     private final List<Boolean> myInitialValues;
 
-    public CheckBoxBinding(final ThreeStateCheckBox common, final List<JCheckBox> checkBoxesList) {
+    CheckBoxBinding(final ThreeStateCheckBox common, final List<JCheckBox> checkBoxesList) {
       LOG.assertTrue(!checkBoxesList.isEmpty());
       myCommon = common;
       myCheckBoxesList = checkBoxesList;
@@ -172,7 +172,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     private final List<JComboBox> myComponentsList;
     private final List<Object> myInitialValues;
 
-    public CombobBoxBinding(final JComboBox common, final List<JComboBox> componentsList) {
+    CombobBoxBinding(final JComboBox common, final List<JComboBox> componentsList) {
       LOG.assertTrue(!componentsList.isEmpty());
       myCommon = common;
       myComponentsList = componentsList;

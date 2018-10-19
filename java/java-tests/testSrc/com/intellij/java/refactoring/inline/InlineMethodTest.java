@@ -231,6 +231,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in javadoc");
   }
 
+  public void testMethodUsedReflectively() {
+    doTestConflict("Inlined method is used reflectively");
+  }
+
   public void testNotAStatement() {
     doTestConflict("Inlined result would contain parse errors");
   }

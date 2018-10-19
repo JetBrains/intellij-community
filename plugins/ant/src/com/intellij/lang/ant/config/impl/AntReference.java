@@ -174,7 +174,7 @@ public abstract class AntReference {
   static class MissingAntReference extends AntReference {
     private final String myName;
 
-    public MissingAntReference(String name) {
+    MissingAntReference(String name) {
       myName = name;
     }
 
@@ -204,7 +204,7 @@ public abstract class AntReference {
   static class BindedReference extends AntReference {
     private final AntInstallation myAnt;
 
-    public BindedReference(AntInstallation ant) {
+    BindedReference(AntInstallation ant) {
       myAnt = ant;
     }
 

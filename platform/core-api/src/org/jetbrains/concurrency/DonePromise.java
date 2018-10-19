@@ -17,7 +17,7 @@ import static org.jetbrains.concurrency.InternalPromiseUtil.isHandlerObsolete;
 class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
   private final PromiseValue<T> value;
 
-  public DonePromise(@NotNull PromiseValue<T> value) {
+  DonePromise(@NotNull PromiseValue<T> value) {
     this.value = value;
   }
 

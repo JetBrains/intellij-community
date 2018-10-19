@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 class CompositeInstructionClientVisitor extends InstructionClientVisitor<Object[]> {
   private final InstructionClientVisitor[] myVisitors;
 
-  public CompositeInstructionClientVisitor(InstructionClientVisitor[] visitors) {
+  CompositeInstructionClientVisitor(InstructionClientVisitor[] visitors) {
     myVisitors = visitors;
   }
 

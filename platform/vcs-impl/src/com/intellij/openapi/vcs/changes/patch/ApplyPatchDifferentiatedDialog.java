@@ -467,7 +467,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myVf = null; // don't try to find vf for each typing; only when requested
     }
 
-    public FilePresentationModel(@NotNull VirtualFile file) {
+    FilePresentationModel(@NotNull VirtualFile file) {
       myPath = file.getPath();
       myVf = file;
     }
@@ -763,11 +763,11 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private class NewBaseSelector implements Runnable {
     final boolean myDirectorySelector;
 
-    public NewBaseSelector() {
+    NewBaseSelector() {
       this(true);
     }
 
-    public NewBaseSelector(boolean directorySelector) {
+    NewBaseSelector(boolean directorySelector) {
       myDirectorySelector = directorySelector;
     }
 
@@ -849,7 +849,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private int myDeleted;
     private int myInapplicable;
 
-    public NamedLegendStatuses() {
+    NamedLegendStatuses() {
       myAdded = 0;
       myModified = 0;
       myDeleted = 0;
@@ -1177,7 +1177,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     private final List<DiffRequestProducer> myRequests;
     private final List<? extends Change> myChanges;
 
-    public MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
+    MyDiffRequestChain(@NotNull List<DiffRequestProducer> requests, @NotNull List<? extends Change> changes, int index) {
       super(index);
       assert requests.size() == changes.size();
       myRequests = requests;

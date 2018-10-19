@@ -17,7 +17,6 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
@@ -54,7 +53,6 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
@@ -403,21 +401,6 @@ public abstract class TodoTreeBuilder implements Disposable {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
   }
 
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object element= nodeDescriptor.getElement();
-    if (element instanceof TodoItemNode){
-      return false;
-    } else if(element instanceof PsiFileNode) {
-      try {
-        return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
-      }
-      catch (IndexNotReadyException e) {
-        return true;
-      }
-    }
-    return true;
-  }
-
   /**
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
    *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
@@ -538,13 +521,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   private void rebuildTreeOnSettingChange() {
-    ArrayList<Object> pathsToSelect = new ArrayList<>();
-    
-    Object root = myTree.getModel().getRoot();
-    if (root != null) {
-      TreeUtil.collectSelectedPaths(myTree, 
-                                    new TreePath(root)).forEach(path -> pathsToSelect.add(TreeUtil.getLastUserObject(path)));
-    }
+    List<Object> pathsToSelect = TreeUtil.collectSelectedUserObjects(myTree);
     myTree.clearSelection();
     getTodoTreeStructure().validateCache();
     updateTree().onSuccess(o -> TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor)));

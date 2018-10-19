@@ -109,7 +109,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class ResetFilterAction extends DumbAwareAction {
-    public ResetFilterAction() {
+    ResetFilterAction() {
       super("Reset Filter");
     }
 
@@ -126,7 +126,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class ShowOnlyCleanupInspectionsAction extends CheckboxAction implements DumbAware{
-    public ShowOnlyCleanupInspectionsAction() {
+    ShowOnlyCleanupInspectionsAction() {
       super("Show Only Cleanup Inspections");
     }
 
@@ -143,7 +143,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
   private class ShowAvailableOnlyOnAnalyzeInspectionsAction extends CheckboxAction implements DumbAware {
 
-    public ShowAvailableOnlyOnAnalyzeInspectionsAction() {
+    ShowAvailableOnlyOnAnalyzeInspectionsAction() {
       super("Show Only Batch-Mode Inspections");
     }
 
@@ -189,7 +189,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     private final Boolean myShowEnabledActions;
 
-    public ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
+    ShowEnabledOrDisabledInspectionsAction(final boolean showEnabledActions) {
       super("Show Only " + (showEnabledActions ? "Enabled" : "Disabled"));
       myShowEnabledActions = showEnabledActions;
     }
@@ -210,7 +210,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   private class LanguageFilterAction extends CheckboxAction implements DumbAware {
     private final Language myLanguage;
 
-    public LanguageFilterAction(final @Nullable Language language) {
+    LanguageFilterAction(final @Nullable Language language) {
       super(language == null ? "Language is not specified" : language.getDisplayName());
       myLanguage = language;
     }
@@ -248,7 +248,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
   }
 
   private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
-    public ShowOnlyModifiedInspectionsAction() {
+    ShowOnlyModifiedInspectionsAction() {
       super("Show Only Modified Inspections");
     }
 

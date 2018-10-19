@@ -36,7 +36,7 @@ class AddNewLibraryDependencyAction extends ChooseAndAddAction<Library> {
   private final StructureConfigurableContext myContext;
   private final LibraryType myLibraryType;
 
-  public AddNewLibraryDependencyAction(final ClasspathPanel classpathPanel,
+  AddNewLibraryDependencyAction(final ClasspathPanel classpathPanel,
                                        StructureConfigurableContext context, LibraryType libraryType) {
     super(classpathPanel);
     myContext = context;

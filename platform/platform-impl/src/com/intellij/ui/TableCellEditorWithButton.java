@@ -119,7 +119,7 @@ public class TableCellEditorWithButton extends AbstractCellEditor implements Tab
     private final JTextField myTextField;
     private final FixedSizeButton myButton;
 
-    public MyComponent() {
+    MyComponent() {
       super(new GridBagLayout());
 
       myTextField = new JTextField();

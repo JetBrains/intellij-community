@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -103,14 +102,7 @@ public class BraceHighlightingHandler {
     // any request to the UI component need to be done from EDT
     final ModalityState modalityState = ModalityState.stateForComponent(editor.getComponent());
 
-    CaretModel model = editor.getCaretModel();
-    if (!model.isUpToDate()) {
-      // happened to be called from typed handler
-      // restart to avoid dreaded "Caret model is in its update process. All requests are illegal at this point."
-      restartLater(editor, modalityState, alarm, processor);
-      return;
-    }
-    final int offset = model.getOffset();
+    final int offset = editor.getCaretModel().getOffset();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {

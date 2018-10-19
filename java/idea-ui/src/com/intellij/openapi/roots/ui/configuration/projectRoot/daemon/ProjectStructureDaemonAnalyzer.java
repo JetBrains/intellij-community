@@ -274,7 +274,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     private final boolean myCollectUsages;
     private final Object[] myEqualityObjects;
 
-    public AnalyzeElementUpdate(ProjectStructureElement element, boolean check, boolean collectUsages) {
+    AnalyzeElementUpdate(ProjectStructureElement element, boolean check, boolean collectUsages) {
       super(element);
       myElement = element;
       myCheck = check;
@@ -311,7 +311,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     private final List<? extends ProjectStructureElementUsage> myUsages;
     private final Object[] myEqualityObjects;
 
-    public UsagesCollectedUpdate(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
+    UsagesCollectedUpdate(ProjectStructureElement element, List<? extends ProjectStructureElementUsage> usages) {
       super(element);
       myElement = element;
       myUsages = usages;
@@ -340,7 +340,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
     private final ProjectStructureProblemsHolderImpl myProblemsHolder;
     private final Object[] myEqualityObjects;
 
-    public ProblemsComputedUpdate(ProjectStructureElement element, ProjectStructureProblemsHolderImpl problemsHolder) {
+    ProblemsComputedUpdate(ProjectStructureElement element, ProjectStructureProblemsHolderImpl problemsHolder) {
       super(element);
       myElement = element;
       myProblemsHolder = problemsHolder;

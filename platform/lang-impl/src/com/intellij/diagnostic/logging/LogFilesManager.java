@@ -131,7 +131,7 @@ public class LogFilesManager {
     private final ProcessHandler myProcess;
     private Set<String> myPaths = new HashSet<>();
 
-    public LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
+    LogFile(LogFileOptions options, RunConfigurationBase configuration, ProcessHandler process) {
       myOptions = options;
       myConfiguration = configuration;
       myProcess = process;

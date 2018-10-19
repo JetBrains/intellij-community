@@ -37,7 +37,7 @@ final class BeanStep extends StepAdapter{
   private JLabel myExistClassLabel;
   private final WizardData myData;
 
-  public BeanStep(@NotNull final WizardData data) {
+  BeanStep(@NotNull final WizardData data) {
     myData = data;
 
     myPackageLabel.setLabelFor(myTfWithBtnChoosePackage.getTextField());

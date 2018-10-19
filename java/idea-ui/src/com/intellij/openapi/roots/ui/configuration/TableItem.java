@@ -25,12 +25,12 @@ class TableItem {
   private final String myUrl;
   private final CellAppearanceEx myCellAppearance;
 
-  public TableItem(@NotNull final VirtualFile file) {
+  TableItem(@NotNull final VirtualFile file) {
     myUrl = file.getUrl();
     myCellAppearance = FileAppearanceService.getInstance().forVirtualFile(file);
   }
 
-  public TableItem(@NotNull final String url) {
+  TableItem(@NotNull final String url) {
     myUrl = url;
 
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);

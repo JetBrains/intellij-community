@@ -51,7 +51,7 @@ public class TestFailedLineInspection extends LocalInspectionTool {
 
     private final String myTopStacktraceLine;
 
-    public DebugFailedTestFix(PsiElement element, String topStacktraceLine) {
+    DebugFailedTestFix(PsiElement element, String topStacktraceLine) {
       super(element, DefaultDebugExecutor.EXECUTOR_ID);
       myTopStacktraceLine = topStacktraceLine;
     }
@@ -75,7 +75,7 @@ public class TestFailedLineInspection extends LocalInspectionTool {
     private final Executor myExecutor;
     private final RunnerAndConfigurationSettings myConfiguration;
 
-    public RunActionFix(PsiElement element, String executorId) {
+    RunActionFix(PsiElement element, String executorId) {
       myExecutor = ExecutorRegistry.getInstance().getExecutorById(executorId);
       myContext = new ConfigurationContext(element);
       myConfiguration = myContext.getConfiguration();

@@ -122,7 +122,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private static class MyCustomListenerWrapper implements TestExecutionListener {
     private final IDEAJUnitListener myJunitListener;
 
-    public MyCustomListenerWrapper(IDEAJUnitListener junitListener) {
+    MyCustomListenerWrapper(IDEAJUnitListener junitListener) {
       myJunitListener = junitListener;}
 
     @Override

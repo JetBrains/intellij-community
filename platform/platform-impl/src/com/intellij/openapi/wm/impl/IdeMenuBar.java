@@ -329,9 +329,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
       removeAll();
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
-      final boolean isDarkMenu = SystemInfo.isMacSystemMenu ? NSDefaults.isDarkMenuBar() : false;
+      final boolean isDarkMenu = SystemInfo.isMacSystemMenu && NSDefaults.isDarkMenuBar();
       for (final AnAction action : myVisibleActions) {
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true, isDarkMenu));
+        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, isDarkMenu));
       }
 
       updateMnemonicsVisibility();
@@ -448,9 +448,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       }
 
       updateMenuActions();
-      if (UIUtil.isWinLafOnVista()) {
-        repaint();
-      }
     }
   }
 

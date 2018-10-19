@@ -357,7 +357,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private class MyStructure extends AbstractTreeStructure {
     private final Project myProject;
 
-    public MyStructure(Project project) {
+    MyStructure(Project project) {
       myProject = project;
     }
 

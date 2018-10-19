@@ -333,7 +333,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
   }
 
   private class MyVcsLogGraphTable extends VcsLogGraphTable {
-    public MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
+    MyVcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
       super(ui, logData, initialDataPack, ui::requestMore);
     }
 

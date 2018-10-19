@@ -2,7 +2,7 @@ package com.siyeh.igtest.visibility.overrides;
 
 public class OverridesStaticMethod extends Base {
   public void method(int i) { /* overrides non-static */ }
-  public void method(String s) { /* overrides static */ }
+  <error descr="Instance method 'method(String)' in 'com.siyeh.igtest.visibility.overrides.OverridesStaticMethod' cannot override static method 'method(String)' in 'com.siyeh.igtest.visibility.overrides.Base'">public void <warning descr="Method 'method()' overrides a static method of a superclass">method</warning>(String s)</error> { /* overrides static */ }
 }
 
 class Base {

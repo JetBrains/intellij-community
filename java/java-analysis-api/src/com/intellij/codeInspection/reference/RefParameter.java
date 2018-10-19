@@ -68,4 +68,8 @@ public interface RefParameter extends RefJavaElement {
 
   @Override
   PsiParameter getElement();
+
+  default int getUsageCount() {
+    throw new UnsupportedOperationException();
+  }
 }

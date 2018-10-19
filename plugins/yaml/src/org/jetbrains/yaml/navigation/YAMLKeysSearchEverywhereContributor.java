@@ -72,8 +72,8 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
-  public void fetchElements(String pattern, boolean everywhere, SearchEverywhereContributorFilter<Language> filter,
-                            ProgressIndicator progressIndicator, Function<Object, Boolean> consumer) {
+  public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<Language> filter,
+                            @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
     if (myProject == null || DumbService.getInstance(myProject).isDumb() || pattern.isEmpty()) {
       return;
     }
@@ -82,20 +82,21 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
   }
 
   @Override
-  public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
+  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
     if (selected instanceof Navigatable) {
       ((Navigatable)selected).navigate(true);
     }
     return true;
   }
 
+  @NotNull
   @Override
-  public ListCellRenderer getElementsRenderer(JList<?> list) {
+  public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
     return new NavigationItemListCellRenderer();
   }
 
   @Override
-  public Object getDataForItem(Object element, String dataId) {
+  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     return null;
   }
 

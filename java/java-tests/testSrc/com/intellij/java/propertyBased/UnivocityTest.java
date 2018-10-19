@@ -87,7 +87,11 @@ public class UnivocityTest extends AbstractApplyAndRevertTestCase {
 
   @Override
   protected String getTestDataPath() {
-    return new File(PathManager.getHomePath(), "univocity-parsers").getAbsolutePath();
+    File file = new File(PathManager.getHomePath(), "univocity-parsers");
+    if (!file.exists()) {
+      fail("Cannot find univocity project, execute this in project home: git clone https://github.com/JetBrains/univocity-parsers.git");
+    }
+    return file.getAbsolutePath();
   }
 
 }

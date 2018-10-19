@@ -123,7 +123,7 @@ public class GitExecutableProblemsNotifier {
    * Notification about unsupported version
    */
   private static class UnsupportedGitVersionNotification extends BadGitExecutableNotification {
-    public UnsupportedGitVersionNotification(@NotNull GitVersion unsupportedVersion) {
+    UnsupportedGitVersionNotification(@NotNull GitVersion unsupportedVersion) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
             GitBundle.message("git.executable.validation.error.version.title", unsupportedVersion.getPresentation()),
             null,
@@ -136,7 +136,7 @@ public class GitExecutableProblemsNotifier {
    * Notification about not being able to determine version
    */
   private static class ErrorRunningGitNotification extends BadGitExecutableNotification {
-    public ErrorRunningGitNotification(@NotNull String error) {
+    ErrorRunningGitNotification(@NotNull String error) {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
             GitBundle.getString("git.executable.validation.error.start.title"),
             null,
@@ -149,7 +149,7 @@ public class GitExecutableProblemsNotifier {
    * Notification about not accepted xcode license
    */
   private static class XcodeLicenseNotAcceptedNotification extends BadGitExecutableNotification {
-    public XcodeLicenseNotAcceptedNotification() {
+    XcodeLicenseNotAcceptedNotification() {
       super(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.getDisplayId(), null,
             GitBundle.getString("git.executable.validation.error.xcode.title"),
             null,
@@ -159,7 +159,7 @@ public class GitExecutableProblemsNotifier {
   }
 
   private abstract static class BadGitExecutableNotification extends Notification {
-    public BadGitExecutableNotification(@NotNull String groupDisplayId,
+    BadGitExecutableNotification(@NotNull String groupDisplayId,
                                         @Nullable Icon icon,
                                         @Nullable String title,
                                         @Nullable String subtitle,

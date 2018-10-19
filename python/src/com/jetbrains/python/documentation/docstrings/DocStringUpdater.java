@@ -154,7 +154,7 @@ public abstract class DocStringUpdater<T extends DocStringLineParser> {
     @NotNull final TextRange range;
     @NotNull final String text;
 
-    public Modification(@NotNull TextRange range, @NotNull String newText) {
+    Modification(@NotNull TextRange range, @NotNull String newText) {
       this.range = range;
       this.text = newText;
     }

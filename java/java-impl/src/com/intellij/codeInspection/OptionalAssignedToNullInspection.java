@@ -140,7 +140,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     private final String myTypeParameter;
     private final String myMethodName;
 
-    public ReplaceWithEmptyOptionalFix(PsiClassType type) {
+    ReplaceWithEmptyOptionalFix(PsiClassType type) {
       myTypeName = type.rawType().getCanonicalText();
       PsiType[] parameters = type.getParameters();
       myTypeParameter =

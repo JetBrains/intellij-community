@@ -21,6 +21,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,13 +125,9 @@ public abstract class SourceScope {
     GlobalSearchScope evaluate(Module module);
   }
   private static GlobalSearchScope evaluateScopesAndUnite(final Module[] modules, final ScopeForModuleEvaluator evaluator) {
-    GlobalSearchScope scope = evaluator.evaluate(modules[0]);
-    for (int i = 1; i < modules.length; i++) {
-      final Module module = modules[i];
-      final GlobalSearchScope otherscope = evaluator.evaluate(module);
-      scope = scope.uniteWith(otherscope);
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> evaluator.evaluate(module));
+    return GlobalSearchScope.union(scopes);
   }
 
   public static SourceScope modules(final Module[] modules) {

@@ -46,7 +46,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
     private final ActionType myType;
 
-    public BaseCreatePolicy(final ActionType type) {
+    BaseCreatePolicy(final ActionType type) {
       myType = type;
     }
 
@@ -79,7 +79,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class SelectPolicy extends BaseCreatePolicy {
-    public SelectPolicy() {
+    SelectPolicy() {
       super(ActionType.SELECT);
     }
 
@@ -102,7 +102,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class CreatePolicy extends BaseCreatePolicy {
-    public CreatePolicy() {
+    CreatePolicy() {
       super(ActionType.CREATE);
     }
 
@@ -135,7 +135,7 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class SavePolicy extends BaseCreatePolicy {
-    public SavePolicy() {
+    SavePolicy() {
       super(ActionType.SAVE);
     }
 

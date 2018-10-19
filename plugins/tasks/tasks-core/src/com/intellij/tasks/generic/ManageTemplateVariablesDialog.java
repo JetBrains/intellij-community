@@ -40,7 +40,7 @@ public class ManageTemplateVariablesDialog extends DialogWrapper {
   }
 
   private static class TemplateVariablesTable extends ListTableWithButtons<TemplateVariable> {
-    public TemplateVariablesTable() {
+    TemplateVariablesTable() {
       getTableView().getEmptyText().setText("No variables");
     }
 

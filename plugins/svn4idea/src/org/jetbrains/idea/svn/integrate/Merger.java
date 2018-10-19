@@ -241,7 +241,7 @@ public class Merger implements IMerger {
     private final int myStart;
     private final int mySize;
 
-    public MergeChunk(int start, int size) {
+    MergeChunk(int start, int size) {
       myStart = start;
       mySize = size;
     }

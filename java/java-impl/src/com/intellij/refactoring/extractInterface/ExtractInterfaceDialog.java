@@ -36,7 +36,7 @@ import java.util.List;
 
 class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
 
-  public ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
+  ExtractInterfaceDialog(Project project, PsiClass sourceClass) {
     super(project, sourceClass, collectMembers(sourceClass), ExtractInterfaceHandler.REFACTORING_NAME);
     for (MemberInfo memberInfo : myMemberInfos) {
       final PsiMember member = memberInfo.getMember();

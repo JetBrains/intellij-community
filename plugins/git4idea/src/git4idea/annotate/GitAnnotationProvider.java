@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
@@ -35,9 +36,8 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
-import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
 import git4idea.history.GitFileHistory;
@@ -145,7 +145,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
-    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.BLAME);
+    GitBinaryHandler h = new GitBinaryHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t");
     h.addParameters("--encoding=UTF-8");
@@ -169,7 +169,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
+    String output = new String(h.run(), CharsetToolkit.UTF8_CHARSET);
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 
@@ -386,7 +386,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   private static class CachedData {
     public final List<LineInfo> lines;
 
-    public CachedData(List<LineInfo> lines) {
+    CachedData(List<LineInfo> lines) {
       this.lines = lines;
     }
   }

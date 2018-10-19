@@ -14,7 +14,7 @@ class UseOfConcreteInheritorVisitor extends BaseInspectionVisitor {
 
   private final String myAncestorName;
 
-  public UseOfConcreteInheritorVisitor(String ancestorName) {
+  UseOfConcreteInheritorVisitor(String ancestorName) {
     myAncestorName = ancestorName;
   }
 

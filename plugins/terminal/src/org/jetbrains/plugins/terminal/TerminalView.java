@@ -230,7 +230,7 @@ public class TerminalView {
     private final AbstractTerminalRunner myTerminalRunner;
     private final JBTabbedTerminalWidget myTerminal;
 
-    public NewSession(@NotNull AbstractTerminalRunner terminalRunner, @NotNull JBTabbedTerminalWidget terminal) {
+    NewSession(@NotNull AbstractTerminalRunner terminalRunner, @NotNull JBTabbedTerminalWidget terminal) {
       super("New Session", "Create New Terminal Session", AllIcons.General.Add);
       myTerminalRunner = terminalRunner;
       myTerminal = terminal;
@@ -246,7 +246,7 @@ public class TerminalView {
     private final JBTabbedTerminalWidget myTerminal;
     private final ToolWindow myToolWindow;
 
-    public CloseSession(@NotNull JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
+    CloseSession(@NotNull JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
       super("Close Session", "Close Terminal Session", AllIcons.Actions.Delete);
       myTerminal = terminal;
       myToolWindow = toolWindow;
@@ -363,7 +363,7 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   private final PropertiesComponent myPropertiesComponent;
   private final ToolWindow myWindow;
 
-  public TerminalToolWindowPanel(PropertiesComponent propertiesComponent, ToolWindow window) {
+  TerminalToolWindowPanel(PropertiesComponent propertiesComponent, ToolWindow window) {
     super(false, true);
     myPropertiesComponent = propertiesComponent;
     myWindow = window;

@@ -95,7 +95,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
   private class MyCvsHandler extends CvsHandler {
 
-    public MyCvsHandler() {
+    MyCvsHandler() {
       super(TITLE, FileSetToBeUpdated.EMPTY);
     }
 

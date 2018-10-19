@@ -59,7 +59,7 @@ class Html5SectionsProcessor {
     private Section myParent = null;
     private XmlTag myHeader = null;
 
-    public Section(final XmlTag tag) {
+    Section(final XmlTag tag) {
       super(tag);
     }
 

@@ -158,7 +158,7 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
   private static class MyProvider implements TreeStructureProvider {
     private final Project myProject;
 
-    public MyProvider(Project project) {
+    MyProvider(Project project) {
       myProject = project;
     }
 

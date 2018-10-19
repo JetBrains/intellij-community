@@ -198,7 +198,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   private static class CommitIdMapFunction<CommitId> implements NotNullFunction<Integer, CommitId> {
     private final List<CommitId> myCommitsIdMap;
 
-    public CommitIdMapFunction(List<CommitId> commitsIdMap) {
+    CommitIdMapFunction(List<CommitId> commitsIdMap) {
       myCommitsIdMap = commitsIdMap;
     }
 
@@ -212,7 +212,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   private static class IntegerCommitIdMapFunction implements NotNullFunction<Integer, Integer> {
     private final IntList myCommitsIdMap;
 
-    public IntegerCommitIdMapFunction(IntList commitsIdMap) {
+    IntegerCommitIdMapFunction(IntList commitsIdMap) {
       myCommitsIdMap = commitsIdMap;
     }
 

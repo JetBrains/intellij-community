@@ -40,7 +40,7 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
   private static class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
     private final PsiClass myPsiClass;
 
-    public JavaFxStaticPropertyClassReference(@NotNull XmlAttribute xmlAttribute, @NotNull String className) {
+    JavaFxStaticPropertyClassReference(@NotNull XmlAttribute xmlAttribute, @NotNull String className) {
       super(xmlAttribute);
       myPsiClass = JavaFxPsiUtil.findPsiClass(className, xmlAttribute);
     }

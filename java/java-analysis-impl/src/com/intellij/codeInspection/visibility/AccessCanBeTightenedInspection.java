@@ -69,7 +69,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     private final ProblemsHolder myHolder;
     private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-    public MyVisitor(@NotNull ProblemsHolder holder) {
+    MyVisitor(@NotNull ProblemsHolder holder) {
       myHolder = holder;
       myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }

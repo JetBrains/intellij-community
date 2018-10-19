@@ -12,9 +12,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
@@ -277,7 +277,7 @@ public class TabHeaderComponent extends JComponent {
     FontMetrics fm = getFontMetrics(getFont());
 
     for (int i = 0; i < size; i++) {
-      int tabWidth = offset + SwingUtilities2.stringWidth(null, fm, myTabs.get(i).compute()) + offset;
+      int tabWidth = offset + UIUtilities.stringWidth(null, fm, myTabs.get(i).compute()) + offset;
       mySizeInfo.tabTitleX[i] = x + offset;
       mySizeInfo.tabs[i] = new Rectangle(x, 0, tabWidth, -1);
       x += tabWidth;

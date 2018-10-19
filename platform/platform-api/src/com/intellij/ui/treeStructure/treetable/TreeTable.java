@@ -230,7 +230,7 @@ public class TreeTable extends JBTable {
     /** Set to true when we are updating the ListSelectionModel. */
     protected boolean updatingListSelectionModel;
 
-    public ListToTreeSelectionModelWrapper() {
+    ListToTreeSelectionModelWrapper() {
       super();
       getListSelectionModel().addListSelectionListener(createListSelectionListener());
     }

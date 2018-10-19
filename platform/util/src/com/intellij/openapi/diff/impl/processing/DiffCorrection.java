@@ -169,8 +169,8 @@ public interface DiffCorrection {
 
   class FragmentsCollector extends BaseFragmentRunner<FragmentsCollector> {
     public void addAll(DiffFragment[] fragments) {
-      for (int i = 0; i < fragments.length; i++) {
-        add(fragments[i]);
+      for (DiffFragment fragment : fragments) {
+        add(fragment);
       }
     }
   }

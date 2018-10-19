@@ -201,7 +201,7 @@ public class ProjectSettingsPanel {
       }
     }
 
-    public ScopeSetting(NamedScope scope, String profile) {
+    ScopeSetting(NamedScope scope, String profile) {
       myScope = scope;
       myProfileName = profile;
     }

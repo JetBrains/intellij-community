@@ -389,7 +389,7 @@ public class JavacMain {
     private final CanceledStatus myCanceledStatus;
     private static final AtomicBoolean ourOptimizedManagerMissingReported = new AtomicBoolean(false);
 
-    public ContextImpl(@NotNull JavaCompiler compiler,
+    ContextImpl(@NotNull JavaCompiler compiler,
                        @NotNull DiagnosticOutputConsumer outConsumer,
                        @NotNull OutputFileConsumer sink,
                        CanceledStatus canceledStatus, boolean canUseOptimizedmanager) {

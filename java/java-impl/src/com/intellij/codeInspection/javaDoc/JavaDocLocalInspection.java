@@ -440,7 +440,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   }
 
   private class OptionsPanel extends JPanel {
-    public OptionsPanel() {
+    OptionsPanel() {
       super(new GridBagLayout());
       GridBagConstraints gc =
         new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
@@ -588,7 +588,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
       private final Options myOptions;
       private final String myTagName;
 
-      public MyChangeListener(JCheckBox checkBox, Options options, String tagName) {
+      MyChangeListener(JCheckBox checkBox, Options options, String tagName) {
         myCheckBox = checkBox;
         myOptions = options;
         myTagName = tagName;
@@ -615,7 +615,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   private static class AddJavadocFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final AddJavadocIntention myIntention;
 
-    public AddJavadocFix(PsiElement nameIdentifier) {
+    AddJavadocFix(PsiElement nameIdentifier) {
       super(nameIdentifier);
       myIntention = new AddJavadocIntention();
     }
@@ -648,7 +648,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private final String myTag;
     private final String myValue;
 
-    public AddMissingTagFix(@NotNull String tag, @NotNull String value) {
+    AddMissingTagFix(@NotNull String tag, @NotNull String value) {
       myTag = tag;
       myValue = value;
     }
@@ -700,7 +700,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   private static class AddMissingParamTagFix extends AddMissingTagFix {
     private final String myName;
 
-    public AddMissingParamTagFix(String name) {
+    AddMissingParamTagFix(String name) {
       super("param", name);
       myName = name;
     }
@@ -772,7 +772,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
     private final JavaDocLocalInspection myInspection;
     private final String myTag;
 
-    public AddUnknownTagToCustoms(@NotNull JavaDocLocalInspection inspection, @NotNull String tag) {
+    AddUnknownTagToCustoms(@NotNull JavaDocLocalInspection inspection, @NotNull String tag) {
       myInspection = inspection;
       myTag = tag;
     }

@@ -83,7 +83,7 @@ public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiRe
   }
 
   private static void updateTypeParameter(PsiTypeParameter typeParameter, ParameterInfoUIContext context) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(typeParameter.getName());
     int highlightEndOffset = buffer.length();
     buffer.append(" extends ");

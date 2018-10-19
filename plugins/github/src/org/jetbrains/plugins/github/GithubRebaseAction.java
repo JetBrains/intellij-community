@@ -75,7 +75,7 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
     @NotNull private final GithubFullPath myRepoPath;
     @NotNull private final String myOnto;
 
-    public RebaseTask(@NotNull Project project,
+    RebaseTask(@NotNull Project project,
                       @NotNull GithubApiRequestExecutor requestExecutor,
                       @NotNull Git git,
                       @NotNull GithubServerPath server,

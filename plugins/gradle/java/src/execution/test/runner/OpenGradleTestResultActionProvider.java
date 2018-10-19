@@ -37,7 +37,7 @@ public class OpenGradleTestResultActionProvider implements ToggleModelActionProv
     @Nullable
     private ProjectSystemId mySystemId;
 
-    public MyToggleModelAction(TestConsoleProperties properties) {
+    MyToggleModelAction(TestConsoleProperties properties) {
       super(GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.text"),
             GradleBundle.message("gradle.test.runner.ui.tests.actions.open.gradle.report.desc"),
                                  GradleIcons.GradleNavigate, properties, OPEN_GRADLE_REPORT);

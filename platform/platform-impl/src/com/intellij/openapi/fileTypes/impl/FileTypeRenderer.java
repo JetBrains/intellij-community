@@ -74,7 +74,7 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   private static class DefaultFileTypeListProvider implements FileTypeListProvider {
     private final List<FileType> myFileTypes;
 
-    public DefaultFileTypeListProvider() {
+    DefaultFileTypeListProvider() {
       myFileTypes = Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes());
     }
 

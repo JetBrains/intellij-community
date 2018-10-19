@@ -54,7 +54,7 @@ class JiraSoapTask extends JiraTask {
 
   private final List<Comment> myComments;
 
-  public JiraSoapTask(@NotNull Element element, @NotNull TaskRepository repository) {
+  JiraSoapTask(@NotNull Element element, @NotNull TaskRepository repository) {
     super(repository);
     myKey = element.getChildText("key");
     mySummary = element.getChildText("summary");

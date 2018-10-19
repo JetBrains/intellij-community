@@ -65,7 +65,7 @@ public class InstanceofQuery<S, T> implements Query<T> {
   private class MyProcessor implements Processor<S> {
     private final Processor<? super T> myConsumer;
 
-    public MyProcessor(Processor<? super T> consumer) {
+    MyProcessor(Processor<? super T> consumer) {
       myConsumer = consumer;
     }
 

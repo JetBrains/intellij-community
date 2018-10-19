@@ -358,11 +358,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
      private final PsiDirectory[] myDirectories;
      private final boolean myRearrangePackagesEnabled;
 
-     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
+     SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories) {
        this(project, directories, true);
      }
 
-     public SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories, boolean rearrangePackagesEnabled) {
+     SelectMoveOrRearrangePackageDialog(Project project, PsiDirectory[] directories, boolean rearrangePackagesEnabled) {
        super(project, true);
        myDirectories = directories;
        myRearrangePackagesEnabled = rearrangePackagesEnabled;

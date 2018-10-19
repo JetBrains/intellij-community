@@ -205,20 +205,27 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           for (PsiElement element : owner.getChildren()) {
             if (element instanceof PsiErrorElement) return false;
           }
-          if (owner instanceof PsiExpressionList && ((PsiExpressionList)owner).isEmpty()) {
-            PsiElement parent = owner.getParent();
-            if (parent instanceof PsiCall) {
-              PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
-              if (chosenMethod != null) {
-                int parametersCount = chosenMethod.getParameterList().getParametersCount();
-                if ((parametersCount == 1 && !chosenMethod.isVarArgs() || parametersCount == 2 && chosenMethod.isVarArgs()) && 
-                                            !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) return false;
+          PsiElement parent = owner.getParent();
+          if (owner instanceof PsiExpressionList && parent instanceof PsiCall) {
+            PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
+            if (chosenMethod != null) {
+              int parametersCount = chosenMethod.getParameterList().getParametersCount();
+              boolean varArgs = chosenMethod.isVarArgs();
+              if (Registry.is("editor.completion.hints.virtual.comma")) {
+                int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
+                int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
+                if (actualParameters < requiredParameters) return false;
+              }
+              else if (((PsiExpressionList)owner).isEmpty() &&
+                       (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&
+                       !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) {
+                  return false;
+                }
               }
             }
           }
         }
       }
-    }
     return true;
   }
 

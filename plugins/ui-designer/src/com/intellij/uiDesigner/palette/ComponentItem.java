@@ -433,7 +433,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   private static final class MySmallIcon implements Icon{
     private final Image myImage;
 
-    public MySmallIcon(@NotNull final Image delegate) {
+    MySmallIcon(@NotNull final Image delegate) {
       myImage = delegate;
     }
 

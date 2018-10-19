@@ -277,7 +277,7 @@ public class CommitPanel extends JBPanel {
     @Nullable private ColorIcon myIcon;
     @Nullable private String myTooltipText;
 
-    public RootPanel(@NotNull JComponent component) {
+    RootPanel(@NotNull JComponent component) {
       myReferent = component;
       setVerticalSizeReferent(myReferent);
       addMouseMotionListener(new MouseAdapter() {

@@ -124,7 +124,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     private final SmartPsiElementPointer<PsiClass> myClass;
     private final List<SmartTypePointer> myExpectedTypes;
 
-    public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
+    FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       myField = PointersKt.createSmartPointer(field);
       myClass = PointersKt.createSmartPointer(aClass);
       myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));

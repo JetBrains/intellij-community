@@ -37,7 +37,7 @@ public class Json5StandardComplianceInspection extends JsonStandardComplianceIns
   }
 
   private class StandardJson5ValidatingElementVisitor extends StandardJsonValidatingElementVisitor {
-    public StandardJson5ValidatingElementVisitor(ProblemsHolder holder) {
+    StandardJson5ValidatingElementVisitor(ProblemsHolder holder) {
       super(holder);
     }
 

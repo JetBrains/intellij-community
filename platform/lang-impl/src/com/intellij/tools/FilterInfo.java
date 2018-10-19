@@ -91,8 +91,7 @@ public class FilterInfo implements JDOMExternalizable {
 
   @Override
   public void readExternal(Element element) {
-    for (Iterator i2 = element.getChildren(ELEMENT_OPTION).iterator(); i2.hasNext(); ) {
-      Element optionElement = (Element)i2.next();
+    for (Element optionElement : element.getChildren(ELEMENT_OPTION)) {
       String value = optionElement.getAttributeValue(ATTRIBUTE_VALUE);
       String name = optionElement.getAttributeValue(ATTRIBUTE_NAME);
 

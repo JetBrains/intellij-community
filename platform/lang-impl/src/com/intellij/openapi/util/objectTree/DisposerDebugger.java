@@ -182,7 +182,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
     }
 
     private class CopyAllocationAction extends AnAction {
-      public CopyAllocationAction() {
+      CopyAllocationAction() {
         super("Copy", "Copy allocation to clipboard", PlatformIcons.COPY_ICON);
       }
 

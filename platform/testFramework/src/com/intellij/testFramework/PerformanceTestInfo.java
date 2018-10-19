@@ -139,8 +139,6 @@ public class PerformanceTestInfo {
       TeamCityLogger.warning(s, null);
       System.out.println(s);
       System.gc();
-      System.gc();
-      System.gc();
     }
   }
 

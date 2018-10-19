@@ -18,6 +18,9 @@ package com.intellij.tasks.vcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -26,6 +29,7 @@ import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 
 import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.cd;
@@ -56,12 +60,21 @@ public class GitTaskBranchesTest extends TaskBranchesTest {
 
   @NotNull
   public static Repository createRepository(@NotNull String name, Project project) {
-    String tempDirectory = FileUtil.getTempDirectory();
+    String tempDirectory;
+    try {
+      tempDirectory = FileUtil.createTempDirectory("foo", "bar").getPath();
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     String root = tempDirectory + "/" + name;
     assertTrue(new File(root).mkdirs());
     GitRepository repository = GitTestUtil.createRepository(project, root);
     GitBranchesCollection branches = repository.getBranches();
     assertEquals(1, branches.getLocalBranches().size());
+
+    ProjectLevelVcsManager.getInstance(project).getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, repository.getVcs()).setValue(
+      VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
     return repository;
   }
 

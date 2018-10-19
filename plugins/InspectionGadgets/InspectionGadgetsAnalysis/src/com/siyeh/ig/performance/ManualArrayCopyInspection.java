@@ -65,7 +65,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private final boolean decrement;
 
-    public ManualArrayCopyFix(boolean decrement) {
+    ManualArrayCopyFix(boolean decrement) {
       this.decrement = decrement;
     }
 

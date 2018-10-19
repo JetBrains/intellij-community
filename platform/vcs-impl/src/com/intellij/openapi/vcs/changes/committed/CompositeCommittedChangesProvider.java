@@ -196,7 +196,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     private final Map<AbstractVcs, ChangesBrowserSettingsEditor> myEditors = new HashMap<>();
     private final Map<AbstractVcs, JCheckBox> myEnabledCheckboxes = new HashMap<>();
 
-    public CompositeChangesBrowserSettingsEditor() {
+    CompositeChangesBrowserSettingsEditor() {
       myCompositePanel = new JPanel();
       myCompositePanel.setLayout(new BoxLayout(myCompositePanel, BoxLayout.Y_AXIS));
       myDateFilter = new DateFilterComponent();

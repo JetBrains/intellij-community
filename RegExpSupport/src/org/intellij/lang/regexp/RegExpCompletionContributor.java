@@ -174,7 +174,7 @@ public final class RegExpCompletionContributor extends CompletionContributor {
 
     private final boolean myEmbrace;
 
-    public NamedCharacterCompletionProvider(boolean embrace) {
+    NamedCharacterCompletionProvider(boolean embrace) {
       myEmbrace = embrace;
     }
 

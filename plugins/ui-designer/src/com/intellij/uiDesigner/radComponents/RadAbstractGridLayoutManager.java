@@ -519,7 +519,7 @@ public abstract class RadAbstractGridLayoutManager extends RadLayoutManager {
   private class MyPropertyChangeListener implements PropertyChangeListener {
     private final RadComponent myComponent;
 
-    public MyPropertyChangeListener(final RadComponent component) {
+    MyPropertyChangeListener(final RadComponent component) {
       myComponent = component;
     }
 

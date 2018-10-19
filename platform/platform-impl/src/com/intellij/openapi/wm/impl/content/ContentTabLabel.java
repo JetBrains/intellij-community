@@ -16,9 +16,9 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
+import com.intellij.util.ui.UIUtilities;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -147,14 +147,14 @@ class ContentTabLabel extends BaseLabel {
 
   private void updateText() {
     FontMetrics fm = getFontMetrics(getFont());
-    int textWidth = SwingUtilities2.stringWidth(this, fm, myText);
+    int textWidth = UIUtilities.stringWidth(this, fm, myText);
     int prefWidth = myIconWithInsetsWidth + textWidth;
 
     int maxWidth = getMaximumSize().width;
 
     if(prefWidth > maxWidth) {
       int offset = maxWidth - myIconWithInsetsWidth;
-      String s = SwingUtilities2.clipString(this, fm, myText, offset);
+      String s = UIUtilities.clipString(this, fm, myText, offset);
       super.setText(s);
       return;
     }
@@ -172,7 +172,7 @@ class ContentTabLabel extends BaseLabel {
     return icon.contains(point);
   }
 
-  public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
+  ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, false);
     myLayout = layout;
     myContent = content;
@@ -355,7 +355,7 @@ class ContentTabLabel extends BaseLabel {
     final IdeTooltip currentTooltip;
     final AdditionalIcon icon;
 
-    public CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
+    CurrentTooltip(IdeTooltip currentTooltip, AdditionalIcon icon) {
       this.currentTooltip = currentTooltip;
       this.icon = icon;
     }

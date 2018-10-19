@@ -58,7 +58,7 @@ public class DesignForExtensionInspection extends BaseInspection {
 
     private final String myMethodName;
 
-    public MakeMethodFinalFix(String methodName) {
+    MakeMethodFinalFix(String methodName) {
       myMethodName = methodName;
     }
 

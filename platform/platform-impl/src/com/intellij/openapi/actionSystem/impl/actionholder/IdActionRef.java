@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 class IdActionRef<T extends AnAction> extends ActionRef<T> {
   private final String myId;
 
-  public IdActionRef(String id) {
+  IdActionRef(String id) {
     myId = id;
   }
 

@@ -21,10 +21,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
 
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.*
 
 import java.time.LocalDate
 
@@ -37,10 +34,15 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String targetIcnsFileName
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
-    super(BuildOptions.OS_MAC, "macOS", buildContext)
+    super(buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
     targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
+  }
+
+  @Override
+  OsFamily getTargetOs() {
+    return OsFamily.MACOS
   }
 
   String getDocTypes() {
@@ -80,8 +82,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
   @Override
   String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for macOS")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
+    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
     def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 class MoveStatementHandler extends BaseMoveHandler {
 
-  public MoveStatementHandler(boolean down) {
+  MoveStatementHandler(boolean down) {
     super(down);
   }
 

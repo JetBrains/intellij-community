@@ -222,7 +222,7 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
 
     final ConcurrentMap<Long, ClassLoader> myLuckyGuess = ContainerUtil.newConcurrentMap();
 
-    public AllPluginsLoader() {
+    AllPluginsLoader() {
       // Groovy performance: do not specify parent loader to enable our luckyGuesser
       // Also specify null explicitly to suppress getSystemClassLoader() as parent
       super(null);

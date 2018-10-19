@@ -91,7 +91,8 @@ abstract class VcsPlatformTest : PlatformTestCase() {
 
   override fun getProjectDirOrFile(): Path {
     val projectRoot = File(testRoot, "project")
-    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION).toPath()
+    val file: File = FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
+    return file.toPath()
   }
 
   override fun setUpModule() {

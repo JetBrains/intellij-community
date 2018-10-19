@@ -60,7 +60,7 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitor {
     @NotNull
     ProblemDescriptor descriptor;
 
-    public ProblemFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor descriptor) {
+    ProblemFix(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor descriptor) {
       this.fix = fix;
       this.descriptor = descriptor;
     }

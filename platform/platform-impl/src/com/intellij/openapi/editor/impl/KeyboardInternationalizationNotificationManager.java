@@ -75,7 +75,7 @@ public class KeyboardInternationalizationNotificationManager {
 
   private static class MyNotificationListener implements NotificationListener {
 
-    public MyNotificationListener() {
+    MyNotificationListener() {
     }
 
     @Override

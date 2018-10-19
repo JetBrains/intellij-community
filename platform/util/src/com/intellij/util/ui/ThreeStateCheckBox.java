@@ -225,11 +225,11 @@ public class ThreeStateCheckBox extends JCheckBox {
     private String addStateDescription(String name) {
       switch(getState()) {
         case SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, "checked");
         case NOT_SELECTED:
-          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "not checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, "not checked");
         case DONT_CARE:
-          return AccessibleContextUtil.combineAccessibleStrings(name, " ", "partially checked");
+          return AccessibleContextUtil.combineAccessibleStrings(name, "partially checked");
         default:
           return name;
       }

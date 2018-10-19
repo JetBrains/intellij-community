@@ -30,7 +30,7 @@ class Html5SectionTreeElement extends PsiTreeElementBase<XmlTag> {
   private final Computable<? extends Collection<StructureViewTreeElement>> myChildrenComputable;
   private final String myHeader;
 
-  public Html5SectionTreeElement(final XmlTag tag,
+  Html5SectionTreeElement(final XmlTag tag,
                                  final Computable<? extends Collection<StructureViewTreeElement>> childrenComputable,
                                  final @Nullable String header) {
     super(tag);

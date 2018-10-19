@@ -194,7 +194,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     private final PsiElement myPlace;
     private boolean myAccessible = true;
 
-    public AccessibleVisitor(PsiElement elementToCheck, PsiElement place) {
+    AccessibleVisitor(PsiElement elementToCheck, PsiElement place) {
       myElementToCheck = elementToCheck;
       myPlace = place;
     }
@@ -287,7 +287,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
   private static class StaticMethodOnlyUsedInOneClassLocalInspection
     extends BaseSharedLocalInspection<StaticMethodOnlyUsedInOneClassInspection> {
 
-    public StaticMethodOnlyUsedInOneClassLocalInspection(StaticMethodOnlyUsedInOneClassInspection settingsDelegate) {
+    StaticMethodOnlyUsedInOneClassLocalInspection(StaticMethodOnlyUsedInOneClassInspection settingsDelegate) {
       super(settingsDelegate);
     }
 
@@ -312,7 +312,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
       private final SmartPsiElementPointer<PsiClass> usageClass;
 
-      public StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
+      StaticMethodOnlyUsedInOneClassFix(PsiClass usageClass) {
         final SmartPointerManager pointerManager = SmartPointerManager.getInstance(usageClass.getProject());
         this.usageClass = pointerManager.createSmartPsiElementPointer(usageClass);
       }

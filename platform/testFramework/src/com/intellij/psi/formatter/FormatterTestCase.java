@@ -352,7 +352,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   }
 
   private String composeMessage(final List<File> failedFiles) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (File file : failedFiles) {
       result.append(file.getPath());
       result.append("\n");

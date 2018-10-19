@@ -263,7 +263,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
     private final ModuleData myModule;
     private final char myDelimiter;
 
-    public ModuleNameGenerator(@NotNull ModuleData module, char delimiter) {
+    ModuleNameGenerator(@NotNull ModuleData module, char delimiter) {
       myModule = module;
       myDelimiter = delimiter;
     }

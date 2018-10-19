@@ -353,7 +353,7 @@ public abstract class IntentionSettingsTree {
   private class MyFilterComponent extends FilterComponent {
     private final TreeExpansionMonitor<DefaultMutableTreeNode> myExpansionMonitor = TreeExpansionMonitor.install(myTree);
 
-    public MyFilterComponent() {
+    MyFilterComponent() {
       super("INTENTION_FILTER_HISTORY", 10);
     }
 

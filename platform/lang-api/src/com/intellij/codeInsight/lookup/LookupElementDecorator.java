@@ -121,7 +121,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   private static class InsertingDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final InsertHandler<? super LookupElementDecorator<T>> myInsertHandler;
 
-    public InsertingDecorator(T element, InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
+    InsertingDecorator(T element, InsertHandler<? super LookupElementDecorator<T>> insertHandler) {
       super(element);
       myInsertHandler = insertHandler;
     }
@@ -155,7 +155,7 @@ public abstract class LookupElementDecorator<T extends LookupElement> extends Lo
   private static class VisagisteDecorator<T extends LookupElement> extends LookupElementDecorator<T> {
     private final LookupElementRenderer<? super LookupElementDecorator<T>> myVisagiste;
 
-    public VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
+    VisagisteDecorator(T element, LookupElementRenderer<? super LookupElementDecorator<T>> visagiste) {
       super(element);
       myVisagiste = visagiste;
     }

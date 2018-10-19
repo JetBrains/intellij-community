@@ -117,7 +117,7 @@ public class RunHotswapDialog extends OptionsDialog {
   private static class SessionItem {
     private final DebuggerSession mySession;
 
-    public SessionItem(DebuggerSession session) {
+    SessionItem(DebuggerSession session) {
       mySession = session;
     }
 

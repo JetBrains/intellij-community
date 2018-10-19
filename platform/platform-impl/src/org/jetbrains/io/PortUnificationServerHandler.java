@@ -69,7 +69,7 @@ class PortUnificationServerHandler extends Decoder {
 
   private final DelegatingHttpRequestHandler delegatingHttpRequestHandler;
 
-  public PortUnificationServerHandler() {
+  PortUnificationServerHandler() {
     this(new DelegatingHttpRequestHandler(), true, true);
   }
 

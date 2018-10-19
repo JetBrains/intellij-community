@@ -31,7 +31,7 @@ class MergeBuilder {
   @NotNull private final int[] myProcessed = new int[]{0, 0, 0}; // LEFT aka SIDE1, RIGHT aka SIDE2, BASE
   @NotNull private final EqualPair[] myPairs = new EqualPair[2]; // LEFT, RIGHT
 
-  public MergeBuilder(@NotNull ContextLogger log) {
+  MergeBuilder(@NotNull ContextLogger log) {
     LOG = log;
   }
 
@@ -124,7 +124,7 @@ class MergeBuilder {
     private int myLength;
     private final FragmentSide mySide;
 
-    public EqualPair(@NotNull TextRange base, @NotNull TextRange version, @NotNull FragmentSide side) {
+    EqualPair(@NotNull TextRange base, @NotNull TextRange version, @NotNull FragmentSide side) {
       LOG.assertTrue(base.getLength() == version.getLength());
       LOG.assertTrue(base.getLength() > 0);
       myBaseStart = base.getStartOffset();

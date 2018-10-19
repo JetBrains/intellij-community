@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyElement;
  * @see PyModuleMemberInfoModel
  */
 class PyModuleMemberInfo extends MemberInfoBase<PyElement> {
-  public PyModuleMemberInfo(PyElement member) {
+  PyModuleMemberInfo(PyElement member) {
     super(member);
   }
 

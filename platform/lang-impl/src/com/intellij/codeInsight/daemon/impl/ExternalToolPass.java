@@ -11,16 +11,20 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -152,18 +156,43 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       @Override
       public void run() {
         if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-          doAnnotate();
-          ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-            if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-              doApply();
-              doFinish(getHighlights(), modificationStampBefore);
-            }
+          underProjectProgress(() -> {
+            doAnnotate();
+            ReadAction.run(() -> {
+              ProgressManager.checkCanceled();
+              if (!documentChanged(modificationStampBefore)) {
+                doApply();
+                doFinish(getHighlights(), modificationStampBefore);
+              }
+            });
           });
         }
       }
     };
 
     myExternalToolPassFactory.scheduleExternalActivity(update);
+  }
+
+  public void underProjectProgress(Runnable r) {
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    ProgressManager.getInstance().runProcess(() -> {
+      Disposable unregisterProgress = ReadAction.compute(() -> {
+        if (myProject.isDisposed()) return null;
+
+        Disposable disposable = progress::cancel;
+        Disposer.register(myProject, disposable);
+        return disposable;
+      });
+      if (unregisterProgress == null) return;
+
+      try {
+        progress.checkCanceled();
+        r.run();
+      }
+      finally {
+        Disposer.dispose(unregisterProgress);
+      }
+    }, progress);
   }
 
   private boolean documentChanged(long modificationStampBefore) {

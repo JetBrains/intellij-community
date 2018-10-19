@@ -276,7 +276,7 @@ public class GitLogParser {
     @NotNull private final GitLogOption[] myOptions;
     @NotNull private final PartialResult myResult = new PartialResult();
 
-    public OptionsParser(@NotNull GitLogOption[] options) {
+    OptionsParser(@NotNull GitLogOption[] options) {
       myOptions = options;
     }
 
@@ -347,7 +347,7 @@ public class GitLogParser {
     @NotNull private final NameStatus myNameStatusOption;
     @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
-    public PathsParser(@NotNull NameStatus nameStatusOption) {
+    PathsParser(@NotNull NameStatus nameStatusOption) {
       myNameStatusOption = nameStatusOption;
     }
 

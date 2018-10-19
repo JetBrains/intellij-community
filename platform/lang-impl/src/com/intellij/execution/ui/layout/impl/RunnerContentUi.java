@@ -1362,7 +1362,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
-    public MyComponent(LayoutManager layout) {
+    MyComponent(LayoutManager layout) {
       super(layout);
       setOpaque(true);
       setFocusCycleRoot(!ScreenReader.isActive());
@@ -1627,7 +1627,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     private final JComponent myLeft;
     private final JComponent myRight;
 
-    public CommonToolbarLayout(final JComponent left, final JComponent right) {
+    CommonToolbarLayout(final JComponent left, final JComponent right) {
       myLeft = left;
       myRight = right;
     }
@@ -1790,7 +1790,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     private final List<Content> myContents;
     private final int myWindow;
 
-    public DockableGrid(Image img, Presentation presentation, final Dimension size, List<Content> contents, int window) {
+    DockableGrid(Image img, Presentation presentation, final Dimension size, List<Content> contents, int window) {
       myImg = img;
       myPresentation = presentation;
       myPreferredSize = size;

@@ -43,7 +43,7 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
   private AntConfiguration myConfig;
   private ExpandedStateUpdater myExpansionListener;
 
-  public AntExplorerTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel) {
+  AntExplorerTreeBuilder(Project project, JTree tree, DefaultTreeModel treeModel) {
     super(tree, treeModel, new AntExplorerTreeStructure(project), IndexComparator.INSTANCE);
     myProject = project;
     myAntBuildListener = new ConfigurationListener();

@@ -235,7 +235,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void queueTask(@NotNull DumbModeTask task) {
     if (LOG.isDebugEnabled()) LOG.debug("Scheduling task " + task);
-    LOG.assertTrue(!myProject.isDefault(), "No indexing tasks should be created for default project: " + task);
+    if (myProject.isDefault()) {
+      LOG.error("No indexing tasks should be created for default project: " + task);
+    }
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {

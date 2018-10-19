@@ -33,7 +33,7 @@ class MacGestureAdapter extends GestureAdapter {
   private final MouseGestureManager myManager;
   private ZoomableViewport myMagnifyingViewport;
 
-  public MacGestureAdapter(MouseGestureManager manager, IdeFrame frame) {
+  MacGestureAdapter(MouseGestureManager manager, IdeFrame frame) {
     myFrame = frame;
     magnification = 0;
     myManager = manager;

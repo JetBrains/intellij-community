@@ -270,7 +270,7 @@ public class PyPep8NamingInspection extends PyInspection {
   private static class IgnoreBaseClassQuickFix implements LocalQuickFix {
     private final List<String> myBaseClassNames;
 
-    public IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
+    IgnoreBaseClassQuickFix(@NotNull PyClass baseClass, @NotNull TypeEvalContext context) {
       myBaseClassNames = new ArrayList<>();
       ContainerUtil.addIfNotNull(getBaseClassNames(), baseClass.getQualifiedName());
       for (PyClass ancestor : baseClass.getAncestorClasses(context)) {
@@ -308,7 +308,7 @@ public class PyPep8NamingInspection extends PyInspection {
     private final String myCode;
     private static final String myText = "Ignore errors like this";
 
-    public IgnoreErrorFix(String code) {
+    IgnoreErrorFix(String code) {
       myCode = code;
     }
 

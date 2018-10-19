@@ -434,7 +434,7 @@ public class EnvironmentUtil {
 
     private final StringBuffer myBuffer;
 
-    public StreamGobbler(@NotNull InputStream stream) {
+    StreamGobbler(@NotNull InputStream stream) {
       super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");

@@ -40,7 +40,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
-    public ConvertExplicitCallToLambdaFix(LambdaAndExplicitMethodPair info, String name) {
+    ConvertExplicitCallToLambdaFix(LambdaAndExplicitMethodPair info, String name) {
       myInfo = info;
       myName = name;
     }

@@ -343,7 +343,7 @@ class CollapsedActionManager {
   private static class DeferredGraphAnswer extends LinearGraphController.LinearGraphAnswer {
     @NotNull private final CollapsedGraph.Modification myModification;
 
-    public DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @NotNull CollapsedGraph.Modification modification) {
+    DeferredGraphAnswer(@Nullable GraphChanges<Integer> graphChanges, @NotNull CollapsedGraph.Modification modification) {
       super(graphChanges);
       myModification = modification;
     }

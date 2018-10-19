@@ -351,7 +351,7 @@ public final class ComponentItemDialog extends DialogWrapper {
   private class MyChooseClassActionListener implements ActionListener {
     private final Project myProject;
 
-    public MyChooseClassActionListener(final Project project) {
+    MyChooseClassActionListener(final Project project) {
       myProject = project;
     }
 
@@ -375,7 +375,7 @@ public final class ComponentItemDialog extends DialogWrapper {
     private final TextFieldWithBrowseButton myTextField;
     private final String myTitle;
 
-    public MyChooseFileActionListener(final Project project,
+    MyChooseFileActionListener(final Project project,
                                       final TreeFileChooser.PsiFileFilter filter,
                                       final TextFieldWithBrowseButton textField,
                                       final String title) {

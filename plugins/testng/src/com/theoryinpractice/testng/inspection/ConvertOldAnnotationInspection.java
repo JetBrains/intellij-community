@@ -113,7 +113,7 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
     PsiAnnotationParameterList list = annotation.getParameterList();
     for (PsiNameValuePair pair : list.getAttributes()) {
       if (attribute.equals(pair.getName())) {
-        final StringBuffer newAnnotationBuffer = new StringBuffer();
+        final StringBuilder newAnnotationBuffer = new StringBuilder();
         newAnnotationBuffer.append(newAnnotation).append('(').append(')');
         final PsiElementFactory factory = JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory();
         final PsiAnnotation newPsiAnnotation = factory.createAnnotationFromText(newAnnotationBuffer.toString(), modifierList);

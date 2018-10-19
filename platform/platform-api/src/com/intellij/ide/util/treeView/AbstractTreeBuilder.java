@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NonNls;
@@ -34,12 +34,6 @@ public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
   protected static final boolean DEFAULT_UPDATE_INACTIVE = true;
-  private final TransferToEDTQueue<Runnable>
-    myLaterInvocator = new TransferToEDTQueue<>("Tree later invocator", runnable -> {
-    runnable.run();
-    return true;
-  }, o -> isDisposed());
-
 
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
@@ -364,7 +358,9 @@ public class AbstractTreeBuilder implements Disposable {
       onDone.run();
     }
     else {
-      myLaterInvocator.offer(onDone);
+      EdtExecutorService.getInstance().execute(()->{
+        if (!isDisposed()) onDone.run();
+      });
     }
   }
 
@@ -376,7 +372,9 @@ public class AbstractTreeBuilder implements Disposable {
       runnable.run();
     }
     else {
-      myLaterInvocator.offer(runnable);
+      EdtExecutorService.getInstance().execute(()->{
+        if (!isDisposed()) runnable.run();
+      });
     }
   }
 

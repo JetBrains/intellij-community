@@ -30,7 +30,7 @@ class UndoRedoStacksHolder {
   private final Collection<Document> myDocumentsWithStacks = new WeakList<>();
   private final Collection<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
-  public UndoRedoStacksHolder(boolean isUndo) {
+  UndoRedoStacksHolder(boolean isUndo) {
     myUndo = isUndo;
   }
 

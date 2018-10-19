@@ -177,7 +177,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private static String joinWords(@NotNull List<String> stringList) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < stringList.size(); i++) {
       String word = stringList.get(i);
       if (!StringUtil.isEmptyOrSpaces(word)) {

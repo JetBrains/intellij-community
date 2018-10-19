@@ -36,8 +36,8 @@ import java.util.*;
 
 public class Javac2 extends Javac {
   public static final String PROPERTY_INSTRUMENTATION_INCLUDE_JAVA_RUNTIME = "javac2.instrumentation.includeJavaRuntime";
-  private ArrayList myFormFiles;
-  private List myNestedFormPathList;
+  private ArrayList<File> myFormFiles;
+  private List<PrefixedPath> myNestedFormPathList;
   private boolean instrumentNotNull = true;
   private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
   private final List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
@@ -235,7 +235,7 @@ public class Javac2 extends Javac {
   public PrefixedPath createNestedformdirs() {
     PrefixedPath p = new PrefixedPath(getProject());
     if (myNestedFormPathList == null) {
-      myNestedFormPathList = new ArrayList();
+      myNestedFormPathList = new ArrayList<PrefixedPath>();
     }
     myNestedFormPathList.add(p);
     return p;
@@ -279,17 +279,16 @@ public class Javac2 extends Javac {
    */
   private void instrumentForms(final InstrumentationClassFinder finder) {
     // we instrument every file, because we cannot find which files should not be instrumented without dependency storage
-    final ArrayList formsToInstrument = myFormFiles;
+    final ArrayList<File> formsToInstrument = myFormFiles;
 
-    if (formsToInstrument.size() == 0) {
+    if (formsToInstrument.isEmpty()) {
       log("No forms to instrument found", Project.MSG_VERBOSE);
       return;
     }
 
-    final HashMap class2form = new HashMap();
+    final HashMap<String, File> class2form = new HashMap<String, File>();
 
-    for (int i = 0; i < formsToInstrument.size(); i++) {
-      final File formFile = (File)formsToInstrument.get(i);
+    for (File formFile : formsToInstrument) {
 
       log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
       final LwRootContainer rootContainer;
@@ -317,7 +316,7 @@ public class Javac2 extends Javac {
         continue;
       }
 
-      final File alreadyProcessedForm = (File)class2form.get(classToBind);
+      final File alreadyProcessedForm = class2form.get(classToBind);
       if (alreadyProcessedForm != null) {
         fireError(formFile.getAbsolutePath() +
                   ": " +
@@ -346,17 +345,17 @@ public class Javac2 extends Javac {
         codeGenerator.patchFile(classFile);
         final FormErrorInfo[] warnings = codeGenerator.getWarnings();
 
-        for (int j = 0; j < warnings.length; j++) {
-          log(formFile.getAbsolutePath() + ": " + warnings[j].getErrorMessage(), Project.MSG_WARN);
+        for (FormErrorInfo warning : warnings) {
+          log(formFile.getAbsolutePath() + ": " + warning.getErrorMessage(), Project.MSG_WARN);
         }
         final FormErrorInfo[] errors = codeGenerator.getErrors();
         if (errors.length > 0) {
-          StringBuffer message = new StringBuffer();
-          for (int j = 0; j < errors.length; j++) {
+          StringBuilder message = new StringBuilder();
+          for (FormErrorInfo error : errors) {
             if (message.length() > 0) {
               message.append("\n");
             }
-            message.append(formFile.getAbsolutePath()).append(": ").append(errors[j].getErrorMessage());
+            message.append(formFile.getAbsolutePath()).append(": ").append(error.getErrorMessage());
           }
           fireError(message.toString());
         }
@@ -380,7 +379,7 @@ public class Javac2 extends Javac {
    * @return a URL classloader
    */
   private InstrumentationClassFinder buildClasspathClassLoader() {
-    final StringBuffer classPathBuffer = new StringBuffer();
+    final StringBuilder classPathBuffer = new StringBuilder();
     final Project project = getProject();
     final Path cp = new Path(project);
     appendPath(cp, getBootclasspath());
@@ -408,8 +407,7 @@ public class Javac2 extends Javac {
     cp.addExtdirs(getExtdirs());
 
     final String[] pathElements = cp.list();
-    for (int i = 0; i < pathElements.length; i++) {
-      final String pathElement = pathElements[i];
+    for (final String pathElement : pathElements) {
       classPathBuffer.append(File.pathSeparator);
       classPathBuffer.append(pathElement);
     }
@@ -462,8 +460,7 @@ public class Javac2 extends Javac {
   private int instrumentNotNull(File dir, final InstrumentationClassFinder finder) {
     int instrumented = 0;
     final File[] files = dir.listFiles();
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+    for (File file : files) {
       final String name = file.getName();
       if (name.endsWith(".class")) {
         final String path = file.getPath();
@@ -526,7 +523,7 @@ public class Javac2 extends Javac {
       return false;
     }
 
-    final boolean[] result = new boolean[]{false};
+    final boolean[] result = {false};
     reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
       public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
@@ -572,14 +569,13 @@ public class Javac2 extends Javac {
   @Override
   protected void resetFileLists() {
     super.resetFileLists();
-    myFormFiles = new ArrayList();
+    myFormFiles = new ArrayList<File>();
   }
 
   @Override
   protected void scanDir(final File srcDir, final File destDir, final String[] files) {
     super.scanDir(srcDir, destDir, files);
-    for (int i = 0; i < files.length; i++) {
-      final String file = files[i];
+    for (final String file : files) {
       if (file.endsWith(".form")) {
         log("Found form file " + file, Project.MSG_VERBOSE);
         myFormFiles.add(new File(srcDir, file));
@@ -588,7 +584,7 @@ public class Javac2 extends Javac {
   }
 
   private static InstrumentationClassFinder createInstrumentationClassFinder(final String classPath, boolean shouldIncludeJavaRuntime) throws MalformedURLException {
-    final ArrayList urls = new ArrayList();
+    final ArrayList<URL> urls = new ArrayList<URL>();
     if (shouldIncludeJavaRuntime) {
       final URL jrt = tryGetJrtURL();
       if (jrt != null) {
@@ -599,16 +595,16 @@ public class Javac2 extends Javac {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURI().toURL());
     }
-    final URL[] urlsArr = (URL[])urls.toArray(new URL[0]);
+    final URL[] urlsArr = urls.toArray(new URL[0]);
     return new InstrumentationClassFinder(urlsArr);
   }
 
   private class AntNestedFormLoader implements NestedFormLoader {
     private final ClassLoader myLoader;
-    private final List myNestedFormPathList;
-    private final HashMap myFormCache = new HashMap();
+    private final List<PrefixedPath> myNestedFormPathList;
+    private final HashMap<String, LwRootContainer> myFormCache = new HashMap<String, LwRootContainer>();
 
-    public AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
+    AntNestedFormLoader(final ClassLoader loader, List nestedFormPathList) {
       myLoader = loader;
       myNestedFormPathList = nestedFormPathList;
     }
@@ -616,13 +612,12 @@ public class Javac2 extends Javac {
     @Override
     public LwRootContainer loadForm(String formFilePath) throws Exception {
       if (myFormCache.containsKey(formFilePath)) {
-        return (LwRootContainer)myFormCache.get(formFilePath);
+        return myFormCache.get(formFilePath);
       }
 
       String lowerFormFilePath = formFilePath.toLowerCase();
       log("Searching for form " + lowerFormFilePath, Project.MSG_VERBOSE);
-      for (Iterator iterator = myFormFiles.iterator(); iterator.hasNext();) {
-        File file = (File)iterator.next();
+      for (File file : myFormFiles) {
         String name = file.getAbsolutePath().replace(File.separatorChar, '/').toLowerCase();
         log("Comparing with " + name, Project.MSG_VERBOSE);
         if (name.endsWith(lowerFormFilePath)) {
@@ -631,8 +626,7 @@ public class Javac2 extends Javac {
       }
 
       if (myNestedFormPathList != null) {
-        for (int i = 0; i < myNestedFormPathList.size(); i++) {
-          PrefixedPath path = (PrefixedPath)myNestedFormPathList.get(i);
+        for (PrefixedPath path : myNestedFormPathList) {
           File formFile = path.findFile(formFilePath);
           if (formFile != null) {
             return loadForm(formFilePath, new FileInputStream(formFile));

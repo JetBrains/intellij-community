@@ -70,7 +70,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    public RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    RedundantStringOperationVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
       myManager = myHolder.getManager();
@@ -243,7 +243,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     private final FixType myFixType;
     private final String myToRemove;
 
-    public RemoveRedundantStringCallFix(String toRemove, FixType fixType) {
+    RemoveRedundantStringCallFix(String toRemove, FixType fixType) {
       myToRemove = toRemove;
       myFixType = fixType;
     }

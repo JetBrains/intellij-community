@@ -45,7 +45,7 @@ public class PlatformProjectViewOpener implements DirectoryProjectConfigurator {
     private final ToolWindowManagerEx myManager;
     private final Project myProject;
 
-    public MyListener(ToolWindowManagerEx manager, Project project) {
+    MyListener(ToolWindowManagerEx manager, Project project) {
       myManager = manager;
       myProject = project;
     }

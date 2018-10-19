@@ -291,7 +291,7 @@ public class CommitPresentationUtil {
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
-    public UnresolvedPresentation(@NotNull Project project,
+    UnresolvedPresentation(@NotNull Project project,
                                   @NotNull VirtualFile root,
                                   @NotNull String rawMessage,
                                   @NotNull String hashAndAuthor) {

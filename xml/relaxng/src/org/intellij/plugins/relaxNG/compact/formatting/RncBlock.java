@@ -36,7 +36,7 @@ import java.util.List;
 class RncBlock implements Block {
   private final ASTNode myNode;
 
-  public RncBlock(ASTNode element) {
+  RncBlock(ASTNode element) {
     myNode = element;
   }
 

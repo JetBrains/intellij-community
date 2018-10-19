@@ -43,7 +43,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  public MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
+  MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
     super(accessor);
 
     oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);

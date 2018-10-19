@@ -47,7 +47,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   private Runnable mySomethingChangedCallback;
 
-  public CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
+  CodeFragmentCodeStyleSettingsPanel(@NotNull CodeStyleSettings settings,
                                             @NotNull CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow settingsToShow,
                                             @NotNull Language language,
                                             @NotNull SelectedTextFormatter selectedTextFormatter)
@@ -137,7 +137,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private class SpacesPanelWithoutPreview extends MySpacesPanel {
     private JPanel myPanel;
 
-    public SpacesPanelWithoutPreview(CodeStyleSettings settings) {
+    SpacesPanelWithoutPreview(CodeStyleSettings settings) {
       super(settings);
     }
 
@@ -197,7 +197,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
   private class WrappingAndBracesPanelWithoutPreview extends MyWrappingAndBracesPanel {
     public JPanel myPanel;
 
-    public WrappingAndBracesPanelWithoutPreview(CodeStyleSettings settings) {
+    WrappingAndBracesPanelWithoutPreview(CodeStyleSettings settings) {
       super(settings);
     }
 

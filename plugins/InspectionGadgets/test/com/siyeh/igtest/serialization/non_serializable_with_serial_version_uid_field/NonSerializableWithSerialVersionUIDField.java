@@ -2,19 +2,19 @@ package com.siyeh.igtest.serialization.non_serializable_with_serial_version_uid_
 
 import java.io.Serializable;
 
-public class NonSerializableWithSerialVersionUIDField {
+public class <warning descr="Non-serializable class 'NonSerializableWithSerialVersionUIDField' defines a 'serialVersionUID' field">NonSerializableWithSerialVersionUIDField</warning> {
 
     private static final long serialVersionUID = -25111423935153899L;
 
     void foo() {
-        new Object() {
+        new <warning descr="Non-serializable anonymous class extending 'Object' defines a 'serialVersionUID' field">Object</warning>() {
             private static final long serialVersionUID = -25111423935153899L;
         };
     }
 }
-@interface X {
+@interface <warning descr="Non-serializable @interface 'X' defines a 'serialVersionUID' field">X</warning> {
     long serialVersionUID = -25111423935153899L;
 }
-interface Y {
+interface <warning descr="Non-serializable interface 'Y' defines a 'serialVersionUID' field">Y</warning> {
     long serialVersionUID = -25111423935153899L;
 }
