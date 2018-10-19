@@ -174,6 +174,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     catch (e: IncorrectMasterPasswordException) {
       throw ConfigurationException("Master password for KeePass database is not correct (\"Clear\" can be used to reset database).")
     }
+    catch (e: Exception) {
+      LOG.error(e)
+      throw ConfigurationException("Internal error: ${e.message}")
+    }
   }
 
   private fun getNewDbFile() = getNewDbFileAsString()?.let { Paths.get(it) }
