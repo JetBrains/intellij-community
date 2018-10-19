@@ -1,266 +1,236 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo;
+package org.jetbrains.plugins.groovy.lang.resolve.delegatesTo
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
-import groovy.lang.Closure;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.*
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
+import groovy.lang.Closure
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
-import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.*;
+class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
-/**
- * @author Max Medvedev
- */
-public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
+  override fun getDelegatesToInfo(closableBlock: GrClosableBlock): DelegatesToInfo? {
+    val call = getContainingCall(closableBlock) ?: return null
 
-  @Override
-  @Nullable
-  public DelegatesToInfo getDelegatesToInfo(@NotNull final GrClosableBlock closableBlock) {
-    GrCall call = getContainingCall(closableBlock);
-    if (call == null) return null;
-
-    final GroovyResolveResult result = resolveActualCall(call);
-    final PsiElement element = result.getElement();
+    val result = resolveActualCall(call)
+    val element = result.element
 
     if (GdkMethodUtil.isWithOrIdentity(element)) {
-      final GrExpression qualifier = inferCallQualifier((GrMethodCall)call);
-      if (qualifier == null) return null;
+      val qualifier = inferCallQualifier(call as GrMethodCall) ?: return null
 
-      return new DelegatesToInfo(qualifier.getType(), Closure.DELEGATE_FIRST);
+      return DelegatesToInfo(qualifier.type, Closure.DELEGATE_FIRST)
     }
 
-    final GrClosureSignature signature = inferSignature(element);
-    if (signature == null) return null;
+    val signature = inferSignature(element) ?: return null
 
-    final GrClosureSignatureUtil.ArgInfo<PsiElement>[] map = mapArgs(closableBlock, call, signature);
-    if (map == null) return null;
+    val map = mapArgs(closableBlock, call, signature) ?: return null
 
-    if (!(element instanceof PsiMethod)) return null;
-    final PsiMethod method = (PsiMethod)element;
-    final PsiParameterList parameterList = method.getParameterList();
-    final PsiParameter parameter = findParameter(parameterList, closableBlock, map);
-    if (parameter == null) return null;
+    if (element !is PsiMethod) return null
+    val method = element as PsiMethod?
+    val parameterList = method!!.parameterList
+    val parameter = findParameter(parameterList, closableBlock, map) ?: return null
 
-    final String delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY);
-    final Integer strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY);
+    val delegateFqnData = parameter.getUserData(DELEGATES_TO_KEY)
+    val strategyData = parameter.getUserData(DELEGATES_TO_STRATEGY_KEY)
     if (delegateFqnData != null) {
-      return new DelegatesToInfo(
+      return DelegatesToInfo(
         TypesUtil.createType(delegateFqnData, closableBlock),
-        strategyData == null ? Closure.OWNER_FIRST : strategyData
-      );
+        strategyData ?: Closure.OWNER_FIRST
+      )
     }
 
-    final PsiModifierList modifierList = parameter.getModifierList();
-    if (modifierList == null) return null;
+    val modifierList = parameter.modifierList ?: return null
 
-    final PsiAnnotation delegatesTo = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO);
-    if (delegatesTo == null) return null;
+    val delegatesTo = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO) ?: return null
 
-    PsiType delegateType = getFromValue(delegatesTo);
-    if (delegateType == null) delegateType = getFromTarget(parameterList, delegatesTo, signature, map);
-    if (delegateType == null) delegateType = getFromType(result, delegatesTo);
+    var delegateType = getFromValue(delegatesTo)
+    if (delegateType == null) delegateType = getFromTarget(parameterList, delegatesTo, signature, map)
+    if (delegateType == null) delegateType = getFromType(result, delegatesTo)
 
-    final int strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"));
-    return new DelegatesToInfo(delegateType, strategyValue);
+    val strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"))
+    return DelegatesToInfo(delegateType, strategyValue)
   }
 
-  private static GrClosureSignatureUtil.ArgInfo<PsiElement>[] mapArgs(PsiElement place, GrCall call, GrClosureSignature signature) {
-    GrClosureSignature rawSignature = GrClosureSignatureUtil.rawSignature(signature);
+  private fun mapArgs(place: PsiElement, call: GrCall, signature: GrClosureSignature): Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>? {
+    val rawSignature = GrClosureSignatureUtil.rawSignature(signature)
     return GrClosureSignatureUtil.mapParametersToArguments(
-      rawSignature, call.getNamedArguments(), call.getExpressionArguments(), call.getClosureArguments(), place, false, false
-    );
+      rawSignature, call.namedArguments, call.expressionArguments, call.closureArguments, place, false, false
+    )
   }
 
-  @Nullable
-  private static GrClosureSignature inferSignature(@Nullable PsiElement element) {
-    if (element instanceof PsiMethod) {
-      return GrClosureSignatureUtil.createSignature((PsiMethod)element, PsiSubstitutor.EMPTY);
+  private fun inferSignature(element: PsiElement?): GrClosureSignature? {
+    if (element is PsiMethod) {
+      return GrClosureSignatureUtil.createSignature((element as PsiMethod?)!!, PsiSubstitutor.EMPTY)
     }
-    else if (element instanceof GrVariable) {
-      final PsiType type = ((GrVariable)element).getTypeGroovy();
-      if (type instanceof GrClosureType) {
-        final GrSignature signature = ((GrClosureType)type).getSignature();
-        if (signature instanceof GrClosureSignature) {
-          return (GrClosureSignature)signature;
+    else if (element is GrVariable) {
+      val type = element.typeGroovy
+      if (type is GrClosureType) {
+        val signature = type.signature
+        if (signature is GrClosureSignature) {
+          return signature
         }
       }
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  private static PsiParameter findParameter(@NotNull PsiParameterList parameterList,
-                                            @NotNull GrClosableBlock closableBlock,
-                                            @NotNull GrClosureSignatureUtil.ArgInfo<PsiElement>[] map) {
-    final PsiParameter[] parameters = parameterList.getParameters();
+  private fun findParameter(parameterList: PsiParameterList,
+                            closableBlock: GrClosableBlock,
+                            map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiParameter? {
+    val parameters = parameterList.parameters
 
-    for (int i = 0; i < map.length; i++) {
-      if (map[i].args.contains(closableBlock)) return parameters[i];
+    for (i in map.indices) {
+      if (map[i].args.contains(closableBlock)) return parameters[i]
     }
 
-    return null;
+    return null
   }
 
-  private static PsiType getFromValue(@NotNull PsiAnnotation delegatesTo) {
-    final PsiAnnotationMemberValue value = delegatesTo.findDeclaredAttributeValue("value");
-    if (value instanceof GrReferenceExpression) {
-      return extractTypeFromClassType(((GrReferenceExpression)value).getType());
+  private fun getFromValue(delegatesTo: PsiAnnotation): PsiType? {
+    val value = delegatesTo.findDeclaredAttributeValue("value")
+    if (value is GrReferenceExpression) {
+      return extractTypeFromClassType(value.type)
     }
-    else if (value instanceof PsiClassObjectAccessExpression) {
-      return extractTypeFromClassType(((PsiClassObjectAccessExpression)value).getType());
+    else if (value is PsiClassObjectAccessExpression) {
+      return extractTypeFromClassType(value.type)
     }
     else if (value == null ||
-             value instanceof PsiLiteralExpression && ((PsiLiteralExpression)value).getType() == PsiType.NULL ||
-             value instanceof GrLiteral && ((GrLiteral)value).getType() == PsiType.NULL) {
-      return null;
+             value is PsiLiteralExpression && value.type === PsiType.NULL ||
+             value is GrLiteral && value.type === PsiType.NULL) {
+      return null
     }
-    else if (value instanceof PsiExpression) {
-      return ((PsiExpression)value).getType();
+    else if (value is PsiExpression) {
+      return value.type
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  private static PsiType getFromTarget(PsiParameterList parameterList,
-                                       PsiAnnotation delegatesTo,
-                                       GrClosureSignature signature,
-                                       GrClosureSignatureUtil.ArgInfo<PsiElement>[] map) {
-    final String target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target");
-    if (target == null) return null;
+  private fun getFromTarget(parameterList: PsiParameterList,
+                            delegatesTo: PsiAnnotation,
+                            signature: GrClosureSignature,
+                            map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiType? {
+    val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
 
-    final int parameter = findTargetParameter(parameterList, target);
-    if (parameter < 0) return null;
+    val parameter = findTargetParameter(parameterList, target)
+    if (parameter < 0) return null
 
-    final PsiType type = map[parameter].type;
-    final Integer index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex");
-    if (index != null) {
-      return inferGenericArgType(signature, type, index, parameter);
+    val type = map[parameter].type
+    val index = GrAnnotationUtil.inferIntegerAttribute(delegatesTo, "genericTypeIndex")
+    return if (index != null) {
+      inferGenericArgType(signature, type, index, parameter)
     }
     else {
-      return type;
+      type
     }
   }
 
-  @Nullable
-  private static PsiType inferGenericArgType(@NotNull GrClosureSignature signature,
-                                             @Nullable PsiType targetType,
-                                             int genericIndex,
-                                             int param) {
-    if (targetType instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult result = ((PsiClassType)targetType).resolveGenerics();
-      final PsiClass psiClass = result.getElement();
+  private fun inferGenericArgType(signature: GrClosureSignature,
+                                  targetType: PsiType?,
+                                  genericIndex: Int,
+                                  param: Int): PsiType? {
+    if (targetType is PsiClassType) {
+      val result = targetType.resolveGenerics()
+      val psiClass = result.element
       if (psiClass != null) {
-        final PsiSubstitutor substitutor = result.getSubstitutor();
+        val substitutor = result.substitutor
 
-        final PsiType baseType = signature.getParameters()[param].getType();
-        final PsiClass baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType);
+        val baseType = signature.parameters[param].type
+        val baseClass = PsiUtil.resolveClassInClassTypeOnly(baseType)
 
         if (baseClass != null && InheritanceUtil.isInheritorOrSelf(psiClass, baseClass, true)) {
-          final PsiTypeParameter[] typeParameters = baseClass.getTypeParameters();
-          if (genericIndex < typeParameters.length) {
-            final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, substitutor);
-            return superClassSubstitutor.substitute(typeParameters[genericIndex]);
+          val typeParameters = baseClass.typeParameters
+          if (genericIndex < typeParameters.size) {
+            val superClassSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(baseClass, psiClass, substitutor)
+            return superClassSubstitutor.substitute(typeParameters[genericIndex])
           }
         }
       }
     }
-    return null;
+    return null
   }
 
-  private static PsiType getFromType(GroovyResolveResult result, PsiAnnotation delegatesTo) {
-    PsiElement element = result.getElement();
-    if (!(element instanceof PsiMethod)) return null;
+  private fun getFromType(result: GroovyResolveResult, delegatesTo: PsiAnnotation): PsiType? {
+    val element = result.element as? PsiMethod ?: return null
 
-    String typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type");
-    if (StringUtil.isEmptyOrSpaces(typeValue)) return null;
+    val typeValue = GrAnnotationUtil.inferStringAttribute(delegatesTo, "type")
+    if (StringUtil.isEmptyOrSpaces(typeValue)) return null
 
-    PsiElement context = FromStringHintProcessor.createContext((PsiMethod)element);
-    PsiType type = JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(typeValue, context);
+    val context = FromStringHintProcessor.createContext(element)
+    val type = JavaPsiFacade.getElementFactory(context.project).createTypeFromText(typeValue!!, context)
 
-    if (result instanceof GroovyMethodResult) {
-      return ((GroovyMethodResult)result).getPartialSubstitutor().substitute(type);
+    return if (result is GroovyMethodResult) {
+      result.partialSubstitutor.substitute(type)
     }
-    return result.getSubstitutor().substitute(type);
+    else result.substitutor.substitute(type)
   }
 
-  private static int findTargetParameter(@NotNull PsiParameterList list, @NotNull String target) {
-    PsiParameter[] parameters = list.getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      final PsiModifierList modifierList = parameters[i].getModifierList();
-      if (modifierList == null) continue;
+  private fun findTargetParameter(list: PsiParameterList, target: String): Int {
+    val parameters = list.parameters
+    for (i in parameters.indices) {
+      val modifierList = parameters[i].modifierList ?: continue
 
-      final PsiAnnotation targetAnnotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET);
-      if (targetAnnotation == null) continue;
+      val targetAnnotation = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET) ?: continue
 
-      final String value = GrAnnotationUtil.inferStringAttribute(targetAnnotation, "value");
-      if (value == null) continue;
+      val value = GrAnnotationUtil.inferStringAttribute(targetAnnotation, "value") ?: continue
 
-      if (value.equals(target)) return i;
+      if (value == target) return i
     }
 
-    return -1;
+    return -1
   }
 
-  @Nullable
-  private static GrExpression inferCallQualifier(@NotNull GrMethodCall call) {
-    final GrExpression expression = call.getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return null;
-    return ((GrReferenceExpression)expression).getQualifier();
+  private fun inferCallQualifier(call: GrMethodCall): GrExpression? {
+    val expression = call.invokedExpression
+    return if (expression !is GrReferenceExpression) null else expression.qualifier
   }
 
-  @Nullable
-  private static PsiType extractTypeFromClassType(@Nullable PsiType type) {
-    if (type instanceof PsiClassType) {
-      final PsiClass resolved = ((PsiClassType)type).resolve();
-      if (resolved != null && CommonClassNames.JAVA_LANG_CLASS.equals(resolved.getQualifiedName())) {
-        final PsiType[] parameters = ((PsiClassType)type).getParameters();
-        if (parameters.length == 1) {
-          return parameters[0];
+  private fun extractTypeFromClassType(type: PsiType?): PsiType? {
+    if (type is PsiClassType) {
+      val resolved = type.resolve()
+      if (resolved != null && CommonClassNames.JAVA_LANG_CLASS == resolved.qualifiedName) {
+        val parameters = type.parameters
+        if (parameters.size == 1) {
+          return parameters[0]
         }
       }
     }
-    return null;
+    return null
   }
 
-  private static int getStrategyValue(@Nullable PsiAnnotationMemberValue strategy) {
-    if (strategy == null) return -1;
+  private fun getStrategyValue(strategy: PsiAnnotationMemberValue?): Int {
+    if (strategy == null) return -1
 
-    final String text = strategy.getText();
-    if ("0".equals(text)) return 0;
-    if ("1".equals(text)) return 1;
-    if ("2".equals(text)) return 2;
-    if ("3".equals(text)) return 3;
-    if ("4".equals(text)) return 4;
+    val text = strategy.text
+    if ("0" == text) return 0
+    if ("1" == text) return 1
+    if ("2" == text) return 2
+    if ("3" == text) return 3
+    if ("4" == text) return 4
 
-    if (text.endsWith("OWNER_FIRST")) return Closure.OWNER_FIRST;
-    if (text.endsWith("DELEGATE_FIRST")) return Closure.DELEGATE_FIRST;
-    if (text.endsWith("OWNER_ONLY")) return Closure.OWNER_ONLY;
-    if (text.endsWith("DELEGATE_ONLY")) return Closure.DELEGATE_ONLY;
-    if (text.endsWith("TO_SELF")) return Closure.TO_SELF;
+    if (text.endsWith("OWNER_FIRST")) return Closure.OWNER_FIRST
+    if (text.endsWith("DELEGATE_FIRST")) return Closure.DELEGATE_FIRST
+    if (text.endsWith("OWNER_ONLY")) return Closure.OWNER_ONLY
+    if (text.endsWith("DELEGATE_ONLY")) return Closure.DELEGATE_ONLY
+    return if (text.endsWith("TO_SELF")) Closure.TO_SELF else -1
 
-    return -1;
   }
 
 
