@@ -1,0 +1,26 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.intellij.errorProne
+
+import com.intellij.compiler.CompilerConfiguration
+import com.intellij.compiler.CompilerConfigurationImpl
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler
+import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.importing.MavenCompilerExtension
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
+
+/**
+ * @author Vladislav.Soroka
+ */
+class MavenCompilerErrorProneExtension : MavenCompilerExtension {
+  override fun getMavenCompilerId(): String = "javac-with-errorprone"
+
+  override fun getCompiler(project: Project): BackendCompiler {
+    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    return compilerConfiguration.registeredJavaCompilers.find { it is ErrorProneJavaBackendCompiler }!!
+  }
+
+  override fun getOptions(project: Project): JpsJavaCompilerOptions {
+    return ErrorProneCompilerConfiguration.getOptions(project)
+  }
+}
+
