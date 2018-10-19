@@ -261,10 +261,9 @@ class UpdateStrategyTest : BareTestFixtureTestCase() {
           ${testData}
         </product>
       </products>"""))
-    val settings = object : UserUpdateSettings {
-      override fun getSelectedChannelStatus() = selectedChannel
-      override fun getIgnoredBuildNumbers() = ignoredBuilds
-    }
+    val settings = UpdateSettings()
+    settings.selectedChannelStatus = selectedChannel
+    settings.ignoredBuildNumbers += ignoredBuilds
     val result = UpdateStrategy(BuildNumber.fromString(currentBuild), updates, settings).checkForUpdates()
     assertEquals(UpdateStrategy.State.LOADED, result.state)
     return result
