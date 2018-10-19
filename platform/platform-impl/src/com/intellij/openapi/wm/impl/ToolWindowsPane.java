@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowType;
@@ -1043,7 +1044,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
-        transferFocus();
+        transferExistingFocus(myInfo.getId());
       }
       finally {
         finish();
@@ -1083,7 +1084,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
-        transferFocus();
+        transferExistingFocus(myInfo.getId());
       }
       finally {
         finish();
@@ -1142,11 +1143,26 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
-        transferFocus();
+        transferExistingFocus(myInfo.getId());
       }
       finally {
         finish();
       }
+    }
+  }
+
+  private void transferExistingFocus(@Nullable String id) {
+    if (id == null) {
+      return;
+    }
+    ToolWindow toolWindow = myManager.getToolWindow(id);
+    if (toolWindow == null) {
+      return;
+    }
+    Component toolComponent = toolWindow.getComponent();
+    Component owner = IdeFocusManager.getGlobalInstance().getFocusOwner();
+    if (owner != null && toolComponent != null && SwingUtilities.isDescendingFrom(owner, toolComponent)) {
+      transferFocus();
     }
   }
 
