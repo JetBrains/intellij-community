@@ -47,11 +47,11 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);
     if (isContextMenu) {
-      count = state.myContextMenuValues.get(key);
-      value = count == null ? 1 : count + 1;
       if (place != null) {
         key = "[" + place + "] " + key;
       }
+      count = state.myContextMenuValues.get(key);
+      value = count == null ? 1 : count + 1;
       state.myContextMenuValues.put(key, value);
     }
   }
