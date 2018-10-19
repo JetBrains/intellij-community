@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * @author Maxim.Mossienko
  */
-@SuppressWarnings({"HardCodedStringLiteral", "LanguageMismatch"})
+@SuppressWarnings("ALL")
 public class StructuralSearchTest extends StructuralSearchTestCase {
   @Override
   protected int findMatchesCount(@Language("JAVA") String in, String pattern, FileType fileType) {
