@@ -45,14 +45,20 @@ fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
   return data
 }
 
-fun mergeWithEventContext(data: Map<String, Any>, context: FUSUsageContext?): Map<String, Any> {
-  if (context == null) return data
+fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value : Int): Map<String, Any> {
+  if (context == null && value == 1) return data
 
   val newData = ContainerUtil.newHashMap<String, Any>()
   newData.putAll(data)
 
-  for (datum in context.data) {
-    newData["event_" + datum.key] = datum.value
+  if (value != 1) {
+    newData["value"] = value
+  }
+
+  context?.let {
+    for (datum in it.data) {
+      newData["event_" + datum.key] = datum.value
+    }
   }
   return newData
 }
