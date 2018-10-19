@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes
@@ -12,27 +11,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBa
 
 class GrMethodCallReference(element: GrMethodCall) : GroovyMethodCallReferenceBase<GrMethodCall>(element) {
 
-  override val isRealReference: Boolean
-    get() {
-      val call = element
-      val invoked = call.invokedExpression
-      if (invoked is GrReferenceExpression) {
-        return when {
-          invoked.hasMemberPointer() -> {
-            // `a.&foo()` compiles into `new MethodClosure(a, "foo").call()` as if `call` was explicitly in the code 
-            true
-          }
-          invoked.hasAt() -> {
-            // `a.@foo()` compiles into `a@.foo.call()` as if `call` was an explicitly in the code
-            true
-          }
-          else -> invoked.staticReference.resolve() is GrVariable
-        }
-      }
-      else {
-        return true
-      }
-    }
+  override val isRealReference: Boolean get() = element.invokedExpression.let { it !is GrReferenceExpression || it.isImplicitCallReceiver }
+
   override val receiver: PsiType? get() = element.invokedExpression.type
 
   override val methodName: String get() = "call"
