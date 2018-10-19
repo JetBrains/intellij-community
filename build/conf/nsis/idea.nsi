@@ -90,11 +90,6 @@ ReserveFile "DeleteSettings.ini"
 ;------------------------------------------------------------------------------
 
 !define MUI_CUSTOMFUNCTION_GUIINIT GUIInit
-!define MUI_LANGDLL_REGISTRY_ROOT "HKCU"
-!define MUI_LANGDLL_REGISTRY_KEY "Software\JetBrains\${MUI_PRODUCT}\${VER_BUILD}\"
-!define MUI_LANGDLL_REGISTRY_VALUENAME "Installer Language"
-
-
 !macro INST_UNINST_SWITCH un
   ;check if the window is win7 or newer
   Function ${un}winVersion
@@ -925,7 +920,7 @@ FunctionEnd
 
 
 Function ProductRegistration
-  ${LogText} "do registartion ${MUI_PRODUCT} ${VER_BUILD}"
+  ${LogText} "do registration ${MUI_PRODUCT} ${VER_BUILD}"
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
 eapInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
@@ -948,26 +943,26 @@ Function UpdateContextMenu
   ${LogText} "update Context Menu"
 
 ; add "Open with PRODUCT" action for files to Windows context menu
-  StrCpy $0 "HKCU"
+  StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
   StrCpy $2 ""
   StrCpy $3 "Edit with ${MUI_PRODUCT}"
   call OMWriteRegStr
 
-  StrCpy $0 "HKCU"
+  StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
   StrCpy $2 "Icon"
   StrCpy $3 "$productLauncher"
   call OMWriteRegStr
 
-  StrCpy $0 "HKCU"
+  StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}\command"
   StrCpy $2 ""
   StrCpy $3 '"$productLauncher" "%1"'
   call OMWriteRegStr
 
 ; add "Open with PRODUCT" action for folders to Windows context menu
-  StrCpy $0 "HKCU"
+  StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
   StrCpy $2 ""
   StrCpy $3 "Open Folder as ${MUI_PRODUCT} Project"
@@ -1418,8 +1413,8 @@ look_at_program_files_32:
     StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
   ${EndIf}
 uninstaller_relocated:
-    MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
-    Abort
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+  Abort
 Done:
 FunctionEnd
 
@@ -1639,6 +1634,7 @@ FunctionEnd
 
 
 Function un.validateStartMenuLinkToLauncher
+;check if exists and compare with $INSTDIR
   ClearErrors
   StrCpy $8 ""
   ShellLink::GetShortCutWorkingDirectory $7
@@ -1650,12 +1646,14 @@ Function un.validateStartMenuLinkToLauncher
 incorrect_link:
   DetailPrint "The link ($7) does not exist or incorrect."
 done:
+  ClearErrors
 FunctionEnd
 
 
 Section "Uninstall"
   Call un.customUninstallActions
   SetRegView 32
+  DetailPrint "baseRegKey: $baseRegKey"
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   StrCpy $2 "InstallLocation"
@@ -1675,31 +1673,20 @@ check_if_IDE_in_use:
   StrCpy $productDir $INSTDIR
   StrCpy $INSTDIR $INSTDIR\..
 
-  ReadRegStr $R9 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" "" shortcuts
-  ReadRegStr $R9 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder"
-  StrCmp $R9 "" delete_caches
-  StrCpy $5 "Software\${MANUFACTURER}"
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
+  StrCpy $2 "MenuFolder"
+  call un.OMReadRegStr
+  StrCmp $3 "" delete_caches shortcuts
 
 shortcuts:
-  ;user does not have the admin rights
-  SetShellVarContext current
   StrCpy $7 "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  ;check is exists and compare with $INSTDIR
   Call un.validateStartMenuLinkToLauncher
-  StrCmp $8 "" 0 keep_current_user
-  ;  IfFileExists "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk" keep_current_user
-
-  ;user has the admin rights
-  SetShellVarContext all
-  StrCpy $7 "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
-  DetailPrint "7, admin: $7"
-  Call un.validateStartMenuLinkToLauncher
-  StrCmp $8 "" 0 keep_current_user
+  StrCmp $8 "" 0 remove_link
   DetailPrint "StartMenu: $7 is not point to valid launcher."
   goto delete_caches
 
-keep_current_user:
+remove_link:
   Delete $7
   ; Delete only if empty (last IDEA version is uninstalled)
   RMDir  "$SMPROGRAMS\$R9"
@@ -1707,8 +1694,8 @@ keep_current_user:
 delete_caches:
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   DetailPrint "Data: $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\"
-  StrCmp $R2 1 "" skip_delete_caches
-   ;find the path to caches (system) folder
+  StrCmp $R2 1 0 skip_delete_caches
+; find the path to caches (system) folder
    StrCpy $0 "system"
    StrCpy $1 "idea.system.path="
    Call un.getPath
@@ -1716,12 +1703,11 @@ delete_caches:
    StrCpy $system_path $2
    RmDir /r "$system_path"
    RmDir "$system_path\\.." ; remove parent of system dir if the dir is empty
-;   RmDir /r $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}\system
-skip_delete_caches:
 
+skip_delete_caches:
   !insertmacro INSTALLOPTIONS_READ $R3 "DeleteSettings.ini" "Field 5" "State"
   StrCmp $R3 1 "" skip_delete_settings
-    ;find the path to settings (config) folder
+; find the path to settings (config) folder
     StrCpy $0 "config"
     StrCpy $1 "idea.config.path="
     Call un.getPath
@@ -1734,8 +1720,8 @@ skip_delete_caches:
     StrCmp $R2 1 "" skip_delete_settings
     RmDir "$config_path\\.." ; remove parent of config dir if the dir is empty
 ;    RmDir $DOCUMENTS\..\${PRODUCT_SETTINGS_DIR}
-skip_delete_settings:
 
+skip_delete_settings:
 ; Delete uninstaller itself
   Delete "$INSTDIR\bin\Uninstall.exe"
   Delete "$INSTDIR\jre64\bin\server\classes.jsa"
@@ -1771,11 +1757,10 @@ desktop_shortcut_launcher64:
     Delete "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk"
 
 registry:
-  StrCpy $0 "HKCU"
+  StrCpy $0 "SHCTX"
   StrCpy $1 "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
   call un.OMDeleteRegKey
 
-  StrCpy $0 "HKCU"
   StrCpy $1 "Software\Classes\Directory\shell\${MUI_PRODUCT}"
   call un.OMDeleteRegKey
 
@@ -1811,8 +1796,8 @@ delValue:
   IfErrors 0 +2
   IntOp $4 $4 + 1
   goto getValue
-finish:
 
+finish:
   StrCpy $1 "$5\${PRODUCT_REG_VER}"
   Call un.OMDeleteRegKeyIfEmpty
   StrCpy $1 "$5"
@@ -1821,20 +1806,16 @@ finish:
   StrCpy $0 "HKCR"
   StrCpy $1 "Applications\${PRODUCT_EXE_FILE}"
   Call un.OMDeleteRegKey
+
+  StrCpy $0 $baseRegKey
   StrCmp $baseRegKey "HKLM" admin user
 admin:
-  StrCpy $0 "HKCR"
   StrCpy $1 "${PRODUCT_PATHS_SELECTOR}"
   goto delete_association
 user:
-  StrCpy $0 "HKCU"
   StrCpy $1 "Software\Classes\${PRODUCT_PATHS_SELECTOR}"
 delete_association:
   ; remove product information which was used for association(s)
-  Call un.OMDeleteRegKey
-
-  StrCpy $0 "${MUI_LANGDLL_REGISTRY_ROOT}"
-  StrCpy $1 "${MUI_LANGDLL_REGISTRY_KEY}"
   Call un.OMDeleteRegKey
 
   StrCpy $0 "HKCR"
