@@ -9,11 +9,11 @@ private object UNINITIALIZED_VALUE
  * Kotlin-friendly version of ClearableLazyValue
  */
 @Suppress("LocalVariableName")
-class SynchronizedClearableLazy<out T>(private val initializer: () -> T) : Lazy<T> {
+class SynchronizedClearableLazy<T>(private val initializer: () -> T) : Lazy<T> {
   @Volatile
   private var _value: Any? = UNINITIALIZED_VALUE
 
-  override val value: T
+  override var value: T
     get() {
       val _v1 = _value
       if (_v1 !== UNINITIALIZED_VALUE) {
@@ -33,10 +33,15 @@ class SynchronizedClearableLazy<out T>(private val initializer: () -> T) : Lazy<
         }
       }
     }
+    set(value) {
+      synchronized(this) {
+        _value = value
+      }
+    }
 
-  override fun isInitialized(): Boolean = _value !== UNINITIALIZED_VALUE
+  override fun isInitialized() = _value !== UNINITIALIZED_VALUE
 
-  override fun toString(): String = if (isInitialized()) value.toString() else "Lazy value not initialized yet."
+  override fun toString() = if (isInitialized()) value.toString() else "Lazy value not initialized yet."
 
   fun drop() {
     synchronized(this) {
