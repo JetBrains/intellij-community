@@ -161,7 +161,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
   }
 
   private fun getStrategyValue(strategy: PsiAnnotationMemberValue?): Int {
-    if (strategy == null) return -1
+    if (strategy == null) return OWNER_FIRST
     val text = strategy.text
     return when (text) {
       "0" -> OWNER_FIRST
@@ -175,7 +175,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
         text.endsWith("OWNER_ONLY") -> OWNER_ONLY
         text.endsWith("DELEGATE_ONLY") -> DELEGATE_ONLY
         text.endsWith("TO_SELF") -> TO_SELF
-        else -> -1
+        else -> OWNER_FIRST
       }
     }
   }
