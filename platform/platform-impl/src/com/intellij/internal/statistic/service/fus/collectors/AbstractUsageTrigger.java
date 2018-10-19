@@ -54,7 +54,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
     migrateLegacyData(collectorInfo);
 
-    FUsageInfo usage = findUsageInfo(collectorInfo.usages, feature, context);
+    FUsageInfo usage = findUsageInfo(collectorInfo.usages.toArray(new FUsageInfo[0]), feature, context);
     if (usage == null) {
       collectorInfo.usages.add(FUsageInfo.create(feature, 1, context));
     }
@@ -73,7 +73,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   }
 
   @Nullable
-  private static FUsageInfo findUsageInfo(@NotNull Set<FUsageInfo> usages, @NotNull String feature, @Nullable FUSUsageContext context) {
+  private static FUsageInfo findUsageInfo(@NotNull FUsageInfo[] usages, @NotNull String feature, @Nullable FUSUsageContext context) {
     for (FUsageInfo usage : usages) {
       if (usage.id.equals(feature) && equalContexts(context, usage.context)) return usage;
     }
@@ -111,7 +111,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
   @Nullable
   private SessionInfo geExistingSessionInfo() {
     FUSession session = getFUSession();
-    for (SessionInfo info : myState.sessions) {
+    for (SessionInfo info : myState.sessions.toArray(new SessionInfo[0])) {
       if (info.id == session.getId()) {
         return info;
       }
@@ -149,7 +149,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
 
     @Nullable
     public UsagesCollectorInfo findUsageCollectorInfo(String id) {
-      for (UsagesCollectorInfo collector : collectors) {
+      for (UsagesCollectorInfo collector : collectors.toArray(new UsagesCollectorInfo[0])) {
         if (id.equals(collector.id)) return collector;
       }
       return null;
