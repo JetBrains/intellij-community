@@ -145,7 +145,16 @@ public class ClassPath {
   }
 
   @Nullable
-  private synchronized Loader getLoader(int i) {
+  private Loader getLoader(int i) {
+    if (i < myLastLoaderProcessed.get()) { // volatile read
+      return myLoaders.get(i);
+    }
+
+    return getLoaderSlowPath(i);
+  }
+
+  @Nullable
+  private synchronized Loader getLoaderSlowPath(int i) {
     while (myLoaders.size() < i + 1) {
       URL url;
       synchronized (myUrls) {
@@ -253,10 +262,10 @@ public class ClassPath {
       if (lastOne) {
         myAllUrlsWereProcessed = true;
       }
-      myLastLoaderProcessed.incrementAndGet();
     }
     myLoaders.add(loader);
     myLoadersMap.put(url, loader);
+    myLastLoaderProcessed.incrementAndGet(); // volatile write
   }
 
   Attributes getManifestData(URL url) {
@@ -438,7 +447,7 @@ public class ClassPath {
       System.out.println(time / 1000000 + " ms for " + msg);
     }
     if (totalRequests % 10000 == 0) {
-      System.out.println(path + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
+      System.out.println(path.getClass().getClassLoader() + ", requests:" + ourTotalRequests + ", time:" + (totalTime / 1000000) + "ms");
     }
   }
   static {
