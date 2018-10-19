@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
@@ -133,6 +134,7 @@ public class PluginManagerCore {
   public static void loadDisabledPlugins(@NotNull String configPath, @NotNull Collection<String> disabledPlugins) {
     File file = new File(configPath, DISABLED_PLUGINS_FILENAME);
     if (file.isFile()) {
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
       try {
         boolean updateDisablePluginsList = false;
@@ -140,7 +142,7 @@ public class PluginManagerCore {
           String id;
           while ((id = reader.readLine()) != null) {
             id = id.trim();
-            if (!requiredPlugins.contains(id)) {
+            if (!requiredPlugins.contains(id) && !appInfo.isEssentialPlugin(id)) {
               disabledPlugins.add(id);
             }
             else {
