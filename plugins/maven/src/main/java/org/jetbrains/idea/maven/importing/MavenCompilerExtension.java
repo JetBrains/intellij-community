@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -18,9 +18,9 @@ public interface MavenCompilerExtension {
    *
    * @return maven compiler id
    */
+  @NotNull
   String getMavenCompilerId();
 
+  @NotNull
   BackendCompiler getCompiler(Project project);
-
-  JpsJavaCompilerOptions getOptions(Project project);
 }
