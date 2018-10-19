@@ -35,9 +35,11 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.sun.javafx.application.PlatformImpl;
+
 interface GlobalMenuLib extends Library {
-  void runDbusServer(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
-  void stopDbusServer();
+  void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
+  void stopWatchDbus();
   void execOnMainLoop(JRunnable run);
 
   Pointer registerWindow(long windowXid, EventHandler handler);
@@ -109,7 +111,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
   private static final GlobalMenuLib.JLogger ourGLogger;
-  private static final Thread ourGlibMainLoopThread;
   private static final GlobalMenuLib.JRunnable ourProcessQueue;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceAppeared;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceVanished;
@@ -148,13 +149,13 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       };
       ourOnAppmenuServiceAppeared = () -> {
         // exec at glib-thread
-        _trace("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
+        LOG.info("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = true;
         ourProcessQueue.run();
       };
       ourOnAppmenuServiceVanished = () -> {
         // exec at glib-thread
-        _trace("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
+        LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = false;
         for (GlobalMenuLinux gml: ourInstances.values()) {
           gml.myWindowHandle = null;
@@ -162,11 +163,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         }
       };
 
-      ourGlibMainLoopThread = new Thread(()->ourLib.runDbusServer(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "Glib-main-loop");
-      ourGlibMainLoopThread.start();
+      // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
+      PlatformImpl.startup(()-> {
+        ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+      });
     } else {
       ourGLogger = null;
-      ourGlibMainLoopThread = null;
       ourProcessQueue = null;
       ourOnAppmenuServiceAppeared = null;
       ourOnAppmenuServiceVanished = null;

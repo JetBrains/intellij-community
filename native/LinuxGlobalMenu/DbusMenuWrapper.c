@@ -18,7 +18,6 @@
 #define  MENUITEM_JHANDLER_PROPERTY "com.intellij.idea.globalmenu.jhandler"
 #define  MENUITEM_UID_PROPERTY "com.intellij.idea.globalmenu.uid"
 
-static GMainLoop *_ourMainLoop = NULL;
 static jlogger _ourLogger = NULL;
 static jrunnable _ourOnServiceAppearedCallback = NULL;
 static jrunnable _ourOnServiceVanishedCallback = NULL;
@@ -79,19 +78,17 @@ static void _onNameVanished(GDBusConnection *connection, const gchar *name, gpoi
     (*((jrunnable) _ourOnServiceVanishedCallback))();
 }
 
-void runDbusServer(jlogger jlog, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
+void startWatchDbus(jlogger jlog, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
   // NOTE: main-loop is necessary for communication with dbus (via glib and it's signals)
+  // It is started in java (see invocation com.sun.javafx.application.PlatformImpl.startup())
   _ourLogger = jlog;
-  _ourMainLoop = g_main_loop_new(NULL/*will be used g_main_context_default()*/, FALSE);
   _ourOnServiceAppearedCallback = onAppmenuServiceAppeared;
   _ourOnServiceVanishedCallback = onAppmenuServiceVanished;
   _ourServiceNameWatcher = g_bus_watch_name(G_BUS_TYPE_SESSION, DBUS_NAME, G_BUS_NAME_WATCHER_FLAGS_NONE, _onNameAppeared, _onNameVanished, NULL, NULL);
-  _info("glib main loop is running");
-  g_main_loop_run(_ourMainLoop);
+  // _info("start watching for dbus name 'com.canonical.AppMenu.Registrar'");
 }
 
-void stopDbusServer() {
-  g_main_loop_quit(_ourMainLoop);
+void stopWatchDbus() {
   g_bus_unwatch_name(_ourServiceNameWatcher);
   // _info("glib main loop is stopped");
 }
