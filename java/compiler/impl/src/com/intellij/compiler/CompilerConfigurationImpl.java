@@ -376,12 +376,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public void setAdditionalOptions(@NotNull Module module, @NotNull List<String> options) {
     JpsJavaCompilerOptions settings = getCompilerSettings();
     if (settings != null) {
-      String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
-      String newValue = ParametersListUtil.join(options);
-      if (!newValue.equals(previous)) {
-        settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
-        BuildManager.getInstance().clearState(myProject);
-      }
+      setAdditionalOptions(settings, module, options);
+    }
+  }
+
+  public void setAdditionalOptions(@NotNull JpsJavaCompilerOptions settings, @NotNull Module module, @NotNull List<String> options) {
+    String previous = settings.ADDITIONAL_OPTIONS_OVERRIDE.getOrDefault(module.getName(), settings.ADDITIONAL_OPTIONS_STRING);
+    String newValue = ParametersListUtil.join(options);
+    if (!newValue.equals(previous)) {
+      settings.ADDITIONAL_OPTIONS_OVERRIDE.put(module.getName(), newValue);
+      BuildManager.getInstance().clearState(myProject);
     }
   }
 
