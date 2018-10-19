@@ -1,7 +1,7 @@
 class SlashSlashInLiteral {
-    // comment
-    final String s1 = "jdbc:mysql://" + "a" +
-            '/' + "b" +
-            '?' + "user" + '=' + "c" +
-            "&amp;" + "password" + '=' + "d";
+  final String s1 = // comment
+          "jdbc:mysql://" + "a" +
+                  '/' + "b" +
+                  '?' + "user" + '=' + "c" +
+                  "&amp;" + "password" + '=' + "d";
 }
