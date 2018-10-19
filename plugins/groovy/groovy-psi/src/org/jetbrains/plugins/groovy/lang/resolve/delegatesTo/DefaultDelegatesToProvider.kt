@@ -53,10 +53,15 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
     val modifierList = parameter.modifierList ?: return null
     val delegatesTo = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO) ?: return null
-    val delegateType = getFromValue(delegatesTo)
-                       ?: getFromTarget(parameterList, delegatesTo, signature, map)
-                       ?: getFromType(result, delegatesTo)
     val strategyValue = getStrategyValue(delegatesTo.findAttributeValue("strategy"))
+    val delegateType = if (strategyValue == OWNER_ONLY || strategyValue == TO_SELF) {
+      null
+    }
+    else {
+      getFromValue(delegatesTo)
+      ?: getFromTarget(parameterList, delegatesTo, signature, map)
+      ?: getFromType(result, delegatesTo)
+    }
     return DelegatesToInfo(delegateType, strategyValue)
   }
 
