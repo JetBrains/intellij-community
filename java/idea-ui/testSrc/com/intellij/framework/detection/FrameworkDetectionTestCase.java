@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.framework.detection;
 
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
@@ -20,8 +21,12 @@ public abstract class FrameworkDetectionTestCase extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FrameworkDetectionManager.getInstance(myProject).doDispose();
-    super.tearDown();
+    try {
+      FrameworkDetectionManager.getInstance(myProject).doDispose();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void setupFrameworks(List<? extends DetectedFrameworkDescription> descriptions) {
