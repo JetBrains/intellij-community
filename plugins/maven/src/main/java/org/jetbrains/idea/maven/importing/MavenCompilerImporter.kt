@@ -11,7 +11,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import org.jdom.Element
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectChanges
+import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
@@ -28,7 +31,6 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                           mavenProject: MavenProject,
                           changes: MavenProjectChanges,
                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    if (!MavenProjectsManager.getInstance(module.project).importingSettings.isUseMavenCompilerArguments) return
     val config = getConfig(mavenProject) ?: return
 
     var compilers = modifiableModelsProvider.getUserData<MutableSet<String>>(COMPILERS)
@@ -47,8 +49,6 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                        changes: MavenProjectChanges,
                        mavenProjectToModuleName: Map<MavenProject, String>,
                        postTasks: List<MavenProjectsProcessorTask>) {
-    if (!MavenProjectsManager.getInstance(module.project).importingSettings.isUseMavenCompilerArguments) return
-
     val compilers = modifiableModelsProvider.getUserData(COMPILERS)
     val isMultipleCompilersUsed = compilers != null && compilers.size > 1
 
