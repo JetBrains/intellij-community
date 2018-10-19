@@ -154,4 +154,12 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public void setThirdPartyPluginsAllowed(boolean value) {
     myState.setThirdPartyPluginsAllowed(value);
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
+  @Deprecated
+  public String getUpdateChannelType() {
+    return myState.getUpdateChannelType();
+  }
+  //</editor-fold>
 }
