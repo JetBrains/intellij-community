@@ -46,7 +46,6 @@ public class MavenImportingSettings implements Cloneable {
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
-  private boolean useMavenCompilerArguments = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
@@ -164,14 +163,6 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
-  public boolean isUseMavenCompilerArguments() {
-    return useMavenCompilerArguments;
-  }
-
-  public void setUseMavenCompilerArguments(boolean useMavenCompilerArguments) {
-    this.useMavenCompilerArguments = useMavenCompilerArguments;
-  }
-
   public String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }
@@ -225,7 +216,6 @@ public class MavenImportingSettings implements Cloneable {
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
-    if (useMavenCompilerArguments != that.useMavenCompilerArguments) return false;
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;
     if (updateFoldersOnImportPhase != null
@@ -252,8 +242,6 @@ public class MavenImportingSettings implements Cloneable {
     if (keepSourceFolders) result++;
     result <<= 1;
     if (useMavenOutput) result++;
-    result <<= 1;
-    if (useMavenCompilerArguments) result++;
     result <<= 1;
     if (downloadSourcesAutomatically) result++;
     result <<= 1;
