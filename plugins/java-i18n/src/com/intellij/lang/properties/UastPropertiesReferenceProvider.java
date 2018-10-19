@@ -12,8 +12,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.*;
 
-import java.util.Objects;
-
 /**
  * @author cdr
  */
@@ -56,8 +54,7 @@ class UastPropertiesReferenceProvider extends UastLiteralReferenceProvider {
     if (value instanceof String) {
       String text = (String)value;
       if (text.indexOf('\n') == -1) {
-        PsiElement source = Objects.requireNonNull(element.getSourcePsi());
-        PsiReference reference = new PropertyReference(text, source, bundleName, soft);
+        PsiReference reference = new PropertyReference(text, host, bundleName, soft);
         return new PsiReference[]{reference};
       }
     }
