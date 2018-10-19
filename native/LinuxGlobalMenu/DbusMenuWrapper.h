@@ -62,6 +62,8 @@ void setItemEnabled(DbusmenuMenuitem* item, bool isEnabled);
 void setItemIcon(DbusmenuMenuitem* item, const char * iconBytesPng, int iconBytesCount);
 void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode);
 
+void toggleItemStateChecked(DbusmenuMenuitem *item, bool isChecked);
+
 #ifdef __cplusplus
 }
 #endif

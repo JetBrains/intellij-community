@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -575,8 +574,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         frame.addWindowListener(new WindowAdapter() {
           @Override
           public void windowClosing(WindowEvent e) {
-            frameMenuBar.myGlobalMenuLinux.unbindNewWindow(frame);
+            frameMenuBar.myGlobalMenuLinux.unbindWindow(frame);
           }
+          @Override
           public void windowOpened(WindowEvent e) {
             frameMenuBar.myGlobalMenuLinux.bindNewWindow(frame);
           }
