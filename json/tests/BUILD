@@ -24,5 +24,6 @@ iml_module(
         "//tools/idea/json:intellij.json[module, test]",
         "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/spellchecker:intellij.spellchecker[module, test]",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
     ],
 )

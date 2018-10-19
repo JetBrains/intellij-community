@@ -308,8 +308,8 @@ java_library(
 java_library(
     name = "intellij-coverage",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.470:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.470:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.493:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.493:jar"],
 )
 
 # managed by go/iml_to_build
@@ -684,13 +684,11 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/log4j/log4j/1.2.17:jar",
         "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-api/1.7.25:jar",
         "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-log4j12/1.7.25:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/log4j/log4j/1.2.17:jar",
         "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-api/1.7.25:jar",
         "//prebuilts/tools/common/m2/repository/org/slf4j/slf4j-log4j12/1.7.25:jar",
     ],
@@ -1256,8 +1254,8 @@ java_library(
 java_library(
     name = "intellij-test-discovery",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.470:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.470:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.493:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.493:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1420,4 +1418,12 @@ java_library(
         "//prebuilts/tools/common/m2/repository/org/apache/maven/maven-model/3.3.9:jar",
         "//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar",
     ],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "Java_Compatibility",
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:java-compatibility"],
+    runtime_deps = ["//tools/idea/lib:java-compatibility"],
 )

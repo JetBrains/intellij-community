@@ -120,3 +120,10 @@ java_import(
     jars = ["jaxb-impl.jar"],
     visibility = ["//visibility:public"],
 )
+
+# managed by go/iml_to_build
+java_import(
+    name = "java-compatibility",
+    jars = ["java-compatibility.jar"],
+    visibility = ["//visibility:public"],
+)

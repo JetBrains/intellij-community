@@ -5,7 +5,10 @@ iml_module(
     name = "intellij.configurationScript",
     srcs = ["src"],
     iml_files = ["intellij.configurationScript.iml"],
-    package_prefixes = {"test": "com.intellij.configurationScript"},
+    package_prefixes = {
+        "test": "com.intellij.configurationScript",
+        "src": "com.intellij.configurationScript",
+    },
     resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
@@ -32,12 +35,14 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea/json:intellij.json[module]",
         "//tools/idea/platform/lang-api:intellij.platform.lang[module]",
-        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
-        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/.idea/libraries:snakeyaml",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module, test]",
+        "//tools/idea:intellij.platform.jps.build_and_others[module, test]",
         "//tools/idea/.idea/libraries:gson[test]",
+        "//tools/idea/plugins/yaml:intellij.yaml[module, test]",
     ],
 )

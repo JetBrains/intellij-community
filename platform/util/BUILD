@@ -31,6 +31,7 @@ iml_module(
         "//tools/idea/.idea/libraries:lz4-java",
         "//tools/idea/.idea/libraries:xml-apis-ext",
         "//tools/idea/.idea/libraries:commons-compress",
+        "//tools/idea/.idea/libraries:Java_Compatibility",
     ],
 )
 

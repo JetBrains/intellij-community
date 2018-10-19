@@ -49,5 +49,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:jackson",
         "//tools/idea/.idea/libraries:netty-codec-http",
+        "//tools/idea/.idea/libraries:Java_Compatibility",
     ],
 )
