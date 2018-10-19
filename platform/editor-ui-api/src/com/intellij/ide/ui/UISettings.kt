@@ -56,11 +56,17 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
   val alwaysShowWindowsButton: Boolean
     get() = state.alwaysShowWindowsButton
 
-  val animateWindows: Boolean
+  var animateWindows: Boolean
     get() = state.animateWindows
+    set(value) {
+      state.animateWindows = value
+    }
 
-  val showMemoryIndicator: Boolean
+  var showMemoryIndicator: Boolean
     get() = state.showMemoryIndicator
+    set(value) {
+      state.showMemoryIndicator = value
+    }
 
   var colorBlindness: ColorBlindness?
     get() = state.colorBlindness
@@ -74,8 +80,11 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.hideToolStripes = value
     }
 
-  val hideNavigationOnFocusLoss: Boolean
+  var hideNavigationOnFocusLoss: Boolean
     get() = state.hideNavigationOnFocusLoss
+    set(value) {
+      state.hideNavigationOnFocusLoss = value
+    }
 
   var reuseNotModifiedTabs: Boolean
     get() = state.reuseNotModifiedTabs
@@ -86,17 +95,29 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
   val maxClipboardContents: Int
     get() = state.maxClipboardContents
 
-  val disableMnemonics: Boolean
+  var disableMnemonics: Boolean
     get() = state.disableMnemonics
+    set(value) {
+      state.disableMnemonics = value
+    }
 
-  val disableMnemonicsInControls: Boolean
+  var disableMnemonicsInControls: Boolean
     get() = state.disableMnemonicsInControls
+    set(value) {
+      state.disableMnemonicsInControls = value
+    }
 
-  val dndWithPressedAltOnly: Boolean
+  var dndWithPressedAltOnly: Boolean
     get() = state.dndWithPressedAltOnly
+    set(value) {
+      state.dndWithPressedAltOnly = value
+    }
 
-  val useSmallLabelsOnTabs: Boolean
+  var useSmallLabelsOnTabs: Boolean
     get() = state.useSmallLabelsOnTabs
+    set(value) {
+      state.useSmallLabelsOnTabs = value
+    }
 
   val smoothScrolling: Boolean
     get() = state.smoothScrolling
@@ -110,14 +131,26 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.cycleScrolling = value
     }
 
-  val navigateToPreview: Boolean
+  var navigateToPreview: Boolean
     get() = state.navigateToPreview
+    set(value) {
+      state.navigateToPreview = value
+    }
 
   val scrollTabLayoutInEditor: Boolean
     get() = state.scrollTabLayoutInEditor
 
-  val showToolWindowsNumbers: Boolean
+  var showToolWindowsNumbers: Boolean
     get() = state.showToolWindowsNumbers
+    set(value) {
+      state.showToolWindowsNumbers = value
+    }
+
+  var showEditorToolTip: Boolean
+    get() = state.showEditorToolTip
+    set(value) {
+      state.showEditorToolTip = value
+    }
 
   var showNavigationBar: Boolean
     get() = state.showNavigationBar
@@ -131,8 +164,17 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.showStatusBar = value
     }
 
-  val showIconInQuickNavigation: Boolean
+  var showIconInQuickNavigation: Boolean
     get() = state.showIconInQuickNavigation
+    set(value) {
+      state.showIconInQuickNavigation = value
+    }
+
+  var moveMouseOnDefaultButton: Boolean
+    get() = state.moveMouseOnDefaultButton
+    set(value) {
+      state.moveMouseOnDefaultButton = value
+    }
 
   var showMainToolbar: Boolean
     get() = state.showMainToolbar
@@ -140,8 +182,11 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.showMainToolbar = value
     }
 
-  val showIconsInMenus: Boolean
+  var showIconsInMenus: Boolean
     get() = state.showIconsInMenus
+    set(value) {
+      state.showIconsInMenus = value
+    }
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
@@ -158,14 +203,23 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.hideKnownExtensionInTabs = value
     }
 
-  val leftHorizontalSplit: Boolean
+  var leftHorizontalSplit: Boolean
     get() = state.leftHorizontalSplit
+    set(value) {
+      state.leftHorizontalSplit = value
+    }
 
-  val rightHorizontalSplit: Boolean
+  var rightHorizontalSplit: Boolean
     get() = state.rightHorizontalSplit
+    set(value) {
+      state.rightHorizontalSplit = value
+    }
 
-  val wideScreenSupport: Boolean
+  var wideScreenSupport: Boolean
     get() = state.wideScreenSupport
+    set(value) {
+      state.wideScreenSupport = value
+    }
 
   val sortBookmarks: Boolean
     get() = state.sortBookmarks

@@ -152,7 +152,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
       UISettings settings = UISettings.getInstanceOrNull();
-      if (settings != null && settings.getState().getMoveMouseOnDefaultButton()) {
+      if (settings != null && settings.getMoveMouseOnDefaultButton()) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;
