@@ -23,6 +23,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   private final boolean myDoNotRememberPasswords;
 
   @Nullable private String myLastAskedKeyPath = null;
+  @Nullable private String myLastAskedUserName = null;
 
   GitNativeSshGuiAuthenticator(@NotNull Project project,
                                @NotNull GitAuthenticationGate authenticationGate,
@@ -39,6 +40,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   public String handleInput(@NotNull String description) {
     return myAuthenticationGate.waitAndCompute(() -> {
       if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
+      if (isSshPassword(description)) return askSshPasswordInput(description);
       if (isConfirmation(description)) return askConfirmationInput(description);
 
       return askGenericInput(description);
@@ -67,6 +69,30 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
     else {
       return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, null);
+    }
+  }
+
+  private static boolean isSshPassword(@NotNull String description) {
+    return SSHUtil.PASSWORD_PROMPT.matcher(description).matches();
+  }
+
+  @Nullable
+  private String askSshPasswordInput(@NotNull String description) {
+    Matcher matcher = SSHUtil.PASSWORD_PROMPT.matcher(description);
+    if (!matcher.matches()) throw new IllegalStateException(description);
+    String username = matcher.group(1);
+
+    boolean resetPassword = username.equals(myLastAskedUserName);
+    myLastAskedUserName = username;
+
+    if (myDoNotRememberPasswords) {
+      return askUser(() -> {
+        String message = GitBundle.message("ssh.password.message", username);
+        return Messages.showPasswordDialog(myProject, message, GitBundle.getString("ssh.password.title"), null);
+      });
+    }
+    else {
+      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myIgnoreAuthenticationRequest, null);
     }
   }
 
