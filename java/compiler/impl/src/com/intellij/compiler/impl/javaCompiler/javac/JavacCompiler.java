@@ -23,6 +23,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import java.util.Collections;
@@ -54,5 +55,11 @@ public class JavacCompiler implements BackendCompiler {
   @NotNull 
   public Set<FileType> getCompilableFileTypes() {
     return Collections.singleton(StdFileTypes.JAVA);
+  }
+
+  @NotNull
+  @Override
+  public CompilerOptions getOptions() {
+    return JavacConfiguration.getOptions(myProject, JavacConfiguration.class);
   }
 }
