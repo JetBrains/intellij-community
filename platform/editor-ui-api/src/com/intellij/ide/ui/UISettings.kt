@@ -104,8 +104,11 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
   val closeTabButtonOnTheRight: Boolean
     get() = state.closeTabButtonOnTheRight
 
-  val cycleScrolling: Boolean
+  var cycleScrolling: Boolean
     get() = state.cycleScrolling
+    set(value) {
+      state.cycleScrolling = value
+    }
 
   val navigateToPreview: Boolean
     get() = state.navigateToPreview
