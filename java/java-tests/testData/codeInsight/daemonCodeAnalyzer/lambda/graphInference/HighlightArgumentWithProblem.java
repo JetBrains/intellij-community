@@ -7,6 +7,6 @@ class Test2 {
   }
 
   {
-    foo (bar(String.class), <error descr="'foo(java.lang.String, java.lang.Integer)' in 'Test2' cannot be applied to '(T, java.lang.String)'">""</error>);
+    foo (bar(String.class), <error descr="'foo(java.lang.String, java.lang.Integer)' in 'Test2' cannot be applied to '(java.lang.String, java.lang.String)'">""</error>);
   }
 }

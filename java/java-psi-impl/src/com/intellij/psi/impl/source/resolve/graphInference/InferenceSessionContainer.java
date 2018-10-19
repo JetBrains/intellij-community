@@ -150,7 +150,7 @@ public class InferenceSessionContainer {
             return properties.getInfo().getSubstitutor(false);
           }
         }
-        return childSession.prepareSubstitution();
+        return null;
       }
       return childSession.collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
     }
