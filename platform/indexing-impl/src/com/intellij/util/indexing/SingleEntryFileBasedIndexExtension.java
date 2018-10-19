@@ -47,6 +47,7 @@ public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedInd
     return true;
   }
 
+  /** Use this method to get key for extracting the value from index */
   public static int getFileKey(@NotNull VirtualFile file) {
     return Math.abs(FileBasedIndex.getFileId(file));
   }
