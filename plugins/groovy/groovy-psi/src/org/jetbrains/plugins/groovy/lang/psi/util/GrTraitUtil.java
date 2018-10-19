@@ -14,6 +14,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -215,7 +216,7 @@ public class GrTraitUtil {
     if (traitFile == null) return;
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
-    int key = FileBasedIndex.getFileId(helperFile);
+    int key = SingleEntryFileBasedIndexExtension.getFileKey(helperFile);
     final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
       GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
     );

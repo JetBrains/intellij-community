@@ -74,7 +74,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<ImageInfo> processor, Project project) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, Math.abs(FileBasedIndex.getFileId(virtualFile)), virtualFile, processor, GlobalSearchScope
+    FileBasedIndex.getInstance().processValues(INDEX_ID, SingleEntryFileBasedIndexExtension.getFileKey(virtualFile), virtualFile, processor, GlobalSearchScope
         .fileScope(project, virtualFile));
   }
 
