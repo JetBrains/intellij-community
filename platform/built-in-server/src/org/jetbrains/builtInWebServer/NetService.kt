@@ -78,7 +78,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
     }
   }
 
-  open fun getAvailableSocketPort() = NetUtils.findAvailableSocketPort()
+  protected open fun getAvailableSocketPort() = NetUtils.findAvailableSocketPort()
 
   @Throws(ExecutionException::class)
   protected abstract fun createProcessHandler(project: Project, port: Int): OSProcessHandler?
