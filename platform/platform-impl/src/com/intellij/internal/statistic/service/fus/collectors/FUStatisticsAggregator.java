@@ -122,9 +122,10 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
                                              @Nullable FUSUsageContext context,
                                              @NotNull Set<UsageDescriptor> usages) {
     final FeatureUsageLogger logger = FeatureUsageLogger.INSTANCE;
-    final Map<String, ?> data = StatisticsUtilKt.createData(project, context);
+    final Map<String, ?> groupData = StatisticsUtilKt.createData(project, context);
     for (UsageDescriptor usage : usages) {
-      logger.logState(groupDescriptor, usage.getKey(), data);
+      final Map<String, Object> eventData = StatisticsUtilKt.mergeWithEventContext(groupData, usage.getContext());
+      logger.logState(groupDescriptor, usage.getKey(), eventData);
     }
   }
 

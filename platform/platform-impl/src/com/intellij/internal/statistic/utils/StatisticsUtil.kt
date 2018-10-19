@@ -45,6 +45,18 @@ fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
   return data
 }
 
+fun mergeWithEventContext(data: Map<String, Any>, context: FUSUsageContext?): Map<String, Any> {
+  if (context == null) return data
+
+  val newData = ContainerUtil.newHashMap<String, Any>()
+  newData.putAll(data)
+
+  for (datum in context.data) {
+    newData["event_" + datum.key] = datum.value
+  }
+  return newData
+}
+
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)
   return plugin == null || plugin.isBundled || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
