@@ -35,5 +35,6 @@ iml_module(
         "//tools/idea/spellchecker:intellij.spellchecker[module]",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/RegExpSupport:intellij.regexp[module]",
     ],
 )

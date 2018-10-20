@@ -78,6 +78,7 @@ iml_module(
 iml_module(
     name = "intellij.platform.lang.tests",
     iml_files = ["intellij.platform.lang.tests.iml"],
+    javacopts = ["-Xep:ReturnValueIgnored:WARN"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",

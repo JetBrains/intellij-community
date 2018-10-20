@@ -45,5 +45,6 @@ iml_module(
         "//tools/idea/plugins/properties/properties-psi-api:intellij.properties.psi[module]",
         "//tools/idea/.idea/libraries:assertJ[test]",
         "//tools/idea:intellij.java.compiler.tests[module, test]",
+        "//tools/idea/.idea/libraries:Java_Compatibility[test]",
     ],
 )

@@ -4,6 +4,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "intellij.jvm.analysis.kotlin.tests",
     iml_files = ["intellij.jvm.analysis.kotlin.tests.iml"],
+    test_runtime_deps = ["//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -23,5 +24,6 @@ iml_module(
     deps = [
         "//tools/idea/jvm/jvm-analysis-tests-api:intellij.jvm.analysis.tests[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea:intellij.java.tests[module, test]",
     ],
 )

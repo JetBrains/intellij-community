@@ -33,5 +33,6 @@ iml_module(
         "//tools/idea/java/compiler/forms-compiler:intellij.java.guiForms.compiler[module]",
         "//tools/idea/platform/forms_rt:intellij.java.guiForms.rt[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization.tests[module, test]",
+        "//tools/idea/.idea/libraries:Java_Compatibility[test]",
     ],
 )

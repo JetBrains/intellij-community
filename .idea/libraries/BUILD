@@ -1424,6 +1424,6 @@ java_library(
 java_library(
     name = "Java_Compatibility",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:java-compatibility"],
-    runtime_deps = ["//tools/idea/lib:java-compatibility"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/java-compatibility/1.0.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/java-compatibility/1.0.1:jar"],
 )

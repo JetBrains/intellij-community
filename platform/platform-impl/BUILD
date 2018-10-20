@@ -22,6 +22,7 @@ iml_module(
         "//tools/idea/platform/editor-ui-ex:intellij.platform.editor.ex",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/.idea/libraries:StreamEx",
+        "//tools/idea/.idea/libraries:kotlinx-coroutines-core",
     ],
     # do not sort: must match IML order
     runtime_deps = [

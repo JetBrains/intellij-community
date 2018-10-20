@@ -10,7 +10,11 @@ iml_module(
     ],
     iml_files = ["intellij.vcs.git.iml"],
     javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
-    resources = ["resources"],
+    # do not sort: must match IML order
+    resources = [
+        "resources",
+        "compatibilityResources",
+    ],
     test_srcs = ["tests"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
