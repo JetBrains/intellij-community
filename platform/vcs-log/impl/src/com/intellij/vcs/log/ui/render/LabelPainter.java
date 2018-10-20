@@ -351,7 +351,7 @@ public class LabelPainter {
   }
 
   public static Font getReferenceFont() {
-    Font font = GraphCommitCellRenderer.getFont();
+    Font font = GraphCommitCellRenderer.getLabelFont();
     return font.deriveFont(font.getSize() - 1f);
   }
 

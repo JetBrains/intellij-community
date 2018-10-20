@@ -130,7 +130,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     myTemplateComponent.getReferencePainter().setShowTagNames(showTagNames);
   }
 
-  public static Font getFont() {
+  public static Font getLabelFont() {
     return UIUtil.getLabelFont();
   }
 
@@ -160,7 +160,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myReferencePainter = new LabelPainter(myLogData, table, iconCache, compact, showTags);
       myIssueLinkRenderer = new IssueLinkRenderer(myLogData.getProject(), this);
 
-      myFont = getFont();
+      myFont = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
       myAffineTransform = configuration != null ? configuration.getDefaultTransform() : null;
       myHeight = calculateHeight();
@@ -254,7 +254,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     public int getPreferredHeight() {
-      Font font = getFont();
+      Font font = getLabelFont();
       GraphicsConfiguration configuration = myGraphTable.getGraphicsConfiguration();
       if (myFont != font || (configuration != null && !Objects.equals(myAffineTransform, configuration.getDefaultTransform()))) {
         myFont = font;
