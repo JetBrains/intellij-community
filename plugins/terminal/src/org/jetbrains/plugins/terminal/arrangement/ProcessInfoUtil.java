@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.terminal;
+package org.jetbrains.plugins.terminal.arrangement;
 
 import com.google.common.util.concurrent.Futures;
 import com.intellij.execution.ExecutionException;
@@ -28,7 +28,7 @@ public class ProcessInfoUtil {
 
   private ProcessInfoUtil() {}
 
-  @Nullable
+  @NotNull
   public static Future<String> getWorkingDirectory(@NotNull Process process) {
     if (process.isAlive()) {
       try {
@@ -45,7 +45,7 @@ public class ProcessInfoUtil {
         LOG.warn("Cannot get pid for " + process);
       }
     }
-    return null;
+    return Futures.immediateFuture(null);
   }
 
   @Nullable
