@@ -39,33 +39,48 @@ import java.util.Collections;
 public class ValProcessor extends AbstractProcessor {
 
   private static final String LOMBOK_VAL_FQN = "lombok.val";
-  private static final String LOMBOK_VAL_SHORT_NAME = "val";
   private static final String LOMBOK_VAR_FQN = "lombok.var";
   private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
-  private static final String LOMBOK_VAR_SHORT_NAME = "var";
 
   public ValProcessor() {
     super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
   }
 
   public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
-    return psiLocalVariable.getInitializer() != null && isSameName(psiLocalVariable.getTypeElement().getText());
+    return psiLocalVariable.getInitializer() != null && isSameName(resolveQualifiedName(psiLocalVariable.getTypeElement()));
   }
 
   public static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
-    return psiLocalVariable.getInitializer() != null && isValOrVar(psiLocalVariable.getTypeElement().getText());
+    return psiLocalVariable.getInitializer() != null && isValOrVar(psiLocalVariable.getTypeElement());
   }
 
-  private static boolean isSameName(String className) {
-    return LOMBOK_VAL_SHORT_NAME.equals(className) || LOMBOK_VAL_FQN.equals(className);
+  private static boolean isSameName(@Nullable String className) {
+    return LOMBOK_VAL_FQN.equals(className);
   }
 
-  private static boolean isVar(String className) {
-    return LOMBOK_VAR_SHORT_NAME.equals(className) || LOMBOK_VAR_FQN.equals(className) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(className);
+  private static boolean isVar(@Nullable String className) {
+    return LOMBOK_VAR_FQN.equals(className) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(className);
   }
 
-  private static boolean isValOrVar(String className) {
+  private static boolean isValOrVar(@Nullable PsiTypeElement typeElement) {
+    String className = resolveQualifiedName(typeElement);
     return isSameName(className) || isVar(className);
+  }
+
+  @Nullable
+  private static String resolveQualifiedName(@Nullable PsiTypeElement typeElement)
+  {
+    if (typeElement == null) {
+      return null;
+    }
+
+    PsiJavaCodeReferenceElement reference = typeElement.getInnermostComponentReferenceElement();
+    if (reference == null)
+    {
+      return null;
+    }
+
+    return reference.getQualifiedName();
   }
 
   public boolean isEnabled(@NotNull Project project) {
@@ -90,8 +105,8 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   public void verifyVariable(@NotNull final PsiLocalVariable psiLocalVariable, @NotNull final ProblemsHolder holder) {
-    boolean isVal = isSameName(psiLocalVariable.getTypeElement().getText());
-    boolean isVar = isVar(psiLocalVariable.getTypeElement().getText());
+    boolean isVal = isSameName(resolveQualifiedName(psiLocalVariable.getTypeElement()));
+    boolean isVar = isVar(resolveQualifiedName(psiLocalVariable.getTypeElement()));
     final String ann = isVal ? "val" : "var";
     if (isVal || isVar) {
       final PsiExpression initializer = psiLocalVariable.getInitializer();
@@ -112,8 +127,8 @@ public class ValProcessor extends AbstractProcessor {
 
   public void verifyParameter(@NotNull final PsiParameter psiParameter, @NotNull final ProblemsHolder holder) {
     final PsiTypeElement typeElement = psiParameter.getTypeElement();
-    boolean isVal = null != typeElement && isSameName(typeElement.getText());
-    boolean isVar = null != typeElement && isVar(typeElement.getText());
+    boolean isVal = null != typeElement && isSameName(resolveQualifiedName(typeElement));
+    boolean isVar = null != typeElement && isVar(resolveQualifiedName(typeElement));
     if (isVar || isVal) {
       PsiElement scope = psiParameter.getDeclarationScope();
       boolean isForeachStatement = scope instanceof PsiForeachStatement;
@@ -127,7 +142,7 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   private boolean isValOrVarForEach(@NotNull PsiParameter psiParameter) {
-    return psiParameter.getParent() instanceof PsiForeachStatement && isValOrVar(psiParameter.getTypeElement().getText());
+    return psiParameter.getParent() instanceof PsiForeachStatement && isValOrVar(psiParameter.getTypeElement());
   }
 
   @Nullable
