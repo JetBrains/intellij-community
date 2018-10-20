@@ -167,7 +167,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
         try {
           return new WinProcess(myProcess).sendCtrlC();
         }
-        catch (Error e) {
+        catch (Throwable e) {
           LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
         }
       }
