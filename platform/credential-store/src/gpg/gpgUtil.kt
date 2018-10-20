@@ -6,9 +6,11 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.SmartList
 
 internal class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
+  // only keys with "Encrypt" capability are returned
   fun listKeys(): List<PgpKey> {
     val result = SmartList<PgpKey>()
     var keyId: String? = null
+    var capabilities: String? = null
     for (line in StringUtilRt.convertLineSeparators(gpgTool.listSecretKeys()).splitToSequence('\n')) {
       val fields = line.splitToSequence(':').iterator()
       if (!fields.hasNext()) {
@@ -23,16 +25,29 @@ internal class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
           }
           // Field 5 - KeyID
           keyId = fields.next()
+
+          for (i in 6 until 12) {
+            fields.next()
+          }
+
+          // Field 12 - Key capabilities
+          capabilities = fields.next()
         }
 
         "uid" -> {
-          for (i in 2 until 10) {
-            fields.next()
+          // a potential letter 'D' to indicate a disabled key
+          // e :: Encrypt
+          // the primary key has uppercase versions of the  letters to denote the usable capabilities of the entire key
+          if (!capabilities!!.contains('D') && capabilities.contains('E')) {
+            for (i in 2 until 10) {
+              fields.next()
+            }
+            // Field 10 - User-ID
+            // The value is quoted like a C string to avoid control characters (the colon is quoted =\x3a=).
+            result.add(PgpKey(keyId!!, fields.next().replace("=\\x3a=", ":")))
           }
-          // Field 10 - User-ID
-          // The value is quoted like a C string to avoid control characters (the colon is quoted =\x3a=).
-          result.add(PgpKey(keyId!!, fields.next().replace("=\\x3a=", ":")))
           keyId = null
+          capabilities = null
         }
       }
     }
