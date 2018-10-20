@@ -164,6 +164,13 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     return myVisiblePack;
   }
 
+  public void jumpToRow(int row) {
+    jumpTo(row, (model, r) -> {
+      if (model.getRowCount() <= r) return -1;
+      return r;
+    }, SettableFuture.create());
+  }
+
   @NotNull
   public Future<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root) {
     SettableFuture<Boolean> future = SettableFuture.create();

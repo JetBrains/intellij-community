@@ -11,10 +11,10 @@ YAML file
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
-              PsiElement(Eol)('\n')
+              PsiElement(block scalar EOL)('\n')
               PsiElement(indent)('    ')
               PsiElement(scalar list)('firstValue')
-              PsiElement(block scalar EOL)('\n')
+          PsiElement(Eol)('\n')
           PsiElement(indent)('   ')
           YAML key value
             PsiElement(scalar key)('key12')
@@ -34,10 +34,10 @@ YAML file
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
-              PsiElement(Eol)('\n')
+              PsiElement(block scalar EOL)('\n')
               PsiElement(indent)('    ')
               PsiElement(scalar list)('firstValue')
-              PsiElement(block scalar EOL)('\n')
+          PsiElement(Eol)('\n')
           PsiElement(indent)('   ')
           YAML key value
             PsiElement(scalar key)('key22')
@@ -57,10 +57,10 @@ YAML file
             PsiWhiteSpace(' ')
             YAML scalar list
               PsiElement(scalar list)('|')
-              PsiElement(Eol)('\n')
+              PsiElement(block scalar EOL)('\n')
               PsiElement(indent)('    ')
               PsiElement(scalar list)('firstValue')
-              PsiElement(block scalar EOL)('\n')
+          PsiElement(Eol)('\n')
           PsiElement(indent)('   ')
           YAML key value
             PsiElement(scalar key)('key32')

@@ -356,7 +356,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
   }
 
   @Override
-  @Nullable public Object getData(Project project, String dataId) {
+  @Nullable public Object getData(Project project, @NotNull String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return JavaPsiFacade.getInstance(project).findClass(myClassName, GlobalSearchScope.allScope(project));
     }

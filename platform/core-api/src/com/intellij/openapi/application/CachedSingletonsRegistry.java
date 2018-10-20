@@ -66,7 +66,7 @@ public class CachedSingletonsRegistry {
     }
   }
 
-  private static void cleanupClass(Class<?> aClass) throws Exception {
+  private static void cleanupClass(Class<?> aClass) {
     ReflectionUtil.resetField(aClass, null, "ourInstance");
   }
 }

@@ -26,6 +26,8 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 
+import static com.intellij.util.ui.EmptyIcon.ICON_16;
+
 /**
  * @author Vladislav.Soroka
  * @since 3/24/2014
@@ -61,7 +63,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
 
       @NotNull
       private Icon getIcon(@NotNull ErrorTreeElementKind kind) {
-        Icon icon = AllIcons.General.Mdot_empty;
+        Icon icon = ICON_16;
         switch (kind) {
           case INFO:
             icon = AllIcons.General.Information;
@@ -76,7 +78,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
             icon = AllIcons.General.Tip;
             break;
           case GENERIC:
-            icon = AllIcons.General.Mdot_empty;
+            icon = ICON_16;
             break;
         }
         return icon;

@@ -254,7 +254,7 @@ public abstract class VcsTreeModelData {
 
 
   @Nullable
-  public static Object getData(@Nullable Project project, @NotNull JTree tree, String dataId) {
+  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId)) {
       Change[] changes = mapToChange(selected(tree)).toArray(Change[]::new);
       if (changes.length != 0) return changes;

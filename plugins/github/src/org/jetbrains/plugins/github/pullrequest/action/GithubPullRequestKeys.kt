@@ -7,6 +7,7 @@ import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsBranchesFetcher
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 
@@ -17,6 +18,9 @@ object GithubPullRequestKeys {
   @JvmStatic
   val PULL_REQUESTS_DETAILS_LOADER =
     DataKey.create<GithubPullRequestsDetailsLoader>("org.jetbrains.plugins.github.pullrequest.details.loader")
+  @JvmStatic
+  val PULL_REQUESTS_BRANCHES_FETCHER =
+    DataKey.create<GithubPullRequestsBranchesFetcher>("org.jetbrains.plugins.github.pullrequest.branch.fetcher")
   @JvmStatic
   val SELECTED_PULL_REQUEST = DataKey.create<GithubSearchedIssue>("org.jetbrains.plugins.github.pullrequest.selected")
   @JvmStatic

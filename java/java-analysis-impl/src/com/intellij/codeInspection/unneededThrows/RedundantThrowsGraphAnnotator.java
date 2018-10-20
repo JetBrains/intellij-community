@@ -22,7 +22,7 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
   @Override
   public void onInitialize(RefElement refElement) {
     if (refElement instanceof RefMethodImpl) {
-      PsiElement element = refElement.getElement();
+      PsiElement element = refElement.getPsiElement();
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
         final PsiCodeBlock body = method.getBody();

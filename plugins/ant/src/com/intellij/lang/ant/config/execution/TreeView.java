@@ -402,7 +402,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       MessageNode item = getSelectedItem();
       if (item == null) return null;

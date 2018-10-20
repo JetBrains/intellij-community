@@ -7,8 +7,4 @@ public class GithubParseException extends RuntimeException {
   public GithubParseException(@NotNull String message) {
     super(message);
   }
-
-  public GithubParseException(String message, Throwable cause) {
-    super(message, cause);
-  }
 }

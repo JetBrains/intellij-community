@@ -105,7 +105,7 @@ private val kotlinJs = KotlinLib(mapOf(
   ),
   Projects.KotlinMPProject.title to ProjectProperties(
     group = NewProjectDialogModel.Groups.Kotlin.toString(),
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
+    frameworkName = "Kotlin (Multiplatform Library)",
     jars = kotlinJsGradleLibs
   ),
   Projects.GradleGProject.title to ProjectProperties(

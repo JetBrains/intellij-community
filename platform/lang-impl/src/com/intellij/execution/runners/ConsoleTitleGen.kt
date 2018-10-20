@@ -55,7 +55,7 @@ open class ConsoleTitleGen @JvmOverloads constructor(private val myProject: Proj
   }
 
 
-  open protected fun getActiveConsoles(consoleTitle: String): List<String> {
+  protected open fun getActiveConsoles(consoleTitle: String): List<String> {
     val consoles = ExecutionHelper.collectConsolesByDisplayName(myProject) { dom -> dom.contains(consoleTitle) }
 
     return consoles.filter({ input ->

@@ -210,4 +210,12 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testStaticImport() {
     doTest();
   }
+
+  public void testInstanceOf() {
+    doTest();
+  }
+
+  public void testReferenceParameterList() {
+    doTest();
+  }
 }

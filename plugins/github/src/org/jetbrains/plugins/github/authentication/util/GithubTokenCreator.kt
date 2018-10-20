@@ -36,7 +36,7 @@ class GithubTokenCreator(private val server: GithubServerPath,
         val current = executor.execute(indicator, GithubApiRequests.Auth.get(server))
         for (i in 1..99) {
           val newNote = note + "_" + i
-          if (current.find { authorization -> newNote == authorization.note } == null) {
+          if (current.find { authorization -> newNote.equals(authorization.note, true) } == null) {
             return executor.execute(indicator, GithubApiRequests.Auth.create(server, scopes, newNote))
           }
         }

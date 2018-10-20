@@ -289,10 +289,11 @@ public class XFramesView extends XDebugView {
       addExecutionStacks(Arrays.asList(executionStacks));
 
       myThreadComboBox.setSelectedItem(activeExecutionStack);
-      myThreadsPanel.removeAll();
-      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-      final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
-      if (!invisible) {
+      boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
+      if (invisible) {
+        myThreadsPanel.remove(myThreadComboBox);
+      }
+      else if (myThreadComboBox.getParent() == null) {
         myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
       }
       updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);

@@ -53,20 +53,22 @@ public class SmartTreeStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return (AbstractTreeNode)element;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     return ((AbstractTreeNode)element).getChildren().toArray();
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     return ((AbstractTreeNode)element).getParent();
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     if (myRootElementWrapper == null){
@@ -80,7 +82,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return ((AbstractTreeNode)element).isAlwaysLeaf();
   }
 

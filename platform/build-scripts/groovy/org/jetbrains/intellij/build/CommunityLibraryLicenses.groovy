@@ -120,7 +120,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", version: "2.2.2", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
-    new LibraryLicense(name: "classworlds", libraryName: "classworlds-1.1.jar", version: "1.1", license: "codehaus",
+    new LibraryLicense(name: "classworlds", libraryName: "Maven", version: "1.1", license: "codehaus",
                        url: "https://github.com/codehaus/classworlds",
                        licenseUrl: "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
@@ -211,8 +211,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Java-WebSocket", libraryName: "java_websocket.jar", version: "1.4.0 Trunk", license: "MIT",
                        url: "https://github.com/TooTallNate/Java-WebSocket",
                        licenseUrl: "https://github.com/TooTallNate/Java-WebSocket/blob/master/LICENSE"),
-    new LibraryLicense(name: "Java Compatibility", version: "", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/Java9Compatibility",
-                       licenseUrl: "https://raw.githubusercontent.com/JetBrains/Java9Compatibility/master/LICENSE"),
+    new LibraryLicense(name: "Java Compatibility", version: "1.0.1", license: "GPL 2.0 + Classpath", url: "https://github.com/JetBrains/intellij-deps-java-compatibility",
+                       licenseUrl: "https://raw.githubusercontent.com/JetBrains/intellij-deps-java-compatibility/master/LICENSE"),
     new LibraryLicense(name: "JavaBeans Activation Framework", libraryName: "javax-activation", version: "1.1", license: "CDDL 1.0",
                           url: "http://java.sun.com/products/archive/javabeans/jaf11.html",
                           licenseUrl: "https://opensource.org/licenses/CDDL-1.0"),
@@ -350,7 +350,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://microba.sourceforge.net/license.txt"),
     new LibraryLicense(name: "MigLayout", libraryName: "miglayout-swing", version: "5.1.0", license: "BSD",
                        url: "http://www.miglayout.com/", licenseUrl: "http://www.miglayout.com/mavensite/license.html"),
-    new LibraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD",
+    new LibraryLicense(name: "minlog", libraryName: "Kryo", version: "1.2", license: "BSD",
                        url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
     /* Android Studio: added by Change I38bafaf1 / commit 0c703f7 */
     new LibraryLicense(name: "mockito", libraryName: "mockito", version: "2.7.1", license: "MIT",

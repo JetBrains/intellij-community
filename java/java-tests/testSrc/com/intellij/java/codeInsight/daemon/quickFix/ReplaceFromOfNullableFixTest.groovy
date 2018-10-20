@@ -32,10 +32,6 @@ class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
     return [new DataFlowInspection()] as LocalInspectionTool[]
   }
 
-  void test() throws Exception {
-     doAllTests()
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable"

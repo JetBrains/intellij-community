@@ -27,8 +27,6 @@ public class RemoveUnusedVariableTest extends LightQuickFixParameterizedTestCase
     PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeUnusedVariable";

@@ -67,6 +67,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.scrollToPathToSelectExt(path: TreePath): Pair<Boolean, Point> {
+    robot.waitForIdle()
     val result =  GuiTestUtilKt.computeOnEdt {
       val isSelected = this.selectionCount == 1 && this.isPathSelected(path)
       Pair.of(isSelected, this.scrollToTreePathExt(path))

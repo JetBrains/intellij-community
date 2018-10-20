@@ -641,7 +641,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return (PresentableNodeDescriptor)userObject;
   }
 
-  public TreePath getPath(PresentableNodeDescriptor node) {
+  public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 

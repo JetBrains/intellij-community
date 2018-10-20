@@ -3,42 +3,45 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 
-class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
-  private static final Key<Integer> ORDER_KEY = Key.create("inlay.order.key");
-
-  static boolean ourPutAtBeginningOfMergedIntervals; // editor only supports documents that change in EDT, so we can use a static field here
+abstract class InlayImpl<T extends InlayImpl> extends RangeMarkerWithGetterImpl<T> implements Inlay {
+  static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
+  private static final Key<Integer> ORDER_BEFORE_DISPOSAL = Key.create("inlay.order.before.disposal");
 
   @NotNull
-  private final EditorImpl myEditor;
+  final EditorImpl myEditor;
+  @NotNull
+  final EditorCustomElementRenderer myRenderer;
   private final boolean myRelatedToPrecedingText;
-  int myOffsetBeforeDisposal = -1;
-  private int myWidthInPixels;
-  @NotNull
-  private final EditorCustomElementRenderer myRenderer;
 
-  InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPreceedingText, @NotNull EditorCustomElementRenderer renderer) {
+  int myWidthInPixels;
+
+  @SuppressWarnings("AbstractMethodCallInConstructor")
+  InlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
-    myRelatedToPrecedingText = relatesToPreceedingText;
+    myRelatedToPrecedingText = relatesToPrecedingText;
     myRenderer = renderer;
     doUpdateSize();
-    myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, relatesToPreceedingText, 0);
+    //noinspection unchecked
+    getTree().addInterval((T)this, offset, offset, false, false, relatesToPrecedingText, 0);
   }
+
+  abstract RangeMarkerTree<T> getTree();
 
   @Override
   public void updateSize() {
-    int oldWidth = myWidthInPixels;
+    int oldWidth = getWidthInPixels();
+    int oldHeight = getHeightInPixels();
     doUpdateSize();
-    if (oldWidth != myWidthInPixels) {
+    if (oldWidth != getWidthInPixels() || oldHeight != getHeightInPixels()) {
       myEditor.getInlayModel().notifyChanged(this);
     }
     else {
@@ -48,59 +51,37 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
 
   @Override
   public void repaint() {
-    if (isValid() && !myEditor.isDisposed()) {
-      int offset = getOffset();
-      myEditor.repaint(offset, offset, false);
-    }
-  }
-
-  private void doUpdateSize() {
-    myWidthInPixels = myRenderer.calcWidthInPixels(myEditor);
-    if (myWidthInPixels <= 0) {
-      throw new IllegalArgumentException("Positive width should be defined for an inline element");
-    }
-  }
-
-  @Override
-  protected void changedUpdateImpl(@NotNull DocumentEvent e) {
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourPutAtBeginningOfMergedIntervals = intervalStart() == e.getOffset();
-    super.changedUpdateImpl(e);
-    if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
-      invalidate(e);
-    }
-  }
-
-  @Override
-  protected void onReTarget(int startOffset, int endOffset, int destOffset) {
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    ourPutAtBeginningOfMergedIntervals = intervalStart() == endOffset;
-    if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
-      myEditor.getInlayModel().myMoveInProgress = true;
-      try {
-        invalidate("moved inside surrogate pair on retarget");
-      }
-      finally {
-        myEditor.getInlayModel().myMoveInProgress = false;
+    if (isValid() && !myEditor.isDisposed() && !myEditor.getDocument().isInBulkUpdate()) {
+      JComponent contentComponent = myEditor.getContentComponent();
+      if (contentComponent.isShowing()) {
+        Rectangle bounds = getBounds();
+        if (bounds != null) {
+          contentComponent.repaint(bounds);
+        }
       }
     }
   }
+
+  abstract void doUpdateSize();
 
   @Override
   public void dispose() {
     if (isValid()) {
-      myOffsetBeforeDisposal = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
+      int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       InlayModelImpl inlayModel = myEditor.getInlayModel();
-      List<Inlay> inlays = inlayModel.getInlineElementsInRange(myOffsetBeforeDisposal, myOffsetBeforeDisposal);
-      putUserData(ORDER_KEY, inlays.indexOf(this));
-      inlayModel.myInlayTree.removeInterval(this);
+      List<Inlay> inlays = inlayModel.getInlineElementsInRange(offset, offset);
+      putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
+      putUserData(OFFSET_BEFORE_DISPOSAL, offset);
+      //noinspection unchecked
+      getTree().removeInterval((T)this);
       inlayModel.notifyRemoved(this);
     }
   }
 
   @Override
   public int getOffset() {
-    return myOffsetBeforeDisposal == -1 ? getStartOffset() : myOffsetBeforeDisposal;
+    Integer offsetBeforeDisposal = getUserData(OFFSET_BEFORE_DISPOSAL);
+    return offsetBeforeDisposal == null ? getStartOffset() : offsetBeforeDisposal;
   }
 
   @Override
@@ -108,14 +89,14 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     return myRelatedToPrecedingText;
   }
 
-  @NotNull
+  abstract Point getPosition();
+
+  @Nullable
   @Override
-  public VisualPosition getVisualPosition() {
-    int offset = getOffset();
-    VisualPosition pos = myEditor.offsetToVisualPosition(offset);
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
-    int order = inlays.indexOf(this);
-    return new VisualPosition(pos.line, pos.column + order, true);
+  public Rectangle getBounds() {
+    if (myEditor.getFoldingModel().isOffsetCollapsed(getOffset())) return null;
+    Point pos = getPosition();
+    return new Rectangle(pos.x, pos.y, getWidthInPixels(), getHeightInPixels());
   }
 
   @NotNull
@@ -129,13 +110,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     return myWidthInPixels;
   }
 
-  @Override
-  public InlayImpl get() {
-    return this;
-  }
-
   int getOrder() {
-    Integer value = getUserData(ORDER_KEY);
+    Integer value = getUserData(ORDER_BEFORE_DISPOSAL);
     return value == null ? -1 : value;
   }
 }

@@ -109,7 +109,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
   @NotNull
   @Override
   public Priority getPriority() {
-    return Priority.HIGH;
+    return Priority.TOP;
   }
 
   private class MyDataContext extends UserDataHolderBase implements DataContext {

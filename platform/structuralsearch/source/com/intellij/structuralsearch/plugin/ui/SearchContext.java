@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Context of the search to be done
@@ -20,7 +22,7 @@ public final class SearchContext {
   private final PsiFile myFile;
   private final Editor myEditor;
 
-  public SearchContext(Project project) {
+  public SearchContext(@NotNull Project project) {
     myProject = project;
     myFile = null;
     myEditor = null;
@@ -37,14 +39,17 @@ public final class SearchContext {
     myEditor = CommonDataKeys.EDITOR.getData(context);
   }
 
+  @Nullable
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Nullable
   public Editor getEditor() {
     return myEditor;
   }

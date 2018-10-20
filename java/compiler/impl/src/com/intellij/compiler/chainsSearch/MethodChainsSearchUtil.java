@@ -39,7 +39,7 @@ public final class MethodChainsSearchUtil {
         for (PsiParameter parameter : m.getParameterList().getParameters()) {
           PsiType t = parameter.getType();
           PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(t);
-          if (aClass != null && aClass == target) {
+          if (aClass == target) {
             return false;
           }
         }

@@ -24,7 +24,11 @@ public abstract class ActionsCollector {
   /**
    * Only actions from platform and JB plugins are recorded.
    */
-  public abstract void record(@Nullable String actionId, @NotNull Class context);
+  public void record(@Nullable String actionId, @NotNull Class context) {
+    record(actionId, context, false, null);
+  }
+
+  public abstract void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place);
 
   public abstract State getState();
 
@@ -36,5 +40,9 @@ public abstract class ActionsCollector {
     @Tag("counts")
     @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
     public Map<String, Integer> myValues = new HashMap<>();
+
+    @Tag("contextMenuCounts")
+    @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
+    public Map<String, Integer> myContextMenuValues = new HashMap<>();
   }
 }

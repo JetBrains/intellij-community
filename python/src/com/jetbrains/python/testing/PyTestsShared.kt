@@ -644,7 +644,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
-  override abstract fun createTemplateConfiguration(project: Project): CONF_T
+  abstract override fun createTemplateConfiguration(project: Project): CONF_T
 }
 
 /**

@@ -92,10 +92,12 @@ public class RefManagerImpl extends RefManager {
     myPsiManager = PsiManager.getInstance(project);
     myRefProject = new RefProjectImpl(this);
     for (InspectionExtensionsFactory factory : Extensions.getExtensions(InspectionExtensionsFactory.EP_NAME)) {
-      final RefManagerExtension extension = factory.createRefManagerExtension(this);
+      final RefManagerExtension<?> extension = factory.createRefManagerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
-        myLanguageExtensions.put(extension.getLanguage(), extension);
+        for (Language language : extension.getLanguages()) {
+          myLanguageExtensions.put(language, extension);
+        }
       }
     }
     if (scope != null) {
@@ -251,7 +253,7 @@ public class RefManagerImpl extends RefManager {
 
     if (refEntity instanceof RefDirectory) {
       Element fileElement = new Element("file");
-      VirtualFile virtualFile = ((PsiDirectory)((RefDirectory)refEntity).getElement()).getVirtualFile();
+      VirtualFile virtualFile = ((PsiDirectory)((RefDirectory)refEntity).getPsiElement()).getVirtualFile();
       fileElement.addContent(virtualFile.getUrl());
       problem.addContent(fileElement);
     }
@@ -410,14 +412,9 @@ public class RefManagerImpl extends RefManager {
   @Override
   public PsiNamedElement getContainerElement(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    return myExtensions
-      .values()
-      .stream()
-      .filter(extension -> extension.getLanguage().equals(language))
-      .map(extension -> extension.getElementContainer(element))
-      .filter(Objects::nonNull)
-      .findFirst()
-      .orElse(null);
+    RefManagerExtension extension = myLanguageExtensions.get(language);
+    if (extension == null) return null;
+    return extension.getElementContainer(element);
   }
 
   private synchronized void registerUnprocessed(VirtualFileWithId virtualFile) {
@@ -425,7 +422,7 @@ public class RefManagerImpl extends RefManager {
   }
 
   void removeReference(@NotNull RefElement refElem) {
-    final PsiElement element = refElem.getElement();
+    final PsiElement element = refElem.getPsiElement();
     final RefManagerExtension extension = element != null ? getExtension(element.getLanguage()) : null;
     if (extension != null) {
       extension.removeReference(refElem);

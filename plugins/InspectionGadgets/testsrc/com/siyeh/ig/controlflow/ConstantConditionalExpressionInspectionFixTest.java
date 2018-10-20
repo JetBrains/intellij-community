@@ -10,8 +10,6 @@ public class ConstantConditionalExpressionInspectionFixTest extends LightQuickFi
     enableInspectionTool(new ConstantConditionalExpressionInspection());
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/constantConditional";

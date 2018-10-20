@@ -93,6 +93,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources;
     private boolean myErrorOnMissingJar = true;
+    private boolean myLazyClassloadingCaches = SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false);
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
 
@@ -101,8 +102,14 @@ public class UrlClassLoader extends ClassLoader {
     public Builder urls(List<URL> urls) { myURLs = urls; return this; }
     public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
+    
+    // Keep ZipFile handle opened in SoftReference. Depending on OS, the option significantly speeds up classloading from libraries. 
+    // Caveat: for Windows opened handle will lock the file preventing its modification
+    // Thus, the option is recommended when jars are not modified or process that uses this option is transient
     public Builder allowLock() { myLockJars = true; return this; }
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    
+    // Build index of packages / class or resource names that allows to avoid IO during classloading
     public Builder useCache() { myUseCache = true; return this; }
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
@@ -139,6 +146,10 @@ public class UrlClassLoader extends ClassLoader {
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
+    
+    // Cache package contents information in FileLoader lazily upon classloading. 
+    // This is less efficient than useCache / usePersistentClasspathIndexForLocalClassDirectories but the option has much smaller startup overhead.  
+    public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
@@ -176,7 +187,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                                 builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar);
+                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches);
   }
 
   public static URL internProtocol(@NotNull URL url) {

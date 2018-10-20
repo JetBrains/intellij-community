@@ -20,8 +20,6 @@ import com.intellij.pom.java.LanguageLevel;
 
 public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameterizedTestCase {
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/changeMethodSignatureFromUsage8";

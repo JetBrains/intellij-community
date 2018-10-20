@@ -127,6 +127,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
   private void initTree(final Node root) throws Exception {
     myStructure = new BaseStructure() {
+      @NotNull
       @Override
       public Object getRootElement() {
         return root;
@@ -138,7 +139,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
       }
 
       @Override
-      public Object getParentElement(final Object element) {
+      public Object getParentElement(@NotNull final Object element) {
         return ((Node)element).getParent();
       }
 

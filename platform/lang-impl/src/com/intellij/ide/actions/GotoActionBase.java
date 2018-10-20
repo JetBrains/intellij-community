@@ -147,7 +147,7 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   @Nullable
-  static String getInitialTextForNavigation(@Nullable Editor editor) {
+  public static String getInitialTextForNavigation(@Nullable Editor editor) {
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
       if (selectedText != null && !selectedText.contains("\n")) {

@@ -41,17 +41,22 @@ public class UsageInfo {
     PsiElement topElement = file == null ? element : file;
     LOG.assertTrue(topElement.isValid(), element);
 
-    TextRange elementRange = element.getTextRange();
+    TextRange elementRange = element instanceof PsiCompiledElement ? TextRange.EMPTY_RANGE : element.getTextRange();
     if (elementRange == null) {
       throw new IllegalArgumentException("text range null for " + element + "; " + element.getClass());
     }
     int effectiveStart;
     int effectiveEnd;
     if (startOffset == -1 && endOffset == -1) {
-      // calculate natural element range
-      // Cls element.getTextOffset() returns -1
-      effectiveStart = Math.max(0, element.getTextOffset() - elementRange.getStartOffset());
-      effectiveEnd = Math.max(effectiveStart, elementRange.getLength());
+      if (element instanceof PsiCompiledElement) {
+        effectiveStart = effectiveEnd = 0;
+      }
+      else {
+        // calculate natural element range
+        // Cls element.getTextOffset() returns -1
+        effectiveStart = Math.max(0, element.getTextOffset() - elementRange.getStartOffset());
+        effectiveEnd = Math.max(effectiveStart, elementRange.getLength());
+      }
     }
     else {
       effectiveStart = startOffset;
@@ -81,6 +86,7 @@ public class UsageInfo {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
     mySmartPointer = smartPointerManager.createSmartPsiElementPointer(element, file);
     if (file != null &&
+        !(element instanceof PsiCompiledElement) &&
         (effectiveStart != element.getTextOffset() - elementRange.getStartOffset() || effectiveEnd != elementRange.getLength())) {
       TextRange rangeToStore = InjectedLanguageManager.getInstance(project).isInjectedFragment(file)
                                ? elementRange
@@ -173,6 +179,7 @@ public class UsageInfo {
   public ProperTextRange getRangeInElement() {
     PsiElement element = getElement();
     if (element == null) return null;
+    if (element instanceof PsiCompiledElement) return new ProperTextRange(0,0);
     TextRange elementRange = element.getTextRange();
     ProperTextRange result;
     if (myPsiFileRange == null) {
@@ -196,7 +203,7 @@ public class UsageInfo {
   }
 
   public int getNavigationOffset() {
-    if (myPsiFileRange  != null) {
+    if (myPsiFileRange != null) {
       final Segment range = myPsiFileRange.getRange();
       if (range != null) {
         return range.getStartOffset();
@@ -205,6 +212,7 @@ public class UsageInfo {
 
     PsiElement element = getElement();
     if (element == null) return -1;
+    if (element instanceof PsiCompiledElement) return 0;
     TextRange range = element.getTextRange();
 
     TextRange rangeInElement = getRangeInElement();
@@ -230,14 +238,15 @@ public class UsageInfo {
   }
 
   public boolean isValid() {
-    if (isFileUsage()) {
+    if (isFileOrCompiled()) {
       return true; // in case of binary file
     }
     return getSegment() != null;
   }
 
-  protected boolean isFileUsage() {
-    return myPsiFileRange == null && getElement() instanceof PsiFile;
+  protected boolean isFileOrCompiled() {
+    PsiElement element = getElement();
+    return myPsiFileRange == null && element instanceof PsiFile || element instanceof PsiCompiledElement;
   }
 
   @Nullable

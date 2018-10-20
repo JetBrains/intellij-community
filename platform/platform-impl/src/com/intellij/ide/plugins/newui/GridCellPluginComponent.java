@@ -81,13 +81,14 @@ public class GridCellPluginComponent extends CellPluginComponent {
         Border border = myLastComponent.getBorder();
         int borderOffset = border == null ? 0 : border.getBorderInsets(myLastComponent).left;
         myLastComponent
-          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurableNew.offset5() + bounds.height, Math.min(buttonSize.width, size.width),
+          .setBounds(bounds.x + location.x - borderOffset, bounds.y + PluginManagerConfigurableNew.offset5() + bounds.height,
+                     Math.min(buttonSize.width, size.width),
                      buttonSize.height);
       }
     });
 
     updateIcon(false, false);
-    setSelection(EventHandler.SelectionType.NONE);
+    updateColors(EventHandler.SelectionType.NONE);
   }
 
   private void createMetricsPanel(@NotNull JPanel centerPanel) {

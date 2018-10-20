@@ -133,7 +133,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    if (myDuringDocumentUpdate || myDocument.isInBulkUpdate()) return;
+    if (myDuringDocumentUpdate || myDocument.isInBulkUpdate() || inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) return;
     doInvalidateRange(inlay.getOffset(), inlay.getOffset());
   }
 
@@ -201,9 +201,11 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     int lineHeight = myView.getLineHeight();
     if (myEditor.isOneLineMode()) return lineHeight;
 
+    int linesHeight = myView.visualLineToY(myEditor.getVisibleLineCount());
+
     // Preferred height of less than a single line height doesn't make sense:
     // at least a single line with a blinking caret on it is to be displayed
-    int size = Math.max(myEditor.getVisibleLineCount(), 1) * lineHeight;
+    int size = Math.max(linesHeight, lineHeight);
 
     EditorSettings settings = myEditor.getSettings();
     if (settings.isAdditionalPageAtBottom()) {

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull
 
 enum OsFamily {
   WINDOWS("win", BuildOptions.OS_WINDOWS, "Windows"),
-  MACOS("mac", BuildOptions.OS_MAC, "macOs"),
+  MACOS("mac", BuildOptions.OS_MAC, "macOS"),
   LINUX("unix", BuildOptions.OS_LINUX, "Linux");
 
   final String distSuffix;

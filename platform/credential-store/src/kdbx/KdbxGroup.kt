@@ -11,7 +11,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, private @Volatile var parent: KdbxGroup?) {
+internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, @Volatile private var parent: KdbxGroup?) {
   @Volatile var name: String = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
     set(value) {
       if (field != value) {
@@ -23,7 +23,8 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
   private val groups: MutableList<KdbxGroup>
   val entries: MutableList<KdbxEntry>
 
-  private @Volatile var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
+  @Volatile
+  private var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
 
   init {
     locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0

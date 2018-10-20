@@ -1,0 +1,7 @@
+{
+    "foo": {
+        "yet-another-key2": "yet-another-value",
+        "yet-another-key3": "yet-another-value",
+        "ano<caret>ther-key": "another-value"
+    }
+}

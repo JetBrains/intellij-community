@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.execution.BeforeRunTask;
@@ -103,12 +89,12 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   private static boolean isEnabledByDefault(@NotNull RunConfiguration configuration) {
-    return (configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
-            ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault()
-           ) &&
-           (configuration instanceof RunConfigurationBase &&
-            ((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault()
-           );
+    if (configuration instanceof RunProfileWithCompileBeforeLaunchOption) {
+      return ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault();
+    }
+    else {
+      return false;
+    }
   }
 
   static boolean shouldCreateTask(RunConfiguration configuration) {
@@ -128,15 +114,16 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     if (!(configuration instanceof RunProfileWithCompileBeforeLaunchOption)) {
       return true;
     }
-
-    if (configuration instanceof RunConfigurationBase && ((RunConfigurationBase)configuration).excludeCompileBeforeLaunchOption()) {
+    
+    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
+    //noinspection deprecation
+    if (runConfiguration.isExcludeCompileBeforeLaunchOption() ||
+        (configuration instanceof RunConfigurationBase && ((RunConfigurationBase)configuration).excludeCompileBeforeLaunchOption())) {
       return true;
     }
 
-    final RunProfileWithCompileBeforeLaunchOption runConfiguration = (RunProfileWithCompileBeforeLaunchOption)configuration;
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
     try {
-
       final Semaphore done = new Semaphore();
       done.down();
       final ProjectTaskNotification callback = new ProjectTaskNotification() {

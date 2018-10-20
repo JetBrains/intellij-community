@@ -134,7 +134,7 @@ public final class GroupItem implements Cloneable, PaletteGroup {
   }
 
   @Override
-  @Nullable public Object getData(Project project, String dataId) {
+  @Nullable public Object getData(Project project, @NotNull String dataId) {
     if (dataId.equals(getClass().getName())) {
       return this;
     }

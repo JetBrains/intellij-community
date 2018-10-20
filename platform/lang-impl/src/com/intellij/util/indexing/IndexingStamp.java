@@ -363,6 +363,7 @@ public class IndexingStamp {
         timestamps = new Timestamps(stream);
       }
       catch (IOException e) {
+        FSRecords.handleError(e);
         throw new RuntimeException(e);
       }
       if (isValid) myTimestampsCache.put(id, timestamps);

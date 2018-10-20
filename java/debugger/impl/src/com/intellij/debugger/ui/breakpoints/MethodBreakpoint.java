@@ -189,6 +189,10 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                     @NotNull ReferenceType classType,
                                                     @NotNull ClassesByNameProvider classesByName,
                                                     boolean base) {
+    if (!MethodBreakpointBase.canBeEmulated(debugProcess)) {
+      breakpoint.disableEmulation();
+      return;
+    }
     if (!base && !shouldCreateRequest(breakpoint, breakpoint.getXBreakpoint(), debugProcess, true)) {
       return;
     }

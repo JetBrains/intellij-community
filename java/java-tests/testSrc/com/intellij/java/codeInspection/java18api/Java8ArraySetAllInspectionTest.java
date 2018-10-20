@@ -27,10 +27,6 @@ public class Java8ArraySetAllInspectionTest extends LightQuickFixParameterizedTe
     return new LocalInspectionTool[]{new Java8ArraySetAllInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/java8ArraysSetAll";

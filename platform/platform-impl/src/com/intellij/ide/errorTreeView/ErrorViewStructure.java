@@ -63,6 +63,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     myCanHideWarnings = canHideWarnings;
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -92,8 +93,9 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return false;
   }
   
+  @NotNull
   @Override
-  public ErrorTreeElement[] getChildElements(Object element) {
+  public ErrorTreeElement[] getChildElements(@NotNull Object element) {
     if (element == myRoot) {
       final List<ErrorTreeElement> children = new ArrayList<>();
       // simple messages
@@ -164,7 +166,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof GroupingElement || element instanceof SimpleMessageElement) {
       return myRoot;
     }
@@ -177,7 +179,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return new ErrorTreeNodeDescriptor(myProject, parentDescriptor, (ErrorTreeElement)element);
   }
 

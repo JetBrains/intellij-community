@@ -45,26 +45,26 @@ class CreateGradleProjectWithKotlinGuiTest(val testParameters: TestParameters) :
           project = kotlinLibs.getValue(KotlinKind.JVM).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
         ),
-        TestParameters(
-          projectName = "gradle_mpp_jvm",
-          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
-        ),
+//        TestParameters(
+//          projectName = "gradle_mpp_jvm",
+//          project = kotlinLibs.getValue(KotlinKind.JVM).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+//        ),
         TestParameters(
           projectName = "gradle_with_js",
           project = kotlinLibs.getValue(KotlinKind.JS).gradleGProject,
           expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_js",
-          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
-        ),
-        TestParameters(
-          projectName = "gradle_mpp_common",
-          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
-        )
+        )//,
+//        TestParameters(
+//          projectName = "gradle_mpp_js",
+//          project = kotlinLibs.getValue(KotlinKind.JS).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+//        ),
+//        TestParameters(
+//          projectName = "gradle_mpp_common",
+//          project = kotlinLibs.getValue(KotlinKind.Common).gradleGMPProject,
+//          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.Common)
+//        )
       )
     }
   }

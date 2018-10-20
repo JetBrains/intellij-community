@@ -513,25 +513,27 @@ public class PlatformTestUtil {
   @NotNull
   protected static AbstractTreeStructure createStructure(@NotNull TreeModel treeModel) {
     return new AbstractTreeStructure() {
+      @NotNull
       @Override
       public Object getRootElement() {
         return treeModel.getRoot();
       }
 
+      @NotNull
       @Override
-      public Object[] getChildElements(Object element) {
+      public Object[] getChildElements(@NotNull Object element) {
         return TreeUtil.nodeChildren(element, treeModel).toList().toArray();
       }
 
       @Nullable
       @Override
-      public Object getParentElement(Object element) {
+      public Object getParentElement(@NotNull Object element) {
         return ((AbstractTreeNode)element).getParent();
       }
 
       @NotNull
       @Override
-      public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+      public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
         throw new UnsupportedOperationException();
       }
 

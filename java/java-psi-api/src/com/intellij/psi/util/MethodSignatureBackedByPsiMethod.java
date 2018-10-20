@@ -50,6 +50,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     return myMethod.isConstructor();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof MethodSignatureBackedByPsiMethod){ // optimization
       if (((MethodSignatureBackedByPsiMethod)o).myMethod == myMethod) return true;

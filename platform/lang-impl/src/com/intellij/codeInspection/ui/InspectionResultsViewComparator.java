@@ -130,7 +130,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
 
   private static int compareEntity(final RefEntity entity, final PsiElement element) {
     if (entity instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)entity).getElement();
+      final PsiElement psiElement = ((RefElement)entity).getPsiElement();
       if (psiElement != null && element != null) {
         return PsiUtilCore.compareElementsByPosition(psiElement, element);
       }
@@ -169,7 +169,7 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
         final VirtualFile file2 = p2.getVirtualFile();
 
         if (file1 != null && file1.isValid() && file2 != null && file2.isValid()) {
-          int cmp = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+          int cmp = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getPsiElement(), ((RefElement)entity2).getPsiElement());
           if (cmp != 0) return cmp;
           if (file1 instanceof VirtualFileWithId && file2 instanceof VirtualFileWithId) {
             return ((VirtualFileWithId)file1).getId() - ((VirtualFileWithId)file2).getId();

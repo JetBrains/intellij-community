@@ -13,10 +13,6 @@ public class IfStatementWithIdenticalBranchesInspectionTest extends LightQuickFi
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/commonIfParts";

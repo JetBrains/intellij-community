@@ -24,6 +24,11 @@ class FileSystemUtils(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.fileSystemUtils by FileSystemUtils
 
 fun FileSystemUtils.checkFileExists(filePath: Path) {
+  assertFileExists(filePath)
+  assertFileNotEmpty(filePath)
+}
+
+fun FileSystemUtils.assertFileExists(filePath: Path) {
   testCase.logTestStep("Going to check whether file `$filePath` created")
   assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
 }

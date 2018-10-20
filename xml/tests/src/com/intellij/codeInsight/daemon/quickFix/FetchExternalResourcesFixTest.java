@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class FetchExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/quickFix/fetchExternalResources";

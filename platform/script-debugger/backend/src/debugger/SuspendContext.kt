@@ -46,7 +46,7 @@ interface SuspendContext<out CALL_FRAME : CallFrame> {
 }
 
 abstract class ContextDependentAsyncResultConsumer<T>(private val context: SuspendContext<*>) : java.util.function.Consumer<T> {
-  override final fun accept(result: T) {
+  final override fun accept(result: T) {
     val vm = context.vm
     if (vm.attachStateManager.isAttached && !vm.suspendContextManager.isContextObsolete(context)) {
       accept(result, vm)

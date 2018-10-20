@@ -96,7 +96,7 @@ public class HintUtil {
   }
 
   public static JComponent createQuestionLabel(String text) {
-    final Icon icon = AllIcons.General.Help_small;
+    final Icon icon = AllIcons.General.ContextHelp;
     return createQuestionLabel(text, icon);
   }
 

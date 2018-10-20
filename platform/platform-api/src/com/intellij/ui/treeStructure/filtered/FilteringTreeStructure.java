@@ -123,34 +123,36 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     return myDescriptors2Nodes.get(nodeObject);
   }
 
+  @NotNull
   @Override
   public FilteringNode getRootElement() {
     return myRoot;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     return ((FilteringNode) element).getChildren();
   }
 
   @Override
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     return ((FilteringNode) element).getParent();
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return element instanceof FilteringNode && ((FilteringNode)element).isAlwaysLeaf();
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull Object element) {
     return myBaseStructure.isToBuildChildrenInBackground(element);
   }
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     return element instanceof FilteringNode ? (FilteringNode)element : new FilteringNode((SimpleNode)parentDescriptor, element);
   }
 
@@ -237,6 +239,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       }
     }
 
+    @NotNull
     @Override
     public SimpleNode[] getChildren() {
       List<FilteringNode> nodes = myNodesCache.get(this);

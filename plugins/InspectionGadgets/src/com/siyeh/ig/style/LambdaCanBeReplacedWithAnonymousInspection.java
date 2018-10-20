@@ -89,7 +89,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
     LOG.assertTrue(anonymousClass != null);
     final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
-    if (infos != null && infos.size() == 1) {
+    if (infos.size() == 1) {
       PsiMethod member = infos.get(0).getPsiMember();
       final PsiParameter[] parameters = member.getParameterList().getParameters();
       if (parameters.length == paramListCopy.length) {

@@ -554,9 +554,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
       public void onUpdated(@NotNull Inlay inlay) {
-        if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
-        validateSize();
-        repaint(inlay.getOffset(), inlay.getOffset(), false);
+        onInlayUpdated(inlay);
       }
     }, myCaretModel);
 
@@ -588,6 +586,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+  }
+
+  private void onInlayUpdated(@NotNull Inlay inlay) {
+    if (myDocument.isInEventsHandling() || myDocument.isInBulkUpdate()) return;
+    validateSize();
+    int offset = inlay.getOffset();
+    if (inlay.getVerticalAlignment() == Inlay.VerticalAlignment.INLINE) {
+      repaint(offset, offset, false);
+    }
+    else {
+      int visualLine = offsetToVisualLine(offset);
+      int y = visualLineToY(visualLine) - EditorUtil.getTotalInlaysHeight(myInlayModel.getBlockElementsForVisualLine(visualLine, true));
+      repaintToScreenBottomStartingFrom(y);
+    }
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
@@ -1313,7 +1325,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myIsColumnMode;
   }
 
-  public int yToVisibleLine(int y) {
+  @Override
+  public int yToVisualLine(int y) {
     return myView.yToVisualLine(y);
   }
 
@@ -1386,7 +1399,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private int logicalLineToY(int line) {
     int visualLine = line < myDocument.getLineCount() ? offsetToVisualLine(myDocument.getLineStartOffset(line)) :
                      logicalToVisualPosition(new LogicalPosition(line, 0)).line;
-    return visibleLineToY(visualLine);
+    return visualLineToY(visualLine);
   }
 
   @Override
@@ -1423,7 +1436,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.findNearestDirectionBoundary(offset, lookForward);
   }
 
-  public int visibleLineToY(int line) {
+  @Override
+  public int visualLineToY(int line) {
     return myView.visualLineToY(line);
   }
 
@@ -1460,12 +1474,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void repaintToScreenBottom(int startLine) {
-    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStartLine = logicalLineToY(startLine);
+    repaintToScreenBottomStartingFrom(yStartLine);
+  }
+
+  private void repaintToScreenBottomStartingFrom(int y) {
+    Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yEndLine = visibleArea.y + visibleArea.height;
 
-    myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, yEndLine - yStartLine);
-    myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), yEndLine - yStartLine);
+    myEditorComponent.repaintEditorComponent(visibleArea.x, y, visibleArea.x + visibleArea.width, yEndLine - y);
+    myGutterComponent.repaint(0, y, myGutterComponent.getWidth(), yEndLine - y);
     ((EditorMarkupModelImpl)getMarkupModel()).repaint(-1, -1);
   }
 
@@ -2140,8 +2158,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = 0;
     }
     int visualLineCount = getVisibleLineCount();
-    if (yToVisibleLine(y) >= visualLineCount) {
-      y = visibleLineToY(Math.max(0, visualLineCount - 1));
+    if (yToVisualLine(y) >= visualLineCount) {
+      y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
@@ -3978,7 +3996,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endSelectionOffset = getSelectionModel().getSelectionEnd();
     int endVisLine = offsetToVisualLine(endSelectionOffset - 1);
 
-    int clickVisLine = yToVisibleLine(e.getPoint().y);
+    int clickVisLine = yToVisualLine(e.getPoint().y);
 
     if (clickVisLine < startVisLine) {
       // Expand selection at backward direction.

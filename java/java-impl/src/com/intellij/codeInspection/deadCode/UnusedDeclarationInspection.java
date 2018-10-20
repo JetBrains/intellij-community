@@ -38,6 +38,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
 
 import javax.swing.*;
 import java.awt.*;
@@ -248,25 +252,27 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
     @Override
     public void onReferencesBuild(RefElement refElement) {
       if (refElement instanceof RefClass) {
-        PsiClass aClass = ((RefClass)refElement).getElement();
-        if (aClass != null) {
-          for (PsiClassInitializer initializer : aClass.getInitializers()) {
-            findUnusedVariables(initializer.getBody(), refElement, aClass);
+        UClass uClass = ((RefClass)refElement).getUastElement();
+        if (uClass != null) {
+          for (PsiClassInitializer initializer : uClass.getInitializers()) {
+            findUnusedVariables(initializer.getBody(), refElement, uClass);
           }
         }
       }
       else if (refElement instanceof RefMethod) {
-        PsiElement element = refElement.getElement();
-        if (element instanceof PsiMethod) {
-          PsiCodeBlock body = ((PsiMethod)element).getBody();
+        UDeclaration element = ((RefMethod)refElement).getUastElement();
+        if (element instanceof UMethod) {
+          UExpression body = ((UMethod)element).getUastBody();
           if (body != null) {
-            findUnusedVariables(body, refElement, element);
+            //TODO resolve
+            findUnusedVariables((PsiCodeBlock)body.getJavaPsi(), refElement, element);
           }
         }
       }
     }
 
     private void findUnusedVariables(PsiCodeBlock body, RefElement refElement, PsiElement element) {
+      if (body == null) return;
       Tools tools = myTools.get(getShortName());
       if (tools.isEnabled(element)) {
         InspectionToolWrapper toolWrapper = tools.getInspectionTool(element);

@@ -101,11 +101,6 @@ public interface Repository extends Disposable {
   @Nullable
   String getCurrentBranchName();
 
-  @Nullable
-  default String getCurrentRemoteBranchName() {
-    return null;
-  }
-
   @NotNull
   AbstractVcs getVcs();
 

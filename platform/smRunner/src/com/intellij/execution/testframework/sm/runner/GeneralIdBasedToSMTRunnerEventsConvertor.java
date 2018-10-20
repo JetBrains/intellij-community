@@ -38,53 +38,55 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onStartTesting() {
     LOG.debug("onStartTesting");
-    addToInvokeLater(() -> {
-      LOG.debug("onStartTesting: invoked");
-      myTestsRootNode.setState(State.RUNNING, this);
-      myTestsRootProxy.setStarted();
-      fireOnTestingStarted(myTestsRootProxy);
-    });
+    myTestsRootNode.setState(State.RUNNING, this);
+    myTestsRootProxy.setStarted();
+    fireOnTestingStarted(myTestsRootProxy);
   }
 
   @Override
   public void onTestsReporterAttached() {
-    addToInvokeLater(() -> fireOnTestsReporterAttached(myTestsRootProxy));
+    fireOnTestsReporterAttached(myTestsRootProxy);
   }
 
   @Override
   public void onFinishTesting() {
     LOG.debug("onFinishTesting");
-    addToInvokeLater(() -> {
-      LOG.debug("onFinishTesting: invoked");
-      if (myIsTestingFinished) {
-        LOG.debug("has already been invoked");
-        // has been already invoked!
-        return;
-      }
-      myIsTestingFinished = true;
+    // has been already invoked!
+    // We don't know whether process was destroyed by user
+    // or it finished after all tests have been run
+    // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
+    // then all is ok otherwise process was terminated by user
 
-      // We don't know whether process was destroyed by user
-      // or it finished after all tests have been run
-      // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
-      // then all is ok otherwise process was terminated by user
-      boolean completeTree = isTreeComplete(myRunningTestNodes, myTestsRootProxy);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("completeTree:" + completeTree);
-      }
-      if (completeTree) {
-        myTestsRootProxy.setFinished();
-      } else {
-        myTestsRootProxy.setTerminated();
-      }
-      if (!myRunningTestNodes.isEmpty()) {
-        logProblem("Unexpected running nodes: " + myRunningTestNodes);
-      }
-      myNodeByIdMap.clear();
-      myRunningTestNodes.clear();
-      myRunningSuiteNodes.clear();
+    LOG.debug("onFinishTesting: invoked");
+    if (myIsTestingFinished) {
+      LOG.debug("has already been invoked");
+      // has been already invoked!
+      return;
+    }
+    myIsTestingFinished = true;
 
-      fireOnTestingFinished(myTestsRootProxy);
-    });
+    // We don't know whether process was destroyed by user
+    // or it finished after all tests have been run
+    // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
+    // then all is ok otherwise process was terminated by user
+    boolean completeTree = isTreeComplete(myRunningTestNodes, myTestsRootProxy);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("completeTree:" + completeTree);
+    }
+    if (completeTree) {
+      myTestsRootProxy.setFinished();
+    }
+    else {
+      myTestsRootProxy.setTerminated();
+    }
+    if (!myRunningTestNodes.isEmpty()) {
+      logProblem("Unexpected running nodes: " + myRunningTestNodes);
+    }
+    myNodeByIdMap.clear();
+    myRunningTestNodes.clear();
+    myRunningSuiteNodes.clear();
+
+    fireOnTestingFinished(myTestsRootProxy);
     super.onFinishTesting();
   }
 
@@ -98,7 +100,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("onTestStarted " + testStartedEvent.getId());
     }
-    addToInvokeLater(() -> doStartNode(testStartedEvent, false));
+    doStartNode(testStartedEvent, false);
   }
 
   @Override
@@ -106,7 +108,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("onSuiteStarted " + suiteStartedEvent.getId());
     }
-    addToInvokeLater(() -> doStartNode(suiteStartedEvent, true));
+    doStartNode(suiteStartedEvent, true);
   }
 
   private void doStartNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
@@ -198,21 +200,18 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
     LOG.debug("onTestFinished");
-    addToInvokeLater(() -> {
-      LOG.debug("onTestFinished: invoked");
-      Node node = findNodeToTerminate(testFinishedEvent);
-      if (node != null) {
-        SMTestProxy testProxy = node.getProxy();
-        final Long duration = testFinishedEvent.getDuration();
-        if (duration != null) {
-          testProxy.setDuration(duration);
-        }
-        testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
-        testProxy.setFinished();
-        fireOnTestFinishedIfNeeded(testProxy, node);
-        terminateNode(node, State.FINISHED);
+    Node node = findNodeToTerminate(testFinishedEvent);
+    if (node != null) {
+      SMTestProxy testProxy = node.getProxy();
+      final Long duration = testFinishedEvent.getDuration();
+      if (duration != null) {
+        testProxy.setDuration(duration);
       }
-    });
+      testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
+      testProxy.setFinished();
+      fireOnTestFinishedIfNeeded(testProxy, node);
+      terminateNode(node, State.FINISHED);
+    }
   }
 
   private void fireOnTestFinishedIfNeeded(@NotNull SMTestProxy testProxy, @NotNull Node node) {
@@ -233,21 +232,16 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("onSuiteFinished " + suiteFinishedEvent.getId());
     }
-    addToInvokeLater(() -> {
+    Node node = findNodeToTerminate(suiteFinishedEvent);
+    if (node != null) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("onSuiteFinished invoked " + suiteFinishedEvent.getId());
+        LOG.debug("finished:" + node.myId);
       }
-      Node node = findNodeToTerminate(suiteFinishedEvent);
-      if (node != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("finished:" + node.myId);
-        }
-        SMTestProxy suiteProxy = node.getProxy();
-        suiteProxy.setFinished();
-        fireOnSuiteFinished(suiteProxy);
-        terminateNode(node, State.FINISHED);
-      }
-    });
+      SMTestProxy suiteProxy = node.getProxy();
+      suiteProxy.setFinished();
+      fireOnSuiteFinished(suiteProxy);
+      terminateNode(node, State.FINISHED);
+    }
   }
 
   @Nullable
@@ -263,11 +257,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
     LOG.debug("onUncapturedOutput " + text);
-    addToInvokeLater(() -> {
-      Node activeNode = findActiveNode();
-      SMTestProxy activeProxy = activeNode.getProxy();
-      activeProxy.addOutput(text, outputType);
-    });
+    Node activeNode = findActiveNode();
+    SMTestProxy activeProxy = activeNode.getProxy();
+    activeProxy.addOutput(text, outputType);
   }
 
   @Override
@@ -282,20 +274,15 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
     LOG.debug("onError " + localizedMessage);
-    addToInvokeLater(() -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("onError invoked " + localizedMessage);
-      }
-      SMTestProxy activeProxy = null;
-      if (nodeId != null) {
-        activeProxy = findProxyById(nodeId);
-      }
-      if (activeProxy == null) {
-        Node activeNode = findActiveNode();
-        activeProxy = activeNode.getProxy();
-      }
-      activeProxy.addError(localizedMessage, stackTrace, isCritical);
-    });
+    SMTestProxy activeProxy = null;
+    if (nodeId != null) {
+      activeProxy = findProxyById(nodeId);
+    }
+    if (activeProxy == null) {
+      Node activeNode = findActiveNode();
+      activeProxy = activeNode.getProxy();
+    }
+    activeProxy.addError(localizedMessage, stackTrace, isCritical);
   }
 
   @Override
@@ -303,7 +290,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     if (LOG.isDebugEnabled()) {
       LOG.debug("onTestFailure " + testFailedEvent.getId());
     }
-    addToInvokeLater(() -> {
+    ((Runnable)() -> {
       if (LOG.isDebugEnabled()) {
         LOG.debug("onTestFailure invoked " + testFailedEvent.getId());
       }
@@ -319,10 +306,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       String failureMessage = testFailedEvent.getLocalizedFailureMessage();
       String stackTrace = testFailedEvent.getStacktrace();
       if (comparisonFailureActualText != null && comparisonFailureExpectedText != null) {
-        testProxy.setTestComparisonFailed(failureMessage, stackTrace, comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent);
-      } else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
+        testProxy
+          .setTestComparisonFailed(failureMessage, stackTrace, comparisonFailureActualText, comparisonFailureExpectedText, testFailedEvent);
+      }
+      else if (comparisonFailureActualText == null && comparisonFailureExpectedText == null) {
         testProxy.setTestFailed(failureMessage, stackTrace, testFailedEvent.isTestError());
-      } else {
+      }
+      else {
         logProblem("Comparison failure actual and expected texts should be both null or not null.\n"
                    + "Expected:\n"
                    + comparisonFailureExpectedText + "\n"
@@ -338,48 +328,42 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
-    });
+    }).run();
   }
 
   @Override
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
     LOG.debug("onTestIgnored");
-    addToInvokeLater(() -> {
-      LOG.debug("onTestIgnored invoked");
-      Node node = findNodeToTerminate(testIgnoredEvent);
-      if (node != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("onTestIgnored node " + node.myId);
-        }
-        SMTestProxy testProxy = node.getProxy();
-        testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
-
-        fireOnTestIgnored(testProxy);
-        fireOnTestFinishedIfNeeded(testProxy, node);
-
-        terminateNode(node, State.IGNORED);
+    Node node = findNodeToTerminate(testIgnoredEvent);
+    if (node != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("onTestIgnored node " + node.myId);
       }
-    });
+      SMTestProxy testProxy = node.getProxy();
+      testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
+
+      fireOnTestIgnored(testProxy);
+      fireOnTestFinishedIfNeeded(testProxy, node);
+
+      terminateNode(node, State.IGNORED);
+    }
   }
 
   @Override
   public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
     LOG.debug("onTestOutput");
-    addToInvokeLater(() -> {
-      LOG.debug("onTestOutput invoke");
-      Node node = findNode(testOutputEvent);
-      if (node == null) {
-        logProblem("Test wasn't started! But " + testOutputEvent + "!");
-        return;
-      }
-      node.getProxy().addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
-    });
+    Node node = findNode(testOutputEvent);
+    if (node == null) {
+      logProblem("Test wasn't started! But " + testOutputEvent + "!");
+      return;
+    }
+    node.getProxy().addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
   }
 
   @Override
   public void onTestsCountInSuite(final int count) {
     LOG.debug("onTestsCountInSuite");
-    addToInvokeLater(() -> fireOnTestsCountInSuite(count));
+    fireOnTestsCountInSuite(count);
   }
 
   @Nullable
@@ -409,19 +393,17 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   @Override
   public void dispose() {
     super.dispose();
-    addToInvokeLater(() -> {
-      disconnectListeners();
+    disconnectListeners();
 
-      if (!myRunningTestNodes.isEmpty()) {
-        Application application = ApplicationManager.getApplication();
-        if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
-          logProblem("Not all events were processed!");
-        }
+    if (!myRunningTestNodes.isEmpty()) {
+      Application application = ApplicationManager.getApplication();
+      if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
+        logProblem("Not all events were processed!");
       }
-      myRunningTestNodes.clear();
-      myRunningSuiteNodes.clear();
-      myNodeByIdMap.clear();
-    });
+    }
+    myRunningTestNodes.clear();
+    myRunningSuiteNodes.clear();
+    myNodeByIdMap.clear();
   }
 
   private void setNodeAndAncestorsRunning(@NotNull Node lowestNode) {

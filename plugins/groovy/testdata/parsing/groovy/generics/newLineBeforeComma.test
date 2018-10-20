@@ -14,12 +14,14 @@ Groovy script
         PsiElement(identifier)('T')
         Type extends bounds list
           <empty list>
-      PsiElement(new line)('\n')
-      PsiErrorElement:'>' expected, got ','
+      PsiErrorElement:',', '>' or extends expected
         <empty list>
     Extends clause
       <empty list>
     Implements clause
+      <empty list>
+    PsiElement(new line)('\n')
+    PsiErrorElement:'>' or '{' expected, got ','
       <empty list>
   PsiElement(,)(',')
   Relational expression

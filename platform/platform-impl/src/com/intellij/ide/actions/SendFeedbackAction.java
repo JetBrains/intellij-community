@@ -34,8 +34,7 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    String url = info == null ? null : info.getReleaseFeedbackUrl();
-    e.getPresentation().setEnabledAndVisible(url != null);
+    e.getPresentation().setEnabledAndVisible(info != null && info.getFeedbackUrl() != null);
   }
 
   @Override
@@ -44,24 +43,28 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
   }
 
   public static void doPerformAction(@Nullable Project project) {
-    ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    String eapUrl = info.getEAPFeedbackUrl();
-    String urlTemplate = info.isEAP() && !eapUrl.contains("youtrack") ? eapUrl : info.getReleaseFeedbackUrl();
-    doPerformAction(project, urlTemplate);
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), getDescription());
   }
 
-  static void doPerformAction(@Nullable Project project, @NotNull String urlTemplate) {
+  public static void doPerformAction(@Nullable Project project, @NotNull String description) {
+    doPerformActionImpl(project, ApplicationInfoEx.getInstanceEx().getFeedbackUrl(), description);
+  }
+
+  static void doPerformActionImpl(@Nullable Project project,
+                                  @NotNull String urlTemplate,
+                                  @NotNull String description) {
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     boolean eap = appInfo.isEAP();
     LicensingFacade la = LicensingFacade.getInstance();
-    urlTemplate = urlTemplate
+    String url = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
       .replace("$EVAL", la != null && la.isEvaluationLicense() ? "true" : "false")
-      .replace("$DESCR", getDescription());
-    BrowserUtil.browse(urlTemplate, project);
+      .replace("$DESCR", description);
+    BrowserUtil.browse(url, project);
   }
 
+  @NotNull
   public static String getDescription() {
     StringBuilder sb = new StringBuilder("\n\n");
     sb.append(ApplicationInfoEx.getInstanceEx().getBuild().asString()).append(", ");

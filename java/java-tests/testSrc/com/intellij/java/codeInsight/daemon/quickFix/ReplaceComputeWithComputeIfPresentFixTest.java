@@ -17,10 +17,6 @@ public class ReplaceComputeWithComputeIfPresentFixTest extends LightQuickFixPara
     return new LocalInspectionTool[]{new DataFlowInspection()};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

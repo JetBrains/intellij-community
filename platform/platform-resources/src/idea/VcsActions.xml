@@ -288,7 +288,7 @@
     <group id="Vcs.MessageActionGroup">
       <action id="Vcs.ShowMessageHistory"
               class="com.intellij.openapi.vcs.actions.ShowMessageHistoryAction"
-              icon="AllIcons.General.MessageHistory"/>
+              icon="AllIcons.Vcs.History"/>
     </group>
 
     <group id="Vcs.CommitExecutor.Actions"/>

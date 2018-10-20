@@ -176,7 +176,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
-  public void fireSchemeChanged(CodeStyleScheme scheme) {
+  void updateScheme(CodeStyleScheme scheme) {
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    clonedSettings.copyFrom(scheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 

@@ -186,7 +186,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
               buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis29.method", nRefs) );
             }
           }
-        } else if (((RefClassImpl)refClass).isSuspicious()) {
+        } else if (refClass instanceof RefClassImpl && ((RefClassImpl)refClass).isSuspicious()) {
           if (method.isAbstract()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis14"));
           } else {
@@ -200,7 +200,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
           if (nOwnRefs == 0 && nSuperRefs == 0 && nDerivedRefs == 0) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis16"));
           } else if (nDerivedRefs > 0 && nSuperRefs == 0 && nOwnRefs == 0) {
-            String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
+            String classOrInterface = refClass == null ? "" : HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis21", classOrInterface));
           } else if (((RefMethodImpl)method).isSuspiciousRecursive()) {
             buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis17"));
@@ -375,7 +375,8 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     if (refElement instanceof RefMethod) {
       RefMethod refMethod = (RefMethod) refElement;
 
-      if (!refMethod.isStatic() && !refMethod.isConstructor() && !refMethod.getOwnerClass().isAnonymous()) {
+      RefClass aClass = refMethod.getOwnerClass();
+      if (!refMethod.isStatic() && !refMethod.isConstructor() && (aClass != null && !aClass.isAnonymous())) {
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
           if (((RefMethodImpl)refDerived).isSuspicious()) {
             if (notInPath(pathToRoot, refDerived)) newChildren.add(refDerived);

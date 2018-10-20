@@ -40,6 +40,7 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   @Override
   public abstract boolean isShowMembers();
 
+  @NotNull
   @Override
   public final Object getRootElement() {
     return myRoot;
@@ -68,7 +69,7 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     if (element instanceof ProjectViewNode) {
       return ((ProjectViewNode)element).isAlwaysLeaf();
     }

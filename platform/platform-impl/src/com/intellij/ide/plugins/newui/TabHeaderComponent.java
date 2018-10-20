@@ -113,7 +113,7 @@ public class TabHeaderComponent extends JComponent {
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarActionGroup.add(new DumbAwareAction(null, null, AllIcons.General.GearPlain) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         ListPopup actionGroupPopup = JBPopupFactory.getInstance().
           createActionGroupPopup(null, actions, e.getDataContext(), true, null, Integer.MAX_VALUE);
 
@@ -166,7 +166,7 @@ public class TabHeaderComponent extends JComponent {
     repaint();
   }
 
-  private void setSelectionWithEvents(int index) {
+  public void setSelectionWithEvents(int index) {
     mySelectionTab = index;
     myListener.selectionChanged(index);
     repaint();

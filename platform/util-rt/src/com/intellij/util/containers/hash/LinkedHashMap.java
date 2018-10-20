@@ -51,14 +51,14 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     this(capacity, loadFactor, (EqualityPolicy)EqualityPolicy.CANONICAL, accessOrder);
   }
 
-  public LinkedHashMap(EqualityPolicy<? super K> hashingStrategy) {
+  public LinkedHashMap(@NotNull EqualityPolicy<? super K> hashingStrategy) {
     this(0, HashUtil.DEFAULT_LOAD_FACTOR, hashingStrategy);
   }
 
-  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<? super K> hashingStrategy) {
+  public LinkedHashMap(int capacity, float loadFactor, @NotNull EqualityPolicy<? super K> hashingStrategy) {
     this(capacity, loadFactor, hashingStrategy, false);
   }
-  public LinkedHashMap(int capacity, float loadFactor, EqualityPolicy<? super K> hashingStrategy, boolean accessOrder) {
+  public LinkedHashMap(int capacity, float loadFactor, @NotNull EqualityPolicy<? super K> hashingStrategy, boolean accessOrder) {
     this.loadFactor = loadFactor;
     this.hashingStrategy = hashingStrategy;
     clear(capacity);
@@ -85,7 +85,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   @Override
   public V get(final Object key) {
     final Entry<K, V>[] table = this.table;
-    final int hash = HashUtil.hash(key, hashingStrategy);
+    final int hash = HashUtil.hash((K)key, hashingStrategy);
     final int index = hash % table.length;
 
     for (Entry<K, V> e = table[index]; e != null; e = e.hashNext) {
@@ -146,7 +146,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   @Override
   public V remove(final Object key) {
     final Entry<K, V>[] table = this.table;
-    final int hash = HashUtil.hash(key, hashingStrategy);
+    final int hash = HashUtil.hash((K)key, hashingStrategy);
     final int index = hash % table.length;
     Entry<K, V> e = table[index];
     if (e == null) {
@@ -395,7 +395,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
     @Override
     public boolean contains(Object o) {
-      return LinkedHashMap.this.containsKey(o);
+      return containsKey(o);
     }
 
     @Override

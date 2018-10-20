@@ -33,8 +33,6 @@ public class StringTokenizerDelimiterInspectionTest extends LightQuickFixParamet
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/inspection/stringTokenizerDelimiter";

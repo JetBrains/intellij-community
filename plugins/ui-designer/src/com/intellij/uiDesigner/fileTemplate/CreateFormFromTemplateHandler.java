@@ -8,19 +8,20 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class CreateFormFromTemplateHandler extends DefaultCreateFromTemplateHandler {
   @Override
-  public boolean handlesTemplate(final FileTemplate template) {
+  public boolean handlesTemplate(@NotNull final FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
     return fileType.equals(StdFileTypes.GUI_DESIGNER_FORM);
   }
 
   @Override
-  public boolean canCreate(final PsiDirectory[] dirs) {
+  public boolean canCreate(@NotNull final PsiDirectory[] dirs) {
     for (PsiDirectory dir : dirs) {
       if (JavaDirectoryService.getInstance().getPackage(dir) != null) return true;
     }

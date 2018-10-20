@@ -25,6 +25,7 @@ import java.awt.*;
  * An interface, defining size and representation of custom visual element in editor.
  *
  * @see InlayModel#addInlineElement(int, EditorCustomElementRenderer)
+ * @see InlayModel#addBlockElement(int, boolean, boolean, EditorCustomElementRenderer)
  * @see Inlay#getRenderer()
  */
 public interface EditorCustomElementRenderer {
@@ -32,6 +33,13 @@ public interface EditorCustomElementRenderer {
    * Defines width of custom element (in pixels)
    */
   int calcWidthInPixels(@NotNull Editor editor);
+
+  /**
+   * Defines height of custom element (in pixels). This value is currently not used for 'inline' elements.
+   */
+  default int calcHeightInPixels(@NotNull Editor editor) {
+    return editor.getLineHeight();
+  }
 
   /**
    * Implements painting for the custom region.

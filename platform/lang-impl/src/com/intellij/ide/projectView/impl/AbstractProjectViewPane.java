@@ -794,7 +794,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @TestOnly
   @Deprecated
   @NotNull
-  public Promise<TreePath> promisePathToElement(Object element) {
+  public Promise<TreePath> promisePathToElement(@NotNull Object element) {
     AbstractTreeBuilder builder = getTreeBuilder();
     if (builder != null) {
       DefaultMutableTreeNode node = builder.getNodeForElement(element);
@@ -816,7 +816,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
-  public static TreeVisitor createVisitor(Object object) {
+  public static TreeVisitor createVisitor(@NotNull Object object) {
     if (object instanceof AbstractTreeNode) {
       AbstractTreeNode node = (AbstractTreeNode)object;
       object = node.getValue();

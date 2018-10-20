@@ -15,8 +15,14 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.count;
 
 public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode<Object> {
   protected final boolean myIsMany;
@@ -24,12 +30,12 @@ public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode<Object> 
   private final int myManyFileCount;
   private final int myManyDirectoryCount;
 
-  protected ChangesBrowserSpecificFilesNode(Object userObject, int filesSize, int dirsSize, boolean many, @NotNull Runnable shower) {
+  protected ChangesBrowserSpecificFilesNode(Object userObject, @NotNull List<VirtualFile> files, @NotNull Runnable shower) {
     super(userObject);
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
-    myManyFileCount = filesSize;
-    myManyDirectoryCount = dirsSize;
-    myIsMany = many;
+    myManyDirectoryCount = count(files, it -> it.isDirectory());
+    myManyFileCount = files.size() - myManyDirectoryCount;
+    myIsMany = files.size() > Registry.intValue("vcs.unversioned.files.max.intree", 1000);
     myDialogShower = shower;
   }
 

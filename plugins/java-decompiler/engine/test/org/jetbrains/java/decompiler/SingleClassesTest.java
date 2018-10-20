@@ -110,7 +110,7 @@ public class SingleClassesTest {
   @Test public void testEmptyBlocks() { doTest("pkg/TestEmptyBlocks"); }
   @Test public void testPrivateEmptyConstructor() { doTest("pkg/TestPrivateEmptyConstructor"); }
   @Test public void testSynchronizedUnprotected() { doTest("pkg/TestSynchronizedUnprotected"); }
-
+  @Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
@@ -118,7 +118,6 @@ public class SingleClassesTest {
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
   //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
-  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }

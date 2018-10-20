@@ -42,7 +42,14 @@ public interface RefElement extends RefEntity {
    *
    * @return the PSI element.
    */
-  PsiElement getElement();
+  default PsiElement getPsiElement() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Deprecated
+  default PsiElement getElement() {
+    return getPsiElement();
+  }
 
   SmartPsiElementPointer getPointer();
 

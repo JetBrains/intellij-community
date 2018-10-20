@@ -366,8 +366,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter((Registry.is("editor.completion.hints.virtual.comma") || args.length == 0) && chosenInfo != null
-                                    ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
+    CandidateInfo parameterToHighlight = chosenInfo;
+    if (completeMatch != null &&
+        (chosenInfo == null || (args.length > 0 && !(context.isPreservedOnHintHidden() &&
+                                                     Registry.is("editor.completion.hints.virtual.comma") &&
+                                                     getParameterCount(completeMatch) < getParameterCount(chosenInfo))))) {
+      parameterToHighlight = completeMatch;
+    }
+    context.setHighlightedParameter(parameterToHighlight);
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
@@ -375,6 +381,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                                      ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
       if (!method.isVarArgs() && index > 0 && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
     }
+  }
+
+  private static int getParameterCount(@NotNull CandidateInfo info) {
+    return ((PsiMethod)info.getElement()).getParameterList().getParametersCount();
   }
 
   private static void highlightHints(@NotNull Editor editor, @Nullable PsiExpressionList expressionList, int currentHintIndex,

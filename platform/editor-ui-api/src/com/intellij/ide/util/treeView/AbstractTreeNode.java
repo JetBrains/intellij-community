@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,10 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Map;
 
-public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>> implements NavigationItem, Queryable.Contributor {
+public abstract class AbstractTreeNode<T>
+  extends PresentableNodeDescriptor<AbstractTreeNode<T>>
+  implements NavigationItem, Queryable.Contributor, LeafState.Supplier {
+
   private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
   private AbstractTreeNode myParent;
@@ -85,6 +89,14 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   protected boolean shouldUpdateData() {
     return !myProject.isDisposed() && getEqualityObject() != null;
+  }
+
+  @NotNull
+  @Override
+  public LeafState getLeafState() {
+    if (isAlwaysShowPlus()) return LeafState.NEVER;
+    if (isAlwaysLeaf()) return LeafState.ALWAYS;
+    return LeafState.DEFAULT;
   }
 
   public boolean isAlwaysShowPlus() {

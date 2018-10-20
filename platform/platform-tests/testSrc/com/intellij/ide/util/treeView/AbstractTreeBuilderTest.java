@@ -379,6 +379,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     private final Set<NodeElement> myLeaves = new HashSet<>();
     private ReValidator myReValidator;
 
+    @NotNull
     @Override
     public Object getRootElement() {
       return myRoot.myElement;
@@ -401,13 +402,13 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
 
     @Override
-    public Object getParentElement(final Object element) {
+    public Object getParentElement(@NotNull final Object element) {
       NodeElement nodeElement = (NodeElement)element;
       return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
     }
 
     @Override
-    public boolean isAlwaysLeaf(Object element) {
+    public boolean isAlwaysLeaf(@NotNull Object element) {
       //noinspection SuspiciousMethodCalls
       return myLeaves.contains(element);
     }
@@ -474,8 +475,9 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return myElement2Node.get(element);
     }
 
+    @NotNull
     @Override
-    public AsyncResult<Object> revalidateElement(Object element) {
+    public AsyncResult<Object> revalidateElement(@NotNull Object element) {
       return myReValidator != null ? myReValidator.revalidate((NodeElement)element) : super.revalidateElement(element);
     }
 
@@ -485,7 +487,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   interface ReValidator {
-    AsyncResult<Object> revalidate(NodeElement element);
+    @NotNull
+    AsyncResult<Object> revalidate(@NotNull NodeElement element);
   }
 
   class MyBuilder extends BaseTreeBuilder {

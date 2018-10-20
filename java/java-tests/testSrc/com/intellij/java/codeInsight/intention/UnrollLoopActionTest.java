@@ -21,9 +21,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class UnrollLoopActionTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

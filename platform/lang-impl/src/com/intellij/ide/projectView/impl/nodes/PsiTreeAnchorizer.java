@@ -29,8 +29,9 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public class PsiTreeAnchorizer extends TreeAnchorizer {
+  @NotNull
   @Override
-  public Object createAnchor(Object element) {
+  public Object createAnchor(@NotNull Object element) {
     if (element instanceof PsiElement) {
       PsiElement psi = (PsiElement)element;
       return ReadAction.compute(() -> {
@@ -42,7 +43,7 @@ public class PsiTreeAnchorizer extends TreeAnchorizer {
   }
   @Override
   @Nullable
-  public Object retrieveElement(final Object pointer) {
+  public Object retrieveElement(@NotNull final Object pointer) {
     if (pointer instanceof SmartPointerWrapper) {
       return ReadAction.compute(() -> ((SmartPointerWrapper)pointer).myPointer.getElement());
     }

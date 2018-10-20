@@ -41,7 +41,7 @@ import java.util.Map;
  * @author Leonid Shalupov
  */
 public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRunConfiguration<T>> extends AbstractRunConfiguration
-  implements AbstractPythonRunConfigurationParams, CommandLinePatcher {
+  implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
   private String mySdkHome = "";
@@ -416,7 +416,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public boolean excludeCompileBeforeLaunchOption() {
+  public boolean isExcludeCompileBeforeLaunchOption() {
     final Module module = getModule();
     return module == null || ModuleType.get(module) instanceof PythonModuleTypeBase;
   }
@@ -464,7 +464,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public boolean isCompileBeforeLaunchAddedByDefault() {
+  public boolean isBuildBeforeLaunchAddedByDefault() {
     return false;
   }
 

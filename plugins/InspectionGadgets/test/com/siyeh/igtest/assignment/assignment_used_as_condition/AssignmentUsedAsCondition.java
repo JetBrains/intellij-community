@@ -18,6 +18,6 @@ public class AssignmentUsedAsCondition {
 
     }
     int i = 1;
-    if (<error descr="Incompatible types. Found: 'int', required: 'boolean'"><warning descr="'i = 8' used as condition">i = 8</warning></error>);
+    if (<error descr="Incompatible types. Found: 'int', required: 'boolean'">i = 8</error>);
   }
 }

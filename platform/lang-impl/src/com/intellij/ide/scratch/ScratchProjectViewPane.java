@@ -187,8 +187,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Nullable
     @Override
-    public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
-      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataName)) {
+    public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
         AbstractTreeNode single = JBIterable.from(selected).single();
         if (single instanceof MyRootNode) {
           VirtualFile file = ((MyRootNode)single).getVirtualFile();

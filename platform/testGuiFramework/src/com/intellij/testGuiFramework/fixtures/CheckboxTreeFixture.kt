@@ -23,6 +23,12 @@ class CheckboxTreeFixture(
 
   fun clickCheckbox() = myDriver.clickCheckbox(target() as CheckboxTree, path)
 
+  /**
+   * Clicks the label specified by [path]
+   * out of checkbox area to keep the checkbox value unchanged
+   * */
+  fun clickLabel() = myDriver.clickLabel(target() as CheckboxTree, path)
+
   fun getCheckboxComponent() = myDriver.getCheckboxComponent(target() as CheckboxTree, path)
 
   fun setCheckboxValue(value: Boolean) {
@@ -40,4 +46,5 @@ class CheckboxTreeFixture(
 
   fun uncheck() = setCheckboxValue(false)
 
+  fun isSelected(): Boolean = getCheckboxComponent()?.isSelected ?: false
 }

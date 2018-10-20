@@ -1044,7 +1044,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewAbstractInsideAnonymous() { doTest(); }
 
-  public void testFilterPrivateConstructors() { doTest(); }
+  public void testFilterPrivateConstructors() { doAntiTest(); }
 
   public void testExplicitMethodTypeParametersQualify() { doTest(); }
   public void testExplicitMethodTypeParametersOverZealous() { doTest(); }

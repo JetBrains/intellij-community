@@ -24,8 +24,6 @@ public class ExplicitArgumentCanBeLambdaInspectionTest extends LightQuickFixPara
     return IdeaTestUtil.getMockJdk9();
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/explicitArgumentCanBeLambda";

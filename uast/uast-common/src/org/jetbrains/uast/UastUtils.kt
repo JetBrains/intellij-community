@@ -38,6 +38,16 @@ fun <T : UElement> UElement.getParentOfType(parentClass: Class<out UElement>, st
   }
 }
 
+fun UElement.skipParentOfType(strict: Boolean, vararg parentClasses: Class<out UElement>): UElement? {
+  var element = (if (strict) uastParent else this)  ?: return null
+  while (true) {
+    if (!parentClasses.any { it.isInstance(element) }) {
+      return element
+    }
+    element = element.uastParent ?: return null
+  }
+}
+
 fun <T : UElement> UElement.getParentOfType(
   parentClass: Class<out UElement>,
   strict: Boolean = true,
@@ -126,7 +136,7 @@ fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Bool
   }
 
   if (probablyParent == null) return false
-  return isChildOf(if (strict) this else uastParent, probablyParent)
+  return isChildOf(if (strict) uastParent else this, probablyParent)
 }
 
 /**

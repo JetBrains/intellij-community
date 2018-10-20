@@ -3,6 +3,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import gnu.trove.TLongArrayList;
 import gnu.trove.TLongHashSet;
 import gnu.trove.TLongIterator;
@@ -45,12 +46,11 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     return true;
   }
 
-  boolean addUnordered(int firstIndex, int secondIndex) {
+  void addUnordered(int firstIndex, int secondIndex) {
     if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
         !myData.contains(createPair(secondIndex, firstIndex, true))) {
       myData.add(createPair(firstIndex, secondIndex, false));
     }
-    return true;
   }
 
   @Override
@@ -140,6 +140,20 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
   public boolean areDistinctUnordered(int c1Index, int c2Index) {
     return myData.contains(createPair(c1Index, c2Index, false));
+  }
+
+  @Nullable
+  DfaRelationValue.RelationType getRelation(int c1Index, int c2Index) {
+    if (areDistinctUnordered(c1Index, c2Index)) {
+      return DfaRelationValue.RelationType.NE;
+    }
+    if (myData.contains(createPair(c1Index, c2Index, true))) {
+      return DfaRelationValue.RelationType.LT;
+    }
+    if (myData.contains(createPair(c2Index, c1Index, true))) {
+      return DfaRelationValue.RelationType.GT;
+    }
+    return null;
   }
 
   private DistinctPair decode(long encoded) {

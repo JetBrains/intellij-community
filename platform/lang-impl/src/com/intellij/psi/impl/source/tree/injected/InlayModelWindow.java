@@ -24,9 +24,34 @@ class InlayModelWindow implements InlayModel {
     return null;
   }
 
+  @Nullable
+  @Override
+  public Inlay addBlockElement(int offset,
+                               boolean relatesToPrecedingText,
+                               boolean showAbove,
+                               int priority,
+                               @NotNull EditorCustomElementRenderer renderer) {
+    logUnsupported();
+    return null;
+  }
+
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     logUnsupported();
     return Collections.emptyList();
   }

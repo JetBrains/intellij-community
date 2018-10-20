@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -113,7 +114,7 @@ public class NodeProgressAnimator implements Runnable, Disposable {
     }
   }
 
-  public void repaintWithParents(final SimpleNode element) {
+  public void repaintWithParents(@NotNull SimpleNode element) {
     SimpleNode current = element;
     do {
       DefaultMutableTreeNode node = myTreeBuilder.getNodeForElement(current);

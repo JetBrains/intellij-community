@@ -2651,12 +2651,7 @@ public class UIUtil {
     builder.append("}\n");
 
     builder.append("code {font-size:").append(font.getSize()).append("pt;}\n");
-
-    URL resource = liImg != null ? SystemInfo.class.getResource(liImg) : null;
-    if (resource != null) {
-      builder.append("ul {list-style-image:url('").append(StringUtil.escapeCharCharacters(resource.toExternalForm())).append("');}\n");
-    }
-
+    builder.append("ul {list-style:disc; margin-left:15px;}\n");
     return builder.append("</style>").toString();
   }
 
@@ -3253,6 +3248,25 @@ public class UIUtil {
   public static String getSystemLookAndFeelClassName() {
     if (systemLaFClassName != null) {
       return systemLaFClassName;
+    }
+
+    if (SystemInfo.isLinux) {
+      // Normally, GTK LaF is considered "system" when:
+      // 1) Gnome session is run
+      // 2) gtk lib is available
+      // Here we weaken the requirements to only 2) and force GTK LaF
+      // installation in order to let it properly scale default font
+      // based on Xft.dpi value.
+      try {
+        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class cls = Class.forName(name);
+        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+          return systemLaFClassName = name;
+        }
+      }
+      catch (Exception ignore) {
+      }
     }
 
     return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();

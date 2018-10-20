@@ -26,10 +26,6 @@ public class IgnoreClassFixTest extends LightQuickFixParameterizedTestCase {
     };
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/com/siyeh/igfixes/fixes/ignore_class_fix";

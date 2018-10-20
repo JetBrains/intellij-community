@@ -5,8 +5,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/2.5.1/equalsverifier-2.5.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/nl/jqno/equalsverifier/equalsverifier/2.4.5/equalsverifier-2.4.5-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

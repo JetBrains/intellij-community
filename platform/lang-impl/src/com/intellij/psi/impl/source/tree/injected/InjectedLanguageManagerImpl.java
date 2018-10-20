@@ -113,21 +113,21 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   @NotNull
   public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
-    PsiFile file = injectedContext.getContainingFile();
-    if (file == null) return injectedTextRange;
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
-    if (!(document instanceof DocumentWindowImpl)) return injectedTextRange;
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    return documentWindow.injectedToHost(injectedTextRange);
+    DocumentWindow documentWindow = getDocumentWindow(injectedContext);
+    return (documentWindow == null) ? injectedTextRange : documentWindow.injectedToHost(injectedTextRange);
   }
+
   @Override
   public int injectedToHost(@NotNull PsiElement element, int offset) {
+    DocumentWindow documentWindow = getDocumentWindow(element);
+    return (documentWindow == null) ? offset : documentWindow.injectedToHost(offset);
+  }
+
+  private static DocumentWindow getDocumentWindow(PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file == null) return offset;
+    if (file == null) return null;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
-    if (!(document instanceof DocumentWindowImpl)) return offset;
-    DocumentWindowImpl documentWindow = (DocumentWindowImpl)document;
-    return documentWindow.injectedToHost(offset);
+    return !(document instanceof DocumentWindow) ? null : (DocumentWindow)document;
   }
 
   // used only from tests => no need for complex synchronization
@@ -201,6 +201,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @NotNull
   @Override
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
+    final String leafText = InjectedLanguageUtil.getUnescapedLeafText(injectedNode, false);
+    if (leafText != null) {
+      return leafText; // optimization
+    }
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {

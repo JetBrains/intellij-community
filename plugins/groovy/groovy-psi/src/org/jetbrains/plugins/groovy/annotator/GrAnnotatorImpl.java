@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.type.GroovyStaticTypeCheckVisitor;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -28,21 +27,9 @@ public class GrAnnotatorImpl implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (FileIndexFacade.getInstance(element.getProject()).isInLibrarySource(element.getContainingFile().getVirtualFile())) return;
-    final GroovyConfigUtils groovyConfig = GroovyConfigUtils.getInstance();
     if (element instanceof GroovyPsiElement) {
       GroovyPsiElement grElement = (GroovyPsiElement)element;
       grElement.accept(new GroovyAnnotator(holder));
-
-      if (groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY2_5)) {
-        grElement.accept(new GroovyAnnotator25(holder));
-      }
-
-      if (groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0)) {
-        grElement.accept(new GroovyAnnotator30(holder));
-      } else {
-        grElement.accept(new GroovyAnnotatorPre30(holder));
-      }
-
       if (PsiUtil.isCompileStatic(grElement)) {
         final GroovyStaticTypeCheckVisitor typeCheckVisitor = myTypeCheckVisitorThreadLocal.get();
         assert typeCheckVisitor != null;

@@ -39,6 +39,7 @@ import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
@@ -166,6 +167,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
       myArtifactsEditor = artifactsEditor;
     }
 
+    @NotNull
     @Override
     public Object getRootElement() {
       if (myRoot == null) {

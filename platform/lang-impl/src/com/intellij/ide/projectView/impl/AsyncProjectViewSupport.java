@@ -51,7 +51,7 @@ class AsyncProjectViewSupport {
                           @NotNull AbstractTreeStructure structure,
                           @NotNull Comparator<NodeDescriptor> comparator) {
     myStructureTreeModel = new StructureTreeModel(structure, comparator);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myNodeUpdater = new ProjectFileNodeUpdater(project, myStructureTreeModel.getInvoker()) {
       @Override
@@ -113,7 +113,7 @@ class AsyncProjectViewSupport {
       }
 
       @Override
-      protected boolean addSubtreeToUpdateByElement(PsiElement element) {
+      protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {
           myNodeUpdater.updateFromFile(file);

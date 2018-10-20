@@ -7,11 +7,14 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.ui.SimpleTextAttributes.STYLE_SMALLER;
 
 public class RunAnythingItemBase extends RunAnythingItem {
   @NotNull private final String myCommand;
@@ -60,10 +63,11 @@ public class RunAnythingItemBase extends RunAnythingItem {
     return myCommand.hashCode();
   }
 
-  protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description) {
+  protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description, boolean isSelected) {
     if (description != null) {
-      component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
-      component.appendTextPadding(480, SwingConstants.RIGHT);
+      SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected));
+      component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), smallAttributes);
+      component.appendTextPadding(660, SwingConstants.RIGHT);
     }
   }
 }

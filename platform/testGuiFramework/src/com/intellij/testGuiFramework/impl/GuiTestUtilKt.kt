@@ -338,10 +338,11 @@ object GuiTestUtilKt {
     return result?.first
   }
 
-  inline fun ignoreComponentLookupException(action: () -> Unit) = try {
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
     action()
   }
   catch (ignore: ComponentLookupException) {
+    null
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {

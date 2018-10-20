@@ -50,8 +50,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWelcomeScreenLogoUrl();
 
-  public abstract String getEditorBackgroundImageUrl();
-
   /**
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
    * standalone tool so different licensing scheme should be applied.
@@ -71,9 +69,9 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSupportUrl();
 
-  public abstract String getEAPFeedbackUrl();
+  public abstract String getYoutrackUrl();
 
-  public abstract String getReleaseFeedbackUrl();
+  public abstract String getFeedbackUrl();
 
   public abstract String getPluginManagerUrl();
 

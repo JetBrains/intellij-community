@@ -49,7 +49,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   @Override
-  public Promise<Object> revalidateElement(Object element) {
+  public Promise<Object> revalidateElement(@NotNull Object element) {
     if (!(element instanceof AbstractTreeNode)) {
       return Promises.rejectedPromise();
     }
@@ -356,7 +356,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   @Override
-  protected boolean validateNode(final Object child) {
+  protected boolean validateNode(@NotNull final Object child) {
     if (child == null) {
       return false;
     }

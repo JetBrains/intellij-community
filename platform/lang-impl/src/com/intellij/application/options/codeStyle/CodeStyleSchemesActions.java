@@ -132,7 +132,7 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
           getModel().fireSchemeListChanged();
         }
         else {
-          getModel().fireSchemeChanged(schemeImported);
+          getModel().updateScheme(schemeImported);
         }
         return schemeImported;
       }

@@ -92,7 +92,7 @@ public class TestTextFieldAction extends DumbAwareAction {
           new ExtendableTextComponent.Extension() {
             @Override
             public Icon getIcon(boolean hovered) {
-              return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
+              return hovered ? AllIcons.General.ContextHelp : AllIcons.General.Locate;
             }
 
             @Override

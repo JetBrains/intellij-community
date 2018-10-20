@@ -20,8 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyStatementBodyInspectionFixTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {

@@ -43,7 +43,7 @@ open class ApplicationRule : ExternalResource() {
     }
   }
 
-  override public final fun before() {
+  public final override fun before() {
     IdeaTestApplication.getInstance()
     TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
@@ -92,7 +92,7 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
     }
   }
 
-  override public fun after() {
+  public override fun after() {
     if (projectOpened.compareAndSet(true, false)) {
       sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false) } }
     }

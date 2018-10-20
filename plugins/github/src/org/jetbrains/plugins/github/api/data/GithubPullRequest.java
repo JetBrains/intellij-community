@@ -380,7 +380,7 @@ public class GithubPullRequest {
   private String activeLockReason;
   @Mandatory private String title;
   private GithubUser user;
-  private String body;
+  @Mandatory private String body;
 
   @Mandatory private Date updatedAt;
   private Date closedAt;
@@ -425,6 +425,11 @@ public class GithubPullRequest {
   @NotNull
   public String getTitle() {
     return title;
+  }
+
+  @NotNull
+  public String getBody() {
+    return body;
   }
 
   @NotNull

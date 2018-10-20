@@ -31,7 +31,7 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 
   protected abstract val virtualFile: VirtualFile?
 
-  override public fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
   override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
 
@@ -79,7 +79,8 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
 open class DirectoryBasedStorage(private val dir: Path,
                                  @Suppress("DEPRECATION") splitter: StateSplitter,
                                  pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
-  private @Volatile var cachedVirtualFile: VirtualFile? = null
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   override val virtualFile: VirtualFile?
     get() {

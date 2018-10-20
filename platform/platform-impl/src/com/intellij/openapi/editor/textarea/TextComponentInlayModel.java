@@ -20,9 +20,31 @@ public class TextComponentInlayModel implements InlayModel {
     return null;
   }
 
+  @Nullable
+  @Override
+  public Inlay addBlockElement(int offset,
+                               boolean relatesToPrecedingText,
+                               boolean showAbove,
+                               int priority,
+                               @NotNull EditorCustomElementRenderer renderer) {
+    return null;
+  }
+
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     return Collections.emptyList();
   }
 

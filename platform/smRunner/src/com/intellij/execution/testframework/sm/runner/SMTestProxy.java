@@ -12,7 +12,6 @@ import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Represents a test result tree node.
@@ -209,10 +209,8 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public void addChild(@NotNull SMTestProxy child) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     if (myChildren == null) {
-      myChildren = ContainerUtil.newArrayListWithCapacity(4);
+      myChildren = new CopyOnWriteArrayList<>();
     }
     myChildren.add(child);
 

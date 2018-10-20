@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Property
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
-  var enabled: Boolean by property(false)
+  var enabled by property(false)
 }
 
 @State(name = "ExternalStorageConfigurationManager")

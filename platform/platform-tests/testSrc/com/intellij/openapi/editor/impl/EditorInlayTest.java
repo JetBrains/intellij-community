@@ -343,6 +343,18 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(Arrays.asList(i1, i2), myEditor.getInlayModel().getInlineElementsInRange(1, 1));
   }
 
+  public void testYToVisualLineCalculationForBlockInlay() {
+    initText("abc\ndef");
+    addBlockInlay(1);
+    assertEquals(1, myEditor.yToVisualLine(TEST_LINE_HEIGHT * 2));
+  }
+
+  public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
+    initText("abc\ndef\nghi");
+    addBlockInlay(1);
+    assertEquals(1, myEditor.yToVisualLine(TEST_LINE_HEIGHT * 2));
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

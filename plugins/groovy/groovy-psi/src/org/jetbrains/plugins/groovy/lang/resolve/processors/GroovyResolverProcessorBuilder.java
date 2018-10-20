@@ -21,6 +21,9 @@ public final class GroovyResolverProcessorBuilder {
     if (myAllVariants) {
       return new GroovyAllVariantsProcessor(ref, kinds);
     }
+    else if (kinds.contains(METHOD)) {
+      return new GroovyCallResolverProcessorImpl(ref, kinds, myForceRValue);
+    }
     else {
       return new GroovyResolverProcessorImpl(ref, kinds, myForceRValue);
     }

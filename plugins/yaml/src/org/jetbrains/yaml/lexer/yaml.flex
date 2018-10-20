@@ -500,33 +500,32 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   {BS_HEADER_ERR_WORD} ([ \t]* {BS_HEADER_ERR_WORD})* { return TEXT; }
 
   {EOL} {
-          yybegin(BS_BODY_STATE);
-          return EOL;
+          goToState(BS_BODY_STATE);
         }
 }
 
 <BS_BODY_STATE> {
   // First comment with ident less then block scalar ident should be after the end of this block.
   // So another EOL type is used to recognize such situation from the parser.
-  {EOL} { return SCALAR_EOL; }
-
-  {WHITE_SPACE} / {NS_CHAR} {
-        if (yylength() <= myPrevElementIndent) {
-          goToState(getStateAfterBlockScalar());
+  // Exclude last EOL from block scalar to proper folding and other IDE functionality
+  {EOL} {WHITE_SPACE_CHAR}* / {NS_CHAR} {
+        int indent = yylength() - 1;
+        yypushback(indent);
+        if (indent <= myPrevElementIndent) {
+          yybegin(getStateAfterBlockScalar());
+          return EOL;
         } else {
-          return INDENT;
+          return SCALAR_EOL;
         }
       }
+
+  {EOL} { return SCALAR_EOL; }
 
   {WHITE_SPACE} { return getWhitespaceType(); }
 
   [^ \n\t] {LINE}? {
-        if (yycolumn <= myPrevElementIndent) {
-          // This 'if' branch should be applied when there is no indent at all
-          goToState(getStateAfterBlockScalar());
-        } else {
-          return myBlockScalarType;
-        }
+        assert yycolumn > myPrevElementIndent;
+        return myBlockScalarType;
       }
 
   [^] { return TEXT; } // It is a bug here. TODO: how to report it

@@ -8,10 +8,10 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -79,7 +79,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     }
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
     try {
-      ApplicationManager.getApplication().runReadAction(() -> {
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
         popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
@@ -88,7 +89,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
           }
           return consumer.apply(element);
         });
-      });
+      }, progressIndicator);
     } finally {
       Disposer.dispose(popup);
     }

@@ -22,10 +22,7 @@ public class CStyleArrayDeclarationInspectionTest extends LightCodeInsightFixtur
   }
 
   private void doTest() {
-    CStyleArrayDeclarationInspection inspection = new CStyleArrayDeclarationInspection();
-    myFixture.enableInspections(inspection);
-    ProjectInspectionProfileManager.getInstance(myFixture.getProject()).getCurrentProfile()
-      .setErrorLevel(HighlightDisplayKey.find(inspection.getShortName()), HighlightDisplayLevel.WARNING, myFixture.getProject());
+    myFixture.enableInspections(new CStyleArrayDeclarationInspection());
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 

@@ -258,7 +258,7 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     return myTable;
   }
 
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 

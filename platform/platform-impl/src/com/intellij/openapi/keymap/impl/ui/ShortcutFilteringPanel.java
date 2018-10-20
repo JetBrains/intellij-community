@@ -113,7 +113,7 @@ final class ShortcutFilteringPanel extends JPanel {
 
     JLabel label = new JLabel(KeyMapBundle.message("filter.mouse.pad.label"));
     label.setOpaque(false);
-    label.setIcon(AllIcons.General.MouseShortcut);
+    label.setIcon(AllIcons.General.Mouse);
     label.setForeground(MouseShortcutPanel.FOREGROUND);
     label.setBorder(JBUI.Borders.empty(14, 4));
     myMousePanel.add(BorderLayout.CENTER, label);

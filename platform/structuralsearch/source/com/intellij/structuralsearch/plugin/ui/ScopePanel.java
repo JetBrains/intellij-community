@@ -19,6 +19,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
+import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -41,7 +42,7 @@ public class ScopePanel extends JPanel {
 
   private final Project myProject;
   private SearchScope myScope;
-  private Runnable myCallback;
+  private NullableConsumer<? super SearchScope> myConsumer;
   Scopes.Type myScopeType;
 
   final ActionToolbarImpl myToolbar;
@@ -131,8 +132,8 @@ public class ScopePanel extends JPanel {
     ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
-  public void setScopeCallback(@Nullable Runnable callback) {
-    myCallback = callback;
+  public void setScopeConsumer(@Nullable NullableConsumer<? super SearchScope> consumer) {
+    myConsumer = consumer;
   }
 
   @Nullable
@@ -161,7 +162,7 @@ public class ScopePanel extends JPanel {
         myScopesComboBox.requestFocus();
         break;
     }
-    if (myCallback != null) myCallback.run();
+    if (myConsumer != null) myConsumer.consume(myScope);
   }
 
   class ScopeToggleAction extends ToggleAction {

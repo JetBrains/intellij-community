@@ -17,6 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,10 +75,91 @@ class FileLoader extends Loader {
     return relativePath;
   }
 
+  private static class DirEntry {
+    static final int[] empty = new int[0];
+    volatile int[] childrenNameHashes;
+    
+    volatile List<DirEntry> childrenDirectories;
+    final int nameHash;
+    final String name;
+    
+    DirEntry(int _nameHash, String _name) {
+      nameHash = _nameHash;
+      name = _name;
+    }
+  }
+  
+  private final DirEntry root = new DirEntry(0, null);
+  
   @Override
   @Nullable
   Resource getResource(final String name) {
     try {
+      if (myConfiguration.myLazyClassloadingCaches) {
+        DirEntry lastEntry = root;
+        int prevIndex = 0;
+        int nextIndex = name.indexOf('/', prevIndex);
+
+        while (true) {
+          int nameEnd = nextIndex == -1 ? name.length() : nextIndex;
+          int nameHash = StringUtil.stringHashCodeInsensitive(name, prevIndex, nameEnd);
+          int[] childrenNameHashes = lastEntry.childrenNameHashes; // volatile read
+          
+          if (childrenNameHashes == null) {
+            String[] list = (prevIndex != 0 ? new File(myRootDir, name.substring(0, prevIndex)) : myRootDir).list();
+            
+            if (list != null) {
+              childrenNameHashes = new int[list.length];
+              for (int i = 0; i < list.length; ++i) {
+                childrenNameHashes[i] = StringUtil.stringHashCodeInsensitive(list[i]);
+              }
+            }
+            else {
+              childrenNameHashes = DirEntry.empty;
+            }
+            lastEntry.childrenNameHashes = childrenNameHashes; // volatile write
+          }
+
+          boolean found = false;
+          for (int childNameHash : childrenNameHashes) {
+            if (childNameHash == nameHash) {
+              found = true;
+              break;
+            }
+          }
+
+          if (!found) {
+            return null;
+          }
+          if (nextIndex == -1 || nextIndex == name.length() - 1) {
+            break;
+          }
+
+          DirEntry nextEntry = null;
+          List<DirEntry> directories = lastEntry.childrenDirectories; // volatile read
+          
+          if (directories != null) {
+            for (DirEntry previouslyScannedDir : directories) {
+              if (previouslyScannedDir.nameHash == nameHash && previouslyScannedDir.name.regionMatches(0, name, prevIndex, nameEnd - prevIndex)) {
+                nextEntry = previouslyScannedDir;
+                break;
+              }
+            }
+          }
+
+          if (nextEntry == null) {
+            nextEntry = new DirEntry(nameHash, name.substring(prevIndex, nameEnd));
+            List<DirEntry> newChildrenDirectories = directories != null ? new SmartList<DirEntry>(directories) : new SmartList<DirEntry>();
+            newChildrenDirectories.add(nextEntry);
+            lastEntry.childrenDirectories = newChildrenDirectories; // volatile write with new copy of data
+          }
+
+          lastEntry = nextEntry;
+          prevIndex = nextIndex + 1;
+          nextIndex = name.indexOf('/', prevIndex);
+        }
+      }
+
       URL url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
       File file = new File(myRootDir, name.replace('/', File.separatorChar));

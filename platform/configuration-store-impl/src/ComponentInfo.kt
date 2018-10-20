@@ -53,11 +53,11 @@ internal class ComponentInfoImpl(override val component: Any, override val state
 }
 
 private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo() {
-  override final val isModificationTrackingSupported = true
+  final override val isModificationTrackingSupported = true
 
-  override abstract var lastModificationCount: Long
+  abstract override var lastModificationCount: Long
 
-  override final fun updateModificationCount(newCount: Long) {
+  final override fun updateModificationCount(newCount: Long) {
     lastModificationCount = newCount
   }
 }

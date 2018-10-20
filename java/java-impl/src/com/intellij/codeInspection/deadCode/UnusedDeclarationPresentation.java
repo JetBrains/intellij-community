@@ -38,6 +38,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -242,7 +243,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
             return false;
           }
           return true;
-        }).map(e -> e.getElement())
+        }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
         SafeDeleteHandler.invoke(project, elements, false,
@@ -306,7 +307,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       List<RefElement> deletedRefs = new ArrayList<>(1);
       final RefFilter filter = getFilter();
       for (RefEntity refElement : refElements) {
-        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
         if (psiElement == null) continue;
         if (filter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
 
@@ -490,8 +491,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (methodVisibility != null &&
           //todo store in the graph
           tool.isIgnoreAccessors()) {
-        final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        final PsiElement psi = element.getPsiElement();
+        if (psi instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)psi)) {
           return null;
         }
       }
@@ -531,7 +532,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (refEntity instanceof RefElement) {
       final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
       if (descriptors != null) {
-        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
+        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getPsiElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
           if (descriptor instanceof ProblemDescriptor) {

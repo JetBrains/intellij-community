@@ -3,7 +3,7 @@
   "definitions": {
     "color": {
       "type": "string",
-      "pattern": "#[0-9a-fA-F]{6}",
+      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$",
       "title": "Color",
       "description": "Color in #RRGGBB format",
       "examples": ["#123abc"]

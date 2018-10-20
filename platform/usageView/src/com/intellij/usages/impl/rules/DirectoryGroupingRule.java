@@ -146,7 +146,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public void calcData(final DataKey key, final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (!isValid()) return;
       if (CommonDataKeys.VIRTUAL_FILE == key) {
         sink.put(CommonDataKeys.VIRTUAL_FILE, myDir);

@@ -52,7 +52,7 @@ public class InspectionResultsViewUtil {
       element = element.getOwner();
     }
     if (!(element instanceof RefElement)) return null;
-    PsiElement containingElement = ((RefElement)element).getElement();
+    PsiElement containingElement = ((RefElement)element).getPsiElement();
     if (!(containingElement instanceof NavigatablePsiElement) || !containingElement.isValid()) return null;
 
     final int lineNumber = node.getLineNumber();

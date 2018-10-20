@@ -16,6 +16,7 @@
 package com.intellij.internal.psiView.stubtree;
 
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin.Ulitin
@@ -28,6 +29,7 @@ public class StubTreeStructure extends SimpleTreeStructure {
     myRoot = root;
   }
 
+  @NotNull
   @Override
   public StubTreeNode getRootElement() {
     return myRoot;

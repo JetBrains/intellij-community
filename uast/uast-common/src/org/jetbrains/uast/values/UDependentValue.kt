@@ -102,7 +102,7 @@ open class UDependentValue protected constructor(
 
   override fun toConstant(): UConstant? = value.toConstant()
 
-  open internal fun copy(dependencies: Set<UDependency>) =
+  internal open fun copy(dependencies: Set<UDependency>) =
     if (dependencies == this.dependencies) this else create(value, dependencies)
 
   override fun coerceConstant(constant: UConstant): UValue =

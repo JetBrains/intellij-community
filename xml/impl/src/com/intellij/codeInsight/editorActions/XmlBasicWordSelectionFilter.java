@@ -26,7 +26,6 @@ import com.intellij.psi.xml.XmlElement;
 public class XmlBasicWordSelectionFilter implements Condition<PsiElement> {
   @Override
   public boolean value(final PsiElement e) {
-    return !(e instanceof XmlToken) &&
-           !(e instanceof XmlElement);
+    return !(e instanceof XmlElement);
   }
 }

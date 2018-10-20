@@ -45,6 +45,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   protected final HashSet<VirtualFile> myDirtyFileSet;
 
-  protected final HashMap<VirtualFile, EditorHighlighter> myFile2Highlighter;
+  protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
   protected final PsiTodoSearchHelper mySearchHelper;
   private final JTree myTree;
@@ -100,7 +101,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     myFileTree = new FileTree();
     myDirtyFileSet = new HashSet<>();
 
-    myFile2Highlighter = new HashMap<>();
+    myFile2Highlighter = ContainerUtil.createSoftValueMap();
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
@@ -377,18 +378,15 @@ public abstract class TodoTreeBuilder implements Disposable {
       if (psiFile == null || !treeStructure.accept(psiFile)) {
         if (myFileTree.contains(file)) {
           myFileTree.removeFile(file);
-          if (myFile2Highlighter.containsKey(file)) { // highlighter isn't needed any more
-            myFile2Highlighter.remove(file);
-          }
+          myFile2Highlighter.remove(file);
         }
       }
       else { // file is valid and contains T.O.D.O items
         myFileTree.removeFile(file);
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-        if (myFile2Highlighter.containsKey(file)) { // update highlighter text
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-          EditorHighlighter highlighter = myFile2Highlighter.get(file);
-          highlighter.setText(document.getCharsSequence());
+        EditorHighlighter highlighter = myFile2Highlighter.get(file);
+        if (highlighter != null) { // update highlighter text
+          highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
         }
       }
       i.remove();
@@ -640,15 +638,13 @@ public abstract class TodoTreeBuilder implements Disposable {
    */
   public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {
     VirtualFile file = psiFile.getVirtualFile();
-    if (myFile2Highlighter.containsKey(file)) {
-      return myFile2Highlighter.get(file);
-    }
-    else {
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
+    EditorHighlighter highlighter = myFile2Highlighter.get(file);
+    if (highlighter == null) {
+      highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
       highlighter.setText(document.getCharsSequence());
       myFile2Highlighter.put(file, highlighter);
-      return highlighter;
     }
+    return highlighter;
   }
 
   public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){

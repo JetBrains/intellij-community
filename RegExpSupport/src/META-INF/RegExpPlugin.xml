@@ -24,6 +24,11 @@
     <lang.surroundDescriptor language="RegExp" implementationClass="org.intellij.lang.regexp.surroundWith.SimpleSurroundDescriptor"/>
     <colorSettingsPage implementation="org.intellij.lang.regexp.RegExpColorsPage"/>
     <basicWordSelectionFilter implementation="org.intellij.lang.regexp.RegExpWordSelectionFilter"/>
+    <regExpMatcherProvider language="JSRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpMatcherProvider"/>
+    <lang.parserDefinition language="JSRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpParserDefinition"/>
+    <lang.parserDefinition language="JSUnicodeRegexp" implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptUnicodeRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="JSRegexp"
+                                   implementationClass="org.intellij.lang.regexp.ecmascript.EcmaScriptRegExpSyntaxHighlighterFactory"/>
 
     <intentionAction>
       <className>org.intellij.lang.regexp.intention.CheckRegExpIntentionAction</className>

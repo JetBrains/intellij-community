@@ -41,6 +41,8 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -451,7 +453,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final Object currentArg = getArgValue(arguments[i], method);
+              final Object currentArg = getArgValue(UastContextKt.toUElement(arguments[i], UExpression.class), method);
               if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
                 if (currentArg != VALUE_IS_NOT_CONST) {
@@ -480,7 +482,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       };
     }
 
-    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+    private Object getArgValue(UExpression arg, PsiMethod method) {
       return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }

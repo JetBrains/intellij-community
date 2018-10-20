@@ -44,7 +44,7 @@ public class JarMemoryLoader {
   }
 
   @Nullable
-  public static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, Map<Resource.Attribute, String> attributes) throws IOException {
+  static JarMemoryLoader load(ZipFile zipFile, URL baseUrl, @Nullable JarLoader attributesProvider) throws IOException {
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
     if (!entries.hasMoreElements()) return null;
 
@@ -57,7 +57,7 @@ public class JarMemoryLoader {
     JarMemoryLoader loader = new JarMemoryLoader();
     for (int i = 0; i < size && entries.hasMoreElements(); i++) {
       ZipEntry entry = entries.nextElement();
-      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributes);
+      MemoryResource resource = MemoryResource.load(baseUrl, zipFile, entry, attributesProvider != null ? attributesProvider.getAttributes() : null);
       loader.myResources.put(entry.getName(), resource);
     }
     return loader;

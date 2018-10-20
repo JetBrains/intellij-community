@@ -34,7 +34,7 @@ public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBe
 
   @Override
   public Icon getIcon() {
-    return AllIcons.General.ExternalToolsSmall;
+    return AllIcons.General.ExternalTools;
   }
 
   @Override

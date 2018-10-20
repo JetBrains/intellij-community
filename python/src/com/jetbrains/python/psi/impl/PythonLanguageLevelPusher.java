@@ -235,7 +235,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
       final Module module = entry.getKey();
       final Sdk newSdk = entry.getValue();
       final Sdk oldSdk = myModuleSdks.get(module);
-      return myModuleSdks.containsKey(module) && (newSdk != null || oldSdk != null) && newSdk != oldSdk;
+      return myModuleSdks.containsKey(module) && newSdk != oldSdk;
     }));
 
     myModuleSdks.putAll(moduleSdks);

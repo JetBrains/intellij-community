@@ -30,8 +30,6 @@ public class RedundantLambdaCodeBlockInspectionTest extends LightQuickFixParamet
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/lambdaCodeBlock2Expr";

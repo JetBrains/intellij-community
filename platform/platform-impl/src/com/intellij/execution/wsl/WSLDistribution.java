@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
+ * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
   static final String WSL_MNT_ROOT = "/mnt/";

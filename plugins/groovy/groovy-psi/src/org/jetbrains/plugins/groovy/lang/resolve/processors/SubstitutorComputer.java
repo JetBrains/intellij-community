@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,8 @@ import com.intellij.psi.PsiClassType.ClassResolveResult;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -51,7 +53,7 @@ public class SubstitutorComputer {
 
   protected final PsiElement myPlace;
 
-  private final PsiType myThisType;
+  private final Lazy<PsiType> myThisType;
   @Nullable
   private final PsiType[] myArgumentTypes;
   @Nullable
@@ -60,7 +62,15 @@ public class SubstitutorComputer {
   private final NotNullLazyValue<Collection<PsiElement>> myExitPoints;
   private final PsiResolveHelper myHelper;
 
-  public SubstitutorComputer(PsiType thisType,
+  public SubstitutorComputer(@Nullable PsiType thisType,
+                             @Nullable PsiType[] argumentTypes,
+                             @Nullable PsiType[] typeArguments,
+                             PsiElement place,
+                             PsiElement placeToInferContext) {
+    this(LazyKt.lazyOf(thisType), argumentTypes, typeArguments, place, placeToInferContext);
+  }
+
+  public SubstitutorComputer(@NotNull Lazy<PsiType> thisType,
                              @Nullable PsiType[] argumentTypes,
                              @Nullable PsiType[] typeArguments,
                              PsiElement place,
@@ -138,7 +148,7 @@ public class SubstitutorComputer {
           newArgTypes[0] = ((GrExpression)resolveContext).getType();
         }
         else {
-          newArgTypes[0] = myThisType;
+          newArgTypes[0] = myThisType.getValue();
         }
         System.arraycopy(argTypes, 0, newArgTypes, 1, argTypes.length);
         argTypes = newArgTypes;

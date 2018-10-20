@@ -134,15 +134,10 @@ public class RegistryValue {
 
   protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
-      String stringCachedValue = myStringCachedValue;
-      if (stringCachedValue == null) {
-        stringCachedValue = _get(key, defaultValue, true);
-        if (isBoolean(stringCachedValue)) {
-          stringCachedValue = Boolean.valueOf(stringCachedValue).toString();
-        }
-        myStringCachedValue = stringCachedValue;
+      if (myStringCachedValue == null) {
+        myStringCachedValue = _get(key, defaultValue, true);
       }
-      return stringCachedValue;
+      return myStringCachedValue;
     }
     return _get(key, defaultValue, false);
   }
@@ -259,6 +254,6 @@ public class RegistryValue {
     return isBoolean(asString());
   }
   private static boolean isBoolean(String s) {
-    return "true".equals(s) || "false".equals(s);
+    return "true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s);
   }
 }

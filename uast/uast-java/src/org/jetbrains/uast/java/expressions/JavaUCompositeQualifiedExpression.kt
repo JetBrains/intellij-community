@@ -25,7 +25,7 @@ class JavaUCompositeQualifiedExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable {
 
-  lateinit internal var receiverInitializer: () -> UExpression
+  internal lateinit var receiverInitializer: () -> UExpression
 
   override val receiver: UExpression by lazy { receiverInitializer() }
 

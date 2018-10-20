@@ -81,11 +81,11 @@ class AnnotationPresentation implements TextAnnotationPresentation {
     return myActions;
   }
 
-  public void addAction(AnAction action) {
+  public void addAction(@NotNull AnAction action) {
     myActions.add(action);
   }
 
-  public void addAction(AnAction action, int index) {
+  public void addAction(@NotNull AnAction action, int index) {
     myActions.add(index, action);
   }
 

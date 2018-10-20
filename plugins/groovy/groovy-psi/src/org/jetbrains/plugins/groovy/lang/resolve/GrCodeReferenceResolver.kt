@@ -160,7 +160,7 @@ private fun GrCodeReferenceElement.resolveAsPartOfFqn(reference: GrCodeReference
     }
     currentElement = e ?: return emptyList()
   }
-  return listOf(BaseGroovyResolveResult(currentElement, this, null))
+  return listOf(BaseGroovyResolveResult(currentElement, this))
 }
 
 private fun PsiClass.getPackage(): PsiPackage? {

@@ -16,8 +16,10 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.MemberImplementorExplorer;
+import org.jetbrains.annotations.NotNull;
 
 public class MemberImplementorExplorersProviderImpl implements OverrideImplementExploreUtil.MemberImplementorExplorersProvider {
+  @NotNull
   @Override
   public MemberImplementorExplorer[] getExplorers() {
     return OverrideImplementUtil.getImplementors();

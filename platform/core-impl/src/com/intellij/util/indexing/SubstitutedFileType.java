@@ -48,8 +48,8 @@ public class SubstitutedFileType extends LanguageFileType{
     if (fileType instanceof LanguageFileType) {
       final Language language = ((LanguageFileType)fileType).getLanguage();
       final Language substitutedLanguage = LanguageSubstitutors.INSTANCE.substituteLanguage(language, file, project);
-      LanguageFileType substFileType = substitutedLanguage.getAssociatedFileType();
-      if (!substitutedLanguage.equals(language) && substFileType != null) {
+      LanguageFileType substFileType;
+      if (!substitutedLanguage.equals(language) && (substFileType = substitutedLanguage.getAssociatedFileType()) != null) {
         return new SubstitutedFileType(fileType, substFileType, substitutedLanguage);
       }
     }

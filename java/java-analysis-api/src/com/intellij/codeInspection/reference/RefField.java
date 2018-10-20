@@ -17,6 +17,8 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiField;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UField;
 
 /**
  * A node in the reference graph corresponding to a Java field.
@@ -56,6 +58,12 @@ public interface RefField extends RefJavaElement {
    */
   RefClass getOwnerClass();
 
+  @Deprecated
   @Override
   PsiField getElement();
+
+  @Override
+  default UField getUastElement() {
+    throw new UnsupportedOperationException();
+  }
 }

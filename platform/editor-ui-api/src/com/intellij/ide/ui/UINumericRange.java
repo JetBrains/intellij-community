@@ -24,7 +24,7 @@ public final class UINumericRange {
   public final int max;
 
   public UINumericRange(int defaultValue, int minimumValue, int maximumValue) {
-    if (minimumValue > maximumValue || defaultValue < minimumValue || defaultValue > maximumValue) {
+    if (defaultValue < minimumValue || defaultValue > maximumValue) {
       throw new IllegalArgumentException("Wrong range values: [" + minimumValue + ".." + defaultValue + ".." + maximumValue + "]");
     }
     initial = defaultValue;

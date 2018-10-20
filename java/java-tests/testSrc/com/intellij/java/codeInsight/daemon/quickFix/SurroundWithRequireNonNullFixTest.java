@@ -30,10 +30,6 @@ public class SurroundWithRequireNonNullFixTest extends LightQuickFixParameterize
     return new LocalInspectionTool[]{inspection};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/surroundWithRequireNonNull";

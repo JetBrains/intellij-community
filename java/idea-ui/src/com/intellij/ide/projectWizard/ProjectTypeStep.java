@@ -674,6 +674,10 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
     return false;
   }
 
+  public static void resetGroupForTests() {
+    PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null);
+  }
+
   @TestOnly
   public AddSupportForFrameworksPanel getFrameworksPanel() {
     return myFrameworksPanel;

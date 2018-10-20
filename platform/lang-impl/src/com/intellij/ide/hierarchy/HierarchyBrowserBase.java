@@ -277,7 +277,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
   }
 
-  void configureTree(@NotNull Tree tree) {
+  protected void configureTree(@NotNull Tree tree) {
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.setToggleClickCount(-1);
     tree.setCellRenderer(new HierarchyNodeRenderer());

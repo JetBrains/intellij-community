@@ -140,16 +140,18 @@ object GithubApiRequests {
                      GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
-        fun get(url: String) = object : Get.JsonPage<GithubIssueComment>(url, GithubIssueComment::class.java) {
-          override val acceptMimeType: String
-            get() = GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE
-        }.withOperationName("get comments for issue")
+        fun get(url: String) = Get.jsonPage<GithubIssueComment>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+          .withOperationName("get comments for issue")
       }
     }
 
     object PullRequests : Entity("/pulls") {
       @JvmStatic
-      fun get(url: String) = Get.json<GithubPullRequest>(url).withOperationName("get pull request")
+      fun get(url: String) = Get.json<GithubPullRequestDetailed>(url).withOperationName("get pull request")
+
+      @JvmStatic
+      fun getHtml(url: String) = Get.json<GithubPullRequestDetailedWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+        .withOperationName("get pull request")
 
       @JvmStatic
       fun create(server: GithubServerPath,

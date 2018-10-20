@@ -64,7 +64,7 @@ enum class UNumericType(val prefix: String = "") {
 }
 
 abstract class UNumericConstant(val type: UNumericType, override val source: ULiteralExpression?) : UAbstractConstant() {
-  override abstract val value: Number
+  abstract override val value: Number
 
   override fun toString(): String = "${type.prefix}$value"
 

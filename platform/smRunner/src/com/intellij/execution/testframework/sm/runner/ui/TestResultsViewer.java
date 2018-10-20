@@ -42,13 +42,6 @@ public interface TestResultsViewer extends Disposable {
 
   void addEventsListener(EventsListener listener);
 
-  void setShowStatisticForProxyHandler(PropagateSelectionHandler handler);
-
-  /**
-   * If handler for statistics was set this method will execute it
-   */
-  void showStatisticsForSelectedProxy();
-
   interface EventsListener extends TestProxyTreeSelectionListener {
     void onTestingStarted(@NotNull TestResultsViewer sender);
 

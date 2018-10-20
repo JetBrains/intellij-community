@@ -60,7 +60,7 @@ public class GitUpdateProcess {
   @NotNull private final ChangeListManager myChangeListManager;
 
   @NotNull private final List<GitRepository> myRepositories;
-  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodules;
+  @NotNull private final Map<GitRepository, GitSubmodule> mySubmodulesInDetachedHead;
   private final boolean myCheckRebaseOverMergeProblem;
   private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
@@ -87,11 +87,17 @@ public class GitUpdateProcess {
     myProgressIndicator = progressIndicator == null ? new EmptyProgressIndicator() : progressIndicator;
     myMerger = new GitMerger(myProject);
 
-    mySubmodules = ContainerUtil.newLinkedHashMap();
     for (GitRepository repository : myRepositories) {
-      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-      if (submodule != null) {
-        mySubmodules.put(repository, submodule);
+      repository.update();
+    }
+
+    mySubmodulesInDetachedHead = ContainerUtil.newLinkedHashMap();
+    for (GitRepository repository : myRepositories) {
+      if (!repository.isOnBranch()) {
+        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+        if (submodule != null) {
+          mySubmodulesInDetachedHead.put(repository, submodule);
+        }
       }
     }
   }
@@ -115,10 +121,6 @@ public class GitUpdateProcess {
     LOG.info("update started|" + updateMethod);
     String oldText = myProgressIndicator.getText();
     myProgressIndicator.setText("Updating...");
-
-    for (GitRepository repository : myRepositories) {
-      repository.update();
-    }
 
     // check if update is possible
     if (checkRebaseInProgress() || isMergeInProgress() || areUnmergedFiles()) {
@@ -285,8 +287,8 @@ public class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodules.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodules.get(repository).getParent(), repository,
+    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
                                                    myProgressIndicator, myUpdatedFiles);
       updaters.put(repository, updater);
     }
@@ -326,8 +328,8 @@ public class GitUpdateProcess {
     Map<GitRepository, GitLocalBranch> currentBranches = ContainerUtil.newLinkedHashMap();
     List<GitRepository> detachedHeads = ContainerUtil.newArrayList();
     for (GitRepository repository : myRepositories) {
-      if (mySubmodules.containsKey(repository)) {
-        LOG.debug("Repository " + repository + " is a submodule, not checking its tracked branch");
+      if (mySubmodulesInDetachedHead.containsKey(repository)) {
+        LOG.debug("Repository " + repository + " is a submodule in detached HEAD state, not checking its tracked branch");
         continue;
       }
 

@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class DfaValue {
   private final int myID;
@@ -32,6 +34,14 @@ public abstract class DfaValue {
 
   public int getID() {
     return myID;
+  }
+
+  /**
+   * @return PSI type of the value if known
+   */
+  @Nullable
+  public PsiType getType() {
+    return null;
   }
 
   /**

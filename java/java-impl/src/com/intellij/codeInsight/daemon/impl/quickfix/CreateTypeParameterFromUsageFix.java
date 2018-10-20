@@ -185,7 +185,8 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC)) {
         break;
       }
-      if (element instanceof PsiMethod || (element instanceof PsiClass && !(element instanceof PsiTypeParameter))) {
+      if (element instanceof PsiClass && ((PsiClass)element).isEnum()) break;
+      if (element instanceof PsiMethod || isValidClass(element)) {
         if (((PsiMember)element).getName() != null) {
           parents.add((PsiNameIdentifierOwner)element);
           if (findFirstOnly) {
@@ -197,5 +198,9 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
       element = element.getParent();
     }
     return parents;
+  }
+
+  private static boolean isValidClass(PsiElement element) {
+    return element instanceof PsiClass && !(element instanceof PsiTypeParameter);
   }
 }

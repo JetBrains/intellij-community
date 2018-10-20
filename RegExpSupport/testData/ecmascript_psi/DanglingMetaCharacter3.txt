@@ -1,0 +1,4 @@
+JS_UNICODE_REGEXP_FILE
+  PsiErrorElement:Dangling metacharacter
+    <empty list>
+  PsiElement(CLASS_END)(']')

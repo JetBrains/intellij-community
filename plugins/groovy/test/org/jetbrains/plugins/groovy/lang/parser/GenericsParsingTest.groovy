@@ -41,4 +41,12 @@ class GenericsParsingTest extends GroovyParsingTestCase {
   void testNewLineBeforeAngle() { doTest() }
 
   void testNewLineBeforeComma() { doTest() }
+
+  void testNewLineBeforeExtendsInTypeParameterBounds() { doTest() }
+
+  void testNewLineAfterExtendsInTypeParameterBounds() { doTest() }
+
+  void testNewLineBeforeAmpInTypeParameterBounds() { doTest() }
+
+  void testNewLineAfterAmpInTypeParameterBounds() { doTest() }
 }

@@ -386,10 +386,13 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
         element.addContent(descriptionElement);
       }
       catch (IllegalDataException e) {
-        //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-        System.out.println("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName());
+        LOG.info("Cannot save results for " + refEntity.getName() + ", inspection which caused problem: " + myToolWrapper.getShortName());
       }
+      customizeExportResults(refEntity, descriptor, element);
     }
+  }
+
+  protected void customizeExportResults(@NotNull RefEntity entity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
   }
 
   @Override

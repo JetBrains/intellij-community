@@ -38,7 +38,7 @@ public class EditorMouseFixture {
 
   public EditorMouseFixture pressAtLineNumbers(int visualLine) {
     assert myEditor.getSettings().isLineNumbersShown();
-    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(0, myEditor.visibleLineToY(visualLine)));
+    return pressAt(myEditor.getGutterComponentEx(), 1, new Point(0, myEditor.visualLineToY(visualLine)));
   }
 
   private EditorMouseFixture pressAt(int clickCount, Point p) {
@@ -108,7 +108,7 @@ public class EditorMouseFixture {
   
   public EditorMouseFixture dragToLineNumbers(int visualLine) {
     assert myEditor.getSettings().isLineNumbersShown();
-    return dragToXY(myEditor.getGutterComponentEx(), 0, myEditor.visibleLineToY(visualLine));
+    return dragToXY(myEditor.getGutterComponentEx(), 0, myEditor.visualLineToY(visualLine));
   }
 
   public EditorMouseFixture dragToXY(int x, int y) {

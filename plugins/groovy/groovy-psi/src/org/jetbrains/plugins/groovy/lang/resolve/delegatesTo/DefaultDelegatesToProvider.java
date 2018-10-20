@@ -200,7 +200,7 @@ public class DefaultDelegatesToProvider implements GrDelegatesToProvider {
     PsiType type = JavaPsiFacade.getElementFactory(context.getProject()).createTypeFromText(typeValue, context);
 
     if (result instanceof GroovyMethodResult) {
-      return ((GroovyMethodResult)result).getSubstitutor(false).substitute(type);
+      return ((GroovyMethodResult)result).getPartialSubstitutor().substitute(type);
     }
     return result.getSubstitutor().substitute(type);
   }

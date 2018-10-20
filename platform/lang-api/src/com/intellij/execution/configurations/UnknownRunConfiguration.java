@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @author spleaner
  */
-public final class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {
+public /*not final for Rider*/ class UnknownRunConfiguration implements RunConfiguration, WithoutOwnBeforeRunSteps {
   private final ConfigurationFactory myFactory;
   private Element myStoredElement;
   private String myName;

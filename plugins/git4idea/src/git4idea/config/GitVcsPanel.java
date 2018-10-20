@@ -85,8 +85,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     mySSHExecutableComboBox.addItem(IDEA_SSH_NAME);
     mySSHExecutableComboBox.addItem(NATIVE_SSH_NAME);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH_NAME);
-    mySSHExecutableComboBox
-      .setToolTipText(GitBundle.message("git.vcs.config.ssh.mode.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
     myTestButton.addActionListener(e -> testExecutable());
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());

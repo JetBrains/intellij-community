@@ -28,5 +28,13 @@ public class Git4ideaIcons {
     return IconLoader.getIcon(path, Git4ideaIcons.class);
   }
 
-  public static final Icon Star = load("/icons/star.png"); // 13x13
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Favorite */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Star = load("/nodes/favorite.svg", com.intellij.icons.AllIcons.class);
 }

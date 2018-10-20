@@ -14,10 +14,6 @@ public class RemoveCurlyBracesFixTest extends LightQuickFixParameterizedTestCase
     return new LocalInspectionTool[]{new EmptyClassInspection()};
   }
 
-  public void test() {
-     doAllTests();
-   }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/removeCurlyBraces";

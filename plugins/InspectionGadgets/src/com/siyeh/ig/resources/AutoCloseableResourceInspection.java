@@ -195,6 +195,10 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   }
 
   private class AutoCloseableResourceFix extends InspectionGadgetsFix {
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
 
     @Nls
     @NotNull

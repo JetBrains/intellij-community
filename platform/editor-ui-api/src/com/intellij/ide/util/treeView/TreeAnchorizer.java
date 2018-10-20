@@ -16,6 +16,7 @@
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,12 +37,13 @@ public class TreeAnchorizer {
     return ourInstance;
   }
 
-  public Object createAnchor(Object element) {
+  @NotNull
+  public Object createAnchor(@NotNull Object element) {
     return element;
   }
 
   @Nullable
-  public Object retrieveElement(Object anchor) {
+  public Object retrieveElement(@NotNull Object anchor) {
     return anchor;
   }
 

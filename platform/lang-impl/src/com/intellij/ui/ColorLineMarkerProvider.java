@@ -25,10 +25,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Konstantin Bulenkov
- */
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
+  public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 
   private final ElementColorProvider[] myExtensions = ElementColorProvider.EP_NAME.getExtensions();
 

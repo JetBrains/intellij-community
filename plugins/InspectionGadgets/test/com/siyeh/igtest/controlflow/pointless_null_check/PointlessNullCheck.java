@@ -2,27 +2,6 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 
 public class PointlessNullCheck {
 
-    public void testViolations(Object arg) {
-        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning> && arg instanceof String) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">null != arg</warning> && arg instanceof String) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg == null</warning> || !(arg instanceof String)) {
-            System.out.println("this should trigger a warning");
-        }
-
-        if ((<warning descr="Unnecessary 'null' check before 'instanceof' expression">(arg) != (null)</warning>) && ((arg) instanceof String)) {
-          System.out.println("this should trigger a warning");
-        }
-        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning> && (arg instanceof String || arg instanceof Integer)) {
-            System.out.println("this should trigger a warning");
-        }
-     }
-
     String arg1 = "foo";
 
     public void testMethods(Object obj, Object obj1, Object obj2) {
@@ -53,39 +32,6 @@ public class PointlessNullCheck {
     private boolean check2(Object obj1, Object obj2) {
         if(obj2 == null) return false;
         return obj2.hashCode() > 10;
-    }
-
-    public void testPassingCases(String arg1, String arg2) {
-        if (arg1 != null || arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1 == null && arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1 != null && arg2 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1.substring(5) instanceof String && arg1.substring(5) != null) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1 != null && arg1.length() > 2) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1 != "hello" || arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-        if (this.arg1 != null && arg1 instanceof String) {
-            System.out.println("this should not trigger a warning");
-        }
-
-        if (arg1 != null && arg1.equals(arg1) && arg1 instanceof String) {
-            System.out.println("no warning");
-        }
     }
 
     void testQualified(Object obj) {

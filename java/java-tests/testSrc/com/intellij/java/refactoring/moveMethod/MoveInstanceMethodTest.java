@@ -129,13 +129,7 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
   }
 
   public void testParameterMethodReference() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTest(true, 0);
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTest(true, 0));
   }
 
   private void doTest(boolean isTargetParameter, final int targetIndex) {

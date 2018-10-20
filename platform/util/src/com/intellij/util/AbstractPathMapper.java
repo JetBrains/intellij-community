@@ -46,7 +46,7 @@ public abstract class AbstractPathMapper implements PathMapper {
   public static String convertToRemote(@NotNull String localPath, @NotNull Collection<? extends PathMappingSettings.PathMapping> pathMappings) {
     PathMappingSettings.BestMappingSelector selector = new PathMappingSettings.BestMappingSelector();
     for (PathMappingSettings.PathMapping mapping : pathMappings) {
-      if (mapping.canReplaceLocal(localPath)) {
+      if (mapping != null && mapping.canReplaceLocal(localPath)) {
         selector.consider(mapping, mapping.getLocalLen());
       }
     }

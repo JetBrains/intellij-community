@@ -10,8 +10,8 @@
     <appStarter implementation="com.intellij.testGuiFramework.impl.GuiTestStarter"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint name="guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
-    <extensionPoint name="generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
+    <extensionPoint qualifiedName="com.intellij.guiRecorderListener" interface="com.intellij.testGuiFramework.recorder.GuiRecorderListener"/>
+    <extensionPoint qualifiedName="com.intellij.generatedCodeReceiver" interface="com.intellij.testGuiFramework.recorder.GeneratedCodeReceiver"/>
   </extensionPoints>
 
   <actions>

@@ -4,10 +4,11 @@ package com.intellij.ide.impl.dataRules;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 
 public class NavigatableArrayRule implements GetDataRule {
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     final Navigatable element = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
     if (element == null) {
       return null;

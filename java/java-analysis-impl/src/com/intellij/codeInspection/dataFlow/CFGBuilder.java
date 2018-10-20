@@ -749,12 +749,12 @@ public class CFGBuilder {
       ConditionalGotoInstruction condGoto = new ConditionalGotoInstruction(null, false, null);
       condGoto.setOffset(myAnalyzer.getInstructionCount());
       myBranches.add(() -> pushUnknown().add(condGoto));
-      assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getVariableType()));
+      assign(targetVariable, factory.createCommonValue(expressions, targetVariable.getType()));
     } else {
       push(factory.getConstFactory().getSentinel());
       for (PsiExpression expression : expressions) {
         pushExpression(expression);
-        boxUnbox(expression, targetVariable.getVariableType());
+        boxUnbox(expression, targetVariable.getType());
       }
       // Revert order
       add(new SpliceInstruction(expressions.length, IntStreamEx.ofIndices(expressions).toArray()));

@@ -18,9 +18,6 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 
 public class MergeFilterChainActionTest extends LightIntentionActionTestCase {
-
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/mergeFilter";

@@ -19,8 +19,8 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
-                        serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsUISettings"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiRequestExecutor$Factory"/>
@@ -82,5 +82,7 @@
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestCreateBranchAction"/>
       <reference id="Github.Open.In.Browser"/>
     </group>
+    <action id="Github.PullRequest.Preview.Show.Details"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestToggleDetailsAction"/>
   </actions>
 </idea-plugin>

@@ -36,7 +36,7 @@ public class TestTreeExpander implements TreeExpander {
 
   @Override
   public void expandAll() {
-    myModel.getTreeBuilder().expandAll(null);
+    TreeUtil.expandAll(myModel.getTreeView());
   }
 
   @Override

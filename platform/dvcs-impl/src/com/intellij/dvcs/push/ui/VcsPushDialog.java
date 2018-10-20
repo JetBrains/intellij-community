@@ -258,7 +258,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsPushUi.VCS_PUSH_DIALOG.is(dataId)) {
       return this;
     }

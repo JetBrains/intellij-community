@@ -25,6 +25,7 @@ import com.intellij.ui.Gray;
 import javax.swing.*;
 import java.awt.*;
 
+@Deprecated
 public class PushedTabBackground {
   private static final Icon ourLeftRound = AllIcons.General.Tab_grey_left;
   private static final Icon ourRightRound = AllIcons.General.Tab_grey_right;

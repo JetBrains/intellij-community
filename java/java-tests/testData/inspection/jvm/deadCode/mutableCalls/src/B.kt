@@ -1,0 +1,3 @@
+fun yyy() {
+  A.xxx()
+}

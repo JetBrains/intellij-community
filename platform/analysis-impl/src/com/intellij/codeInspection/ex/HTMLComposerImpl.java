@@ -102,7 +102,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Nullable
   private HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
-    final PsiElement element = refElement.getElement();
+    final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
 
@@ -113,7 +113,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     } else {
       refElement.accept(new RefVisitor() {
         @Override public void visitFile(@NotNull RefFile file) {
-          final PsiFile psiFile = file.getElement();
+          final PsiFile psiFile = file.getPsiElement();
           if (psiFile != null) {
             buf.append(B_OPENING);
             buf.append(psiFile.getName());
@@ -200,7 +200,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
       buf.append("\">");
       String refElementName = refElement.getName();
-      final PsiElement element = refElement.getElement();
+      final PsiElement element = refElement.getPsiElement();
       if (element != null) {
         VirtualFile file = PsiUtilCore.getVirtualFile(element);
         if (file != null) {

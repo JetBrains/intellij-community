@@ -53,7 +53,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
             if (pointer != null) {
               VirtualFile vFile = pointer.getVirtualFile();
               if (vFile != null && searchScope.contains(vFile)) {
-                final PsiElement element = ((RefElement)entity).getElement();
+                final PsiElement element = ((RefElement)entity).getPsiElement();
                 if (element != null) {
                   final TextRange range = element.getTextRange();
                   if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {

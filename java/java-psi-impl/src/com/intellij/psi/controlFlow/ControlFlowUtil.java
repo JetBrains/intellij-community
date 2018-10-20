@@ -2215,4 +2215,33 @@ public class ControlFlowUtil {
     }
     return throwType.isAssignableFrom(catchType);
   }
+
+  public static boolean areVariablesUnmodifiedAtLocations(@NotNull ControlFlow flow,
+                                                          int startOffset,
+                                                          int endOffset,
+                                                          @NotNull Set<? extends PsiVariable> variables,
+                                                          @NotNull Iterable<? extends PsiElement> locations) {
+    List<Instruction> instructions = flow.getInstructions();
+    startOffset = Math.max(startOffset, 0);
+    endOffset = Math.min(endOffset, instructions.size());
+
+    IntArrayList locationOffsetList = new IntArrayList();
+    for (PsiElement location : locations) {
+      int offset = flow.getStartOffset(location);
+      if (offset >= startOffset && offset < endOffset) {
+        locationOffsetList.add(offset);
+      }
+    }
+    int[] locationOffsets = locationOffsetList.toArray();
+
+    for (int offset = startOffset; offset < endOffset; offset++) {
+      Instruction instruction = instructions.get(offset);
+      if (instruction instanceof WriteVariableInstruction && variables.contains(((WriteVariableInstruction)instruction).variable)) {
+        if (areInstructionsReachable(flow, locationOffsets, offset)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }

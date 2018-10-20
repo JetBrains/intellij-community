@@ -142,13 +142,15 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
   }
 
   class MyTreeStructure extends AbstractTreeStructure {
+    @NotNull
     @Override
     public Object getRootElement() {
       return RootDescriptor.ROOT;
     }
 
+    @NotNull
     @Override
-    public Object[] getChildElements(Object element) {
+    public Object[] getChildElements(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return ArrayUtil.toStringArray(myCertificates.keySet());
       }
@@ -160,7 +162,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
     @Nullable
     @Override
-    public Object getParentElement(Object element) {
+    public Object getParentElement(@NotNull Object element) {
       if (element == RootDescriptor.ROOT) {
         return null;
       }
@@ -172,7 +174,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
     @NotNull
     @Override
-    public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+    public NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
       if (element == RootDescriptor.ROOT) {
         return ROOT_DESCRIPTOR;
       }

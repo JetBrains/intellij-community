@@ -123,6 +123,7 @@ public class JsonCachedValues {
   }
 
   private static List<Pair<Collection<String>, String>> computeSchemaCatalog(PsiFile catalog) {
+    if (!catalog.isValid()) return null;
     JsonValue value = ((JsonFile)catalog).getTopLevelValue();
     if (!(value instanceof JsonObject)) return null;
 

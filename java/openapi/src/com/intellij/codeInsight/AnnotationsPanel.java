@@ -71,7 +71,7 @@ public class AnnotationsPanel {
                                            int column) {
         append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
         if (value.equals(myDefaultAnnotation)) {
-          setIcon(AllIcons.Diff.CurrentLine);
+          setIcon(AllIcons.Actions.Forward);
         }
         else {
           setIcon(EmptyIcon.ICON_16);

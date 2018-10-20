@@ -23,9 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsStatusDescriptor;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.provider.HgChangeProvider;
 
@@ -41,23 +40,23 @@ public class HgCommit extends VcsChangesLazilyParsedDetails {
                   @NotNull HgRevisionNumber vcsRevisionNumber,
                   @NotNull VcsUser author,
                   long time,
-                  List<List<HgFileStatusInfo>> reportedChanges) {
+                  List<List<VcsFileStatusInfo>> reportedChanges) {
     super(hash, parentsHashes, time, root, vcsRevisionNumber.getSubject(), author, vcsRevisionNumber.getCommitMessage(), author, time);
     myRevisionNumber = vcsRevisionNumber;
     myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
   }
 
-  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<HgFileStatusInfo> {
+  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
     private UnparsedChanges(@NotNull Project project,
-                            @NotNull List<List<HgFileStatusInfo>> changesOutput) {
-      super(project, changesOutput, new HgChangesDescriptor());
+                            @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
+      super(project, changesOutput);
     }
 
     @NotNull
     @Override
-    protected List<Change> parseStatusInfo(@NotNull List<HgFileStatusInfo> changes, int parentIndex) {
+    protected List<Change> parseStatusInfo(@NotNull List<VcsFileStatusInfo> changes, int parentIndex) {
       List<Change> result = ContainerUtil.newArrayList();
-      for (HgFileStatusInfo info : changes) {
+      for (VcsFileStatusInfo info : changes) {
         String filePath = info.getFirstPath();
         HgRevisionNumber parentRevision = myRevisionNumber.getParents().isEmpty() ? null : myRevisionNumber.getParents().get(parentIndex);
         switch (info.getType()) {
@@ -77,59 +76,6 @@ public class HgCommit extends VcsChangesLazilyParsedDetails {
         }
       }
       return result;
-    }
-  }
-
-  private static class HgChangesDescriptor extends VcsStatusDescriptor<HgFileStatusInfo> {
-    @NotNull
-    @Override
-    protected HgFileStatusInfo createStatus(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath) {
-      return new HgFileStatusInfo(type, path, secondPath);
-    }
-
-    @NotNull
-    @Override
-    public String getFirstPath(@NotNull HgFileStatusInfo info) {
-      return info.getFirstPath();
-    }
-
-    @Nullable
-    @Override
-    public String getSecondPath(@NotNull HgFileStatusInfo info) {
-      return info.getSecondPath();
-    }
-
-    @NotNull
-    @Override
-    public Change.Type getType(@NotNull HgFileStatusInfo info) {
-      return info.getType();
-    }
-  }
-
-  public static class HgFileStatusInfo {
-    @NotNull private final Change.Type myType;
-    @NotNull private final String myFirstPath;
-    @Nullable private final String mySecondPath;
-
-    public HgFileStatusInfo(@NotNull Change.Type type, @NotNull String firstPath, @Nullable String secondPath) {
-      myType = type;
-      myFirstPath = firstPath;
-      mySecondPath = secondPath;
-    }
-
-    @NotNull
-    public Change.Type getType() {
-      return myType;
-    }
-
-    @NotNull
-    public String getFirstPath() {
-      return myFirstPath;
-    }
-
-    @Nullable
-    public String getSecondPath() {
-      return mySecondPath;
     }
   }
 }

@@ -333,7 +333,7 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
 fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
   if (textRange == null) return false
   val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
-  return !editor.inlayModel.getInlineElementsInRange(start, textRange.endOffset).isEmpty()
+  return editor.inlayModel.hasInlineElementsInRange(start, textRange.endOffset)
 }
 
 

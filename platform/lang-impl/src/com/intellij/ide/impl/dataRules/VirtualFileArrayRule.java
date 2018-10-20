@@ -57,7 +57,7 @@ public class VirtualFileArrayRule implements GetDataRule {
   }
 
   @Override
-  public Object getData(final DataProvider dataProvider) {
+  public Object getData(@NotNull final DataProvider dataProvider) {
     // Try to detect multiselection.
 
     Set<VirtualFile> result = null;

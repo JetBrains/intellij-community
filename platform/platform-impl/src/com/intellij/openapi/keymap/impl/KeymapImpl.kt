@@ -181,7 +181,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getParent(): KeymapImpl? = parent
 
-  override final fun canModify(): Boolean = canModify
+  final override fun canModify(): Boolean = canModify
 
   override fun addShortcut(actionId: String, shortcut: Shortcut) {
     val list = actionIdToShortcuts.getOrPut(actionId) {

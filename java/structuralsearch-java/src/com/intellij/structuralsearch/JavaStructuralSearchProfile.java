@@ -825,7 +825,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         if (completePattern || variableNode == null) return false;
         if (variableNode instanceof PsiLiteralExpression && ((PsiLiteralExpression)variableNode).getValue() instanceof String) return true;
         final PsiElement parent = variableNode.getParent();
-        return parent instanceof PsiReferenceExpression || parent instanceof PsiJavaCodeReferenceElement;
+        return parent instanceof PsiJavaCodeReferenceElement;
       default: return super.isApplicableConstraint(constraintName, variableNode, completePattern, target);
     }
   }

@@ -29,7 +29,8 @@ abstract class BreakpointBase<L : Any>(override val target: BreakpointTarget,
    * Whether the breakpoint data have changed with respect
    * to the JavaScript VM data
    */
-  protected @Volatile var dirty: Boolean = false
+  @Volatile
+  protected var dirty: Boolean = false
 
   override val isResolved: Boolean
     get() = !actualLocations.isEmpty()

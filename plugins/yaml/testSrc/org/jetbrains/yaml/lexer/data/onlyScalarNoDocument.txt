@@ -1,5 +1,5 @@
 scalar list ('|')
-Eol ('\n')
+block scalar EOL ('\n')
 indent ('  ')
 block scalar EOL ('\n')
 block scalar EOL ('\n')

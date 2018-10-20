@@ -22,6 +22,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.treeStructure.Tree;
 import org.intellij.plugins.xsltDebugger.ui.actions.CopyValueAction;
 import org.intellij.plugins.xsltDebugger.ui.actions.NavigateAction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -41,7 +42,7 @@ public class StructureTree extends Tree implements TypeSafeDataProvider {
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key.equals(CommonDataKeys.NAVIGATABLE)) {
       final TreePath selection = getSelectionPath();
       if (selection != null) {

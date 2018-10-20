@@ -146,7 +146,6 @@ public class GroovyBlock implements Block, ASTBlock {
     }
     if (psiParent instanceof GrBinaryExpression ||
         psiParent instanceof GrConditionalExpression ||
-        psiParent instanceof GrCommandArgumentList ||
         psiParent instanceof GrArgumentList ||
         psiParent instanceof GrParameterList ||
         psiParent instanceof GrListOrMap ||

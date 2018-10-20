@@ -42,7 +42,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -89,7 +88,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
-  protected Runnable myPrepareSuccessfulSwingThreadCallback = EmptyRunnable.INSTANCE;
+  protected Runnable myPrepareSuccessfulSwingThreadCallback;
 
   protected BaseRefactoringProcessor(@NotNull Project project) {
     this(project, null);
@@ -578,17 +577,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       this.messages = messages;
     }
 
-    @TestOnly
-    public static void setTestIgnore(boolean myIgnore) {
-      myTestIgnore = myIgnore;
-    }
-
     public static boolean isTestIgnore() {
       return myTestIgnore;
     }
 
     @TestOnly
-    public static <T extends Throwable> void withIgnoredConflicts(ThrowableRunnable<T> r) throws T {
+    public static <T extends Throwable> void withIgnoredConflicts(@NotNull ThrowableRunnable<T> r) throws T {
       try {
         myTestIgnore = true;
         r.run();

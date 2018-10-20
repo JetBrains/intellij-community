@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
@@ -200,8 +201,9 @@ public class Xsd2InstanceUtils {
         } else if ("schemaLocation".equals(xmlAttribute.getName())) {
           final PsiReference[] references = xmlAttribute.getValueElement().getReferences();
 
-          if (references.length > 0) {
-            PsiElement psiElement = references[0].resolve();
+          PsiReference reference = ArrayUtil.getLastElement(references);
+          if (reference != null) {
+            PsiElement psiElement = reference.resolve();
 
             if (psiElement instanceof XmlFile) {
               final String s = processAndSaveAllSchemas(((XmlFile) psiElement), scannedToFileName, schemaReferenceProcessor);

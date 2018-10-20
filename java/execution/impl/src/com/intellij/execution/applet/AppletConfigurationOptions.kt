@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet
 
 import com.intellij.execution.ExternalizablePath
@@ -13,7 +11,7 @@ class AppletConfigurationOptions : JvmConfigurationOptions() {
   var htmlFileName: String? by string()
 
   @get:OptionTag("HTML_USED")
-  var htmlUsed: Boolean by property(false)
+  var htmlUsed by property(false)
 
   @get:OptionTag("WIDTH")
   var width: Int by property(400)

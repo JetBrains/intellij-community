@@ -11,12 +11,12 @@ public class ReportProblemAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-    String url = info == null ? null : info.getEAPFeedbackUrl();
-    e.getPresentation().setEnabledAndVisible(url != null && url.contains("youtrack"));
+    e.getPresentation().setEnabledAndVisible(info != null && info.getYoutrackUrl() != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    SendFeedbackAction.doPerformAction(e.getProject(), ApplicationInfoEx.getInstanceEx().getEAPFeedbackUrl());
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    SendFeedbackAction.doPerformActionImpl(e.getProject(), appInfo.getYoutrackUrl(), SendFeedbackAction.getDescription());
   }
 }

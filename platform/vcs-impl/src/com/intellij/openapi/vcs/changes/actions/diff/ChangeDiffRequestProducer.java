@@ -56,7 +56,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -170,15 +169,15 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer, ChangeDif
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
-    return create(project, change, Collections.emptyMap());
+    return create(project, change, null);
   }
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project,
                                                  @NotNull Change change,
-                                                 @NotNull Map<Key, Object> changeContext) {
+                                                 @Nullable Map<Key, Object> changeContext) {
     if (!canCreate(project, change)) return null;
-    return new ChangeDiffRequestProducer(project, change, changeContext);
+    return new ChangeDiffRequestProducer(project, change, ContainerUtil.notNullize(changeContext));
   }
 
   public static boolean canCreate(@Nullable Project project, @NotNull Change change) {

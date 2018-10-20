@@ -20,17 +20,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractTreeStructure {
+  @NotNull
   public abstract Object getRootElement();
-  public abstract Object[] getChildElements(Object element);
+  @NotNull
+  public abstract Object[] getChildElements(@NotNull Object element);
   @Nullable
-  public abstract Object getParentElement(Object element);
+  public abstract Object getParentElement(@NotNull Object element);
 
   @NotNull
-  public abstract NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor);
+  public abstract NodeDescriptor createDescriptor(@NotNull Object element, @Nullable NodeDescriptor parentDescriptor);
 
   public abstract void commit();
   public abstract boolean hasSomethingToCommit();
@@ -60,19 +63,35 @@ public abstract class AbstractTreeStructure {
     return ActionCallback.DONE;
   }
 
-  public boolean isToBuildChildrenInBackground(Object element){
+  public boolean isToBuildChildrenInBackground(@NotNull Object element){
     return false;
   }
   
-  public boolean isValid(Object element) {
+  public boolean isValid(@NotNull Object element) {
     return true;
   }
 
-  public boolean isAlwaysLeaf(Object element) {
+  /**
+   * @param element an object that represents a node in this tree structure
+   * @return a leaf state for the given element
+   * @see LeafState.Supplier#getLeafState()
+   */
+  @NotNull
+  public LeafState getLeafState(@NotNull Object element) {
+    if (isAlwaysLeaf(element)) return LeafState.ALWAYS;
+    if (element instanceof LeafState.Supplier) {
+      LeafState.Supplier supplier = (LeafState.Supplier)element;
+      return supplier.getLeafState();
+    }
+    return LeafState.DEFAULT;
+  }
+
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return false;
   }
 
-  public AsyncResult<Object> revalidateElement(Object element) {
+  @NotNull
+  public AsyncResult<Object> revalidateElement(@NotNull Object element) {
     return AsyncResult.done(element);
   }
 }

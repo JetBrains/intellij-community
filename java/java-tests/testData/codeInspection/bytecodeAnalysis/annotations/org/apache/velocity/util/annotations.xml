@@ -49,11 +49,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.velocity.util.ExceptionUtils java.lang.Throwable createWithCause(java.lang.Class, java.lang.String, java.lang.Throwable)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_,_-&gt;null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.util.MapFactory MapFactory()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

@@ -17,9 +17,14 @@ package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UMethod;
 
 import java.util.Collection;
 
@@ -155,10 +160,19 @@ public interface RefMethod extends RefJavaElement {
    *
    * @return the class instance.
    */
+  @Nullable
   RefClass getOwnerClass();
 
+  @Deprecated
   @Override
-  PsiModifierListOwner getElement();
+  default PsiModifierListOwner getElement() {
+    return ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
+  }
+
+  @Override
+  default UDeclaration getUastElement() {
+    throw new UnsupportedOperationException();
+  }
 
   boolean isCalledOnSubClass();
 }

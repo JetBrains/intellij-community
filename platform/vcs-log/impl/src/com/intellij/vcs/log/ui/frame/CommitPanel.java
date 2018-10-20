@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.StringUtil;
@@ -45,8 +44,8 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRA
 
 public class CommitPanel extends JBPanel {
   public static final int SIDE_BORDER = 14;
-  private static final int INTERNAL_BORDER = 10;
-  private static final int EXTERNAL_BORDER = 14;
+  public static final int INTERNAL_BORDER = 10;
+  public static final int EXTERNAL_BORDER = 14;
   private static final int ROOT_ICON_SIZE = 13;
   private static final int ROOT_GAP = 4;
 

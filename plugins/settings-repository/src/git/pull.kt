@@ -58,7 +58,7 @@ class GitRepositoryClientImpl(override val repository: Repository, private val c
   }
 }
 
-open internal class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
+internal open class Pull(val manager: GitRepositoryClient, val indicator: ProgressIndicator?, val commitMessageFormatter: CommitMessageFormatter = IdeaCommitMessageFormatter()) {
   val repository = manager.repository
 
   // we must use the same StoredConfig instance during the operation

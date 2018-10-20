@@ -164,7 +164,7 @@ public abstract class DfaFactType<T> extends Key<T> {
       if(source instanceof SpecialField) {
         return ((SpecialField)source).getRange();
       }
-      LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
+      LongRangeSet fromType = LongRangeSet.fromType(var.getType());
       return fromType == null ? null : LongRangeSet.fromPsiElement(var.getPsiVariable()).intersect(fromType);
     }
 

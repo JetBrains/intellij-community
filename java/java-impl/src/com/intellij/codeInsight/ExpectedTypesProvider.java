@@ -299,7 +299,7 @@ public class ExpectedTypesProvider {
         if (parent instanceof PsiMethodCallExpression) {
           Collections.addAll(myResult, findClassesWithDeclaredMethod((PsiMethodCallExpression)parent));
         }
-        else if (parent instanceof PsiReferenceExpression || parent instanceof PsiVariable ||
+        else if (parent instanceof PsiVariable ||
                  parent instanceof PsiExpression) {
           if (LENGTH_SYNTHETIC_ARRAY_FIELD.equals(referenceName)) {
             myResult.addAll(anyArrayType());

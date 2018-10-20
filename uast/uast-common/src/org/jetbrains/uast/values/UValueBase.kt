@@ -97,5 +97,5 @@ abstract class UValueBase : UValue {
 
   override val reachable: Boolean = true
 
-  override abstract fun toString(): String
+  abstract override fun toString(): String
 }

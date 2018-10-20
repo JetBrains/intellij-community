@@ -17,8 +17,6 @@ public class RedundantExplicitVariableTypeInspectionTest extends LightQuickFixPa
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_10;

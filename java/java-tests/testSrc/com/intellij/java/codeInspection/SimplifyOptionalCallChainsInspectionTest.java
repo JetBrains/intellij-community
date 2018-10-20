@@ -34,10 +34,6 @@ public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParam
     return new LocalInspectionTool[]{new SimplifyOptionalCallChainsInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/inspection/optionalChains";

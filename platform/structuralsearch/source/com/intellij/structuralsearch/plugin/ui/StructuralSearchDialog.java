@@ -232,23 +232,7 @@ public class StructuralSearchDialog extends DialogWrapper {
         final boolean compiled = isCompiled();
         ApplicationManager.getApplication().invokeLater(() -> {
           myFilterButtonEnabled = compiled;
-          final List<String> variables = getSearchVariables();
-          if (!variables.isEmpty()) {
-            variables.add(SSRBundle.message("complete.match.variable.name"));
-            myTargetComboBox.setItems(variables);
-            myTargetComboBox.setEnabled(true);
-            final MatchOptions options = myConfiguration.getMatchOptions();
-            for (String variable : variables) {
-              final MatchVariableConstraint constraint = options.getVariableConstraint(variable);
-              if (constraint != null && constraint.isPartOfSearchResults()) {
-                myTargetComboBox.setSelectedItem(variable);
-                break;
-              }
-            }
-          }
-          else {
-            myTargetComboBox.setEnabled(false);
-          }
+          setSearchTargets(myConfiguration.getMatchOptions());
           getOKAction().setEnabled(valid);
         });
       }
@@ -277,12 +261,11 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void detectFileType() {
-    final PsiFile file = mySearchContext.getFile();
-    PsiElement context = file;
+    PsiElement context = mySearchContext.getFile();
 
     final Editor editor = mySearchContext.getEditor();
-    if (editor != null) {
-      context = file.findElementAt(editor.getCaretModel().getOffset());
+    if (editor != null && context != null) {
+      context = context.findElementAt(editor.getCaretModel().getOffset());
       if (context != null) {
         context = context.getParent();
       }
@@ -361,8 +344,8 @@ public class StructuralSearchDialog extends DialogWrapper {
     myScopePanel = new ScopePanel(getProject());
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeCallback(() -> {
-        if (myScopePanel.getScope() == null) {
+      myScopePanel.setScopeConsumer(scope -> {
+        if (scope == null) {
           getOKAction().setEnabled(false);
         }
         else {
@@ -379,6 +362,12 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
+    myTargetComboBox.setItemConsumer(item -> {
+      final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+      for (String name : matchOptions.getVariableConstraintNames()) {
+        matchOptions.getVariableConstraint(name).setPartOfSearchResults(name.equals(item));
+      }
+    });
 
     final JPanel centerPanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(centerPanel);
@@ -618,21 +607,15 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private List<String> getVariablesFromListeners() {
-    final List<String> result = getSearchVariables();
+    final List<String> result = getVarsFrom(mySearchCriteriaEdit.getEditor());
     if (myReplace) {
-      final Editor editor = myReplaceCriteriaEdit.getEditor();
-      for (String var : getVarsFrom(editor)) {
+      for (String var : getVarsFrom(myReplaceCriteriaEdit.getEditor())) {
         if (!result.contains(var)) {
           result.add(var + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
         }
       }
     }
     return result;
-  }
-
-  @NotNull
-  private List<String> getSearchVariables() {
-    return getVarsFrom(mySearchCriteriaEdit.getEditor());
   }
 
   private static List<String> getVarsFrom(Editor editor) {
@@ -643,7 +626,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     return (handler == null) ? new SmartList<>() : new ArrayList<>(handler.getVariables());
   }
 
-  public final Project getProject() {
+  private Project getProject() {
     return mySearchContext.getProject();
   }
 
@@ -789,20 +772,30 @@ public class StructuralSearchDialog extends DialogWrapper {
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
   }
 
-  public void loadConfiguration(Configuration configuration) {
-    myConfiguration = createConfiguration(configuration);
-    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+  private void setSearchTargets(MatchOptions matchOptions) {
     final List<String> names = new ArrayList<>(matchOptions.getVariableConstraintNames());
     names.remove(Configuration.CONTEXT_VAR_NAME);
     names.add(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItems(names);
-    for (String name : names) {
-      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
-      if (constraint != null && constraint.isPartOfSearchResults()) {
-        myTargetComboBox.setSelectedItem(name);
-        break;
+    if (names.size() > 1) {
+      myTargetComboBox.setEnabled(true);
+      for (String name : names) {
+        final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+        if (constraint != null && constraint.isPartOfSearchResults()) {
+          myTargetComboBox.setSelectedItem(name);
+          break;
+        }
       }
     }
+    else {
+      myTargetComboBox.setEnabled(false);
+    }
+  }
+
+  public void loadConfiguration(Configuration configuration) {
+    myConfiguration = createConfiguration(configuration);
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    setSearchTargets(matchOptions);
     final SearchScope scope = matchOptions.getScope();
     if (scope != null) {
       myScopePanel.setScope(scope);

@@ -28,10 +28,6 @@ public class CreateGetterOrSetterTest extends LightQuickFixParameterizedTestCase
     enableInspectionTool(new UnusedDeclarationInspection());
   }
 
-  public void test() {
-    doAllTests();
-  }
-
 
   @Override
   protected String getBasePath() {

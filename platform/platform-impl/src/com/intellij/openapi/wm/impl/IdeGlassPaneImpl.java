@@ -356,8 +356,7 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   private boolean canProcessCursorFor(Component target) {
-    if (target instanceof JMenu ||
-        target instanceof JMenuItem ||
+    if (target instanceof JMenuItem ||
         target instanceof Divider ||
         target instanceof JSeparator ||
         (target instanceof JEditorPane && ((JEditorPane)target).getEditorKit() instanceof HTMLEditorKit)) {

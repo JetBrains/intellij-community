@@ -144,18 +144,16 @@ open class GuiTestRunner internal constructor(open val runner: GuiTestRunnerInte
         eachNotifier.addFailure(throwable)
       }
       Type.FINISHED -> {
-        testIsRunning1 = processTestFinished(eachNotifier, testIsRunning1)
+        testIsRunning1 = processTestFinished(eachNotifier)
       }
       else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
     }
     return testIsRunning1
   }
 
-  protected open fun processTestFinished(eachNotifier: EachTestNotifier,
-                                         testIsRunning1: Boolean): Boolean {
-    var testIsRunning11 = testIsRunning1
-    eachNotifier.fireTestFinished(); testIsRunning11 = false
-    return testIsRunning11
+  protected open fun processTestFinished(eachNotifier: EachTestNotifier): Boolean {
+    eachNotifier.fireTestFinished()
+    return false
   }
 
   protected fun getIdeFromMethod(method: FrameworkMethod): Ide {

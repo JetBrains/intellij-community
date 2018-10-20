@@ -29,25 +29,25 @@ private fun canActivateOnStart(id: String?): Boolean {
 class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   companion object {
     internal const val TAG = "window_info"
-    const val DEFAULT_WEIGHT: Float = 0.33f
+    const val DEFAULT_WEIGHT = 0.33f
   }
 
   @get:Transient
-  var isRegistered: Boolean = false
+  var isRegistered = false
 
-  override var isActive: Boolean by property(false)
+  override var isActive by property(false)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
-  override var anchor: ToolWindowAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
+  override var anchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
   @get:Attribute("auto_hide")
-  override var isAutoHide: Boolean by property(false)
+  override var isAutoHide by property(false)
 
   /**
    * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  override var floatingBounds: Rectangle? by property<Rectangle?>()
+  override var floatingBounds by property<Rectangle?>(null) { it == null || (it.width == 0 && it.height == 0 && it.x == 0 && it.y == 0) }
 
   /**
    * ID of the tool window
@@ -65,10 +65,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override var type: ToolWindowType by property(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
-  var isVisible: Boolean by property(false)
+  var isVisible by property(false)
 
   @get:Attribute("show_stripe_button")
-  override var isShowStripeButton: Boolean by property(true)
+  override var isShowStripeButton by property(true)
 
   /**
    * Internal weight of tool window. "weight" means how much of internal desktop
@@ -80,7 +80,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   var sideWeight: Float by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
 
   @get:Attribute("side_tool")
-  override var isSplit: Boolean by property(false)
+  override var isSplit by property(false)
 
   @get:Attribute("content_ui", converter = ContentUiTypeConverter::class)
   override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED) { it == ToolWindowContentUiType.TABBED }

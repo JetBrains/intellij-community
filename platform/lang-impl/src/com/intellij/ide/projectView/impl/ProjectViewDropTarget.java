@@ -374,7 +374,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
     @Override
     public boolean shouldDelegateToParent(@NotNull TreePath[] sources, @NotNull TreePath target) {
       PsiElement psiElement = getPsiElement(target);
-      return psiElement == null || !(psiElement instanceof PsiDirectoryContainer) && !(psiElement instanceof PsiDirectory);
+      return !(psiElement instanceof PsiDirectoryContainer) && !(psiElement instanceof PsiDirectory);
     }
 
     @Override

@@ -36,6 +36,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.uast.*;
 
 import java.util.*;
 
@@ -167,64 +168,64 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
   }
 
-  private static boolean isExternalizableNoParameterConstructor(@NotNull PsiMethod method, RefClass refClass) {
+  private static boolean isExternalizableNoParameterConstructor(@NotNull UMethod method, RefClass refClass) {
     if (!method.isConstructor()) return false;
-    if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
-    final PsiParameterList parameterList = method.getParameterList();
+    if (method.getVisibility() != UastVisibility.PUBLIC) return false;
+    final List<UParameter> parameterList = method.getUastParameters();
     if (!parameterList.isEmpty()) return false;
-    final PsiClass aClass = method.getContainingClass();
+    final UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return aClass == null || isExternalizable(aClass, refClass);
   }
 
-  private static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
+  private static boolean isSerializationImplicitlyUsedField(@NotNull UField field) {
     final String name = field.getName();
     if (!HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
-    if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = field.getContainingClass();
+    if (!field.isStatic()) return false;
+    UClass aClass = UDeclarationKt.getContainingDeclaration(field, UClass.class);
     return aClass == null || isSerializable(aClass, null);
   }
 
-  private static boolean isWriteObjectMethod(@NotNull PsiMethod method, RefClass refClass) {
+  private static boolean isWriteObjectMethod(@NotNull UMethod method, RefClass refClass) {
     final String name = method.getName();
     if (!"writeObject".equals(name)) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-    if (!equalsToText(parameters[0].getType(), "java.io.ObjectOutputStream")) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
+    List<UParameter> parameters = method.getUastParameters();
+    if (parameters.size() != 1) return false;
+    if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectOutputStream")) return false;
+    if (method.isStatic()) return false;
+    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadObjectMethod(@NotNull PsiMethod method, RefClass refClass) {
+  private static boolean isReadObjectMethod(@NotNull UMethod method, RefClass refClass) {
     final String name = method.getName();
     if (!"readObject".equals(name)) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 1) return false;
-    if (!equalsToText(parameters[0].getType(), "java.io.ObjectInputStream")) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
+    List<UParameter> parameters = method.getUastParameters();
+    if (parameters.size() != 1) return false;
+    if (!equalsToText(parameters.get(0).getType(), "java.io.ObjectInputStream")) return false;
+    if (method.isStatic()) return false;
+    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isWriteReplaceMethod(@NotNull PsiMethod method, RefClass refClass) {
+  private static boolean isWriteReplaceMethod(@NotNull UMethod method, RefClass refClass) {
     final String name = method.getName();
     if (!"writeReplace".equals(name)) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) return false;
+    List<UParameter> parameters = method.getUastParameters();
+    if (parameters.size() != 0) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    PsiClass aClass = method.getContainingClass();
+    if (method.isStatic()) return false;
+    UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
-  private static boolean isReadResolveMethod(@NotNull PsiMethod method, RefClass refClass) {
+  private static boolean isReadResolveMethod(@NotNull UMethod method, RefClass refClass) {
     final String name = method.getName();
     if (!"readResolve".equals(name)) return false;
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    if (parameters.length != 0) return false;
+    List<UParameter> parameters = method.getUastParameters();
+    if (parameters.size() != 0) return false;
     if (!equalsToText(method.getReturnType(), CommonClassNames.JAVA_LANG_OBJECT)) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    final PsiClass aClass = method.getContainingClass();
+    if (method.isStatic()) return false;
+    final UClass aClass = UDeclarationKt.getContainingDeclaration(method, UClass.class);
     return !(aClass != null && !isSerializable(aClass, refClass));
   }
 
@@ -232,24 +233,26 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return type != null && type.equalsToText(text);
   }
 
-  private static boolean isSerializable(PsiClass aClass, @Nullable RefClass refClass) {
-    final PsiClass serializableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
+  private static boolean isSerializable(UClass aClass, @Nullable RefClass refClass) {
+    PsiClass psi = aClass.getPsi();
+    final PsiClass serializableClass = JavaPsiFacade.getInstance(psi.getProject()).findClass("java.io.Serializable", psi.getResolveScope());
     return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
   }
 
-  private static boolean isExternalizable(@NotNull PsiClass aClass, RefClass refClass) {
-    final GlobalSearchScope scope = aClass.getResolveScope();
-    final PsiClass externalizableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Externalizable", scope);
+  private static boolean isExternalizable(@NotNull UClass aClass, RefClass refClass) {
+    PsiClass psi = aClass.getPsi();
+    final PsiClass externalizableClass = JavaPsiFacade.getInstance(psi.getProject()).findClass("java.io.Externalizable", psi.getResolveScope());
     return externalizableClass != null && isSerializable(aClass, refClass, externalizableClass);
   }
 
-  private static boolean isSerializable(PsiClass aClass, RefClass refClass, PsiClass serializableClass) {
+  private static boolean isSerializable(UClass aClass, RefClass refClass, PsiClass serializableClass) {
     if (aClass == null) return false;
-    if (aClass.isInheritor(serializableClass, true)) return true;
+    if (aClass.getJavaPsi().isInheritor(serializableClass, true)) return true;
     if (refClass != null) {
       final Set<RefClass> subClasses = refClass.getSubClasses();
       for (RefClass subClass : subClasses) {
-        if (isSerializable(subClass.getElement(), subClass, serializableClass)) return true;
+        //TODO reimplement
+        if (isSerializable(subClass.getUastElement(), subClass, serializableClass)) return true;
       }
     }
     return false;
@@ -303,7 +306,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             }
 
             private void findExternalClassReferences(final RefClass refElement) {
-              final PsiClass psiClass = refElement.getElement();
+              final UClass psiClass = refElement.getUastElement();
               String qualifiedName = psiClass != null ? psiClass.getQualifiedName() : null;
               if (qualifiedName != null) {
                 final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(globalContext.getProject());
@@ -339,7 +342,13 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   public boolean isEntryPoint(@NotNull RefElement owner) {
-    final PsiElement element = owner.getElement();
+    PsiElement element = owner.getPsiElement();
+    if (owner instanceof RefJavaElement) {
+      UElement uElement = ((RefJavaElement)owner).getUastElement();
+      if (uElement != null) {
+        element = uElement.getJavaPsi();
+      }
+    }
     if (RefUtil.isImplicitUsage(element)) return true;
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(element.getProject());
@@ -460,8 +469,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             @Override
             public void visitField(@NotNull final RefField refField) {
               myProcessedSuspicious.add(refField);
-              PsiField psiField = refField.getElement();
-              if (psiField != null && isSerializationImplicitlyUsedField(psiField)) {
+              UField uField = refField.getUastElement();
+              if (uField != null && isSerializationImplicitlyUsedField(uField)) {
                 getEntryPointsManager(globalContext).addEntryPoint(refField, false);
               }
               else {
@@ -480,8 +489,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                 visitClass(refMethod.getOwnerClass());
               }
               else {
-                PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
-                if (psiMethod != null && isSerializablePatternMethod(psiMethod, refMethod.getOwnerClass())) {
+                UMethod uMethod = (UMethod)refMethod.getUastElement();
+                if (uMethod != null && isSerializablePatternMethod(uMethod, refMethod.getOwnerClass())) {
                   getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
@@ -527,7 +536,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return true;
   }
 
-  private static boolean isSerializablePatternMethod(@NotNull PsiMethod psiMethod, RefClass refClass) {
+  private static boolean isSerializablePatternMethod(@NotNull UMethod psiMethod, RefClass refClass) {
     return isReadObjectMethod(psiMethod, refClass) || isWriteObjectMethod(psiMethod, refClass) || isReadResolveMethod(psiMethod, refClass) ||
            isWriteReplaceMethod(psiMethod, refClass) || isExternalizableNoParameterConstructor(psiMethod, refClass);
   }
@@ -598,7 +607,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
             addInstantiatedClass(method.getOwnerClass());
           }
           else {
-            ((RefClassImpl)method.getOwnerClass()).setReachable(true);
+            ((RefElementImpl)method.getOwner()).setReachable(true);
           }
           myProcessedMethods.add(method);
           makeContentReachable((RefJavaElementImpl)method);
@@ -662,9 +671,11 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       }
     }
 
-    private void makeClassInitializersReachable(RefClass refClass) {
-      for (RefElement refCallee : refClass.getOutReferences()) {
-        refCallee.accept(this);
+    private void makeClassInitializersReachable(@Nullable RefClass refClass) {
+      if (refClass != null) {
+        for (RefElement refCallee : refClass.getOutReferences()) {
+          refCallee.accept(this);
+        }
       }
     }
 
@@ -678,7 +689,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     private boolean isClassInstantiated(RefClass refClass) {
-      return myInstantiatedClasses.contains(refClass);
+      return refClass == null || refClass.isUtilityClass() || myInstantiatedClasses.contains(refClass);
     }
 
     private int newlyInstantiatedClassesCount() {
