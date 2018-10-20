@@ -132,16 +132,13 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
   public String getIdeGrouping() {
     ModuleData data = getData();
     if (data == null) return null;
-    String internalName = StringUtil.nullize(data.getInternalName());
-    String parentGrouping = getIdeParentGrouping();
-    if (parentGrouping == null) return internalName;
-    return StringUtil.join(parentGrouping, ".", internalName);
+    return data.getIdeGrouping();
   }
 
   @Nullable
   public String getIdeParentGrouping() {
     ModuleData data = getData();
     if (data == null) return null;
-    return StringUtil.nullize(data.getGroup());
+    return data.getIdeParentGrouping();
   }
 }

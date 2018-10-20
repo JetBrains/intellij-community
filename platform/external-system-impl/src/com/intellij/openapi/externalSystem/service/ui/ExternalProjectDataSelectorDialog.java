@@ -311,6 +311,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private Couple<CheckedTreeNode> createRoot() {
     final Map<DataNode, DataNodeCheckedTreeNode> treeNodeMap = ContainerUtil.newIdentityTroveMap();
+    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newHashMap();
 
     final DataNodeCheckedTreeNode[] preselectedNode = {null};
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
@@ -328,7 +329,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     final int[] modulesCount = {0};
 
-    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), node -> {
+    ExternalSystemApiUtil.visitChildrenFirst(myProjectInfo.getExternalProjectStructure(), node -> {
       final Key key = node.getKey();
       if (!myPublicKeys.contains(key)) return;
 
@@ -353,20 +354,31 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
           preselectedNode[0] = treeNode;
         }
+        DataNode parent = node.getParent();
         if (node.getData() instanceof ModuleData) {
-          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
+          ModuleData moduleData = (ModuleData)node.getData();
+          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
             rootModuleNode[0] = treeNode;
           }
+          String ideGrouping = moduleData.getIdeGrouping();
+          if (ideGrouping != null) {
+            ideGroupingMap.put(ideGrouping, node);
+          }
+          String ideParentGrouping = moduleData.getIdeParentGrouping();
+          DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
+          if (structuralParent != null) {
+            parent = structuralParent;
+          }
         }
-        treeNode.setEnabled(myIgnorableKeys.contains(key));
-        treeNodeMap.put(node, treeNode);
-        final DataNode parent = node.getParent();
         if (parent != null) {
           final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
           if (parentTreeNode != null) {
             parentTreeNode.add(treeNode);
           }
         }
+        treeNode.setEnabled(myIgnorableKeys.contains(key));
+        treeNodeMap.put(node, treeNode);
+
       }
     });
 

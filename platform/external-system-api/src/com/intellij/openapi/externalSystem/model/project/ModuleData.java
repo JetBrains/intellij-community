@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -221,6 +222,19 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
       myProperties = ContainerUtil.newHashMap();
     }
     myProperties.put(key, value);
+  }
+
+  @Nullable
+  public String getIdeGrouping() {
+    String internalName = StringUtil.nullize(getInternalName());
+    String parentGrouping = getIdeParentGrouping();
+    if (parentGrouping == null) return internalName;
+    return StringUtil.join(parentGrouping, ".", internalName);
+  }
+
+  @Nullable
+  public String getIdeParentGrouping() {
+    return StringUtil.nullize(getGroup());
   }
 
   @Override
