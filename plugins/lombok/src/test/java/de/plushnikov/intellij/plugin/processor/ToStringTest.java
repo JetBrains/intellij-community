@@ -19,6 +19,10 @@ public class ToStringTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testTostring$ToStringExplicitInclude() {
+    doTest(true);
+  }
+
   public void testTostring$ToStringInner() {
     doTest(true);
   }

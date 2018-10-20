@@ -35,7 +35,7 @@ class EqualsAndHashCodeSimpleOf {
         return a;
     }
 
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (o == this) return true;
         if (!(o instanceof EqualsAndHashCodeSimpleOf)) return false;
         final EqualsAndHashCodeSimpleOf other = (EqualsAndHashCodeSimpleOf) o;
@@ -44,14 +44,14 @@ class EqualsAndHashCodeSimpleOf {
         return true;
     }
 
+    protected boolean canEqual(final Object other) {
+    return other instanceof EqualsAndHashCodeSimpleOf;
+  }
+
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
         result = result * PRIME + this.getX();
         return result;
-    }
-
-    protected boolean canEqual(Object other) {
-        return other instanceof EqualsAndHashCodeSimpleOf;
     }
 }

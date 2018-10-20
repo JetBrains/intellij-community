@@ -23,6 +23,10 @@ public class EqualsAndHashCodeTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testEqualsandhashcode$EqualsAndHashCodeExplicitInclude() {
+    doTest(true);
+  }
+
   public void testEqualsandhashcode$EqualsAndHashCodeNestedShadow() {
     doTest(true);
   }

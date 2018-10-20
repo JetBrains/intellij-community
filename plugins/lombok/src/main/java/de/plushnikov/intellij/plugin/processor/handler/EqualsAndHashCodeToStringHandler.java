@@ -23,34 +23,45 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 public class EqualsAndHashCodeToStringHandler {
-  public static class MemberInfo {
+
+  private static final String TO_STRING_RANK_ANNOTATION_PARAMETER = "rank";
+
+  public static class MemberInfo implements Comparable<MemberInfo> {
     private final PsiField psiField;
     private final PsiMethod psiMethod;
     private final String memberName;
     private final boolean defaultInclude;
+    private final int rankValue;
 
     MemberInfo(PsiField psiField) {
       this(psiField, psiField.getName(), false);
     }
 
-    MemberInfo(PsiField psiField, String memberName) {
-      this(psiField, memberName, false);
+    MemberInfo(PsiField psiField, String memberName, int rankValue) {
+      this(psiField, memberName, false, rankValue);
     }
 
     MemberInfo(PsiField psiField, String memberName, boolean defaultInclude) {
+      this(psiField, memberName, defaultInclude, 0);
+    }
+
+    private MemberInfo(PsiField psiField, String memberName, boolean defaultInclude, int rankValue) {
       this.psiField = psiField;
       this.psiMethod = null;
       this.memberName = memberName;
       this.defaultInclude = defaultInclude;
+      this.rankValue = rankValue;
     }
 
-    MemberInfo(PsiMethod psiMethod, String memberName) {
+    MemberInfo(PsiMethod psiMethod, String memberName, int rankValue) {
       this.psiField = null;
       this.psiMethod = psiMethod;
       this.memberName = memberName;
       this.defaultInclude = false;
+      this.rankValue = rankValue;
     }
 
     public PsiField getField() {
@@ -78,6 +89,11 @@ public class EqualsAndHashCodeToStringHandler {
       }
       return false;
     }
+
+    @Override
+    public int compareTo(@NotNull MemberInfo other) {
+      return Integer.compare(other.rankValue, rankValue);
+    }
   }
 
   public Collection<MemberInfo> filterFields(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean filterTransient, String includeAnnotationProperty) {
@@ -102,7 +118,7 @@ public class EqualsAndHashCodeToStringHandler {
     final Collection<PsiMember> psiMembers = PsiClassUtil.collectClassMemberIntern(psiClass);
 
     final Collection<String> fieldNames2BeReplaced = new ArrayList<>();
-    final Collection<MemberInfo> result = new ArrayList<>(psiMembers.size());
+    final List<MemberInfo> result = new ArrayList<>(psiMembers.size());
 
     for (PsiMember psiMember : psiMembers) {
       final PsiAnnotation includeAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMember, annotationIncludeFQN);
@@ -144,22 +160,24 @@ public class EqualsAndHashCodeToStringHandler {
         }
         result.add(new MemberInfo(psiField, fieldName, true));
       } else {
-        final String annotationValue = PsiAnnotationUtil.getStringAnnotationValue(includeAnnotation, includeAnnotationProperty);
+        final String includeNameValue = PsiAnnotationUtil.getStringAnnotationValue(includeAnnotation, includeAnnotationProperty);
         final String newMemberName;
-        if (StringUtil.isEmptyOrSpaces(annotationValue)) {
+        if (StringUtil.isEmptyOrSpaces(includeNameValue)) {
           newMemberName = psiMember.getName();
         } else {
-          newMemberName = annotationValue;
+          newMemberName = includeNameValue;
         }
 
         if ((psiMember instanceof PsiMethod)) {
           final PsiMethod psiMethod = (PsiMethod) psiMember;
           if (0 == psiMethod.getParameterList().getParametersCount()) {
             fieldNames2BeReplaced.add(newMemberName);
-            result.add(new MemberInfo(psiMethod, psiMethod.getName()));
+            int memberRank = calcMemberRank(includeAnnotation);
+            result.add(new MemberInfo(psiMethod, psiMethod.getName(), memberRank));
           }
         } else {
-          result.add(new MemberInfo((PsiField) psiMember, newMemberName));
+          int memberRank = calcMemberRank(includeAnnotation);
+          result.add(new MemberInfo((PsiField) psiMember, newMemberName, memberRank));
         }
       }
     }
@@ -169,7 +187,19 @@ public class EqualsAndHashCodeToStringHandler {
       result.removeIf(memberInfo -> memberInfo.matchDefaultIncludedFieldName(fieldName));
     }
 
+    result.sort(MemberInfo::compareTo);
     return result;
+  }
+
+  private int calcMemberRank(@NotNull PsiAnnotation includeAnnotation) {
+    final String includeRankValue = PsiAnnotationUtil.getStringAnnotationValue(includeAnnotation, TO_STRING_RANK_ANNOTATION_PARAMETER);
+    if (!StringUtil.isEmptyOrSpaces(includeRankValue)) {
+      try {
+        return Integer.parseInt(includeRankValue);
+      } catch (NumberFormatException ignore) {
+      }
+    }
+    return 0;
   }
 
   public String getMemberAccessorName(@NotNull MemberInfo memberInfo, boolean doNotUseGetters, @NotNull PsiClass psiClass) {
@@ -204,7 +234,8 @@ public class EqualsAndHashCodeToStringHandler {
   private Collection<String> makeSet(@NotNull Collection<String> exclude) {
     if (exclude.isEmpty()) {
       return Collections.emptySet();
+    } else {
+      return new HashSet<>(exclude);
     }
-    return new HashSet<>(exclude);
   }
 }

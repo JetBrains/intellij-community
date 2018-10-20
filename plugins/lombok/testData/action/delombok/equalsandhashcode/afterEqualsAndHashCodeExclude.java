@@ -35,7 +35,7 @@ class EqualsAndHashCodeSimpleExclude {
         return a;
     }
 
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (o == this) return true;
         if (!(o instanceof EqualsAndHashCodeSimpleExclude)) return false;
         final EqualsAndHashCodeSimpleExclude other = (EqualsAndHashCodeSimpleExclude) o;
@@ -51,6 +51,10 @@ class EqualsAndHashCodeSimpleExclude {
         return true;
     }
 
+    protected boolean canEqual(final Object other) {
+    return other instanceof EqualsAndHashCodeSimpleExclude;
+  }
+
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -63,9 +67,5 @@ class EqualsAndHashCodeSimpleExclude {
         final Object $a = this.getA();
         result = result * PRIME + ($a == null ? 43 : $a.hashCode());
         return result;
-    }
-
-    protected boolean canEqual(Object other) {
-        return other instanceof EqualsAndHashCodeSimpleExclude;
     }
 }
