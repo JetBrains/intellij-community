@@ -130,6 +130,7 @@ Developed By
 - [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
+- [**@Lekanich** Aleksandr Lekanich](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
 - [**@ruurd** Ruurd Pels](https://github.com/ruurd)
