@@ -124,16 +124,6 @@ public class TerminalView {
       }
     });
 
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        final ContentManager contentManager = myToolWindow.getContentManager();
-        for (Content tab : contentManager.getContents()) {
-          Disposer.dispose(tab);
-        }
-      }
-    });
-
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer(myToolWindow);
       Disposer.register(myProject, myDockContainer);
