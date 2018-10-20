@@ -33,6 +33,14 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
 
   //<editor-fold desc="Handling of makeFinal and @NonFinal">
 
+  public void testFieldDefaultsStaticFinal() {
+
+    PsiModifierList modifierList = getFieldModifierListAtCaret();
+
+    assertFalse("@FieldDefaults(makeFinal = true) should not make static field final", modifierList.hasModifierProperty(PsiModifier.FINAL));
+    assertTrue("@FieldDefaults(makeFinal = true) should keep static field package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+  }
+
   public void testFieldDefaultsFinal() {
 
     PsiModifierList modifierList = getFieldModifierListAtCaret();
@@ -59,6 +67,15 @@ public class FieldDefaultsModifierTest extends LightCodeInsightFixtureTestCase {
   //</editor-fold>
 
   //<editor-fold desc="Handling of visibility modifiers">
+
+  public void testFieldDefaultsStaticPrivate() {
+
+    PsiModifierList modifierList = getFieldModifierListAtCaret();
+
+    assertFalse("@FieldDefaults should not make static field private", modifierList.hasModifierProperty(PsiModifier.PRIVATE));
+    assertTrue("@FieldDefaults should keep static field package local", modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL));
+  }
+
 
   public void testFieldDefaultsNone() {
 

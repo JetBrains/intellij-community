@@ -43,6 +43,9 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
 
   @Override
   public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+    if (modifiers.contains(PsiModifier.STATIC)) {
+      return; // skip static fields
+    }
 
     PsiClass searchableClass = PsiTreeUtil.getParentOfType(modifierList, PsiClass.class, true);
     if (searchableClass == null) {
@@ -54,7 +57,7 @@ public class FieldDefaultsModifierProcessor implements ModifierProcessor {
       return; // Should not get here, but safer to check
     }
 
-    PsiField parentElement = (PsiField) modifierList.getParent();
+    final PsiField parentElement = (PsiField) modifierList.getParent();
 
     // FINAL
     // Is @FieldDefaults(makeFinal = true)?

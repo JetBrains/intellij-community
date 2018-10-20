@@ -47,4 +47,15 @@ public class ValueModifierTest extends LightCodeInsightFixtureTestCase {
     assertFalse("@Value should not make class private", list.hasModifierProperty(PsiModifier.PRIVATE));
     assertFalse("@Value should not make class static", list.hasModifierProperty(PsiModifier.STATIC));
   }
+
+  public void testValueModifiersStatic() {
+    PsiFile file = myFixture.configureByFile(getTestName(false) + ".java");
+
+    PsiField field = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiField.class);
+    assertNotNull(field);
+    assertNotNull(field.getModifierList());
+
+    assertFalse("@Value should not make static variable final", field.getModifierList().hasModifierProperty(PsiModifier.FINAL));
+    assertFalse("@Value should not make static variable private", field.getModifierList().hasModifierProperty(PsiModifier.PRIVATE));
+  }
 }

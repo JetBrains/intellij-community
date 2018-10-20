@@ -35,6 +35,9 @@ public class ValueModifierProcessor implements ModifierProcessor {
 
   @Override
   public void transformModifiers(@NotNull PsiModifierList modifierList, @NotNull final Set<String> modifiers) {
+    if (modifiers.contains(PsiModifier.STATIC)) {
+      return; // skip static fields
+    }
 
     final PsiModifierListOwner parentElement = PsiTreeUtil.getParentOfType(modifierList, PsiModifierListOwner.class, false);
     if (null != parentElement) {

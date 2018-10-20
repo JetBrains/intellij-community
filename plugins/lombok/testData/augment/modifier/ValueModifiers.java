@@ -1,5 +1,5 @@
 @lombok.Value
-public class ValueExample {
+public class ValueModifiers {
 
   String name<caret>;
 }
