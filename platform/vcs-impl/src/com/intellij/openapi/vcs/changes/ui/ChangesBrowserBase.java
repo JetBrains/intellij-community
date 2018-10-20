@@ -249,12 +249,12 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   public boolean canShowDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     return ContainerUtil.exists(selection.getList(), entry -> getDiffRequestProducer(entry) != null);
   }
 
   public void showDiff() {
-    ListSelection<Object> selection = VcsTreeModelData.getListSelection(myViewer);
+    ListSelection<Object> selection = VcsTreeModelData.getListSelectionOrAll(myViewer);
     ListSelection<ChangeDiffRequestChain.Producer> producers = selection.map(this::getDiffRequestProducer);
     DiffRequestChain chain = new ChangeDiffRequestChain(producers.getList(), producers.getSelectedIndex());
     updateDiffContext(chain);
