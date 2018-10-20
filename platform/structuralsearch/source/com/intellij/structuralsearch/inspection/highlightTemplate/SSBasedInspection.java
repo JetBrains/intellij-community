@@ -20,6 +20,7 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author cdr
@@ -36,7 +40,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
   static final String SHORT_NAME = "SSBasedInspection";
-  private final List<Configuration> myConfigurations = new ArrayList<>();
+  private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
   final Set<String> myProblemsReported = new HashSet<>(1);
 
   @Override
