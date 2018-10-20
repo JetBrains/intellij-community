@@ -16,7 +16,7 @@ internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private v
     return doExecute(commandLine)
   }
 
-  // http://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
+  // https://git.gnupg.org/cgi-bin/gitweb.cgi?p=gnupg.git;a=blob_plain;f=doc/DETAILS
   // https://delim.co/#
   override fun listSecretKeys(): String {
     val commandLine = createCommandLine()

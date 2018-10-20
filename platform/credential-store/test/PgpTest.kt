@@ -3,7 +3,6 @@ package com.intellij.credentialStore
 
 import com.intellij.credentialStore.gpg.GpgToolWrapper
 import com.intellij.credentialStore.gpg.Pgp
-import com.intellij.credentialStore.gpg.PgpKey
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.exists
@@ -17,29 +16,36 @@ internal class PgpTest {
   fun `list keys`() {
     val pgp = Pgp(object : GpgToolWrapper {
       override fun listSecretKeys(): String {
-              return """
-                sec:u:4096:1:4A80F49A4F310160:1488277734:::u:::scESC:::+:::23::0:
-                fpr:::::::::59B9F2A7746C72782F769DF14A80F49A4F310160:
-                grp:::::::::17BD0839039245C34F1D6F4E19AF1D3A6096F875:
-                uid:u::::1488277734::461DC46F99FC4906DD8CFCAA7C807415AA613E99::Foo Bar <foo@example.com>::::::::::0:
-                ssb:u:4096:1:EE4C14DA445A73EF:1488277734::::::e:::+:::23:
-                fpr:::::::::4DFED9B767CBD7358D53F0E6EE4C14DA445A73EF:
-                grp:::::::::A1CAC786A8744EB623629FE13310F6B58219299A:
-                sec:u:4096:1:0CE777E8BE9477EF:1539670578:::u:::scESC:::+:::23::0:
-                fpr:::::::::815DCD20BECFE321EA37E67D0CE777E8BE9477EF:
-                grp:::::::::CB26AD8D61B30F34BC13F5678FEA8D5247980205:
-                uid:u::::1539670578::245790E6FDD162E381082973E71F54B6238A7E9C::test <test@example.com>::::::::::0:
-                ssb:u:4096:1:F678B66FEFDDA6CA:1539670578::::::e:::+:::23:
-                fpr:::::::::71F1746CE870050BC15D9424F678B66FEFDDA6CA:
-                grp:::::::::954970BF3D78156316E8AE8CB94955E3B4B2412A:
-              """.trimIndent()
-            }
+        return """
+          sec:u:4096:1:4A80F49A4F310160:1488277734:::u:::scESC:::+:::23::0:
+          fpr:::::::::59B9F2A7746C72782F769DF14A80F49A4F310160:
+          grp:::::::::17BD0839039245C34F1D6F4E19AF1D3A6096F875:
+          uid:u::::1488277734::461DC46F99FC4906DD8CFCAA7C807415AA613E99::Foo Bar <foo@example.com>::::::::::0:
+          ssb:u:4096:1:EE4C14DA445A73EF:1488277734::::::e:::+:::23:
+          fpr:::::::::4DFED9B767CBD7358D53F0E6EE4C14DA445A73EF:
+          grp:::::::::A1CAC786A8744EB623629FE13310F6B58219299A:
+          sec:u:4096:1:C9B8EC731170961F:1540025925:::u:::scESC:::+:::23::0:
+          fpr:::::::::D4F7247FF0F2C734D5A81BC1C9B8EC731170961F:
+          grp:::::::::6FB00F9FE5AAA4045051642AF58E1DA5B1F854B4:
+          uid:u::::1540025925::687269A34F90ADA2A69E7FED718BFF6612C5DBD2::test <test@example.com>::::::::::0:
+          ssb:u:4096:1:0C58EDCCDE1BAC09:1540025925::::::e:::+:::23:
+          fpr:::::::::A28E33BF31E44023B443B3980C58EDCCDE1BAC09:
+          grp:::::::::B77F0FD73A184F51665D781BBA1800200BE85579:
+          sec:u:4096:1:C4183F955D4DC0F1:1540025957:::u:::scSC:::+:::23::0:
+          fpr:::::::::5C50DFB0A46F59D2CA667A17C4183F955D4DC0F1:
+          grp:::::::::ED761CE5A962F8F12AF3484E054C7341A9E90CB4:
+          uid:u::::1540025957::4432B4FD5436B0CF942D7FE0B1A7C5403B8E20A1::test (without encryption) <test@foo.com>::::::::::0:
+          """.trimIndent()
+      }
 
       override fun encrypt(data: ByteArray, recipient: String) = throw UnsupportedOperationException()
 
       override fun decrypt(data: ByteArray) = throw UnsupportedOperationException()
     })
-    assertThat(pgp.listKeys()).containsExactly(PgpKey("4A80F49A4F310160", "Foo Bar <foo@example.com>"), PgpKey("0CE777E8BE9477EF", "test <test@example.com>"))
+    assertThat(pgp.listKeys().joinToString("\n")).isEqualTo("""
+      PgpKey(keyId=4A80F49A4F310160, userId=Foo Bar <foo@example.com>)
+      PgpKey(keyId=C9B8EC731170961F, userId=test <test@example.com>)
+    """.trimIndent())
   }
 
   @Test
