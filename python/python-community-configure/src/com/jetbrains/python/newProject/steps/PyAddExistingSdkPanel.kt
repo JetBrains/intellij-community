@@ -21,6 +21,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.associatedModulePath
 import java.awt.BorderLayout
 import java.awt.Component
 
@@ -65,7 +66,10 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    sdkChooserCombo = PythonSdkChooserCombo(project, module, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
+    val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null }
+    sdkChooserCombo = PythonSdkChooserCombo(project, module, sdksForNewProject, newProjectPath) {
+      it != null && it == preferredSdk
+    }.apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         putClientProperty("JButton.buttonType", null)
       }
