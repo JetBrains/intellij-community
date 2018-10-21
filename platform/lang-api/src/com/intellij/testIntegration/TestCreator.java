@@ -22,12 +22,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
 /**
- * Implementation of the extension are used on generating tests while navigation using GotoTestOrCodeAction
+ * Implementations of this extension are used on generating tests while navigation using GotoTestOrCodeAction. Should be registered in the plugin configuration under <code>testCreator</code> element.
  * <p>
  * To decorate creating test action consider implementing {@link ItemPresentation}
+ *
+ * <pre>
+ *   {@code
+ *   <testCreator language="MyLanguage" implementationClass="my.testcreator.TestCreatorImpl"/>
+ *   }
+ * </pre>
  */
 public interface TestCreator {
+
+  /**
+   * Should this action be available in this context?
+   */
   boolean isAvailable(Project project, Editor editor, PsiFile file);
 
+  /**
+   * Triggered when the user actually selects the "Create New Test..." action. Responsible for actually creating the test file.
+   */
   void createTest(Project project, Editor editor, PsiFile file);
 }
