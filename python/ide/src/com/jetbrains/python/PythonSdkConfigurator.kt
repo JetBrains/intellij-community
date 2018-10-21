@@ -44,7 +44,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   override fun configureProject(project: Project?, baseDir: VirtualFile, moduleRef: Ref<Module>?) {
-    if (project == null || project.pythonSdk != null) {
+    if (project == null || project.pythonSdk != null || baseDir.children?.isEmpty() == false) {
       return
     }
     val module = ModuleManager.getInstance(project).modules.firstOrNull() ?: return
