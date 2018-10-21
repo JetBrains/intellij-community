@@ -2,7 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +13,8 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
 import java.util.Map;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,9 +54,46 @@ public class JBColor extends Color {
       @NotNull
       @Override
       public Color produce() {
-        return ObjectUtils.notNull(UIManager.getColor(propertyName), defaultColor);
+        Color color = notNull(findPatternMatch(propertyName),
+                              notNull(UIManager.getColor(propertyName), defaultColor));
+        if (UIManager.get(propertyName) == null) {
+          UIManager.put(propertyName, color);
+        }
+        return color;
       }
     });
+  }
+
+  // Let's find if namedColor can be overridden by *.propertyName rule in ui theme and apply it
+  // We need to cache calculated results. Cache and rules will be reset after LaF change
+  private static Color findPatternMatch(String name) {
+    Object value = UIManager.get("*");
+
+    if (value instanceof Map) {
+      Color color = null;
+      Map<?,?> map = (Map<?, ?>)value;
+      Object o = UIManager.get("*cache");
+      if (! (o instanceof Map)) {
+        o = new java.util.HashMap<String, Color>();
+        UIManager.put("*cache", o);
+      }
+      Map<String,Color> cache = (Map)o;
+      if (cache.containsKey(name)) {
+        return cache.get(name);
+      }
+      for (Map.Entry<?, ?> entry : map.entrySet()) {
+        if (entry.getKey() instanceof String && name.endsWith(((String)entry.getKey()))) {
+          Object result = map.get(entry.getKey());
+          if (result instanceof Color) {
+            color = (Color)result;
+            break;
+          }
+        }
+      }
+      cache.put(name, color);
+      return color;
+    }
+    return null;
   }
 
   @NotNull
