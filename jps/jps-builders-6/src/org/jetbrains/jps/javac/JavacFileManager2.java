@@ -2,11 +2,15 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,14 +25,28 @@ import java.util.*;
  * that proved to work faster in the context of JPS
  */
 class JavacFileManager2 extends JpsJavacFileManager {
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final boolean isWindows = _OS_NAME.startsWith("windows");
+  private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
+  private static final boolean isMac = _OS_NAME.startsWith("mac");
+  private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
 
-  private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
+  private final Collection<JavaSourceTransformer> mySourceTransformers;
+  private final FileOperations myFileOperations;
   @Nullable
   private String myEncodingName;
+  private final Function<File, JavaFileObject> myFileToInputFileObjectConverter = new Function<File, JavaFileObject>() {
+    @Override
+    public JavaFileObject fun(File file) {
+      return new InputFileObject(file, myEncodingName);
+    }
+  };
 
-  JavacFileManager2(Context context, Collection<? extends JavaSourceTransformer> transformers) {
+  JavacFileManager2(final Context context, Collection<JavaSourceTransformer> transformers) {
     super(context);
     mySourceTransformers = transformers;
+    // for future: a different implementation of file operations can be provided if necessary
+    myFileOperations = new DefaultFileOperations();
   }
 
   @Override
@@ -65,7 +83,14 @@ class JavacFileManager2 extends JpsJavacFileManager {
 
   @Override
   public String inferBinaryName(Location location, JavaFileObject file) {
-    return super.inferBinaryName(location, unwrapFileObject(file));
+    final JavaFileObject _fo = unwrapFileObject(file);
+    if (_fo instanceof JpsFileObject) {
+      final String inferred = ((JpsFileObject)_fo).inferBinaryName(getLocation(location), isFileSystemCaseSensitive);
+      if (inferred != null) {
+        return inferred;
+      }
+    }
+    return super.inferBinaryName(location, _fo);
   }
 
   @Override
@@ -74,23 +99,33 @@ class JavacFileManager2 extends JpsJavacFileManager {
   }
 
   @Override
-  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
-    return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromFiles(files));
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(final Iterable<? extends File> files) {
+    return wrapJavaFileObjects(JpsJavacFileManager.convert(files, new Function<File, JavaFileObject>() {
+      @Override
+      public JavaFileObject fun(File file) {
+        return new InputFileObject(file, myEncodingName);
+      }
+    }));
   }
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
-    return wrapJavaFileObjects(getStdManager().getJavaFileObjects(files));
+    return getJavaFileObjectsFromFiles(Arrays.asList(files));
   }
 
   @Override
-  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
-    return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromStrings(names));
+  public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(final Iterable<String> names) {
+    return getJavaFileObjectsFromFiles(JpsJavacFileManager.convert(names, new Function<String, File>() {
+      @Override
+      public File fun(String s) {
+        return new File(s);
+      }
+    }));
   }
 
   @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
-    return wrapJavaFileObjects(getStdManager().getJavaFileObjects(names));
+    return getJavaFileObjectsFromStrings(Arrays.asList(names));
   }
 
   @Override
@@ -125,31 +160,115 @@ class JavacFileManager2 extends JpsJavacFileManager {
     return fo;
   }
 
+  private static Set<StandardLocation> ourFSLocations = EnumSet.of(
+    StandardLocation.PLATFORM_CLASS_PATH,
+    StandardLocation.CLASS_OUTPUT,
+    StandardLocation.CLASS_PATH,
+    StandardLocation.SOURCE_OUTPUT,
+    StandardLocation.SOURCE_PATH,
+    StandardLocation.ANNOTATION_PROCESSOR_PATH
+  );
+  private static boolean isFileSystemLocation(Location location) {
+    try {
+      return ourFSLocations.contains(StandardLocation.valueOf(location.getName()));
+    }
+    catch (IllegalArgumentException ignored) {
+      return false; // assume 'unknown' location is a non-FS location
+    }
+  }
+
   @Override
-  public Iterable<JavaFileObject> list(Location location, String packageName, Set<JavaFileObject.Kind> kinds, boolean recurse) throws IOException {
-    final Iterable<JavaFileObject> objects = super.list(location, packageName, kinds, recurse);
-    //noinspection unchecked
-    return kinds.contains(JavaFileObject.Kind.SOURCE)? (Iterable<JavaFileObject>)wrapJavaFileObjects(objects) : objects;
-  }
-
-  private Iterable<? extends JavaFileObject> wrapJavaFileObjects(Iterable<? extends JavaFileObject> originalObjects) {
-    if (mySourceTransformers.isEmpty()) {
-      return originalObjects;
+  public Iterable<JavaFileObject> list(Location location, String packageName, final Set<JavaFileObject.Kind> kinds, final boolean recurse) throws IOException {
+    if (!isFileSystemLocation(location)) {
+      // locations, not supported by this class should be handled by default javac file manager
+      return super.list(location, packageName, kinds, recurse);
     }
-    List<JavaFileObject> wrapped = null;
-    for (JavaFileObject fo : originalObjects) {
-      if (wrapped == null) {
-        wrapped = new ArrayList<JavaFileObject>(); // lazy init
+    // we consider here only locations that are known to be file-based
+    final Iterable<? extends File> locationRoots = getLocation(location);
+    if (locationRoots == null) {
+      return Collections.emptyList();
+    }
+
+    final List<Iterable<JavaFileObject>> result = new ArrayList<Iterable<JavaFileObject>>();
+    for (File root : locationRoots) {
+      final boolean isFile;
+
+      FileOperations.Archive archive = myFileOperations.lookupArchive(root);
+      if (archive != null) {
+        isFile = true;
       }
-      wrapped.add(JavaFileObject.Kind.SOURCE.equals(fo.getKind())? new TransformableJavaFileObject(fo, mySourceTransformers) : fo);
+      else {
+        isFile = myFileOperations.isFile(root);
+      }
+
+      if (isFile) {
+        // Not a directory; either a file or non-existent, create the archive
+        try {
+          if (archive == null) {
+            archive = myFileOperations.openArchive(root, myEncodingName);
+          }
+          if (archive != null) {
+            result.add(archive.list(packageName.replace('.', '/'), kinds, recurse));
+          }
+          else {
+            // fallback to default implementation
+            result.add(super.list(location, packageName, kinds, recurse));
+          }
+        }
+        catch (IOException ex) {
+          throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
+        }
+      }
+      else {
+        // is a directory or does not exist
+        final File dir = new File(root, packageName.replace('.', '/'));
+        final BooleanFunction<File> filter = recurse?
+          new BooleanFunction<File>() {
+            @Override
+            public boolean fun(File file) {
+              return kinds.contains(getKind(file.getName()));
+            }
+          }:
+          new BooleanFunction<File>() {
+            final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
+            @Override
+            public boolean fun(File file) {
+              return kinds.contains(getKind(file.getName())) && (!acceptUnknownFiles || myFileOperations.isFile(file));
+            }
+          };
+        result.add(JpsJavacFileManager.convert(JpsJavacFileManager.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
+      }
     }
-    return wrapped != null? wrapped : originalObjects;
+    final Iterable<JavaFileObject> allFiles = JpsJavacFileManager.merge(result);
+    //noinspection unchecked
+    return kinds.contains(JavaFileObject.Kind.SOURCE) ? (Iterable<JavaFileObject>)wrapJavaFileObjects(allFiles) : allFiles;
   }
 
+  @Override
+  public void onOutputFileGenerated(File file) {
+    final File parent = file.getParentFile();
+    if (parent != null) {
+      myFileOperations.clearCaches(parent);
+    }
+  }
+
+  private Iterable<? extends JavaFileObject> wrapJavaFileObjects(final Iterable<? extends JavaFileObject> originalObjects) {
+    return mySourceTransformers.isEmpty()? originalObjects : JpsJavacFileManager.convert(originalObjects, new Function<JavaFileObject, JavaFileObject>() {
+      @Override
+      public JavaFileObject fun(JavaFileObject fo) {
+        return JavaFileObject.Kind.SOURCE.equals(fo.getKind())? new TransformableJavaFileObject(fo, mySourceTransformers) : fo;
+      }
+    });
+  }
+
+  private static Set<JavaFileObject.Kind> ourSourceOrClass = EnumSet.of(JavaFileObject.Kind.SOURCE, JavaFileObject.Kind.CLASS);
   @Override
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
-    final JavaFileObject fo = super.getJavaFileForInput(location, className, kind);
+    if (!ourSourceOrClass.contains(kind)) {
+      throw new IllegalArgumentException("Invalid kind: " + kind);
+    }
+    final JavaFileObject fo = super.getJavaFileForInput(location, className, kind); // todo
     if (fo == null && !"module-info".equals(className)) {
       // workaround javac bug (missing null-check): throwing exception here instead of returning null
       throw new FileNotFoundException("Java resource does not exist : " + location + '/' + kind + '/' + className);
@@ -291,4 +410,16 @@ class JavacFileManager2 extends JpsJavacFileManager {
       throw new CompilationCanceledException();
     }
   }
+
+  @Override
+  public void close() {
+    try {
+      super.close();
+    }
+    finally {
+      myFileOperations.clearCaches(null);
+    }
+  }
+
+
 }

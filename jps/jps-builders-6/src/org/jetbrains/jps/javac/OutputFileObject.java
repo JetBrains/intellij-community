@@ -21,14 +21,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.net.URI;
 
 /**
  * @author Eugene Zhuravlev
  */
-public final class OutputFileObject extends SimpleJavaFileObject {
+public final class OutputFileObject extends JpsFileObject {
   @Nullable
   private final JpsJavacFileManager.Context myContext;
   @Nullable
@@ -101,6 +101,12 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable
   public URI getSourceUri() {
     return mySourceUri;
+  }
+
+  @Override
+  @Nullable
+  protected String inferBinaryName(Iterable<? extends File> path, boolean caseSensitiveFS) {
+    return null; // this will cause FileManager to delegate to JVM implementation
   }
 
   @Override
