@@ -294,9 +294,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       def tmpTargetPath = targetPath + ".tmp.zip"
       buildContext.messages.progress("Building zip archive for macOS")
 
+/* TODO(b/118034991): generate product-info.json files (or not)
       def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
       generateProductJson(buildContext, productJsonDir, null)
       allPaths += [productJsonDir]
+TODO(b/118034991): generate product-info.json files (or not) */
 
       buildContext.ant.zip(zipfile: tmpTargetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         allPaths.each {
@@ -375,7 +377,9 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       fos.close()
       inFile.delete()
 
+/* TODO(b/118034991): generate product-info.json files (or not)
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipRoot)
+TODO(b/118034991): generate product-info.json files (or not) */
       return targetPath
     }
   }

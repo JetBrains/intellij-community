@@ -233,9 +233,11 @@ IDS_VM_OPTIONS=$vmOptions
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       def dirs = [buildContext.paths.distAll, winDistPath]  // Android Studio: modified by Change Idc07b110 / commit f20681e
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
+/* TODO(b/118034991): generate product-info.json files (or not)
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.zip$zipNameSuffix").absolutePath
       generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty())
       dirs += [productJsonDir]
+TODO(b/118034991): generate product-info.json files (or not) */
       buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         dirs.each {
           zipfileset(dir: it, prefix: zipPrefix)
@@ -245,7 +247,9 @@ IDS_VM_OPTIONS=$vmOptions
           type(type: "file")
         }
       }
+/* TODO(b/118034991): generate product-info.json files (or not)
       new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipPrefix)
+TODO(b/118034991): generate product-info.json files (or not) */
       buildContext.notifyArtifactBuilt(targetPath)
     }
   }
