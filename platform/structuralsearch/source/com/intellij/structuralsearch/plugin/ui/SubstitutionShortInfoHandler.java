@@ -44,7 +44,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent e) {
-    LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
+    LogicalPosition position  = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
 
     handleInputFocusMovement(position, false);
   }
@@ -220,13 +220,10 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
                                                 editor.getComponent().getRootPane().getLayeredPane());
     final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setShowImmediately(true)
       .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    final String dressedText;
-    if (Registry.is("ssr.use.new.search.dialog")) {
-      dressedText = text + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
-    }
-    else {
-      dressedText = text;
-    }
+    final String dressedText = Registry.is("ssr.use.new.search.dialog") && !editor.isViewer()
+                               ? text + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>"
+                               : text;
+    if (dressedText.isEmpty()) return;
     TooltipController.getInstance().showTooltip(editor, p, dressedText, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
