@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 
 /**
  * @author traff
