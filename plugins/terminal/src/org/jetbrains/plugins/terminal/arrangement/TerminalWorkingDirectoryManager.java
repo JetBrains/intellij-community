@@ -38,16 +38,16 @@ public class TerminalWorkingDirectoryManager {
 
   private final Map<Content, Data> myDataByContentMap = ContainerUtil.newHashMap();
 
-  public TerminalWorkingDirectoryManager() {
+  TerminalWorkingDirectoryManager() {
   }
 
   @Nullable
-  public String getWorkingDirectory(@NotNull Content content) {
+  String getWorkingDirectory(@NotNull Content content) {
     Data data = getData(content);
     return data != null ? data.myWorkingDirectory : null;
   }
 
-  public void init(@NotNull ToolWindow terminalToolWindow) {
+  void init(@NotNull ToolWindow terminalToolWindow) {
     ContentManager contentManager = terminalToolWindow.getContentManager();
     for (Content content : contentManager.getContents()) {
       watchTab(content);

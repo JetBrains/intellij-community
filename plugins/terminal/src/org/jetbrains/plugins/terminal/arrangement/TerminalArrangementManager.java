@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.terminal;
+package org.jetbrains.plugins.terminal.arrangement;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.TerminalTabState;
 
 @State(name = "TerminalArrangementManager", storages = {
   @Storage(StoragePathMacros.CACHE_FILE)
@@ -24,7 +24,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
     myWorkingDirectoryManager = new TerminalWorkingDirectoryManager();
   }
 
-  void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
+  public void setToolWindow(@NotNull ToolWindow terminalToolWindow) {
     myTerminalToolWindow = terminalToolWindow;
     if (isAvailable()) {
       myWorkingDirectoryManager.init(terminalToolWindow);
@@ -49,7 +49,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   }
 
   @Nullable
-  TerminalArrangementState getArrangementState() {
+  public TerminalArrangementState getArrangementState() {
     return myState;
   }
 
@@ -68,7 +68,7 @@ public class TerminalArrangementManager implements PersistentStateComponent<Term
   }
 
   @NotNull
-  static TerminalArrangementManager getInstance(@NotNull Project project) {
+  public static TerminalArrangementManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, TerminalArrangementManager.class);
   }
 
