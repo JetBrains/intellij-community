@@ -91,8 +91,8 @@ public class TerminalWorkingDirectoryManager {
     if (connector == null) return;
     try {
       long startNano = System.nanoTime();
-      Future<String> directory = ProcessInfoUtil.getWorkingDirectory(connector.getProcess());
-      data.myWorkingDirectory = directory.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
+      Future<String> cwd = ProcessInfoUtil.getCurrentWorkingDirectory(connector.getProcess());
+      data.myWorkingDirectory = cwd.get(FETCH_WAIT_MILLIS, TimeUnit.MILLISECONDS);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Cwd (" + data.myWorkingDirectory + ") fetched in " + TimeoutUtil.getDurationMillis(startNano) + " ms");
       }
@@ -100,7 +100,13 @@ public class TerminalWorkingDirectoryManager {
     catch (InterruptedException ignored) {
     }
     catch (ExecutionException e) {
-      LOG.warn("Failed to fetch cwd for " + data.myContentName, e);
+      String message = "Failed to fetch cwd for " + data.myContentName;
+      if (LOG.isDebugEnabled()) {
+        LOG.warn(message, e);
+      }
+      else {
+        LOG.warn(message + ": " + e.getCause().getMessage());
+      }
     }
     catch (TimeoutException e) {
       LOG.warn("Timeout fetching cwd for " + data.myContentName, e);

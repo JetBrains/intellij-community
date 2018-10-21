@@ -8,51 +8,74 @@ import com.intellij.execution.process.CapturingProcessRunner;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.pty4j.windows.WinPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
 
 public class ProcessInfoUtil {
   private static final Logger LOG = Logger.getInstance(ProcessInfoUtil.class);
-  private static final int TIMEOUT_MILLIS = 1000;
+  private static final int TIMEOUT_MILLIS = 2000;
+  // restrict amount of concurrent cwd fetchings to not utilize all the threads in case of unpredicted hangings
+  private static final ExecutorService POOL = AppExecutorUtil.createBoundedScheduledExecutorService("Terminal CWD", 1);
 
   private ProcessInfoUtil() {}
 
   @NotNull
-  public static Future<String> getWorkingDirectory(@NotNull Process process) {
+  public static Future<String> getCurrentWorkingDirectory(@NotNull Process process) {
     if (process.isAlive()) {
-      try {
-        int pid = OSProcessUtil.getProcessID(process);
-        String fastWorkingDir = tryGetWorkingDirFast(pid);
-        if (fastWorkingDir != null) {
-          return Futures.immediateFuture(fastWorkingDir);
-        }
-        FutureTask<String> future = new FutureTask<>(() -> doGetWorkingDirectory(pid));
-        ApplicationManager.getApplication().executeOnPooledThread(future);
-        return future;
-      }
-      catch (Exception e) {
-        LOG.warn("Cannot get pid for " + process);
-      }
+      return POOL.submit(() -> doGetCwd(process));
     }
     return Futures.immediateFuture(null);
   }
 
   @Nullable
-  private static String doGetWorkingDirectory(int pid) throws ExecutionException {
-    if (!SystemInfo.isUnix) {
-      return null;
+  private static String doGetCwd(@NotNull Process process) throws Exception {
+    if (SystemInfo.isUnix) {
+      int pid = OSProcessUtil.getProcessID(process);
+      String result = tryGetCwdFastOnUnix(pid);
+      if (result != null) {
+        return result;
+      }
+      return getCwdOnUnix(pid);
     }
+    else if (SystemInfo.isWindows) {
+      if (process instanceof WinPtyProcess) {
+        return ((WinPtyProcess)process).getWorkingDirectory();
+      }
+      throw new IllegalStateException("Cwd can be fetched for " + WinPtyProcess.class + " only, got " + process.getClass());
+    }
+    throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
+  }
+
+  @Nullable
+  private static String tryGetCwdFastOnUnix(int pid) {
+    String procPath = "/proc/" + pid + "/cwd";
+    try {
+      File dir = Paths.get(procPath).toRealPath().toFile();
+      if (dir != null && dir.isDirectory()) {
+        return dir.getAbsolutePath();
+      }
+    }
+    catch (Exception e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Cannot resolve cwd from " + procPath + ", fallback to lsof -a -d cwd -p " + pid, e);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static String getCwdOnUnix(int pid) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine("lsof", "-a", "-d", "cwd", "-p", String.valueOf(pid), "-Fn");
     CapturingProcessRunner runner = new CapturingProcessRunner(new OSProcessHandler(commandLine));
     ProcessOutput output = runner.runProcess(TIMEOUT_MILLIS);
@@ -79,23 +102,6 @@ public class ProcessInfoUtil {
       }
       else if (pidEncountered && line.startsWith("n")) {
         return line.substring(1);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static String tryGetWorkingDirFast(int pid) {
-    if (SystemInfo.isUnix) {
-      String procPath = "/proc/" + pid + "/cwd";
-      try {
-        Path path = Paths.get(procPath).toRealPath();
-        if (Files.isDirectory(path)) {
-          return path.toString();
-        }
-      }
-      catch (Exception e) {
-        LOG.debug("Cannot get working directory from /proc/" + pid + "/cwd", e);
       }
     }
     return null;
