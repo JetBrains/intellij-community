@@ -69,7 +69,7 @@ class Connection(val loginModel: LoginModel, connectionLifetime: Lifetime) {
         }
 
         Desktop.getDesktop().browse(URI(
-            Navigator.login("http://localhost:$port/auth").absoluteHref(loginModel.server)
+            Navigator.dynamicLogin("http://localhost:$port/auth").absoluteHref(loginModel.server)
         ))
     }
 }
