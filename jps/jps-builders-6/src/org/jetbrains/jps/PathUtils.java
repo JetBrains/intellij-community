@@ -39,7 +39,6 @@ public class PathUtils {
   public static URI toURI(String localPath) {
     try {
       final StringBuilder buf = new StringBuilder();
-      buf.append("file:");
       final String p = FileUtilRt.toSystemIndependentName(localPath);
       if (!p.startsWith("/")) {
         buf.append("///");
@@ -48,7 +47,7 @@ public class PathUtils {
         buf.append("//");
       }
       buf.append(p);
-      return new URI(buf.toString());
+      return new URI("file", null, buf.toString(), null);
     }
     catch (URISyntaxException e) {
       throw new Error(e);

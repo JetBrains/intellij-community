@@ -26,7 +26,6 @@ public class ZipFileObject extends JpsFileObject {
   @NotNull
   private static URI createUri(final File zipFile, String relPath) {
     final StringBuilder buf = new StringBuilder();
-    buf.append("jar:");
     final String p = FileUtilRt.toSystemIndependentName(zipFile.getPath());
     if (!p.startsWith("/")) {
       buf.append("///");
@@ -36,7 +35,7 @@ public class ZipFileObject extends JpsFileObject {
     }
     buf.append(p).append(relPath.startsWith("/") ? "!" : "!/").append(relPath);
     try {
-      return new URI(buf.toString());
+      return new URI("jar", null, buf.toString(), null);
     }
     catch (URISyntaxException e) {
       throw new Error("Cannot create URI " + buf.toString(), e);
