@@ -99,8 +99,11 @@ public class UrlClassLoader extends ClassLoader {
 
     private Builder() { }
 
-    public Builder urls(List<URL> urls) { myURLs = urls; return this; }
-    public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    @NotNull
+    public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
+    @NotNull
+    public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    @NotNull
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
     
     /**
@@ -108,13 +111,17 @@ public class UrlClassLoader extends ClassLoader {
      * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
      * Thus, the option is recommended when jars are not modified or process that uses this option is transient
      */
+    @NotNull
     public Builder allowLock() { myLockJars = true; return this; }
+    @NotNull
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
     
     /** 
      * Build backward index of packages / class or resource names that allows to avoid IO during classloading 
      */
+    @NotNull
     public Builder useCache() { myUseCache = true; return this; }
+    @NotNull
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
     /**
@@ -126,6 +133,7 @@ public class UrlClassLoader extends ClassLoader {
      * logical error since code is prepared for that and disk access is performed upon class / resource loading.
      * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
      */
+    @NotNull
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
@@ -141,6 +149,7 @@ public class UrlClassLoader extends ClassLoader {
      *
      * @see #createCachePool()
      */
+    @NotNull
     public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
       myUseCache = true;
       myCachePool = (CachePoolImpl)pool;
@@ -148,21 +157,28 @@ public class UrlClassLoader extends ClassLoader {
       return this;
     }
 
+    @NotNull
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    @NotNull
     public Builder noPreload() { myPreload = false; return this; }
+    @NotNull
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
     
     /**
      * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading. 
      * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less 
      * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
-     */  
+     */
+    @NotNull
     public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
+    @NotNull
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
+  @NotNull
   public static Builder build() {
     return new Builder();
   }
@@ -220,7 +236,7 @@ public class UrlClassLoader extends ClassLoader {
    */
   @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   @Deprecated
-  public void addURL(URL url) {
+  public void addURL(@NotNull URL url) {
     getClassPath().addURL(url);
     myURLs.add(url);
   }
@@ -350,7 +366,8 @@ public class UrlClassLoader extends ClassLoader {
     System.load(libPath);
   }
 
-  private static String mapLibraryName(String libName) {
+  @NotNull
+  private static String mapLibraryName(@NotNull String libName) {
     String baseName = libName;
     if (SystemInfo.is64Bit) {
       baseName = baseName.replace("32", "") + "64";
@@ -363,7 +380,8 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings({"unused"})
+  @SuppressWarnings("unused")
+  @NotNull
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;

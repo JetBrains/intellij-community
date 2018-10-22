@@ -155,7 +155,7 @@ public class ThreadDumper {
   private static void printStackTrace(@NotNull Writer f, @NotNull StackTraceElement[] stackTraceElements) {
     try {
       for (StackTraceElement element : stackTraceElements) {
-        f.write("\tat " + element.toString() + "\n");
+        f.write("\tat " + element + "\n");
       }
     }
     catch (IOException e) {
