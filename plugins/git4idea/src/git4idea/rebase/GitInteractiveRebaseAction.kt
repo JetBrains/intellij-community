@@ -26,9 +26,7 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     prohibitRebaseDuringRebase(e, "rebase")
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    super.actionPerformed(e)
-
+  override fun actionPerformedAfterChecks(e: AnActionEvent) {
     val commit = getSelectedCommit(e)
     val project = e.project!!
     val repository = getRepository(e)

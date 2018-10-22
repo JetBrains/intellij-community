@@ -54,6 +54,10 @@
             description="Undo last commit and put its changes into selected changelist"/>
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
             description="Change commit message" />
+    <action id="Git.Fixup.To.Commit" class="git4idea.rebase.GitCommitFixupBySubjectAction" text="Fixup..."
+            description="Create a fixup commit"/>
+    <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction" text="Squash Into..."
+            description="Create a squash commit"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
@@ -139,6 +143,8 @@
       <reference id="Git.Uncommit"/>
       <separator/>
       <reference id="Git.Reword.Commit"/>
+      <reference id="Git.Fixup.To.Commit" />
+      <reference id="Git.Squash.Into.Commit" />
       <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>

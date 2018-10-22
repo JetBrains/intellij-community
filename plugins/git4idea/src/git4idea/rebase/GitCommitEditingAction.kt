@@ -92,7 +92,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     e.presentation.isEnabledAndVisible = true
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
+  final override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val data = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
     val log = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
@@ -113,7 +113,11 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       Messages.showErrorDialog(project, commitPushedToProtectedBranchError(protectedBranch), getFailureTitle())
       return
     }
+
+    actionPerformedAfterChecks(e)
   }
+
+  abstract fun actionPerformedAfterChecks(e: AnActionEvent)
 
   protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
