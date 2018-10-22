@@ -52,7 +52,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   @Nullable
   protected static VirtualFile findDir(@Nullable String baseDir) {
-    if (baseDir == null) {
+    if (StringUtil.isEmpty(baseDir)) {
       return null;
     }
     return ReadAction.compute(() -> {
