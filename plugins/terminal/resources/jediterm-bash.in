@@ -47,7 +47,7 @@ function override_jb_variables {
   done
 }
 
-if [ -n $LOGIN_SHELL ]; then
+if [ -n "$LOGIN_SHELL" ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
