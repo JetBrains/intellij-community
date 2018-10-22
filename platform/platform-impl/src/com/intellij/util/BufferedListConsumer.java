@@ -28,8 +28,6 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
   private List<T> myBuffer;
   private final Object myFlushLock;
   private final Consumer<? super List<T>> myConsumer;
-  private int myCnt;
-  private Runnable myFlushListener;
   private volatile boolean myPendingFlush;
 
   public BufferedListConsumer(int size, Consumer<? super List<T>> consumer, int interval) {
@@ -39,13 +37,11 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
     myConsumer = consumer;
     myInterval = interval;
     myTs = System.currentTimeMillis();
-    myCnt = 0;
     myPendingFlush = false;
   }
 
   public void consumeOne(final T t) {
     synchronized (myFlushLock) {
-      ++ myCnt;
       myBuffer.add(t);
       flushCheck();
     }
@@ -54,7 +50,6 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
   @Override
   public void consume(List<T> list) {
     synchronized (myFlushLock) {
-      myCnt += list.size();
       myBuffer.addAll(list);
       flushCheck();
     }
@@ -99,18 +94,5 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
 
   public void flush() {
     flushImpl(System.currentTimeMillis());
-    if (myFlushListener != null) {
-      myFlushListener.run();
-    }
-  }
-
-  public int getCnt() {
-    synchronized (myFlushLock) {
-      return myCnt;
-    }
-  }
-
-  public Consumer<T> asConsumer() {
-    return t -> consumeOne(t);
   }
 }
