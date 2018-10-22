@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
@@ -84,13 +84,27 @@ class ProcessProxyImpl implements ProcessProxy {
     });
   }
 
+  private static File getBreakgenHelper() {
+    return PathManager.findBinFile("breakgen.dll");
+  }
+
+  String getBinPath() {
+    if (SystemInfo.isWindows) {
+      File file = getBreakgenHelper();
+      if (file != null) {
+        return file.getParent();
+      }
+    }
+    return PathManager.getBinPath();
+  }
+
   @Override
   public boolean canSendBreak() {
     if (SystemInfo.isWindows) {
       synchronized (myLock) {
         if (myConnection == null) return false;
       }
-      return new File(PathManager.getBinPath(), "breakgen.dll").exists();
+      return getBreakgenHelper() != null;
     }
 
     if (SystemInfo.isUnix) {
