@@ -42,7 +42,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
                        module: Module,
-                       rootModel: MavenRootModelAdapter,
+                       rootModel: MavenRootModelAdapter?,
                        mavenModel: MavenProjectsTree,
                        mavenProject: MavenProject,
                        changes: MavenProjectChanges,
