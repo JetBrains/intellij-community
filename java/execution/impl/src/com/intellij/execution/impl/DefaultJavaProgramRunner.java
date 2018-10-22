@@ -22,10 +22,13 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -36,11 +39,16 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
+import sun.tools.attach.HotSpotVirtualMachine;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +57,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author spleaner
  */
 public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
+  private static final Logger LOG = Logger.getInstance(DefaultJavaProgramRunner.class);
   private final static String ourWiseThreadDumpProperty = "idea.java.run.wise.thread.dump";
 
   public static final String DEFAULT_JAVA_RUNNER_ID = "Run";
@@ -200,9 +209,37 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     }
 
     @Override
-    protected void perform(AnActionEvent e, ProcessProxy proxy) {
+    protected void perform(AnActionEvent event, ProcessProxy proxy) {
+      if (Registry.is("execution.dump.threads.using.attach") && myProcessHandler instanceof BaseProcessHandler) {
+        // try vm attach first
+        VirtualMachine vm = null;
+        try {
+          vm = VirtualMachine.attach(String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler)myProcessHandler).getProcess())));
+          InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
+          String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
+          List<ThreadState> threads = ThreadDumpParser.parse(text);
+          showThreadDump(text, threads, event.getProject());
+          return;
+        }
+        catch (AttachNotSupportedException e) {
+          LOG.debug(e);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+        finally {
+          if (vm != null) {
+            try {
+              vm.detach();
+            }
+            catch (IOException ignored) {
+            }
+          }
+        }
+      }
+
       boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
-      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(e.getProject(), myProcessHandler) : null;
+      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(event.getProject(), myProcessHandler) : null;
 
       proxy.sendBreak();
 
@@ -321,17 +358,17 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
         }
         myProcessHandler.removeProcessListener(myListener);
         if (threadStates != null && ! threadStates.isEmpty()) {
-          showThreadDump(myListener.getOutput().getStdout(), threadStates);
+          showThreadDump(myListener.getOutput().getStdout(), threadStates, myProject);
         }
       });
     }
+  }
 
-    private void showThreadDump(String out, List<ThreadState> states) {
-      AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(myProject, states) : null;
-      String title = "<Stacktrace> " + DateFormatUtil.formatDateTime(System.currentTimeMillis());
-      ApplicationManager.getApplication().invokeLater(
-        () -> AnalyzeStacktraceUtil.addConsole(myProject, factory, title, out), ModalityState.NON_MODAL);
-    }
+  private static void showThreadDump(String out, List<ThreadState> states, Project project) {
+    AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
+    String title = "Dump " + DateFormatUtil.formatDateTime(System.currentTimeMillis());
+    ApplicationManager.getApplication().invokeLater(
+            () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }
 
   protected static class SoftExitAction extends ProxyBasedAction {
