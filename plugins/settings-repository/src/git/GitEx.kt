@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import org.eclipse.jgit.api.CommitCommand
+import org.eclipse.jgit.api.LsRemoteCommand
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.dircache.DirCacheCheckout
 import org.eclipse.jgit.errors.TransportException
@@ -56,7 +58,7 @@ fun Repository.fetch(remoteConfig: RemoteConfig, credentialsProvider: Credential
   catch (e: TransportException) {
     val message = e.message!!
     if (message.startsWith("Remote does not have ")) {
-      LOG.info(message)
+      LOG.warn(message)
       // "Remote does not have refs/heads/master available for fetch." - remote repository is not initialized
       return null
     }
@@ -102,7 +104,7 @@ fun Config.getRemoteBranchFullName(): String {
 val Repository.upstream: String?
     get() = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL).nullize()
 
-fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER): StoredConfig {
+fun Repository.setUpstream(url: String?, remoteBranchName: String): StoredConfig {
   // our local branch named 'master' in any case
   val localBranchName = Constants.MASTER
 
@@ -117,12 +119,12 @@ fun Repository.setUpstream(url: String?, branchName: String = Constants.MASTER):
     LOG.debug("Set remote $url")
     config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_KEY_URL, url)
     // http://git-scm.com/book/en/Git-Internals-The-Refspec
-    config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + branchName + ':' + Constants.R_REMOTES + remoteName + '/' + branchName)
+    config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, ConfigConstants.CONFIG_FETCH_SECTION, '+' + Constants.R_HEADS + remoteBranchName + ':' + Constants.R_REMOTES + remoteName + '/' + remoteBranchName)
     // todo should we set it if fetch specified (kirill.likhodedov suggestion)
     //config.setString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "push", Constants.R_HEADS + localBranchName + ':' + Constants.R_HEADS + branchName);
 
     config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_REMOTE, remoteName)
-    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + branchName)
+    config.setString(ConfigConstants.CONFIG_BRANCH_SECTION, localBranchName, ConfigConstants.CONFIG_KEY_MERGE, Constants.R_HEADS + remoteBranchName)
   }
   config.save()
   return config
@@ -138,12 +140,16 @@ fun Repository.computeIndexDiff(): IndexDiff {
   }
 }
 
+// https://stackoverflow.com/questions/18726037/what-determines-default-branch-after-git-clone
+// https://stackoverflow.com/questions/50481123/get-the-default-branch-of-a-remote-repository-with-jgit
 fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore>? = null, progressMonitor: ProgressMonitor = NullProgressMonitor.INSTANCE): Repository {
   val repository = createBareRepository(dir)
-  val config = repository.setUpstream(uri)
+  val credentialsProvider = if (credentialsStore == null) null else JGitCredentialsProvider(credentialsStore, repository)
+
+  val config = repository.setUpstream(uri, getDefaultBranch(uri, credentialsProvider) ?: Constants.MASTER)
   val remoteConfig = RemoteConfig(config, Constants.DEFAULT_REMOTE_NAME)
 
-  val result = repository.fetch(remoteConfig, if (credentialsStore == null) null else JGitCredentialsProvider(credentialsStore, repository), progressMonitor) ?: return repository
+  val result = repository.fetch(remoteConfig, credentialsProvider, progressMonitor) ?: return repository
   var head = findBranchToCheckout(result)
   if (head == null) {
     val branch = Constants.HEAD
@@ -175,6 +181,24 @@ fun cloneBare(uri: String, dir: Path, credentialsStore: Lazy<IcsCredentialsStore
   return repository
 }
 
+private fun getDefaultBranch(uri: String, credentialsProvider: JGitCredentialsProvider?): String? {
+  val remoteRefs = LsRemoteCommand(null)
+    .setRemote(uri)
+    .setTags(false)
+    .setCredentialsProvider(credentialsProvider)
+    .callAsMap()
+
+  val remoteHeadRef = remoteRefs.get(Constants.HEAD)
+  if (remoteHeadRef != null) {
+    for ((refName, ref) in remoteRefs) {
+      if (ref !== remoteHeadRef && ref.objectId == remoteHeadRef.objectId) {
+        return refName.removePrefix(Constants.R_HEADS)
+      }
+    }
+  }
+  return null
+}
+
 private fun findBranchToCheckout(result: FetchResult): Ref? {
   val idHead = result.getAdvertisedRef(Constants.HEAD) ?: return null
 
@@ -189,7 +213,12 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
 fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.FETCH_HEAD) ?: return
   newObjectReader().use { reader ->
-    val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
+    val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree)
+    if (rootTreeWalk == null) {
+      LOG.debug { "$path not found" }
+      return
+    }
+
     if (!rootTreeWalk.isSubtree) {
       // not a directory
       LOG.warn("File $path is not a directory")

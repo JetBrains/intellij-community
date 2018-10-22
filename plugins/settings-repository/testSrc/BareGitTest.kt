@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.SmartList
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
@@ -57,5 +58,20 @@ internal class BareGitTest {
 
     assertThat(data).hasSize(1)
     assertThat(data.get("Mac OS X from RubyMine.xml")).isEqualTo(SAMPLE_FILE_CONTENT)
+  }
+
+  @Test
+  fun `processChildren not-master branch`() {
+    val clonePath = tempDirManager.newPath()
+    val repository = cloneBare("https://github.com/pronskiy/PhpStorm-Live-Templates-Craft-CMS.git", clonePath)
+
+    val filePath = "templates"
+    val data = THashSet<String>()
+    repository.processChildren(filePath) {name, input ->
+      data.add(name)
+      true
+    }
+
+    assertThat(data).isNotEmpty
   }
 }
