@@ -1680,7 +1680,7 @@ check_if_IDE_in_use:
   StrCmp $3 "" delete_caches shortcuts
 
 shortcuts:
-  StrCpy $7 "$SMPROGRAMS\$R9\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
+  StrCpy $7 "$SMPROGRAMS\$3\${PRODUCT_FULL_NAME_WITH_VER}.lnk"
   Call un.validateStartMenuLinkToLauncher
   StrCmp $8 "" 0 remove_link
   DetailPrint "StartMenu: $7 is not point to valid launcher."
@@ -1689,7 +1689,7 @@ shortcuts:
 remove_link:
   Delete $7
   ; Delete only if empty (last IDEA version is uninstalled)
-  RMDir  "$SMPROGRAMS\$R9"
+  RMDir  "$SMPROGRAMS\$3"
 
 delete_caches:
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
