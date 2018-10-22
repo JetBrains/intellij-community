@@ -46,9 +46,9 @@ public abstract class AbstractCodeBlockSupportHandler implements CodeBlockSuppor
    *  The method defines a highlighting tree. <br>
    *  Highlighting tree nodes are PSI elements. <br>
    *  A highlighting tree has an edge from A to B if and only if <br>
-   *    - A is a parent for B in the PSI tree
-   *    - <code>#getDirectChildrenElementTypes(getElementType(A)).contains(getElementType(B))</code>
-   *
+   *    - A is a parent for B in the PSI tree <br>
+   *    - <code>#getDirectChildrenElementTypes(getElementType(A)).contains(getElementType(B))</code> <br>
+   *  <br>
    *  If two keyword elements have a common ancestor in a highlighting tree they will be highlighted together <br>
    *  The method should be consistent with {@link #getTopLevelElementTypes()} and {@link #getKeywordElementTypes()}<br>
    *  <br>
@@ -63,7 +63,6 @@ public abstract class AbstractCodeBlockSupportHandler implements CodeBlockSuppor
    *      <br>
    *    end       <br>
    *  </code>   <br>
-   *
    *
    *  the children should be defined as follows:<br>
    *  <br>
