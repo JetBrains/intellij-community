@@ -36,6 +36,9 @@ public class DefaultXmlPsiPolicy implements XmlPsiPolicy{
 
   @Override
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
+    if (displayText.isEmpty()) {
+      return null;
+    }
     CharTable charTable = SharedImplUtil.findCharTableByTree(text.getNode());
     final FileElement dummyParent = DummyHolderFactory.createHolder(text.getManager(), null, charTable).getTreeElement();
     final XmlTag rootTag =
