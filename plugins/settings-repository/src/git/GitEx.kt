@@ -188,8 +188,7 @@ private fun findBranchToCheckout(result: FetchResult): Ref? {
 
 fun Repository.processChildren(path: String, filter: ((name: String) -> Boolean)? = null, processor: (name: String, inputStream: InputStream) -> Boolean) {
   val lastCommitId = resolve(Constants.FETCH_HEAD) ?: return
-  val reader = newObjectReader()
-  reader.use {
+  newObjectReader().use { reader ->
     val rootTreeWalk = TreeWalk.forPath(reader, path, RevWalk(reader).parseCommit(lastCommitId).tree) ?: return
     if (!rootTreeWalk.isSubtree) {
       // not a directory
@@ -268,10 +267,6 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
 
   override fun mark(limit: Int) = delegate.mark(limit)
 
-  override fun skip(n: Long): Long {
-    return super.skip(n)
-  }
-
   override fun markSupported() = delegate.markSupported()
 
   override fun equals(other: Any?) = delegate == other
@@ -279,6 +274,7 @@ private class InputStreamWrapper(private val delegate: InputStream, private val 
   override fun available() = delegate.available()
 
   override fun close() {
+    @Suppress("ConvertTryFinallyToUseCall")
     try {
       delegate.close()
     }
