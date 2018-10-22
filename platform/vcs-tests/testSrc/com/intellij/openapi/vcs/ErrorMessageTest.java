@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NonNls;
 
   private void doTest(final int errors, final int warnings, final String expected) {
     final String message = VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text", errors, warnings);
-    assertTrue(message.indexOf(expected) >= 0);
+    assertTrue(message.contains(expected));
+    final String message2 = VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text", "foo.java", errors, warnings);
+    assertTrue(message2.contains(expected));
   }
 }
