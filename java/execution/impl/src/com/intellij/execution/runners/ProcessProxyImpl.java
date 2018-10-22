@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
  */
 class ProcessProxyImpl implements ProcessProxy {
   static final Key<ProcessProxyImpl> KEY = Key.create("ProcessProxyImpl");
+  private static final File ourBreakgenHelper = SystemInfo.isWindows ? PathManager.findBinFile("breakgen.dll") : null;
 
   private final AsynchronousChannelGroup myGroup;
   private final int myPort;
@@ -84,15 +85,10 @@ class ProcessProxyImpl implements ProcessProxy {
     });
   }
 
-  private static File getBreakgenHelper() {
-    return PathManager.findBinFile("breakgen.dll");
-  }
-
   String getBinPath() {
     if (SystemInfo.isWindows) {
-      File file = getBreakgenHelper();
-      if (file != null) {
-        return file.getParent();
+      if (ourBreakgenHelper != null) {
+        return ourBreakgenHelper.getParent();
       }
     }
     return PathManager.getBinPath();
@@ -104,7 +100,7 @@ class ProcessProxyImpl implements ProcessProxy {
       synchronized (myLock) {
         if (myConnection == null) return false;
       }
-      return getBreakgenHelper() != null;
+      return ourBreakgenHelper != null;
     }
 
     if (SystemInfo.isUnix) {
