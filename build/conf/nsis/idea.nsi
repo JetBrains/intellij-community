@@ -1197,6 +1197,7 @@ skip_ipr:
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
+  ${LogText} "ShortCutWorkingDirectory: $0"
 
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
