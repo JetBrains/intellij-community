@@ -166,8 +166,8 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       init();
     }
 
-    @Override
     @Nullable
+    @Override
     protected JComponent createCenterPanel() {
       return myWholePanel;
     }
