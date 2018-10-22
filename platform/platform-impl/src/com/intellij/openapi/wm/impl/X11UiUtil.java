@@ -247,8 +247,8 @@ public class X11UiUtil {
     if (X11 == null || !Registry.is("ide.x11.override.wm")) return;
 
     try {
-      if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        setWM("MUTTER_WM", "METACITY_WM");
+      if ("Muffin".equals(wmName)) {
+        setWM("MUTTER_WM");
       }
       else if ("Marco".equals(wmName)) {
         setWM("MARCO_WM", "METACITY_WM");
