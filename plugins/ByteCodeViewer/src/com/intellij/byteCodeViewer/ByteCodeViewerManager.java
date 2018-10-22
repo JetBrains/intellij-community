@@ -40,7 +40,6 @@ import java.io.StringWriter;
 
 /**
  * @author anna
- * @since 5/7/12
  */
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");

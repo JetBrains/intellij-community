@@ -49,7 +49,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 20.07.2012
  */
 public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTestCase {
   private static final RichTextHandler[] RICH_TEXT_HANDLERS = {new RangeHandler(), new FoldingHandler()};

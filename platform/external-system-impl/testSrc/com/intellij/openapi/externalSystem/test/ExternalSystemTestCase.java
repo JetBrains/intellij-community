@@ -61,7 +61,6 @@ import java.util.jar.Manifest;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public abstract class ExternalSystemTestCase extends UsefulTestCase {
   private File ourTempDir;

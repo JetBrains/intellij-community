@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/10/2014
  */
 public abstract class ExternalSystemViewContributor {
   public static final ExtensionPointName<ExternalSystemViewContributor> EP_NAME =

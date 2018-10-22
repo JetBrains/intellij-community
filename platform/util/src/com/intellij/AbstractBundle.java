@@ -44,7 +44,6 @@ import java.util.ResourceBundle;
  * </pre>
  *
  * @author Denis Zhdanov
- * @since 8/1/11 2:37 PM
  */
 public abstract class AbstractBundle {
   private static final Logger LOG = Logger.getInstance("#com.intellij.AbstractBundle");

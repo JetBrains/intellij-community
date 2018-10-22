@@ -36,7 +36,6 @@ import java.awt.*;
  * projects, e.g. one module is backed by a single external project and couple of others are backed by a single external multi-project).
  * 
  * @author Denis Zhdanov
- * @since 4/24/13 1:19 PM
  */
 public abstract class AbstractExternalProjectSettingsControl<S extends ExternalProjectSettings>
   implements ExternalSystemSettingsControl<S>

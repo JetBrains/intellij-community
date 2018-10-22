@@ -389,7 +389,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `other xml file as not-roamable without explicit roaming`() {
-    @State(name = "A", storages = [(Storage(value = "other.xml"))])
+    @State(name = "A", storages = [(Storage(value = Storage.NOT_ROAMABLE_FILE))])
     class AOther : A()
 
     val component = AOther()
@@ -398,7 +398,7 @@ internal class ApplicationStoreTest {
 
     saveStore()
 
-    assertThat(testAppConfig.resolve("other.xml")).doesNotExist()
+    assertThat(testAppConfig.resolve(Storage.NOT_ROAMABLE_FILE)).doesNotExist()
   }
 
   private fun saveStore() {

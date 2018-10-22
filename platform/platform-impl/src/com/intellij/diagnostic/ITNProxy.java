@@ -50,7 +50,6 @@ import java.util.function.IntConsumer;
 
 /**
  * @author stathik
- * @since Aug 4, 2003
  */
 class ITNProxy {
   private static final String DEFAULT_USER = "idea_anonymous";

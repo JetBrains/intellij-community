@@ -54,7 +54,6 @@ import java.util.List;
 
 /**
  * @author max
- * @since Apr 11, 2002
  */
 @SuppressWarnings("HardCodedStringLiteral")
 public abstract class InspectionTestCase extends PsiTestCase {

@@ -2,7 +2,7 @@
 package com.intellij.credentialStore
 
 import com.google.common.cache.CacheBuilder
-import com.intellij.credentialStore.keePass.createInMemoryKeePassCredentialStore
+import com.intellij.credentialStore.keePass.InMemoryCredentialStore
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -21,11 +21,11 @@ internal val NOTIFICATION_MANAGER by lazy {
 
 // used only for native keychains, not for KeePass, so, postponedCredentials and other is not overhead if KeePass is used
 private class NativeCredentialStoreWrapper(private val store: CredentialStore) : CredentialStore {
-  private val fallbackStore = lazy { createInMemoryKeePassCredentialStore() }
+  private val fallbackStore = lazy { InMemoryCredentialStore() }
 
   private val queueProcessor = QueueProcessor<() -> Unit> { it() }
 
-  private val postponedCredentials = createInMemoryKeePassCredentialStore()
+  private val postponedCredentials = InMemoryCredentialStore()
   private val postponedRemovedCredentials = ContainerUtil.newConcurrentSet<CredentialAttributes>()
 
   private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()

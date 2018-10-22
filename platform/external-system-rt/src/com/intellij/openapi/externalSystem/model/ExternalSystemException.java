@@ -16,7 +16,6 @@ import java.io.StringWriter;
  * get the problems mentioned above. I.e. it doesn't require anything specific can be safely delivered to ide process then.
  * 
  * @author Denis Zhdanov
- * @since 10/21/11 11:42 AM
  */
 public class ExternalSystemException extends RuntimeException {
 

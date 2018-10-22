@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author db
- * @since 22.07.2003
  */
 public class TypeMigrationTest extends TypeMigrationTestBase {
   private PsiElementFactory myFactory;

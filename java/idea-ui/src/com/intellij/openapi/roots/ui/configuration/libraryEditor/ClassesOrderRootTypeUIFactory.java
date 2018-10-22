@@ -30,7 +30,6 @@ import javax.swing.*;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override

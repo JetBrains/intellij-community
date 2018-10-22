@@ -14,7 +14,6 @@ import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/24/2015
  */
 public class GradleGroovyFrameworkSupportProvider extends GradleFrameworkSupportProvider {
 

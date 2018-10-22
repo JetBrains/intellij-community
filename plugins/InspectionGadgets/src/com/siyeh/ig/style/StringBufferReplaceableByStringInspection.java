@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.application.options.CodeStyle;
@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -169,7 +170,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
           final CommentTracker tracker = new CommentTracker();
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, tracker, new StringBuilder());
           if (stringExpression != null && stringBuilderExpression != null) {
-            PsiReplacementUtil.replaceExpression(stringBuilderExpression, stringExpression.toString(), tracker);
+            tracker.replaceExpressionAndRestoreComments(stringBuilderExpression, stringExpression.toString());
           }
         }
         return;
@@ -235,12 +236,15 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
       if (statement == null) {
         return;
       }
-      tracker.delete(variable);
+      final List<PsiElement> toDelete = new SmartList<>();
+      toDelete.add(variable);
       for (int i = 0, size = expressions.size() - 1; i < size; i++) {
-        tracker.delete(expressions.get(i).getParent());
+        toDelete.add(expressions.get(i).getParent());
       }
+
       final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
+        toDelete.forEach(tracker::delete);
         final String modifier = JavaCodeStyleSettings.getInstance(lastExpression.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
         final String statementText = modifier + CommonClassNames.JAVA_LANG_STRING + ' ' + variableName + "=" + expressionText + ';';
         final PsiStatement newStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(statementText, lastExpression);
@@ -248,7 +252,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
         PsiReplacementUtil.replaceExpression(lastExpression, variableName, tracker);
       }
       else {
-        PsiReplacementUtil.replaceExpression(lastExpression, expressionText, tracker);
+        tracker.replaceExpressionAndRestoreComments(lastExpression, expressionText, toDelete);
       }
     }
 

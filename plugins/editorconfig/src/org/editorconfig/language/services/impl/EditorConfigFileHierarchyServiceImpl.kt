@@ -65,8 +65,9 @@ class EditorConfigFileHierarchyServiceImpl(
         cacheDropsCount += 1
         affectingFilesCache.clear()
       }
-
-      updateHandlers(project)
+      if(!project.isDisposed) {
+          updateHandlers(project)
+      }
     }
   }
 

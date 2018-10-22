@@ -10,12 +10,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getConstructorCandidates
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildTopLevelArgumentTypes
 
-class GrConstructorReference(element: GrNewExpression) : GroovyReferenceBase<GrNewExpression>(element) {
+class GrConstructorReference(element: GrNewExpression) : GroovyCachingReference<GrNewExpression>(element) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val ref = element.referenceElement ?: return emptyList()

@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 9/6/12 9:17 AM
  */
 public interface SettingsAwareBlock extends Block {
   

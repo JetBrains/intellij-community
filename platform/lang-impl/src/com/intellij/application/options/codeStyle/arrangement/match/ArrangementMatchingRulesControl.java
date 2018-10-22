@@ -45,7 +45,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 1:23 PM
  */
 public class ArrangementMatchingRulesControl extends JBTable {
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel(ApplicationBundle.message("arrangement.text.empty.rule"));

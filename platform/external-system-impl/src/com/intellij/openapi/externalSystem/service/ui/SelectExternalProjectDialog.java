@@ -31,7 +31,6 @@ import java.awt.event.InputEvent;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class SelectExternalProjectDialog extends SelectExternalSystemNodeDialog {
 

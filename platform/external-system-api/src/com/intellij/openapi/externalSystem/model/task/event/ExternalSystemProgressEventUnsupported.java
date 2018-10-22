@@ -21,7 +21,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2015
  */
 public interface ExternalSystemProgressEventUnsupported extends Serializable {
   @NotNull

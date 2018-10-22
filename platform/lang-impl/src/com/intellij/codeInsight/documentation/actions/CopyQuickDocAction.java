@@ -27,7 +27,6 @@ import java.awt.datatransfer.StringSelection;
 
 /**
  * @author Denis Zhdanov
- * @since 3/29/11 1:28 PM
  */
 public class CopyQuickDocAction extends AnAction implements DumbAware, HintManagerImpl.ActionToIgnore {
 

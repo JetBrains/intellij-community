@@ -417,4 +417,7 @@
   <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="alt shift F5"/>
   </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
 </keymap>

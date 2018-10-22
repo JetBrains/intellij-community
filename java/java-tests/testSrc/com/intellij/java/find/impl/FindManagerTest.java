@@ -69,7 +69,6 @@ import java.util.concurrent.CountDownLatch;
 
 /**
  * @author MYakovlev
- * @since Oct 17, 2002
  */
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;

@@ -4,6 +4,7 @@ package com.intellij.notification.impl;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
@@ -235,9 +236,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
       if (layout == null) return null;
 
-      final ProjectManager projectManager = ProjectManager.getInstance();
-      final boolean noProjects = projectManager.getOpenProjects().length == 0;
-      final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
       Ref<BalloonLayoutData> layoutDataRef = new Ref<>();
       if (project == null || project.isDefault()) {
         BalloonLayoutData layoutData = new BalloonLayoutData();
@@ -270,9 +268,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         layoutDataRef.get().project = project;
       }
       ((BalloonImpl)balloon).startFadeoutTimer(0);
-      if (NotificationDisplayType.BALLOON == displayType) {
-        FrameStateManager.getInstance().getApplicationActive().doWhenDone(() -> {
-          if (!sticky && !balloon.isDisposed()) {
+      if (displayType == NotificationDisplayType.BALLOON || ProjectManager.getInstance().getOpenProjects().length == 0) {
+        frameActivateBalloonListener(balloon, () -> {
+          if (!balloon.isDisposed()) {
             ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
           }
         });
@@ -280,6 +278,21 @@ public class NotificationsManagerImpl extends NotificationsManager {
       return balloon;
     }
     return null;
+  }
+
+  public static void frameActivateBalloonListener(@NotNull Balloon balloon, @NotNull Runnable callback) {
+    if (ApplicationManager.getApplication().isActive()) {
+      callback.run();
+    }
+    else {
+      FrameStateManager.getInstance().addListener(new FrameStateListener() {
+        @Override
+        public void onFrameActivated() {
+          FrameStateManager.getInstance().removeListener(this);
+          callback.run();
+        }
+      }, balloon);
+    }
   }
 
   @Nullable

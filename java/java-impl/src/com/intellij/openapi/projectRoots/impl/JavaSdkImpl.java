@@ -43,7 +43,6 @@ import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.suggestJavaSdk
 
 /**
  * @author Eugene Zhuravlev
- * @since Sep 17, 2004
  */
 public class JavaSdkImpl extends JavaSdk {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.JavaSdkImpl");

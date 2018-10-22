@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
 

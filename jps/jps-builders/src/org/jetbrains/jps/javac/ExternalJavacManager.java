@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
- * @since 2.01.2012
  */
 public class ExternalJavacManager {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.javac.ExternalJavacServer");

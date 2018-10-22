@@ -72,11 +72,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   private static class Sheet implements Disposable {
     private AsyncTreeModel myAsyncTreeModel;
     private StructureTreeModel myStructureTreeModel;
+    @NotNull private final String myType;
     private final JTree myTree;
     private String myScope;
     private final OccurenceNavigator myOccurenceNavigator;
 
-    Sheet(@NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
+    Sheet(@NotNull String type, @NotNull JTree tree, @NotNull String scope, @NotNull OccurenceNavigator occurenceNavigator) {
+      myType = type;
       myTree = tree;
       myScope = scope;
       myOccurenceNavigator = occurenceNavigator;
@@ -143,7 +145,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       };
 
 
-      myType2Sheet.put(type, new Sheet(tree, scope, occurenceNavigatorSupport));
+      myType2Sheet.put(type, new Sheet(type, tree, scope, occurenceNavigatorSupport));
       myTreePanel.add(ScrollPaneFactory.createScrollPane(tree), type);
     }
 
@@ -353,7 +355,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return;
         }
         Comparator<NodeDescriptor> comparator = getComparator();
-        StructureTreeModel myModel = comparator == null ? new StructureTreeModel(structure) : new StructureTreeModel(structure, comparator);
+        StructureTreeModel myModel = comparator == null ? new StructureTreeModel<>(structure) : new StructureTreeModel<>(structure, comparator);
         AsyncTreeModel atm = new AsyncTreeModel(myModel, sheet);
         tree.setModel(atm);
 
@@ -531,8 +533,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  private static void disposeSheet(@NotNull Sheet sheet) {
+  private void disposeSheet(@NotNull Sheet sheet) {
     Disposer.dispose(sheet);
+    myType2Sheet.put(sheet.myType, new Sheet(sheet.myType, sheet.myTree, sheet.myScope, sheet.myOccurenceNavigator));
   }
 
   protected void doRefresh(boolean currentBuilderOnly) {

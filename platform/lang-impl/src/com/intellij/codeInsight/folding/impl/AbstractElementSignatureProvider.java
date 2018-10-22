@@ -20,7 +20,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Denis Zhdanov
- * @since 11/7/11 12:00 PM
  */
 public abstract class AbstractElementSignatureProvider implements ElementSignatureProvider {
   private static final int CHILDREN_COUNT_LIMIT = 100;

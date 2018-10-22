@@ -20,8 +20,8 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val ui = UISettings.shadowInstance
     var usages = setOf(
-      UsageDescriptor("UI.font.size[${ui.fontSize}]"),
-      UsageDescriptor(ensureProperKey("UI.font.name[${ui.fontFace}]")),
+      UsageDescriptor("UI.font.size[${ui.state.fontSize}]"),
+      UsageDescriptor(ensureProperKey("UI.font.name[${ui.state.fontFace}]")),
       UsageDescriptor("Presentation.mode.font.size[${ui.presentationModeFontSize}]")
     )
     if (!scheme.isUseAppFontPreferencesInEditor) {
@@ -46,7 +46,7 @@ class FontSizeInfoUsageCollector : ApplicationUsagesCollector() {
     val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size")
     if (quickDocFontSize != null) {
       usages += setOf(
-        UsageDescriptor("QuickDoc.font.size[" + quickDocFontSize +"]")
+        UsageDescriptor("QuickDoc.font.size[$quickDocFontSize]")
       )
     }
     return usages

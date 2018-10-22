@@ -19,7 +19,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class ModuleVersion {
   @Tag("groupId")

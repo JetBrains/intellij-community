@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 1:00 PM
  */
 public class DefaultArrangementEntryMatcherSerializer {
 

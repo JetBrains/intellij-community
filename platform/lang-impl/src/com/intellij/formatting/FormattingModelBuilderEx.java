@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 8/22/12 2:23 PM
  */
 public interface FormattingModelBuilderEx extends FormattingModelBuilder {
   

@@ -54,6 +54,7 @@ public class TransformableJavaFileObject implements JavaFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
+    // todo: more accurately would be returning a stream for transformed content
     return myOriginal.openInputStream();
   }
 

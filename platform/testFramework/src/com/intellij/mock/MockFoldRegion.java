@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since Jun 30, 2010 1:55:53 PM
  */
 public class MockFoldRegion extends UserDataHolderBase implements FoldRegion {
 

@@ -557,13 +557,13 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
     val result1: String = result1.filterNot { it == '.' }
     val result2: String = result2.filterNot { it == '.' }
 
-    private var inner = true
+    private var innerPolicy = InnerFragmentsPolicy.WORDS
     private var changedLinesNumber: IntPair? = null
     private var range: Range? = null
     private var changedLines: List<Couple<IntPair>>? = null
 
     fun noInnerChanges(): Test {
-      inner = false
+      innerPolicy = InnerFragmentsPolicy.NONE
       return this
     }
 
@@ -601,10 +601,10 @@ class IgnoreComparisonUtilTest : DiffTestCase() {
       val lineOffsets2 = LineOffsetsUtil.create(text2)
 
       val result = if (range != null) {
-        MANAGER.compareLinesWithIgnoredRanges(range!!, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, inner, INDICATOR)
+        MANAGER.compareLinesWithIgnoredRanges(range!!, text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, innerPolicy, INDICATOR)
       }
       else {
-        MANAGER.compareLinesWithIgnoredRanges(text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, inner, INDICATOR)
+        MANAGER.compareLinesWithIgnoredRanges(text1, text2, lineOffsets1, lineOffsets2, ignored1, ignored2, innerPolicy, INDICATOR)
       }
 
       val expected = Couple(parseExpected(result1), parseExpected(result2))

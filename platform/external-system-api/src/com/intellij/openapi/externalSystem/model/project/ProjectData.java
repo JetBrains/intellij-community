@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/1/11 1:30 PM
  */
 public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
 

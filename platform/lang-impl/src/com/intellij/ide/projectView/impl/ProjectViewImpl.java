@@ -1495,7 +1495,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return getGlobalOptions().getAutoscrollToSource();
     }
 
-    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().getDefaultAutoScrollToSource());
+    return getPaneOptionValue(myAutoscrollToSource, paneId, UISettings.getInstance().getState().getDefaultAutoScrollToSource());
   }
 
   public void setAutoscrollToSource(boolean autoscrollMode, String paneId) {

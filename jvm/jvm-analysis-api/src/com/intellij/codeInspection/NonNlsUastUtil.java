@@ -91,7 +91,7 @@ public final class NonNlsUastUtil {
     }
 
     while (parent instanceof UBinaryExpression) {
-      if (!isAssignmentExpression((UBinaryExpression)parent)) {
+      if (!isAssignmentOrComparisonExpression((UBinaryExpression)parent)) {
         // go upper to find assignment expression (or field/variable declaration)
         parent = UastUtils.getParentOfType(parent, true, UBinaryExpression.class, UVariable.class);
         if (parent instanceof UVariable) {
@@ -155,12 +155,9 @@ public final class NonNlsUastUtil {
     return isCallExpressionWithNonNlsReceiver(callExpression);
   }
 
-  //TODO looks dirty, is there a better way to check this?  <--  see UElementAsPsiInspection
-  private static boolean isAssignmentExpression(@NotNull UBinaryExpression expression) {
-    UIdentifier operatorIdentifier = expression.getOperatorIdentifier();
-    if (operatorIdentifier == null) return false;
-    String operatorName = operatorIdentifier.getName();
-    return operatorName.equals("=") || operatorName.equals("+=");
+  private static boolean isAssignmentOrComparisonExpression(@NotNull UBinaryExpression expression) {
+    final UastBinaryOperator operator = expression.getOperator();
+    return operator instanceof UastBinaryOperator.AssignOperator || operator instanceof UastBinaryOperator.ComparisonOperator;
   }
 
   private static boolean isNonNlsAnnotatedPsi(@NotNull PsiElement element) {

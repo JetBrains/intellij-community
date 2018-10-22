@@ -54,7 +54,7 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
     scope.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof PsiClass ||
+        if (element instanceof PsiMethod ||
             element instanceof PsiReferenceParameterList ||
             element instanceof PsiTypeElement ||
             element instanceof PsiLambdaExpression) {
@@ -76,7 +76,6 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
   }
 
   private static boolean hasSingleInitializationPlace(@NotNull PsiClass targetClass) {
-    if (targetClass instanceof PsiAnonymousClass) return true;
     if (!targetClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
 
     PsiFile file = targetClass.getContainingFile();
@@ -109,7 +108,8 @@ public class StaticInitializerReferencesSubClassInspection extends AbstractBaseJ
       }
     }
     if (element instanceof PsiExpression) {
-      return PsiUtil.resolveClassInClassTypeOnly(((PsiExpression)element).getType());
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(((PsiExpression)element).getType());
+      return psiClass instanceof PsiAnonymousClass ? psiClass.getSuperClass() : psiClass;
     }
     return null;
   }

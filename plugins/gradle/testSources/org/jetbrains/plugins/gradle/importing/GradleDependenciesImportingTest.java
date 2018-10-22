@@ -51,7 +51,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 

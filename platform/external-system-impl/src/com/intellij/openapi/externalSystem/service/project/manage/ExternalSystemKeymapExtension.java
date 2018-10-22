@@ -63,7 +63,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2014
  */
 public class ExternalSystemKeymapExtension implements KeymapExtension {
 

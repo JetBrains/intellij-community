@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/30/2014
  */
 public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBeforeRunTask> {
   @NotNull

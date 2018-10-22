@@ -24,6 +24,14 @@ public interface GrReferenceExpression extends GrExpression, GrReferenceElement<
   @Nullable
   PsiElement getDotToken();
 
+  @NotNull
+  GroovyReference getStaticReference();
+
+  /**
+   * @return whether this reference is a receiver of implicit {@code .call()}
+   */
+  boolean isImplicitCallReceiver();
+
   boolean hasAt();
 
   boolean hasMemberPointer();

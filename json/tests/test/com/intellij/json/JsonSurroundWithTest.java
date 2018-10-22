@@ -36,7 +36,15 @@ public class JsonSurroundWithTest extends JsonTestCase {
     doTest(new JsonWithArrayLiteralSurrounder());
   }
 
+  public void testMultipleValuesIntoArray() {
+    doTest(new JsonWithArrayLiteralSurrounder());
+  }
+
   public void testQuotes() {
+    doTest(new JsonWithQuotesSurrounder());
+  }
+
+  public void testMultipleValuesIntoString() {
     doTest(new JsonWithQuotesSurrounder());
   }
 

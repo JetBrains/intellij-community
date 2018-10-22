@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Denis Zhdanov
- * @since 6/5/13 8:11 PM
  */
 public class ExternalSystemTaskLocation extends PsiLocation<PsiElement> {
 

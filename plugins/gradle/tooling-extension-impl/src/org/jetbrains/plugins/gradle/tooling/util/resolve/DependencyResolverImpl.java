@@ -45,7 +45,6 @@ import static org.gradle.internal.impldep.com.google.common.collect.Iterables.fi
 
 /**
  * @author Vladislav.Soroka
- * @since 8/19/2015
  */
 public class DependencyResolverImpl implements DependencyResolver {
 

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * Container for external system task information.
  *
  * @author Denis Zhdanov
- * @since 5/15/13 10:59 AM
  */
 public class TaskData extends AbstractExternalEntityData implements ExternalConfigPathAware, Comparable<TaskData> {
 

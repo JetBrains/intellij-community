@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/23/12 11:41 AM
  */
 public class ArrangementRemoveConditionAction extends AnAction {
 

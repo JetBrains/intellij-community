@@ -1,0 +1,129 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.jps.javac;
+
+import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.CharArrayCharSequence;
+
+import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+public class ZipFileObject extends JpsFileObject {
+  private final ZipFile myZip;
+  private final ZipEntry myEntry;
+  private final String myEncoding;
+
+  ZipFileObject(File root, ZipFile zip, ZipEntry entry, String encoding) {
+    super(createUri(root, entry.getName()), findKind(entry.getName()));
+    myZip = zip;
+    myEntry = entry;
+    myEncoding = encoding;
+  }
+
+  @NotNull
+  private static URI createUri(final File zipFile, String relPath) {
+    final StringBuilder buf = new StringBuilder();
+    final String p = FileUtilRt.toSystemIndependentName(zipFile.getPath());
+    if (!p.startsWith("/")) {
+      buf.append("///");
+    }
+    else if (!p.startsWith("//")) {
+      buf.append("//");
+    }
+    buf.append(p).append(relPath.startsWith("/") ? "!" : "!/").append(relPath);
+    try {
+      return new URI("jar", null, buf.toString(), null);
+    }
+    catch (URISyntaxException e) {
+      throw new Error("Cannot create URI " + buf.toString(), e);
+    }
+  }
+
+  @Override
+  public InputStream openInputStream() throws IOException {
+    return myZip.getInputStream(myEntry);
+  }
+
+  @Override
+  public OutputStream openOutputStream() throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public Writer openWriter() throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public long getLastModified() {
+    return myEntry.getTime();
+  }
+
+  @Override
+  public boolean delete() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected String inferBinaryName(Iterable<? extends File> path, final boolean caseSensitiveFS) {
+    final String name = myEntry.getName();
+    int idx = name.lastIndexOf(".");
+    return (idx < 0 ? name : name.substring(0, idx)).replace('/', '.');
+  }
+
+
+  @Override
+  public boolean isNameCompatible(@NotNull String cn, Kind kind) {
+    if (kind == Kind.OTHER) {
+      return getKind() == kind;
+    }
+    if (getKind() != kind) {
+      return false;
+    }
+    final String name = myEntry.getName();
+    return name.length() == (cn.length() + kind.extension.length()) && name.startsWith(cn) && name.endsWith(kind.extension);
+  }
+
+  /**
+   * Check if two file objects are equal.
+   * Two RegularFileObjects are equal if the absolute paths of the underlying
+   * files are equal.
+   */
+  @Override
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof ZipFileObject)) {
+      return false;
+    }
+    return toUri().equals(((ZipFileObject)other).toUri());  // todo: check if this is fast enough to rely on URI.equals() here
+  }
+
+  @Override
+  public int hashCode() {
+    return toUri().hashCode();
+  }
+
+  @Override
+  public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
+    // todo: consider adding content caching if needed
+    // todo: currently ignoreEncodingErrors is not honored. Do we actually need to support it?
+    final InputStream in = openInputStream();
+    try {
+      final InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in);
+      try {
+        return new CharArrayCharSequence(FileUtilRt.loadText(reader, (int)myEntry.getSize()));  // todo
+      }
+      finally {
+        reader.close();
+      }          
+    }
+    finally {
+      in.close();
+    }
+  }
+}

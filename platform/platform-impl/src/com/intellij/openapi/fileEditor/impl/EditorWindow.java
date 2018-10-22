@@ -98,7 +98,7 @@ public class EditorWindow {
   private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
-      if (size() >= UISettings.getInstance().getEditorTabLimit()) {
+      if (size() >= UISettings.getInstance().getState().getEditorTabLimit()) {
         remove(0);
       }
       super.push(pair);
@@ -336,7 +336,7 @@ public class EditorWindow {
       return currentlySelectedIndex;
     }
     UISettings uiSettings = UISettings.getInstance();
-    if (uiSettings.getActiveMruEditorOnClose()) {
+    if (uiSettings.getState().getActiveMruEditorOnClose()) {
       // try to open last visited file
       final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
       for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
@@ -355,7 +355,7 @@ public class EditorWindow {
         }
       }
     } else
-    if (uiSettings.getActiveRightEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
+    if (uiSettings.getState().getActiveRightEditorOnClose() && fileIndex + 1 < myTabbedPane.getTabCount()) {
       return fileIndex + 1;
     }
 
@@ -716,7 +716,7 @@ public class EditorWindow {
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
         myTabbedPane.insertTab(file, EmptyIcon.create(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
-        trimToSize(UISettings.getInstance().getEditorTabLimit(), file, false);
+        trimToSize(UISettings.getInstance().getState().getEditorTabLimit(), file, false);
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }
@@ -901,7 +901,7 @@ public class EditorWindow {
     final int index = findEditorIndex(findFileComposite(file));
     if (index != -1) {
       setTitleAt(index, EditorTabPresentationUtil.getEditorTabTitle(getManager().getProject(), file, this));
-      setToolTipTextAt(index, UISettings.getInstance().getShowTabsTooltips()
+      setToolTipTextAt(index, UISettings.getInstance().getState().getShowTabsTooltips()
                               ? getManager().getFileTooltipText(file)
                               : null);
     }
@@ -933,9 +933,9 @@ public class EditorWindow {
 
     final Icon modifiedIcon;
     UISettings settings = UISettings.getInstance();
-    if (settings.getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
+    if (settings.getState().getMarkModifiedTabsWithAsterisk() || !settings.getHideTabsIfNeed()) {
       modifiedIcon =
-        settings.getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
+        settings.getState().getMarkModifiedTabsWithAsterisk() && composite != null && composite.isModified() ? MODIFIED_ICON : GAP_ICON;
       count++;
     }
     else {
@@ -1004,7 +1004,7 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null &&
-        getTabCount() < UISettings.getInstance().getEditorTabLimit() &&
+        getTabCount() < UISettings.getInstance().getState().getEditorTabLimit() &&
         findFileComposite(siblingEditor.getFile()) == null || myTabbedPane == null && getTabCount() == 0) {
       setEditor(siblingEditor, true);
     }
@@ -1116,7 +1116,7 @@ public class EditorWindow {
       if (myTabbedPane == null) return;
       final EditorComposite selectedComposite = getSelectedEditor();
       try {
-        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getCloseNonModifiedFilesFirst(), transferFocus);
+        doTrimSize(limit, fileToIgnore, UISettings.getInstance().getState().getCloseNonModifiedFilesFirst(), transferFocus);
       }
       finally {
         setSelectedEditor(selectedComposite, false);

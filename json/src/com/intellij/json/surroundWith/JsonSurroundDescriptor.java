@@ -1,7 +1,6 @@
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonElementTypes;
-import com.intellij.json.psi.JsonElement;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
@@ -47,24 +46,29 @@ public class JsonSurroundDescriptor implements SurroundDescriptor {
       endOffset = lastElement.getTextRange().getEndOffset();
     }
 
-    final JsonElement property = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, JsonProperty.class);
+    final JsonProperty property = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, JsonProperty.class);
     if (property != null) {
-      final List<JsonElement> properties = ContainerUtil.newArrayList(property);
-      PsiElement nextSibling = property.getNextSibling();
-      while (nextSibling != null && nextSibling.getTextRange().getEndOffset() <= endOffset) {
-        if (nextSibling instanceof JsonProperty) {
-          properties.add((JsonProperty)nextSibling);
-        }
-        nextSibling = nextSibling.getNextSibling();
-      }
-      return properties.toArray(PsiElement.EMPTY_ARRAY);
+      return collectElements(endOffset, property, JsonProperty.class);
     }
 
     final JsonValue value = PsiTreeUtil.findElementOfClassAtRange(file, startOffset, endOffset, JsonValue.class);
     if (value != null) {
-      return new PsiElement[]{value};
+      return collectElements(endOffset, value, JsonValue.class);
     }
     return PsiElement.EMPTY_ARRAY;
+  }
+
+  @NotNull
+  private static <T extends PsiElement> PsiElement[] collectElements(int endOffset, @NotNull T property, @NotNull Class<T> kind) {
+    final List<T> properties = ContainerUtil.newArrayList(property);
+    PsiElement nextSibling = property.getNextSibling();
+    while (nextSibling != null && nextSibling.getTextRange().getEndOffset() <= endOffset) {
+      if (kind.isInstance(nextSibling)) {
+        properties.add(kind.cast(nextSibling));
+      }
+      nextSibling = nextSibling.getNextSibling();
+    }
+    return properties.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @NotNull

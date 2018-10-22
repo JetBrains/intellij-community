@@ -1115,4 +1115,7 @@
   <action id="EditorShowGutterIconTooltip">
     <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="T"/>
   </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
 </keymap>

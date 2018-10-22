@@ -104,8 +104,8 @@ public class GitLogUtil {
       options.add(REF_NAMES);
     }
 
-    GitLogParser parser =
-      new GitLogParser(project, GitLogParser.NameStatus.NONE, ContainerUtil.toArray(options, GitLogParser.GitLogOption[]::new));
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE,
+                                           ArrayUtil.toObjectArray(options, GitLogParser.GitLogOption.class));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");

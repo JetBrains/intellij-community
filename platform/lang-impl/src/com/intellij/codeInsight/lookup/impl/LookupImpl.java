@@ -476,9 +476,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     if (!writableOk) {
-      fireBeforeItemSelected(null, completionChar);
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
+      hideWithItemSelected(null, completionChar);
       return;
     }
     CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookupInWritableFile(completionChar, item), null, null);
@@ -492,9 +490,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         item.getObject() instanceof DeferredUserLookupValue &&
         item.as(LookupItem.CLASS_CONDITION_KEY) != null &&
         !((DeferredUserLookupValue)item.getObject()).handleUserSelection(item.as(LookupItem.CLASS_CONDITION_KEY), myProject)) {
-      fireBeforeItemSelected(null, completionChar);
-      doHide(false, true);
-      fireItemSelected(null, completionChar);
+      hideWithItemSelected(null, completionChar);
+      return;
+    }
+    if (item.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null) {
+      hideWithItemSelected(item, completionChar);
       return;
     }
 
@@ -528,6 +528,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     doHide(false, true);
 
     fireItemSelected(item, completionChar);
+  }
+
+  private void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
+    fireBeforeItemSelected(lookupItem, completionChar);
+    doHide(false, true);
+    fireItemSelected(lookupItem, completionChar);
   }
 
   public int getPrefixLength(LookupElement item) {

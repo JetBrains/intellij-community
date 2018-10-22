@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 5.02.2014
  */
 public class GradleEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
   @Override

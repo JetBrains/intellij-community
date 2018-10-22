@@ -52,7 +52,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
  * Base class for java formatter tests that holds utility methods.
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   private JavaCodeStyleBean myCodeStyleBean;

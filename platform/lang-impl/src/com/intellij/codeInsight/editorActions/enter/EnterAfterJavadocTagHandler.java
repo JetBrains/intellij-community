@@ -35,7 +35,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 1/20/11 12:32 PM
  */
 public class EnterAfterJavadocTagHandler extends EnterHandlerDelegateAdapter {
 

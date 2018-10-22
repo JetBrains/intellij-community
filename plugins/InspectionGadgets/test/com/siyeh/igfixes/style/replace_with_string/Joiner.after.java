@@ -3,9 +3,9 @@ import java.util.StringJoiner;
 
 class Test {
   void test(String str1, String str2) {
-      // comment0
-      // comment2
-      String s = str1 + // comment1
-              str2; // comment3
+    String s = // comment0
+            str1 + // comment1
+                    str2 // comment2
+            ; // comment3
   }
 }

@@ -14,7 +14,6 @@ import static org.junit.Assume.assumeTrue;
 
 /**
  * @author mike
- * @since Sep 19, 2002
  */
 public class EnvironmentUtilTest {
   @Test(timeout = 30000)

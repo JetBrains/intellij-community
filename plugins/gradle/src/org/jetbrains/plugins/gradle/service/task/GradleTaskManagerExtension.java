@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 public interface GradleTaskManagerExtension {
 

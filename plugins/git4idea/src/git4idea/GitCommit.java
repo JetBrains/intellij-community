@@ -15,14 +15,12 @@
  */
 package git4idea;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
@@ -40,8 +38,6 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
-  private static final Logger LOG = Logger.getInstance(GitCommit.class);
-  private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
   @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -90,22 +86,9 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
   }
 
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
-    @NotNull private final String myRootPath = ourPathsInterner.intern(getRoot().getPath());
-
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
       super(project, changesOutput);
-    }
-
-    @Override
-    @NotNull
-    protected String absolutePath(@NotNull String path) {
-      try {
-        return myRootPath + "/" + GitUtil.unescapePath(path);
-      }
-      catch (VcsException e) {
-        return myRootPath + "/" + path;
-      }
     }
 
     @NotNull

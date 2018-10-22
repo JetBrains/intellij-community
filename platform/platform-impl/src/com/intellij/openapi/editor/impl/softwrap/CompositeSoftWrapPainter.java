@@ -24,7 +24,6 @@ import static java.util.Arrays.asList;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since Jul 2, 2010 10:20:14 AM
  */
 public class CompositeSoftWrapPainter implements SoftWrapPainter {
 

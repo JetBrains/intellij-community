@@ -31,7 +31,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.nor
 
 /**
  * @author Denis Zhdanov
- * @since 23.05.13 18:46
  */
 public class ExternalSystemTaskSettingsControl implements ExternalSystemSettingsControl<ExternalSystemTaskExecutionSettings> {
 

@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 @Tag("resource")
 public class ResourceRootConfiguration extends FilePattern {

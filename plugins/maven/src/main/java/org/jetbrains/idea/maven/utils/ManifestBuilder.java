@@ -40,7 +40,6 @@ import static org.codehaus.plexus.archiver.jar.Manifest.Attribute;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/22/2014
  */
 public class ManifestBuilder {
 

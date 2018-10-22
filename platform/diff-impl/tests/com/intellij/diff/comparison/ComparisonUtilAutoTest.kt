@@ -23,6 +23,7 @@ import com.intellij.diff.fragments.MergeLineFragment
 import com.intellij.diff.fragments.MergeWordFragment
 import com.intellij.diff.tools.util.base.HighlightPolicy
 import com.intellij.diff.tools.util.base.IgnorePolicy
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.ThreeSide
@@ -69,78 +70,90 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   }
 
   private fun doTestLine(seed: Long, runs: Int, maxLength: Int) {
-    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val fragmentsPolicies = listOf(InnerFragmentsPolicy.WORDS, InnerFragmentsPolicy.CHARS)
 
-    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+    doTest(seed, runs, maxLength, ignorePolicies, fragmentsPolicies) { text1, text2, ignorePolicy, fragmentsPolicy, debugData ->
       val sequence1 = text1.charsSequence
       val sequence2 = text2.charsSequence
 
-      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      val lineOffsets1 = LineOffsetsUtil.create(sequence1)
+      val lineOffsets2 = LineOffsetsUtil.create(sequence2)
+
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, lineOffsets1, lineOffsets2, ignorePolicy, fragmentsPolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
-      checkResultLine(text1, text2, fragments, policy, true)
+      checkResultLine(text1, text2, fragments, ignorePolicy, true)
     }
   }
 
   private fun doTestLineSquashed(seed: Long, runs: Int, maxLength: Int) {
-    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val fragmentsPolicies = listOf(InnerFragmentsPolicy.WORDS, InnerFragmentsPolicy.CHARS)
 
-    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+    doTest(seed, runs, maxLength, ignorePolicies, fragmentsPolicies) { text1, text2, ignorePolicy, fragmentsPolicy, debugData ->
       val sequence1 = text1.charsSequence
       val sequence2 = text2.charsSequence
 
-      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      val lineOffsets1 = LineOffsetsUtil.create(sequence1)
+      val lineOffsets2 = LineOffsetsUtil.create(sequence2)
+
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, lineOffsets1, lineOffsets2, ignorePolicy, fragmentsPolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
       val squashedFragments = MANAGER.squash(fragments)
       debugData.put("Squashed Fragments", squashedFragments)
 
-      checkResultLine(text1, text2, squashedFragments, policy, false)
+      checkResultLine(text1, text2, squashedFragments, ignorePolicy, false)
     }
   }
 
   private fun doTestLineTrimSquashed(seed: Long, runs: Int, maxLength: Int) {
-    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val fragmentsPolicies = listOf(InnerFragmentsPolicy.WORDS, InnerFragmentsPolicy.CHARS)
 
-    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+    doTest(seed, runs, maxLength, ignorePolicies, fragmentsPolicies) { text1, text2, ignorePolicy, fragmentsPolicy, debugData ->
       val sequence1 = text1.charsSequence
       val sequence2 = text2.charsSequence
 
-      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, policy, INDICATOR)
+      val lineOffsets1 = LineOffsetsUtil.create(sequence1)
+      val lineOffsets2 = LineOffsetsUtil.create(sequence2)
+
+      val fragments = MANAGER.compareLinesInner(sequence1, sequence2, lineOffsets1, lineOffsets2, ignorePolicy, fragmentsPolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
-      val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, policy, true, true)
+      val processed = MANAGER.processBlocks(fragments, sequence1, sequence2, ignorePolicy, true, true)
       debugData.put("Processed Fragments", processed)
 
-      checkResultLine(text1, text2, processed, policy, false)
+      checkResultLine(text1, text2, processed, ignorePolicy, false)
     }
   }
 
   private fun doTestChar(seed: Long, runs: Int, maxLength: Int) {
-    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+    doTest(seed, runs, maxLength, ignorePolicies) { text1, text2, ignorePolicy, debugData ->
       val sequence1 = text1.charsSequence
       val sequence2 = text2.charsSequence
 
-      val fragments = MANAGER.compareChars(sequence1, sequence2, policy, INDICATOR)
+      val fragments = MANAGER.compareChars(sequence1, sequence2, ignorePolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
-      checkResultChar(sequence1, sequence2, fragments, policy)
+      checkResultChar(sequence1, sequence2, fragments, ignorePolicy)
     }
   }
 
   private fun doTestWord(seed: Long, runs: Int, maxLength: Int) {
-    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
-    doTest(seed, runs, maxLength, policies) { text1, text2, policy, debugData ->
+    doTest(seed, runs, maxLength, ignorePolicies) { text1, text2, ignorePolicy, debugData ->
       val sequence1 = text1.charsSequence
       val sequence2 = text2.charsSequence
 
-      val fragments = MANAGER.compareWords(sequence1, sequence2, policy, INDICATOR)
+      val fragments = MANAGER.compareWords(sequence1, sequence2, ignorePolicy, INDICATOR)
       debugData.put("Fragments", fragments)
 
-      checkResultWord(sequence1, sequence2, fragments, policy)
+      checkResultWord(sequence1, sequence2, fragments, ignorePolicy)
     }
   }
 
@@ -218,12 +231,24 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   }
 
 
-  private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
+  private fun doTest(seed: Long, runs: Int, maxLength: Int,
+                     ignorePolicies: List<ComparisonPolicy>, fragmentsPolicies: List<InnerFragmentsPolicy>,
+                     test: (Document, Document, ComparisonPolicy, InnerFragmentsPolicy, DiffTestCase.DebugData) -> Unit) {
+    doTest(seed, runs, maxLength, ignorePolicies) { text1, text2, ignorePolicy, debugData ->
+      for (fragmentsPolicy in fragmentsPolicies) {
+        debugData.put("Inner Policy", fragmentsPolicy)
+        test(text1, text2, ignorePolicy, fragmentsPolicy, debugData)
+      }
+    }
+  }
+
+  private fun doTest(seed: Long, runs: Int, maxLength: Int,
+                     ignorePolicies: List<ComparisonPolicy>,
                      test: (Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
     doTest(seed, runs, maxLength) { text1, text2, debugData ->
-      for (comparisonPolicy in policies) {
-        debugData.put("Policy", comparisonPolicy)
-        test(text1, text2, comparisonPolicy, debugData)
+      for (ignorePolicy in ignorePolicies) {
+        debugData.put("Ignore Policy", ignorePolicy)
+        test(text1, text2, ignorePolicy, debugData)
       }
     }
   }

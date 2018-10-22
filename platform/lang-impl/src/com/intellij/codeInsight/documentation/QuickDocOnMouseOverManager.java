@@ -40,7 +40,6 @@ import java.util.Map;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 7/2/12 9:09 AM
  */
 public class QuickDocOnMouseOverManager {
   private static final Logger LOG = Logger.getInstance(QuickDocOnMouseOverManager.class);

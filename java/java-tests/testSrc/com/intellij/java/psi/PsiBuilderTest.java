@@ -33,7 +33,6 @@ import com.intellij.testFramework.LightIdeaTestCase;
 import junit.framework.AssertionFailedError;
 
 /**
- * @since Jan 21, 2005
  * @author max
  */
 public class PsiBuilderTest extends LightIdeaTestCase {

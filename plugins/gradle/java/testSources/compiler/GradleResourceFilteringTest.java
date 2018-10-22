@@ -5,7 +5,6 @@ import org.junit.Test;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/21/2014
  */
 public class GradleResourceFilteringTest extends GradleCompilingTestCase {
 

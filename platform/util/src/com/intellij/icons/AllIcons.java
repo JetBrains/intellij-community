@@ -2526,6 +2526,7 @@ public class AllIcons {
   public final static class Vcs {
     public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 16x16
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
+    public static final Icon Branch = IconLoader.getIcon("/vcs/branch.svg"); // 16x16
     public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16

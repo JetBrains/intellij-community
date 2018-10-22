@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 3/11/13 10:41 AM
  */
 public abstract class AbstractArrangementUiComponent implements ArrangementUiComponent {
 

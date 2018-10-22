@@ -24,7 +24,6 @@ import java.util.jar.JarFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   @NotNull

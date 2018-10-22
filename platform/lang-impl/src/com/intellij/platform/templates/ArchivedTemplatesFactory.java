@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- * @since 10/1/12
  */
 public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);

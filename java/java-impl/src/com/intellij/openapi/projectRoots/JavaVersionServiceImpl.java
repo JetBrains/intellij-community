@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * @since 3/28/12
  */
 public class JavaVersionServiceImpl extends JavaVersionService {
   @Override

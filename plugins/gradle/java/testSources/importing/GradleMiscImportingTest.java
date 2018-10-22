@@ -36,7 +36,6 @@ import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/27/2015
  */
 public class GradleMiscImportingTest extends GradleImportingTestCase {
 

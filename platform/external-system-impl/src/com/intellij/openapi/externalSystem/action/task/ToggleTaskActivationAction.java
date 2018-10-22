@@ -38,7 +38,6 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 

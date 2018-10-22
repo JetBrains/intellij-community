@@ -43,7 +43,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/25/2014
  */
 public class GradleExecuteTaskAction extends ExternalSystemAction {
 

@@ -193,6 +193,10 @@ public class PatternCompiler {
   public static String getLastFindPlan() {
     return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
   }
+  @TestOnly
+  public static void cleanupForNextTest() {
+    lastTestingContext = null;
+  }
 
   @NotNull
   private static List<PsiElement> compileByAllPrefixes(Project project,

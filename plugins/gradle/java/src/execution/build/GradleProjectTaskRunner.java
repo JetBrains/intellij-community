@@ -69,7 +69,6 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.resolvePro
  * }
  *
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class GradleProjectTaskRunner extends ProjectTaskRunner {
 

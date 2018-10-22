@@ -46,7 +46,6 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/14/12 9:54 AM
  */
 public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 

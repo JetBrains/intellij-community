@@ -1,23 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
-import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.*
 
-internal val LOG = Logger.getInstance(CredentialStore::class.java)
-
-private fun toOldKey(hash: ByteArray) = "old-hashed-key|" + Base64.getEncoder().encodeToString(hash)
-
-internal fun toOldKeyAsIdentity(hash: ByteArray) = CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(hash))
-
-fun toOldKey(requestor: Class<*>, userName: String): CredentialAttributes {
-  return CredentialAttributes(SERVICE_NAME_PREFIX, toOldKey(MessageDigest.getInstance("SHA-256").digest("${requestor.name}/$userName".toByteArray())))
-}
+internal val LOG = logger<CredentialStore>()
 
 fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {

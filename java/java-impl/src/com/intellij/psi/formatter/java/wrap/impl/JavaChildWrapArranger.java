@@ -31,7 +31,6 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010
  */
 public class JavaChildWrapArranger {
   /**

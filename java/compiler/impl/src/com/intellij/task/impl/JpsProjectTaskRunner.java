@@ -44,7 +44,6 @@ import java.util.stream.Stream;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class JpsProjectTaskRunner extends ProjectTaskRunner {
   private static final Logger LOG = Logger.getInstance(JpsProjectTaskRunner.class);

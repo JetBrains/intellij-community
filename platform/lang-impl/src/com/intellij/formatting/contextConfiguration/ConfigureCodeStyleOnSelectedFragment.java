@@ -82,7 +82,23 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, Lo
   @Nullable
   private static LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
     Language language = PsiUtilBase.getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), file.getProject());
-    return language != null ? LanguageCodeStyleSettingsProvider.forLanguageOrParent(language) : null;
+    return language != null ? guessSettingsProviderForLanguage(language) : null;
+  }
+
+  @Nullable
+  private static LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
+    LanguageCodeStyleSettingsProvider exactMatch = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    if (exactMatch != null) {
+      return exactMatch;
+    }
+    LanguageCodeStyleSettingsProvider guessed = null;
+    for (LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+      if (language.isKindOf(provider.getLanguage())
+          && (guessed == null || provider.getLanguage().isKindOf(guessed.getLanguage()))) {
+        guessed = provider;
+      }
+    }
+    return guessed;
   }
 
   @Override

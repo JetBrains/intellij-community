@@ -85,6 +85,10 @@ def patch_is_interactive():
     matplotlib.is_interactive = patched_is_interactive
 
 
+def _get_major_version(module):
+    return int(module.__version__.split('.')[0])
+
+
 def activate_matplotlib(enable_gui_function):
     """Set interactive to True for interactive backends.
     enable_gui_function - Function which enables gui, should be run in the main thread.
@@ -93,6 +97,16 @@ def activate_matplotlib(enable_gui_function):
     if not hasattr(matplotlib, 'rcParams'):
         # matplotlib module wasn't fully imported, try later
         return False
+
+    if _get_major_version(matplotlib) >= 3:
+        # since matplotlib 3.0, accessing `matplotlib.rcParams` lead to pyplot import,
+        # so we need to wait until necessary pyplot attributes will be imported as well
+        if 'matplotlib.pyplot' not in sys.modules:
+            return False
+        pyplot = sys.modules['matplotlib.pyplot']
+        if not hasattr(pyplot, 'switch_backend'):
+            return False
+
     gui, backend = find_gui_and_backend()
     is_interactive = is_interactive_backend(backend)
     if is_interactive:

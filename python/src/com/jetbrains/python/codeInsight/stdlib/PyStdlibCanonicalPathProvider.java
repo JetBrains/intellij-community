@@ -77,6 +77,9 @@ public class PyStdlibCanonicalPathProvider implements PyCanonicalPathProvider {
         components.set(0, "pickle");
         return QualifiedName.fromComponents(components);
       }
+      else if (qName.matchesPrefix(QualifiedName.fromComponents("mock", "mock"))) {
+        return qName.removeHead(1);
+      }
     }
     return null;
   }

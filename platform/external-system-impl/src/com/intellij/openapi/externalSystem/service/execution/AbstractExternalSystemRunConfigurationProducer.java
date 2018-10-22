@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/16/2016
  */
 public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
 

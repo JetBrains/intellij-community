@@ -172,7 +172,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     if (state == MessagePool.State.NoErrors) {
       myNotificationPopupAlreadyShown = false;
       if (myBalloon != null) {
-        myBalloon.hide();
+        Disposer.dispose(myBalloon);
       }
     }
     else if (state == MessagePool.State.UnreadErrors && !myNotificationPopupAlreadyShown && isActive(myFrame)) {

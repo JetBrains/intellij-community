@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -33,9 +32,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBScrollBar;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBPoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -57,7 +54,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
-import static com.intellij.util.ui.UIUtil.addBorder;
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser implements Disposable {
@@ -117,28 +113,6 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   protected JComponent createHeaderPanel() {
     return JBUI.Panels.simplePanel(myChangeListChooser)
                       .withBorder(JBUI.Borders.emptyLeft(6));
-  }
-
-  @NotNull
-  @Override
-  protected JComponent createCenterPanel() {
-    CurrentBranchComponent branchComponent = new CurrentBranchComponent(myProject, this);
-    JScrollPane viewerScrollPane = getViewerScrollPane();
-
-    if (!SystemInfo.isMac) {
-      addBorder(branchComponent, JBUI.Borders.empty(5, 0, 0, 7));
-      viewerScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-      viewerScrollPane.getVerticalScrollBar().add(JBScrollBar.LEADING, branchComponent);
-
-      return viewerScrollPane;
-    }
-    else {
-      ScrollPaneOverlayPanel overlayPanel = new ScrollPaneOverlayPanel(viewerScrollPane);
-      overlayPanel.setTopRightOffset(new JBPoint(7, 5));
-      overlayPanel.setTopRightComponent(branchComponent);
-
-      return overlayPanel;
-    }
   }
 
   @NotNull

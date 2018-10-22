@@ -48,7 +48,6 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/6/2016
  */
 public class GradleProjectCompositeSelectorDialog extends DialogWrapper {
 

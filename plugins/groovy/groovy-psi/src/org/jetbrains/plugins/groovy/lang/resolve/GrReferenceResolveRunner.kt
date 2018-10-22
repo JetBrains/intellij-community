@@ -4,8 +4,9 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.*
 import com.intellij.psi.util.InheritanceUtil.isInheritor
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.strictParents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -97,10 +98,6 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 }
 
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Collection<GroovyResolveResult> {
-  resolveStatic()?.let {
-    return listOf(it)
-  }
-
   if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return emptyList()
   val processor = GroovyResolverProcessorBuilder.builder()
     .setForceRValue(forceRValue)
@@ -159,13 +156,7 @@ private fun GrReferenceExpression.resolveClassFqn(facade: JavaPsiFacade, scope: 
  *
  * @see org.codehaus.groovy.control.ResolveVisitor
  */
-private fun GrReferenceExpression.resolveStatic(): GroovyResolveResult? {
-  return CachedValuesManager.getCachedValue(this) {
-    CachedValueProvider.Result.create(doResolveStatic(), this, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)
-  }
-}
-
-private fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
+internal fun GrReferenceExpression.doResolveStatic(): GroovyResolveResult? {
   val name = referenceName ?: return null
 
   val fqnResult = resolvePackageOrClass()
@@ -245,7 +236,7 @@ private fun PsiElement.resolveUnqualifiedType(name: String): ClassResolveResult?
 }
 
 private fun PsiElement.resolveQualifiedType(name: String, qualifier: GrReferenceExpression): ClassResolveResult? {
-  val classQualifier = qualifier.resolveStatic()?.element as? PsiClass ?: return null
+  val classQualifier = qualifier.staticReference.resolve() as? PsiClass ?: return null
   val processor = ReferenceExpressionClassProcessor(name, this)
   classQualifier.processDeclarations(processor, ResolveState.initial(), null, this)
   return processor.result

@@ -53,7 +53,6 @@ import java.util.stream.Collectors;
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
  *
  * @author Vladislav.Soroka
- * @since 6/21/2016
  */
 public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvironmentProvider {
 

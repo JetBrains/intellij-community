@@ -18,7 +18,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +31,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBImageIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -333,7 +333,7 @@ public class CustomizableActionsPanel {
         catch (IOException e) {
           LOG.debug(e);
         }
-        Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
+        Icon icon = new File(path).exists() && image != null ? new JBImageIcon(image) : null;
         if (icon != null) {
           if (icon.getIconWidth() >  EmptyIcon.ICON_18.getIconWidth() || icon.getIconHeight() > EmptyIcon.ICON_18.getIconHeight()) {
             Messages.showErrorDialog(component, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("title.choose.action.icon"));

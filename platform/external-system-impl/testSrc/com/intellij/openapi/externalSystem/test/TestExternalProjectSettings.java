@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/13 5:12 PM
  */
 public class TestExternalProjectSettings extends ExternalProjectSettings {
 

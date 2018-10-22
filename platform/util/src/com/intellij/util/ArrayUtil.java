@@ -682,17 +682,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @Contract(pure=true)
   public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
-    if (object == null) {
-      for (int i = start; i < end; i++) {
-        if (objects[i] == null) return i;
-      }
-    }
-    else {
-      for (int i = start; i < end; i++) {
-        if (object.equals(objects[i])) return i;
-      }
-    }
-    return -1;
+    return ArrayUtilRt.indexOf(objects, object, start, end);
   }
 
   @Contract(pure=true)

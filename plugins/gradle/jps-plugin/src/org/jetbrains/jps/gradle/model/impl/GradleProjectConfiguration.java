@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/10/2014
  */
 public class GradleProjectConfiguration {
   public static final String CONFIGURATION_FILE_RELATIVE_PATH = "gradle/configuration.xml";

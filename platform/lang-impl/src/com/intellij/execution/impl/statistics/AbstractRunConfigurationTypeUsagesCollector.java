@@ -8,25 +8,26 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Nikolay Matveev
- */
+import static java.lang.String.valueOf;
+
 public abstract class AbstractRunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   protected abstract boolean isApplicable(@NotNull RunManager runManager, @NotNull RunnerAndConfigurationSettings settings);
 
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages(@NotNull Project project) {
-    final Set<String> runConfigurationTypes = new HashSet<>();
+    final TObjectIntHashMap<Template> templates = new TObjectIntHashMap<>();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       if (project.isDisposed()) return;
       final RunManager runManager = RunManager.getInstance(project);
@@ -48,10 +49,57 @@ public abstract class AbstractRunConfigurationTypeUsagesCollector extends Projec
           if (configurationType.getConfigurationFactories().length > 1) {
             keyBuilder.append(".").append(configurationFactory.getId());
           }
-          runConfigurationTypes.add(keyBuilder.toString());
+          final Template template = new Template(keyBuilder.toString(), createContext(settings, runConfiguration));
+          if (templates.containsKey(template)) {
+            templates.increment(template);
+          }
+          else {
+            templates.put(template, 1);
+          }
         }
       }
     });
-    return ContainerUtil.map2Set(runConfigurationTypes, runConfigurationType -> new UsageDescriptor(runConfigurationType, 1));
+
+    final Set<UsageDescriptor> result = new HashSet<>();
+    templates.forEachEntry((template, value) -> result.add(template.createUsageDescriptor(value)));
+    return result;
+  }
+
+  private static FUSUsageContext createContext(@NotNull RunnerAndConfigurationSettings settings,
+                                               @NotNull RunConfiguration runConfiguration) {
+    return FUSUsageContext.create(
+      valueOf(settings.isShared()),
+      valueOf(settings.isEditBeforeRun()),
+      valueOf(settings.isActivateToolWindowBeforeRun()),
+      valueOf(runConfiguration.isAllowRunningInParallel())
+    );
+  }
+
+  private static class Template {
+    private final String myKey;
+    private final FUSUsageContext myContext;
+
+    private Template(String key, FUSUsageContext context) {
+      myKey = key;
+      myContext = context;
+    }
+
+    private UsageDescriptor createUsageDescriptor(int count) {
+      return new UsageDescriptor(myKey, count, myContext);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Template template = (Template)o;
+      return Objects.equals(myKey, template.myKey) &&
+             Objects.equals(myContext, template.myContext);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myKey, myContext);
+    }
   }
 }

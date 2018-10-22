@@ -462,9 +462,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
     addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
     addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
-    addWidget(statusBar, new InsertOverwritePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
     addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
-              StatusBar.Anchors.after(StatusBar.StandardWidgets.INSERT_OVERWRITE_PANEL));
+              StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
     for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
       StatusBarWidget widget = widgetProvider.getWidget(project);

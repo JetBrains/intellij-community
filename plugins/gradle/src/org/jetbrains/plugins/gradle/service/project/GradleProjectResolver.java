@@ -71,7 +71,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 /**
  * @author Denis Zhdanov, Vladislav Soroka
- * @since 8/8/11 11:09 AM
  */
 public class GradleProjectResolver implements ExternalSystemProjectResolver<GradleExecutionSettings> {
 

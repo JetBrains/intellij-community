@@ -32,7 +32,7 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
       settings.state.isRememberPasswordByDefault = value
     }
 
-  private var _currentProvider: Lazy<CredentialStore> = if (provider == null) SynchronizedClearableLazy { computeProvider(settings) } else lazyOf(provider)
+  private val _currentProvider = SynchronizedClearableLazy { computeProvider(settings) }
 
   protected val currentProviderIfComputed: CredentialStore?
     get() = if (_currentProvider.isInitialized()) _currentProvider.value else null
@@ -40,13 +40,13 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
   internal var currentProvider: CredentialStore
     get() = _currentProvider.value
     set(value) {
-      _currentProvider = lazyOf(value)
+      _currentProvider.value = value
     }
 
   internal fun closeCurrentStore(isSave: Boolean, isEvenMemoryOnly: Boolean) {
     val store = currentProviderIfComputed ?: return
-    if (isEvenMemoryOnly || store !is KeePassCredentialStore || !store.isMemoryOnly) {
-      (_currentProvider as SynchronizedClearableLazy).drop()
+    if (isEvenMemoryOnly || store !is InMemoryCredentialStore) {
+      _currentProvider.drop()
       if (isSave && store is KeePassCredentialStore) {
         try {
           store.save(createMasterKeyEncryptionSpec())
@@ -67,10 +67,16 @@ open class BasePasswordSafe @JvmOverloads constructor(val settings: PasswordSafe
   }
 
   // it is helper storage to support set password as memory-only (see setPassword memoryOnly flag)
-  protected val memoryHelperProvider: Lazy<CredentialStore> = lazy { createInMemoryKeePassCredentialStore() }
+  protected val memoryHelperProvider: Lazy<CredentialStore> = lazy { InMemoryCredentialStore() }
 
   override val isMemoryOnly: Boolean
     get() = settings.providerType == ProviderType.MEMORY_ONLY
+
+  init {
+    provider?.let {
+      currentProvider = it
+    }
+  }
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
@@ -161,7 +167,7 @@ internal fun getDefaultKeePassDbFile() = getDefaultKeePassBaseDirectory().resolv
 
 private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return createInMemoryKeePassCredentialStore()
+    return InMemoryCredentialStore()
   }
 
   fun showError(title: String) {
@@ -205,7 +211,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
   }
 
   settings.providerType = ProviderType.MEMORY_ONLY
-  return createInMemoryKeePassCredentialStore()
+  return InMemoryCredentialStore()
 }
 
 internal fun createPersistentCredentialStore(): CredentialStore? {

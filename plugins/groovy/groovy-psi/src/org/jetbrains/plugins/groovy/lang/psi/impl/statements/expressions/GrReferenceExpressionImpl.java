@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
@@ -61,6 +62,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   public GrReferenceExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
+
+  private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
 
   private final Lazy<GroovyReference> myRValueReference = lazy(
     () -> isRValue(this) ? new GrReferenceExpressionReference(this, true) : null
@@ -471,6 +474,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return false;
   }
 
+  @NotNull
+  @Override
+  public GroovyReference getStaticReference() {
+    return myStaticReference;
+  }
+
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
@@ -617,6 +626,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @NotNull
   @Override
   public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(incomplete);
+    if (!staticResults.isEmpty()) {
+      return staticResults;
+    }
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, RESOLVER);
   }
 
@@ -654,5 +667,12 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       ((GroovyFile)file).addImport(statement);
     }
     return this;
+  }
+
+  @Override
+  public boolean isImplicitCallReceiver() {
+    // `a.&foo()` compiles into `new MethodClosure(a, "foo").call()` as if `call` was explicitly in the code
+    // `a.@foo()` compiles into `a@.foo.call()` as if `call` was an explicitly in the code
+    return !hasAt() && !hasMemberPointer() && myStaticReference.resolve() instanceof GrVariable;
   }
 }

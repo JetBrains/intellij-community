@@ -71,7 +71,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 

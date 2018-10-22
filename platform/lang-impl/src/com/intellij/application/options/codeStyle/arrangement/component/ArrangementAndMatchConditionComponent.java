@@ -43,7 +43,6 @@ import java.util.Set;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 8/8/12 10:51 AM
  */
 public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 

@@ -181,7 +181,8 @@ private interface MacOsKeychainLibrary : Library {
   fun SecKeychainItemFreeContent(/*SecKeychainAttributeList*/attrList: Pointer?, data: Pointer?)
 }
 
-private class SecKeychainAttributeInfo : Structure() {
+// must be not private
+internal class SecKeychainAttributeInfo : Structure() {
   @JvmField
   var count: Int = 0
   @JvmField
@@ -211,7 +212,8 @@ private fun SecKeychainAttributeInfo(vararg ids: Int): SecKeychainAttributeInfo 
   return info
 }
 
-private class SecKeychainAttributeList : Structure {
+// must be not private
+internal class SecKeychainAttributeList : Structure {
   @JvmField
   var count = 0
   @JvmField
@@ -224,7 +226,8 @@ private class SecKeychainAttributeList : Structure {
   override fun getFieldOrder() = listOf("count", "attr")
 }
 
-private class SecKeychainAttribute : Structure, Structure.ByReference {
+// must be not private
+internal class SecKeychainAttribute : Structure, Structure.ByReference {
   @JvmField
   var tag = 0
   @JvmField

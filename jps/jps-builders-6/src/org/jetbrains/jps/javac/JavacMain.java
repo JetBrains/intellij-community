@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
-  private static final boolean CUSTOM_JAVAC_FILE_MANAGER = Boolean.valueOf(System.getProperty("jps.custom.javac.file.manager", "false")).booleanValue();
+  private static final boolean CUSTOM_JAVAC_FILE_MANAGER = Boolean.valueOf(System.getProperty("jps.custom.javac.file.manager", "true")).booleanValue();
 
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
   private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(

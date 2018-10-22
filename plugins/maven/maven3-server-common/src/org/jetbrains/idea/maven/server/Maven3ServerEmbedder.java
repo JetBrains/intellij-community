@@ -55,7 +55,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/20/2015
  */
 public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements MavenServerEmbedder {
 

@@ -82,8 +82,7 @@ internal class KeePassDatabase(private val rootElement: Element = createEmptyDat
   internal fun protectValue(value: CharSequence) = StringProtectedByStreamCipher(value, secureStringCipher.value)
 
   @Synchronized
-  fun save(credentials: KeePassCredentials, outputStream: OutputStream) {
-    val secureRandom = createSecureRandom()
+  fun save(credentials: KeePassCredentials, outputStream: OutputStream, secureRandom: SecureRandom) {
     val kdbxHeader = KdbxHeader(secureRandom)
     kdbxHeader.writeKdbxHeader(outputStream)
 

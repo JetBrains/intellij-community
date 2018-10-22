@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/14
  */
 public enum TestEventResult {
   SUCCESS("SUCCESS"),

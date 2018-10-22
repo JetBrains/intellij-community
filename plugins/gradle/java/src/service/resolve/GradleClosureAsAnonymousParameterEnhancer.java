@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousPar
 
 /**
  * @author Vladislav.Soroka
- * @since 9/6/13
  */
 public class GradleClosureAsAnonymousParameterEnhancer extends ClosureAsAnonymousParameterEnhancer {
   @Nullable

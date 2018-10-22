@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/31/14
  */
 public class ScalaCompileOptionsData implements Serializable {
   private static final long serialVersionUID = 1L;

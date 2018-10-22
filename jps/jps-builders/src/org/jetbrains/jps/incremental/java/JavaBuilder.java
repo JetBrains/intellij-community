@@ -72,7 +72,6 @@ import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author Eugene Zhuravlev
- * @since 21.09.2011
  */
 public class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.JavaBuilder");

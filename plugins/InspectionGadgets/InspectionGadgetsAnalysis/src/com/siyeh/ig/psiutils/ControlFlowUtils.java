@@ -923,15 +923,17 @@ public class ControlFlowUtils {
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
           PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
+          // not the first in the && chain: we cannot properly generate code which would short-circuit as well
           // except some special cases
           return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
                  (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
                  (polyParent instanceof PsiLambdaExpression);
         }
         else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
-          return false;
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the || chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiReturnStatement) || (polyParent instanceof PsiLambdaExpression);
         }
       }
       if (checkExecuted && parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {

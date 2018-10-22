@@ -50,7 +50,6 @@ import java.awt.event.KeyEvent;
 
 /**
  * @author lex
- * @since Nov 24, 2003
  */
 public class ValueHint extends AbstractValueHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.ValueHint");

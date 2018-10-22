@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
-import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
 
 public class LabelPainter {
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -42,6 +41,7 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
@@ -351,7 +351,7 @@ public class LabelPainter {
   }
 
   public static Font getReferenceFont() {
-    Font font = RectanglePainter.getFont();
+    Font font = GraphCommitCellRenderer.getLabelFont();
     return font.deriveFont(font.getSize() - 1f);
   }
 

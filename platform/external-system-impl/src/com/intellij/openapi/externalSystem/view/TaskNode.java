@@ -29,7 +29,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class TaskNode extends ExternalSystemNode<TaskData> {
   private final TaskData myTaskData;

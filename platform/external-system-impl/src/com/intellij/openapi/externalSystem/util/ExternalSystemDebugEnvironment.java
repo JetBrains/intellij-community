@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/24/13
  */
 public class ExternalSystemDebugEnvironment {
 

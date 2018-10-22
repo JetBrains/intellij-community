@@ -464,7 +464,7 @@ public class ExpressionGenerator extends Generator {
     }
     else {
       //write assignment such as +=, -=, etc
-      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.getReference().multiResolve(false));
       final PsiElement resolved = resolveResult.getElement();
 
       if (resolved instanceof PsiMethod && !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationTokenType())) {
@@ -636,7 +636,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.getReference().multiResolve(false));
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod) {
       if (right == null) {
@@ -708,7 +708,7 @@ public class ExpressionGenerator extends Generator {
   public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
     final boolean postfix = expression.isPostfix();
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+    final GroovyResolveResult resolveResult = expression.getReference().advancedResolve();
     final PsiElement resolved = resolveResult.getElement();
     final GrExpression operand = expression.getOperand();
 

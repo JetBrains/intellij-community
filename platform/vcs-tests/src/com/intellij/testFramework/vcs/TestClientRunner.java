@@ -35,7 +35,6 @@ import java.util.Map;
 
 /**
  * @author Irina.Chernushina
- * @since 2.05.2012
  */
 public class TestClientRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.vcs.TestClientRunner");

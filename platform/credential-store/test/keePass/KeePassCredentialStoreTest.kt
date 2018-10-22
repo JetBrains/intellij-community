@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.keePass
 
-import com.intellij.credentialStore.CredentialAttributes
-import com.intellij.credentialStore.Credentials
-import com.intellij.credentialStore.EncryptionSpec
-import com.intellij.credentialStore.getDefaultEncryptionType
+import com.intellij.credentialStore.*
 import com.intellij.credentialStore.kdbx.IncorrectMasterPasswordException
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.TemporaryDirectory
@@ -64,7 +61,7 @@ class KeePassCredentialStoreTest {
       credentialMap.put(attributes, credentials)
     }
 
-    provider.setMasterKey("foo")
+    provider.setMasterKey("foo", createSecureRandom())
 
     val dbFile = baseDir.resolve(DB_FILE_NAME)
     val masterPasswordFile = baseDir.resolve(MASTER_KEY_FILE_NAME)

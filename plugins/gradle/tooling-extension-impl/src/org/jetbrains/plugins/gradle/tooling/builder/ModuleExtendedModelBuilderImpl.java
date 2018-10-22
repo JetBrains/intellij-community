@@ -50,7 +50,6 @@ import java.util.*;
  * @deprecated to be removed in 2018.1
  *
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 @Deprecated
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {

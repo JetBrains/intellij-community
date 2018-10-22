@@ -99,7 +99,6 @@ import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
- * @since Dec 20, 2007
  */
 public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent, Disposable {
   static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexImpl");

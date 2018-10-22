@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.GraphAlgorithms
@@ -10,7 +9,7 @@ import java.util.*
 
 private val NUMBER = Regex("\\d+")
 
-class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
+class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UpdateSettings) {
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
@@ -92,20 +91,4 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
     }
     return UpdateChain(path, if (total > 0) total.toString() else null)
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings) : this(currentBuild, updatesInfo, updateSettings)
-
-
-  @Deprecated("use {@link #UpdateStrategy(BuildNumber, UpdatesInfo, UserUpdateSettings)}")
-  constructor(@Suppress("UNUSED_PARAMETER") majorVersion: Int,
-              @Suppress("UNUSED_PARAMETER") currentBuild: BuildNumber,
-              @Suppress("UNUSED_PARAMETER") updatesInfo: UpdatesInfo,
-              @Suppress("UNUSED_PARAMETER") updateSettings: UserUpdateSettings,
-              @Suppress("UNUSED_PARAMETER") customization: UpdateStrategyCustomization) : this(currentBuild, updatesInfo, updateSettings)
-  //</editor-fold>
 }

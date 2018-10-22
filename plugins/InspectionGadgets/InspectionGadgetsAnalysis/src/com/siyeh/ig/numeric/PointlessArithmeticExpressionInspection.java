@@ -171,7 +171,7 @@ public class PointlessArithmeticExpressionInspection extends BaseInspection {
       final String replacement = expressions.stream().map(x -> tracker.textWithComments(x)).collect(Collectors.joining(delimiter));
       final boolean castToLongNeeded = TypeConversionUtil.isLongType(type) &&
                                        expressions.stream().noneMatch(x -> TypeConversionUtil.isLongType(x.getType()));
-      tracker.replaceAndRestoreComments(element, castToLongNeeded ? "(long)" + replacement : replacement);
+      tracker.replaceExpressionAndRestoreComments(expression, castToLongNeeded ? "(long)" + replacement : replacement);
     }
   }
 

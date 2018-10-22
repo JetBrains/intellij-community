@@ -32,7 +32,6 @@ import java.util.StringTokenizer;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 11/7/11 11:59 AM
  */
 public class OffsetsElementSignatureProvider extends AbstractElementSignatureProvider {
 

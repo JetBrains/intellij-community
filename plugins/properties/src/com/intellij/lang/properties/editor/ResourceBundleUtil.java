@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 10/5/11 2:35 PM
  */
 public class ResourceBundleUtil {
 

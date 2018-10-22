@@ -29,7 +29,6 @@ import java.awt.*;
  * size of the dialog that serves as a container for the panel), that width is used as a maximum width.
  *
  * @author Denis Zhdanov
- * @since Jul 28, 2008
  */
 public class MultiRowFlowPanel extends JPanel {
 

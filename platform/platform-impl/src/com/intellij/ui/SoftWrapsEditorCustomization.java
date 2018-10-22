@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Aug 20, 2010 4:54:48 PM
  */
 public class SoftWrapsEditorCustomization extends SimpleEditorCustomization {
 

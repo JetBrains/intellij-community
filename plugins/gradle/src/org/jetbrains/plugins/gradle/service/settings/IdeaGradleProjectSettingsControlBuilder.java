@@ -61,7 +61,6 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSettingsControlBuilder {
 

@@ -88,40 +88,54 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   @NotNull
   @Override
   public List<CodeSmellInfo> findCodeSmells(@NotNull final List<VirtualFile> filesToCheck) throws ProcessCanceledException {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final List<CodeSmellInfo> result = new ArrayList<>();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
-
-    final Ref<Exception> exception = Ref.create();
-    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
-      @Override
-      public void run(@NotNull ProgressIndicator progress) {
-        try {
-          for (int i = 0; i < filesToCheck.size(); i++) {
-            if (progress.isCanceled()) throw new ProcessCanceledException();
-
-            final VirtualFile file = filesToCheck.get(i);
-
-            progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
-            progress.setFraction((double)i / (double)filesToCheck.size());
-
-            result.addAll(findCodeSmells(file, progress));
+    List<CodeSmellInfo> result = new ArrayList<>();
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
+      final Ref<Exception> exception = Ref.create();
+      ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+        @Override
+        public void run(@NotNull ProgressIndicator progress) {
+          try {
+            result.addAll(findCodeSmells(filesToCheck, progress));
+          }
+          catch (ProcessCanceledException e) {
+            exception.set(e);
+          }
+          catch (Exception e) {
+            LOG.error(e);
+            exception.set(e);
           }
         }
-        catch (ProcessCanceledException e) {
-          exception.set(e);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-          exception.set(e);
-        }
+      });
+      if (!exception.isNull()) {
+        ExceptionUtil.rethrowAllAsUnchecked(exception.get());
       }
-    });
-    if (!exception.isNull()) {
-      ExceptionUtil.rethrowAllAsUnchecked(exception.get());
+    }
+    else if (ProgressManager.getInstance().hasProgressIndicator()) {
+      result.addAll(findCodeSmells(filesToCheck, ProgressManager.getInstance().getProgressIndicator()));
+    }
+    else {
+      throw new RuntimeException("Must run from Event Dispatch Thread or with a progress indicator");
     }
 
+    return result;
+  }
+
+  @NotNull
+  private List<CodeSmellInfo> findCodeSmells(@NotNull List<VirtualFile> files,
+                                             @NotNull ProgressIndicator progress) {
+    final List<CodeSmellInfo> result = new ArrayList<>();
+    for (int i = 0; i < files.size(); i++) {
+      if (progress.isCanceled()) throw new ProcessCanceledException();
+
+      final VirtualFile file = files.get(i);
+
+      progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+      progress.setFraction((double)i / (double)files.size());
+
+      result.addAll(findCodeSmells(file, progress));
+    }
     return result;
   }
 

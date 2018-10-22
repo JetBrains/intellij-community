@@ -9,7 +9,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 11/22/12 7:52 PM
  */
 public class TextIcon implements Icon {
 

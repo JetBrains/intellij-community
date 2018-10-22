@@ -32,7 +32,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/13/2015
  */
 public class GradleProjectStructureCustomizer extends ExternalProjectStructureCustomizer {
 

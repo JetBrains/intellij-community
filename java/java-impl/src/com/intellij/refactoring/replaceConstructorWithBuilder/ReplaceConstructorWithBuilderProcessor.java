@@ -52,7 +52,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 04-Sep-2008
  */
 public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefactoringProcessor {
   public static final String REFACTORING_NAME = "Replace Constructor with Builder";

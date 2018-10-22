@@ -42,7 +42,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * @since Jun 3, 2008
  *
  * A source file is scheduled for recompilation if
  * 1. its timestamp has changed

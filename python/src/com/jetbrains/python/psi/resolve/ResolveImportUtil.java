@@ -127,9 +127,9 @@ public class ResolveImportUtil {
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      results.addAll(updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false)));
+      results.addAll(resolveChildren(candidate, name, file, false, true, false, false));
     }
-    return results;
+    return updateRatedResults(PyStubPackages.removeRuntimeModulesForWhomStubModulesFound(results));
   }
 
   @NotNull

@@ -18,7 +18,6 @@ import java.util.Set;
  * Allows to customize the Java coverage engine for other JVM-based languages.
  *
  * @author anna
- * @since 2/14/11
  */
 public abstract class JavaCoverageEngineExtension {
   public static final ExtensionPointName<JavaCoverageEngineExtension> EP_NAME = ExtensionPointName.create("com.intellij.javaCoverageEngineExtension");

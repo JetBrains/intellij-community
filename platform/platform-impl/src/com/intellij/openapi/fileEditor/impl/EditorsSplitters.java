@@ -797,7 +797,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
       final List<Element> children = new ArrayList<>(fileElements.size());
 
       // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      int toRemove = fileElements.size() - UISettings.getInstance().getEditorTabLimit();
+      int toRemove = fileElements.size() - UISettings.getInstance().getState().getEditorTabLimit();
       for (Element fileElement : fileElements) {
         if (toRemove <= 0 || Boolean.valueOf(fileElement.getAttributeValue(PINNED)).booleanValue()) {
           children.add(fileElement);

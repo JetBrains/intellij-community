@@ -1,5 +1,5 @@
 class Comment4 {{
-    //c1
-    String s = "" +//c2
-            "abc";
+  String s = //c1
+          "" +//c2
+                  "abc";
 }}

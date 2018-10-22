@@ -89,12 +89,6 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
-    PsiFile value = getValue();
-    return value != null ? value.getVirtualFile() : null;
-  }
-
-  @Override
   public boolean canNavigate() {
     return isNavigatableLibraryRoot() || super.canNavigate();
   }

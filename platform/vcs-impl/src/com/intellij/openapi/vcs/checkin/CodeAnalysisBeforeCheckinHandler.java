@@ -7,10 +7,16 @@ import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -21,12 +27,16 @@ import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * The check-in handler which performs code analysis before check-in. Source code for this class
@@ -61,12 +71,19 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   private ReturnResult processFoundCodeSmells(final List<CodeSmellInfo> codeSmells, @Nullable CommitExecutor executor) {
     int errorCount = collectErrors(codeSmells);
     int warningCount = codeSmells.size() - errorCount;
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Set<VirtualFile> virtualFiles = ContainerUtil.map2Set(codeSmells, (smell) -> fileDocumentManager.getFile(smell.getDocument()));
     String commitButtonText = executor != null ? executor.getActionText() : myCheckinPanel.getCommitActionName();
     commitButtonText = StringUtil.trimEnd(commitButtonText, "...");
 
+    String message = virtualFiles.size() == 1
+      ? VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text",
+                          FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(virtualFiles.iterator().next().getPath())), errorCount, warningCount)
+      : VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
+                          errorCount, warningCount);
+
     final int answer = Messages.showYesNoCancelDialog(myProject,
-                                                      VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
-                                                                        errorCount, warningCount),
+                                                      message,
                                                       VcsBundle.message("code.smells.error.messages.tab.name"),
                                                       VcsBundle.message("code.smells.review.button"),
                                                       commitButtonText, CommonBundle.getCancelButtonText(), UIUtil.getWarningIcon());
@@ -123,19 +140,51 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult runCodeAnalysis(@Nullable CommitExecutor commitExecutor) {
-    final List<CodeSmellInfo> codeSmells;
     final List<VirtualFile> files = CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles(myCheckinPanel.getVirtualFiles(), myProject);
     if (Registry.is("vcs.code.analysis.before.checkin.show.only.new", false)) {
-      codeSmells = CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files);
+      return runCodeAnalysisNew(commitExecutor, files);
     }
-    else {
-      codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
+    return runCodeAnalysisOld(commitExecutor, files);
+  }
+
+  @NotNull
+  private ReturnResult runCodeAnalysisNew(@Nullable CommitExecutor commitExecutor,
+                                          @NotNull List<VirtualFile> files) {
+    Ref<List<CodeSmellInfo>> codeSmells = Ref.create();
+    Ref<Exception> exception = Ref.create();
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checking.code.smells.progress.title"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          assert myProject != null;
+          indicator.setIndeterminate(true);
+          codeSmells.set(CodeAnalysisBeforeCheckinShowOnlyNew.runAnalysis(myProject, files, indicator));
+        } catch (ProcessCanceledException e) {
+          exception.set(e);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          exception.set(e);
+        }
+      }
+    });
+    if (!exception.isNull()) {
+      ExceptionUtil.rethrowAllAsUnchecked(exception.get());
     }
+    if (!codeSmells.get().isEmpty()) {
+      return processFoundCodeSmells(codeSmells.get(), commitExecutor);
+    }
+    return ReturnResult.COMMIT;
+  }
+
+  @NotNull
+  private ReturnResult runCodeAnalysisOld(@Nullable CommitExecutor commitExecutor,
+                                          @NotNull List<VirtualFile> files) {
+    final List<CodeSmellInfo> codeSmells = CodeSmellDetector.getInstance(myProject).findCodeSmells(files);
     if (!codeSmells.isEmpty()) {
       return processFoundCodeSmells(codeSmells, commitExecutor);
     }
-    else {
-      return ReturnResult.COMMIT;
-    }
+    return ReturnResult.COMMIT;
   }
 }

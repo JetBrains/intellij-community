@@ -41,6 +41,8 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
+import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
+import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 
 import javax.swing.*;
@@ -123,16 +125,6 @@ public class TerminalView {
       }
     });
 
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        final ContentManager contentManager = myToolWindow.getContentManager();
-        for (Content tab : contentManager.getContents()) {
-          Disposer.dispose(tab);
-        }
-      }
-    });
-
     if (myDockContainer == null) {
       myDockContainer = new TerminalDockContainer(myToolWindow);
       Disposer.register(myProject, myDockContainer);
@@ -186,6 +178,7 @@ public class TerminalView {
     if (terminalWidget == null) {
       VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
       terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
+      TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
       terminalWidget.setVirtualFile(null);
@@ -281,7 +274,7 @@ public class TerminalView {
   }
 
   @NotNull
-  static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
+  public static JBTerminalWidget getWidgetByContent(@NotNull Content content) {
     return Objects.requireNonNull(content.getUserData(TERMINAL_WIDGET_KEY));
   }
 

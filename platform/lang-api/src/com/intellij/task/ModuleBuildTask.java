@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/18/2016
  */
 public interface ModuleBuildTask extends BuildTask {
   @NotNull

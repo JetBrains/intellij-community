@@ -1,4 +1,3 @@
 class X {
-    /*!*/
-    long typePromotion = (long) Integer.MAX_VALUE * Integer.MAX_VALUE;
+  long typePromotion = /*1*/ /*2*/ (long) Integer.MAX_VALUE * /*3*//*4*/ Integer.MAX_VALUE;
 }

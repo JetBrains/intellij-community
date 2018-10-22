@@ -44,7 +44,6 @@ import java.util.*;
  * This class contains utility methods for guessing test data files location and name patterns from existing one.
  *
  * @author Denis Zhdanov
- * @since 5/24/11 2:28 PM
  */
 @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
 public class TestDataGuessByExistingFilesUtil {

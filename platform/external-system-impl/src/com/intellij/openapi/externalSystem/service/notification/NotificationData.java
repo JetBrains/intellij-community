@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/28/14
  */
 public class NotificationData implements Disposable {
 

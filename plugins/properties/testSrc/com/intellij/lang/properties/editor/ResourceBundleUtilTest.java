@@ -8,7 +8,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author Denis Zhdanov
- * @since 10/5/11 2:37 PM
  */
 public class ResourceBundleUtilTest {
 

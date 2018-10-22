@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 4:00 PM
  */
 public class InProcessExternalSystemCommunicationManager implements ExternalSystemCommunicationManager {
 

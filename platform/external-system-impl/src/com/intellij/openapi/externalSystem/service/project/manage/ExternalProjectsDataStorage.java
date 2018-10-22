@@ -48,7 +48,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/18/2014
  */
 @State(name = "ExternalProjectsData", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {

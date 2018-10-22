@@ -54,7 +54,6 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Or
 
 /**
  * @author Denis Zhdanov
- * @since 7/20/12 2:31 PM
  */
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
                                        ArrangementSectionRuleAwareSettings,

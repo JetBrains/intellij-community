@@ -39,7 +39,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since 29-May-2006
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");

@@ -35,7 +35,6 @@ import static com.intellij.openapi.util.text.StringUtil.formatFileSize;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/2/2017
  */
 public class GradleProgressListener implements ProgressListener, org.gradle.tooling.events.ProgressListener {
   private final ExternalSystemTaskNotificationListener myListener;

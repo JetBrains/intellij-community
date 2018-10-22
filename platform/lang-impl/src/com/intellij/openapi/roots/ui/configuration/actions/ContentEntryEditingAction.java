@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 14, 2003
  */
 public abstract class ContentEntryEditingAction extends ToggleAction implements DumbAware {
   protected final JTree myTree;

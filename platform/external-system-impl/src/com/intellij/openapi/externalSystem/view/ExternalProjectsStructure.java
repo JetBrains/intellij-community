@@ -36,7 +36,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/22/2014
  */
 public class ExternalProjectsStructure extends SimpleTreeStructure implements Disposable  {
   private final Project myProject;

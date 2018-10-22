@@ -59,7 +59,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 
 /**
  * @author Vladislav.Soroka
- * @since 10/6/2015
  */
 public class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);

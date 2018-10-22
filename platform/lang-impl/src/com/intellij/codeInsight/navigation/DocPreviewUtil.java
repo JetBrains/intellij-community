@@ -37,7 +37,6 @@ import java.util.regex.Pattern;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/10/12 8:06 AM
  */
 public class DocPreviewUtil {
 

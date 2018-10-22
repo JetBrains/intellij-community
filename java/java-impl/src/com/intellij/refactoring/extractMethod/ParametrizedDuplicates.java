@@ -436,13 +436,25 @@ public class ParametrizedDuplicates {
     statement = (PsiBlockStatement)parent.addBefore(statement, fragmentStart);
     parent.deleteChildRange(fragmentStart, fragmentEnd);
 
-    PsiCodeBlock codeBlock = statement.getCodeBlock();
-    PsiElement[] elementsInBlock = codeBlock.getChildren();
-    LOG.assertTrue(elementsInBlock.length >= elements.length + 2, "wrapper block length is too small");
-    elementsInBlock = Arrays.copyOfRange(elementsInBlock, 1, elementsInBlock.length - 1);
+    PsiElement[] elementsInBlock = trimBracesAndWhitespaces(statement.getCodeBlock());
 
     declareReusedLocalVariables(reusedLocalVariables, statement, factory);
     return elementsInBlock;
+  }
+
+  @NotNull
+  private static PsiElement[] trimBracesAndWhitespaces(@NotNull PsiCodeBlock codeBlock) {
+    PsiElement[] elements = codeBlock.getChildren();
+    int start = 1;
+    while (start < elements.length && elements[start] instanceof PsiWhiteSpace) {
+      start++;
+    }
+    int end = elements.length - 1;
+    while (end > 0 && elements[end - 1] instanceof PsiWhiteSpace) {
+      end--;
+    }
+    LOG.assertTrue(start < end, "wrapper block length is too small");
+    return Arrays.copyOfRange(elements, start, end);
   }
 
   private static void declareReusedLocalVariables(@NotNull List<ReusedLocalVariable> reusedLocalVariables,

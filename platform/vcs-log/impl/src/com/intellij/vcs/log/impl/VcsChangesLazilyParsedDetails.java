@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -40,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
+  private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
   protected static final Changes EMPTY_CHANGES = new EmptyChanges();
   @NotNull protected final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
@@ -132,6 +134,8 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
 
   protected abstract class UnparsedChanges implements Changes {
     @NotNull protected final Project myProject;
+    // without interner each commit will have it's own instance of this string
+    @NotNull private final String myRootPrefix = ourPathsInterner.intern(getRoot().getPath() + "/");
     @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
     @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
 
@@ -204,8 +208,8 @@ public abstract class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImp
     }
 
     @NotNull
-    protected String absolutePath(@NotNull String path) {
-      return getRoot().getPath() + "/" + path;
+    private String absolutePath(@NotNull String path) {
+      return myRootPrefix + path;
     }
 
     @NotNull

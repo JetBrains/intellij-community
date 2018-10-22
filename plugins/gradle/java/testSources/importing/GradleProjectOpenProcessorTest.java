@@ -44,7 +44,6 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.exe
 
 /**
  * @author Vladislav.Soroka
- * @since 3/20/2017
  */
 public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
 

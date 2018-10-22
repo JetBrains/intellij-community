@@ -25,7 +25,6 @@ import java.io.Serializable;
 
 /**
  * @author max
- * @since Sep 5, 2006
  */
 public class RawText implements Cloneable, Serializable {
   private static DataFlavor ourFlavor;

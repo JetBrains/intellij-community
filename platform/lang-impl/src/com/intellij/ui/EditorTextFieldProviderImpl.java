@@ -28,7 +28,6 @@ import javax.swing.*;
  * {@link EditorCustomization customizations} if necessary.
  *
  * @author Denis Zhdanov
- * @since Aug 20, 2010 3:21:03 PM
  */
 public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
   @NotNull

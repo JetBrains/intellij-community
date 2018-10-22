@@ -18,9 +18,11 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * @since 6.03.2003
  */
 public class PluginClassLoader extends UrlClassLoader {
+  static { 
+    if (registerAsParallelCapable()) markParallelCapable(PluginClassLoader.class); 
+  }
   private final ClassLoader[] myParents;
   private final PluginId myPluginId;
   private final String myPluginVersion;
@@ -122,23 +124,25 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   @Nullable
-  private synchronized Class loadClassInsideSelf(@NotNull String name) {
-    Class c = findLoadedClass(name);
-    if (c != null) {
+  private Class loadClassInsideSelf(@NotNull String name) {
+    synchronized (getClassLoadingLock(name)) {
+      Class c = findLoadedClass(name);
+      if (c != null) {
+        return c;
+      }
+
+      try {
+        c = _findClass(name);
+      }
+      catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
+        throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
+      }
+      if (c != null) {
+        PluginManagerCore.addPluginClass(myPluginId);
+      }
+
       return c;
     }
-
-    try {
-      c = _findClass(name);
-    }
-    catch (IncompatibleClassChangeError | UnsupportedClassVersionError e) {
-      throw new PluginException("While loading class " + name + ": " + e.getMessage(), e, myPluginId);
-    }
-    if (c != null) {
-      PluginManagerCore.addPluginClass(myPluginId);
-    }
-
-    return c;
   }
 
   @Override

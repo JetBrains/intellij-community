@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -139,36 +140,47 @@ public final class CommentTracker {
    * @return the string containing the element text and possibly some comments.
    */
   public String commentsBefore(@NotNull PsiElement element) {
+    List<PsiElement> comments = grabCommentsBefore(element);
+    if (comments.isEmpty()) return "";
     StringBuilder sb = new StringBuilder();
-    if (lastTextWithCommentsElement != null) {
-      int start = lastTextWithCommentsElement.getTextRange().getEndOffset();
-      int end = element.getTextRange().getStartOffset();
-      PsiElement parent = PsiTreeUtil.findCommonParent(lastTextWithCommentsElement, element);
-      if (parent != null && start < end) {
-        List<PsiElement> toDelete = new ArrayList<>();
-        PsiTreeUtil.processElements(parent, e -> {
-          if (e instanceof PsiComment) {
-            TextRange range = e.getTextRange();
-            if (range.getStartOffset() >= start && range.getEndOffset() <= end && !shouldIgnore((PsiComment)e)) {
-              if (sb.length() == 0 && e.getPrevSibling() instanceof PsiWhiteSpace) {
-                sb.append(e.getPrevSibling().getText());
-              }
-              sb.append(e.getText());
-              PsiElement cur = e;
-              while (cur.getNextSibling() == null && cur != parent) cur = cur.getParent();
-              if (cur.getNextSibling() instanceof PsiWhiteSpace) {
-                sb.append(cur.getNextSibling().getText());
-              }
-              toDelete.add(e);
-            }
-          }
-          return true;
-        });
-        toDelete.forEach(PsiElement::delete);
+    for (PsiElement comment : comments) {
+      PsiElement prev = comment.getPrevSibling();
+      if (sb.length() == 0 && prev instanceof PsiWhiteSpace) {
+        sb.append(prev.getText());
+      }
+      sb.append(comment.getText());
+      PsiElement next = PsiTreeUtil.nextLeaf(comment);
+      if (next instanceof PsiWhiteSpace) {
+        sb.append(next.getText());
       }
     }
-    lastTextWithCommentsElement = element;
+    comments.forEach(PsiElement::delete);
     return sb.toString();
+  }
+
+  private List<PsiElement> grabCommentsBefore(@NotNull PsiElement element) {
+    if (lastTextWithCommentsElement == null) {
+      lastTextWithCommentsElement = element;
+      return Collections.emptyList();
+    }
+    List<PsiElement> result = new SmartList<>();
+    int start = lastTextWithCommentsElement.getTextRange().getEndOffset();
+    int end = element.getTextRange().getStartOffset();
+    PsiElement parent = PsiTreeUtil.findCommonParent(lastTextWithCommentsElement, element);
+    if (parent != null && start < end) {
+      PsiTreeUtil.processElements(parent, e -> {
+        if (e instanceof PsiComment) {
+          TextRange range = e.getTextRange();
+          if (range.getStartOffset() >= start && range.getEndOffset() <= end && !shouldIgnore((PsiComment)e)) {
+            result.add(e);
+          }
+        }
+        return true;
+      });
+    }
+
+    lastTextWithCommentsElement = element;
+    return result;
   }
 
   /**
@@ -306,6 +318,46 @@ public final class CommentTracker {
     restoreSuffixComments(result, suffix);
     insertCommentsBefore(anchor);
     return result;
+  }
+
+  /**
+   * Replaces the specified expression and restores any comments to their appropriate place before and/or after the expression.
+   * Meant to be used with {@link #commentsBefore(PsiElement)} and {@link #commentsBetween(PsiElement, PsiElement)}
+   *
+   * @param expression  the expression to replace
+   * @param replacementText  text of the replacement expression
+   * @return the element which was inserted in the tree
+   */
+  public @NotNull PsiElement replaceExpressionAndRestoreComments(@NotNull PsiExpression expression, @NotNull String replacementText) {
+    return replaceExpressionAndRestoreComments(expression, replacementText, Collections.emptyList());
+  }
+
+  public @NotNull PsiElement replaceExpressionAndRestoreComments(@NotNull PsiExpression expression, @NotNull String replacementText,
+                                                                 List<PsiElement> toDelete) {
+    List<PsiElement> trailingComments = new SmartList<>();
+    List<PsiElement> comments = grabCommentsBefore(PsiTreeUtil.lastChild(expression));
+    if (!comments.isEmpty()) {
+      PsiParserFacade parser = PsiParserFacade.SERVICE.getInstance(expression.getProject());
+      for (PsiElement comment : comments) {
+        PsiElement prev = comment.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          String text = prev.getText();
+          if (!text.contains("\n")) trailingComments.add(parser.createWhiteSpaceFromText(" "));
+          else if (text.endsWith("\n")) trailingComments.add(parser.createWhiteSpaceFromText("\n")); // comment at first column
+          else trailingComments.add(parser.createWhiteSpaceFromText("\n ")); // newline followed by space will cause formatter to indent
+        }
+        ignoredParents.add(comment);
+        trailingComments.add(comment.copy());
+      }
+      Collections.reverse(trailingComments);
+    }
+    PsiElement replacement = replace(expression, replacementText);
+    for (PsiElement element : trailingComments) {
+      replacement.getParent().addAfter(element, replacement);
+    }
+    toDelete.forEach(this::delete);
+    insertCommentsBefore(replacement);
+    return replacement;
   }
 
   @NotNull

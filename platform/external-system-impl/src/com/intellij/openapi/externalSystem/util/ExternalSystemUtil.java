@@ -112,7 +112,6 @@ import static com.intellij.util.containers.ContainerUtil.list;
 
 /**
  * @author Denis Zhdanov
- * @since 4/22/13 9:36 AM
  */
 public class ExternalSystemUtil {
 

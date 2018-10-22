@@ -29,7 +29,6 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 /**
  * @author anna
- * @since 04-Feb-2008
  */
 public class JavaNavBarExtension extends AbstractNavBarModelExtension {
   @Override

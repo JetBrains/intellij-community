@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Irina.Chernushina
- * @since 2.05.2012
  */
 public class SvnTreeConflictDataTest extends SvnTestCase {
   private VirtualFile myTheirs;

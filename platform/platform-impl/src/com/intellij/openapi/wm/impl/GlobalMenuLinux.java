@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
@@ -29,14 +30,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.Date;
 
 interface GlobalMenuLib extends Library {
   void runDbusServer(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
@@ -46,8 +43,8 @@ interface GlobalMenuLib extends Library {
   Pointer registerWindow(long windowXid, EventHandler handler);
   void releaseWindowOnMainLoop(Pointer wi);
 
-  void bindNewWindow(Pointer wi, long windowXid);
-  void unbindWindow(Pointer wi, long windowXid);
+  void bindNewWindow(Pointer wi, long windowXid); // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
+  void unbindWindow(Pointer wi, long windowXid);  // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
 
   void clearRootMenu(Pointer wi);
   void clearMenu(Pointer dbmi);
@@ -62,6 +59,8 @@ interface GlobalMenuLib extends Library {
   void setItemEnabled(Pointer item, boolean isEnabled);
   void setItemIcon(Pointer item, byte[] iconBytesPng, int iconBytesCount);
   void setItemShortcut(Pointer item, int jmodifiers, int jkeycode);
+
+  void toggleItemStateChecked(Pointer item, boolean isChecked);
 
   interface EventHandler extends Callback {
     void handleEvent(int uid, int eventType);
@@ -98,16 +97,22 @@ interface GlobalMenuLib extends Library {
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
-  private static final boolean TRACE_SYSOUT       = Registry.is("linux.native.menu.debug.trace.sysout", false);
-  private static final boolean TRACE_DISABLED     = Registry.is("linux.native.menu.debug.trace.disabled", true);
-  private static final boolean TRACE_SYNC_STATS   = Registry.is("linux.native.menu.debug.trace.sync-stats", false);
-  private static final boolean TRACE_EVENTS       = Registry.is("linux.native.menu.debug.trace.events", false);
-  private static final boolean TRACE_EVENT_FILTER = Registry.is("linux.native.menu.debug.trace.event-filter", false);
+  private static final boolean TRACE_SYSOUT               = Registry.is("linux.native.menu.debug.trace.sysout", false);
+  private static final boolean TRACE_DISABLED             = Registry.is("linux.native.menu.debug.trace.disabled", true);
+  private static final boolean TRACE_SYNC_STATS           = Registry.is("linux.native.menu.debug.trace.sync-stats", false);
+  private static final boolean TRACE_EVENTS               = Registry.is("linux.native.menu.debug.trace.events", false);
+  private static final boolean TRACE_EVENT_FILTER         = Registry.is("linux.native.menu.debug.trace.event-filter", false);
+  private static final boolean TRACE_CLEARING             = Registry.is("linux.native.menu.debug.trace.clearing", false);
+  private static final boolean TRACE_HIERARCHY_MISMATCHES = Registry.is("linux.native.menu.debug.trace.hierarchy.mismatches", false);
+  private static final boolean SHOW_SWING_MENU            = Registry.is("linux.native.menu.debug.show.frame.menu", false);
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
   private static final GlobalMenuLib.JLogger ourGLogger;
   private static final Thread ourGlibMainLoopThread;
+  private static final GlobalMenuLib.JRunnable ourProcessQueue;
+  private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceAppeared;
+  private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceVanished;
   private static final Map<Long, GlobalMenuLinux> ourInstances = new ConcurrentHashMap<>();
   private static boolean ourIsServiceAvailable = false;
 
@@ -124,18 +129,47 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (ourLib != null) {
       ourGLogger = (level, msg) -> {
         if (level == GlobalMenuLib.LOG_LEVEL_INFO) {
-          // System.out.println("INFO: " + msg);
-          LOG.info(msg);
+          if (TRACE_SYSOUT)
+            _trace(msg);
+          else
+            LOG.info(msg);
         } else {
           // System.out.println("ERROR: " + msg);
           LOG.error(msg);
         }
       };
-      ourGlibMainLoopThread = new Thread(()->ourLib.runDbusServer(ourGLogger, GlobalMenuLinux::_onAppmenuServiceAppeared, GlobalMenuLinux::_onAppmenuServiceVanished), "Glib-main-loop");
+      ourProcessQueue = () -> {
+        // exec at glib-thread
+        if (!ourIsServiceAvailable)
+          return;
+
+        for (GlobalMenuLinux gml: ourInstances.values())
+          gml._processRoots();
+      };
+      ourOnAppmenuServiceAppeared = () -> {
+        // exec at glib-thread
+        _trace("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
+        ourIsServiceAvailable = true;
+        ourProcessQueue.run();
+      };
+      ourOnAppmenuServiceVanished = () -> {
+        // exec at glib-thread
+        _trace("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
+        ourIsServiceAvailable = false;
+        for (GlobalMenuLinux gml: ourInstances.values()) {
+          gml.myWindowHandle = null;
+          ApplicationManager.getApplication().invokeLater(()->gml.myFrame.getJMenuBar().setVisible(true));
+        }
+      };
+
+      ourGlibMainLoopThread = new Thread(()->ourLib.runDbusServer(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished), "Glib-main-loop");
       ourGlibMainLoopThread.start();
     } else {
       ourGLogger = null;
       ourGlibMainLoopThread = null;
+      ourProcessQueue = null;
+      ourOnAppmenuServiceAppeared = null;
+      ourOnAppmenuServiceVanished = null;
     }
   }
 
@@ -163,17 +197,34 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
 
   public void bindNewWindow(@NotNull Window frame) {
+    // exec at EDT
     final long xid = _getX11WindowXid(frame);
-    if (xid == 0)
+    if (xid == 0) {
+      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu binding");
       return;
-    ourLib.bindNewWindow(myWindowHandle, xid);
+    }
+    if (myWindowHandle != null) {
+      _trace("bind new window 0x%X", xid);
+      ourLib.bindNewWindow(myWindowHandle, xid);
+      if (frame instanceof JFrame) {
+        final JFrame jfr = (JFrame)frame;
+        if (jfr.getJMenuBar() != null)
+          jfr.getJMenuBar().setVisible(false);
+      }
+    }
   }
 
-  public void unbindNewWindow(@NotNull Window frame) {
+  public void unbindWindow(@NotNull Window frame) {
+    // exec at EDT
     final long xid = _getX11WindowXid(frame);
-    if (xid == 0)
+    if (xid == 0) {
+      LOG.warn("can't obtain XID of window: " + frame + ", skip global menu unbinding");
       return;
-    ourLib.unbindWindow(myWindowHandle, xid);
+    }
+    if (myWindowHandle != null) {
+      _trace("unbind window 0x%X", xid);
+      ourLib.unbindWindow(myWindowHandle, xid);
+    }
   }
 
   public void setRoots(List<ActionMenu> roots) {
@@ -187,8 +238,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (roots != null) {
       for (ActionMenu am: roots) {
         final int uid = System.identityHashCode(am);
-        final MenuItemInternal mi = new MenuItemInternal(newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, _buildMnemonicLabel(am), am.getText(), null, true, am.getAnAction());
+        final MenuItemInternal mi = new MenuItemInternal(newRoots.size(), uid, GlobalMenuLib.ITEM_SUBMENU, am.getAnAction());
         mi.jitem = am;
+        mi.setLabelFromSwingPeer(am);
         newRoots.add(mi);
       }
     }
@@ -223,7 +275,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     for (MenuItemInternal mi: croots)
       mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
 
-    if (!Registry.is("linux.native.menu.debug.show.frame.menu", false))
+    if (!SHOW_SWING_MENU)
       ApplicationManager.getApplication().invokeLater(()->myFrame.getJMenuBar().setVisible(false));
   }
 
@@ -291,14 +343,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     MenuItemInternal result = null;
     if (each instanceof ActionMenuItem) {
       final ActionMenuItem ami = (ActionMenuItem)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getText(), ami.getText(), _icon2png(ami.getIcon()), ami.isEnabled(), ami.getAnAction());
+      result = new MenuItemInternal(-1, System.identityHashCode(ami), ami.isToggleable() ? GlobalMenuLib.ITEM_CHECK : GlobalMenuLib.ITEM_SIMPLE, ami.getAnAction());
       result.jitem = ami;
     } else if (each instanceof ActionMenu) {
       final ActionMenu am2 = (ActionMenu)each;
-      result = new MenuItemInternal(-1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getText(), am2.getText(), null, am2.isEnabled(), am2.getAnAction());
+      result = new MenuItemInternal(-1, System.identityHashCode(am2), GlobalMenuLib.ITEM_SUBMENU, am2.getAnAction());
       result.jitem = am2;
     } else if (each instanceof JSeparator) {
-      result = new MenuItemInternal(-1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null, null, null, true, null);
+      result = new MenuItemInternal(-1, System.identityHashCode(each), GlobalMenuLib.ITEM_SIMPLE, null);
     } else if (each instanceof StubItem) {
       // System.out.println("skip StubItem");
     } else {
@@ -334,6 +386,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         if (cmi != null) {
           mi.children.add(cmi);
           if (stats != null) ++stats[STAT_CREATED];
+          if (each instanceof JMenuItem)
+            cmi.updateBySwingPeer((JMenuItem)each);
         }
       } else {
         cmi.toDelete = false;
@@ -359,11 +413,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       if (child.nativePeer != null) {
         if (child.toDelete) {
           ourLib.removeMenuItem(mi.nativePeer, child.nativePeer);
+          child.nativePeer = null;
         } else {
-          // update states and icons
-          // NOTE: probably it's better to use sync flags, to avoid frequent calls, to avoid applet destabilization)
-          ourLib.setItemEnabled(child.nativePeer, child.isEnabled);
-          ourLib.setItemIcon(child.nativePeer, child.iconPngBytes, child.iconPngBytes != null ? child.iconPngBytes.length : 0);
+          child.updateNative();
         }
       } else {
         if (child.action == null) {
@@ -372,11 +424,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         }
 
         child.nativePeer = ourLib.addMenuItem(mi.nativePeer, child.uid, child.txt, child.type);
-
-        if (!child.isEnabled)
-          ourLib.setItemEnabled(child.nativePeer, false);
-        if (child.iconPngBytes != null && child.iconPngBytes.length > 0)
-          ourLib.setItemIcon(child.nativePeer, child.iconPngBytes, child.iconPngBytes.length);
+        child.updateNative();
       }
 
       _processChildren(child);
@@ -416,7 +464,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
           // ETD-start
           final JMenuItem jmi = mi.jitem;
           if (jmi == null) {
-            LOG.error("can't find corresponding (opening) ActionMenu, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
+            if (TRACE_HIERARCHY_MISMATCHES) _trace("corresponding (opening) swing item is null, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
             return;
           }
           if (!(jmi instanceof ActionMenu)) {
@@ -437,26 +485,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         _processChildren(mi);
       } else if (eventType == GlobalMenuLib.EVENT_CLOSED) {
         // glib main-loop thread
-        final Timer timer = new Timer(100, (e) -> {
-          // ETD-start
-          final JMenuItem jmi = mi.jitem;
-          if (jmi == null) {
-            LOG.error("can't find corresponding (closing) ActionMenu, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
-            return;
-          }
-          if (!(jmi instanceof ActionMenu)) {
-            LOG.error("corresponding (closing) swing item isn't instance of ActionMenu, class=" + jmi.getClass().getName() + ", event source: " + mi);
-            return;
-          }
-
-          final ActionMenu am = (ActionMenu)jmi;
-          am.clearItems();
-          mi.clearChildrenSwingRefs();
-        });
-        timer.setRepeats(false);
-        timer.start();
-
-        _trace("\t scheduled (100 ms later) to clear menu '%s'", mi.txt);
+        mi.scheduleClearSwing();
       }
 
       return;
@@ -483,22 +512,22 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   public static boolean isAvailable() { return ourLib != null; }
 
   private static GlobalMenuLib _loadLibrary() {
-    if (!SystemInfo.isLinux)
+    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
       return null;
 
-    UrlClassLoader.loadPlatformLibrary("dbm");
-
-    // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
-    // the way we tell CF to interpret our char*
-    // May be removed if we use toStringViaUTF16
-    System.setProperty("jna.encoding", "UTF8");
-
-    final Map<String, Object> options = new HashMap<>();
     try {
+      UrlClassLoader.loadPlatformLibrary("dbm");
+
+      // Set JNA to convert java.lang.String to char* using UTF-8, and match that with
+      // the way we tell CF to interpret our char*
+      // May be removed if we use toStringViaUTF16
+      System.setProperty("jna.encoding", "UTF8");
+
+      final Map<String, Object> options = new HashMap<>();
       return Native.loadLibrary("dbm", GlobalMenuLib.class, options);
     } catch (UnsatisfiedLinkError ule) {
-      LOG.error(ule);
-    } catch (RuntimeException e) {
+      LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
+    } catch (Throwable e) {
       LOG.error(e);
     }
     return null;
@@ -514,28 +543,27 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     String txt;
     String originTxt;
-    boolean isEnabled;
+    boolean isEnabled = true;
+    boolean isChecked = false;
     byte[] iconPngBytes;
 
     JMenuItem jitem;
     Pointer nativePeer;
     boolean toDelete = false;
 
-    long lastOpenedMs = 0;
     long lastClosedMs = 0;
 
-    MenuItemInternal(int rootPos, int uid, int type, String txt, String originTxt, byte[] iconPngBytes, boolean isEnabled, AnAction action) {
+    Timer timerClearSwing;
+
+    MenuItemInternal(int rootPos, int uid, int type, AnAction action) {
       this.rootPos = rootPos;
       this.uid = uid;
       this.type = type;
-      this.txt = txt;
-      this.originTxt = originTxt;
-      this.iconPngBytes = iconPngBytes;
-      this.isEnabled = isEnabled;
       this.action = action;
     }
 
     boolean isRoot() { return rootPos >= 0; }
+    boolean isToggleable() { return type == GlobalMenuLib.ITEM_CHECK || type == GlobalMenuLib.ITEM_RADIO; }
 
     void clearChildrenSwingRefs() {
       for (MenuItemInternal cmi: children) {
@@ -545,14 +573,42 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
 
     // returns true when changed
-    boolean updateBySwingPeer(JMenuItem peer) {
+    boolean updateBySwingPeer(@NotNull JMenuItem peer) {
       // exec at EDT
       jitem = peer;
-      // probably need to calc sync flags like: if (cmi.isEnabled != each.isEnabled()) cmi.needUpdate = true;
+      // NOTE: probably is's better to use sync flags like: if (cmi.isEnabled != each.isEnabled()) cmi.needUpdate = true;
       boolean res = isEnabled != peer.isEnabled();
       isEnabled = peer.isEnabled();
-      // TODO: update icons (text must be the same)
+      if (isToggleable()) {
+        if (isChecked != peer.isSelected()) res = true;
+        isChecked = peer.isSelected();
+      }
+      if (!Objects.equals(originTxt, peer.getText())) {
+        // _trace("label changes: '%s' -> '%s'", originTxt, peer.getText());
+        setLabelFromSwingPeer(peer);
+        res = true;
+      }
+      iconPngBytes = isToggleable() ? null : _icon2png(peer.getIcon());
       return res;
+    }
+
+    void setLabelFromSwingPeer(@NotNull JMenuItem peer) {
+      // exec at EDT
+      originTxt = peer.getText();
+      txt = _buildMnemonicLabel(peer);
+    }
+
+    void updateNative() {
+      // exec at glib-loop thread
+      // NOTE: probably it's better to use sync flags, to avoid frequent calls, to avoid applet destabilization)
+      if (nativePeer == null)
+        return;
+
+      ourLib.setItemLabel(nativePeer, txt);
+      ourLib.setItemEnabled(nativePeer, isEnabled);
+      ourLib.setItemIcon(nativePeer, iconPngBytes, iconPngBytes != null ? iconPngBytes.length : 0);
+      if (isToggleable())
+        ourLib.toggleItemStateChecked(nativePeer, isChecked);
     }
 
     MenuItemInternal findCorrespondingChild(@NotNull Component target) {
@@ -638,6 +694,55 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         res = res + " [toDelele]";
       return res;
     }
+
+    String toStringShort() {
+      String res = String.format("'%s'", txt);
+      if (toDelete)
+        res = res + " [D]";
+      if (isRoot())
+        res = "Root " + res;
+      else
+        res = "Submenu " + res;
+      return res;
+    }
+
+    synchronized void scheduleClearSwing() {
+      // exec at glib main-loop thread
+      if (timerClearSwing != null)
+        timerClearSwing.stop();
+
+      timerClearSwing = new Timer(300, (e) -> {
+        _clearSwing();
+      });
+      timerClearSwing.setRepeats(false);
+      timerClearSwing.start();
+      if (TRACE_CLEARING) _trace("\t scheduled (300 ms later) to clear '%s'", toStringShort());
+    }
+
+    synchronized void cancelClearSwing() {
+      // exec at glib main-loop thread
+      timerClearSwing = null;
+    }
+
+    private void _clearSwing() {
+      // exec at ETD
+      if (timerClearSwing == null)
+        return;
+
+      if (jitem == null) {
+        if (TRACE_CLEARING) _trace("corresponding (closing) swing item is null - nothing to clear, event source: ", this);
+        return;
+      }
+      if (!(jitem instanceof ActionMenu)) {
+        LOG.error("corresponding (closing) swing item isn't instance of ActionMenu, class=" + jitem.getClass().getName() + ", event source: " + toString());
+        return;
+      }
+
+      final ActionMenu am = (ActionMenu)jitem;
+      am.clearItems();
+      clearChildrenSwingRefs();
+      if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());
+    }
   }
 
   private class EventFilter {
@@ -666,6 +771,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
             if (TRACE_EVENT_FILTER) _trace("EventFilter: start timer to process 'about-to-show' of first-root later");
             return false;
           }
+
+          myTimer = null;
         } else if (mi.rootPos > 0) {
           if ((timeMs - myLastFirstRootEventMs) < 50) {
             if (TRACE_EVENT_FILTER) _trace("EventFilter: skip fake 'about-to-show' of root[%d]%s", mi.rootPos, myTimer != null ? " (reset timer)" : "");
@@ -685,8 +792,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         }
       }
 
-      if (mi.rootPos == 0)
-        myTimer = null;
       return true;
     }
   }
@@ -820,29 +925,5 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       System.out.println(ourDtf.format(new Date()) + ": " + msg);
     else
       LOG.info(msg);
-  }
-
-  private static final GlobalMenuLib.JRunnable ourProcessQueue = () -> {
-    // exec at glib-thread
-    if (!ourIsServiceAvailable)
-      return;
-
-    for (GlobalMenuLinux gml: ourInstances.values())
-      gml._processRoots();
-  };
-
-  private static void _onAppmenuServiceAppeared() {
-    // exec at glib-thread
-    ourIsServiceAvailable = true;
-    ourProcessQueue.run();
-  }
-
-  private static void _onAppmenuServiceVanished() {
-    // exec at glib-thread
-    ourIsServiceAvailable = false;
-    for (GlobalMenuLinux gml: ourInstances.values()) {
-      gml.myWindowHandle = null;
-      ApplicationManager.getApplication().invokeLater(()->gml.myFrame.getJMenuBar().setVisible(true));
-    }
   }
 }

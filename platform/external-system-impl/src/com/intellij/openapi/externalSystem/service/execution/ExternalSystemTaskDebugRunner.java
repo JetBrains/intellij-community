@@ -35,7 +35,6 @@ import java.net.ServerSocket;
 
 /**
  * @author Denis Zhdanov
- * @since 6/7/13 11:18 AM
  */
 public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   static final Logger LOG = Logger.getInstance(ExternalSystemTaskDebugRunner.class);

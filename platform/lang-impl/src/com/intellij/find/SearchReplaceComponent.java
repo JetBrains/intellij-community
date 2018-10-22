@@ -302,12 +302,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private void updateSearchComponent(@NotNull String textToSet) {
     if (!updateTextComponent(true)) {
-      String existingText = mySearchTextComponent.getText();
-      if (!existingText.equals(textToSet)) {
-        mySearchTextComponent.setText(textToSet);
-        // textToSet should be selected even if we have no selection before (if we have the selection then setText will remain it)
-        if (existingText.length() == 0) mySearchTextComponent.selectAll();
-      }
+      replaceTextInTextComponentEnsuringSelection(textToSet, mySearchTextComponent);
       return;
     }
 
@@ -335,13 +330,18 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     new VariantsCompletionAction(mySearchTextComponent); // It registers a shortcut set automatically on construction
   }
 
+  private static void replaceTextInTextComponentEnsuringSelection(@NotNull String textToSet, JTextComponent component) {
+    String existingText = component.getText();
+    if (!existingText.equals(textToSet)) {
+      component.setText(textToSet);
+      // textToSet should be selected even if we have no selection before (if we have the selection then setText will remain it)
+      if (component.getSelectionStart() == component.getSelectionEnd()) component.selectAll();
+    }
+  }
+
   private void updateReplaceComponent(@NotNull String textToSet) {
     if (!updateTextComponent(false)) {
-      String existingText = myReplaceTextComponent.getText();
-      if (!existingText.equals(textToSet)) {
-        myReplaceTextComponent.setText(textToSet);
-        if (existingText.length() == 0) myReplaceTextComponent.selectAll();
-      }
+      replaceTextInTextComponentEnsuringSelection(textToSet, myReplaceTextComponent);
       return;
     }
     myReplaceTextComponent.setText(textToSet);
@@ -535,7 +535,12 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     toolbar.setForceMinimumSize(true);
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setSecondaryButtonPopupStateModifier(mySearchToolbar1PopupStateModifier);
-    toolbar.setSecondaryActionsTooltip("Show Filter Popup (" + KeymapUtil.getShortcutText(ShowMoreOptions.SHORT_CUT) + ")");
+    KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut("ShowFilterPopup");
+    if (keyboardShortcut != null) {
+      toolbar.setSecondaryActionsTooltip(FindBundle.message("find.popup.show.filter.popup") + " (" + KeymapUtil.getShortcutText(keyboardShortcut) + ")");
+    } else {
+      toolbar.setSecondaryActionsTooltip(FindBundle.message("find.popup.show.filter.popup"));
+    }
     toolbar.setSecondaryActionsIcon(AllIcons.General.Filter);
 
     new ShowMoreOptions(toolbar, mySearchFieldWrapper);

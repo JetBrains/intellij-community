@@ -199,17 +199,6 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
-  @Nullable
-  public static LanguageCodeStyleSettingsProvider forLanguageOrParent(@NotNull Language language) {
-    LanguageCodeStyleSettingsProvider guessed = null;
-    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
-      if (language.isKindOf(provider.getLanguage()) && (guessed == null || provider.getLanguage().isKindOf(guessed.getLanguage()))) {
-        guessed = provider;
-      }
-    }
-    return guessed;
-  }
-
   @SuppressWarnings("unused")
   public static DisplayPriority getDisplayPriority(Language language) {
     LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);

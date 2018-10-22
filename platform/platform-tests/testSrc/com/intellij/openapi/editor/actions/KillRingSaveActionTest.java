@@ -23,7 +23,6 @@ import java.awt.datatransfer.DataFlavor;
 
 /**
  * @author Denis Zhdanov
- * @since 4/19/11 6:15 PM
  */
 public class KillRingSaveActionTest extends AbstractRegionToKillRingTest {
 

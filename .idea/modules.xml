@@ -253,7 +253,6 @@
     <module old-name="python-community-plugin-resources" new-name="intellij.python.community.plugin.resources" />
     <module old-name="python-community-tests" new-name="intellij.python.community.tests" />
     <module old-name="python-community-tools" new-name="intellij.python.tools" />
-    <module old-name="python-copyright" new-name="intellij.python.copyright" />
     <module old-name="python-edu-build" new-name="intellij.pycharm.edu.build" />
     <module old-name="python-helpers" new-name="intellij.python.helpers" />
     <module old-name="python-openapi" new-name="intellij.python.community" />
@@ -543,6 +542,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/intellij.maven.artifactResolver.m3.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m3/intellij.maven.artifactResolver.m3.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m31/intellij.maven.artifactResolver.m31.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/maven/error-prone-compiler/intellij.maven.errorProne.compiler.iml" filepath="$PROJECT_DIR$/plugins/maven/error-prone-compiler/intellij.maven.errorProne.compiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" filepath="$PROJECT_DIR$/plugins/maven/jps-plugin/intellij.maven.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven-server-api/intellij.maven.server.iml" filepath="$PROJECT_DIR$/plugins/maven/maven-server-api/intellij.maven.server.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven2-server-impl/intellij.maven.server.m2.impl.iml" filepath="$PROJECT_DIR$/plugins/maven/maven2-server-impl/intellij.maven.server.m2.impl.iml" />

@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/16/2014
  */
 public class DefaultExternalPlugin implements ExternalPlugin {
   private static final long serialVersionUID = 1L;

@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/4/2015
  */
 public class GradleRunnerUtil {
 

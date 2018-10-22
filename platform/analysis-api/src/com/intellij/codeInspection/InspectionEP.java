@@ -34,7 +34,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author Dmitry Avdeev
- * @since 27.09.2011
  * @see LocalInspectionEP
  */
 public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {

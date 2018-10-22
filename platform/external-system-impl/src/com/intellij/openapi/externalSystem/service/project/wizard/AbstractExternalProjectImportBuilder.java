@@ -50,7 +50,6 @@ import java.util.*;
  * GoF builder for external system backed projects.
  * 
  * @author Denis Zhdanov
- * @since 8/1/11 1:29 PM
  */
 public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>

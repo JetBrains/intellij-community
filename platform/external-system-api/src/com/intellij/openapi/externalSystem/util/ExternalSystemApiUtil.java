@@ -54,7 +54,6 @@ import static com.intellij.util.PlatformUtils.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
 

@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/20/2015
  */
 public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disposable {
 

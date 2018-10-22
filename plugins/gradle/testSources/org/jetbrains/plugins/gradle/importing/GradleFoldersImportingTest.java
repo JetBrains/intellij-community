@@ -29,7 +29,6 @@ import java.io.IOException;
 
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public class GradleFoldersImportingTest extends GradleImportingTestCase {
 

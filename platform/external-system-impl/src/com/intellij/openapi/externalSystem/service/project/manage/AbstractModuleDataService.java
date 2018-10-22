@@ -64,7 +64,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
 

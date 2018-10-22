@@ -25,7 +25,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class ToggleOfflineAction extends ExternalSystemToggleAction {
 

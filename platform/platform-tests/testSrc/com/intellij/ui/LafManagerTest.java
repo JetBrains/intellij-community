@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
 
@@ -12,12 +13,11 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class LafManagerTest extends PlatformTestCase {
-
   public void testCustomFont() {
-    final String fontFace = UISettings.getInstance().getFontFace();
+    UISettingsState uiSettings = UISettings.getInstance().getState();
+    final String fontFace = uiSettings.getFontFace();
     final int fontSize = UISettings.getInstance().getFontSize();
     final LafManagerImpl lafManager = LafManagerImpl.getTestInstance();
-    final UISettings uiSettings = UISettings.getInstance();
 
     try {
       String newFontName = "Arial";
@@ -31,8 +31,8 @@ public class LafManagerTest extends PlatformTestCase {
       assertEquals("Font size is not changed", newFontSize, font.getSize());
     } finally {
       uiSettings.setOverrideLafFonts(false);
-      UISettings.getInstance().setFontFace(fontFace);
-      UISettings.getInstance().setFontSize(fontSize);
+      uiSettings.setFontFace(fontFace);
+      uiSettings.setFontSize(fontSize);
       lafManager.updateUI();
     }
   }

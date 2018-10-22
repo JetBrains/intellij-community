@@ -20,7 +20,6 @@ import org.jdom.Element;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/26/2014
  */
 @Tag("projects_view")
 public class ExternalProjectsViewState {

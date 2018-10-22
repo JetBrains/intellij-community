@@ -36,7 +36,6 @@ import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.
 
 /**
  * @author Vladislav.Soroka
- * @since 2/26/2015
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
 

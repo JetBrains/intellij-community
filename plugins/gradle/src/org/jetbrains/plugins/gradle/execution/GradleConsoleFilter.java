@@ -33,7 +33,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilter implements Filter {
   private final Project myProject;

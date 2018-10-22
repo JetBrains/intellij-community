@@ -26,4 +26,8 @@ public class RuntimeConfigurationException extends ConfigurationException {
   public RuntimeConfigurationException(final String message) {
     super(message, ExecutionBundle.message("run.configuration.error.dialog.title"));
   }
+
+  public RuntimeConfigurationException(final String message, Throwable cause) {
+    super(message, cause, ExecutionBundle.message("run.configuration.error.dialog.title"));
+  }
 }
