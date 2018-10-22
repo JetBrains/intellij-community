@@ -6,7 +6,6 @@ import com.intellij.openapi.diff.impl.patch.CharsetEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
@@ -26,15 +25,13 @@ public class ApplyTextFilePatch extends ApplyFilePatchBase<TextFilePatch> {
   @Override
   @Nullable
   protected Result applyChange(final Project project, final VirtualFile fileToPatch, final FilePath pathBeforeRename, @Nullable final Getter<CharSequence> baseContents) throws IOException {
-    byte[] fileContents = fileToPatch.contentsToByteArray();
-    CharSequence text = LoadTextUtil.getTextByBinaryPresentation(fileContents, fileToPatch);
+    final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
+    if (document == null) {
+      throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
+    }
 
-    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(text, myPatch.getHunks());
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(document.getText(), myPatch.getHunks());
     if (appliedPatch != null) {
-      final Document document = FileDocumentManager.getInstance().getDocument(fileToPatch);
-      if (document == null) {
-        throw new IOException("Failed to set contents for updated file " + fileToPatch.getPath());
-      }
       document.setText(appliedPatch.patchedText);
       FileDocumentManager.getInstance().saveDocument(document);
       return new Result(appliedPatch.status);
