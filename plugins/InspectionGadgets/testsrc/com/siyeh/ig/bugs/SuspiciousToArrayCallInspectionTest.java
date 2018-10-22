@@ -82,6 +82,15 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
            "    }\n" +
            "}");
   }
+  
+  public void testStreamsIntersection() {
+    doTest("import java.util.stream.Stream;\n" +
+           "class Test {\n" +
+           "    {\n" +
+           "        Stream.of(1, 2.0, 3.0).toArray(/*Array of type 'java.lang.Number[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
+           "    }\n" +
+           "}");
+  }
 
   @NotNull
   @Override

@@ -85,14 +85,13 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
         return;
       }
       if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        PsiType itemType =
-          GenericsUtil.getVariableTypeByExpressionType(JavaGenericsUtil.getCollectionItemType(classType, expression.getResolveScope()));
+        PsiType itemType = JavaGenericsUtil.getCollectionItemType(classType, expression.getResolveScope());
         checkArrayTypes(argument, expression, argument.getType(), itemType);
       }
       else if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
         PsiType argumentType = getIntFunctionParameterType(argument);
         if (argumentType != null) {
-          checkArrayTypes(argument, expression, argumentType, StreamApiUtil.getStreamElementType(classType));
+          checkArrayTypes(argument, expression, argumentType, StreamApiUtil.getStreamElementType(classType, false));
         }
       }
     }
@@ -109,6 +108,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       if (!(argumentType instanceof PsiArrayType)) {
         return;
       }
+      itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiArrayType arrayType = (PsiArrayType)argumentType;
       final PsiType componentType = arrayType.getComponentType();
       final PsiElement parent = expression.getParent();
