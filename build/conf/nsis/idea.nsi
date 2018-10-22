@@ -1084,7 +1084,7 @@ absent:
   Goto done
 do_not_change_path:
   ${LogText} "  Length of PATH is bigger than 8192 bytes. Installer can not not update it."
-  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes. Installer can not not update it."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes.$\r$\nInstaller can not not update it."
 done:
 FunctionEnd
 
