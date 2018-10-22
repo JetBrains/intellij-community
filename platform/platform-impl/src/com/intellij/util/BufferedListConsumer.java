@@ -80,9 +80,9 @@ public class BufferedListConsumer<T> implements Consumer<List<T>> {
   @NotNull
   private Runnable createConsumerRunnable(final long ts) {
     return () -> {
-      myTs = ts;
       final List<T> list;
       synchronized (myFlushLock) {
+        myTs = ts;
         myPendingFlush = false;
         if (myBuffer.isEmpty()) return;
         list = myBuffer;
