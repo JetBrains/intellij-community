@@ -325,8 +325,7 @@ class ForkedDebuggerThread extends Thread {
         @Override
         public void action() {
           VirtualMachineProxy virtualMachineProxy = debugProcess.getVirtualMachineProxy();
-          if (virtualMachineProxy instanceof VirtualMachineProxyImpl &&
-              ((VirtualMachineProxyImpl)virtualMachineProxy).canBeModified()) {
+          if (virtualMachineProxy instanceof VirtualMachineProxyImpl) {
             // use success exit code here to avoid the main process interruption
             ((VirtualMachineProxyImpl)virtualMachineProxy).exit(0);
           }
