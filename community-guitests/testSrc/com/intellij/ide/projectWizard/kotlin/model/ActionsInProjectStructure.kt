@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
-import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.jTree
-import com.intellij.testGuiFramework.impl.selectWithKeyboard
 import com.intellij.testGuiFramework.util.logUIStep
-import com.intellij.testGuiFramework.util.scenarios.*
+import com.intellij.testGuiFramework.util.scenarios.ProjectStructureDialogModel
+import com.intellij.testGuiFramework.util.scenarios.checkLibraryPresent
+import com.intellij.testGuiFramework.util.scenarios.checkModule
 import org.fest.swing.exception.ComponentLookupException
 
 // Attention: it's supposed that Project Structure dialog is open both before the function
@@ -14,7 +14,7 @@ fun ProjectStructureDialogModel.checkFacetInOneModule(expectedFacet: FacetStruct
   checkModule {
     with(guiTestCase) {
       try {
-        jTree(path[0], timeout = Timeouts.seconds05).selectWithKeyboard(this, *path)
+        jTree(*path).clickPath()
         logUIStep("Check facet for module `${path.joinToString(" -> ")}`")
         (this as KotlinGuiTestCase).checkFacetState(expectedFacet)
       }
