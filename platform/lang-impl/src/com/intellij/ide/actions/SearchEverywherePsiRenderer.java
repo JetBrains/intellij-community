@@ -18,9 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.util.PlatformModuleRendererFactory;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
@@ -35,8 +32,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 
 import javax.swing.*;
@@ -158,28 +153,8 @@ public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiE
                                                        int index,
                                                        boolean selected,
                                                        boolean hasFocus) {
-    if (!(value instanceof NavigationItem)) return false;
-
-    NavigationItem item = (NavigationItem)value;
-
-    TextAttributes attributes = getNavigationItemAttributes(item);
-
-    SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
-
-    Color color = list.getForeground();
-    if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
-
-    String name = item.getName();
-    renderer.append(name + " ", nameAttributes);
-    ItemPresentation itemPresentation = item.getPresentation();
-    assert itemPresentation != null;
-    renderer.setIcon(itemPresentation.getIcon(true));
-
-    String locationString = itemPresentation.getLocationString();
-    if (!StringUtil.isEmpty(locationString)) {
-      renderer.append(locationString, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY));
-    }
-    return true;
+    return GotoFileCellRenderer.doCustomizeNonPsiElementLeftRenderer(
+      renderer, list, value, getNavigationItemAttributes(value));
   }
 
   @Override

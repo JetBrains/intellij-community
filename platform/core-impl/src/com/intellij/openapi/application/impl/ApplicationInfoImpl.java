@@ -48,9 +48,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private Color myCopyrightForeground = JBColor.BLACK;
   private Color myAboutForeground = JBColor.BLACK;
   private Color myAboutLinkColor;
+  private Rectangle myAboutLogoRect;
   private String myProgressTailIconName;
   private Icon myProgressTailIcon;
-
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
@@ -87,17 +87,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private boolean myEAP;
   private boolean myHasHelp = true;
   private boolean myHasContextHelp = true;
-  @Nullable
-  private String myHelpFileName = "ideahelp.jar";
-  @Nullable
-  private String myHelpRootName = "idea";
+  private @Nullable String myHelpFileName = "ideahelp.jar";
+  private @Nullable String myHelpRootName = "idea";
   private String myWebHelpUrl = "https://www.jetbrains.com/idea/webhelp/";
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
-  private String myStatisticsSettingsUrl;
   private String myFUStatisticsSettingsUrl;
-  private String myStatisticsServiceUrl;
-  private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -109,8 +104,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-
-  private Rectangle myAboutLogoRect;
 
   private static final String IDEA_PATH = "/idea/";
   private static final String ELEMENT_VERSION = "version";
@@ -176,10 +169,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_WINDOWS_URL = "win";
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
-  private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
   private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
-  private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
@@ -527,20 +517,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myCopyrightStart;
   }
 
-  public String getStatisticsSettingsUrl() {
-    return myStatisticsSettingsUrl;
-  }
-
   public String getFUStatisticsSettingsUrl() {
     return myFUStatisticsSettingsUrl;
-  }
-
-  public String getStatisticsServiceUrl() {
-    return myStatisticsServiceUrl;
-  }
-
-  public String getStatisticsServiceKey() {
-    return myStatisticsServiceKey;
   }
 
   public String getEventLogSettingsUrl() {
@@ -600,16 +578,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private static ApplicationInfoImpl ourShadowInstance;
 
-  public boolean isBetaOrRC() {
-    String minor = getMinorVersion();
-    if (minor != null) {
-      if (minor.contains("RC") || minor.contains("Beta") || minor.contains("beta")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
@@ -648,10 +616,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       setBuildNumber(myApiVersion, myBuildNumber);
 
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
-      if (dateString.equals("__BUILD_DATE__")) {
+      if ("__BUILD_DATE__".equals(dateString)) {
         myBuildDate = new GregorianCalendar();
-        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar")) {
-          final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
+        try (JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + "/lib/bootstrap.jar")) {
+          JarEntry jarEntry = bootstrapJar.entries().nextElement();  // META-INF is always updated on build
           myBuildDate.setTime(new Date(jarEntry.getTime()));
         }
         catch (Exception ignore) { }
@@ -871,17 +839,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
-      myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
       myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
-      myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
-      myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
       myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
-      myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
       myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
-      myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
-      myStatisticsServiceKey  = null;
       myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
     }
 
@@ -922,8 +884,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return parentNode.getChildren(name, parentNode.getNamespace());
   }
 
-  private static Element getChild(Element parentNode, String version) {
-    return parentNode.getChild(version, parentNode.getNamespace());
+  private static Element getChild(Element parentNode, String name) {
+    return parentNode.getChild(name, parentNode.getNamespace());
   }
 
   //copy of ApplicationInfoProperties.shortenCompanyName

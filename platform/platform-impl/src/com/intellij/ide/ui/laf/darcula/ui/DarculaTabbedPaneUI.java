@@ -137,7 +137,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   protected void paintTabArea(Graphics g, int tabPlacement, int selectedIndex) {
     if (tabPane.getTabLayoutPolicy() == JTabbedPane.SCROLL_TAB_LAYOUT) {
       Rectangle bounds = g.getClipBounds();
-      g.setColor(JBColor.namedColor("TabbedPane.borderColor", 0xbfbfbf));
+      g.setColor(JBColor.namedColor("TabbedPane.contentAreaColor", 0xbfbfbf));
 
       if (tabPlacement == LEFT || tabPlacement == RIGHT) {
         g.fillRect(bounds.x + bounds.width - OFFSET.get(), bounds.y, OFFSET.get(), bounds.y + bounds.height);

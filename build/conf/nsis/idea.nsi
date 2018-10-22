@@ -1083,8 +1083,8 @@ absent:
   ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
   Goto done
 do_not_change_path:
-  ${LogText} "  PATH can not be updated. The size is very big."
-  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
+  ${LogText} "  Length of PATH is bigger than 8192 bytes. Installer can not update it."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes.$\r$\nInstaller can not update it."
 done:
 FunctionEnd
 
@@ -1197,6 +1197,7 @@ skip_ipr:
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
+  ${LogText} "ShortCutWorkingDirectory: $0"
 
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"

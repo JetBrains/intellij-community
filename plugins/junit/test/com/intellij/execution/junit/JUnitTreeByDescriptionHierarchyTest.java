@@ -37,6 +37,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
   @Test
   public void testEmptySuite() {
     doTest(Description.createSuiteDescription("empty suite"), "##teamcity[enteredTheMatrix]\n" +
+                                                              "##teamcity[suiteTreeStarted name='empty suite' locationHint='java:suite://empty suite']\n" +
+                                                              "##teamcity[suiteTreeEnded name='empty suite']\n" +
                                                               "##teamcity[treeEnded]\n");
   }
 

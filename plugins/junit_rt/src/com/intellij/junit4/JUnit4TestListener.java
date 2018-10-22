@@ -474,7 +474,10 @@ public class JUnit4TestListener extends RunListener {
         }
         myPrintStream.println("##teamcity[suiteTreeNode name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + getTestMethodLocation(methodName, className) + "]");
       }
-
+      else {
+        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\' locationHint=\'java:suite://" + escapeName(className) + "\']");
+        myPrintStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(className)) + "\']");
+      }
       return;
     }
    
