@@ -1,55 +1,38 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Ref;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.vcs.FileBasedTest;
 import com.intellij.util.BufferedListConsumer;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+
+import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static com.intellij.util.ConcurrencyUtil.joinAll;
+import static java.util.Collections.synchronizedList;
 
 public class BufferedListConsumerTest extends FileBasedTest {
 
   @Test
   public void testHugeWriteRead() throws Exception {
-    Ref<Future<?>> futureRef = new Ref<>();
-
     final Random random = new Random(17);
     final Set<Long> src = new HashSet<>(200);
     for (int i = 0; i < 100; i++) {
       src.add(System.currentTimeMillis());
       src.add(random.nextLong());
     }
-    final List<Long> dst = new ArrayList<>();
-    final BufferedListConsumer<Long> consumer = new BufferedListConsumer<Long>(9, items -> dst.addAll(items), 4) {
-      @Override
-      protected void invokeConsumer(@NotNull Runnable consumerRunnable) {
-        futureRef.set(ApplicationManager.getApplication().executeOnPooledThread(consumerRunnable));
+    final int sourceSize = src.size();
+    final List<Long> dst = synchronizedList(new ArrayList<>());
+    final Semaphore semaphore = new Semaphore();
+    Consumer<List<Long>> innerConsumer = items -> {
+      dst.addAll(items);
+      if (sourceSize == dst.size()) {
+        semaphore.up();
       }
     };
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
+    final BufferedListConsumer<Long> consumer = new BufferedListConsumer<>(9, innerConsumer, 4);
     Thread thread = new Thread("buffered list test") {
       @Override
       public void run() {
@@ -57,22 +40,21 @@ public class BufferedListConsumerTest extends FileBasedTest {
           consumer.consumeOne(aLong);
         }
         consumer.flush();
-        semaphore.up();
       }
     };
+    semaphore.down();
     thread.start();
 
     int timeout = 10 * 1000;
     try {
       if (!semaphore.waitFor(timeout)) throw new Exception("Couldn't await background thread");
 
-      Future<?> future = futureRef.get();
-      if (future != null) future.get(timeout, TimeUnit.MILLISECONDS);
-
-      UsefulTestCase.assertOrderedEquals(dst, src);
+      // BufferedListConsumer calls inner consumer in some background thread. This thread could be not the same between calls, which could
+      // lead to different elements order in dst and src.
+      assertSameElements(dst, src);
     }
     finally {
-      ConcurrencyUtil.joinAll(thread);
+      joinAll(thread);
     }
   }
 }
