@@ -16,17 +16,25 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SuspiciousToArrayCallInspection extends BaseInspection {
 
@@ -42,6 +50,12 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     final PsiType type = (PsiType)infos[0];
     final PsiType foundType = (PsiType)infos[1];
     return InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor", type.getCanonicalText(), foundType.getCanonicalText());
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new SuspiciousToArrayCallFix((PsiType)infos[0], (boolean)infos[2]);
   }
 
   @Override
@@ -86,7 +100,11 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       }
       if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         PsiType itemType = JavaGenericsUtil.getCollectionItemType(classType, expression.getResolveScope());
-        checkArrayTypes(argument, expression, argument.getType(), itemType);
+        PsiType argumentType = argument.getType();
+        if (!(argumentType instanceof PsiArrayType)) {
+          argumentType = getIntFunctionParameterType(argument);
+        }
+        checkArrayTypes(argument, expression, argumentType, itemType);
       }
       else if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
         PsiType argumentType = getIntFunctionParameterType(argument);
@@ -145,8 +163,44 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
             return;
           }
         }
-        registerError(argument, itemType, componentType);
+        registerError(argument, itemType, componentType, !(argument.getType() instanceof PsiArrayType));
       }
+    }
+  }
+
+  private static class SuspiciousToArrayCallFix extends InspectionGadgetsFix {
+    private final String myReplacement;
+    private final String myPresented;
+    
+    SuspiciousToArrayCallFix(PsiType wantedType, boolean isFunction) {
+      if (isFunction) {
+        myReplacement = wantedType.getCanonicalText() + "[]::new";
+        myPresented = wantedType.getPresentableText() + "[]::new";
+      } else {
+        myReplacement = "new "+wantedType.getCanonicalText() + "[0]";
+        myPresented = "new "+wantedType.getPresentableText() + "[0]";
+      }
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
+      if (expression == null) return;
+      new CommentTracker().replaceAndRestoreComments(expression, myReplacement);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", myPresented);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Replace with proper array";
     }
   }
 }
