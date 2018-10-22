@@ -1158,7 +1158,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         // merging two XmlText-s should be done in one transaction to preserve smart pointers
         ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
           @Override
-          public void makeChange(TreeChangeEvent destinationTreeChange) {
+          public void makeChange(@NotNull TreeChangeEvent destinationTreeChange) {
             PsiElement anchor = prevText.getPrevSibling();
             prevText.delete();
             nextText.delete();
