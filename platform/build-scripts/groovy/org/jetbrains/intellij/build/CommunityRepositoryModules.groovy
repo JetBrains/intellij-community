@@ -143,6 +143,7 @@ class CommunityRepositoryModules {
       withModule("intellij.maven.server.m3.common")
       withModule("intellij.maven.server.m30.impl")
       withModule("intellij.maven.server.m3.impl")
+      withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
