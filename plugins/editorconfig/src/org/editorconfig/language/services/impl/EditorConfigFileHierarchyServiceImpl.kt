@@ -93,9 +93,10 @@ class EditorConfigFileHierarchyServiceImpl(
 
   private fun startBackgroundTask(virtualFile: VirtualFile) {
     val expectedCacheDropsCount = cacheDropsCount
-    ReadAction.nonBlocking<List<EditorConfigPsiFile>?> {
-      findApplicableFiles(virtualFile)
-    }.finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
+    ReadAction
+      .nonBlocking<List<EditorConfigPsiFile>?> { findApplicableFiles(virtualFile) }
+      .expireWhen { project.isDisposed }
+      .finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
       affectingFiles ?: return@ui
       synchronized(cacheLocker) {
         if (expectedCacheDropsCount != cacheDropsCount) return@ui
