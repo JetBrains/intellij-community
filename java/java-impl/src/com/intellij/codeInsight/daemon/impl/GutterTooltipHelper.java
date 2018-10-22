@@ -64,7 +64,7 @@ public final class GutterTooltipHelper {
                                                               @NotNull Function<E, String> function,
                                                               @NotNull Predicate<E> predicate,
                                                               @Nullable String actionId) {
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder("<html><body>");
     if (prefix != null) sb.append(prefix);
     for (E element : elements) {
       String elementPrefix = function.apply(element);
@@ -72,6 +72,7 @@ public final class GutterTooltipHelper {
       appendElement(sb, element, predicate.test(element));
     }
     appendContextHelp(sb, actionId);
+    sb.append("</body></html>");
     return sb.toString();
   }
 
