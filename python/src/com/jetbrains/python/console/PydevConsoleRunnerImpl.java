@@ -668,7 +668,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void stopConsole() {
     if (myPydevConsoleCommunication != null) {
       try {
-        myPydevConsoleCommunication.interrupt();
         closeCommunication();
         // waiting for REPL communication before destroying process handler
         Thread.sleep(300);
