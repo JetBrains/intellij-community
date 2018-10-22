@@ -1083,8 +1083,8 @@ absent:
   ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
   Goto done
 do_not_change_path:
-  ${LogText} "  PATH can not be updated. The size is very big."
-  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
+  ${LogText} "  Length of PATH is bigger than 8192 bytes. Installer can not not update it."
+  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes. Installer can not not update it."
 done:
 FunctionEnd
 
