@@ -37,13 +37,13 @@ internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
-  val credentialsStore: Lazy<IcsCredentialsStore> = lazy { IcsCredentialsStore() }
+  val credentialsStore = lazy { IcsCredentialsStore() }
 
   val settingsFile: Path = dir.resolve("config.json")
 
   val settings: IcsSettings
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
-  val readOnlySourcesManager: ReadOnlySourceManager = ReadOnlySourceManager(this, dir)
+  val readOnlySourcesManager = ReadOnlySourceManager(this, dir)
 
   init {
     settings = try {
@@ -68,7 +68,8 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   @Volatile
   private var autoCommitEnabled = true
 
-  @Volatile var isRepositoryActive: Boolean = false
+  @Volatile
+  var isRepositoryActive = false
 
   val isActive: Boolean
     get() = isRepositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
@@ -99,18 +100,6 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       return true
     }
   }
-
-//  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-//    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
-//
-//    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-//      if (isProjectOrModuleFile(fileSpec)) {
-//        // applicable only if file was committed to Settings Server explicitly
-//        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
-//      }
-//      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
-//    }
-//  }
 
   fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean = syncManager.sync(syncType, project, localRepositoryInitializer)
 
