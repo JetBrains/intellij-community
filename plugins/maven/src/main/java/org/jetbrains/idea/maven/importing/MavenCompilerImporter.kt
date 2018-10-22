@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import org.jdom.Element
@@ -50,21 +49,44 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                        mavenProjectToModuleName: Map<MavenProject, String>,
                        postTasks: List<MavenProjectsProcessorTask>) {
     val compilers = modifiableModelsProvider.getUserData(COMPILERS)
-    val isMultipleCompilersUsed = compilers != null && compilers.size > 1
+    val defaultCompilerId = if (compilers != null && compilers.size == 1) compilers.first() else JAVAC_ID
 
-    val compilerConfiguration = getConfig(mavenProject) ?: return
-    val compilerId = getCompilerId(compilerConfiguration)
+    val mavenConfiguration: Lazy<Element?> = lazy { getConfig(mavenProject) }
+    val compilerId = if (mavenProject.packaging != "pom") mavenConfiguration.value?.let { getCompilerId(it) } else null
 
-    MavenCompilerExtension.EP_NAME.extensions.find { compilerId == it.mavenCompilerId }?.run {
-      importCompilerConfiguration(module, compilerConfiguration, this, !isMultipleCompilersUsed)
+    val ideCompilerConfiguration = CompilerConfiguration.getInstance(module.project) as CompilerConfigurationImpl
+
+    for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
+      if (mavenConfiguration.value != null && compilerId == compilerExtension.mavenCompilerId) {
+        importCompilerConfiguration(module, mavenConfiguration.value!!, compilerExtension)
+      }
+      else {
+        // cleanup obsolete options
+        (compilerExtension.getCompiler(module.project)?.options as? JpsJavaCompilerOptions)?.let {
+          ideCompilerConfiguration.setAdditionalOptions(it, module, emptyList())
+        }
+      }
+
+      if (modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null && defaultCompilerId == compilerExtension.mavenCompilerId) {
+        val backendCompiler = compilerExtension.getCompiler(module.project)
+        if (backendCompiler != null && ideCompilerConfiguration.defaultCompiler != backendCompiler) {
+          if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
+            ideCompilerConfiguration.defaultCompiler = backendCompiler
+          }
+          else {
+            LOG.error(backendCompiler.toString() + " is not registered.")
+          }
+        }
+
+        modifiableModelsProvider.putUserData(DEFAULT_COMPILER_IS_SET, true)
+      }
     }
   }
 
   private fun importCompilerConfiguration(module: Module,
                                           compilerMavenConfiguration: Element,
-                                          extension: MavenCompilerExtension,
-                                          useAsDefault: Boolean) {
-    val compilerOptions = extension.getCompiler(module.project).options as? JpsJavaCompilerOptions ?: return
+                                          extension: MavenCompilerExtension) {
+    val compilerOptions = extension.getCompiler(module.project)?.options as? JpsJavaCompilerOptions ?: return
 
     val options = mutableListOf<String>()
     val parameters = compilerMavenConfiguration.getChild("parameters")
@@ -95,30 +117,17 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     val compilerConfiguration = CompilerConfiguration.getInstance(module.project) as CompilerConfigurationImpl
     compilerConfiguration.setAdditionalOptions(compilerOptions, module, options)
-
-    if (useAsDefault) {
-      val backendCompiler = extension.getCompiler(module.project)
-      if (compilerConfiguration.defaultCompiler !== backendCompiler) {
-        val compilers = compilerConfiguration.registeredJavaCompilers
-        if (compilers.contains(backendCompiler)) {
-          compilerConfiguration.defaultCompiler = backendCompiler
-        }
-        else {
-          LOG.error(backendCompiler.toString() + " is not registered.")
-        }
-      }
-    }
   }
 
   companion object {
     private val COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
+    private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
+    private const val JAVAC_ID = "javac"
 
     private fun getCompilerId(config: Element): String {
-      var compilerId = config.getChildTextTrim("compilerId")
-      if (StringUtil.isEmpty(compilerId) || "javac" == compilerId) {
-        compilerId = "javac"
-      }
-      return compilerId
+      val compilerId = config.getChildTextTrim("compilerId")
+      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId) return JAVAC_ID
+      else return compilerId
     }
   }
 }
