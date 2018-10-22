@@ -54,8 +54,8 @@ public class JBColor extends Color {
       @NotNull
       @Override
       public Color produce() {
-        Color color = notNull(findPatternMatch(propertyName),
-                              notNull(UIManager.getColor(propertyName), defaultColor));
+        Color color = notNull(UIManager.getColor(propertyName),
+                              notNull(findPatternMatch(propertyName), defaultColor));
         if (UIManager.get(propertyName) == null) {
           UIManager.put(propertyName, color);
         }
