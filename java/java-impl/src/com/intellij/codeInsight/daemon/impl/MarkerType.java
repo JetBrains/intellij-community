@@ -10,17 +10,13 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FindSuperElementsHelper;
-import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -35,14 +31,13 @@ import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.text.MessageFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
@@ -115,44 +110,44 @@ public class MarkerType {
     PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
     if (superMethods.length == 0) return null;
 
-    PsiMethod superMethod = superMethods[0];
-    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
-
-    final boolean sameSignature = superMethod.getSignature(PsiSubstitutor.EMPTY).equals(method.getSignature(PsiSubstitutor.EMPTY));
-    @NonNls final String key;
-    if (isSuperAbstract && !isAbstract){
-      key = sameSignature ? "method.implements" : "method.implements.in";
-    }
-    else{
-      key = sameSignature ? "method.overrides" : "method.overrides.in";
-    }
-    return composeText(superMethods, "", DaemonBundle.message(key), IdeActions.ACTION_GOTO_SUPER);
+    AtomicBoolean first = new AtomicBoolean(true);
+    return GutterTooltipHelper.getTooltipText(
+      Arrays.asList(superMethods),
+      superMethod -> getTooltipPrefix(method, superMethod, first.getAndSet(false)),
+      superMethod -> isSameSignature(method, superMethod),
+      IdeActions.ACTION_GOTO_SUPER);
   }
+
   @Nullable
   private static String calculateOverridingSiblingMethodTooltip(@NotNull PsiMethod method) {
     FindSuperElementsHelper.SiblingInfo pair = FindSuperElementsHelper.getSiblingInfoInheritedViaSubClass(method);
     if (pair == null) return null;
-    PsiMethod superMethod = pair.superMethod;
-    PsiClass subClass = pair.subClass;
-    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
-    String postfix = MessageFormat.format(" via sub-class <a href=\"#javaClass/{0}\">{0}</a>", ClassPresentationUtil.getNameForClass(subClass, true));
-    @NonNls String pattern = DaemonBundle.message(isSuperAbstract && !isAbstract ?
-                                                  "method.implements" :
-                                                  "method.overrides") + postfix;
-    return composeText(new PsiElement[]{superMethod}, "", pattern, IdeActions.ACTION_GOTO_SUPER);
+    return GutterTooltipHelper.getTooltipText(
+      Arrays.asList(pair.superMethod, pair.subClass),
+      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, true) : " via sub-class ",
+      element -> element instanceof PsiMethod && isSameSignature(method, (PsiMethod)element),
+      IdeActions.ACTION_GOTO_SUPER);
   }
 
   @NotNull
-  private static String composeText(@NotNull PsiElement[] methods, @NotNull String start, @NotNull String pattern, @NotNull String actionId) {
-    Shortcut[] shortcuts = ActionManager.getInstance().getAction(actionId).getShortcutSet().getShortcuts();
-    Shortcut shortcut = ArrayUtil.getFirstElement(shortcuts);
-    String postfix = "<br><div style='margin-top: 5px'><font size='2'>Click";
-    if (shortcut != null) postfix += " or press " + KeymapUtil.getShortcutText(shortcut);
-    postfix += " to navigate</font></div>";
-    return GutterIconTooltipHelper.composeText(Arrays.asList(methods), start, pattern, postfix);
+  private static String getTooltipPrefix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod, boolean first) {
+    StringBuilder sb = new StringBuilder();
+    if (!first) sb.append("<br>");
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
+    boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
+    sb.append(isSuperAbstract && !isAbstract ? "Implements method " : "Overrides method ");
+    if (isSameSignature(method, superMethod)) sb.append("in ");
+    return sb.toString();
+  }
+
+  private static boolean isSameSignature(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+    return method.getSignature(PsiSubstitutor.EMPTY).equals(superMethod.getSignature(PsiSubstitutor.EMPTY));
+  }
+
+  @NotNull
+  private static String getImplementationTooltip(@NotNull String prefix, @NotNull PsiElement... elements) {
+    return GutterTooltipHelper.getTooltipText(Arrays.asList(elements), prefix, true, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 
   private static void navigateToOverridingMethod(MouseEvent e, @NotNull PsiMethod method, boolean acceptSelf) {
@@ -164,6 +159,7 @@ public class MarkerType {
                                         DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                                         new MethodCellRenderer(showMethodNames));
   }
+
   private static void navigateToSiblingOverridingMethod(MouseEvent e, @NotNull PsiMethod method) {
     PsiMethod superMethod = FindSuperElementsHelper.getSiblingInheritedViaSubClass(method);
     if (superMethod == null) return;
@@ -203,14 +199,13 @@ public class MarkerType {
       PsiElement parent = element.getParent();
       if (!(parent instanceof PsiMethod)) return;
       navigateToOverriddenMethod(e, (PsiMethod)parent);
-
     }
   });
 
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      return DaemonBundle.message("method.is.implemented.too.many");
+      return getImplementationTooltip("Has implementations");
     }
 
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
@@ -220,13 +215,13 @@ public class MarkerType {
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (processor.isOverflow()){
-      return DaemonBundle.message(isAbstract ? "method.is.implemented.too.many" : "method.is.overridden.too.many");
+      return getImplementationTooltip(isAbstract ? "Has implementations" : "Is overridden in subclasses");
     }
 
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
     if (overridings.length == 0) {
       if (aClass != null && isAbstract && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
-        return "Has functional implementations";
+        return getImplementationTooltip("Has functional implementations");
       }
       return null;
     }
@@ -234,9 +229,7 @@ public class MarkerType {
     Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
     Arrays.sort(overridings, comparator);
 
-    String start = DaemonBundle.message(isAbstract ? "method.is.implemented.header" : "method.is.overriden.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{1}\">{1}</a>";
-    return composeText(overridings, start, pattern, IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    return getImplementationTooltip(isAbstract ? "Is implemented in" : "Is overridden in", overridings);
   }
 
   private static void navigateToOverriddenMethod(MouseEvent e, @NotNull final PsiMethod method) {
@@ -298,7 +291,7 @@ public class MarkerType {
     ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
 
     if (processor.isOverflow()) {
-      return DaemonBundle.message(aClass.isInterface() ? "interface.is.implemented.too.many" : "class.is.subclassed.too.many");
+      return getImplementationTooltip(aClass.isInterface() ? "Has implementations" : "Has subclasses");
     }
 
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
@@ -307,7 +300,7 @@ public class MarkerType {
         new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
       FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(functionalImplementations));
       if (!functionalImplementations.getCollection().isEmpty()) {
-        return "Has functional implementations";
+        return getImplementationTooltip("Has functional implementations");
       }
       return null;
     }
@@ -315,9 +308,7 @@ public class MarkerType {
     Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
     Arrays.sort(subclasses, comparator);
 
-    String start = DaemonBundle.message(aClass.isInterface() ? "interface.is.implemented.by.header" : "class.is.subclassed.by.header");
-    @NonNls String pattern = "&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#javaClass/{0}\">{0}</a>";
-    return composeText(subclasses, start, pattern, IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    return getImplementationTooltip(aClass.isInterface() ? "Is implemented by" : "Is subclassed by", subclasses);
   }
 
   // Used in Kotlin, please don't make private
