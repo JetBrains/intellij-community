@@ -554,6 +554,7 @@ public final class IconLoader {
   }
 
   public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+    private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
     @NotNull private volatile MyUrlResolver myResolver;
@@ -563,26 +564,6 @@ public final class IconLoader {
 
     @Nullable private final ImageFilter myLocalFilter;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
-
-    {
-      // For instance, ShadowPainter updates the context from outside.
-      getScaleContext().addUpdateListener(new UpdateListener() {
-        @Override
-        public void contextUpdated() {
-          myRealIcon = null;
-        }
-      });
-    }
-
-    private CachedImageIcon(@NotNull CachedImageIcon icon, @Nullable Boolean darkOverridden, @Nullable RGBImageFilter newLocalFilter) {
-      myRealIcon = null; // to be computed
-      myOriginalPath = icon.myOriginalPath;
-      myResolver = icon.myResolver;
-      myDarkOverridden = darkOverridden;
-      myLocalFilter = newLocalFilter == null ? icon.myLocalFilter : newLocalFilter;
-      myUseCacheOnLoad = icon.myUseCacheOnLoad;
-      myTransform = isDark() != icon.isDark() ? null : icon.myTransform;
-    }
 
     public CachedImageIcon(@NotNull URL url) {
       this(url, true);
@@ -594,12 +575,24 @@ public final class IconLoader {
 
     private CachedImageIcon(@NotNull MyUrlResolver urlResolver, @Nullable String originalPath, boolean useCacheOnLoad)
     {
-      myResolver = urlResolver;
-      myTransform = ourTransform.get();
-      myUseCacheOnLoad = useCacheOnLoad;
+      this(originalPath, urlResolver, false, useCacheOnLoad, ourTransform.get(), null);
+    }
+
+    private CachedImageIcon(@Nullable String originalPath, @NotNull MyUrlResolver resolver, @Nullable Boolean darkOverridden,
+                            boolean useCacheOnLoad, IconTransform transform, @Nullable ImageFilter localFilter) {
       myOriginalPath = originalPath;
-      myDarkOverridden = false;
-      myLocalFilter = null;
+      myResolver = resolver;
+      myDarkOverridden = darkOverridden;
+      myUseCacheOnLoad = useCacheOnLoad;
+      myTransform = transform;
+      myLocalFilter = localFilter;
+      // For instance, ShadowPainter updates the context from outside.
+      getScaleContext().addUpdateListener(new UpdateListener() {
+        @Override
+        public void contextUpdated() {
+          myRealIcon = null;
+        }
+      });
     }
 
     @Contract("_, _, _, _, _, true -> !null")
@@ -622,7 +615,7 @@ public final class IconLoader {
     }
 
     @NotNull
-    private synchronized ImageIcon getRealIcon() {
+    private ImageIcon getRealIcon() {
       return getRealIcon(null);
     }
 
@@ -636,26 +629,26 @@ public final class IconLoader {
     private ImageIcon getRealIcon(@Nullable ScaleContext ctx) {
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
-        synchronized (this) {
+        synchronized (myLock) {
           if (!isValid()) {
             myTransform = ourTransform.get();
             myResolver.resolve();
             myRealIcon = null;
             myScaledIconsCache.clear();
             if (myOriginalPath != null) {
-              myResolver = myResolver.patchResolver(myOriginalPath, myTransform);
+              myResolver = myResolver.patch(myOriginalPath, myTransform);
             }
           }
         }
       }
       Object realIcon = myRealIcon;
-      if (!updateScaleContext(ctx) && realIcon != null) {
-        // try returning the current icon as the context is up-to-date
-        ImageIcon icon = unwrapIcon(realIcon);
-        if (icon != null) return icon;
-      }
+      synchronized (myLock) {
+        if (!updateScaleContext(ctx) && realIcon != null) {
+          // try returning the current icon as the context is up-to-date
+          ImageIcon icon = unwrapIcon(realIcon);
+          if (icon != null) return icon;
+        }
 
-      synchronized (this) {
         ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
         if (icon != null) {
           myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<ImageIcon>(icon);
@@ -725,7 +718,8 @@ public final class IconLoader {
 
     @Override
     public Icon getDarkIcon(boolean isDark) {
-      return new CachedImageIcon(this, isDark, null);
+      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, isDark != this.isDark() ? null : myTransform,
+                                 myLocalFilter);
     }
 
     @Override
@@ -740,12 +734,12 @@ public final class IconLoader {
     @NotNull
     @Override
     public CachedImageIcon copy() {
-      return new CachedImageIcon(this, this.myDarkOverridden, null);
+      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, myLocalFilter);
     }
 
     @NotNull
     private Icon createWithFilter(@NotNull RGBImageFilter filter) {
-      return new CachedImageIcon(this, this.myDarkOverridden, filter);
+      return new CachedImageIcon(myOriginalPath, myResolver, myDarkOverridden, myUseCacheOnLoad, myTransform, filter);
     }
     
     private boolean isDark() {
@@ -907,7 +901,7 @@ public final class IconLoader {
         return myUrl;
       }
 
-      MyUrlResolver patchResolver(String originalPath, IconTransform transform) {
+      MyUrlResolver patch(String originalPath, IconTransform transform) {
         Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, myClassLoader);
         ClassLoader classLoader = patchedPath.second != null ? patchedPath.second : myClassLoader;
         String path = patchedPath.first;
