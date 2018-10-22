@@ -13,8 +13,8 @@ import com.intellij.openapi.project.Project
 class MavenCompilerEclipseExtension : MavenCompilerExtension {
   override fun getMavenCompilerId(): String = "eclipse"
 
-  override fun getCompiler(project: Project): BackendCompiler {
+  override fun getCompiler(project: Project): BackendCompiler? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    return compilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler }!!
+    return compilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler }
   }
 }
