@@ -56,8 +56,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
       return null;
     }
     return ReadAction.compute(() -> {
-      String path = FileUtil.toSystemIndependentName(baseDir);
-      VirtualFile dir = LocalFileFinder.findFile(path);
+      VirtualFile dir = LocalFileFinder.findFile(baseDir);
       return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
     });
   }
