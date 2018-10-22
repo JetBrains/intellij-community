@@ -3,6 +3,7 @@ package com.intellij.xml;
 
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.testFramework.PsiTestCase;
 
 public class XmlModificationsTest extends PsiTestCase {
@@ -41,5 +42,13 @@ public class XmlModificationsTest extends PsiTestCase {
     final XmlTag tag = myFactory.createTagFromText("<a/>");
     tag.add(tag.createChildTag("b", "", null, false));
     assertEquals("<a><b/></a>", tag.getText());
+  }
+
+  public void testSetText() {
+    final XmlTag tag = myFactory.createTagFromText("<a>foo</a>");
+    XmlText[] elements = tag.getValue().getTextElements();
+    assertEquals(1, elements.length);
+    elements[0].setValue("");
+    assertEquals("<a></a>", tag.getText());
   }
 }
