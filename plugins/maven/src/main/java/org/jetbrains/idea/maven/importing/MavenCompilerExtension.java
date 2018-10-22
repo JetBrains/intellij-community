@@ -5,6 +5,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -21,6 +22,9 @@ public interface MavenCompilerExtension {
   @NotNull
   String getMavenCompilerId();
 
-  @NotNull
+  /**
+   * Returns null if the IDE backend compiler can not be registered
+   */
+  @Nullable
   BackendCompiler getCompiler(Project project);
 }

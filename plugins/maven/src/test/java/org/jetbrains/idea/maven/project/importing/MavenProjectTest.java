@@ -529,30 +529,35 @@ public class MavenProjectTest extends MavenImportingTestCase {
   }
 
   public void testCompilerPluginErrorProneConfiguration() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
 
-                     "<build>" +
-                     "  <plugins>" +
-                     "    <plugin>" +
-                     "      <groupId>org.apache.maven.plugins</groupId>" +
-                     "      <artifactId>maven-compiler-plugin</artifactId>" +
-                     "      <configuration>" +
-                     "        <compilerId>javac-with-errorprone</compilerId>" +
-                     "        <compilerArgs>" +
-                     "          <arg>-XepAllErrorsAsWarnings</arg>" +
-                     "        </compilerArgs>" +
-                     "      </configuration>" +
-                     "    </plugin>" +
-                     "  </plugins>" +
-                     "</build>");
-
-    importProject();
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <compilerId>javac-with-errorprone</compilerId>" +
+                  "        <compilerArgs>" +
+                  "          <arg>-XepAllErrorsAsWarnings</arg>" +
+                  "        </compilerArgs>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
 
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     assertEquals("error-prone", compilerConfiguration.getDefaultCompiler().getId());
     assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-XepAllErrorsAsWarnings");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
   }
 
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {
