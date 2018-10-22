@@ -366,7 +366,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   private static void showThreadDump(String out, List<ThreadState> states, Project project) {
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
-    String title = "Dump " + DateFormatUtil.formatDateTime(System.currentTimeMillis());
+    String title = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
     ApplicationManager.getApplication().invokeLater(
             () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }
