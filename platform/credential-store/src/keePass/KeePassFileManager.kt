@@ -126,7 +126,7 @@ internal open class KeePassFileManager(private val file: Path,
     return true
   }
 
-  fun askAndSetMasterKey(event: AnActionEvent?): Boolean {
+  fun askAndSetMasterKey(event: AnActionEvent?, topNote: String? = null): Boolean {
     val contextComponent = event?.getData(PlatformDataKeys.CONTEXT_COMPONENT)
 
     // to open old database, key can be required, so, to avoid showing 2 dialogs, check it before
@@ -138,7 +138,7 @@ internal open class KeePassFileManager(private val file: Path,
       return requestCurrentAndNewKeys(contextComponent)
     }
 
-    return requestMasterPassword("Set Master Password", contextComponent = contextComponent) {
+    return requestMasterPassword("Set Master Password", topNote = topNote, contextComponent = contextComponent) {
       saveDatabase(file, db, createMasterKey(it), masterKeyFileStorage, secureRandom.value)
       null
     }
@@ -242,9 +242,6 @@ internal open class KeePassFileManager(private val file: Path,
       return
     }
 
-    requestMasterPassword("Set Master Password", topNote = "Database file located in custom location,\ntherefore custom master password is required.") {
-      masterKeyFileStorage.save(createMasterKey(it))
-      null
-    }
+    askAndSetMasterKey(null, topNote = "Database file located in custom location,\ntherefore custom master password is required.")
   }
 }
