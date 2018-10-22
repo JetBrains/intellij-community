@@ -77,6 +77,9 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class StructuralSearchDialog extends DialogWrapper {
+  @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
+  @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
+
   @NonNls private static final String RECURSIVE_STATE = "structural.search.recursive";
   @NonNls private static final String MATCH_CASE_STATE = "structural.search.match.case";
   @NonNls private static final String SHORTEN_FQN_STATE = "structural.search.shorten.fqn";
@@ -163,7 +166,8 @@ public class StructuralSearchDialog extends DialogWrapper {
         myReplacePanel.setVisible(replace);
         myRecursive.setVisible(!replace);
         loadConfiguration(myConfiguration);
-        final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
+        final Dimension size =
+          DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY);
         if (size != null) {
           setSize(size.width, size.height);
         }
@@ -658,6 +662,26 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     initiateValidation();
     super.show();
+
+    // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
+    final DimensionService dimensionService = DimensionService.getInstance();
+    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    if (location != null) {
+      setLocation(location);
+    }
+    final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    if (size != null) {
+      setSize(size.width, size.height);
+    }
+    else {
+      pack();
+      // set width from replace if search not available and vice versa
+      final Dimension otherSize =
+        dimensionService.getSize(myReplace ? SEARCH_DIMENSION_SERVICE_KEY : REPLACE_DIMENSION_SERVICE_KEY, getProject());
+      if (otherSize != null) {
+        setSize(otherSize.width, getSize().height);
+      }
+    }
   }
 
   @Override
@@ -882,21 +906,35 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
-    return myReplace
-           ? "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog"
-           : "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
+  protected final String getDimensionServiceKey() {
+    return null;
   }
 
   @Override
   public void dispose() {
+    if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
+    else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
+
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
     myReplaceCriteriaEdit.removeNotify();
     super.dispose();
+  }
+
+  private void storeDimensions(String key1, String key2) {
+    // handle own dimension service to store dimensions correctly when switching between search/replace in the same dialog
+    final Dimension size = getSize();
+    final DimensionService dimensionService = DimensionService.getInstance();
+    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, getLocation(), getProject());
+    dimensionService.setSize(key1, size, getProject());
+    final Dimension otherSize = dimensionService.getSize(key2);
+    if (otherSize != null && otherSize.width != size.width) {
+      otherSize.width = size.width;
+      dimensionService.setSize(key2, otherSize, getProject());
+    }
   }
 
   @Override
