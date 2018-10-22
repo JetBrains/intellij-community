@@ -197,6 +197,9 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
+
+    <registryKey key="maven.disable.compiler.arguments.import" defaultValue="false"
+                 description="Stop importing of the maven compiler arguments"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
