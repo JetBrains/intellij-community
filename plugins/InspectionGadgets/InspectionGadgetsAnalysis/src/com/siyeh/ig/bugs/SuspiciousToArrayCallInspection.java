@@ -121,50 +121,51 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
 
     private void checkArrayTypes(@NotNull PsiExpression argument,
                                  @NotNull PsiMethodCallExpression expression,
-                                 PsiType argumentType, 
+                                 PsiType argumentType,
                                  PsiType itemType) {
       if (!(argumentType instanceof PsiArrayType)) {
         return;
       }
-      itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiArrayType arrayType = (PsiArrayType)argumentType;
+      final PsiType componentType = arrayType.getComponentType();
+      PsiType actualType = getActualItemTypeIfMismatch(arrayType, expression, itemType);
+      if (actualType != null) {
+        registerError(argument, actualType, componentType, !(argument.getType() instanceof PsiArrayType));
+      }
+    }
+
+    @Nullable
+    private static PsiType getActualItemTypeIfMismatch(@NotNull PsiArrayType arrayType,
+                                                       @NotNull PsiMethodCallExpression expression,
+                                                       PsiType itemType) {
+      itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiType componentType = arrayType.getComponentType();
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
         final PsiTypeElement castTypeElement = castExpression.getCastType();
-        if (castTypeElement == null) {
-          return;
-        }
+        if (castTypeElement == null) return null;
         final PsiType castType = castTypeElement.getType();
-        if (castType.equals(arrayType) || !(castType instanceof PsiArrayType)) {
-          return;
-        }
+        if (castType.equals(arrayType) || !(castType instanceof PsiArrayType)) return null;
         final PsiArrayType castArrayType = (PsiArrayType)castType;
-        registerError(argument, castArrayType.getComponentType(), componentType);
+        return castArrayType.getComponentType();
       }
-      else {
-        if (itemType == null || componentType.isAssignableFrom(itemType)) {
-          return;
-        }
-        if (itemType instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)itemType;
-          final PsiClass aClass = classType.resolve();
-          if (aClass instanceof PsiTypeParameter) {
-            final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
-            final PsiReferenceList extendsList = typeParameter.getExtendsList();
-            final PsiClassType[] types = extendsList.getReferencedTypes();
-            if (types.length == 0) {
-              registerError(argument, TypeUtils.getObjectType(argument), componentType);
-            }
-            else if (types.length == 1) {
-              registerError(argument, types[0], componentType);
-            }
-            return;
+      if (itemType == null || componentType.isAssignableFrom(itemType)) return null;
+      if (itemType instanceof PsiClassType) {
+        final PsiClass aClass = ((PsiClassType)itemType).resolve();
+        if (aClass instanceof PsiTypeParameter) {
+          final PsiReferenceList extendsList = ((PsiTypeParameter)aClass).getExtendsList();
+          final PsiClassType[] types = extendsList.getReferencedTypes();
+          if (types.length == 0) {
+            return TypeUtils.getObjectType(expression);
           }
+          if (types.length == 1) {
+            return types[0];
+          }
+          return null;
         }
-        registerError(argument, itemType, componentType, !(argument.getType() instanceof PsiArrayType));
       }
+      return itemType;
     }
   }
 
