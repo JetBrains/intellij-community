@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
@@ -20,6 +21,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.reference.SoftReference
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.FixedHashMap
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import org.editorconfig.EditorConfigRegistry
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.psi.EditorConfigPsiFile
@@ -33,9 +36,11 @@ class EditorConfigFileHierarchyServiceImpl(
   private val manager: PsiManager,
   private val application: Application,
   private val project: Project
-) : EditorConfigFileHierarchyService, BulkFileListener, RegistryValueListener.Adapter() {
-  private val taskExecutor = SequentialTaskExecutor
-    .createSequentialApplicationPoolExecutor("editorconfig.notification.vfs.update.executor")
+) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener {
+
+  private val taskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("editorconfig.notification.vfs.update.executor")
+
+  private val updateQueue = MergingUpdateQueue("EditorConfigFileHierarchy UpdateQueue", 500, true, null, project)
 
   @Volatile
   private var cacheDropsCount = 0
@@ -43,13 +48,16 @@ class EditorConfigFileHierarchyServiceImpl(
   private val affectingFilesCache = FixedHashMap<VirtualFile, Reference<List<EditorConfigPsiFile>>>(CacheSize)
 
   init {
-    application.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this)
+    DumbService.getInstance(project).runWhenSmart {
+      application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, this)
+    }
     Registry.get(EditorConfigRegistry.EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY).addListener(this, project)
   }
 
   private fun updateHandlers(project: Project) {
-    application.assertIsDispatchThread()
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null)
+    updateQueue.queue(Update.create("editorconfig hierarchy update") {
+      CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(null)
+    })
   }
 
   // method of BulkFileListener
@@ -65,13 +73,12 @@ class EditorConfigFileHierarchyServiceImpl(
         cacheDropsCount += 1
         affectingFilesCache.clear()
       }
-      if(!project.isDisposed) {
-          updateHandlers(project)
-      }
+      updateHandlers(project)
     }
   }
 
-  // method of RegistryValueListener
+  override fun beforeValueChanged(value: RegistryValue) {}
+
   override fun afterValueChanged(value: RegistryValue) {
     synchronized(cacheLocker) {
       cacheDropsCount += 1
@@ -91,16 +98,15 @@ class EditorConfigFileHierarchyServiceImpl(
 
   private fun startBackgroundTask(virtualFile: VirtualFile) {
     val expectedCacheDropsCount = cacheDropsCount
-    ReadAction.nonBlocking<List<EditorConfigPsiFile>?> {
-      findApplicableFiles(virtualFile)
-    }.finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
-      affectingFiles ?: return@ui
+    ReadAction
+      .nonBlocking<List<EditorConfigPsiFile>?> { findApplicableFiles(virtualFile) }
+      .expireWhen { project.isDisposed }
+      .finishOnUiThread(ModalityState.any()) ui@{ affectingFiles ->
+      if (affectingFiles == null) return@ui
       synchronized(cacheLocker) {
         if (expectedCacheDropsCount != cacheDropsCount) return@ui
         affectingFilesCache[virtualFile] = SoftReference(affectingFiles)
       }
-
-      updateHandlers(project)
     }.submit(taskExecutor)
   }
 

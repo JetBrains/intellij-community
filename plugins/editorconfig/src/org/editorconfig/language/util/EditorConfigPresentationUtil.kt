@@ -6,11 +6,13 @@ import com.intellij.psi.PsiElement
 import org.editorconfig.language.psi.EditorConfigPsiFile
 
 object EditorConfigPresentationUtil {
+  @JvmStatic
   fun getFileName(file: EditorConfigPsiFile, withFolder: Boolean): String {
     val settings = UISettings.instanceOrNull
     val settingsAwareFlag = settings?.showDirectoryForNonUniqueFilenames?.and(withFolder) ?: withFolder
     return if (settingsAwareFlag) "${file.parent?.name}/${file.name}" else file.name
   }
 
+  @JvmStatic
   fun path(element: PsiElement) = EditorConfigPsiTreeUtil.getOriginalFile(element.containingFile)?.virtualFile?.parent?.path ?: ""
 }
