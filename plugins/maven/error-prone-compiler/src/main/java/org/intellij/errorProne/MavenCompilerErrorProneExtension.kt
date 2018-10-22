@@ -15,7 +15,10 @@ class MavenCompilerErrorProneExtension : MavenCompilerExtension {
 
   override fun getCompiler(project: Project): BackendCompiler? {
     val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
-    return compilerConfiguration.registeredJavaCompilers.find { it is ErrorProneJavaBackendCompiler }
+    return compilerConfiguration.registeredJavaCompilers.find {
+      // TODO move `intellij.maven.errorProne.compiler` module to the errorProne plugin module (contrib repo)
+      it.javaClass.name == "org.intellij.errorProne.ErrorProneJavaBackendCompiler"
+    }
   }
 }
 
