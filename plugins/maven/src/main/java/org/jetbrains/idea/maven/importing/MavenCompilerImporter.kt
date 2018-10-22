@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import org.jdom.Element
@@ -21,6 +22,10 @@ import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
  */
 class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin") {
   private val LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerImporter")
+
+  override fun isApplicable(mavenProject: MavenProject?): Boolean {
+    return super.isApplicable(mavenProject) && !Registry.`is`("maven.disable.compiler.arguments.import", false)
+  }
 
   override fun processChangedModulesOnly(): Boolean {
     return false
