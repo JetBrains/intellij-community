@@ -414,6 +414,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public boolean isMajorEAP() {
+    return myEAP && (myMinorVersion == null || myMinorVersion.indexOf('.') < 0);
+  }
+
+  @Override
   public UpdateUrls getUpdateUrls() {
     return myUpdateUrls;
   }
