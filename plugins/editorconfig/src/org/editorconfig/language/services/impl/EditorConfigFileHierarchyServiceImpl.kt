@@ -33,7 +33,8 @@ class EditorConfigFileHierarchyServiceImpl(
   private val manager: PsiManager,
   private val application: Application,
   private val project: Project
-) : EditorConfigFileHierarchyService, BulkFileListener, RegistryValueListener.Adapter() {
+) : EditorConfigFileHierarchyService(), BulkFileListener, RegistryValueListener {
+
   private val taskExecutor = SequentialTaskExecutor
     .createSequentialApplicationPoolExecutor("editorconfig.notification.vfs.update.executor")
 
@@ -71,7 +72,8 @@ class EditorConfigFileHierarchyServiceImpl(
     }
   }
 
-  // method of RegistryValueListener
+  override fun beforeValueChanged(value: RegistryValue) {}
+
   override fun afterValueChanged(value: RegistryValue) {
     synchronized(cacheLocker) {
       cacheDropsCount += 1
