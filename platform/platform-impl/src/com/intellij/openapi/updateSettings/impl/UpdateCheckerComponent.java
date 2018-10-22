@@ -62,7 +62,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
   private void updateDefaultChannel() {
     ChannelStatus current = mySettings.getSelectedChannelStatus();
     LOG.info("channel: " + current.getCode());
-    boolean eap = ApplicationInfoEx.getInstanceEx().isEAP();
+    boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
 
     if (eap && current != ChannelStatus.EAP && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
       mySettings.setSelectedChannelStatus(ChannelStatus.EAP);

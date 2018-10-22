@@ -149,7 +149,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
         myChannelWarning.setVisible(true);
         myChannelWarning.setBorder(new JBEmptyBorder(0, 0, 10, 0));
       }
-      else if (ApplicationInfoEx.getInstanceEx().isEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+      else if (ApplicationInfoEx.getInstanceEx().isMajorEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
         myUpdateChannels.setEnabled(false);
         myUpdateChannels.setToolTipText(IdeBundle.message("updates.settings.channel.locked"));
       }
