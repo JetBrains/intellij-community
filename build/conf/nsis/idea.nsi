@@ -1207,6 +1207,7 @@ skip_ipr:
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
+  ${LogText} ""
   ${LogText} "ShortCutWorkingDirectory: $0"
 
   StrCpy $0 $baseRegKey
@@ -1253,6 +1254,7 @@ skip_ipr:
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
+  ${LogText} ""
   ${LogText} "Regenerating the Shared Archives for java 64"
   ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
 
