@@ -319,7 +319,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   private static class RevisionHistoryHighlighter implements VcsLogHighlighter {
-    @NotNull private final JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.otherBranchBackground",
+    @NotNull private final JBColor myBgColor = namedColor("VersionControl.FileHistory.Commit.selectedBranchBackground",
                                                           new JBColor(new Color(0xfffee4), new Color(0x49493f)));
     @NotNull private final VcsLogStorage myStorage;
     @NotNull private final Hash myRevision;
