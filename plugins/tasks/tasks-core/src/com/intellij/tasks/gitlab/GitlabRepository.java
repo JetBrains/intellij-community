@@ -52,17 +52,20 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   private static final TypeToken<List<GitlabIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<List<GitlabIssue>>() {};
   // @formatter:on
 
-  static final GitlabProject UNSPECIFIED_PROJECT = new GitlabProject() {
-    @Override
-    public String getName() {
-      return "-- all issues created by you --";
-    }
+  public static final GitlabProject UNSPECIFIED_PROJECT = createUnspecifiedProject();
 
-    @Override
-    public int getId() {
-      return -1;
-    }
-  };
+  @NotNull
+  private static GitlabProject createUnspecifiedProject() {
+    final GitlabProject unspecified = new GitlabProject() {
+      @Override
+      public String getName() {
+        return "-- all issues created by you --";
+      }
+    };
+    unspecified.setId(-1);
+    return unspecified;
+  }
+
   private GitlabProject myCurrentProject;
   private List<GitlabProject> myProjects = null;
   private ApiVersion myApiVersion = null;
