@@ -101,11 +101,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   public boolean SPACES_WITHIN_ANGLE_BRACKETS;
 
-
-
   public boolean PLACE_DOT_ON_NEXT_LINE = true;
-
-
 
   //Type arguments
   public boolean SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT;

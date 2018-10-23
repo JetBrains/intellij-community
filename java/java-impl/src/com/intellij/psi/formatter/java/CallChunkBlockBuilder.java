@@ -60,19 +60,21 @@ public class CallChunkBlockBuilder {
     }
 
     // Support for groovy style dot placement
-    final ASTNode lastNode = subNodes.get(subNodes.size() - 1);
-    if (lastNode.getElementType() == JavaTokenType.DOT) {
-      AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
-      subNodes.remove(subNodes.size() - 1);
-      if (!subNodes.isEmpty()) {
-        subBlocks.add(create(subNodes, wrap, null));
+    if (!subNodes.isEmpty()) {
+      final ASTNode lastNode = subNodes.get(subNodes.size() - 1);
+      if (lastNode.getElementType() == JavaTokenType.DOT) {
+        AlignmentStrategy strategy = AlignmentStrategy.getNullStrategy();
+        subNodes.remove(subNodes.size() - 1);
+        if (!subNodes.isEmpty()) {
+          subBlocks.add(create(subNodes, wrap, null));
+        }
+        Block block =
+          newJavaBlock(lastNode, mySettings, myJavaSettings, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, true), strategy,
+                       myFormattingMode);
+        subBlocks.add(block);
+        return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
+                                      Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
       }
-      Block block =
-        newJavaBlock(lastNode, mySettings, myJavaSettings, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, true), strategy,
-                     myFormattingMode);
-      subBlocks.add(block);
-      return new SyntheticCodeBlock(subBlocks, alignment, mySettings, myJavaSettings,
-                                    Indent.getContinuationWithoutFirstIndent(myIndentSettings.USE_RELATIVE_INDENTS), wrap);
     }
     List<Block> blocks = createJavaBlocks(subNodes);
 
