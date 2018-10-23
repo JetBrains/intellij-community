@@ -179,7 +179,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control F10",              "Android.HotswapChanges", "RunToCursor", "UpdateRunningApplication"},
     { "control N",                "FileChooser.NewFolder", "Generate", },
     { "control P",                "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "Print"},
-    { "control alt F",            "ReformatCode", "IntroduceField"},
+    { "control alt F",            "ReformatCode", "IntroduceField", "ShowFilterPopup"},
     { "shift F12",                "RestoreDefaultLayout", "FindUsagesInFile"},
     { "shift F2",                 "GotoPreviousError", "GotoDeclaration"},
     { "shift control F7",         "FindUsagesInFile", "HighlightUsagesInFile"},
@@ -187,8 +187,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt F9",                   "ViewBreakpoints", "EditBreakpoint"},
     { "alt MULTIPLY",             "ShowExecutionPoint", "Images.Thumbnails.ToggleRecursive"},
     { "shift alt U",              "GotoPrevElementUnderCaretUsage", "ToggleCamelSnakeCase"},
-    { "shift alt D",              "GotoNextElementUnderCaretUsage", "hg4idea.QFold"},
-    { "ctrl alt F",               "IntroduceField", "ReformatCode", "ShowFilterPopup"}
+    { "shift alt D",              "GotoNextElementUnderCaretUsage", "hg4idea.QFold"}
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
