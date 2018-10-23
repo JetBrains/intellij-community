@@ -1,5 +1,6 @@
 package circlet.components
 
+import circlet.arenas.*
 import circlet.client.api.impl.*
 import circlet.klogging.impl.*
 import circlet.platform.client.serialization.*
@@ -13,6 +14,8 @@ class CircletApplicationComponent : ApplicationComponent {
         KLoggerStaticFactory.customFactory = ErrorToWarningKLoggers
 
         mutableUiDispatch = ApplicationUiDispatch
+
+        initArenas()
 
         ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
     }
