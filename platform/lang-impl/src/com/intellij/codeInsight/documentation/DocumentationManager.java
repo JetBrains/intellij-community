@@ -678,7 +678,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = targetElement == null ? null :
+                                  documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
         return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
