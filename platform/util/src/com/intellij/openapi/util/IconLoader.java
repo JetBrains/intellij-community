@@ -559,7 +559,8 @@ public final class IconLoader {
     return icon;
   }
 
-  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+  public static final class CachedImageIcon extends com.intellij.util.ui.JBUI.RasterJBIcon implements ScalableIcon, DarkIconProvider, 
+                                                                                                      MenuBarIconProvider {
     private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
