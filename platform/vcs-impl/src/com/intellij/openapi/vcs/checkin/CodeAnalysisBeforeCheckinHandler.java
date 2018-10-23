@@ -80,7 +80,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       ? VcsBundle.message("before.commit.file.contains.code.smells.edit.them.confirm.text",
                           FileUtil.toSystemDependentName(FileUtil.getLocationRelativeToUserHome(virtualFiles.iterator().next().getPath())), errorCount, warningCount)
       : VcsBundle.message("before.commit.files.contain.code.smells.edit.them.confirm.text",
-                          errorCount, warningCount);
+                          virtualFiles.size(), errorCount, warningCount);
 
     final int answer = Messages.showYesNoCancelDialog(myProject,
                                                       message,
