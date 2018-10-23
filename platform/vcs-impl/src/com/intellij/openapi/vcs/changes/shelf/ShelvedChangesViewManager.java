@@ -19,8 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,7 +32,10 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor;
+import com.intellij.openapi.vcs.changes.DnDActivateOnHoldTargetContent;
+import com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -59,7 +60,6 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
@@ -94,9 +94,9 @@ public class ShelvedChangesViewManager implements Disposable {
   private final ChangesViewContentManager myContentManager;
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
-  private final ShelfTree myTree;
+  final ShelfTree myTree;
   private MyShelfContent myContent = null;
-  private final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
+  final DeleteProvider myDeleteProvider = new MyShelveDeleteProvider();
   private final MergingUpdateQueue myUpdateQueue;
   private final VcsConfiguration myVcsConfiguration;
 
@@ -614,32 +614,15 @@ public class ShelvedChangesViewManager implements Disposable {
       if (project == null) return;
 
       List<ShelvedChangeList> shelvedListsToDelete = TreeUtil.collectSelectedObjectsOfType(myTree, ShelvedChangeList.class);
-      ArrayList<ShelvedChangeList> shelvedListsFromChanges = newArrayList(getShelvedLists(dataContext));
-      // filter changes
-      shelvedListsFromChanges.removeAll(shelvedListsToDelete);
+
       List<ShelvedChange> changesToDelete = getChangesNotInLists(shelvedListsToDelete, getShelveChanges(dataContext));
       List<ShelvedBinaryFile> binariesToDelete = getBinariesNotInLists(shelvedListsToDelete, getBinaryShelveChanges(dataContext));
 
       int fileListSize = binariesToDelete.size() + changesToDelete.size();
-      if (fileListSize == 0 && shelvedListsToDelete.isEmpty()) return;
-
-      Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate = newHashMap();
-      for (ShelvedChangeList changeList : shelvedListsToDelete) {
-        Date originalDate = changeList.DATE;
-        ShelvedChangeList recentlyDeleted = ShelveChangesManager.getInstance(myProject).deleteChangeList(changeList);
-        if (recentlyDeleted != null) {
-          createdDeletedListsWithOriginalDate.put(recentlyDeleted, originalDate);
-        }
-      }
-      for (ShelvedChangeList list : shelvedListsFromChanges) {
-        Date originalDate = list.DATE;
-        ShelvedChangeList listWithDeletedChanges = removeChangesFromChangeList(project, list, changesToDelete, binariesToDelete);
-        if (listWithDeletedChanges != null) {
-          createdDeletedListsWithOriginalDate.put(listWithDeletedChanges, originalDate);
-        }
-      }
-      if (!createdDeletedListsWithOriginalDate.isEmpty()) {
-        showUndoDeleteNotification(shelvedListsToDelete, fileListSize, createdDeletedListsWithOriginalDate);
+      Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDates =
+        myShelveChangesManager.deleteShelves(shelvedListsToDelete, getShelvedLists(dataContext), changesToDelete, binariesToDelete);
+      if (!createdDeletedListsWithOriginalDates.isEmpty()) {
+        showUndoDeleteNotification(shelvedListsToDelete, fileListSize, createdDeletedListsWithOriginalDates);
       }
     }
 
@@ -709,32 +692,6 @@ public class ShelvedChangesViewManager implements Disposable {
     private String constructDeleteFilesInfoMessage(int size) {
       if (size == 0) return "";
       return (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size);
-    }
-
-    @Nullable
-    private ShelvedChangeList removeChangesFromChangeList(@NotNull Project project,
-                                                          @NotNull ShelvedChangeList list,
-                                                          @NotNull List<ShelvedChange> changes,
-                                                          @NotNull List<ShelvedBinaryFile> binaryFiles) {
-      final ArrayList<ShelvedBinaryFile> remainingBinaries = new ArrayList<>(list.getBinaryFiles());
-      remainingBinaries.removeAll(binaryFiles);
-
-      final CommitContext commitContext = new CommitContext();
-      final List<FilePatch> remainingPatches = new ArrayList<>();
-      try {
-        ShelveChangesManager.loadTextPatches(myProject, list, changes, remainingPatches, commitContext);
-      }
-      catch (IOException | PatchSyntaxException e) {
-        LOG.info(e);
-        VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
-        return null;
-      }
-      if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-        return myShelveChangesManager.deleteChangeList(list);
-      }
-      else {
-        return myShelveChangesManager.saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
-      }
     }
 
     @Override
