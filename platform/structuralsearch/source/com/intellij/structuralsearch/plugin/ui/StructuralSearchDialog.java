@@ -172,8 +172,12 @@ public class StructuralSearchDialog extends DialogWrapper {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
-        SubstitutionShortInfoHandler.install(editor, variableName ->
-          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
+        SubstitutionShortInfoHandler.install(editor, variableName -> {
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+          if (isFilterPanelEnabled()) {
+            myConfiguration.setCurrentVariableName(variableName);
+          }
+        });
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
         final Project project = getProject();
         final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
@@ -452,7 +456,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
     historyToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     final JLabel label = new JLabel(SSRBundle.message("search.template"));
-    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration);
+    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration, link -> showFilterPanel(link));
 
     myRecursive = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     myRecursive.setVisible(!myReplace);
@@ -518,12 +522,12 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return mySearchEditorPanel.getSecondComponent() != null;
+        return isFilterPanelEnabled();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        mySearchEditorPanel.setSecondComponent(state ? myFilterPanel.getComponent() : null);
+        setFilterPanelEnabled(state);
       }
 
       @Override
@@ -764,8 +768,29 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   public void showFilterPanel(String variableName) {
-    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    if (myFilterButtonEnabled) {
+      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+      setFilterPanelEnabled(true);
+      myConfiguration.setCurrentVariableName(variableName);
+    }
+  }
+
+  void setFilterPanelEnabled(boolean enabled) {
+    if (enabled) {
+      if (!isFilterPanelEnabled()) {
+        mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+      }
+    }
+    else {
+      if (isFilterPanelEnabled()) {
+        mySearchEditorPanel.setSecondComponent(null);
+        myConfiguration.setCurrentVariableName(null);
+      }
+    }
+  }
+
+  boolean isFilterPanelEnabled() {
+    return mySearchEditorPanel.getSecondComponent() != null;
   }
 
   private void setSearchTargets(MatchOptions matchOptions) {
