@@ -19,18 +19,20 @@ class InlayModelWindow implements InlayModel {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
     logUnsupported();
     return null;
   }
 
   @Nullable
   @Override
-  public Inlay addBlockElement(int offset,
-                               boolean relatesToPrecedingText,
-                               boolean showAbove,
-                               int priority,
-                               @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     logUnsupported();
     return null;
   }

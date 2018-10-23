@@ -29,7 +29,7 @@ import java.util.List;
 
 public class ProjectViewModuleNode extends AbstractModuleNode {
 
-  public ProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
+  public ProjectViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

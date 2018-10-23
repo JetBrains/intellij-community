@@ -99,14 +99,14 @@ public abstract class ConfigurationFactory {
   }
 
   public Icon getIcon() {
-    // null only if SimpleConfigurationType (but method overriden)
+    // null only if SimpleConfigurationType (but method overridden)
     //noinspection ConstantConditions
     return myType.getIcon();
   }
 
   @NotNull
   public ConfigurationType getType() {
-    // null only if SimpleConfigurationType (but method overriden)
+    // null only if SimpleConfigurationType (but method overridden)
     //noinspection ConstantConditions
     return myType;
   }

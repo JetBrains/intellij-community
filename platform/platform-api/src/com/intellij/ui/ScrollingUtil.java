@@ -625,11 +625,21 @@ public class ScrollingUtil {
       public void actionPerformed(@NotNull AnActionEvent e) {
         moveDown(table, e.getModifiers(), cycleScrolling);
       }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!isMultiline(target));
+      }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveDown(), target);
     new MyScrollingAction(table) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         moveUp(table, e.getModifiers(), cycleScrolling);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!isMultiline(target));
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMoveUp(), target);
     new MyScrollingAction(table) {
@@ -644,6 +654,10 @@ public class ScrollingUtil {
         movePageDown(table);
       }
     }.registerCustomShortcutSet(CommonShortcuts.getMovePageDown(), target);
+  }
+
+  private static boolean isMultiline(JComponent component) {
+    return component instanceof JTextArea && ((JTextArea)component).getText().contains("\n");
   }
 
   static class MoveAction extends AbstractAction {

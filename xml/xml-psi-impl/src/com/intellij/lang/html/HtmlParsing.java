@@ -606,7 +606,7 @@ public class HtmlParsing {
     myBuilder.advanceLexer();
   }
 
-  protected void error(final String message) {
+  protected void error(@NotNull String message) {
     myBuilder.error(message);
   }
 }

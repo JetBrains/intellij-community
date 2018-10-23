@@ -28,6 +28,7 @@ import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import java.awt.Component
 import java.io.File
@@ -73,6 +74,10 @@ open class GuiTestCase {
   val slash: String = File.separator
 
   private val screenshotTaker: ScreenshotTaker = ScreenshotTaker()
+  @get:Rule
+  val testRootPath: TemporaryFolder by lazy {
+    TemporaryFolder()
+  }
 
   fun robot() = guiTestRule.robot()
 

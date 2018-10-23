@@ -141,7 +141,7 @@ public class ExpectedHighlightingData {
   }
 
   public void init() {
-    WriteCommandAction.writeCommandAction(null).run(() -> {
+    WriteCommandAction.runWriteCommandAction(null, () -> {
       extractExpectedLineMarkerSet(myDocument);
       extractExpectedHighlightsSet(myDocument);
       refreshLineMarkers();

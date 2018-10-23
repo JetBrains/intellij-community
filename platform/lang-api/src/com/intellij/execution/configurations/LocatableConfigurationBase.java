@@ -14,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author yole
  */
-public abstract class LocatableConfigurationBase extends RunConfigurationBase implements LocatableConfiguration {
-  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, String name) {
+public abstract class LocatableConfigurationBase<T> extends RunConfigurationBase<T> implements LocatableConfiguration {
+  protected LocatableConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, @Nullable String name) {
     super(project, factory, name);
   }
 
@@ -23,6 +23,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
     super(project, factory, null);
   }
 
+  @NotNull
   @Override
   protected LocatableRunConfigurationOptions getOptions() {
     return (LocatableRunConfigurationOptions)super.getOptions();

@@ -48,7 +48,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -101,11 +100,6 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     Color bgColor = color.getBackgroundColor();
     if (bgColor == null) {
       bgColor = color.getForegroundColor();
-    }
-    if (editor.getSettings().isLineNumbersShown() || editor.getGutter().isAnnotationsShown()) {
-      if (bgColor != null) {
-        bgColor = ColorUtil.toAlpha(bgColor, 150);
-      }
     }
     if (bgColor != null) {
       g.setColor(bgColor);

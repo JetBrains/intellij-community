@@ -65,8 +65,8 @@ public abstract class TestClassesFilter {
 
     @Override
     public String toString() {
-      return "AndTestClassesFilter{" +
-             "first: " + first.toString() + "," +
+      return "TestClassesFilter.And{" +
+             "first: " + first.toString() + ", " +
              "second: " + second.toString() + '}';
     }
   }

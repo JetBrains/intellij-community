@@ -44,7 +44,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
   private final Sdk mySdk;
   private final PyRemoteSdkAdditionalDataBase myRemoteSdkData;
 
-  private PyRemoteLibrariesNode(Sdk sdk, Project project, PsiDirectory value, ViewSettings viewSettings) {
+  private PyRemoteLibrariesNode(Sdk sdk, Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
     mySdk = sdk;
     assert mySdk.getSdkAdditionalData() instanceof PyRemoteSdkAdditionalDataBase;
@@ -71,7 +71,9 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
         final VirtualFile remoteLibraries = remoteLibrary.getParent();
 
         final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
-        return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+        if (remoteLibrariesDirectory != null) {
+          return new PyRemoteLibrariesNode(sdk, project, remoteLibrariesDirectory, settings);
+        }
       }
     }
     return null;
@@ -88,7 +90,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
         PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
 
 
-        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
+        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path) && dir != null) {
           return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
                                       getProject(), dir, getSettings());
         }
@@ -122,7 +124,7 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
 
     private final String myRemotePath;
 
-    public PyRemoteRootNode(String remotePath, Project project, PsiDirectory value, ViewSettings viewSettings) {
+    public PyRemoteRootNode(String remotePath, Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
       super(project, value, viewSettings);
       myRemotePath = remotePath;
     }

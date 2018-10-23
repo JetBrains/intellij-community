@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -58,7 +59,7 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
-  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   & CommonJavaRunConfigurationParameters
   & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {

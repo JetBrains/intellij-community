@@ -70,6 +70,7 @@ class TraceFileUploader {
             log("Uploading metadata: " + metadataContent)
             final byte[] content = metadataContent.getBytes(UTF_8)
 
+            conn.setRequestProperty("User-Agent", "TraceFileUploader")
             conn.setRequestProperty("Connection", "Keep-Alive")
             conn.setRequestProperty("Accept", "text/plain;charset=UTF-8")
             conn.setRequestProperty("Accept-Charset", UTF_8)
@@ -108,6 +109,7 @@ class TraceFileUploader {
             conn.setUseCaches(false)
             conn.setRequestMethod("POST")
 
+            conn.setRequestProperty("User-Agent", "TraceFileUploader")
             conn.setRequestProperty("Connection", "Keep-Alive")
             conn.setRequestProperty("Accept-Charset", UTF_8)
             conn.setRequestProperty("Content-Type", "application/octet-stream")

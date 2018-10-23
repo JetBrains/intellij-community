@@ -657,7 +657,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         UIUtil.invokeLaterIfNeeded(() -> {
           AppIcon appIcon = AppIcon.getInstance();
           if (appIcon.hideProgress(myProject, "indexUpdate")) {
-            appIcon.requestAttention(myProject, false);
+            if (Registry.is("ide.appIcon.requestAttention.after.indexing", false)) {
+              appIcon.requestAttention(myProject, false);
+            }
             appIcon.setOkBadge(myProject, true);
           }
         });

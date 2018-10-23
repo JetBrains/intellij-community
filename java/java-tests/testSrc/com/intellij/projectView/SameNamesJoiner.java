@@ -121,7 +121,7 @@ class SameNamesJoiner implements TreeStructureProvider {
       return myChildren;
     }
 
-    JoinedNode(Collection<AbstractTreeNode> children, Joined formFile) {
+    JoinedNode(Collection<AbstractTreeNode> children, @NotNull Joined formFile) {
       super(null, formFile, null);
       myChildren = children;
     }

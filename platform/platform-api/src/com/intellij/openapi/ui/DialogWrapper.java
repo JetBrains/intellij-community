@@ -28,8 +28,6 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -1958,7 +1956,7 @@ public abstract class DialogWrapper {
       SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
-    List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
+    List<ValidationInfo> corrected = ContainerUtil.filter(myInfo, vi -> !info.contains(vi));
     if (Registry.is("ide.inplace.validation.tooltip")) {
       corrected.stream().filter(vi -> vi.component != null).
         map(vi -> ComponentValidator.getInstance(vi.component)).

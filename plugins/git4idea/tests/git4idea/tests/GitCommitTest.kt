@@ -689,6 +689,143 @@ abstract class GitCommitTest(private val useStagingArea: Boolean) : GitSingleRep
     assertMessage("modified in master", repo.message("HEAD"))
   }
 
+  fun `test commit gitignored file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac(".gitignore", "ignore*")
+
+    touch("file.txt", "file1 content")
+    touch("ignore1.txt", "ignore1 content")
+    touch("ignore2.txt", "ignore2 content")
+    git("add -f -- ignore1.txt ignore2.txt file.txt")
+
+    val changes1 = assertChanges {
+      added("file.txt")
+      added("ignore1.txt")
+      added("ignore2.txt")
+    }
+
+    commit(changes1)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      added("file.txt")
+      added("ignore1.txt")
+      added("ignore2.txt")
+    }
+
+    overwrite("file.txt", "new file content")
+    overwrite("ignore1.txt", "new file1 content")
+    overwrite("ignore2.txt", "new file2 content")
+
+    val changes2 = assertChanges {
+      modified("file.txt")
+      modified("ignore1.txt")
+      modified("ignore2.txt")
+    }
+
+    commit(changes2)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("file.txt")
+      modified("ignore1.txt")
+      modified("ignore2.txt")
+    }
+  }
+
+  fun `test commit gitignored directory`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac(".gitignore", "ignore/")
+
+    touch("file.txt", "file1 content")
+    touch("ignore/ignore1.txt", "ignore1 content")
+    touch("ignore/ignore2.txt", "ignore2 content")
+    git("add -f -- ignore/ignore1.txt ignore/ignore2.txt file.txt")
+
+    val changes1 = assertChanges {
+      added("file.txt")
+      added("ignore/ignore1.txt")
+      added("ignore/ignore2.txt")
+    }
+
+    commit(changes1)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      added("file.txt")
+      added("ignore/ignore1.txt")
+      added("ignore/ignore2.txt")
+    }
+
+    overwrite("file.txt", "new file content")
+    overwrite("ignore/ignore1.txt", "new file1 content")
+    overwrite("ignore/ignore2.txt", "new file2 content")
+
+    val changes2 = assertChanges {
+      modified("file.txt")
+      modified("ignore/ignore1.txt")
+      modified("ignore/ignore2.txt")
+    }
+
+    commit(changes2)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("file.txt")
+      modified("ignore/ignore1.txt")
+      modified("ignore/ignore2.txt")
+    }
+  }
+
+  fun `test excluded from commit gitignored file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac(".gitignore", "ignore*")
+
+    touch("file.txt", "file1 content")
+    touch("ignore1.txt", "ignore1 content")
+    git("add -f -- ignore1.txt file.txt")
+
+    val changes1 = assertChanges {
+      added("file.txt")
+      added("ignore1.txt")
+    }
+
+    commit(changes1)
+
+    assertNoChanges()
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      added("file.txt")
+      added("ignore1.txt")
+    }
+
+    overwrite("ignore1.txt", "new file content")
+    touch("ignore2.txt", "ignore2 content")
+    git("add -f -- ignore1.txt ignore2.txt")
+
+    val changes2 = assertChanges {
+      modified("ignore1.txt")
+      added("ignore2.txt")
+    }
+
+    commit(listOf(changes2[0]))
+
+    assertChanges {
+      added("ignore2.txt")
+    }
+    assertMessage("comment", repo.message("HEAD"))
+    repo.assertCommitted {
+      modified("ignore1.txt")
+    }
+  }
+
   private fun `assume version where git reset returns 0 exit code on success `() {
     assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
                vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))

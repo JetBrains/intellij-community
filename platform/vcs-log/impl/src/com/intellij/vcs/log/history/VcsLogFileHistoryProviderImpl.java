@@ -27,8 +27,12 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider {
   @NotNull
@@ -49,16 +53,18 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
+    FilePath correctedPath = getCorrectedPath(project, path);
+
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
     FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
-                                                                  ui -> ui.matches(path, hash));
+                                                                  ui -> ui.matches(correctedPath, hash));
     boolean firstTime = fileHistoryUi == null;
     if (firstTime) {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       assert logManager != null;
       String suffix = hash != null ? " (" + hash.toShortString() + ")" : "";
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, path.getName() + suffix,
-                                                   new FileHistoryUiFactory(path, hash), true);
+      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, TAB_NAME, correctedPath.getName() + suffix,
+                                                   new FileHistoryUiFactory(correctedPath, hash), true);
     }
 
     if (hash != null) {
@@ -67,5 +73,14 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
     else if (firstTime) {
       fileHistoryUi.jumpToRow(0);
     }
+  }
+
+  @NotNull
+  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
+    if (!root.equals(VcsUtil.getVcsRootFor(project, path)) && path.isDirectory()) {
+      return VcsUtil.getFilePath(path.getPath(), false);
+    }
+    return path;
   }
 }

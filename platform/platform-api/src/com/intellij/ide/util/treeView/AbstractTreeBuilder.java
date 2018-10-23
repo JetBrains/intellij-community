@@ -144,7 +144,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getUpdater();
   }
 
-  public final boolean addSubtreeToUpdateByElement(Object element) {
+  public final boolean addSubtreeToUpdateByElement(@NotNull Object element) {
     AbstractTreeUpdater updater = getUpdater();
     return updater != null && updater.addSubtreeToUpdateByElement(element);
   }
@@ -455,7 +455,7 @@ public class AbstractTreeBuilder implements Disposable {
 
   private static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {
     AbstractTreeNodeWrapper() {
-      super(null, null);
+      super(null, TREE_WRAPPER_VALUE);
     }
 
     @Override

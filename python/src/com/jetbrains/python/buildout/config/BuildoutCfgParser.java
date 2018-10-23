@@ -120,7 +120,7 @@ public class BuildoutCfgParser implements PsiParser, BuildoutCfgElementTypes, Bu
       return myBuilder.getTokenType() == type;
     }
 
-    private void error(String message) {
+    private void error(@NotNull String message) {
       myBuilder.error(message);
     }
 

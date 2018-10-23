@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer.*
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider
@@ -25,8 +26,7 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
   override fun canCreate(project: Project?, change: Change): Boolean {
     val beforeRevision = change.beforeRevision
     val afterRevision = change.afterRevision
-    return (beforeRevision == null || beforeRevision is GitSubmoduleContentRevision) &&
-           (afterRevision == null || afterRevision is GitSubmoduleContentRevision)
+    return beforeRevision is GitSubmoduleContentRevision || afterRevision is GitSubmoduleContentRevision
   }
 
   @Throws(ProcessCanceledException::class, DiffRequestProducerException::class)
@@ -34,12 +34,24 @@ class GitSubmoduleDiffRequestProvider : ChangeDiffRequestProvider {
                        context: UserDataHolder,
                        indicator: ProgressIndicator): DiffRequest {
     val change = presentable.change
-    val beforeRevision = change.beforeRevision
-    val afterRevision = change.afterRevision
+    var beforeRevision = change.beforeRevision
+    var afterRevision = change.afterRevision
+    if (afterRevision is CurrentContentRevision) {
+      require(beforeRevision is GitSubmoduleContentRevision)
+      val submodule = (beforeRevision as GitSubmoduleContentRevision).submodule
+      afterRevision = GitSubmoduleContentRevision.createCurrentRevision(submodule)
+    }
+    else if (beforeRevision is CurrentContentRevision) {
+      require(afterRevision is GitSubmoduleContentRevision)
+      val submodule = (afterRevision as GitSubmoduleContentRevision).submodule
+      beforeRevision = GitSubmoduleContentRevision.createCurrentRevision(submodule)
+    }
+
     val factory = DiffContentFactory.getInstance()
     val beforeContent = beforeRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
     val afterContent = afterRevision?.content?.let { factory.create(it) } ?: factory.createEmpty()
-    return SimpleDiffRequest(DiffRequestFactoryImpl.getTitle(beforeRevision?.file, afterRevision?.file, DIFF_TITLE_RENAME_SEPARATOR) +  " (Submodule)",
+    val title = DiffRequestFactoryImpl.getTitle(beforeRevision?.file, afterRevision?.file, DIFF_TITLE_RENAME_SEPARATOR)
+    return SimpleDiffRequest("$title (Submodule)",
                              beforeContent,
                              afterContent,
                              getRevisionTitle(beforeRevision, BASE_VERSION),

@@ -58,6 +58,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -74,6 +75,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final String myShortcutText;
   private final SeverityRegistrar mySeverityRegistrar;
   private final InspectionProfileWrapper myProfileWrapper;
+  private final Map<String, Set<PsiElement>> mySuppressedElements = new HashMap<>();
 
   public LocalInspectionsPass(@NotNull PsiFile file,
                               @Nullable Document document,
@@ -224,6 +226,40 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     myInfos = new ArrayList<>();
     addHighlightsFromResults(myInfos);
+
+    if (isOnTheFly) highlightRedundantSuppressions(toolWrappers, iManager, inside, outside, elementDialectIds);
+  }
+
+  private void highlightRedundantSuppressions(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                              @NotNull InspectionManager iManager,
+                                              List<PsiElement> inside, 
+                                              List<PsiElement> outside, 
+                                              Set<String> elementDialectIds) {
+    HighlightDisplayKey key = HighlightDisplayKey.find(RedundantSuppressInspection.SHORT_NAME);
+    final InspectionProfileImpl inspectionProfile = myProfileWrapper.getInspectionProfile();
+    if (key != null && inspectionProfile.isToolEnabled(key, getFile())) {
+      InspectionToolWrapper toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
+      InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
+      if (suppressor instanceof RedundantSuppressionDetector) {
+        Set<String> activeTools = toolWrappers.stream().map(tool -> tool.getID()).collect(Collectors.toSet());
+        LocalInspectionTool
+          localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
+        ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), true);
+        PsiElementVisitor visitor = localTool.buildVisitor(holder, true);
+        InspectionEngine.acceptElements(inside, visitor, elementDialectIds, null);
+        InspectionEngine.acceptElements(outside, visitor, elementDialectIds, null);
+
+        HighlightSeverity severity = myProfileWrapper.getErrorLevel(key, getFile()).getSeverity();
+        for (ProblemDescriptor descriptor : holder.getResults()) {
+          ProgressManager.checkCanceled();
+          PsiElement element = descriptor.getPsiElement();
+          if (element != null) {
+            Document thisDocument = documentManager.getDocument(getFile());
+            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument, new LocalInspectionToolWrapper(localTool), severity, descriptor, element);
+          }
+        }
+      }
+    }
   }
 
   @NotNull
@@ -473,7 +509,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element) {
     LocalInspectionTool tool = toolWrapper.getTool();
-    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) return;
+    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) {
+      mySuppressedElements.computeIfAbsent(toolWrapper.getID(), shortName -> new HashSet<>()).add(element);
+      return;
+    }
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
     @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
 

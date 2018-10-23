@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * @author peter
  */
-public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> implements
+public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element> implements
                                                                                                    CommonJavaRunConfigurationParameters {
   public String vmParams;
   public String cmdLine;

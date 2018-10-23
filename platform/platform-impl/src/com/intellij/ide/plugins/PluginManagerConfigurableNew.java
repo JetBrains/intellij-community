@@ -29,6 +29,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -288,6 +289,8 @@ public class PluginManagerConfigurableNew
     mySearchListener = (_0, query) -> {
       removeDetailsPanel();
       mySearchTextField.setTextIgnoreEvents(query);
+      IdeFocusManager.getGlobalInstance()
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(mySearchTextField, true));
       showSearchPanel(query);
     };
 
@@ -393,7 +396,7 @@ public class PluginManagerConfigurableNew
       }
     });
 
-    myTabHeaderComponent.addTab("Trending");
+    myTabHeaderComponent.addTab("Marketplace");
     myTabHeaderComponent.addTab("Installed");
     myTabHeaderComponent.addTab(myUpdatesTabName = new CountTabName(myTabHeaderComponent, "Updates"));
 
@@ -434,7 +437,7 @@ public class PluginManagerConfigurableNew
     String historyPropertyName;
     SearchResultPanel searchPanel;
     if (index == TRENDING_TAB) {
-      text = "Search trending plugins";
+      text = "Search plugins in marketplace";
       if (!UpdateSettings.getInstance().getPluginHosts().isEmpty()) {
         text += " and custom repositories";
       }
@@ -610,7 +613,7 @@ public class PluginManagerConfigurableNew
     PluginsGroupComponentWithProgress panel =
       new PluginsGroupComponentWithProgress(new PluginsGridLayout(), EventHandler.EMPTY, myNameListener, mySearchListener,
                                             descriptor -> new GridCellPluginComponent(myPluginsModel, descriptor, myTagBuilder));
-    panel.getEmptyText().setText("Trending plugins are not loaded.")
+    panel.getEmptyText().setText("Marketplace plugins are not loaded.")
       .appendSecondaryText("Check the internet connection.", StatusText.DEFAULT_ATTRIBUTES, null);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -1331,7 +1334,7 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
     String downloads = ((PluginNode)plugin).getDownloads();
     if (!StringUtil.isEmptyOrSpaces(downloads)) {
       try {
@@ -1339,6 +1342,7 @@ public class PluginManagerConfigurableNew
         if (value > 1000) {
           return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
         }
+        return value.toString();
       }
       catch (NumberFormatException ignore) {
       }
@@ -1348,9 +1352,9 @@ public class PluginManagerConfigurableNew
   }
 
   @Nullable
-  public static String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
+  public static synchronized String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
     long date = ((PluginNode)plugin).getDate();
-    return date > 0 ? DATE_FORMAT.format(new Date(date)) : null;
+    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
   }
 
   @Nullable

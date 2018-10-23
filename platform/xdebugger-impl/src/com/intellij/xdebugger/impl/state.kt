@@ -16,36 +16,36 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
-  var defaultBreakpoints: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
+  var defaultBreakpoints by list<BreakpointState<*, *, *>>()
 
-  @get:XCollection(elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class), style = XCollection.Style.v2)
-  var breakpoints: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
+  @get:XCollection(elementTypes = [BreakpointState::class, LineBreakpointState::class], style = XCollection.Style.v2)
+  var breakpoints by list<BreakpointState<*, *, *>>()
 
-  @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class))
-  var breakpointsDefaults: MutableList<BreakpointState<*, *, *>> by list<BreakpointState<*, *, *>>()
+  @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = [BreakpointState::class, LineBreakpointState::class])
+  var breakpointsDefaults by list<BreakpointState<*, *, *>>()
 
   @get:Tag("breakpoints-dialog")
-  var breakpointsDialogProperties: XBreakpointsDialogState? = null
+  var breakpointsDialogProperties by property<XBreakpointsDialogState>()
 
-  var defaultGroup: String? by string()
+  var defaultGroup by string()
 }
 
 @Tag("watches-manager")
 class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressions: MutableList<ConfigurationState> by list<ConfigurationState>()
+  var expressions by list<ConfigurationState>()
 }
 
 @Tag("configuration")
 class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
-  var name: String? by string()
+  var name by string()
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressionStates: MutableList<WatchState> by list<WatchState>()
+  var expressionStates by list<WatchState>()
 
   init {
     // passed values are not default - constructor provided only for convenience

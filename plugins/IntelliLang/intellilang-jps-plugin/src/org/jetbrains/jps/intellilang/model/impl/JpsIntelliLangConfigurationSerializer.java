@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.intellilang.model.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,21 +24,20 @@ public class JpsIntelliLangConfigurationSerializer extends JpsGlobalExtensionSer
 
   @Override
   public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-    final JpsIntelliLangConfigurationImpl configuration = new JpsIntelliLangConfigurationImpl();
+    JpsIntelliLangConfigurationImpl configuration = new JpsIntelliLangConfigurationImpl();
 
-    final String annotationName = JDOMExternalizerUtil.readField(componentTag, PATTERN_ANNOTATION_NAME);
+    String annotationName = JDOMExternalizerUtil.readField(componentTag, PATTERN_ANNOTATION_NAME);
     if (annotationName != null) {
       configuration.setPatternAnnotationClassName(annotationName);
     }
 
-    final String instrumentationType = JDOMExternalizerUtil.readField(componentTag, INSTRUMENTATION_TYPE_NAME);
+    String instrumentationType = JDOMExternalizerUtil.readField(componentTag, INSTRUMENTATION_TYPE_NAME);
     if (instrumentationType != null) {
       try {
-        final InstrumentationType type = InstrumentationType.valueOf(instrumentationType);
-        configuration.setInstrumentationType(type);
+        configuration.setInstrumentationType(InstrumentationType.valueOf(instrumentationType));
       }
-      catch (IllegalArgumentException ignored) {
-        LOG.info(ignored);
+      catch (IllegalArgumentException e) {
+        LOG.info(e);
       }
     }
 
@@ -50,6 +50,5 @@ public class JpsIntelliLangConfigurationSerializer extends JpsGlobalExtensionSer
   }
 
   @Override
-  public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-  }
+  public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) { }
 }

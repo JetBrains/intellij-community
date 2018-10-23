@@ -50,7 +50,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   private static final Logger LOG = Logger.getInstance(AbstractPsiBasedNode.class.getName());
 
   protected AbstractPsiBasedNode(final Project project,
-                                final Value value,
+                                 @NotNull Value value,
                                 final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }

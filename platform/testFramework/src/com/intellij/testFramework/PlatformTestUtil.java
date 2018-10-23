@@ -637,8 +637,7 @@ public class PlatformTestUtil {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
-  private static long measure(@NotNull Runnable actionToMeasure) {
-    waitForAllBackgroundActivityToCalmDown();
+  public static long measure(@NotNull Runnable actionToMeasure) {
     long start = System.currentTimeMillis();
     actionToMeasure.run();
     long finish = System.currentTimeMillis();
@@ -648,6 +647,7 @@ public class PlatformTestUtil {
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
+      waitForAllBackgroundActivityToCalmDown();
       long duration = measure(actionToMeasure);
       try {
         assertTiming(message, expected, duration);

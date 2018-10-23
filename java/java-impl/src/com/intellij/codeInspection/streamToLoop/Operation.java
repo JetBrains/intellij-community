@@ -18,6 +18,7 @@ package com.intellij.codeInspection.streamToLoop;
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
@@ -300,14 +301,14 @@ abstract class Operation {
       if(fn == null) return null;
       String varName = fn.tryLightTransform();
       if(varName == null) return null;
-      PsiExpression body = fn.getExpression();
+      PsiExpression body = PsiUtil.skipParenthesizedExprDown(fn.getExpression());
       PsiExpression condition = null;
       boolean inverted = false;
       if(body instanceof PsiConditionalExpression) {
         PsiConditionalExpression ternary = (PsiConditionalExpression)body;
         condition = ternary.getCondition();
-        PsiExpression thenExpression = ternary.getThenExpression();
-        PsiExpression elseExpression = ternary.getElseExpression();
+        PsiExpression thenExpression = PsiUtil.skipParenthesizedExprDown(ternary.getThenExpression());
+        PsiExpression elseExpression = PsiUtil.skipParenthesizedExprDown(ternary.getElseExpression());
         if(StreamApiUtil.isNullOrEmptyStream(thenExpression)) {
           body = elseExpression;
           inverted = true;
@@ -319,8 +320,8 @@ abstract class Operation {
       }
       if(!(body instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression terminalCall = (PsiMethodCallExpression)body;
-      List<StreamToLoopInspection.OperationRecord> records = StreamToLoopInspection.extractOperations(outVar, terminalCall,
-                                                                                                      supportUnknownSources);
+      List<StreamToLoopInspection.OperationRecord> records =
+        StreamToLoopInspection.extractOperations(outVar, terminalCall, supportUnknownSources);
       if(records == null || StreamToLoopInspection.getTerminal(records) != null) return null;
       return new FlatMapOperation(varName, fn, records, condition, inverted);
     }

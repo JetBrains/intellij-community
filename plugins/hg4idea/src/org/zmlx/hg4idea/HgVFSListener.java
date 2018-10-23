@@ -90,7 +90,7 @@ public class HgVFSListener extends VcsVFSListener {
           Collection<VirtualFile> untrackedForRepo = new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
             .getFiles(repo, new ArrayList<>(files));
           untrackedFiles.addAll(untrackedForRepo);
-          List<VirtualFile> ignoredForRepo = files.stream().filter(file -> !untrackedForRepo.contains(file)).collect(Collectors.toList());
+          List<VirtualFile> ignoredForRepo = ContainerUtil.filter(files, file -> !untrackedForRepo.contains(file));
           getIgnoreRepoHolder(repo).addFiles(ignoredForRepo);
         }
         addedFiles.retainAll(untrackedFiles);

@@ -228,9 +228,9 @@ private class CopyrightManagerPostStartupActivity : StartupActivity {
           return
         }
 
-        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).submit {
+        AppUIExecutor.onUiThread(ModalityState.NON_MODAL).later().withDocumentsCommitted(project).execute {
           if (!virtualFile.isValid) {
-            return@submit
+            return@execute
           }
 
           val file = PsiManager.getInstance(project).findFile(virtualFile)

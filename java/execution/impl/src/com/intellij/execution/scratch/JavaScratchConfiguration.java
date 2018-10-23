@@ -109,6 +109,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
   }
 
+  @NotNull
   @Override
   protected JavaScratchConfigurationOptions getOptions() {
     return (JavaScratchConfigurationOptions)super.getOptions();

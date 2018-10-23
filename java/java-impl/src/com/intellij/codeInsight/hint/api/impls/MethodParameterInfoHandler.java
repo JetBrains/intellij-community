@@ -421,20 +421,14 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             CharSequence text = editor.getDocument().getImmutableCharSequence();
             int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
             int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
-            for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(firstRangeStartOffset, firstRangeEndOffset)) {
-              if (presentationManager.isParameterHint(inlay)) {
-                highlightedHints.add(inlay);
-                if (i == currentHintIndex && currentHint == null) currentHint = inlay;
-              }
+            for (Inlay inlay : presentationManager.getParameterHintsInRange(editor, firstRangeStartOffset, firstRangeEndOffset)) {
+              highlightedHints.add(inlay);
+              if (i == currentHintIndex && currentHint == null) currentHint = inlay;
             }
             int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
             if (secondRangeEndOffset > firstRangeEndOffset) {
               int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
-              for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(secondRangeStartOffset, secondRangeEndOffset)) {
-                if (presentationManager.isParameterHint(inlay)) {
-                  highlightedHints.add(inlay);
-                }
-              }
+              highlightedHints.addAll(presentationManager.getParameterHintsInRange(editor, secondRangeStartOffset, secondRangeEndOffset));
             }
           }
         }
@@ -818,13 +812,12 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     Editor editor = context.getEditor();
     Caret caret = editor.getCaretModel().getCurrentCaret();
     int caretOffset = caret.getOffset();
-    List<Inlay> inlays = editor.getInlayModel().getInlineElementsInRange(caretOffset, caretOffset);
+    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
+    List<Inlay> inlays = pm.getParameterHintsInRange(editor, caretOffset, caretOffset);
     if (inlays.isEmpty()) return;
 
     VisualPosition caretPosition = caret.getVisualPosition();
-    ParameterHintsPresentationManager pm = ParameterHintsPresentationManager.getInstance();
-    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> pm.isParameterHint(inlay) &&
-                                                                          StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
+    int inlaysBeforeCaretWithComma = ContainerUtil.count(inlays, inlay -> StringUtil.startsWithChar(pm.getHintText(inlay), ',') &&
                                                                           caretPosition.after(inlay.getVisualPosition()));
     if (inlaysBeforeCaretWithComma == 0) return;
 

@@ -19,10 +19,11 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BasePsiNode <T extends PsiElement> extends AbstractPsiBasedNode<T> {
-  protected BasePsiNode(Project project, T value, ViewSettings viewSettings) {
+  protected BasePsiNode(Project project, @NotNull T value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

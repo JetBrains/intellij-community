@@ -12,7 +12,7 @@ public class Test {
   }
 
   void foo() {
-    //noinspe<caret>ction unchecked
+    //noinspection unc<caret>hecked
     foo(new ArrayList<String>()).addAll(foo1(new ArrayList<String>()));
   }
 }

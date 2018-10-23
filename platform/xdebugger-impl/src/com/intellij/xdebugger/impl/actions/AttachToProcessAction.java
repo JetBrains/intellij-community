@@ -44,7 +44,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AttachToProcessAction extends AnAction {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY = Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
@@ -227,8 +226,7 @@ public class AttachToProcessAction extends AnAction {
 
   @NotNull
   private static List<XAttachDebuggerProvider> getProvidersApplicableForHost(@NotNull XAttachHost host) {
-    return XAttachDebuggerProvider.getAttachDebuggerProviders().stream().filter(provider -> provider.isAttachHostApplicable(host))
-                                  .collect(Collectors.toList());
+    return ContainerUtil.filter(XAttachDebuggerProvider.getAttachDebuggerProviders(), provider -> provider.isAttachHostApplicable(host));
   }
 
   @NotNull

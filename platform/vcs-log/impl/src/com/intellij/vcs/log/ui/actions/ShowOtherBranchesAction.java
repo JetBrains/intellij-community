@@ -27,7 +27,7 @@ import com.intellij.vcs.log.history.FileHistoryUiProperties;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +52,7 @@ public class ShowOtherBranchesAction extends BooleanPropertyToggleAction {
     VcsLogUi logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     if (project != null && logManager != null && filePath != null && logUi != null) {
       VcsLogIndex index = logManager.getDataManager().getIndex();
-      VirtualFile root = VcsUtil.getVcsRootFor(project, filePath);
+      VirtualFile root = VcsLogUtil.getActualRoot(project, filePath);
       if (root != null && !index.isIndexed(root)) {
         e.getPresentation().setEnabled(false);
       }

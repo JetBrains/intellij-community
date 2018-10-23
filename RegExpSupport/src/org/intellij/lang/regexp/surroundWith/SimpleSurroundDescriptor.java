@@ -36,6 +36,11 @@ public class SimpleSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] SURROUNDERS = {
     new GroupSurrounder("Capturing Group (pattern)", "("),
     new GroupSurrounder("Non-Capturing Group (?:pattern)", "(?:"),
+    new GroupSurrounder("Atomic Group (?:pattern)", "(?:"),
+    new GroupSurrounder("Positive Lookbehind (?<=pattern)", "(?<="),
+    new GroupSurrounder("Negative Lookbehind (?<!pattern)", "(?<!"),
+    new GroupSurrounder("Positive Lookahead (?=pattern)", "(?="),
+    new GroupSurrounder("Negative Lookahead (?!pattern)", "(?!"),
   };
 
   @Override

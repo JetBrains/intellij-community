@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.fixtures.extended.hasValidModel
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
@@ -703,24 +704,20 @@ object GuiTestUtil {
   fun jTreeComponent(container: Container,
                      timeout: Timeout,
                      vararg pathStrings: String,
-                     predicate: FinderPredicate = Predicate.equality): JTree {
-    val myTree: JTree?
-    try {
-      myTree = if (pathStrings.isEmpty()) {
-        waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout)
-      }
-      else {
-        waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) {
-                         ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
-                       },
-                       timeout)
-      }
-    }
-    catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
-    }
-    return myTree
+                     predicate: FinderPredicate = Predicate.equality): JTree = try {
+    waitUntilFound(
+      robot = GuiRobotHolder.robot,
+      root = container,
+      matcher = GuiTestUtilKt.typeMatcher(JTree::class.java) {
+        // the found tree should have meaningful model
+        it.hasValidModel() &&
+        (pathStrings.isEmpty() || ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath())
+      },
+      timeout = timeout
+    )
+  }
+  catch (e: WaitTimedOutError) {
+    throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT

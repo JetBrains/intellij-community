@@ -455,6 +455,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
     addFrameStateListener(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
   }
 
   @Override
@@ -497,6 +498,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Persiste
       addFrameStateListener(frame);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
 
     return frame;
   }

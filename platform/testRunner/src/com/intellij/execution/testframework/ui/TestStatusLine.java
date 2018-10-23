@@ -24,6 +24,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -57,12 +58,21 @@ public class TestStatusLine extends NonOpaquePanel {
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
-  public void formatTestMessage(int testsTotal,
+  public void formatTestMessage(final int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
                                 final int ignoredTestsCount,
                                 final Long duration,
                                 final long endTime) {
+    UIUtil.invokeLaterIfNeeded(() -> doFormatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime));
+  }
+
+  private void doFormatTestMessage(int testsTotal,
+                                   int finishedTestsCount,
+                                   int failuresCount,
+                                   int ignoredTestsCount,
+                                   Long duration,
+                                   long endTime) {
     myState.clear();
     if (testsTotal == 0) {
       testsTotal = finishedTestsCount;
@@ -157,8 +167,10 @@ public class TestStatusLine extends NonOpaquePanel {
   }
 
   public void setText(String progressStatus_text) {
-    myState.clear();
-    myState.append(progressStatus_text);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myState.clear();
+      myState.append(progressStatus_text);
+    });
   }
 
   @TestOnly

@@ -5,6 +5,7 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -94,7 +95,7 @@ abstract class ElementProcessingHintPass(
 
       hints.forEachEntry { offset, hintTexts ->
         hintTexts.forEach {
-          val inlay = inlayModel.addInlineElement(offset, createRenderer(it))
+          val inlay : Inlay<*>? = inlayModel.addInlineElement(offset, createRenderer(it))
           inlay?.putUserData(getHintKey(), true)
         }
         true

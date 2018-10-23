@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -17,11 +19,19 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupActivity {
+  private static final Cache<Pair<String, String>, Boolean> EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE = CacheBuilder.newBuilder()
+    .maximumSize(1000)
+    .expireAfterWrite(1, TimeUnit.MINUTES)
+    .build();
+
   @Override
   public void runActivity(@NotNull Project project) {
     MessageBusConnection myConnection = project.getMessageBus().connect();
@@ -34,7 +44,10 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
 
       @Override
       public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-
+        String extension = file.getExtension() != null ? file.getExtension() : file.getName();
+        String fileType = file.getFileType().getName();
+        EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.invalidate(Pair.create(file.getPath(), extension));
+        EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.invalidate(Pair.create(file.getPath(), fileType));
       }
 
       @Override
@@ -54,9 +67,12 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
         if (editor == null || editor.getProject() != project) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file != null) {
-          FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionEditUsageTriggerCollector.class,
-                                                                file.getExtension() != null ? file.getExtension() : file.getName());
-          FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeEditUsageTriggerCollector.class, file.getFileType().getName());
+          String extension = file.getExtension() != null ? file.getExtension() : file.getName();
+          String fileType = file.getFileType().getName();
+          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), extension), Boolean.TRUE) == null)
+            FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionEditUsageTriggerCollector.class, extension);
+          if (EDIT_USAGE_ONE_MINUTE_THROTTLING_CACHE.asMap().putIfAbsent(Pair.create(file.getPath(), fileType), Boolean.TRUE) == null)
+            FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeEditUsageTriggerCollector.class, fileType);
         }
       }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
@@ -26,8 +27,6 @@ import org.jetbrains.jps.backwardRefs.index.JavaCompilerIndices;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-
-import static java.util.stream.Collectors.toList;
 
 public class JavaBackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final JavaBackwardReferenceIndexReaderFactory INSTANCE = new JavaBackwardReferenceIndexReaderFactory();
@@ -119,7 +118,7 @@ public class JavaBackwardReferenceIndexReaderFactory implements CompilerReferenc
 
       Map<VirtualFile, SearchId[]> candidatesPerFile = new HashMap<>();
       myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(searchElement).forEach((fileId, defs) -> {
-        final List<CompilerRef> requiredCandidates = defs.stream().filter(requiredCompilerRefClass::isInstance).collect(toList());
+        final List<CompilerRef> requiredCandidates = ContainerUtil.filter(defs, requiredCompilerRefClass::isInstance);
         if (requiredCandidates.isEmpty()) return true;
         final VirtualFile file = findFile(fileId);
         if (file != null && effectiveSearchScope.contains(file)) {

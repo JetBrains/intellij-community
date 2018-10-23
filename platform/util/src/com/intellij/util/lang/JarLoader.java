@@ -16,7 +16,9 @@ package com.intellij.util.lang;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -172,10 +175,59 @@ class JarLoader extends Loader {
     }
   }
 
+  private final AtomicInteger myNumberOfRequests = new AtomicInteger();
+  private volatile TIntHashSet myPackageHashesInside;
+
+  private TIntHashSet buildPackageHashes() {
+    try {
+      ZipFile zipFile = getZipFile();
+      try {
+        Enumeration<? extends ZipEntry> entries = zipFile.entries();
+        TIntHashSet result = new TIntHashSet();
+
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          String name = entry.getName();
+          int ind = name.lastIndexOf('/');
+          if (ind != -1) {
+            int packageHash = StringUtil.stringHashCodeInsensitive(name, 0, ind);
+            result.add(packageHash);
+          }
+        }
+        return result;
+      }
+      finally {
+        releaseZipFile(zipFile);
+      }
+    } catch (Exception e) {
+      error("url: " + myFilePath, e);
+      return new TIntHashSet(0);
+    }
+  }
+
   @Override
   @Nullable
   Resource getResource(String name) {
-    JarMemoryLoader loader = myMemoryLoader != null? myMemoryLoader.get() : null;
+    if (myConfiguration.myLazyClassloadingCaches) {
+      int numberOfHits = myNumberOfRequests.incrementAndGet();
+      TIntHashSet packagesInside = myPackageHashesInside;
+
+      if (numberOfHits > ClasspathCache.NUMBER_OF_ACCESSES_FOR_LAZY_CACHING && packagesInside == null) {
+        myPackageHashesInside = packagesInside = buildPackageHashes();
+      }
+
+      if (packagesInside != null) {
+        int ind = name.lastIndexOf('/');
+        if (ind != -1) {
+          int packageHash = StringUtil.stringHashCodeInsensitive(name, 0, ind);
+          if (!packagesInside.contains(packageHash)) {
+            return null;
+          }
+        }
+      }
+    }
+
+    JarMemoryLoader loader = myMemoryLoader != null ? myMemoryLoader.get() : null;
     if (loader != null) {
       Resource resource = loader.getResource(name);
       if (resource != null) return resource;

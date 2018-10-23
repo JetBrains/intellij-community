@@ -135,13 +135,11 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("X"), "a.java")
 
       index.update("b.java", "y", null)
       assertDataEquals(index.getFilesByWord("y"), "b.java")
       index.update("c.java", "Y", null)
-      index.flush() //todo: this should not be required but the following line will fail without it
       assertDataEquals(index.getFilesByWord("y"), "b.java", "c.java")
     }
     finally {

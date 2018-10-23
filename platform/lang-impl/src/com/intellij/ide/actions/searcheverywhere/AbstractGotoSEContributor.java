@@ -45,10 +45,12 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   //space character in the end of pattern forces full matches search
   private static final String fullMatchSearchSuffix = " ";
 
-  protected final Project myProject;
+  @Nullable protected final Project myProject;
+  @Nullable protected final PsiElement psiContext;
 
-  protected AbstractGotoSEContributor(Project project) {
+  protected AbstractGotoSEContributor(@Nullable Project project, @Nullable PsiElement context) {
     myProject = project;
+    psiContext = context;
   }
 
   @NotNull
@@ -67,6 +69,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<F> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+    if (myProject == null) {
+      return; //nothing to search
+    }
+
     if (!isDumbModeSupported() && DumbService.getInstance(myProject).isDumb()) {
       return;
     }
@@ -77,10 +83,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     if (filter != null) {
       model.setFilterItems(filter.getSelectedElements());
     }
-    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);
-    try {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+
+    ProgressIndicatorUtils.yieldToPendingWriteActions();
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+      ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, psiContext);
+      try {
         popup.getProvider().filterElements(popup, searchString, everywhere, progressIndicator, element -> {
           if (progressIndicator.isCanceled()) return false;
           if (element == null) {
@@ -89,10 +96,10 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
           }
           return consumer.apply(element);
         });
-      }, progressIndicator);
-    } finally {
-      Disposer.dispose(popup);
-    }
+      } finally {
+        Disposer.dispose(popup);
+      }
+    }, progressIndicator);
   }
 
   //todo param is unnecessary #UX-1

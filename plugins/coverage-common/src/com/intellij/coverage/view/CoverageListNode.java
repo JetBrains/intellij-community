@@ -26,7 +26,7 @@ public class CoverageListNode extends AbstractTreeNode {
   private final FileStatusManager myFileStatusManager;
 
   public CoverageListNode(Project project, 
-                          final PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage);

@@ -41,7 +41,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-@SuppressWarnings("NonStaticInitializer")
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressWindow");
 
@@ -100,9 +99,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       parent = JOptionPane.getRootFrame();
     }
 
-    myDialog = parent == null
-               ? new ProgressDialog(this, shouldShowBackground, myProject, myCancelText)
-               : new ProgressDialog(this, shouldShowBackground, parent, myCancelText);
+    myDialog = new ProgressDialog(this, shouldShowBackground, parent, myProject, myCancelText);
 
     Disposer.register(this, myDialog);
 
@@ -320,7 +317,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myTitle;
   }
 
-  public void setCancelButtonText(String text) {
+  public void setCancelButtonText(@NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }
@@ -359,6 +356,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+    private long myLastUpdatedButtonTimestamp;
     @Override
     public void cancel() {
       super.cancel();
@@ -371,7 +369,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     public void checkCanceled() {
       super.checkCanceled();
       // assume checkCanceled() would be called from the correct thread
-      enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+      long now = System.currentTimeMillis();
+      if (now - myLastUpdatedButtonTimestamp > 10) {
+        enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+        myLastUpdatedButtonTimestamp = now;
+      }
     }
 
     @Override

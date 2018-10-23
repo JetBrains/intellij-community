@@ -891,6 +891,7 @@ public class AllIcons {
     public static final Icon TodoDefault = IconLoader.getIcon("/general/todoDefault.svg"); // 16x16
     public static final Icon TodoImportant = IconLoader.getIcon("/general/todoImportant.svg"); // 16x16
     public static final Icon TodoQuestion = IconLoader.getIcon("/general/todoQuestion.svg"); // 16x16
+    public static final Icon User = IconLoader.getIcon("/general/user.svg"); // 16x16
     public static final Icon Warning = IconLoader.getIcon("/general/warning.svg"); // 16x16
     public static final Icon WarningDecorator = IconLoader.getIcon("/general/warningDecorator.svg"); // 16x16
     public static final Icon WarningDialog = IconLoader.getIcon("/general/warningDialog.svg"); // 32x32
@@ -1687,7 +1688,11 @@ public class AllIcons {
     public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.svg"); // 16x16
 
     public static class Types {
-      public static final Icon UserDefined = IconLoader.getIcon("/modules/types/userDefined.svg"); // 16x16
+
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.User */
+      @SuppressWarnings("unused")
+      @Deprecated
+      public static final Icon UserDefined = AllIcons.General.User;
 
     }
     public static final Icon UnloadedModule = IconLoader.getIcon("/modules/unloadedModule.svg"); // 16x16

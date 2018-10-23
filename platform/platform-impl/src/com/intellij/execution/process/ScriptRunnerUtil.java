@@ -202,8 +202,8 @@ public final class ScriptRunnerUtil {
                                              long millisTimeout,
                                              @Nullable String commandLine) {
     if (processHandler.isProcessTerminated()) {
-      if (commandLine == null && processHandler instanceof BaseOSProcessHandler) {
-        commandLine = ((BaseOSProcessHandler) processHandler).getCommandLine();
+      if (commandLine == null && processHandler instanceof BaseProcessHandler) {
+        commandLine = ((BaseProcessHandler)processHandler).getCommandLine();
       }
       LOG.warn("Process '" + commandLine + "' is already terminated!");
       return;

@@ -44,6 +44,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
@@ -504,6 +506,17 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
     });
 
+    registerAction(IdeActions.ACTION_NEXT_TAB, __ -> switchToNextTab());
+    registerAction(IdeActions.ACTION_PREVIOUS_TAB, __ -> switchToPrevTab());
+    registerAction(IdeActions.ACTION_SWITCHER, e -> {
+      if (e.getInputEvent().isShiftDown()) {
+        switchToPrevTab();
+      }
+      else {
+        switchToNextTab();
+      }
+    });
+
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> {
       stopSearching();
@@ -568,6 +581,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         }
       }
     });
+  }
+
+  private void registerAction(String actionID, Consumer<AnActionEvent> action) {
+    Optional.ofNullable(ActionManager.getInstance().getAction(actionID))
+      .map(a -> a.getShortcutSet())
+      .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
   }
 
   private void onMouseClicked(@NotNull MouseEvent e) {
@@ -863,7 +882,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       List<SearchEverywhereContributor> list = contributors();
       int index = list.lastIndexOf(contributor);
       if (index >= 0) {
-        return index;
+        return isMoreElement(index) ? index : index + 1;
       }
 
       for (int i = 0; i < list.size(); i++) {
@@ -888,9 +907,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       stopSearching();
 
       Collection<SearchEverywhereContributor> contributors = isAllTabSelected() ? getUsedContributors() : Collections.singleton(mySelectedTab.getContributor().get());
-      contributors = contributors.stream()
-                                 .filter(SearchEverywhereContributor::showInFindResults)
-                                 .collect(Collectors.toList());
+      contributors = ContainerUtil.filter(contributors, SearchEverywhereContributor::showInFindResults);
 
       if (contributors.isEmpty()) {
         return;
@@ -920,9 +937,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       fillUsages(cached, usages, targets);
 
       Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
-      contributorsForAdditionalSearch = contributors.stream()
-                                                    .filter(contributor -> myListModel.hasMoreElements(contributor))
-                                                    .collect(Collectors.toList());
+      contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
 
       searchFinishedHandler.run();
       if (!contributorsForAdditionalSearch.isEmpty()) {

@@ -24,6 +24,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.*;
@@ -66,7 +67,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private boolean myMultilineEnabled = true;
 
   public SearchTextArea(boolean searchMode) {
-    this(new JTextArea(), searchMode, false);
+    this(new JBTextArea(), searchMode, false);
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
@@ -127,6 +128,19 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
           d.height = Math.min(d.height, ui.getPreferredSize(myTextArea).height);
         }
         return d;
+      }
+
+      @Override
+      public void doLayout() {
+        super.doLayout();
+        JScrollBar hsb = getHorizontalScrollBar();
+        if (StringUtil.getLineBreakCount(getTextArea().getText()) == 0 && hsb.isVisible()) {
+          Rectangle hsbBounds = hsb.getBounds();
+          hsb.setVisible(false);
+          Rectangle bounds = getViewport().getBounds();
+          bounds = bounds.union(hsbBounds);
+          getViewport().setBounds(bounds);
+        }
       }
     };
     myTextArea.setBorder(new Border() {
@@ -234,8 +248,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       myIconsPanel.setBorder(myHelper.getIconsPanelBorder(rows));
       myIconsPanel.revalidate();
       myIconsPanel.repaint();
-      myScrollPane.setHorizontalScrollBarPolicy(multiline ? HORIZONTAL_SCROLLBAR_AS_NEEDED : HORIZONTAL_SCROLLBAR_NEVER);
+      myScrollPane.setHorizontalScrollBarPolicy(HORIZONTAL_SCROLLBAR_AS_NEEDED);
       myScrollPane.setVerticalScrollBarPolicy(multiline ? VERTICAL_SCROLLBAR_AS_NEEDED : VERTICAL_SCROLLBAR_NEVER);
+      myScrollPane.getHorizontalScrollBar().setVisible(multiline);
       myScrollPane.revalidate();
       doLayout();
     }

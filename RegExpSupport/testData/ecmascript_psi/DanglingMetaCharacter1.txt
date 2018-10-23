@@ -1,4 +1,6 @@
 JS_UNICODE_REGEXP_FILE
-  PsiErrorElement:Dangling metacharacter
-    <empty list>
-  PsiElement(LBRACE)('{')
+  RegExpPatternImpl: <{>
+    RegExpBranchImpl: <{>
+      PsiErrorElement:Dangling metacharacter
+        <empty list>
+      PsiElement(LBRACE)('{')

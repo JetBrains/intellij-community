@@ -2,7 +2,9 @@
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,11 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.PsiBinaryExpression.BOOLEAN_OPERATION_TOKENS;
 
 /**
+ * Calculates how big is the expression. Is used for filtering out too simple expressions. <br>
+ * Expression complexity is >= 0. Complexity <= 10 means the expression is trivial (a constant or a variable). <br>
+ * Complexity >= 100 means that the expression is really big (many operators and/or method calls). <br>
+ * Side effects aren't checked here.
+ *
  * @author Pavel.Dolgov
  */
 class ComplexityCalculator {
-  public static final int TOO_COMPLEX = 100_000;
-
   private static final int IDENTIFIER = 10;
   private static final int CONSTANT = 1;
   private static final int OPERATOR = 10;
@@ -24,7 +29,9 @@ class ComplexityCalculator {
   private static final int SLICE = 10;
   private static final int LAMBDA = 20;
   private static final int REFERENCE = 20;
+  private static final int NEW_EXPR = 20;
   private static final int PARAMETER = 1;
+  private static final int UNKNOWN = 15;
 
   private static final TokenSet NEGATIONS = TokenSet.create(JavaTokenType.EXCL, JavaTokenType.MINUS, JavaTokenType.TILDE);
 
@@ -64,6 +71,19 @@ class ComplexityCalculator {
       int c = NEGATIONS.contains(unary.getOperationTokenType()) ? SIMPLE_OPERATOR : OPERATOR;
       return getComplexity(unary.getOperand()) + c;
     }
+    if (e instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binary = (PsiBinaryExpression)e;
+      IElementType token = binary.getOperationTokenType();
+      PsiExpression left = binary.getLOperand();
+      PsiExpression right = binary.getROperand();
+      int c = BOOLEAN_OPERATION_TOKENS.contains(token) ||
+              JavaTokenType.PLUS.equals(token) && (isLiteral(left, "1") || isLiteral(right, "1")) ||
+              JavaTokenType.MINUS.equals(token) && isLiteral(right, "1") ||
+              JavaTokenType.ASTERISK.equals(token) && (isLiteral(left, "2") || isLiteral(right, "2")) ||
+              JavaTokenType.DIV.equals(token) && isLiteral(right, "2")
+              ? SIMPLE_OPERATOR : OPERATOR;
+      return c + getComplexity(left) + getComplexity(right);
+    }
     if (e instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression polyadic = (PsiPolyadicExpression)e;
       int c = BOOLEAN_OPERATION_TOKENS.contains(polyadic.getOperationTokenType()) ? SIMPLE_OPERATOR : OPERATOR;
@@ -82,11 +102,7 @@ class ComplexityCalculator {
     if (e instanceof PsiMethodCallExpression) {
       PsiMethodCallExpression call = (PsiMethodCallExpression)e;
       PsiReferenceExpression ref = call.getMethodExpression();
-      int c = getComplexity(ref.getQualifierExpression()) + METHOD_CALL;
-      for (PsiExpression argument : call.getArgumentList().getExpressions()) {
-        c += PARAMETER + getComplexity(argument);
-      }
-      return c;
+      return METHOD_CALL + getComplexity(ref.getQualifierExpression()) + calculateArgumentsComplexity(call.getArgumentList());
     }
     if (e instanceof PsiReferenceExpression) {
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
@@ -109,9 +125,16 @@ class ComplexityCalculator {
     }
     if (e instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)e;
-      PsiExpression bodyExpr = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-      if (bodyExpr == null) return TOO_COMPLEX;
-      return LAMBDA + getComplexity(bodyExpr) + lambda.getParameterList().getParametersCount() * PARAMETER;
+      PsiElement body = lambda.getBody();
+      int c = LAMBDA + PARAMETER * lambda.getParameterList().getParametersCount();
+      PsiExpression bodyExpr = LambdaUtil.extractSingleExpressionFromBody(body);
+      if (bodyExpr != null) {
+        return c + getComplexity(bodyExpr);
+      }
+      if(body instanceof PsiCodeBlock) {
+        return c + UNKNOWN * ((PsiCodeBlock)body).getStatementCount();
+      }
+      return c + UNKNOWN;
     }
     if (e instanceof PsiArrayInitializerExpression) {
       PsiExpression[] initializers = ((PsiArrayInitializerExpression)e).getInitializers();
@@ -121,6 +144,41 @@ class ComplexityCalculator {
       }
       return c;
     }
-    return TOO_COMPLEX;
+    if (e instanceof PsiNewExpression) {
+      PsiNewExpression newExpr = (PsiNewExpression)e;
+      return NEW_EXPR +
+             getComplexity(newExpr.getQualifier()) +
+             getComplexity(newExpr.getArrayInitializer()) +
+             calculateArgumentsComplexity(newExpr.getArgumentList()) +
+             (newExpr.getAnonymousClass() != null ? UNKNOWN : 0);
+    }
+    return UNKNOWN;
+  }
+
+  private int calculateArgumentsComplexity(@Nullable PsiExpressionList arguments) {
+    if (arguments == null) return 0;
+    int c = 0;
+    for (PsiExpression argument : arguments.getExpressions()) {
+      c += PARAMETER + getComplexity(argument);
+    }
+    return c;
+  }
+
+  private static boolean isLiteral(@Nullable PsiExpression expression, @NotNull String withText) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    return expression instanceof PsiLiteral && expression.textMatches(withText);
+  }
+
+  /**
+   * Quick check to filter out the obvious things early
+   */
+  static boolean isDefinitelySimple(@Nullable PsiExpression expression, int threshold) {
+    if (expression instanceof PsiLiteral) {
+      return CONSTANT < threshold;
+    }
+    if (expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).getQualifierExpression() == null) {
+      return REFERENCE < threshold;
+    }
+    return false;
   }
 }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.java.generate.inspection
 
-import com.intellij.openapi.application.Result
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
@@ -30,7 +30,6 @@ import org.jetbrains.java.generate.config.ConflictResolutionPolicy
 import org.jetbrains.java.generate.config.ReplacePolicy
 import org.jetbrains.java.generate.template.TemplateResource
 import org.jetbrains.java.generate.template.toString.ToStringTemplatesManager
-
 /**
  * Created by Max Medvedev on 07/03/14
  */
@@ -148,12 +147,9 @@ class Foo  {
     Collection<PsiMember> members = collectMembers(clazz)
     GenerateToStringWorker worker = buildWorker(clazz, policy)
 
-    new WriteCommandAction(myFixture.project, myFixture.file) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
+    WriteCommandAction.runWriteCommandAction(myFixture.project, "","", {
         worker.execute(members, template, policy)
-      }
-    }.execute()
+      }, myFixture.file)
 
     myFixture.checkResult(after)
   }

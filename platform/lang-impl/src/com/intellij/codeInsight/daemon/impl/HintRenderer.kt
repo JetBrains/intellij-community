@@ -7,6 +7,7 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -26,7 +27,8 @@ import javax.swing.UIManager
 open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
   var widthAdjustment: HintWidthAdjustment? = null
 
-  override fun calcWidthInPixels(editor: Editor): Int {
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+    val editor = inlay.editor
     val fontMetrics = getFontMetrics(editor).metrics
     return doCalcWidth(text, fontMetrics) + calcWidthAdjustment(editor, fontMetrics)
   }
@@ -35,7 +37,8 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
   }
 
-  override fun paint(editor: Editor, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
+  override fun paint(inlay: Inlay<*>, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
+    val editor = inlay.editor
     if (editor !is EditorImpl) return
     val ascent = editor.ascent
     val descent = editor.descent

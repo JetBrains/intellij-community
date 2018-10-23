@@ -32,17 +32,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ProjectViewModuleGroupNode extends ModuleGroupNode {
-  public ProjectViewModuleGroupNode(final Project project, final Object value, final ViewSettings viewSettings) {
-    super(project, (ModuleGroup)value, viewSettings);
-  }
-
-  public ProjectViewModuleGroupNode(final Project project, final ModuleGroup value, final ViewSettings viewSettings) {
+  public ProjectViewModuleGroupNode(final Project project, @NotNull ModuleGroup value, final ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @NotNull
   @Override
-  protected AbstractTreeNode createModuleNode(Module module) {
+  protected AbstractTreeNode createModuleNode(@NotNull Module module) {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
     if (roots.length == 1) {
       final PsiDirectory psi = PsiManager.getInstance(myProject).findDirectory(roots[0]);
@@ -56,7 +52,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
 
   @NotNull
   @Override
-  protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
+  protected ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }
 

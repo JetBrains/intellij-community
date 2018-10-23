@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
@@ -56,7 +57,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         .forEach(operands -> process(expression, operands, and));
     }
 
-    private static boolean isAllowed(PsiExpression expression) {
+    private boolean isAllowed(PsiExpression expression) {
       // Disallow anything which may throw or produce side effect
       return PsiTreeUtil.processElements(expression, element -> {
         if (element instanceof PsiCallExpression || element instanceof PsiArrayAccessExpression ||
@@ -65,6 +66,10 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         }
         if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
           return false;
+        }
+        if (element instanceof PsiLiteralExpression) {
+          return HighlightUtil.checkLiteralExpressionParsingError((PsiLiteralExpression)element, PsiUtil.getLanguageLevel(myHolder.getFile()),
+                                                           myHolder.getFile()) == null;
         }
         if (element instanceof PsiReferenceExpression) {
           PsiReferenceExpression ref = (PsiReferenceExpression)element;

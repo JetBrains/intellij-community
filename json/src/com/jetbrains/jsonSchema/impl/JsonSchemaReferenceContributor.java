@@ -16,17 +16,16 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.psi.*;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,48 +34,33 @@ import org.jetbrains.annotations.Nullable;
  * @author Irina.Chernushina on 3/31/2016.
  */
 public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
-  public static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref");
-  public static final PsiElementPattern.Capture<JsonStringLiteral> PROPERTY_NAME_PATTERN = createPropertyNamePattern();
+  public static final PsiElementPattern.Capture<JsonValue> REF_PATTERN = createPropertyValuePattern("$ref", true, false);
+  public static final PsiElementPattern.Capture<JsonValue> SCHEMA_PATTERN = createPropertyValuePattern("$schema", false, true);
   public static final PsiElementPattern.Capture<JsonStringLiteral> REQUIRED_PROP_PATTERN = createRequiredPropPattern();
 
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(REF_PATTERN, new JsonSchemaRefReferenceProvider());
-    registrar.registerReferenceProvider(PROPERTY_NAME_PATTERN, new JsonPropertyName2SchemaDefinitionReferenceProvider());
+    registrar.registerReferenceProvider(REF_PATTERN, new JsonPointerReferenceProvider(false));
+    registrar.registerReferenceProvider(SCHEMA_PATTERN, new JsonPointerReferenceProvider(true));
     registrar.registerReferenceProvider(REQUIRED_PROP_PATTERN, new JsonRequiredPropsReferenceProvider());
   }
 
   private static PsiElementPattern.Capture<JsonValue> createPropertyValuePattern(
-    @SuppressWarnings("SameParameterValue") @NotNull final String propertyName) {
+    @SuppressWarnings("SameParameterValue") @NotNull final String propertyName, boolean schemaOnly, boolean rootOnly) {
 
     return PlatformPatterns.psiElement(JsonValue.class).and(new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (element instanceof JsonValue) {
           final JsonValue value = (JsonValue) element;
-          if (!JsonSchemaService.isSchemaFile(CompletionUtil.getOriginalOrSelf(value.getContainingFile()))) return false;
+          if (schemaOnly && !JsonSchemaService.isSchemaFile(CompletionUtil.getOriginalOrSelf(value.getContainingFile()))) return false;
 
-          if (value.getParent() instanceof JsonProperty && ((JsonProperty)value.getParent()).getValue() == element) {
-            return propertyName.equals(((JsonProperty)value.getParent()).getName());
+          final JsonProperty property = ObjectUtils.tryCast(value.getParent(), JsonProperty.class);
+          if (property != null && property.getValue() == element) {
+            final PsiFile file = property.getContainingFile();
+            if (rootOnly && (!(file instanceof JsonFile) || ((JsonFile)file).getTopLevelValue() != property.getParent())) return false;
+            return propertyName.equals(property.getName());
           }
-        }
-        return false;
-      }
-
-      @Override
-      public boolean isClassAcceptable(Class hintClass) {
-        return true;
-      }
-    }));
-  }
-
-  private static PsiElementPattern.Capture<JsonStringLiteral> createPropertyNamePattern() {
-    return PlatformPatterns.psiElement(JsonStringLiteral.class).and(new FilterPattern(new ElementFilter() {
-      @Override
-      public boolean isAcceptable(Object element, @Nullable PsiElement context) {
-        if (element instanceof JsonStringLiteral) {
-          final PsiElement parent = ((JsonStringLiteral)element).getParent();
-          return parent instanceof JsonProperty && ((JsonProperty)parent).getNameElement() == element;
         }
         return false;
       }

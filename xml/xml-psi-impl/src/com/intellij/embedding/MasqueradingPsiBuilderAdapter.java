@@ -367,7 +367,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }
@@ -399,7 +399,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     }
 
     @Override
-    public void error(String message) {
+    public void error(@NotNull String message) {
       if (myOriginalPositionMarker != null) {
         myOriginalPositionMarker.drop();
       }

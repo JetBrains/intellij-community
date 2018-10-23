@@ -41,8 +41,14 @@ class CompilationTasksImpl extends CompilationTasks {
       resolveProjectDependencies()
       return
     }
+    // Android Studio: added by Change I1dba4249 / commit 8f836c4
     if (context.options.compiledModules != null) {
       context.messages.info("Compilation skipped, modules and their dependencies are described in the file '${context.options.compiledModules}'")
+      resolveProjectDependencies()
+      return
+    }
+    if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+      context.messages.info("Compilation skipped, the compiled classes from '${context.options.pathToCompiledClassesArchivesMetadata}' will be used")
       resolveProjectDependencies()
       return
     }
@@ -81,6 +87,7 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void buildProjectArtifacts(Collection<String> artifactNames) {
+    // Android Studio: added by Change I1dba4249 / commit 8f836c4
     if (context.options.compiledArtifacts != null) {
       context.messages.info("Artifact build skipped, the prebuilt artifacts from '${context.options.compiledArtifacts}' will be used")
       return

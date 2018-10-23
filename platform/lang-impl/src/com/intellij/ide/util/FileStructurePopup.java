@@ -161,6 +161,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         return getRootElement() == element;
       }
 
+      @NotNull
       @Override
       protected TreeElementWrapper createTree() {
         return StructureViewComponent.createWrapper(myProject, myModel.getRoot(), myModel);

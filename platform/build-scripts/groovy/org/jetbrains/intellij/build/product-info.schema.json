@@ -39,15 +39,15 @@
             "enum": ["Windows", "Linux", "macOS"]
           },
           "launcherPath": {
-            "description": "Path to an executable file which starts the IDE (relative to the parent directory of this file, '/' as a separator), e.g. 'bin/idea.sh'",
+            "description": "Path to an executable file which starts the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.sh'",
             "type": "string"
           },
           "javaExecutablePath": {
-            "description": "Path to an JRE executable file (relative to the parent directory of this file, '/' as a separator), e.g. 'jre64/bin/java'. May be missing if JRE isn't bundled with the product.",
+            "description": "Path to an JRE executable file (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'jre64/bin/java'. May be missing if JRE isn't bundled with the product.",
             "type": "string"
           },
           "vmOptionsFilePath": {
-            "description": "Path to a file containing JVM options which are used to start the IDE (relative to the parent directory of this file, '/' as a separator), e.g. 'bin/idea64.vmoptions'",
+            "description": "Path to a file containing JVM options which are used to start the IDE (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea64.vmoptions'",
             "type": "string"
           },
           "startupWmClass": {

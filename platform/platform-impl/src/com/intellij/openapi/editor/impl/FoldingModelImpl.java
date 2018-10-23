@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
+public class FoldingModelImpl extends InlayModel.SimpleAdapter
+  implements FoldingModelEx, PrioritizedInternalDocumentListener, Dumpable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFoldingModelImpl");
 
   public static final Key<Boolean> SELECT_REGION_ON_CARET_NEARBY = Key.create("select.region.on.caret.nearby");
@@ -575,6 +576,11 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public int getPriority() {
     return EditorDocumentPriorities.FOLD_MODEL;
+  }
+
+  @Override
+  public void onUpdated(@NotNull Inlay inlay) {
+    myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable

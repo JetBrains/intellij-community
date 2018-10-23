@@ -180,7 +180,7 @@ public class GitVFSListener extends VcsVFSListener {
 
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
-        GitFileUtils.delete(myProject, root, files, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }

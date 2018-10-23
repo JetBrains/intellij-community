@@ -25,7 +25,7 @@ import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 public class SmartTreeStructure extends AbstractTreeStructure {
-
+  @NotNull
   protected final TreeModel myModel;
   protected final Project myProject;
   private TreeElementWrapper myRootElementWrapper;
@@ -77,6 +77,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     return myRootElementWrapper;
   }
 
+  @NotNull
   protected TreeElementWrapper createTree() {
     return new TreeElementWrapper(myProject, myModel.getRoot(), myModel);
   }

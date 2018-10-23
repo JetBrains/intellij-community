@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StructureViewModuleNode extends AbstractModuleNode {
-  public StructureViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
+  public StructureViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

@@ -67,6 +67,7 @@ public class Group implements KeymapGroup {
   @Override
   public void addGroup(KeymapGroup keymapGroup) {
     Group group = (Group) keymapGroup;
+    if (myChildren.contains(group)) return;
     myChildren.add(group);
     group.myParent = this;
   }

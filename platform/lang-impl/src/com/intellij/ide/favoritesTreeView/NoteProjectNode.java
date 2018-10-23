@@ -23,7 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public class NoteProjectNode extends ProjectViewNodeWithChildrenList<NoteNode> {
-  public NoteProjectNode(Project project, NoteNode node, ViewSettings viewSettings) {
+  public NoteProjectNode(Project project, @NotNull NoteNode node, ViewSettings viewSettings) {
     super(project, node, viewSettings);
   }
 

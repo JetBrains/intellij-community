@@ -187,6 +187,7 @@ public class FileParser {
     return statement;
   }
 
+  @NotNull
   private static String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {
     return bundle.getMessage(errorMessageKey);
   }

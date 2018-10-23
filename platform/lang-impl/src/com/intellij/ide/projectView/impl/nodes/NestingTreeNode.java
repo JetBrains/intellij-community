@@ -45,7 +45,10 @@ public class NestingTreeNode extends PsiFileNode {
   public Collection<AbstractTreeNode> getChildrenImpl() {
     final ArrayList<AbstractTreeNode> result = new ArrayList<>(myChildNodes.size());
     for (PsiFileNode node : myChildNodes) {
-      result.add(new PsiFileNode(node.getProject(), node.getValue(), node.getSettings()));
+      PsiFile value = node.getValue();
+      if (value != null) {
+        result.add(new PsiFileNode(node.getProject(), value, node.getSettings()));
+      }
     }
 
     final Collection<AbstractTreeNode> superChildren = super.getChildrenImpl();

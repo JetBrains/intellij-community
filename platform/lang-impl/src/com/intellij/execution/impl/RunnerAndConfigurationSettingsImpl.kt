@@ -52,6 +52,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
+  @Suppress("UNUSED_PARAMETER")
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
@@ -198,7 +202,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
         configuration.configurationModule.findModule(moduleName)?.let {
@@ -207,12 +211,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.deserializeAndLoadState(element)
-    }
-    else {
-      configuration.readExternal(element)
-    }
+    deserializeConfigurationFrom(configuration, element)
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
@@ -274,7 +273,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       }
     }
 
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       configuration.configurationModule.module?.let {
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
@@ -295,15 +294,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     PathMacroManager.getInstance(project).collapsePathsRecursively(element)
   }
 
-  private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.serializeStateInto(element)
-    }
-    else {
-      configuration.writeExternal(element)
-    }
-  }
-
   override fun writeScheme(): Element {
     val element = Element("configuration")
     writeExternal(element)
@@ -313,7 +303,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
     configuration.checkConfiguration()
-    if (configuration !is RunConfigurationBase) {
+    if (configuration !is RunConfigurationBase<*>) {
       return
     }
 
@@ -508,3 +498,21 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
+
+fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
+  if (configuration is PersistentStateComponent<*>) {
+    serializeStateInto(configuration, element)
+  }
+  else {
+    configuration.writeExternal(element)
+  }
+}
+
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
+  if (configuration is PersistentStateComponent<*>) {
+    deserializeAndLoadState(configuration, element)
+  }
+  else {
+    configuration.readExternal(element)
+  }
+}

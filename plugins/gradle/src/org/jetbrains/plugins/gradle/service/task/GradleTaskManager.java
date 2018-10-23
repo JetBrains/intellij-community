@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -50,6 +51,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.jetbrains.plugins.gradle.util.GradleUtil.determineRootProject;
 
@@ -88,13 +90,10 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
 
     ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
-    if (forkedDebuggerSetup != null) {
-      String javaHome = effectiveSettings.getJavaHome();
-      JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
-        javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
-      boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
-      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
+    if (forkedDebuggerSetup != null && isGradleScriptDebug(settings)) {
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater(effectiveSettings)));
     }
+
     CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
     myCancellationMap.put(id, cancellationTokenSource);
     Function<ProjectConnection, Void> f = connection -> {
@@ -132,6 +131,19 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       myHelper.ensureInstalledWrapper(id, determineRootProject(projectPath), effectiveSettings, listener, cancellationTokenSource.token());
     }
     myHelper.execute(projectPath, effectiveSettings, f);
+  }
+
+  protected boolean isGradleScriptDebug(@Nullable GradleExecutionSettings settings) {
+    return Optional.ofNullable(settings)
+      .map(s -> s.getUserData(GradleRunConfiguration.DEBUG_FLAG_KEY))
+      .orElse(false);
+  }
+
+  protected boolean isJdk9orLater(GradleExecutionSettings effectiveSettings) {
+    String javaHome = effectiveSettings.getJavaHome();
+    JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
+      javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
+    return jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,

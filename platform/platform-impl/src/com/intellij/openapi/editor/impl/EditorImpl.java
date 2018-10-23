@@ -450,6 +450,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myFoldingModel.addListener(mySoftWrapModel, myCaretModel);
 
+    myInlayModel.addListener(myFoldingModel, myCaretModel);
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
     myIndentsModel = new IndentsModelImpl(this);
@@ -960,7 +961,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
     if (myProject == null || !myProject.isDisposed()) {
-      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+      CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(myProject);
+      if (settingsManager != null) {
+        settingsManager.removeListener(this);
+      }
     }
 
     if (myBulkUpdateListener != null) {
@@ -1501,7 +1505,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int endVisLine = myDocument.getTextLength() <= 0
                      ? 0
                      : offsetToVisualLine(myDocument.getLineEndOffset(Math.min(myDocument.getLineCount() - 1, endLine)));
-    int height = endVisLine * getLineHeight() - yStartLine + getLineHeight() + 2;
+    int height = visualLineToY(endVisLine) - yStartLine + getLineHeight() + 2;
 
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStartLine, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStartLine, myGutterComponent.getWidth(), height);
@@ -4590,7 +4594,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       String contextMenuGroupId = myContextMenuGroupId;
       Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
       if (inlay != null) {
-        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId();
+        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
       }
       AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(contextMenuGroupId);

@@ -177,7 +177,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param before       marker to complete this one before.
      * @param errorMessage for error element.
      */
-    void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage);
+    void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage);
 
     /**
      * Completes this marker and labels it as error element with specified message. Before calling this method,
@@ -185,7 +185,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param message for error element.
      */
-    void error(String message);
+    void error(@NotNull String message);
 
     /**
      * Like {@linkplain #error(String)}, but the marker is completed before specified one.
@@ -193,7 +193,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param message for error element.
      * @param before  marker to complete this one before.
      */
-    void errorBefore(String message, @NotNull Marker before);
+    void errorBefore(@NotNull String message, @NotNull Marker before);
 
     /**
      * Allows to define custom edge token binders instead of default ones. If any of parameters is null
@@ -220,7 +220,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @param messageText the text of the error message displayed to the user.
    */
-  void error(String messageText);
+  void error(@NotNull String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.

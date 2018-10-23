@@ -237,7 +237,7 @@ class AssociationsEditor {
   @SuppressWarnings({"ALL"})
   private static class MyProjectStructure extends AbstractProjectTreeStructure {
 
-    public MyProjectStructure(Project project) {
+    public MyProjectStructure(@NotNull Project project) {
       super(project);
     }
 

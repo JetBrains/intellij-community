@@ -15,16 +15,13 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.copy
 
-import com.intellij.openapi.application.Result
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.copy.CopyClassesHandler
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
-
 /**
  * @author peter
  */
@@ -43,14 +40,11 @@ class GroovyCopyClassTest extends LightCodeInsightFixtureTestCase {
 
     final PsiClass srcClass = myFixture.javaFacade.findClass("foo.$testName", GlobalSearchScope.allScope(project))
     assertTrue(CopyClassesHandler.canCopyClass(srcClass))
-    new WriteCommandAction(project, [] as PsiFile[]) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
+    WriteCommandAction.runWriteCommandAction(project, {
         def map = Collections.singletonMap(srcClass.navigationElement.containingFile, [srcClass] as PsiClass[])
         def dir = srcClass.manager.findDirectory(myFixture.tempDirFixture.getFile("bar"))
         CopyClassesHandler.doCopyClasses(map, "${testName}_after", dir, project)
-      }
-    }.execute()
+      });
 
     myFixture.checkResultByFile("bar/${testName}_after.groovy", "${testName}_after.groovy", true)
   }

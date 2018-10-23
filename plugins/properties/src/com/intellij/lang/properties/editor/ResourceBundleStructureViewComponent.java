@@ -64,6 +64,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     getTree().setCellRenderer(new ResourceBundleEditorRenderer());
   }
 
+  @NotNull
   @Override
   protected ActionGroup createActionGroup() {
     final DefaultActionGroup result = (DefaultActionGroup) super.createActionGroup();
@@ -72,7 +73,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   @Override
-  protected void addGroupByActions(final DefaultActionGroup result) {
+  protected void addGroupByActions(@NotNull final DefaultActionGroup result) {
     super.addGroupByActions(result);
     result.add(new NewPropertyAction(true), Constraints.FIRST);
   }

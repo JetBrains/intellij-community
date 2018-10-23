@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "a": {
+      "type": "array",
+      "items": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "number"
+        }
+      ],
+        "additionalItems": {
+            "type": "boolean"
+        }
+    }
+  }
+}

@@ -35,7 +35,7 @@ import java.util.List;
 public class MvcProjectNode extends AbstractProjectNode {
   private final MvcToolWindowDescriptor myDescriptor;
 
-  public MvcProjectNode(final Project project, final ViewSettings viewSettings, MvcToolWindowDescriptor descriptor) {
+  public MvcProjectNode(@NotNull Project project, final ViewSettings viewSettings, MvcToolWindowDescriptor descriptor) {
     super(project, project, viewSettings);
     myDescriptor = descriptor;
   }

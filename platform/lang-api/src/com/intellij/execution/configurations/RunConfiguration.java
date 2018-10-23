@@ -151,7 +151,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void readExternal(@NotNull Element element) {
   }
 
-  default void writeExternal(Element element) {
+  default void writeExternal(@NotNull Element element) {
   }
 
   @NotNull

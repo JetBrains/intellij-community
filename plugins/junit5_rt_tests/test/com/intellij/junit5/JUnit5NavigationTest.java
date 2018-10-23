@@ -75,7 +75,7 @@ class JUnit5NavigationTest {
     String locationHintValue = locationHintValue();
 
     Assertions.assertTrue(locationHintValue.startsWith("java:"), locationHintValue);
-    Assertions.assertTrue(locationHintValue.contains("://className.methodName"), locationHintValue);
+    Assertions.assertTrue(locationHintValue.contains("://className/methodName"), locationHintValue);
   }
 
   @Test

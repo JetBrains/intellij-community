@@ -209,8 +209,7 @@ public class CheckRegExpForm {
 
   @TestOnly
   public static boolean isMatchingTextTest(@NotNull PsiFile regexpFile, @NotNull String sampleText) {
-    final RegExpMatchResult result = isMatchingText(regexpFile, sampleText);
-    return result != null && result == RegExpMatchResult.MATCHES;
+    return isMatchingText(regexpFile, sampleText) == RegExpMatchResult.MATCHES;
   }
   static RegExpMatchResult isMatchingText(@NotNull final PsiFile regexpFile, @NotNull String sampleText) {
     final String regExp = regexpFile.getText();

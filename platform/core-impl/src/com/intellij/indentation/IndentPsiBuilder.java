@@ -141,7 +141,7 @@ public class IndentPsiBuilder extends PsiBuilderAdapter {
     }
 
     @Override
-    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage) {
+    public void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage) {
       unregisterMarker(this);
       super.doneBefore(type, before, errorMessage);
     }

@@ -1,0 +1,38 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmName("PyCustomPackageManagers")
+
+package com.jetbrains.python.packaging
+
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.projectRoots.Sdk
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Experimental
+interface PyPackageManagerProvider {
+  /**
+   * Returns [PyPackageManager] if specified [sdk] is known to this provider
+   * and `null` otherwise.
+   *
+   * @see tryCreateCustomPackageManager
+   */
+  fun tryCreateForSdk(sdk: Sdk): PyPackageManager?
+}
+
+val EP_NAME: ExtensionPointName<PyPackageManagerProvider> = ExtensionPointName.create("Pythonid.packageManagerProvider")
+
+private val LOG: Logger = Logger.getInstance("#com.jetbrains.python.packaging.PyCustomPackageManagers")
+
+/**
+ * Returns the first [PyPackageManager] returned by available
+ * [PyPackageManagerProvider]s for [sdk] specified. Returns `null` if all
+ * [PyPackageManagerProvider]s returned `null` for this [sdk].
+ */
+@ApiStatus.Experimental
+fun tryCreateCustomPackageManager(sdk: Sdk): PyPackageManager? {
+  val managers = EP_NAME.extensionList.mapNotNull { it.tryCreateForSdk(sdk) }
+  if (managers.size > 1) {
+    LOG.warn("Ambiguous Python package managers found: $managers")
+  }
+  return managers.firstOrNull()
+}

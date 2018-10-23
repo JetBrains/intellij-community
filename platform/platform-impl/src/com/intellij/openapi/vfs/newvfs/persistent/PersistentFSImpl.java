@@ -713,7 +713,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
         String newName = vme.getFile().getName();
         path2 = vme.getNewParent().getPath() + "/" + newName;
       }
-      if (path2 != null && !path2.equals(path) && checkIfConflictingEvent(path2, files, middleDirs)) {
+      if (path2 != null && !FileUtil.PATH_HASHING_STRATEGY.equals(path2, path) && checkIfConflictingEvent(path2, files, middleDirs)) {
         break;
       }
     }
@@ -753,6 +753,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
                                @NotNull Set<? super String> files,
                                @NotNull Set<? super String> middleDirs) {
     int endIndex = groupByPath(events, startIndex, files, middleDirs);
+    assert endIndex > startIndex : events.get(startIndex) +"; files: "+files+"; middleDirs: "+middleDirs;
     // since all events in the group events[startIndex..endIndex) are mutually non-conflicting, we can re-arrange creations/deletions together
     groupCreations(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
     groupDeletions(events, startIndex, endIndex, outValidatedEvents, outApplyEvents);
@@ -867,8 +868,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
 
     int startIndex = 0;
     List<Runnable> applyEvents = new ArrayList<>(events.size());
-    Set<String> files = new THashSet<>(events.size());
-    Set<String> middleDirs = new THashSet<>(events.size());
+    Set<String> files = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> middleDirs = new THashSet<>(events.size(), FileUtil.PATH_HASHING_STRATEGY);
     while (startIndex != events.size()) {
       applyEvents.clear();
       List<VFileEvent> validated = new ArrayList<>(events.size() - startIndex);

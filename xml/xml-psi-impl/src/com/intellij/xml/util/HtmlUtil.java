@@ -582,7 +582,7 @@ public class HtmlUtil {
         }
 
         @Override
-        public void error(String message, int startOffset, int endOffset) {
+        public void error(@NotNull String message, int startOffset, int endOffset) {
         }
       });
     }

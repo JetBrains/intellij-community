@@ -37,7 +37,7 @@ import java.util.List;
  * @author yole
  */
 public class PyElementNode extends BasePsiNode<PyElement> {
-  public PyElementNode(Project project, PyElement value, ViewSettings viewSettings) {
+  public PyElementNode(Project project, @NotNull PyElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

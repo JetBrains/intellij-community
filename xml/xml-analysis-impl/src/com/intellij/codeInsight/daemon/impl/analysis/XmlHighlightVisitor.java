@@ -31,6 +31,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -427,6 +428,12 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     XmlAttribute attribute = (XmlAttribute)parent;
 
     XmlTag tag = attribute.getParent();
+
+    if (tag == null) {
+      LOG.error("Missing tag for attribute: " + attribute.getName(),
+                new Attachment(myHolder.getContextFile().getName(), myHolder.getContextFile().getText()));
+      return;
+    }
 
     XmlElementDescriptor elementDescriptor = tag.getDescriptor();
     XmlAttributeDescriptor attributeDescriptor = elementDescriptor != null ? elementDescriptor.getAttributeDescriptor(attribute):null;

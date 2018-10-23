@@ -31,10 +31,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitFileRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
+import git4idea.*;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.GitBinaryHandler;
 import git4idea.commands.GitCommand;
@@ -100,6 +97,11 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     VcsRevisionNumber revisionNumber = revision != null ? revision.getRevisionNumber() : null;
 
     return annotate(realFilePath, revisionNumber, file);
+  }
+
+  @Override
+  public boolean isAnnotationValid(@NotNull FilePath path, @NotNull VcsRevisionNumber revisionNumber) {
+    return GitContentRevision.getRepositoryIfSubmodule(myProject, path) == null;
   }
 
   @NotNull

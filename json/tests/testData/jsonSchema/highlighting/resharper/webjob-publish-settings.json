@@ -1,0 +1,64 @@
+{
+	"title": "JSON schema for Azure Webjobs configuration files",
+	"$schema": "http://json-schema.org/draft-04/schema#",
+
+	"type": "object",
+	"required": [ "runMode" ],
+
+	"definitions": {
+		"shared": {
+			"properties": {
+				"webJobName": {
+					"type": "string",
+					"description": "The name of the Azure Webjob."
+				},
+				"startTime": {
+					"type": "string",
+					"format": "date-time",
+					"description": "The start time of a scheduled job. Example. 2014-06-11T00:00:00-08:00"
+				},
+				"endTime": {
+					"type": "string",
+					"format": "date-time",
+					"description": "The end time of a scheduled job. Example. 2014-06-12T00:00:00-08:00"
+				},
+				"jobRecurrenceFrequency": {
+					"type": "string",
+					"enum": [ "Second", "Minute", "Hour", "Day", "Week", "Month" ],
+					"description": "The frequency metric used with the 'interval' property."
+				},
+				"interval": {
+					"type": "integer",
+					"description": "The interval of how often the Azure Webjob should run. Use it with the 'jobRecurrenceFrequency' property."
+				}
+			}
+		},
+		"scheduled": {
+			"required": [ "webJobName", "startTime", "endTime", "jobRecurrenceFrequency", "interval" ],
+			"allOf": [ { "$ref": "#/definitions/shared" } ],
+			"properties": {
+				"runMode": {
+					"type": "string",
+					"enum": [ "Scheduled" ],
+					"description": "Determines the run mode of the Azure Webjob. \n\n Triggered: manually triggered \n Scheduled: runs on a specific schedule \n Continuous: runs all the time"
+				}
+			}
+		},
+		"notScheduled": {
+			"required": [ "runMode" ],
+			"allOf": [ { "$ref": "#/definitions/shared" } ],
+			"properties": {
+				"runMode": {
+					"type": "string",
+					"enum": [ "Continuous", "OnDemand" ],
+					"description": "Determines the run mode of the Azure Webjob. \n\n Triggered: manually triggered \n Scheduled: runs on a specific schedule \n Continuous: runs all the time"
+				}
+			}
+		}
+	},
+
+	"oneOf": [
+		{ "$ref": "#/definitions/scheduled" },
+		{ "$ref": "#/definitions/notScheduled" }
+	]
+}

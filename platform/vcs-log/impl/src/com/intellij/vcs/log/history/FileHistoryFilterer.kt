@@ -50,7 +50,6 @@ import com.intellij.vcs.log.visible.VcsLogFilterer
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
-import com.intellij.vcsUtil.VcsUtil
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
@@ -66,7 +65,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
                       filters: VcsLogFilterCollection,
                       commitCount: CommitCountStage): Pair<VisiblePack, CommitCountStage> {
     val filePath = getFilePath(filters) ?: return vcsLogFilterer.filter(dataPack, sortType, filters, commitCount)
-    val root = VcsUtil.getVcsRootFor(project, filePath)!!
+    val root = VcsLogUtil.getActualRoot(project, filePath)!!
     return MyWorker(root, filePath, getHash(filters)).filter(dataPack, sortType, filters, commitCount)
   }
 

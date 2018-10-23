@@ -86,10 +86,12 @@ fun PluginsDialogScenarios.isPluginRequiredVersionInstalled(pluginName: String, 
     welcomePageDialogModel.openPluginsDialog()
     testCase.logUIStep("Get version of `$pluginName` plugin")
     pluginDialog {
-      if (isPluginInstalled(pluginName)) {
+      if (isPluginInstalled(pluginName)) { // it can be shown on trending page and not installed
         pluginDetails(pluginName) {
-          version = pluginVersion()
-          testCase.logInfo("Found `$version` version of `$pluginName` plugin")
+          if (isPluginInstalled(pluginName)) {
+            version = pluginVersion()
+            testCase.logInfo("Found `$version` version of `$pluginName` plugin")
+          }
         }
       }
       else

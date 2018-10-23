@@ -30,9 +30,6 @@ public class Foundation {
     myFoundationLibrary = Native.loadLibrary("Foundation", FoundationLibrary.class, foundationOptions);
   }
 
-  static Callback ourRunnableCallback;
-
-
   public static void init() { /* fake method to init foundation */ }
 
   private Foundation() {
@@ -253,6 +250,7 @@ public class Foundation {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
 
+  private static Callback ourRunnableCallback;
   private static final Map<String, RunnableInfo> ourMainThreadRunnables = new HashMap<String, RunnableInfo>();
   private static long ourCurrentRunnableCount = 0;
   private static final Object RUNNABLE_LOCK = new Object();
@@ -268,20 +266,29 @@ public class Foundation {
   }
 
   public static void executeOnMainThread(final boolean withAutoreleasePool, final boolean waitUntilDone, final Runnable runnable) {
-    initRunnableSupport();
-
+    String runnableCountString;
     synchronized (RUNNABLE_LOCK) {
+      initRunnableSupport();
+
       ourCurrentRunnableCount++;
-      ourMainThreadRunnables.put(String.valueOf(ourCurrentRunnableCount), new RunnableInfo(runnable, withAutoreleasePool));
+      runnableCountString = String.valueOf(ourCurrentRunnableCount);
+      ourMainThreadRunnables.put(runnableCountString, new RunnableInfo(runnable, withAutoreleasePool));
     }
 
+    // fixme: Use Grand Central Dispatch instead?
     final ID ideaRunnable = getObjcClass("IdeaRunnable");
     final ID runnableObject = invoke(invoke(ideaRunnable, "alloc"), "init");
+    final ID keyObject = invoke(nsString(runnableCountString), "retain");
     invoke(runnableObject, "performSelectorOnMainThread:withObject:waitUntilDone:", createSelector("run:"),
-           nsString(String.valueOf(ourCurrentRunnableCount)), Boolean.valueOf(waitUntilDone));
+           keyObject, Boolean.valueOf(waitUntilDone));
     invoke(runnableObject, "release");
   }
 
+  /**
+   * Registers idea runnable adapter class in ObjC runtime, if not registered yet.
+   * <p>
+   * Warning: NOT THREAD-SAFE! Must be called under lock. Danger of segmentation fault.
+   */
   private static void initRunnableSupport() {
     if (ourRunnableCallback == null) {
       final ID runnableClass = allocateObjcClassPair(getObjcClass("NSObject"), "IdeaRunnable");
@@ -291,6 +298,7 @@ public class Foundation {
         @SuppressWarnings("UnusedDeclaration")
         public void callback(ID self, String selector, ID keyObject) {
           final String key = toStringViaUTF8(keyObject);
+          invoke(keyObject, "release");
 
           RunnableInfo info;
           synchronized (RUNNABLE_LOCK) {

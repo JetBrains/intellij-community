@@ -502,7 +502,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
         performWhenAllCommitted(() -> semaphore.up(), contextTransaction);
       }, ModalityState.any());
-      semaphore.waitFor();
+
+      while (!semaphore.waitFor(10)) {
+        ProgressManager.checkCanceled();
+      }
     }
   }
 

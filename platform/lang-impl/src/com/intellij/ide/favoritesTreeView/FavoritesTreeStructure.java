@@ -51,13 +51,13 @@ public class FavoritesTreeStructure extends ProjectTreeStructure {
 
   private static final Logger LOGGER = Logger.getInstance(FavoritesTreeStructure.class);
   private TreeStructureProvider myNonProjectProvider = null;
-  public FavoritesTreeStructure(Project project) {
+  public FavoritesTreeStructure(@NotNull Project project) {
     super(project, FavoritesProjectViewPane.ID);
     myNonProjectProvider = new MyProvider(project);
   }
 
   @Override
-  protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+  protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
     return new FavoritesRootNode(project);
   }
 

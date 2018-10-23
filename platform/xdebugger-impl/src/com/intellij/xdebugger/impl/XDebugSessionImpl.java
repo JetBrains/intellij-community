@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -592,6 +593,10 @@ public class XDebugSessionImpl implements XDebugSession {
       boolean isTopFrame = isTopFrameSelected();
 
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
+
+      if (Registry.is("debugger.show.values.between.lines")) {
+        XDebuggerInlayUtil.setupValuePlaceholders(this, false);
+      }
     }
   }
 
@@ -915,6 +920,9 @@ public class XDebugSessionImpl implements XDebugSession {
         }
 
         clearPausedData();
+        if (Registry.is("debugger.show.values.between.lines")) {
+          XDebuggerInlayUtil.setupValuePlaceholders(this, true);
+        }
 
         if (myValueMarkers != null) {
           myValueMarkers.clear();

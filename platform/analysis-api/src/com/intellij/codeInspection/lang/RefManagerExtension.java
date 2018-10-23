@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.lang;
 
@@ -78,5 +78,9 @@ public interface RefManagerExtension<T> {
   @NotNull
   default Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
     return Stream.empty();
+  }
+
+  default void markExternalReferencesProcessed(@NotNull RefElement file) {
+
   }
 }

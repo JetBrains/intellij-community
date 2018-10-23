@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
-  public PackageViewProjectNode(Project project, ViewSettings viewSettings) {
+  public PackageViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
 

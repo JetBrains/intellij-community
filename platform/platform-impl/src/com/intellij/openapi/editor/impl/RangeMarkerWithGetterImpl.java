@@ -8,14 +8,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @see HardReferencingRangeMarkerTree
  */
-class RangeMarkerWithGetterImpl<T extends RangeMarkerWithGetterImpl> extends RangeMarkerImpl implements Getter<T> {
+class RangeMarkerWithGetterImpl extends RangeMarkerImpl implements Getter<RangeMarkerWithGetterImpl> {
   RangeMarkerWithGetterImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
     super(document, start, end, register);
   }
 
   @Override
-  public T get() {
-    //noinspection unchecked
-    return (T)this;
+  public final RangeMarkerWithGetterImpl get() {
+    return this;
   }
 }

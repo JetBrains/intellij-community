@@ -89,7 +89,11 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
+    Collection<VcsRef> branches = myFilterModel.getDataPack().getRefs().getBranches();
+    if (myBranchFilterModel.getVisibleRoots() != null) {
+      branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
+    }
+    return ContainerUtil.map(branches, VcsRef::getName);
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {

@@ -478,7 +478,7 @@ public class XmlParsing {
     myBuilder.advanceLexer();
   }
 
-  private void error(final String message) {
+  private void error(@NotNull String message) {
     myBuilder.error(message);
   }
 }

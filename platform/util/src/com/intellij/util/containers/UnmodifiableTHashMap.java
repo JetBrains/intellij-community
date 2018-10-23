@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class UnmodifiableTHashMap<K,V> extends THashMap<K,V> {
-  public UnmodifiableTHashMap(@NotNull TObjectHashingStrategy<K> strategy, K k, V v) {
+  public UnmodifiableTHashMap(@NotNull TObjectHashingStrategy<K> strategy, @NotNull K k, V v) {
     super(strategy);
     super.put(k, v);
   }
@@ -26,13 +26,13 @@ public class UnmodifiableTHashMap<K,V> extends THashMap<K,V> {
     }
   }
   public UnmodifiableTHashMap(@NotNull TObjectHashingStrategy<K> strategy,
-                              @NotNull Map<? extends K, ? extends V> map, K additionalKey, V additionalValue) {
+                              @NotNull Map<? extends K, ? extends V> map, @NotNull K additionalKey, V additionalValue) {
     this(strategy, map);
     super.put(additionalKey, additionalValue);
   }
 
   @Override
-  public V put(K key, V value) {
+  public V put(@NotNull K key, V value) {
     throw new UnsupportedOperationException();
   }
 

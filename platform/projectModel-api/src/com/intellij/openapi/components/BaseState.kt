@@ -4,7 +4,6 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
@@ -21,7 +20,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
-  private val properties: MutableList<StoredProperty<Any>> = SmartList()
+  // do not use SmartList because most objects have more than 1 property
+  private val properties: MutableList<StoredProperty<Any>> = ArrayList()
 
   @Volatile
   @Transient

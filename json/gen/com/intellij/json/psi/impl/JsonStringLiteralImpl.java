@@ -37,4 +37,8 @@ public class JsonStringLiteralImpl extends JsonStringLiteralMixin implements Jso
     return JsonPsiImplUtils.getValue(this);
   }
 
+  public boolean isPropertyName() {
+    return JsonPsiImplUtils.isPropertyName(this);
+  }
+
 }

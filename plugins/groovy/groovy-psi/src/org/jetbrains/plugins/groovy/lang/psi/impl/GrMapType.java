@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
@@ -115,15 +114,6 @@ public abstract class GrMapType extends GrLiteralClassType {
     return param == null ? "null" : param.getInternalCanonicalText();
   }
 
-  public boolean equals(Object obj) {
-    if (obj instanceof GrMapType) {
-      GrMapType other = (GrMapType)obj;
-      return getStringEntries().equals(other.getStringEntries()) &&
-             getOtherEntries().equals(other.getOtherEntries());
-    }
-    return super.equals(obj);
-  }
-
   @Override
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return type instanceof GrMapType || super.isAssignableFrom(type);
@@ -145,8 +135,8 @@ public abstract class GrMapType extends GrLiteralClassType {
 
   public static GrMapType create(JavaPsiFacade facade,
                                  GlobalSearchScope scope,
-                                 LinkedHashMap<String, PsiType> stringEntries,
-                                 List<Couple<PsiType>> otherEntries) {
+                                 @NotNull LinkedHashMap<String, PsiType> stringEntries,
+                                 @NotNull List<Couple<PsiType>> otherEntries) {
     return new GrMapTypeImpl(facade, scope, stringEntries, otherEntries, LanguageLevel.JDK_1_5);
   }
 

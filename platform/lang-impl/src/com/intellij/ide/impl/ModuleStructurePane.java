@@ -30,9 +30,10 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class ModuleStructurePane extends ProjectViewPane {
+  @NotNull
   private final Module myModule;
 
-  public ModuleStructurePane(Module module) {
+  public ModuleStructurePane(@NotNull Module module) {
     super(module.getProject());
     myModule = module;
   }
@@ -42,7 +43,7 @@ public class ModuleStructurePane extends ProjectViewPane {
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectTreeStructure(myProject, ID){
       @Override
-      protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
+      protected AbstractTreeNode createRoot(@NotNull final Project project, @NotNull ViewSettings settings) {
         return new StructureViewModuleNode(project, myModule, settings);
       }
     };

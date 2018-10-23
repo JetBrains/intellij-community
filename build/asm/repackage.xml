@@ -43,8 +43,10 @@
     <patch dir="${src.dir}" strip="0" patchfile="2_coverage_fix.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="3_api_version.patch" failonerror="true"/>
     <patch dir="${src.dir}" strip="0" patchfile="4_compat_const.patch" failonerror="true"/>
+    <patch dir="${src.dir}" strip="0" patchfile="5_asm62_compat.patch" failonerror="true"/>
     <delete file="${src.dir}/org/objectweb/asm/tools/ModuleInfoBndPlugin.java" quiet="true"/>
     <delete dir="${src.dir}/org/objectweb/asm/optimizer" quiet="true"/>
+    <delete dir="${src.dir}" includes="**/*.orig" quiet="true"/>
   </target>
 
   <target name="repackage" depends="patch">

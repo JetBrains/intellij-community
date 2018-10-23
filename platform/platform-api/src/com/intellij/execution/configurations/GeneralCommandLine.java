@@ -508,12 +508,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     @Override
     public String put(String key, String value) {
-      if (key == null || key.isEmpty() || key.indexOf('\0') != -1 || SystemInfo.isUnix && key.indexOf('=') != -1) {
-        throw new IllegalArgumentException("Illegal environment variable name: " + key);
-      }
-      if (value == null || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Illegal environment variable value: " + value);
-      }
+      EnvironmentUtil.validate(key, value);
       return super.put(key, value);
     }
 

@@ -25,7 +25,7 @@ import java.util.Collection;
 
 public class GroupWrapper extends CachingChildrenTreeNode<Group> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.smartTree.GroupWrapper");
-  public GroupWrapper(Project project, Group value, TreeModel treeModel) {
+  public GroupWrapper(Project project, @NotNull Group value, @NotNull TreeModel treeModel) {
     super(project, value, treeModel);
     clearChildren();
   }

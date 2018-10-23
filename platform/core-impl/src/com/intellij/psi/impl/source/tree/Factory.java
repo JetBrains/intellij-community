@@ -64,7 +64,7 @@ public class Factory  {
   }
 
   @NotNull
-  public static CompositeElement createErrorElement(String description) {
+  public static CompositeElement createErrorElement(@NotNull String description) {
     return new PsiErrorElementImpl(description);
   }
 

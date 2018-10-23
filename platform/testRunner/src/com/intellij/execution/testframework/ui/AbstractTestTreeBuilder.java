@@ -28,7 +28,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 
-public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder implements AbstractTestTreeBuilderBase {
+public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder implements AbstractTestTreeBuilderBase<AbstractTestProxy> {
   public AbstractTestTreeBuilder(final JTree tree,
                                  final DefaultTreeModel defaultTreeModel,
                                  final AbstractTreeStructure structure,

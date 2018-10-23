@@ -320,7 +320,7 @@ public class ModuleParser {
     builder.advanceLexer();
   }
 
-  private static void parseExtras(PsiBuilder builder, String message) {
+  private static void parseExtras(PsiBuilder builder, @NotNull String message) {
     PsiBuilder.Marker extras = builder.mark();
     while (builder.getTokenType() != null) builder.advanceLexer();
     extras.error(message);

@@ -21,6 +21,7 @@ public abstract class SearchResultPanel {
   public final int backTabIndex;
 
   protected final PluginsGroupComponent myPanel;
+  private JScrollBar myVerticalScrollBar;
   private final PluginsGroup myGroup = new PluginsGroup("Search Results");
   private String myQuery;
   private AtomicBoolean myRunQuery;
@@ -37,7 +38,7 @@ public abstract class SearchResultPanel {
 
     setEmptyText();
 
-    if (panel instanceof PluginsGroupComponentWithProgress) {
+    if (isProgressMode()) {
       loading(false);
     }
   }
@@ -46,6 +47,9 @@ public abstract class SearchResultPanel {
   public JComponent createScrollPane() {
     JBScrollPane pane = new JBScrollPane(myPanel);
     pane.setBorder(JBUI.Borders.empty());
+    if (isProgressMode()) {
+      myVerticalScrollBar = pane.getVerticalScrollBar();
+    }
     return pane;
   }
 
@@ -86,7 +90,7 @@ public abstract class SearchResultPanel {
   private void handleQuery(@NotNull String query) {
     myGroup.clear();
 
-    if (myPanel instanceof PluginsGroupComponentWithProgress) {
+    if (isProgressMode()) {
       loading(true);
 
       AtomicBoolean runQuery = myRunQuery = new AtomicBoolean(true);
@@ -103,8 +107,8 @@ public abstract class SearchResultPanel {
           loading(false);
 
           if (!myGroup.descriptors.isEmpty()) {
-            myPanel.addGroup(myGroup);
             myGroup.titleWithCount();
+            myPanel.addLazyGroup(myGroup, myVerticalScrollBar, 100, this::fullRepaint);
           }
 
           myPanel.initialSelection(false);
@@ -138,9 +142,13 @@ public abstract class SearchResultPanel {
   }
 
   public void dispose() {
-    if (myPanel instanceof PluginsGroupComponentWithProgress) {
+    if (isProgressMode()) {
       ((PluginsGroupComponentWithProgress)myPanel).dispose();
     }
+  }
+
+  private boolean isProgressMode() {
+    return myPanel instanceof PluginsGroupComponentWithProgress;
   }
 
   private void removeGroup() {

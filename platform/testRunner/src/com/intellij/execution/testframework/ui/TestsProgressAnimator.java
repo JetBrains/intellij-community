@@ -37,6 +37,15 @@ public class TestsProgressAnimator implements Runnable, Disposable {
   private AbstractTestProxy myCurrentTestCase;
   private AbstractTestTreeBuilderBase myTreeBuilder;
 
+  /**
+   * To be deleted when AbstractTreeBuilder would be completely eliminated
+   */
+  @Deprecated
+  public TestsProgressAnimator(AbstractTestTreeBuilder builder) {
+    Disposer.register(builder, this);
+    init(builder);
+  }
+
   public TestsProgressAnimator(AbstractTestTreeBuilderBase builder) {
     Disposer.register(builder, this);
     init(builder);

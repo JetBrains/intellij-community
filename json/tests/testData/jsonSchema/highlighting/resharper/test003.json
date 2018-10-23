@@ -1,0 +1,5 @@
+{
+  "a": <warning descr="Type is not allowed. Expected: string.">5</warning>,
+  "b": <warning descr="Type is not allowed. Expected: string.">7</warning>,
+  "c": <warning descr="Type is not allowed. Expected: string.">9</warning>
+}

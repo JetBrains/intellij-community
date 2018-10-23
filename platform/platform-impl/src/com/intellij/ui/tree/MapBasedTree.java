@@ -17,22 +17,16 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
+import static java.util.Collections.*;
 
 /**
  * @author Sergey.Malenkov
@@ -161,9 +155,9 @@ public final class MapBasedTree<K, N> {
         oldChildren = emptyList();
         LOG.warn("MapBasedTree: unexpected state");
       }
-      removed = oldChildren.stream().filter(entry -> !mapContained.containsKey(entry)).collect(toList());
-      inserted = newChildren.stream().filter(entry -> !mapContained.containsKey(entry)).collect(toList());
-      contained = newChildren.stream().filter(entry -> mapContained.containsKey(entry)).collect(toList());
+      removed = ContainerUtil.filter(oldChildren, entry -> !mapContained.containsKey(entry));
+      inserted = ContainerUtil.filter(newChildren, entry -> !mapContained.containsKey(entry));
+      contained = ContainerUtil.filter(newChildren, entry -> mapContained.containsKey(entry));
     }
     removeChildren(parent, removed);
     mapInserted.forEach(this::insert);

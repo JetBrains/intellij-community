@@ -413,13 +413,28 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
-    get() = selectedConfigurationId?.let { lock.read { idToSettings.get(it) } }
+    get() {
+      return lock.read { 
+        selectedConfigurationId?.let { idToSettings.get(it) }
+      }
+    }
     set(value) {
-      if (value?.uniqueID == selectedConfigurationId) {
-        return
+      fun isTheSame() = value?.uniqueID == selectedConfigurationId
+      
+      lock.read {
+        if (isTheSame()) {
+          return
+        }
       }
 
-      selectedConfigurationId = value?.uniqueID
+      lock.write {
+        if (isTheSame()) {
+          return
+        }
+        
+        selectedConfigurationId = value?.uniqueID
+      }
+      
       eventPublisher.runConfigurationSelected()
     }
 
@@ -509,7 +524,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (!task.isEnabled) {
           child.setAttribute("enabled", "false")
         }
-        task.serializeStateInto(child)
+        serializeStateInto(task, child)
       }
       else {
         @Suppress("DEPRECATION")
@@ -756,7 +771,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
           beforeRunTask.isEnabled = true
-          beforeRunTask.deserializeAndLoadState(methodElement)
+          deserializeAndLoadState(beforeRunTask, methodElement)
         }
         else {
           @Suppress("DEPRECATION")
@@ -1070,7 +1085,7 @@ internal fun RunConfiguration.cloneBeforeRunTasks() {
 fun callNewConfigurationCreated(factory: ConfigurationFactory, configuration: RunConfiguration) {
   @Suppress("UNCHECKED_CAST", "DEPRECATION")
   (factory as? ConfigurationFactoryEx<RunConfiguration>)?.onNewConfigurationCreated(configuration)
-  (configuration as? RunConfigurationBase)?.onNewConfigurationCreated()
+  (configuration as? ConfigurationCreationListener)?.onNewConfigurationCreated()
 }
 
 private fun getFactoryKey(factory: ConfigurationFactory): String {

@@ -5,11 +5,11 @@ import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.openapi.Disposable;
 
-public interface AbstractTestTreeBuilderBase extends Disposable {
+public interface AbstractTestTreeBuilderBase<T extends AbstractTestProxy> extends Disposable {
   /**
    * Allow test animator to update the tree
    */
-  void repaintWithParents(AbstractTestProxy testProxy);
+  void repaintWithParents(T testProxy);
 
   /**
    * Update comparator used in tree

@@ -19,12 +19,16 @@ class DuplicateExpressionsTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/duplicateExpressions"
 
   fun testUpdateInWhileLoop() = doTest(70)
-  fun testIntFloatMixedMath() = doTest(60)
+  fun testIntFloatMixedMath() = doTest(50)
   fun testTernaryIf() = doTest(60)
   fun testStringStartsWith() = doTest(60)
   fun testFinalFieldsOfParameter() = doTest(100)
-  fun testStringCharAt() = doTest(70)
+  fun testStringCharAt() = doTest(60)
   fun testEquals() = doTest(70)
+  fun testVariableModified() = doTest(50)
+  fun testVariableNotModified() = doTest(50)
+  fun testCompositeQualifier() = doTest(40)
+  fun testMethodCallWithSideEffect() = doTest(70)
 
   private fun doTest(threshold: Int = 50) {
     val oldThreshold = inspection.complexityThreshold

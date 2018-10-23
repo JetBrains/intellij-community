@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
@@ -118,9 +117,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
     getRunManager().writeConfigurations(
       element,
-      getModuleRunConfigurationSettings().stream()
-        .filter(settings -> settings.isShared() == isShared)
-        .collect(Collectors.toList())
+      ContainerUtil.filter(getModuleRunConfigurationSettings(), settings -> settings.isShared() == isShared)
     );
     return element;
   }

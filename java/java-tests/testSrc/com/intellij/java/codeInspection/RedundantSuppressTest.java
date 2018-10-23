@@ -63,7 +63,7 @@ public class RedundantSuppressTest extends InspectionTestCase {
   }
 
   public void testModuleInfo() {
-    doTest();
+    doTest("redundantSuppress/" + getTestName(true), myWrapper,"java 1.5",false);
   }
 
   public void testDefaultFile() {

@@ -86,6 +86,11 @@ class BuildOptions {
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
 
   /**
+   * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   */
+  String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
+
+  /**
    * Path to a property file containing the paths of precompiled artifacts
    */
   String compiledArtifacts = System.getProperty("intellij.build.compiled.artifacts")

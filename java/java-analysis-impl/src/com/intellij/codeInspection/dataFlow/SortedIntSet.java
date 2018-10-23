@@ -52,12 +52,28 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
     }
   }
 
+  boolean containsAll(SortedIntSet that) {
+    int thatSize = that.size();
+    int thisSize = this.size();
+    if (thatSize > thisSize) return false;
+    int thisIndex=0;
+    for (int thatIndex = 0; thatIndex < thatSize; thatIndex++) {
+      int thatValue = that._data[thatIndex];
+      while (thisIndex < thisSize && this._data[thisIndex] < thatValue) {
+        thisIndex++;
+      }
+      if (thisIndex == thisSize || this._data[thisIndex] > thatValue) return false;
+      thisIndex++;
+    }
+    return true;
+  }
+
   @Override
   public int compareTo(SortedIntSet t) {
     if (t == this) return 0;
-    if (t.size() != size()) return size() - t.size();
+    if (t.size() != size()) return Integer.compare(size(), t.size());
     for (int i = 0; i < size(); i++) {
-      if (_data[i] != t._data[i]) return _data[i] - t._data[i];
+      if (_data[i] != t._data[i]) return Integer.compare(_data[i], t._data[i]);
     }
     return 0;
   }

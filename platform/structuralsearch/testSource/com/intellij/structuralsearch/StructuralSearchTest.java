@@ -2357,6 +2357,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String pattern2 = "interface 'Class {  default '_ReturnType '_MethodName{0,0}('_ParameterType '_Parameter*);}";
     assertEquals("should find interface without default methods", 1, findMatchesCount(source, pattern2));
+
+    String pattern3 = "default '_ReturnType 'MethodName('_ParameterType '_Parameter*);";
+    assertEquals("find naked default method", 1, findMatchesCount(source, pattern3));
   }
 
   public void testFindMethodReferences() {

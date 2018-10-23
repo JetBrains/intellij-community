@@ -594,7 +594,7 @@ public class XPathParser implements PsiParser {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
+  protected static void checkMatches(final PsiBuilder builder, final IElementType token, @NotNull String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
     } else {
@@ -602,7 +602,7 @@ public class XPathParser implements PsiParser {
     }
   }
 
-  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokens, final String message) {
+  protected static void checkMatches(final PsiBuilder builder, final TokenSet tokens, @NotNull String message) {
     if (tokens.contains(builder.getTokenType())) {
       builder.advanceLexer();
     } else {

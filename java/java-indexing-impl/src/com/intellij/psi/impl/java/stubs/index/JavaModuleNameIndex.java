@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule> {
@@ -73,7 +72,7 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
     }
 
     if (!filter.isEmpty()) {
-      modules = modules.stream().filter(m -> !filter.contains(m.getContainingFile().getVirtualFile())).collect(Collectors.toList());
+      modules = ContainerUtil.filter(modules, m -> !filter.contains(m.getContainingFile().getVirtualFile()));
     }
 
     return modules;

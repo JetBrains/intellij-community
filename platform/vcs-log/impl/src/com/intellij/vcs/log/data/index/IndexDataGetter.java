@@ -31,7 +31,7 @@ import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
-import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -268,7 +268,7 @@ public class IndexDataGetter {
 
   @NotNull
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
     if (myRoots.contains(root)) {
       return executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit), Collections.emptySet());
     }
@@ -280,7 +280,7 @@ public class IndexDataGetter {
   public FileNamesData buildFileNamesData(@NotNull FilePath path) {
     FileNamesData result = new MyFileNamesData();
 
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
     if (myRoots.contains(root)) {
       executeAndCatch(() -> {
         myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {

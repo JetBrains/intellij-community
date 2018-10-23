@@ -378,7 +378,7 @@ TODO(b/118034991): generate product-info.json files (or not) */
       inFile.delete()
 
 /* TODO(b/118034991): generate product-info.json files (or not)
-      new ProductInfoValidator(buildContext).checkInArchive(targetPath, zipRoot)
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
 TODO(b/118034991): generate product-info.json files (or not) */
       return targetPath
     }
@@ -390,7 +390,9 @@ TODO(b/118034991): generate product-info.json files (or not) */
 
   static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
     String executable = buildContext.productProperties.baseFileName
-    new ProductInfoGenerator(buildContext).generateProductJson(productJsonDir, null, "MacOS/${executable}", javaExecutablePath, "bin/${executable}.vmoptions", OsFamily.MACOS)
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", null,
+                                                               "../MacOS/${executable}", javaExecutablePath,
+                                                               "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
 
 

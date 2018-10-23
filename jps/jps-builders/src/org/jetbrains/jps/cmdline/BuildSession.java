@@ -54,6 +54,8 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
   public static final String FS_STATE_FILE = "fs_state.dat";
+  private static final Boolean REPORT_BUILD_STATISTICS = Boolean.valueOf(System.getProperty(GlobalOptions.REPORT_BUILD_STATISTICS, "false"));
+  
   private final UUID mySessionId;
   private final Channel myChannel;
   @Nullable 
@@ -162,14 +164,14 @@ final class BuildSession implements Runnable, CanceledStatus {
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
           else if (buildMessage instanceof BuilderStatisticsMessage) {
-            BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
-            int srcCount = message.getNumberOfProcessedSources();
-            long time = message.getElapsedTimeMs();
-            if (srcCount != 0 || time > 50) {
-              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed" +
-                       (srcCount == 0 ? "" : " ("+ time/srcCount +"ms per file)"));
+            final BuilderStatisticsMessage message = (BuilderStatisticsMessage)buildMessage;
+            final boolean worthReporting = message.getNumberOfProcessedSources() != 0 || message.getElapsedTimeMs() > 50;
+            if (worthReporting) {
+              LOG.info(message.getMessageText());
             }
-            response = null;
+            response = worthReporting && REPORT_BUILD_STATISTICS ?
+                       CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f):
+                       null;
           }
           else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;

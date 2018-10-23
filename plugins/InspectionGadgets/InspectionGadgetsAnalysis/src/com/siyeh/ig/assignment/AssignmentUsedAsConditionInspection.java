@@ -76,10 +76,13 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
     @Override
     public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
-      if (expression.getRExpression() == null || !(expression.getLExpression() instanceof PsiReferenceExpression)) {
+      if (expression.getRExpression() == null ||
+          expression.getOperationTokenType() != JavaTokenType.EQ ||
+          !PsiType.BOOLEAN.equals(expression.getType())) {
         return;
       }
-      if (!PsiType.BOOLEAN.equals(expression.getType())) {
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
+      if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

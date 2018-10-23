@@ -800,26 +800,24 @@ public class SMTestProxy extends AbstractTestProxy {
     if (isLeaf()) {
       state = SuiteFinishedState.EMPTY_LEAF_SUITE;
     }
+    else if (isDefect()) {
+      // Test suit contains errors if at least one of its tests contains error
+      if (containsErrorTests()) {
+        state = SuiteFinishedState.ERROR_SUITE;
+      }
+      else {
+        // if suite contains failed tests - all suite should be
+        // consider as failed
+        state = containsFailedTests()
+                ? SuiteFinishedState.FAILED_SUITE
+                : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
+      }
+    }
     else if (isEmptySuite()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     }
     else {
-      if (isDefect()) {
-        // Test suit contains errors if at least one of its tests contains error
-        if (containsErrorTests()) {
-          state = SuiteFinishedState.ERROR_SUITE;
-        }
-        else {
-          // if suite contains failed tests - all suite should be
-          // consider as failed
-          state = containsFailedTests()
-                  ? SuiteFinishedState.FAILED_SUITE
-                  : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
-        }
-      }
-      else {
-        state = SuiteFinishedState.PASSED_SUITE;
-      }
+      state = SuiteFinishedState.PASSED_SUITE;
     }
     return state;
   }

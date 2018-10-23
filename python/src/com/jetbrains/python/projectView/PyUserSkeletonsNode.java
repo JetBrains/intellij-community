@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class PyUserSkeletonsNode extends PsiDirectoryNode {
-  private PyUserSkeletonsNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+  private PyUserSkeletonsNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
@@ -46,7 +46,9 @@ public class PyUserSkeletonsNode extends PsiDirectoryNode {
     final VirtualFile userSkeletonsVirtualFile = PyUserSkeletonsUtil.getUserSkeletonsDirectory();
     if (userSkeletonsVirtualFile != null) {
       final PsiDirectory userSkeletonsDirectory = PsiManager.getInstance(project).findDirectory(userSkeletonsVirtualFile);
-      return new PyUserSkeletonsNode(project, userSkeletonsDirectory, viewSettings);
+      if (userSkeletonsDirectory != null) {
+        return new PyUserSkeletonsNode(project, userSkeletonsDirectory, viewSettings);
+      }
     }
     return null;
   }

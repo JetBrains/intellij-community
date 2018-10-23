@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.text.Caret;
 import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ComponentEvent;
@@ -104,23 +103,17 @@ public abstract class CellPluginComponent extends JPanel {
       }
     };
 
-    myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
+    PluginManagerConfigurableNew.installTiny(myDescription);
     myDescription.setEditable(false);
     myDescription.setFocusable(false);
     myDescription.setOpaque(false);
     myDescription.setBorder(null);
+    myDescription.setCaret(EmptyCaret.INSTANCE);
 
-    Caret caret = myDescription.getCaret();
-    myDescription.setCaret(null);
-
+    myDescription.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
     myDescription.setText(XmlStringUtil.wrapInHtml(description));
 
-    if (caret != null) {
-      myDescription.setCaret(caret);
-      myDescription.setCaretPosition(0);
-    }
-
-    parent.add(PluginManagerConfigurableNew.installTiny(myDescription));
+    parent.add(myDescription);
   }
 
   @NotNull

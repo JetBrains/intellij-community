@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.GotoFileAction;
 import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
 import com.intellij.ide.util.gotoByName.GotoFileConfiguration;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeUICustomization;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +30,8 @@ import java.util.stream.Stream;
  */
 public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<FileType> {
 
-  public FileSearchEverywhereContributor(Project project) {
-    super(project);
+  public FileSearchEverywhereContributor(@Nullable Project project, @Nullable PsiElement context) {
+    super(project, context);
   }
 
   @NotNull
@@ -89,7 +91,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
     @NotNull
     @Override
     public SearchEverywhereContributor<FileType> createContributor(AnActionEvent initEvent) {
-      return new FileSearchEverywhereContributor(initEvent.getProject());
+      return new FileSearchEverywhereContributor(initEvent.getProject(), GotoActionBase.getPsiContext(initEvent));
     }
 
     @Nullable

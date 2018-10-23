@@ -72,15 +72,15 @@ public class InlineElementData extends HighlightData {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      return myDelegate.calcWidthInPixels(editor);
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      return myDelegate.calcWidthInPixels(inlay);
     }
 
     @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
-      myDelegate.paint(editor, g, r, textAttributes);
+    public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+      myDelegate.paint(inlay, g, r, textAttributes);
       if (drawBorder) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(BLINKING_HIGHLIGHTS_ATTRIBUTES);
+        TextAttributes attributes = inlay.getEditor().getColorsScheme().getAttributes(BLINKING_HIGHLIGHTS_ATTRIBUTES);
         if (attributes != null && attributes.getEffectColor() != null) {
           g.setColor(attributes.getEffectColor());
           g.drawRect(r.x, r.y, r.width, r.height);

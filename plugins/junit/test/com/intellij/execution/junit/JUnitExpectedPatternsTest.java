@@ -47,6 +47,15 @@ public class JUnitExpectedPatternsTest {
   }
 
   @Test
+  public void testHamcrestAssertThatEqWithReasonTrim() {
+    ComparisonFailureData notification = createNotification("\n" +
+                                                            "Expected: is <2>\n" +
+                                                            "     but: was <1>");
+    Assert.assertNotNull(notification);
+    Assert.assertEquals("is <2>", notification.getExpected());
+  }
+  
+  @Test
   public void testNonGreedyGt() {
     ComparisonFailureData notification = createNotification("expected:<<foo>> but was:<hi with <brackets>>");
     Assert.assertNotNull(notification);

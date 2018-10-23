@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbUnawareHider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -61,8 +62,6 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
                                                      @NotNull PsiElement target) {
     HierarchyBrowser hierarchyBrowser = provider.createHierarchyBrowser(target);
 
-    final Content content;
-
     HierarchyBrowserManager hierarchyBrowserManager = HierarchyBrowserManager.getInstance(project);
 
     final ContentManager contentManager = hierarchyBrowserManager.getContentManager();
@@ -73,6 +72,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       browserComponent = DumbService.getInstance(project).wrapGently(browserComponent, project);
     }
 
+    final Content content;
     if (selectedContent != null && !selectedContent.isPinned()) {
       content = selectedContent;
       Component component = content.getComponent();
@@ -98,7 +98,11 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
       }
       provider.browserActivated(hierarchyBrowser);
     };
-    ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY).activate(runnable);
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
+    toolWindow.activate(runnable);
+    if (hierarchyBrowser instanceof Disposable) {
+      Disposer.register(toolWindow.getContentManager(), (Disposable)hierarchyBrowser);
+    }
     return hierarchyBrowser;
   }
 

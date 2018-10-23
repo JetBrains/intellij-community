@@ -17,6 +17,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Range;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
@@ -832,7 +833,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
-    promiseExpandAll(tree).onProcessed(path -> onDone.run());
+    promiseExpandAll(tree).onSuccess(result -> onDone.run());
   }
 
   /**
@@ -841,7 +842,7 @@ public final class TreeUtil {
    * @param tree a tree, which nodes should be expanded
    */
   @NotNull
-  public static Promise<TreePath> promiseExpandAll(@NotNull JTree tree) {
+  public static Promise<?> promiseExpandAll(@NotNull JTree tree) {
     return promiseExpand(tree, Integer.MAX_VALUE);
   }
 
@@ -862,7 +863,7 @@ public final class TreeUtil {
    * @param onDone a task to run after expanding nodes
    */
   public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
-    promiseExpand(tree, depth).onProcessed(path -> onDone.run());
+    promiseExpand(tree, depth).onSuccess(result -> onDone.run());
   }
 
   /**
@@ -872,8 +873,15 @@ public final class TreeUtil {
    * @param depth a depth starting from the root node
    */
   @NotNull
-  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
-    return promiseExpand(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE);
+  public static Promise<?> promiseExpand(@NotNull JTree tree, int depth) {
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    promiseMakeVisible(tree, path -> depth < path.getPathCount() ? TreeVisitor.Action.SKIP_SIBLINGS : TreeVisitor.Action.CONTINUE, promise)
+      .onError(promise::setError)
+      .onSuccess(path -> {
+        if (promise.isCancelled()) return;
+        promise.setResult(null);
+      });
+    return promise;
   }
 
   @NotNull
@@ -1184,10 +1192,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be expanded
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and expanded
    */
   public static void expand(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseExpand(tree, visitor).onProcessed(consumer);
+    promiseExpand(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1195,6 +1203,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be expanded
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and expanded
    */
   @NotNull
   public static Promise<TreePath> promiseExpand(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1217,10 +1226,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be made visible
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and made visible
    */
   public static void makeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseMakeVisible(tree, visitor).onProcessed(consumer);
+    promiseMakeVisible(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1228,6 +1237,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be made visible
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and made visible
    */
   @NotNull
   public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1264,7 +1274,7 @@ public final class TreeUtil {
       .onSuccess(paths -> {
         if (promise.isCancelled()) return;
         if (paths != null && !paths.isEmpty()) {
-          paths = paths.stream().filter(tree::isVisible).collect(toList());
+          paths = ContainerUtil.filter(paths, tree::isVisible);
         }
         if (paths != null && !paths.isEmpty()) {
           promise.setResult(paths);
@@ -1301,10 +1311,10 @@ public final class TreeUtil {
    *
    * @param tree     a tree, which nodes should be selected
    * @param visitor  a visitor that controls expanding of tree nodes
-   * @param consumer a path consumer called on done
+   * @param consumer a path consumer called if path is found and selected
    */
   public static void select(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
-    promiseSelect(tree, visitor).onProcessed(consumer);
+    promiseSelect(tree, visitor).onSuccess(consumer);
   }
 
   /**
@@ -1312,6 +1322,7 @@ public final class TreeUtil {
    *
    * @param tree    a tree, which nodes should be selected
    * @param visitor a visitor that controls expanding of tree nodes
+   * @return a promise that will be succeed only if path is found and selected
    */
   @NotNull
   public static Promise<TreePath> promiseSelect(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
@@ -1380,9 +1391,10 @@ public final class TreeUtil {
       TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
       return acceptor.accept(visitor);
     }
-    return model == null
-           ? Promises.rejectedPromise("tree model is not set")
-           : Promises.resolvedPromise(visitModel(model, visitor));
+    if (model == null) return Promises.rejectedPromise("tree model is not set");
+    AsyncPromise<TreePath> promise = new AsyncPromise<>();
+    UIUtil.invokeLaterIfNeeded(() -> promise.setResult(visitModel(model, visitor)));
+    return promise;
   }
 
   /**

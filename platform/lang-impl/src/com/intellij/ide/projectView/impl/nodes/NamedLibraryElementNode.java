@@ -40,7 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement> implements NavigatableWithText {
-  public NamedLibraryElementNode(Project project, NamedLibraryElement value, ViewSettings viewSettings) {
+  public NamedLibraryElementNode(Project project, @NotNull NamedLibraryElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 

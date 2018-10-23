@@ -401,16 +401,15 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       hostWhitespaceStart = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceStart);
       hostWhitespaceEnd = ((EditorWindow)myEditor).getDocument().injectedToHost(hostWhitespaceEnd);
     }
-    List<Inlay> inlays = hostEditor.getInlayModel().getInlineElementsInRange(hostWhitespaceStart, hostWhitespaceEnd);
+    List<Inlay> inlays = ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(hostEditor,
+                                                                                                  hostWhitespaceStart, hostWhitespaceEnd);
     for (Inlay inlay : inlays) {
-      if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) {
-        int inlayOffset = inlay.getOffset();
-        if (myEditor instanceof EditorWindow) {
-          if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
-          inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
-        }
-        return inlayOffset;
+      int inlayOffset = inlay.getOffset();
+      if (myEditor instanceof EditorWindow) {
+        if (((EditorWindow)myEditor).getDocument().getHostRange(inlayOffset) == null) continue;
+        inlayOffset = ((EditorWindow)myEditor).getDocument().hostToInjected(inlayOffset);
       }
+      return inlayOffset;
     }
     return offset;
   }

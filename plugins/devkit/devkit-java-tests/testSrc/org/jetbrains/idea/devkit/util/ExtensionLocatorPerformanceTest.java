@@ -17,11 +17,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("util", PathUtil.getJarPathForClass(Attribute.class));
-    moduleBuilder.addLibrary("jblist", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(ArrayList.class));
     moduleBuilder.addLibrary("console", PathUtil.getJarPathForClass(CustomizableConsoleFoldingBean.class));
   }
 

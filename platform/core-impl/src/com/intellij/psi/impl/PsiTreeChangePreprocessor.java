@@ -20,6 +20,10 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * An extension called before notifying {@link com.intellij.psi.PsiTreeChangeListener}s of events.<p></p>
+ *
+ * Try to avoid processing PSI events at all cost! See {@link com.intellij.psi.PsiTreeChangeEvent} documentation for more details.
+ *
  * @author yole
  */
 public interface PsiTreeChangePreprocessor {

@@ -152,7 +152,7 @@ public class SdkConfigurationUtil {
 
       sdkType.setupSdkPaths(sdk);
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       LOG.warn("Error creating or configuring sdk: homeDir=[" + homeDir + "]; " +
                "sdkType=[" + sdkType + "]; " +
                "additionalData=[" + additionalData + "]; " +
