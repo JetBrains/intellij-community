@@ -939,6 +939,7 @@ iml_module(
         "//tools/idea/resources:intellij.java.resources[module]",
         "//tools/idea/platform/xdebugger-impl:intellij.platform.debugger.impl[module]",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
+        "//tools/idea/.idea/libraries:sa-jdwp",
     ],
 )
 

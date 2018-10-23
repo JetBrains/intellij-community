@@ -672,14 +672,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "jayatana",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jayatana-1.2.4"],
-    runtime_deps = ["//tools/idea/lib:jayatana-1.2.4"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "Slf4j",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -1426,4 +1418,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/java-compatibility/1.0.1:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/java-compatibility/1.0.1:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "sa-jdwp",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.2:jar"],
 )

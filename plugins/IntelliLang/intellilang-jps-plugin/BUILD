@@ -14,6 +14,8 @@ iml_module(
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
     ],
+    test_srcs = ["test"],
+    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
@@ -26,5 +28,9 @@ iml_module(
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/java/compiler/instrumentation-util:intellij.java.compiler.instrumentationUtil[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
+        "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
+        "//tools/idea/.idea/libraries:KotlinJavaRuntime[test]",
+        "//tools/idea/.idea/libraries:JUnit4[test]",
+        "//tools/idea/.idea/libraries:assertJ[test]",
     ],
 )

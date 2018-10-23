@@ -66,7 +66,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/jps/model-impl:intellij.platform.jps.model.impl[module]",
         "//tools/idea/platform/analysis-impl:intellij.platform.analysis.impl[module]",
-        "//tools/idea/.idea/libraries:jayatana",
         "//tools/idea/platform/editor-ui-ex:intellij.platform.editor.ex[module]",
         "//tools/idea/.idea/libraries:gson",
         "//tools/idea/.idea/libraries:http-client",

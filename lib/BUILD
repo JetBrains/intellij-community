@@ -49,13 +49,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "jayatana-1.2.4",
-    jars = ["jayatana-1.2.4.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "serviceMessages",
     jars = ["serviceMessages.jar"],
     visibility = ["//visibility:public"],
