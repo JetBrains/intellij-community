@@ -427,7 +427,7 @@ public class Runner {
       }
       catch (Throwable t) {
         logger().error("prepare failed", t);
-        String message = "An error occurred when preparing the patch" + (jarName != null ? ' ' + jarName : "") + ":\n" +
+        String message = "An error occurred when " + (jarName != null ? "extracting " + jarName : "preparing the patch") + ":\n" +
                          t.getClass().getSimpleName() + ": " + t.getMessage() + "\n\n" +
                          ui.bold("No files were changed. Please retry applying the patch.") + "\n\n" +
                          "More details in the log: " + logPath;
