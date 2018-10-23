@@ -143,7 +143,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
 
       FileTemplateSettings settings = ServiceManager.getService(project, FileTemplateSettings.class);
       FTManager ftManager = settings.getDefaultTemplatesManager();
-      File root = ftManager.getConfigRoot(false);
+      File root = ftManager.getConfigRoot();
       assertTrue(root.exists());
       File file = new File(root, "Foo.java");
       assertTrue(file.createNewFile());
