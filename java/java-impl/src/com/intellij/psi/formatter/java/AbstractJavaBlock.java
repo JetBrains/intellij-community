@@ -36,6 +36,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspElementType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -578,10 +579,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       else if (childType == JavaElementType.FIELD) {
         child = processField(result, child, alignmentStrategy, defaultWrap, childIndent);
       }
-      else if (childType == JavaElementType.LOCAL_VARIABLE
-               || childType == JavaElementType.DECLARATION_STATEMENT
-                  && (nodeType == JavaElementType.METHOD || nodeType == JavaElementType.CODE_BLOCK))
-      {
+      else if (childType == JavaElementType.LOCAL_VARIABLE ||
+               childType == JavaElementType.DECLARATION_STATEMENT
+               && (nodeType == JavaElementType.METHOD || nodeType == JavaElementType.CODE_BLOCK) ||
+               mySettings.ALIGN_CONSECUTIVE_ASSIGNMENTS && childType == JavaElementType.EXPRESSION_STATEMENT) {
         result.add(new SimpleJavaBlock(child, defaultWrap, alignmentStrategy, childIndent, mySettings, myJavaSettings, myFormattingMode));
       }
       else if (childType == JavaElementType.METHOD) {
@@ -599,13 +600,15 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
             childIndent = delegateAttributes.getChildIndent();
           }
         }
-
         AlignmentStrategy alignmentStrategyToUse = shouldAlignChild(child)
                                                    ? AlignmentStrategy.wrap(alignment)
                                                    : AlignmentStrategy.getNullStrategy();
 
-        if (myAlignmentStrategy.getAlignment(nodeType, childType) != null &&
-            (nodeType == JavaElementType.IMPLEMENTS_LIST || nodeType == JavaElementType.CLASS)) {
+        if ((myAlignmentStrategy.getAlignment(nodeType, childType) != null &&
+             (nodeType == JavaElementType.IMPLEMENTS_LIST || nodeType == JavaElementType.CLASS))
+            // required to pass the same alignment strategy for consequent assignment expressions
+            || (mySettings.ALIGN_CONSECUTIVE_ASSIGNMENTS && ((nodeType == JavaElementType.EXPRESSION_STATEMENT
+                && childType == JavaElementType.ASSIGNMENT_EXPRESSION) || nodeType == JavaElementType.ASSIGNMENT_EXPRESSION))) {
           alignmentStrategyToUse = myAlignmentStrategy;
         }
 
@@ -1290,9 +1293,17 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
 
     ASTNode parent = myNode.getTreeParent();
     IElementType parentType = parent != null ? parent.getElementType() : null;
-    if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS
-        && (parentType == JavaElementType.METHOD || myNode instanceof PsiCodeBlock)) {
-      return new SubsequentVariablesAligner();
+    if (parentType == JavaElementType.METHOD || myNode instanceof PsiCodeBlock) {
+      if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS || mySettings.ALIGN_CONSECUTIVE_ASSIGNMENTS) {
+        List<CompositeAligner.AlignerConfiguration> configuration = new SmartList<>();
+        if (mySettings.ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS) {
+          configuration.add(SubsequentVariablesAlignerConfigurations.subsequentVariableAligner);
+        }
+        if (mySettings.ALIGN_CONSECUTIVE_ASSIGNMENTS) {
+          configuration.add(SubsequentVariablesAlignerConfigurations.subsequentAssignmentAligner);
+        }
+        return new CompositeAligner(configuration);
+      }
     }
 
     return ChildAlignmentStrategyProvider.NULL_STRATEGY_PROVIDER;

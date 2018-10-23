@@ -455,6 +455,8 @@ public class CodeStyleSettingPresentation {
                                        ApplicationBundle.message("wrapping.align.fields.in.columns")),
       new CodeStyleSettingPresentation("ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
                                        ApplicationBundle.message("wrapping.align.variables.in.columns")),
+      new CodeStyleSettingPresentation("ALIGN_CONSECUTIVE_ASSIGNMENTS",
+                                       ApplicationBundle.message("wrapping.align.assignments.in.columns")),
       new CodeStyleSettingPresentation("ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                        ApplicationBundle.message("wrapping.align.simple.methods.in.columns"))
     ));
