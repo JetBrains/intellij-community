@@ -101,7 +101,9 @@ public final class IconLoader {
       next = updater.fun(prev);
     } while (!ourTransform.compareAndSet(prev, next));
     if (prev != next) {
-      clearCache();
+      ourIconsCache.clear();
+      ourIcon2DisabledIcon.clear();
+      ImageLoader.clearCache(); //clears svg cache
     }
   }
 
@@ -148,9 +150,13 @@ public final class IconLoader {
   }
 
   public static void clearCache() {
-    ourIconsCache.clear();
-    ourIcon2DisabledIcon.clear();
-    ImageLoader.clearCache(); //clears svg cache
+    updateTransform(new Function<IconTransform, IconTransform>() {
+      @Override
+      public IconTransform fun(IconTransform transform) {
+        // Copy the transform to trigger update of cached icons
+        return transform.copy();
+      }
+    });
   }
 
   //TODO[kb] support iconsets
@@ -1062,6 +1068,10 @@ public final class IconLoader {
         }
       }
       return Pair.create(path, null);
+    }
+
+    public IconTransform copy() {
+      return new IconTransform(myDark, myPatchers, myFilter);
     }
 
     public static IconTransform getDefault() {
