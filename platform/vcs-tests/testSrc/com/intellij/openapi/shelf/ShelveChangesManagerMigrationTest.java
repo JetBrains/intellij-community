@@ -27,7 +27,7 @@ import org.jdom.Element;
 
 import java.io.File;
 
-public class ShelveChangesManagerTest extends PlatformTestCase {
+public class ShelveChangesManagerMigrationTest extends PlatformTestCase {
 
   public void testMigrateInfo() throws Exception {
     doTest();
