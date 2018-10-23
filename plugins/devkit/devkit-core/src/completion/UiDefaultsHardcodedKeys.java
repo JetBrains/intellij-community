@@ -1347,7 +1347,7 @@ public final class UiDefaultsHardcodedKeys {
     "ValidationTooltip.errorBorderColor",
     "ValidationTooltip.warningBackgroundColor",
     "ValidationTooltip.warningBorderColor",
-    "VersionControl.FileHistory.Commit.otherBranchBackground",
+    "VersionControl.FileHistory.Commit.selectedBranchBackground",
     "VersionControl.Log.Commit.currentBranchBackground",
     "VersionControl.Log.Commit.unmatchedForeground",
     "VersionControl.Ref.foreground",
