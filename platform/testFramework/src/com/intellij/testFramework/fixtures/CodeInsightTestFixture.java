@@ -406,7 +406,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testCompletionVariants(@NotNull @TestDataFile String fileBefore, @NotNull String... items);
 
   /**
-   * Launches renaming refactoring and checks the result.
+   * Launches renaming refactoring on the PSI element at caret and checks the result.
    *
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter  result file to be checked against.
@@ -419,7 +419,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                   @TestDataFile @NotNull String... additionalFiles);
 
   /**
-   * Launches renaming refactoring using the rename handler and checks the result.
+   * Launches renaming refactoring using the rename handler (using the high-level rename API, as opposed to retrieving the PSI element
+   * at caret and invoking the PSI rename on it) and checks the result.
    *
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter  result file to be checked against.
