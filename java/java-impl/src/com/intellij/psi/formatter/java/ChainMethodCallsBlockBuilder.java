@@ -83,7 +83,7 @@ class ChainMethodCallsBlockBuilder {
       }
       else {
         if (!myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
-          wrap = Wrap.createWrap(WrapType.ALWAYS, true);
+          wrap = Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, true);
         } else {
           wrap = null;
         }
@@ -133,7 +133,7 @@ class ChainMethodCallsBlockBuilder {
     List<ASTNode> current = new ArrayList<>();
     if (myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
       for (ASTNode node : nodes) {
-        if (tryAddToResult(node, current, result)) {
+        if (tryFinishChunk(node, current, result)) {
           current = new ArrayList<>();
         }
         current.add(node);
@@ -141,7 +141,7 @@ class ChainMethodCallsBlockBuilder {
     } else {
       for (ASTNode node : nodes) {
         current.add(node);
-        if (tryAddToResult(node, current, result)) {
+        if (tryFinishChunk(node, current, result)) {
           current = new ArrayList<>();
         }
       }
@@ -155,7 +155,7 @@ class ChainMethodCallsBlockBuilder {
   /**
    * @return true if current list should be finished
    */
-  private static boolean tryAddToResult(ASTNode node, List<ASTNode> current, List<ChainedCallChunk> result) {
+  private static boolean tryFinishChunk(ASTNode node, List<ASTNode> current, List<ChainedCallChunk> result) {
     if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
       if (!current.isEmpty()) {
         result.add(new ChainedCallChunk(current));
