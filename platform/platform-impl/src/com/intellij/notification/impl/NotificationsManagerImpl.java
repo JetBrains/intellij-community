@@ -63,6 +63,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -77,6 +78,7 @@ import java.util.List;
 public class NotificationsManagerImpl extends NotificationsManager {
   public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
   public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
+  public static final Color LINK_COLOR = JBColor.namedColor("Notification.Link.foreground", JBColor.link());
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -368,7 +370,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    text.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
+    HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
+    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(LINK_COLOR) + "}");
+    text.setEditorKit(kit);
     text.setForeground(foreground);
 
     final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
