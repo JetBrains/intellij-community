@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +29,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.geom.Area;
-import java.awt.geom.Path2D;
 import java.util.List;
 
 public abstract class ProgressStripeIcon implements Icon {
@@ -78,41 +75,6 @@ public abstract class ProgressStripeIcon implements Icon {
     return JBUI.scale(HEIGHT);
   }
 
-  private static class StripeIcon extends ProgressStripeIcon {
-    private static final double ALPHA = 0.8;
-    private static final JBColor BG_COLOR = new JBColor(ColorUtil.withAlpha(Gray._165, ALPHA), ColorUtil.withAlpha(Gray._110, ALPHA));
-    private static final int WIDTH = 16;
-
-    private StripeIcon(@NotNull JComponent component, int shift) {
-      super(component, shift);
-    }
-
-    @Override
-    public int getChunkWidth() {
-      return JBUI.scale(WIDTH);
-    }
-
-    @Override
-    protected void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
-      g2.setColor(BG_COLOR);
-
-      Path2D.Double path = new Path2D.Double();
-      int height = JBUI.scale(HEIGHT);
-      float incline = height / 2.0f;
-      float length = JBUI.scale(WIDTH) / 2.0f;
-      float start = length / 2.0f;
-      path.moveTo(x + shift + start, y + height);
-      path.lineTo(x + shift + start + incline, y);
-      path.lineTo(x + shift + start + incline + length, y);
-      path.lineTo(x + shift + start + length, y + height);
-      path.lineTo(x + shift + start, y + height);
-      path.closePath();
-
-      g2.fill(new Area(path));
-    }
-  }
-
-  // this icon is not used under darcula
   private static class GradientIcon extends ProgressStripeIcon {
     @SuppressWarnings("UseJBColor")
     private static final Color DARK = new ProgressStripeColor(new JBColor(Gray._165, new Color(0x6a6a6a)),
@@ -162,20 +124,12 @@ public abstract class ProgressStripeIcon implements Icon {
   @NotNull
   public static AsyncProcessIcon generateIcon(@NotNull JComponent component) {
     List<Icon> result = ContainerUtil.newArrayList();
-    if (UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula()) {
-      for (int i = 0; i < 2 * JBUI.scale(GradientIcon.GRADIENT); i += JBUI.scale(TRANSLATE)) {
-        result.add(new GradientIcon(component, i));
-      }
-    }
-    else {
-      for (int i = 0; i < JBUI.scale(StripeIcon.WIDTH); i += JBUI.scale(TRANSLATE)) {
-        result.add(new StripeIcon(component, i));
-      }
-      result = ContainerUtil.reverse(result);
+    for (int i = 0; i < 2 * JBUI.scale(GradientIcon.GRADIENT); i += JBUI.scale(TRANSLATE)) {
+      result.add(new GradientIcon(component, i));
     }
 
     Icon passive = result.get(0);
-    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[0]), passive) {
+    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressStripeIcon", result.toArray(new Icon[0]), passive) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(component.getWidth(), passive.getIconHeight());
