@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
@@ -398,9 +399,9 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   private static int myThreadDumpsCount = 0;
 
-  public static void addThreadDump(Project project, List<ThreadState> threads, final RunnerLayoutUi ui, DebuggerSession session) {
+  public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
     final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.filters(ExceptionFilters.getFilters(session.getSearchScope()));
+    consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
     final ConsoleView consoleView = consoleBuilder.getConsole();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
     consoleView.allowHeavyFilters();

@@ -3,6 +3,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.engine.JavaDebugProcess;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.attach.JavaDebuggerAttachUtil;
 import com.intellij.debugger.impl.attach.PidRemoteConnection;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -15,6 +16,7 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -29,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
@@ -146,7 +149,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
     final JComponent consoleComponent = executionConsole != null ? executionConsole.getComponent() : null;
     ProcessHandler processHandler = executionResult.getProcessHandler();
     assert processHandler != null : executionResult;
-    final ControlBreakAction controlBreakAction = new ControlBreakAction(processHandler);
+    final ControlBreakAction controlBreakAction = new ControlBreakAction(processHandler, contentBuilder.getSearchScope());
     if (consoleComponent != null) {
       controlBreakAction.registerCustomShortcutSet(controlBreakAction.getShortcutSet(), consoleComponent);
       processHandler.addProcessListener(new ProcessAdapter() {
@@ -198,8 +201,11 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
   }
 
   protected static class ControlBreakAction extends ProxyBasedAction {
-    public ControlBreakAction(final ProcessHandler processHandler) {
+    private final GlobalSearchScope mySearchScope;
+
+    public ControlBreakAction(final ProcessHandler processHandler, GlobalSearchScope searchScope) {
       super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
+      mySearchScope = searchScope;
       setShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_CANCEL, InputEvent.CTRL_DOWN_MASK)));
     }
 
@@ -210,7 +216,12 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     protected void perform(AnActionEvent event, ProcessProxy proxy) {
-      if (Registry.is("execution.dump.threads.using.attach") && myProcessHandler instanceof BaseProcessHandler) {
+      Project project = event.getProject();
+      if (project == null) {
+        return;
+      }
+      RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
+      if (Registry.is("execution.dump.threads.using.attach") && myProcessHandler instanceof BaseProcessHandler && runnerContentUi != null) {
         // try vm attach first
         VirtualMachine vm = null;
         try {
@@ -218,7 +229,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
           InputStream inputStream = ((HotSpotVirtualMachine)vm).remoteDataDump();
           String text = StreamUtil.readText(inputStream, CharsetToolkit.UTF8_CHARSET);
           List<ThreadState> threads = ThreadDumpParser.parse(text);
-          showThreadDump(text, threads, event.getProject());
+          DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
           return;
         }
         catch (AttachNotSupportedException e) {
@@ -239,7 +250,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       }
 
       boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
-      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(event.getProject(), myProcessHandler) : null;
+      WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(project, myProcessHandler) : null;
 
       proxy.sendBreak();
 
