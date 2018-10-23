@@ -85,7 +85,9 @@ class BundledJreManager {
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
-        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
+        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
+          cutdirsmapper(dirs: 1)
+        }
       }
       else {
         //'tar' command is used instead of Ant task to ensure that executable flags will be preserved
