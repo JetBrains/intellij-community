@@ -311,52 +311,52 @@ public class ExceptionDeobfuscator {
   }
 
   public static boolean handleMultipleEntryExceptionRanges(ControlFlowGraph graph) {
-
     GenericDominatorEngine engine = new GenericDominatorEngine(new IGraph() {
+      @Override
       public List<? extends IGraphNode> getReversePostOrderList() {
         return graph.getReversePostOrder();
       }
 
+      @Override
       public Set<? extends IGraphNode> getRoots() {
         return new HashSet<>(Collections.singletonList(graph.getFirst()));
       }
     });
 
     engine.initialize();
-    
-    boolean found = false;
-    
-    while(true) {
+
+    boolean found;
+
+    while (true) {
       found = false;
       boolean splitted = false;
-      
-      for(ExceptionRangeCFG range : graph.getExceptions()) {
+
+      for (ExceptionRangeCFG range : graph.getExceptions()) {
         Set<BasicBlock> setEntries = getRangeEntries(range);
-        
-        if(setEntries.size() > 1) { // multiple-entry protected range
+
+        if (setEntries.size() > 1) { // multiple-entry protected range
           found = true;
-          
-          if(splitExceptionRange(range, setEntries, graph, engine)) {
+
+          if (splitExceptionRange(range, setEntries, graph, engine)) {
             splitted = true;
             break;
           }
         }
       }
-      
-      if(!splitted) {
+
+      if (!splitted) {
         break;
       }
     }
-    
+
     return !found;
   }
 
   private static Set<BasicBlock> getRangeEntries(ExceptionRangeCFG range) {
-
     Set<BasicBlock> setEntries = new HashSet<>();
-    Set<BasicBlock> setRange= new HashSet<>(range.getProtectedRange());
-    
-    for(BasicBlock block : range.getProtectedRange()) {
+    Set<BasicBlock> setRange = new HashSet<>(range.getProtectedRange());
+
+    for (BasicBlock block : range.getProtectedRange()) {
       Set<BasicBlock> setPreds = new HashSet<>(block.getPreds());
       setPreds.removeAll(setRange);
 
@@ -367,19 +367,22 @@ public class ExceptionDeobfuscator {
 
     return setEntries;
   }
-  
-  private static boolean splitExceptionRange(ExceptionRangeCFG range, Set<BasicBlock> setEntries, ControlFlowGraph graph, GenericDominatorEngine engine) {
 
-    for(BasicBlock entry : setEntries) {
+  private static boolean splitExceptionRange(ExceptionRangeCFG range,
+                                             Set<BasicBlock> setEntries,
+                                             ControlFlowGraph graph,
+                                             GenericDominatorEngine engine) {
+    for (BasicBlock entry : setEntries) {
       List<BasicBlock> lstSubrangeBlocks = getReachableBlocksRestricted(entry, range, engine);
-      if(!lstSubrangeBlocks.isEmpty() && lstSubrangeBlocks.size() < range.getProtectedRange().size()) {
+      if (!lstSubrangeBlocks.isEmpty() && lstSubrangeBlocks.size() < range.getProtectedRange().size()) {
         // add new range
         ExceptionRangeCFG subRange = new ExceptionRangeCFG(lstSubrangeBlocks, range.getHandler(), range.getExceptionTypes());
         graph.getExceptions().add(subRange);
         // shrink the original range
         range.getProtectedRange().removeAll(lstSubrangeBlocks);
         return true;
-      } else {
+      }
+      else {
         // should not happen
         DecompilerContext.getLogger().writeMessage("Inconsistency found while splitting protected range", IFernflowerLogger.Severity.WARN);
       }
@@ -389,22 +392,21 @@ public class ExceptionDeobfuscator {
   }
 
   public static void insertDummyExceptionHandlerBlocks(ControlFlowGraph graph, int bytecode_version) {
-
     Map<BasicBlock, Set<ExceptionRangeCFG>> mapRanges = new HashMap<>();
     for (ExceptionRangeCFG range : graph.getExceptions()) {
       mapRanges.computeIfAbsent(range.getHandler(), k -> new HashSet<>()).add(range);
     }
-    
+
     for (Entry<BasicBlock, Set<ExceptionRangeCFG>> ent : mapRanges.entrySet()) {
       BasicBlock handler = ent.getKey();
       Set<ExceptionRangeCFG> ranges = ent.getValue();
-      
-      if(ranges.size() == 1) {
+
+      if (ranges.size() == 1) {
         continue;
       }
-      
-      for(ExceptionRangeCFG range : ranges) {
-        
+
+      for (ExceptionRangeCFG range : ranges) {
+
         // add some dummy instructions to prevent optimizing away the empty block  
         SimpleInstructionSequence seq = new SimpleInstructionSequence();
         seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
@@ -414,11 +416,11 @@ public class ExceptionDeobfuscator {
         dummyBlock.setSeq(seq);
 
         graph.getBlocks().addWithKey(dummyBlock, dummyBlock.id);
-        
+
         // only exception predecessors from this range considered
         List<BasicBlock> lstPredExceptions = new ArrayList<>(handler.getPredExceptions());
         lstPredExceptions.retainAll(range.getProtectedRange());
-        
+
         // replace predecessors
         for (BasicBlock pred : lstPredExceptions) {
           pred.replaceSuccessor(handler, dummyBlock);
@@ -428,20 +430,19 @@ public class ExceptionDeobfuscator {
         range.setHandler(dummyBlock);
         // add common exception edges
         Set<BasicBlock> commonHandlers = new HashSet<>(handler.getSuccExceptions());
-        for(BasicBlock pred : lstPredExceptions) {
+        for (BasicBlock pred : lstPredExceptions) {
           commonHandlers.retainAll(pred.getSuccExceptions());
         }
         // TODO: more sanity checks?
-        for(BasicBlock commonHandler : commonHandlers) {
+        for (BasicBlock commonHandler : commonHandlers) {
           ExceptionRangeCFG commonRange = graph.getExceptionRange(commonHandler, handler);
-          
+
           dummyBlock.addSuccessorException(commonHandler);
           commonRange.getProtectedRange().add(dummyBlock);
         }
-        
+
         dummyBlock.addSuccessor(handler);
       }
     }
   }
-  
 }
