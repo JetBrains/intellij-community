@@ -65,7 +65,7 @@ public class JavacMain {
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
     final boolean javacBefore9 = isJavacBefore9(compilingTool);
     final JpsJavacFileManager fileManager = CUSTOM_JAVAC_FILE_MANAGER ? new JavacFileManager2(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, false), JavaSourceTransformer.getTransformers()
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, false), javacBefore9, JavaSourceTransformer.getTransformers()
     ) : new JavacFileManager(
       new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, javacBefore9), JavaSourceTransformer.getTransformers()
     );
