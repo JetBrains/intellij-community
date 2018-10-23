@@ -40,8 +40,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.BlockSupportImpl;
-import com.intellij.psi.impl.DiffLog;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -270,6 +268,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     CharSequence newText = changedFile.getNode().getChars();
     for (final PsiFile file : allFiles) {
+      if (!(file instanceof PsiFileImpl)) continue;
       FileElement fileElement = file == changedFile ? null : ((PsiFileImpl)file).getTreeElement();
       Runnable changeAction = fileElement == null ? null : reparseFile(file, fileElement, newText);
       if (changeAction == null) continue;
