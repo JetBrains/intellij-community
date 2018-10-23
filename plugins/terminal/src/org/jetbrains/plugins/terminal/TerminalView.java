@@ -5,6 +5,10 @@ import com.google.common.collect.Sets;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ToggleDistractionFreeModeAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
+import com.intellij.ide.dnd.DnDDropHandler;
+import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
@@ -26,6 +30,9 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.intellij.ui.awt.RelativePoint;
@@ -36,6 +43,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
@@ -384,6 +392,34 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
     super(false, true);
     myPropertiesComponent = propertiesComponent;
     myWindow = window;
+    installDnD(window);
+  }
+
+  private static void installDnD(@NotNull ToolWindow window) {
+    DnDDropHandler handler = new DnDDropHandler() {
+      @Override
+      public void drop(DnDEvent event) {
+        TransferableWrapper tw = ObjectUtils.tryCast(event.getAttachedObject(), TransferableWrapper.class);
+        if (tw != null) {
+          PsiDirectory dir = getDirectory(ArrayUtil.getFirstElement(tw.getPsiElements()));
+          if (dir != null && tw.getPsiElements().length == 1) {
+            TerminalView view = TerminalView.getInstance(dir.getProject());
+            TerminalTabState state = new TerminalTabState();
+            state.myWorkingDirectory = dir.getVirtualFile().getPath();
+            view.createNewSession(view.getTerminalRunner(), state);
+          }
+        }
+      }
+    };
+    DnDSupport.createBuilder(window.getComponent()).setDropHandler(handler).install();
+  }
+
+  @Nullable
+  private static PsiDirectory getDirectory(@Nullable PsiElement item) {
+    if (item instanceof PsiFile) {
+      return ((PsiFile)item).getParent();
+    }
+    return ObjectUtils.tryCast(item, PsiDirectory.class);
   }
 
   @Override
