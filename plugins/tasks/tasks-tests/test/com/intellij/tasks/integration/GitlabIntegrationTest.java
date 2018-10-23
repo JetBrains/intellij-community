@@ -94,7 +94,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     assertEquals("#1 First issue with iid = 1", myRepository.getTaskComment(task));
   }
 
-  // PY-198199
+  // IDEA-198199
   public void testUnspecifiedProjectIdSerialized() {
     myRepository.setCurrentProject(GitlabRepository.UNSPECIFIED_PROJECT);
     final List<Element> options = XmlSerializer.serialize(myRepository).getChildren("option");
