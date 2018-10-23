@@ -20,25 +20,15 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
   private val myListener = MyListener()
   private val myLock = Any()
 
-  protected val allCurrentKeys: Collection<Key>
-    get() = synchronized(myLock) {
-      return ArrayList(myState.keys)
-    }
+  protected val allCurrentKeys get() = synchronized(myLock) { myState.keys.toList() }
 
-  val isEmpty: Boolean
-    get() = synchronized(myLock) {
-      return myState.isEmpty()
-    }
+  val isEmpty get() = synchronized(myLock) { myState.isEmpty() }
 
   protected abstract fun ask(obj: T, description: String?): Boolean
   protected abstract fun getKey(obj: T): Key
   protected abstract fun getNotificationContent(obj: T): String
 
-  protected fun getStateFor(key: Key): Boolean {
-    synchronized(myLock) {
-      return myState.containsKey(key)
-    }
-  }
+  protected fun getStateFor(key: Key) = synchronized(myLock) { myState.containsKey(key) }
 
   fun clear() {
     val notifications = synchronized(myLock) {
@@ -53,22 +43,18 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
     }, ModalityState.NON_MODAL, myProject.disposed)
   }
 
-  private fun expireNotification(notification: MyNotification) {
-    UIUtil.invokeLaterIfNeeded { notification.expire() }
-  }
+  private fun expireNotification(notification: MyNotification) = UIUtil.invokeLaterIfNeeded { notification.expire() }
 
   open fun ensureNotify(obj: T): Boolean {
     val notification = synchronized(myLock) {
       val key = getKey(obj)
-      if (myState.containsKey(key)) {
-        return false
-      }
+      if (myState.containsKey(key)) return false
+
       val objNotification = MyNotification(myGroupId, myTitle, getNotificationContent(obj), myType, myListener, obj)
       myState[key] = objNotification
       objNotification
     }
-    val state = onFirstNotification(obj)
-    if (state) {
+    if (onFirstNotification(obj)) {
       removeLazyNotification(obj)
       return true
     }
@@ -76,29 +62,22 @@ abstract class GenericNotifierImpl<T, Key>(@JvmField protected val myProject: Pr
     return false
   }
 
-  protected open fun onFirstNotification(obj: T): Boolean {
-    return false
-  }
+  protected open fun onFirstNotification(obj: T) = false
 
   fun removeLazyNotificationByKey(key: Key) {
-    val notification = synchronized(myLock) {
-      myState.remove(key)
-    }
+    val notification = synchronized(myLock) { myState.remove(key) }
     if (notification != null) {
       expireNotification(notification)
     }
   }
 
-  fun removeLazyNotification(obj: T) {
-    removeLazyNotificationByKey(getKey(obj))
-  }
+  fun removeLazyNotification(obj: T) = removeLazyNotificationByKey(getKey(obj))
 
   private inner class MyListener : NotificationListener {
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       val concreteNotification = notification as GenericNotifierImpl<T, Key>.MyNotification
       val obj = concreteNotification.obj
-      val state = ask(obj, event.description)
-      if (state) {
+      if (ask(obj, event.description)) {
         synchronized(myLock) {
           myState.remove(getKey(obj))
         }
