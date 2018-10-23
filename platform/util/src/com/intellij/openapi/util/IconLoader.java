@@ -2,7 +2,6 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -17,6 +16,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.ScaleContext;
+import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -559,15 +559,14 @@ public final class IconLoader {
     return icon;
   }
 
-  public static final class CachedImageIcon extends com.intellij.util.ui.JBUI.RasterJBIcon implements ScalableIcon, DarkIconProvider, 
-                                                                                                      MenuBarIconProvider {
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
     @NotNull private volatile MyUrlResolver myResolver;
     @Nullable("when not overridden") private final Boolean myDarkOverridden;
+    @NotNull private volatile IconTransform myTransform;
     private final boolean myUseCacheOnLoad;
-    private volatile IconTransform myTransform;
 
     @Nullable private final ImageFilter myLocalFilter;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -582,11 +581,16 @@ public final class IconLoader {
 
     private CachedImageIcon(@NotNull MyUrlResolver urlResolver, @Nullable String originalPath, boolean useCacheOnLoad)
     {
-      this(originalPath, urlResolver, false, useCacheOnLoad, ourTransform.get(), null);
+      this(originalPath, urlResolver, null, useCacheOnLoad, ourTransform.get(), null);
     }
 
-    private CachedImageIcon(@Nullable String originalPath, @NotNull MyUrlResolver resolver, @Nullable Boolean darkOverridden,
-                            boolean useCacheOnLoad, IconTransform transform, @Nullable ImageFilter localFilter) {
+    private CachedImageIcon(@Nullable String originalPath,
+                            @NotNull MyUrlResolver resolver,
+                            @Nullable Boolean darkOverridden,
+                            boolean useCacheOnLoad,
+                            @NotNull IconTransform transform,
+                            @Nullable ImageFilter localFilter)
+    {
       myOriginalPath = originalPath;
       myResolver = resolver;
       myDarkOverridden = darkOverridden;
@@ -725,8 +729,7 @@ public final class IconLoader {
 
     @Override
     public Icon getDarkIcon(boolean isDark) {
-      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, isDark != this.isDark() ? null : myTransform,
-                                 myLocalFilter);
+      return new CachedImageIcon(myOriginalPath, myResolver, isDark, myUseCacheOnLoad, myTransform, myLocalFilter);
     }
 
     @Override
