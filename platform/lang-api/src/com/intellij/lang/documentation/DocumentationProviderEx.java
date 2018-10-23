@@ -46,7 +46,7 @@ public class DocumentationProviderEx implements DocumentationProvider {
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return null; 
   }
 

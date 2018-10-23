@@ -17,7 +17,7 @@ import javax.swing.*;
 
 public class StructuralSearchTemplateDocumentationProvider extends AbstractDocumentationProvider {
   @Override
-  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     if (object instanceof Configuration) {
       return new ConfigurationElement((Configuration)object, psiManager);
     }

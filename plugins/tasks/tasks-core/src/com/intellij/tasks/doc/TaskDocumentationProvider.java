@@ -24,7 +24,6 @@ import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.xml.util.XmlStringUtil;
 import com.petebevin.markdown.MarkdownProcessor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -71,7 +70,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     return object instanceof Task ? new TaskPsiElement(psiManager, (Task)object): null;
   }
 

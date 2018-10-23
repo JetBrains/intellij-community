@@ -25,7 +25,6 @@ import com.jetbrains.python.documentation.PyDocumentationBuilder;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class PydevDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(@NotNull final PsiManager psiManager, @NotNull final Object object, @NotNull final PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
     if (object instanceof PydevConsoleElement){
       return (PydevConsoleElement) object;
     }

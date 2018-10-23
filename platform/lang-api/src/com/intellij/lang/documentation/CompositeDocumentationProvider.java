@@ -143,7 +143,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager, object, element);
       if (result != null) {
