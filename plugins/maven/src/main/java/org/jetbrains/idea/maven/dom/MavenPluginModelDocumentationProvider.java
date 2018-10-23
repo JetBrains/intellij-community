@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -38,7 +39,7 @@ public class MavenPluginModelDocumentationProvider implements DocumentationProvi
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     return null;
   }
 

@@ -21,6 +21,7 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.DelegatePsiTarget;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -60,7 +61,7 @@ public class DomDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull final PsiManager psiManager, @NotNull final Object object, @NotNull final PsiElement element) {
     return null;
   }
 

@@ -37,6 +37,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.ColorSampleLookupValue;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -261,7 +262,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     PsiElement result = createNavigationElementHTML(psiManager, object.toString(),element);
 
     DocumentationProvider styleProvider = getStyleProvider();

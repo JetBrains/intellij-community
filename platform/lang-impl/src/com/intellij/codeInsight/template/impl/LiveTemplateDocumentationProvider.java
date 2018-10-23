@@ -17,7 +17,7 @@ import javax.swing.*;
 
 public class LiveTemplateDocumentationProvider extends AbstractDocumentationProvider {
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     if (object instanceof LiveTemplateLookupElementImpl) {
       TemplateImpl template = ((LiveTemplateLookupElementImpl)object).getTemplate();
       final TemplateImpl templateFromSettings = TemplateSettings.getInstance().getTemplate(template.getKey(), template.getGroupName());

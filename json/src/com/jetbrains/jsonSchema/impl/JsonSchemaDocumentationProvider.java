@@ -177,7 +177,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     if ((element instanceof JsonProperty || isWhitespaceOrComment(element) && element.getParent() instanceof JsonObject) && object instanceof String) {
       return new FakeDocElement(element instanceof JsonProperty ? ((JsonProperty)element).getNameElement() : element, StringUtil.unquoteString((String)object));
     }

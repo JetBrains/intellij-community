@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -90,7 +91,7 @@ public interface DocumentationProvider {
   String generateDoc(PsiElement element, @Nullable PsiElement originalElement);
 
   @Nullable
-  PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
+  PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element);
 
   /**
    * Returns the target element for a link in a documentation comment. The link needs to use the

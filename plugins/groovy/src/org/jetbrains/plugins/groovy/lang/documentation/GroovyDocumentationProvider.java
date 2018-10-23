@@ -426,7 +426,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
 
   @Override
   @Nullable
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     if (object instanceof GroovyResolveResult) {
       return ((GroovyResolveResult)object).getElement();
     }

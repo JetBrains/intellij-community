@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.xml.util.documentation.XmlDocumentationProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -75,7 +76,7 @@ public class MavenPomXmlDocumentationProvider implements DocumentationProvider {
 
   @Nullable
   @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
     if (!isFromPomXml(element)) return null;
 
     return myDelegate.getDocumentationElementForLookupItem(psiManager, object, element);

@@ -316,7 +316,7 @@ public class XmlDocumentationProvider implements DocumentationProvider {
   }
 
   @Override
-  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, Object object, PsiElement element) {
+  public PsiElement getDocumentationElementForLookupItem(@NotNull final PsiManager psiManager, @NotNull Object object, @NotNull PsiElement element) {
 
     if (object instanceof XmlExtension.TagInfo) {
       return ((XmlExtension.TagInfo)object).getDeclaration();

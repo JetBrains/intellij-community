@@ -195,7 +195,7 @@ public class XsltDocumentationProvider implements DocumentationProvider {
 
     @Override
     @Nullable
-    public PsiElement getDocumentationElementForLookupItem(PsiManager mgr, Object object, PsiElement psiElement) {
+    public PsiElement getDocumentationElementForLookupItem(@NotNull PsiManager mgr, @NotNull Object object, @NotNull PsiElement psiElement) {
         if (object instanceof String) {
             if (psiElement instanceof XmlElement) {
                 final XmlTag tag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
