@@ -184,6 +184,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                    "SPECIAL_ELSE_IF_TREATMENT",
                                    "ENUM_CONSTANTS_WRAP",
                                    "ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS",
+                                   "ALIGN_CONSECUTIVE_ASSIGNMENTS",
                                    "ALIGN_SUBSEQUENT_SIMPLE_METHODS",
                                    "WRAP_FIRST_METHOD_IN_CALL_CHAIN");
 
