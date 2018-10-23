@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
+import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,6 +58,7 @@ public abstract class DebuggerUtils {
         return "null";
       }
       if (value instanceof StringReference) {
+        ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
         return ((StringReference)value).value();
       }
       if (isInteger(value)) {
@@ -120,6 +122,14 @@ public abstract class DebuggerUtils {
     }
     catch (ObjectCollectedException ignored) {
       throw EvaluateExceptionUtil.OBJECT_WAS_COLLECTED;
+    }
+  }
+
+  public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
+    throws EvaluateException {
+    StackFrameProxy frameProxy = context.getFrameProxy();
+    if (frameProxy != null && frameProxy.location().method().isConstructor() && reference.equals(context.computeThisObject())) {
+      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.is.being.initialized"));
     }
   }
 
