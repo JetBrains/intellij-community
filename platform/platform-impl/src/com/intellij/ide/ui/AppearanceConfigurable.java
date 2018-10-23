@@ -1,14 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
@@ -219,6 +224,20 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     update |= settings.getNavigateToPreview() != (myComponent.myNavigateToPreviewCheckBox.isVisible() && myComponent.myNavigateToPreviewCheckBox.isSelected());
     settings.setNavigateToPreview(myComponent.myNavigateToPreviewCheckBox.isSelected());
 
+    boolean updateSupportScreenReaders = myComponent.isSupportScreenReadersModified();
+    if (updateSupportScreenReaders) {
+      GeneralSettings.getInstance().setSupportScreenReaders(myComponent.mySupportScreenReadersCheckBox.isSelected());
+    }
+
+    ColorBlindness blindness = myComponent.myColorBlindnessPanel.getColorBlindness();
+    boolean updateEditorScheme = false;
+    if (settings.getColorBlindness() != blindness) {
+      settings.setColorBlindness(blindness);
+      update = true;
+      ServiceKt.getStateStore(ApplicationManager.getApplication()).reloadState(DefaultColorSchemesManager.class);
+      updateEditorScheme = true;
+    }
+
     update |= settings.getDisableMnemonicsInControls() != myComponent.myDisableMnemonicInControlsCheckBox.isSelected();
     settings.setDisableMnemonicsInControls(myComponent.myDisableMnemonicInControlsCheckBox.isSelected());
 
@@ -280,7 +299,12 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     }
     myComponent.updateCombo();
 
-    EditorFactory.getInstance().refreshAllEditors();
+    if (updateEditorScheme) {
+      ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
+    }
+    else {
+      EditorFactory.getInstance().refreshAllEditors();
+    }
   }
 
   private static int getIntValue(JComboBox combo, int defaultValue) {
@@ -345,6 +369,15 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.mySmoothScrollingCheckBox.setSelected(settings.getSmoothScrolling());
     myComponent.myNavigateToPreviewCheckBox.setSelected(settings.getNavigateToPreview());
     myComponent.myNavigateToPreviewCheckBox.setVisible(false);//disabled for a while
+
+    myComponent.mySupportScreenReadersCheckBox.setSelected(GeneralSettings.getInstance().isSupportScreenReaders());
+    myComponent.mySupportScreenReadersCheckBox.setEnabled(!GeneralSettings.isSupportScreenReadersOverridden());
+    myComponent.mySupportScreenReadersCheckBox.setToolTipText(
+      GeneralSettings.isSupportScreenReadersOverridden()
+      ? "The option is overridden by the JVM property: \"" + GeneralSettings.SUPPORT_SCREEN_READERS + "\""
+      : null);
+
+    myComponent.myColorBlindnessPanel.setColorBlindness(settings.getColorBlindness());
     myComponent.myDisableMnemonicInControlsCheckBox.setSelected(settings.getDisableMnemonicsInControls());
 
     boolean alphaModeEnabled = WindowManagerEx.getInstanceEx().isAlphaModeSupported();
@@ -410,6 +443,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myRightLayoutCheckBox.isSelected() != settings.getRightHorizontalSplit();
     isModified |= myComponent.mySmoothScrollingCheckBox.isSelected() != settings.getSmoothScrolling();
     isModified |= myComponent.myNavigateToPreviewCheckBox.isSelected() != settings.getNavigateToPreview();
+    isModified |= myComponent.isSupportScreenReadersModified();
+    isModified |= myComponent.myColorBlindnessPanel.getColorBlindness() != settings.getColorBlindness();
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.getShowIconInQuickNavigation();
 
@@ -466,7 +501,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JTextField myAlphaModeDelayTextField;
     private JSlider myAlphaModeRatioSlider;
     private JLabel myFontSizeLabel;
-    private JLabel myFontNameLabel;
     private JPanel myTransparencyPanel;
     private JCheckBox myOverrideLAFFonts;
 
@@ -485,6 +519,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private ComboBox myPresentationModeFontSize;
     private JCheckBox mySmoothScrollingCheckBox;
     private JCheckBox myNavigateToPreviewCheckBox;
+    private JCheckBox mySupportScreenReadersCheckBox;
+    private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
@@ -502,8 +538,12 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
       myFontCombo.setEnabled(enableChooser);
       myFontSizeCombo.setEnabled(enableChooser);
-      myFontNameLabel.setEnabled(enableChooser);
       myFontSizeLabel.setEnabled(enableChooser);
+    }
+
+    boolean isSupportScreenReadersModified() {
+      return mySupportScreenReadersCheckBox.isEnabled() &&
+             mySupportScreenReadersCheckBox.isSelected() != GeneralSettings.getInstance().isSupportScreenReaders();
     }
 
     private void createUIComponents() {
