@@ -1,4 +1,5 @@
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.logging.Level;
 
 public class v {
@@ -20,8 +21,51 @@ public class v {
       // $FF: Couldn't be decompiled
    }
 
-   private static void a(Field param0, Object param1) {
-      // $FF: Couldn't be decompiled
+   private static void a(Field var0, Object var1) {
+      int var3 = y.d;
+
+      Throwable var10000;
+      boolean var10001;
+      label43: {
+         try {
+            if (var3 != 0) {
+               return;
+            }
+
+            if (!List.class.isAssignableFrom(var0.getType())) {
+               break label43;
+            }
+         } catch (Throwable var7) {
+            throw var7;
+         }
+
+         Throwable var2;
+         try {
+            var0.set(var1, t.b(((x)var0.getAnnotation(x.class)).a()));
+            return;
+         } catch (Throwable var5) {
+            var2 = var5;
+         }
+
+         try {
+            t.a.log(Level.WARNING, var1.getClass() + "." + var0.getName() + a[1] + var2.getMessage(), var2);
+            if (var3 == 0) {
+               return;
+            }
+         } catch (Throwable var6) {
+            var10000 = var6;
+            var10001 = false;
+            throw var10000;
+         }
+      }
+
+      try {
+         t.a.warning(var1.getClass() + "." + var0.getName() + a[2]);
+      } catch (Throwable var4) {
+         var10000 = var4;
+         var10001 = false;
+         throw var10000;
+      }
    }
 
    private static void b(Field var0, Object var1) {
