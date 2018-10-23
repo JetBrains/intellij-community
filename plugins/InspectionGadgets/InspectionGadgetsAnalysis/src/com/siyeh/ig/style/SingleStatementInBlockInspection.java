@@ -172,11 +172,11 @@ public class SingleStatementInBlockInspection extends BaseInspection {
       if (startElement instanceof PsiLoopStatement) {
         body = ((PsiLoopStatement)startElement).getBody();
       }
-      else if (startParent instanceof PsiLoopStatement) {
-        body = ((PsiLoopStatement)startParent).getBody();
-      }
       else if (startElement instanceof PsiIfStatement) {
         body = ((PsiIfStatement)startElement).getThenBranch();
+      }
+      else if (startParent instanceof PsiLoopStatement) {
+        body = ((PsiLoopStatement)startParent).getBody();
       }
       else if (startElement instanceof PsiKeyword) {
         assert startParent instanceof PsiIfStatement;
