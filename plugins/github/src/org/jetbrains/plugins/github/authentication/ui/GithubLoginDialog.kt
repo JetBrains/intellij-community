@@ -110,9 +110,9 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     return this
   }
 
-  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text)
-  fun getLogin(): String = login
-  fun getToken(): String = token
+  fun getServer(): GithubServerPath = GithubServerPath.from(serverTextField.text.trim())
+  fun getLogin(): String = login.trim()
+  fun getToken(): String = token.trim()
 
   override fun doOKAction() {
     setBusy(true)
