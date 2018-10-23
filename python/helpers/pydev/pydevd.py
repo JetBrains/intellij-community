@@ -34,6 +34,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
+from _pydevd_bundle.pydevd_breakpointhook import install_breakpointhook
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -54,32 +55,6 @@ for v in __version_info__:
 __version__ = '.'.join(__version_info_str__)
 
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
-
-
-def install_breakpointhook(pydevd_breakpointhook=None):
-    if pydevd_breakpointhook is None:
-        def pydevd_breakpointhook(*args, **kwargs):
-            hookname = os.getenv('PYTHONBREAKPOINT')
-            if hookname is not None and len(hookname) > 0 and hasattr(sys, '__breakpointhook__'):
-                sys.__breakpointhook__(*args, **kwargs)
-            else:
-                py_db = get_global_debugger()
-                if (py_db is not None) and (py_db.frame_eval_func is not None):
-                    from _pydevd_frame_eval.pydevd_frame_tracing import suspend_at_builtin_breakpoint
-                    suspend_at_builtin_breakpoint()
-                else:
-                    settrace(*args, **kwargs)
-
-    if sys.version_info[0:2] >= (3, 7):
-        # There are some choices on how to provide the breakpoint hook. Namely, we can provide a
-        # PYTHONBREAKPOINT which provides the import path for a method to be executed or we
-        # can override sys.breakpointhook.
-        # pydevd overrides sys.breakpointhook instead of providing an environment variable because
-        # it's possible that the debugger starts the user program but is not available in the
-        # PYTHONPATH (and would thus fail to be imported if PYTHONBREAKPOINT was set to pydevd.settrace).
-        # Note that the implementation still takes PYTHONBREAKPOINT in account (so, if it was provided
-        # by someone else, it'd still work).
-        sys.breakpointhook = pydevd_breakpointhook
 
 # Install the breakpoint hook at import time.
 install_breakpointhook()
@@ -1198,6 +1173,7 @@ def settrace(
         trace_only_current_thread=False,
         overwrite_prev_trace=False,
         patch_multiprocessing=False,
+        stop_at_frame=None,
 ):
     '''Sets the tracing function with the pydev debug function and initializes needed facilities.
 
@@ -1221,18 +1197,22 @@ def settrace(
 
     @param patch_multiprocessing: if True we'll patch the functions which create new processes so that launched
         processes are debugged.
+
+    @param stop_at_frame: if passed it'll stop at the given frame, otherwise it'll stop in the function which
+        called this method.
     '''
     _set_trace_lock.acquire()
     try:
         _locked_settrace(
-                host,
-                stdoutToServer,
-                stderrToServer,
-                port,
-                suspend,
-                trace_only_current_thread,
-                overwrite_prev_trace,
-                patch_multiprocessing,
+            host,
+            stdoutToServer,
+            stderrToServer,
+            port,
+            suspend,
+            trace_only_current_thread,
+            overwrite_prev_trace,
+            patch_multiprocessing,
+            stop_at_frame,
         )
     finally:
         _set_trace_lock.release()
@@ -1250,6 +1230,7 @@ def _locked_settrace(
         trace_only_current_thread,
         overwrite_prev_trace,
         patch_multiprocessing,
+        stop_at_frame,
 ):
     if patch_multiprocessing:
         try:
@@ -1334,16 +1315,11 @@ def _locked_settrace(
         PyDBCommandThread(debugger).start()
         CheckOutputThread(debugger).start()
 
-        #Suspend as the last thing after all tracing is in place.
-        if suspend:
-            debugger.set_suspend(t, CMD_THREAD_SUSPEND)
-
-
     else:
         # ok, we're already in debug mode, with all set, so, let's just set the break
         debugger = get_global_debugger()
 
-        debugger.set_trace_for_frame_and_parents(get_frame(), False)
+        debugger.set_trace_for_frame_and_parents(get_frame(), also_add_to_passed_frame=True, overwrite_prev_trace=True)
 
         t = threadingCurrentThread()
         try:
@@ -1358,8 +1334,17 @@ def _locked_settrace(
             # Trace future threads?
             debugger.patch_threads()
 
-
-        if suspend:
+    # Suspend as the last thing after all tracing is in place.
+    if suspend:
+        if stop_at_frame is not None:
+            # If the step was set we have to go to run state and
+            # set the proper frame for it to stop.
+            additional_info.pydev_state = STATE_RUN
+            additional_info.pydev_step_cmd = CMD_STEP_OVER
+            additional_info.pydev_step_stop = stop_at_frame
+            additional_info.suspend_type = PYTHON_SUSPEND
+        else:
+            # Ask to break as soon as possible.
             debugger.set_suspend(t, CMD_THREAD_SUSPEND)
 
 
