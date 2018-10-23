@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -36,7 +37,6 @@ import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,10 +71,7 @@ public class TerminalView {
     return myTerminalRunner;
   }
 
-  @Nullable
-  private VirtualFile myFileToOpen;
-
-  public TerminalView(Project project) {
+  public TerminalView(@NotNull Project project) {
     myProject = project;
     myTerminalRunner = LocalTerminalDirectRunner.createTerminalRunner(myProject);
   }
@@ -83,8 +80,8 @@ public class TerminalView {
     return project.getComponent(TerminalView.class);
   }
 
-  public void initTerminal(@NotNull ToolWindow toolWindow, @Nullable TerminalArrangementState arrangementState) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+  void initToolWindow(@NotNull ToolWindow toolWindow) {
+    if (myToolWindow != null) {
       return;
     }
 
@@ -98,29 +95,13 @@ public class TerminalView {
     ((ToolWindowImpl)myToolWindow).setTabDoubleClickActions(new RenameTerminalSessionAction());
 
     myToolWindow.setToHideOnEmptyContent(true);
-    List<TerminalTabState> states = arrangementState != null ? arrangementState.myTabStates : null;
-    if (ContainerUtil.isEmpty(states)) {
-      newTab(null);
-    }
-    else {
-      for (TerminalTabState tabState : states) {
-        createNewSession(myTerminalRunner, tabState);
-      }
-      ContentManager contentManager = toolWindow.getContentManager();
-      Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
-      if (content != null) {
-        contentManager.setSelectedContent(content);
-      }
-    }
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
-        if (toolWindow.isVisible()) {
-          if (myToolWindow.getContentManager().getContentCount() == 0) {
-            initTerminal(toolWindow, null);
-          }
-          myFileToOpen = null;
+        if (toolWindow.isVisible() && myToolWindow.getContentManager().getContentCount() == 0) {
+          // open a new session if all tabs were closed manually
+          createNewSession(myTerminalRunner, null);
         }
       }
     });
@@ -132,6 +113,21 @@ public class TerminalView {
     }
   }
 
+  void restoreTabs(@Nullable TerminalArrangementState arrangementState) {
+    if (arrangementState != null) {
+      for (TerminalTabState tabState : arrangementState.myTabStates) {
+        createNewSession(myTerminalRunner, tabState);
+      }
+      ContentManager contentManager = myToolWindow.getContentManager();
+      Content content = contentManager.getContent(arrangementState.mySelectedTabIndex);
+      if (content != null) {
+        contentManager.setSelectedContent(content);
+      }
+    }
+    if (myToolWindow.getContentManager().getContentCount() == 0) {
+      createNewSession(myTerminalRunner, null);
+    }
+  }
 
   public void createNewSession(@NotNull AbstractTerminalRunner terminalRunner) {
     createNewSession(terminalRunner, null);
@@ -221,14 +217,11 @@ public class TerminalView {
   }
 
   @Nullable
-  private VirtualFile getCurrentWorkingDir(@Nullable TerminalTabState tabState) {
+  private static VirtualFile getCurrentWorkingDir(@Nullable TerminalTabState tabState) {
     String dir = tabState != null ? tabState.myWorkingDirectory : null;
     VirtualFile result = null;
     if (dir != null) {
       result = LocalFileSystem.getInstance().findFileByPath(dir);
-    }
-    if (result == null) {
-      result = myFileToOpen;
     }
     return result;
   }
@@ -264,13 +257,18 @@ public class TerminalView {
     }
   }
 
-  @Nullable
-  public VirtualFile getFileToOpen() {
-    return myFileToOpen;
-  }
-
-  public void setFileToOpen(@Nullable VirtualFile fileToOpen) {
-    myFileToOpen = fileToOpen;
+  public void openTerminalIn(@Nullable VirtualFile fileToOpen) {
+    ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+    if (window != null && window.isAvailable()) {
+      // ensure TerminalToolWindowFactory.createToolWindowContent gets called
+      ((ToolWindowImpl)window).ensureContentInitialized();
+      TerminalTabState state = new TerminalTabState();
+      if (fileToOpen != null) {
+        state.myWorkingDirectory = fileToOpen.getPath();
+      }
+      createNewSession(myTerminalRunner, state);
+      window.activate(null);
+    }
   }
 
   @NotNull
