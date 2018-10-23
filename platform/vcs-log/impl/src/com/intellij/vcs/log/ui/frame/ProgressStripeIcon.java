@@ -115,11 +115,10 @@ public abstract class ProgressStripeIcon implements Icon {
   // this icon is not used under darcula
   @SuppressWarnings("UseJBColor")
   private static class GradientIcon extends ProgressStripeIcon {
-    private static final double ALPHA = 0.5;
     private static final Color DARK_BLUE = new Color(0x4d9ff8);
     private static final Color DARK_GRAY = Gray._165;
-    private static final Color LIGHT_BLUE = ColorUtil.withAlpha(new Color(0x90c2f8), ALPHA);
-    private static final Color LIGHT_GRAY = ColorUtil.withAlpha(new Color(0xdbdbdb), ALPHA);
+    private static final Color LIGHT_BLUE = new Color(0x90c2f8);
+    private static final Color LIGHT_GRAY = new Color(0xdbdbdb);
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 2;
 
