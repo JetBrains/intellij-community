@@ -107,6 +107,10 @@ public class MethodProcessorRunnable implements Runnable {
 
     if (ExceptionDeobfuscator.hasObfuscatedExceptions(graph)) {
       DecompilerContext.getLogger().writeMessage("Heavily obfuscated exception ranges found!", IFernflowerLogger.Severity.WARN);
+      if (!ExceptionDeobfuscator.handleMultipleEntryExceptionRanges(graph)) {
+        DecompilerContext.getLogger().writeMessage("Found multiple entry exception ranges which could not be splitted", IFernflowerLogger.Severity.WARN);
+      }
+      ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, cl.getBytecodeVersion());
     }
 
     RootStatement root = DomHelper.parseGraph(graph);
