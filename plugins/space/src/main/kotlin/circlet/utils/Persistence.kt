@@ -28,6 +28,10 @@ object IdeaPersistence : Persistence {
         TODO("not implemented")
     }
 
+    override fun on(key: String, callback: (String?) -> Unit) {
+        TODO("not implemented")
+    }
+
     override suspend fun clear() {
     }
 
