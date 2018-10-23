@@ -195,6 +195,33 @@ public class TestsPresentationUtil {
     renderer.append(testProxy.getPresentableName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
+  public static void formatCurrentState(final SMTestProxy testProxy,
+                             final TestTreeRenderer renderer) {
+    TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
+    if (magnitude == TestStateInfo.Magnitude.RUNNING_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.accessible.presentation.labels.tests.running"));
+    } else if (magnitude == TestStateInfo.Magnitude.NOT_RUN_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.not.run"));
+    } else if (magnitude == TestStateInfo.Magnitude.TERMINATED_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.terminated"));
+    } else if (magnitude == TestStateInfo.Magnitude.PASSED_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.passed"));
+    } else if (magnitude == TestStateInfo.Magnitude.IGNORED_INDEX && testProxy.isFinal()) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.ignored"));
+    } else if( magnitude == TestStateInfo.Magnitude.FAILED_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.failed"));
+    } else if(magnitude == TestStateInfo.Magnitude.ERROR_INDEX) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.error"));
+    } else if(magnitude == TestStateInfo.Magnitude.IGNORED_INDEX && !testProxy.isFinal()) {
+      renderer.setCurrentStateString(SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.accessible.presentation.labels.test.contains.ignored.tests"));
+    }
+
+  }
+
   @NotNull
   public static String getPresentableName(final SMTestProxy testProxy) {
     final SMTestProxy parent = testProxy.getParent();

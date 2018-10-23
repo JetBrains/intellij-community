@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
@@ -25,6 +26,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
   private SMRootTestProxyFormatter myAdditionalRootFormatter;
   private int myDurationWidth = -1;
   private int myRow;
+  private String myCurrentState;
 
   public TestTreeRenderer(final TestConsoleProperties consoleProperties) {
     myConsoleProperties = consoleProperties;
@@ -59,7 +61,7 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
       } else {
         TestsPresentationUtil.formatTestProxy(testProxy, this);
       }
-
+TestsPresentationUtil.formatCurrentState(testProxy, this);
       if (TestConsoleProperties.SHOW_INLINE_STATISTICS.value(myConsoleProperties)) {
         String durationString = testProxy.getDurationString(myConsoleProperties);
         if (durationString != null) {
@@ -101,4 +103,23 @@ public class TestTreeRenderer extends ColoredTreeCellRenderer {
     myAdditionalRootFormatter = null;
   }
 
+  public void setCurrentStateString(String currentState) {
+    this.myCurrentState = currentState;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if(accessibleContext == null) {
+      return new AccessibleTestTreeRenderer();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleTestTreeRenderer extends AccessibleColoredTreeCellRenderer {
+
+    @Override
+    public String getAccessibleName() {
+      return myCurrentState + ", " + super.getAccessibleName();
+    }
+  }
 }
