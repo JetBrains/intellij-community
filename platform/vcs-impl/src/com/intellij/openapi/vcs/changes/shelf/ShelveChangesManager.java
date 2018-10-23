@@ -42,6 +42,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jdom.Parent;
@@ -687,6 +688,65 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       }
     });
   }
+
+  @NotNull
+  Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                             @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
+                                             @NotNull List<ShelvedChange> changesToDelete,
+                                             @NotNull List<ShelvedBinaryFile> binariesToDelete) {
+    // filter changes
+    ArrayList<ShelvedChangeList> shelvedListsFromChangesToDelete = newArrayList(shelvedListsFromChanges);
+    shelvedListsFromChangesToDelete.removeAll(shelvedListsToDelete);
+
+    if (shelvedListsFromChangesToDelete.size() + binariesToDelete.size() == 0 && shelvedListsToDelete.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    //store original dates to restore if needed
+    Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate = newHashMap();
+    for (ShelvedChangeList changeList : shelvedListsToDelete) {
+      Date originalDate = changeList.DATE;
+      ShelvedChangeList recentlyDeleted = deleteChangeList(changeList);
+      //was not completely deleted
+      if (recentlyDeleted != null) {
+        createdDeletedListsWithOriginalDate.put(recentlyDeleted, originalDate);
+      }
+    }
+    for (ShelvedChangeList list : shelvedListsFromChangesToDelete) {
+      Date originalDate = list.DATE;
+      ShelvedChangeList listWithDeletedChanges = removeChangesFromChangeList(list, changesToDelete, binariesToDelete);
+      if (listWithDeletedChanges != null) {
+        createdDeletedListsWithOriginalDate.put(listWithDeletedChanges, originalDate);
+      }
+    }
+    return createdDeletedListsWithOriginalDate;
+  }
+
+  @Nullable
+  private ShelvedChangeList removeChangesFromChangeList(@NotNull ShelvedChangeList list,
+                                                        @NotNull List<ShelvedChange> changes,
+                                                        @NotNull List<ShelvedBinaryFile> binaryFiles) {
+    final ArrayList<ShelvedBinaryFile> remainingBinaries = new ArrayList<>(list.getBinaryFiles());
+    remainingBinaries.removeAll(binaryFiles);
+
+    final CommitContext commitContext = new CommitContext();
+    final List<FilePatch> remainingPatches = new ArrayList<>();
+    try {
+      loadTextPatches(myProject, list, changes, remainingPatches, commitContext);
+    }
+    catch (IOException | PatchSyntaxException e) {
+      LOG.info(e);
+      VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
+      return null;
+    }
+    if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
+      return deleteChangeList(list);
+    }
+    else {
+      return saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
+    }
+  }
+
 
   static List<TextFilePatch> loadTextPatches(final Project project,
                                              final ShelvedChangeList changeList,
