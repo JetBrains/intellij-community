@@ -79,12 +79,10 @@ public final class IconLoader {
 
   private IconLoader() { }
 
-  public static <T> T performStrictly(Callable<T> callable) {
+  public static <T> T performStrictly(ThrowableComputable<T, ? extends RuntimeException> computable) {
     STRICT_LOCAL.set(true);
     try {
-      return callable.call();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      return computable.compute();
     } finally {
       STRICT_LOCAL.set(false);
     }
