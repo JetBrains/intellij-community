@@ -221,14 +221,20 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.wideScreenSupport = value
     }
 
-  val sortBookmarks: Boolean
+  var sortBookmarks: Boolean
     get() = state.sortBookmarks
+    set(value) {
+      state.sortBookmarks = value
+    }
 
   val showCloseButton: Boolean
     get() = state.showCloseButton
 
-  val presentationMode: Boolean
+  var presentationMode: Boolean
     get() = state.presentationMode
+    set(value) {
+      state.presentationMode = value
+    }
 
   val presentationModeFontSize: Int
     get() = state.presentationModeFontSize
@@ -285,6 +291,24 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
     get() = state.pinFindInPath
     set(value) {
       state.pinFindInPath = value
+    }
+
+  var activeRightEditorOnClose: Boolean
+    get() = state.activeRightEditorOnClose
+    set(value) {
+      state.activeRightEditorOnClose = value
+    }
+
+  var showTabsTooltips: Boolean
+    get() = state.showTabsTooltips
+    set(value) {
+      state.showTabsTooltips = value
+    }
+
+  var markModifiedTabsWithAsterisk: Boolean
+    get() = state.markModifiedTabsWithAsterisk
+    set(value) {
+      state.markModifiedTabsWithAsterisk = value
     }
 
   @Suppress("unused")

@@ -39,6 +39,9 @@ extern "C"{
 // must be called from java thread (to avoid detach, so jna-callbacks will be invoked from same thread)
 void startWatchDbus(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
 void stopWatchDbus();
+
+void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
+
 void execOnMainLoop(jrunnable run);
 
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid

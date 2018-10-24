@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
@@ -35,6 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.text.CharSequenceReader;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.Attributes;
@@ -48,6 +36,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Supplier;
 
 public abstract class BaseExternalAnnotationsManager extends ExternalAnnotationsManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.BaseExternalAnnotationsManager");
@@ -65,6 +54,25 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     LowMemoryWatcher.register(this::dropCache, psiManager.getProject());
   }
 
+  /**
+   * Returns canonical string presentation of {@code listOwner}
+   * used in external annotations files.
+   *
+   * @param listOwner API element to return external name of
+   * @return external name or {@code null} if the {@code listOwner}
+   * is of unknown type (neither class, method, field nor parameter)
+   */
+  @Nullable
+  protected static String getExternalName(@NotNull PsiModifierListOwner listOwner) {
+    return getExternalName(listOwner, false);
+  }
+
+  /**
+   * @deprecated use {@link #getExternalName(PsiModifierListOwner)} instead
+   * since external annotations files don't contain parameters' names anyway.
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
+  @Deprecated
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner, boolean showParamName) {
     return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
@@ -85,9 +93,45 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   @Nullable
   public PsiAnnotation findExternalAnnotation(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
-    List<AnnotationData> list = collectExternalAnnotations(listOwner);
-    AnnotationData data = findByFQN(list, annotationFQN);
-    return data == null ? null : data.getAnnotation(this);
+    List<PsiAnnotation> result = findExternalAnnotations(listOwner, annotationFQN);
+    return result.isEmpty() ? null : result.get(0);
+  }
+
+  @NotNull
+  @Override
+  public List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+    List<AnnotationData> result = collectExternalAnnotations(listOwner);
+    return filterAnnotations(result, annotationFQN);
+  }
+
+  @Nullable
+  @Override
+  public List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass, @NotNull String annotationFQN) {
+    if (aClass.getConstructors().length > 0) {
+      return null;
+    }
+    List<AnnotationData> result = collectDefaultConstructorExternalAnnotations(aClass);
+    return filterAnnotations(result, annotationFQN);
+  }
+
+  @NotNull
+  private List<PsiAnnotation> filterAnnotations(@NotNull List<AnnotationData> result, @NotNull String annotationFQN) {
+    return StreamEx.of(result)
+      .filter(data -> data.annotationClassFqName.equals(annotationFQN))
+      .map(data -> data.getAnnotation(this))
+      .toCollection(SmartList::new);
+  }
+
+  @Nullable
+  @Override
+  public List<PsiAnnotation> findDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass) {
+    if (aClass.getConstructors().length > 0) {
+      return null;
+    }
+    List<AnnotationData> result = collectDefaultConstructorExternalAnnotations(aClass);
+    return StreamEx.of(result)
+      .map(data -> data.getAnnotation(this))
+      .toCollection(SmartList::new);
   }
 
   @Override
@@ -110,21 +154,36 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);
-  private final ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData> cache = new ConcurrentMostlySingularMultiMap<>();
+  private final ConcurrentMostlySingularMultiMap<Object, AnnotationData> cache = new ConcurrentMostlySingularMultiMap<>();
 
   // interner for storing annotation FQN
   private final CharTableImpl charTable = new CharTableImpl();
 
   @NotNull
-  private List<AnnotationData> collectExternalAnnotations(@NotNull PsiModifierListOwner listOwner) {
-    if (!hasAnyAnnotationsRoots()) return Collections.emptyList();
+  private List<AnnotationData> collectDefaultConstructorExternalAnnotations(@NotNull PsiClass aClass) {
+    //External annotations of default constructor are stored at the same annotations files as class' ones.
+    List<PsiFile> annotationsFiles = findExternalAnnotationsFiles(aClass);
+    if (annotationsFiles == null) return NO_DATA;
 
+    String defCtrExternalName = getExternalName(aClass) + " " + aClass.getName() + "()";
+    return collectExternalAnnotations(defCtrExternalName, () -> doCollect(defCtrExternalName, annotationsFiles, false));
+  }
+
+  @NotNull
+  private List<AnnotationData> collectExternalAnnotations(@NotNull PsiModifierListOwner listOwner) {
+    return collectExternalAnnotations(listOwner, () -> doCollect(listOwner, false));
+  }
+
+  @NotNull
+  private List<AnnotationData> collectExternalAnnotations(@NotNull Object cacheKey,
+                                                          @NotNull Supplier<List<AnnotationData>> dataSupplier) {
+    if (!hasAnyAnnotationsRoots()) return Collections.emptyList();
     List<AnnotationData> cached;
     while (true) {
-      cached = (List<AnnotationData>)cache.get(listOwner);
+      cached = (List<AnnotationData>)cache.get(cacheKey);
       if (cached == NO_DATA || !cached.isEmpty()) return cached;
-      List<AnnotationData> computed = doCollect(listOwner, false);
-      if (cache.replace(listOwner, cached, computed)) {
+      List<AnnotationData> computed = dataSupplier.get();
+      if (cache.replace(cacheKey, cached, computed)) {
         cached = computed;
         break;
       }
@@ -182,11 +241,16 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) return NO_DATA;
 
-    String externalName = getExternalName(listOwner, false);
+    String externalName = getExternalName(listOwner);
     if (externalName == null) return NO_DATA;
 
+    return doCollect(externalName, files, onlyWritable);
+  }
+
+  @NotNull
+  private List<AnnotationData> doCollect(@NotNull String externalName, @NotNull List<PsiFile> annotationsFiles, boolean onlyWritable) {
     SmartList<AnnotationData> result = new SmartList<>();
-    for (PsiFile file : files) {
+    for (PsiFile file : annotationsFiles) {
       if (!file.isValid()) continue;
       if (onlyWritable && !file.isWritable()) continue;
 
@@ -423,7 +487,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
 
     @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
+    public void endElement(String uri, String localName, String qName) {
       if ("item".equals(qName)) {
         myExternalName = null;
       }
