@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.PermanentInstallationID;
@@ -37,6 +36,11 @@ public class EventLogStatisticsService implements StatisticsService {
       throw new StatServiceException("Event Log collector is not enabled");
     }
 
+    final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
+    if (logs.isEmpty()) {
+      return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
+    }
+
     final String serviceUrl = settings.getServiceUrl();
     if (serviceUrl == null) {
       return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
@@ -49,7 +53,6 @@ public class EventLogStatisticsService implements StatisticsService {
 
     final LogEventFilter filter = settings.getEventFilter();
     try {
-      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
       for (File file : logs) {
         final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
@@ -100,8 +103,6 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove);
-
-      UsageStatisticsPersistenceComponent.getInstance().setEventLogSentTime(System.currentTimeMillis());
       return decorator.toResult();
     }
     catch (Exception e) {
