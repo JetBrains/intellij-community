@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.stdlib;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,518 +33,923 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
  */
 public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLinkProvider {
   // use tools/stdlib-modindex.py to regenerate the map when new Python versions are released
-  private static final List<String> py2LibraryModules = ImmutableList.of(
-    "abc",
-    "aepack",
-    "aetools",
-    "aetypes",
-    "aifc",
-    "al",
-    "anydbm",
-    "argparse",
-    "array",
-    "asynchat",
-    "asyncore",
-    "atexit",
-    "audioop",
-    "autoGIL",
-    "base64",
-    "BaseHTTPServer",
-    "Bastion",
-    "bdb",
-    "binascii",
-    "binhex",
-    "bisect",
-    "bsddb",
-    "bz2",
-    "calendar",
-    "cd",
-    "cgi",
-    "CGIHTTPServer",
-    "cgitb",
-    "chunk",
-    "cmath",
-    "cmd",
-    "code",
-    "codecs",
-    "codeop",
-    "collections",
-    "ColorPicker",
-    "colorsys",
-    "commands",
-    "compileall",
-    "ConfigParser",
-    "contextlib",
-    "Cookie",
-    "cookielib",
-    "copy",
-    "copy_reg",
-    "crypt",
-    "csv",
-    "ctypes",
-    "curses.ascii",
-    "curses.panel",
-    "curses",
-    "datetime",
-    "dbhash",
-    "dbm",
-    "decimal",
-    "difflib",
-    "dircache",
-    "dis",
-    "distutils",
-    "dl",
-    "doctest",
-    "DocXMLRPCServer",
-    "dumbdbm",
-    "dummy_thread",
-    "dummy_threading",
-    "EasyDialogs",
-    "email.charset",
-    "email.encoders",
-    "email.errors",
-    "email.generator",
-    "email.header",
-    "email.iterators",
-    "email.message",
-    "email.mime",
-    "email.parser",
-    "email",
-    "email.utils",
-    "errno",
-    "fcntl",
-    "filecmp",
-    "fileinput",
-    "fl",
-    "fm",
-    "fnmatch",
-    "formatter",
-    "fpectl",
-    "fpformat",
-    "fractions",
-    "FrameWork",
-    "ftplib",
-    "functools",
-    "future_builtins",
-    "gc",
-    "gdbm",
-    "gensuitemodule",
-    "getopt",
-    "getpass",
-    "gettext",
-    "gl",
-    "glob",
-    "grp",
-    "gzip",
-    "hashlib",
-    "heapq",
-    "hmac",
-    "hotshot",
-    "htmllib",
-    "HTMLParser",
-    "httplib",
-    "ic",
-    "imageop",
-    "imaplib",
-    "imgfile",
-    "imghdr",
-    "imp",
-    "importlib",
-    "imputil",
-    "inspect",
-    "io",
-    "itertools",
-    "jpeg",
-    "json",
-    "keyword",
-    "linecache",
-    "locale",
-    "logging",
-    "MacOS",
-    "macostools",
-    "macpath",
-    "mailbox",
-    "mailcap",
-    "marshal",
-    "math",
-    "md5",
-    "mhlib",
-    "mimetools",
-    "mimetypes",
-    "MimeWriter",
-    "mimify",
-    "MiniAEFrame",
-    "mmap",
-    "modulefinder",
-    "msilib",
-    "msvcrt",
-    "multifile",
-    "multiprocessing",
-    "mutex",
-    "netrc",
-    "new",
-    "nis",
-    "nntplib",
-    "numbers",
-    "operator",
-    "optparse",
-    "os.path",
-    "os",
-    "ossaudiodev",
-    "parser",
-    "pickle",
-    "pickletools",
-    "pipes",
-    "pkgutil",
-    "platform",
-    "plistlib",
-    "popen2",
-    "poplib",
-    "posix",
-    "posixfile",
-    "pprint",
-    "pty",
-    "pwd",
-    "pyclbr",
-    "pydoc",
-    "xml.parsers.expat",
-    "py_compile",
-    "Queue",
-    "quopri",
-    "random",
-    "re",
-    "readline",
-    "repr",
-    "resource",
-    "rexec",
-    "rfc822",
-    "rlcompleter",
-    "robotparser",
-    "runpy",
-    "sched",
-    "ScrolledText",
-    "select",
-    "sets",
-    "sgmllib",
-    "sha",
-    "shelve",
-    "shlex",
-    "shutil",
-    "signal",
-    "SimpleHTTPServer",
-    "SimpleXMLRPCServer",
-    "site",
-    "smtpd",
-    "smtplib",
-    "sndhdr",
-    "socket",
-    "SocketServer",
-    "spwd",
-    "sqlite3",
-    "ssl",
-    "stat",
-    "statvfs",
-    "string",
-    "StringIO",
-    "stringprep",
-    "struct",
-    "subprocess",
-    "sunau",
-    "sunaudiodev",
-    "symbol",
-    "symtable",
-    "sys",
-    "sysconfig",
-    "syslog",
-    "tabnanny",
-    "telnetlib",
-    "tempfile",
-    "termios",
-    "test",
-    "textwrap",
-    "thread",
-    "threading",
-    "time",
-    "timeit",
-    "Tix",
-    "Tkinter",
-    "token",
-    "tokenize",
-    "trace",
-    "traceback",
-    "ttk",
-    "tty",
-    "types",
-    "unicodedata",
-    "unittest",
-    "urllib",
-    "urllib2",
-    "urlparse",
-    "user",
-    "UserDict",
-    "uu",
-    "uuid",
-    "warnings",
-    "wave",
-    "weakref",
-    "webbrowser",
-    "whichdb",
-    "winsound",
-    "wsgiref",
-    "xdrlib",
-    "xml.dom.minidom",
-    "xml.dom.pulldom",
-    "xml.dom",
-    "xml.etree.ElementTree",
-    "xml.sax.handler",
-    "xml.sax.xmlreader",
-    "xml.sax",
-    "xml.sax.saxutils",
-    "xmllib",
-    "xmlrpclib",
-    "zipfile",
-    "zipimport",
-    "zlib",
-    "_winreg",
-    "__builtin__",
-    "__future__"
-  );
+  private static final Map<String, String> py2LibraryModulesToWebpageName = ImmutableMap.<String, String>builder()
+    .put("BaseHTTPServer", "basehttpserver")
+    .put("Bastion", "bastion")
+    .put("CGIHTTPServer", "cgihttpserver")
+    .put("ColorPicker", "colorpicker")
+    .put("ConfigParser", "configparser")
+    .put("Cookie", "cookie")
+    .put("DocXMLRPCServer", "docxmlrpcserver")
+    .put("EasyDialogs", "easydialogs")
+    .put("FrameWork", "framework")
+    .put("HTMLParser", "htmlparser")
+    .put("MacOS", "macos")
+    .put("MimeWriter", "mimewriter")
+    .put("MiniAEFrame", "miniaeframe")
+    .put("Queue", "queue")
+    .put("ScrolledText", "scrolledtext")
+    .put("SimpleHTTPServer", "simplehttpserver")
+    .put("SimpleXMLRPCServer", "simplexmlrpcserver")
+    .put("SocketServer", "socketserver")
+    .put("StringIO", "stringio")
+    .put("Tix", "tix")
+    .put("Tkinter", "tkinter")
+    .put("UserDict", "userdict")
+    .put("__builtin__", "__builtin__")
+    .put("__future__", "__future__")
+    .put("__main__", "__main__")
+    .put("_winreg", "_winreg")
+    .put("abc", "abc")
+    .put("aepack", "aepack")
+    .put("aetools", "aetools")
+    .put("aetypes", "aetypes")
+    .put("aifc", "aifc")
+    .put("al", "al")
+    .put("anydbm", "anydbm")
+    .put("argparse", "argparse")
+    .put("array", "array")
+    .put("ast", "ast")
+    .put("asynchat", "asynchat")
+    .put("asyncore", "asyncore")
+    .put("atexit", "atexit")
+    .put("audioop", "audioop")
+    .put("autoGIL", "autogil")
+    .put("base64", "base64")
+    .put("bdb", "bdb")
+    .put("binascii", "binascii")
+    .put("binhex", "binhex")
+    .put("bisect", "bisect")
+    .put("bsddb", "bsddb")
+    .put("bz2", "bz2")
+    .put("calendar", "calendar")
+    .put("cd", "cd")
+    .put("cgi", "cgi")
+    .put("cgitb", "cgitb")
+    .put("chunk", "chunk")
+    .put("cmath", "cmath")
+    .put("cmd", "cmd")
+    .put("code", "code")
+    .put("codecs", "codecs")
+    .put("codeop", "codeop")
+    .put("collections", "collections")
+    .put("colorsys", "colorsys")
+    .put("commands", "commands")
+    .put("compileall", "compileall")
+    .put("contextlib", "contextlib")
+    .put("cookielib", "cookielib")
+    .put("copy", "copy")
+    .put("copy_reg", "copy_reg")
+    .put("crypt", "crypt")
+    .put("csv", "csv")
+    .put("ctypes", "ctypes")
+    .put("curses", "curses")
+    .put("curses.ascii", "curses.ascii")
+    .put("curses.panel", "curses.panel")
+    .put("datetime", "datetime")
+    .put("dbhash", "dbhash")
+    .put("dbm", "dbm")
+    .put("decimal", "decimal")
+    .put("difflib", "difflib")
+    .put("dircache", "dircache")
+    .put("dis", "dis")
+    .put("distutils", "distutils")
+    .put("dl", "dl")
+    .put("doctest", "doctest")
+    .put("dumbdbm", "dumbdbm")
+    .put("dummy_thread", "dummy_thread")
+    .put("dummy_threading", "dummy_threading")
+    .put("email", "email")
+    .put("email.charset", "email.charset")
+    .put("email.encoders", "email.encoders")
+    .put("email.errors", "email.errors")
+    .put("email.generator", "email.generator")
+    .put("email.header", "email.header")
+    .put("email.iterators", "email.iterators")
+    .put("email.message", "email.message")
+    .put("email.mime", "email.mime")
+    .put("email.parser", "email.parser")
+    .put("email.utils", "email.util")
+    .put("ensurepip", "ensurepip")
+    .put("errno", "errno")
+    .put("fcntl", "fcntl")
+    .put("filecmp", "filecmp")
+    .put("fileinput", "fileinput")
+    .put("fl", "fl")
+    .put("fm", "fm")
+    .put("fnmatch", "fnmatch")
+    .put("formatter", "formatter")
+    .put("fpectl", "fpectl")
+    .put("fpformat", "fpformat")
+    .put("fractions", "fractions")
+    .put("ftplib", "ftplib")
+    .put("functools", "functools")
+    .put("future_builtins", "future_builtins")
+    .put("gc", "gc")
+    .put("gdbm", "gdbm")
+    .put("gensuitemodule", "gensuitemodule")
+    .put("getopt", "getopt")
+    .put("getpass", "getpass")
+    .put("gettext", "gettext")
+    .put("gl", "gl")
+    .put("glob", "glob")
+    .put("grp", "grp")
+    .put("gzip", "gzip")
+    .put("hashlib", "hashlib")
+    .put("heapq", "heapq")
+    .put("hmac", "hmac")
+    .put("hotshot", "hotshot")
+    .put("htmllib", "htmllib")
+    .put("httplib", "httplib")
+    .put("ic", "ic")
+    .put("imageop", "imageop")
+    .put("imaplib", "imaplib")
+    .put("imgfile", "imgfile")
+    .put("imghdr", "imghdr")
+    .put("imp", "imp")
+    .put("importlib", "importlib")
+    .put("imputil", "imputil")
+    .put("inspect", "inspect")
+    .put("io", "io")
+    .put("itertools", "itertools")
+    .put("jpeg", "jpeg")
+    .put("json", "json")
+    .put("keyword", "keyword")
+    .put("linecache", "linecache")
+    .put("locale", "locale")
+    .put("logging", "logging")
+    .put("logging.config", "logging.config")
+    .put("logging.handlers", "logging.handlers")
+    .put("macostools", "macostools")
+    .put("macpath", "macpath")
+    .put("mailbox", "mailbox")
+    .put("mailcap", "mailcap")
+    .put("marshal", "marshal")
+    .put("math", "math")
+    .put("md5", "md5")
+    .put("mhlib", "mhlib")
+    .put("mimetools", "mimetools")
+    .put("mimetypes", "mimetypes")
+    .put("mimify", "mimify")
+    .put("mmap", "mmap")
+    .put("modulefinder", "modulefinder")
+    .put("msilib", "msilib")
+    .put("msvcrt", "msvcrt")
+    .put("multifile", "multifile")
+    .put("multiprocessing", "multiprocessing")
+    .put("mutex", "mutex")
+    .put("netrc", "netrc")
+    .put("new", "new")
+    .put("nis", "nis")
+    .put("nntplib", "nntplib")
+    .put("numbers", "numbers")
+    .put("operator", "operator")
+    .put("optparse", "optparse")
+    .put("os", "os")
+    .put("os.path", "os.path")
+    .put("ossaudiodev", "ossaudiodev")
+    .put("parser", "parser")
+    .put("pdb", "pdb")
+    .put("pickle", "pickle")
+    .put("pickletools", "pickletools")
+    .put("pipes", "pipes")
+    .put("pkgutil", "pkgutil")
+    .put("platform", "platform")
+    .put("plistlib", "plistlib")
+    .put("popen2", "popen2")
+    .put("poplib", "poplib")
+    .put("posix", "posix")
+    .put("posixfile", "posixfile")
+    .put("pprint", "pprint")
+    .put("pty", "pty")
+    .put("pwd", "pwd")
+    .put("py_compile", "py_compile")
+    .put("pyclbr", "pyclbr")
+    .put("pydoc", "pydoc")
+    .put("quopri", "quopri")
+    .put("random", "random")
+    .put("re", "re")
+    .put("readline", "readline")
+    .put("repr", "repr")
+    .put("resource", "resource")
+    .put("rexec", "rexec")
+    .put("rfc822", "rfc822")
+    .put("rlcompleter", "rlcompleter")
+    .put("robotparser", "robotparser")
+    .put("runpy", "runpy")
+    .put("sched", "sched")
+    .put("select", "select")
+    .put("sets", "sets")
+    .put("sgmllib", "sgmllib")
+    .put("sha", "sha")
+    .put("shelve", "shelve")
+    .put("shlex", "shlex")
+    .put("shutil", "shutil")
+    .put("signal", "signal")
+    .put("site", "site")
+    .put("smtpd", "smtpd")
+    .put("smtplib", "smtplib")
+    .put("sndhdr", "sndhdr")
+    .put("socket", "socket")
+    .put("spwd", "spwd")
+    .put("sqlite3", "sqlite3")
+    .put("ssl", "ssl")
+    .put("stat", "stat")
+    .put("statvfs", "statvfs")
+    .put("string", "string")
+    .put("stringprep", "stringprep")
+    .put("struct", "struct")
+    .put("subprocess", "subprocess")
+    .put("sunau", "sunau")
+    .put("sunaudiodev", "sunaudio")
+    .put("symbol", "symbol")
+    .put("symtable", "symtable")
+    .put("sys", "sys")
+    .put("sysconfig", "sysconfig")
+    .put("syslog", "syslog")
+    .put("tabnanny", "tabnanny")
+    .put("tarfile", "tarfile")
+    .put("telnetlib", "telnetlib")
+    .put("tempfile", "tempfile")
+    .put("termios", "termios")
+    .put("test", "test")
+    .put("textwrap", "textwrap")
+    .put("thread", "thread")
+    .put("threading", "threading")
+    .put("time", "time")
+    .put("timeit", "timeit")
+    .put("token", "token")
+    .put("tokenize", "tokenize")
+    .put("trace", "trace")
+    .put("traceback", "traceback")
+    .put("ttk", "ttk")
+    .put("tty", "tty")
+    .put("turtle", "turtle")
+    .put("types", "types")
+    .put("unicodedata", "unicodedata")
+    .put("unittest", "unittest")
+    .put("urllib", "urllib")
+    .put("urllib2", "urllib2")
+    .put("urlparse", "urlparse")
+    .put("user", "user")
+    .put("uu", "uu")
+    .put("uuid", "uuid")
+    .put("warnings", "warnings")
+    .put("wave", "wave")
+    .put("weakref", "weakref")
+    .put("webbrowser", "webbrowser")
+    .put("whichdb", "whichdb")
+    .put("winsound", "winsound")
+    .put("wsgiref", "wsgiref")
+    .put("xdrlib", "xdrlib")
+    .put("xml.dom", "xml.dom")
+    .put("xml.dom.minidom", "xml.dom.minidom")
+    .put("xml.dom.pulldom", "xml.dom.pulldom")
+    .put("xml.etree.ElementTree", "xml.etree.elementtree")
+    .put("xml.parsers.expat", "pyexpat")
+    .put("xml.sax", "xml.sax")
+    .put("xml.sax.handler", "xml.sax.handler")
+    .put("xml.sax.saxutils", "xml.sax.utils")
+    .put("xml.sax.xmlreader", "xml.sax.reader")
+    .put("xmllib", "xmllib")
+    .put("xmlrpclib", "xmlrpclib")
+    .put("zipfile", "zipfile")
+    .put("zipimport", "zipimport")
+    .put("zlib", "zlib")
+    .build();
 
-  private static final List<String> py3LibraryModules = ImmutableList.of(
-    "abc",
-    "aifc",
-    "argparse",
-    "array",
-    "ast",
-    "asynchat",
-    "asyncore",
-    "atexit",
-    "audioop",
-    "base64",
-    "bdb",
-    "binascii",
-    "binhex",
-    "bisect",
-    "builtins",
-    "bz2",
-    "calendar",
-    "cgi",
-    "cgitb",
-    "chunk",
-    "cmath",
-    "cmd",
-    "code",
-    "codecs",
-    "codeop",
-    "collections",
-    "colorsys",
-    "compileall",
-    "concurrent.futures",
-    "configparser",
-    "contextlib",
-    "copy",
-    "copyreg",
-    "crypt",
-    "csv",
-    "ctypes",
-    "curses.ascii",
-    "curses.panel",
-    "curses",
-    "datetime",
-    "dbm",
-    "decimal",
-    "difflib",
-    "dis",
-    "distutils",
-    "doctest",
-    "dummy_threading",
-    "email.charset",
-    "email.encoders",
-    "email.errors",
-    "email.generator",
-    "email.header",
-    "email.iterators",
-    "email.message",
-    "email.mime",
-    "email.parser",
-    "email",
-    "email.utils",
-    "errno",
-    "fcntl",
-    "filecmp",
-    "fileinput",
-    "fnmatch",
-    "formatter",
-    "fpectl",
-    "fractions",
-    "ftplib",
-    "functools",
-    "gc",
-    "getopt",
-    "getpass",
-    "gettext",
-    "glob",
-    "grp",
-    "gzip",
-    "hashlib",
-    "heapq",
-    "hmac",
-    "html.entities",
-    "html.parser",
-    "html",
-    "http.client",
-    "http.cookiejar",
-    "http.cookies",
-    "http.server",
-    "imaplib",
-    "imghdr",
-    "imp",
-    "importlib",
-    "inspect",
-    "io",
-    "itertools",
-    "json",
-    "keyword",
-    "linecache",
-    "locale",
-    "logging.config",
-    "logging.handlers",
-    "logging",
-    "macpath",
-    "mailbox",
-    "mailcap",
-    "marshal",
-    "math",
-    "mimetypes",
-    "mmap",
-    "modulefinder",
-    "msilib",
-    "msvcrt",
-    "multiprocessing",
-    "netrc",
-    "nis",
-    "nntplib",
-    "numbers",
-    "operator",
-    "optparse",
-    "os.path",
-    "os",
-    "ossaudiodev",
-    "parser",
-    "pickle",
-    "pickletools",
-    "pipes",
-    "pkgutil",
-    "platform",
-    "plistlib",
-    "poplib",
-    "posix",
-    "pprint",
-    "pty",
-    "pwd",
-    "pyclbr",
-    "pydoc",
-    "xml.parsers.expat",
-    "py_compile",
-    "queue",
-    "quopri",
-    "random",
-    "re",
-    "readline",
-    "reprlib",
-    "resource",
-    "rlcompleter",
-    "runpy",
-    "sched",
-    "select",
-    "shelve",
-    "shlex",
-    "shutil",
-    "signal",
-    "site",
-    "smtpd",
-    "smtplib",
-    "sndhdr",
-    "socket",
-    "socketserver",
-    "spwd",
-    "sqlite3",
-    "ssl",
-    "stat",
-    "string",
-    "stringprep",
-    "struct",
-    "subprocess",
-    "sunau",
-    "symbol",
-    "symtable",
-    "sys",
-    "sysconfig",
-    "syslog",
-    "tabnanny",
-    "tarfile",
-    "telnetlib",
-    "tempfile",
-    "termios",
-    "test",
-    "textwrap",
-    "threading",
-    "time",
-    "timeit",
-    "tkinter",
-    "tkinter.scrolledtext",
-    "tkinter.tix",
-    "tkinter.ttk",
-    "token",
-    "tokenize",
-    "trace",
-    "traceback",
-    "tty",
-    "types",
-    "unicodedata",
-    "unittest",
-    "urllib.error",
-    "urllib.parse",
-    "urllib.request",
-    "urllib.robotparser",
-    "uu",
-    "uuid",
-    "warnings",
-    "wave",
-    "weakref",
-    "webbrowser",
-    "winreg",
-    "winsound",
-    "wsgiref",
-    "xdrlib",
-    "xml.dom.minidom",
-    "xml.dom.pulldom",
-    "xml.dom",
-    "xml.etree.ElementTree",
-    "xml.sax.handler",
-    "xml.sax.xmlreader",
-    "xml.sax",
-    "xml.sax.saxutils",
-    "xmlrpc.client",
-    "xmlrpc.server",
-    "zipfile",
-    "zipimport",
-    "zlib",
-    "_dummy_thread",
-    "_thread",
-    "__future__"
-  );
+  private static final Map<String, String> py3LibraryModulesToWebpageName = ImmutableMap.<String, String>builder()
+    .put("__future__", "__future__")
+    .put("__main__", "__main__")
+    .put("_dummy_thread", "_dummy_thread")
+    .put("_thread", "_thread")
+    .put("abc", "abc")
+    .put("aifc", "aifc")
+    .put("argparse", "argparse")
+    .put("array", "array")
+    .put("ast", "ast")
+    .put("asynchat", "asynchat")
+    .put("asyncio", "asyncio")
+    .put("asyncore", "asyncore")
+    .put("atexit", "atexit")
+    .put("audioop", "audioop")
+    .put("base64", "base64")
+    .put("bdb", "bdb")
+    .put("binascii", "binascii")
+    .put("binhex", "binhex")
+    .put("bisect", "bisect")
+    .put("builtins", "builtins")
+    .put("bz2", "bz2")
+    .put("calendar", "calendar")
+    .put("cgi", "cgi")
+    .put("cgitb", "cgitb")
+    .put("chunk", "chunk")
+    .put("cmath", "cmath")
+    .put("cmd", "cmd")
+    .put("code", "code")
+    .put("codecs", "codecs")
+    .put("codeop", "codeop")
+    .put("collections", "collections")
+    .put("collections.abc", "collections.abc")
+    .put("colorsys", "colorsys")
+    .put("compileall", "compileall")
+    .put("concurrent.futures", "concurrent.futures")
+    .put("configparser", "configparser")
+    .put("contextlib", "contextlib")
+    .put("contextvars", "contextvars")
+    .put("copy", "copy")
+    .put("copyreg", "copyreg")
+    .put("crypt", "crypt")
+    .put("csv", "csv")
+    .put("ctypes", "ctypes")
+    .put("curses", "curses")
+    .put("curses.ascii", "curses.ascii")
+    .put("curses.panel", "curses.panel")
+    .put("datetime", "datetime")
+    .put("dbm", "dbm")
+    .put("decimal", "decimal")
+    .put("difflib", "difflib")
+    .put("dis", "dis")
+    .put("distutils", "distutils")
+    .put("doctest", "doctest")
+    .put("dummy_threading", "dummy_threading")
+    .put("email", "email")
+    .put("email.charset", "email.charset")
+    .put("email.contentmanager", "email.contentmanager")
+    .put("email.encoders", "email.encoders")
+    .put("email.errors", "email.errors")
+    .put("email.generator", "email.generator")
+    .put("email.header", "email.header")
+    .put("email.headerregistry", "email.headerregistry")
+    .put("email.iterators", "email.iterators")
+    .put("email.message", "email.message")
+    .put("email.message.Message", "email.compat32-message")
+    .put("email.mime", "email.mime")
+    .put("email.parser", "email.parser")
+    .put("email.policy", "email.policy")
+    .put("email.utils", "email.util")
+    .put("ensurepip", "ensurepip")
+    .put("enum", "enum")
+    .put("errno", "errno")
+    .put("faulthandler", "faulthandler")
+    .put("fcntl", "fcntl")
+    .put("filecmp", "filecmp")
+    .put("fileinput", "fileinput")
+    .put("fnmatch", "fnmatch")
+    .put("formatter", "formatter")
+    .put("fractions", "fractions")
+    .put("ftplib", "ftplib")
+    .put("functools", "functools")
+    .put("gc", "gc")
+    .put("getopt", "getopt")
+    .put("getpass", "getpass")
+    .put("gettext", "gettext")
+    .put("glob", "glob")
+    .put("grp", "grp")
+    .put("gzip", "gzip")
+    .put("hashlib", "hashlib")
+    .put("heapq", "heapq")
+    .put("hmac", "hmac")
+    .put("html", "html")
+    .put("html.entities", "html.entities")
+    .put("html.parser", "html.parser")
+    .put("http", "http")
+    .put("http.client", "http.client")
+    .put("http.cookiejar", "http.cookiejar")
+    .put("http.cookies", "http.cookies")
+    .put("http.server", "http.server")
+    .put("imaplib", "imaplib")
+    .put("imghdr", "imghdr")
+    .put("imp", "imp")
+    .put("importlib", "importlib")
+    .put("inspect", "inspect")
+    .put("io", "io")
+    .put("ipaddress", "ipaddress")
+    .put("itertools", "itertools")
+    .put("json", "json")
+    .put("keyword", "keyword")
+    .put("linecache", "linecache")
+    .put("locale", "locale")
+    .put("logging", "logging")
+    .put("logging.config", "logging.config")
+    .put("logging.handlers", "logging.handlers")
+    .put("lzma", "lzma")
+    .put("macpath", "macpath")
+    .put("mailbox", "mailbox")
+    .put("mailcap", "mailcap")
+    .put("marshal", "marshal")
+    .put("math", "math")
+    .put("mimetypes", "mimetypes")
+    .put("mmap", "mmap")
+    .put("modulefinder", "modulefinder")
+    .put("msilib", "msilib")
+    .put("msvcrt", "msvcrt")
+    .put("multiprocessing", "multiprocessing")
+    .put("netrc", "netrc")
+    .put("nis", "nis")
+    .put("nntplib", "nntplib")
+    .put("numbers", "numbers")
+    .put("operator", "operator")
+    .put("optparse", "optparse")
+    .put("os", "os")
+    .put("os.path", "os.path")
+    .put("ossaudiodev", "ossaudiodev")
+    .put("parser", "parser")
+    .put("pathlib", "pathlib")
+    .put("pdb", "pdb")
+    .put("pickle", "pickle")
+    .put("pickletools", "pickletools")
+    .put("pipes", "pipes")
+    .put("pkgutil", "pkgutil")
+    .put("platform", "platform")
+    .put("plistlib", "plistlib")
+    .put("poplib", "poplib")
+    .put("posix", "posix")
+    .put("pprint", "pprint")
+    .put("pty", "pty")
+    .put("pwd", "pwd")
+    .put("py_compile", "py_compile")
+    .put("pyclbr", "pyclbr")
+    .put("pydoc", "pydoc")
+    .put("queue", "queue")
+    .put("quopri", "quopri")
+    .put("random", "random")
+    .put("re", "re")
+    .put("readline", "readline")
+    .put("reprlib", "reprlib")
+    .put("resource", "resource")
+    .put("rlcompleter", "rlcompleter")
+    .put("runpy", "runpy")
+    .put("sched", "sched")
+    .put("secrets", "secrets")
+    .put("select", "select")
+    .put("selectors", "selectors")
+    .put("shelve", "shelve")
+    .put("shlex", "shlex")
+    .put("shutil", "shutil")
+    .put("signal", "signal")
+    .put("site", "site")
+    .put("smtpd", "smtpd")
+    .put("smtplib", "smtplib")
+    .put("sndhdr", "sndhdr")
+    .put("socket", "socket")
+    .put("socketserver", "socketserver")
+    .put("spwd", "spwd")
+    .put("sqlite3", "sqlite3")
+    .put("ssl", "ssl")
+    .put("stat", "stat")
+    .put("statistics", "statistics")
+    .put("string", "string")
+    .put("stringprep", "stringprep")
+    .put("struct", "struct")
+    .put("subprocess", "subprocess")
+    .put("sunau", "sunau")
+    .put("symbol", "symbol")
+    .put("symtable", "symtable")
+    .put("sys", "sys")
+    .put("sysconfig", "sysconfig")
+    .put("syslog", "syslog")
+    .put("tabnanny", "tabnanny")
+    .put("tarfile", "tarfile")
+    .put("telnetlib", "telnetlib")
+    .put("tempfile", "tempfile")
+    .put("termios", "termios")
+    .put("test", "test")
+    .put("textwrap", "textwrap")
+    .put("threading", "threading")
+    .put("time", "time")
+    .put("timeit", "timeit")
+    .put("tkinter", "tkinter")
+    .put("tkinter.scrolledtext", "tkinter.scrolledtext")
+    .put("tkinter.tix", "tkinter.tix")
+    .put("tkinter.ttk", "tkinter.ttk")
+    .put("token", "token")
+    .put("tokenize", "tokenize")
+    .put("trace", "trace")
+    .put("traceback", "traceback")
+    .put("tracemalloc", "tracemalloc")
+    .put("tty", "tty")
+    .put("turtle", "turtle")
+    .put("types", "types")
+    .put("typing", "typing")
+    .put("unicodedata", "unicodedata")
+    .put("unittest", "unittest")
+    .put("unittest.mock", "unittest.mock")
+    .put("urllib", "urllib")
+    .put("urllib.error", "urllib.error")
+    .put("urllib.parse", "urllib.parse")
+    .put("urllib.request", "urllib.request")
+    .put("urllib.robotparser", "urllib.robotparser")
+    .put("uu", "uu")
+    .put("uuid", "uuid")
+    .put("venv", "venv")
+    .put("warnings", "warnings")
+    .put("wave", "wave")
+    .put("weakref", "weakref")
+    .put("webbrowser", "webbrowser")
+    .put("winreg", "winreg")
+    .put("winsound", "winsound")
+    .put("wsgiref", "wsgiref")
+    .put("xdrlib", "xdrlib")
+    .put("xml.dom", "xml.dom")
+    .put("xml.dom.minidom", "xml.dom.minidom")
+    .put("xml.dom.pulldom", "xml.dom.pulldom")
+    .put("xml.etree.ElementTree", "xml.etree.elementtree")
+    .put("xml.parsers.expat", "pyexpat")
+    .put("xml.sax", "xml.sax")
+    .put("xml.sax.handler", "xml.sax.handler")
+    .put("xml.sax.saxutils", "xml.sax.utils")
+    .put("xml.sax.xmlreader", "xml.sax.reader")
+    .put("xmlrpc", "xmlrpc")
+    .put("xmlrpc.client", "xmlrpc.client")
+    .put("xmlrpc.server", "xmlrpc.server")
+    .put("zipapp", "zipapp")
+    .put("zipfile", "zipfile")
+    .put("zipimport", "zipimport")
+    .put("zlib", "zlib")
+    .build();
+
+  private static final Map<String, String> stdlibObjectsToWebpage = ImmutableMap.<String, String>builder()
+    .put("ArithmeticError", "exceptions")
+    .put("AssertionError", "exceptions")
+    .put("AttributeError", "exceptions")
+    .put("BaseException", "exceptions")
+    .put("BaseException.args", "exceptions")
+    .put("BaseException.with_traceback", "exceptions")
+    .put("BlockingIOError", "exceptions")
+    .put("BlockingIOError.characters_written", "exceptions")
+    .put("BrokenPipeError", "exceptions")
+    .put("BufferError", "exceptions")
+    .put("BytesWarning", "exceptions")
+    .put("ChildProcessError", "exceptions")
+    .put("ConnectionAbortedError", "exceptions")
+    .put("ConnectionError", "exceptions")
+    .put("ConnectionRefusedError", "exceptions")
+    .put("ConnectionResetError", "exceptions")
+    .put("DeprecationWarning", "exceptions")
+    .put("EOFError", "exceptions")
+    .put("Ellipsis", "constants")
+    .put("EnvironmentError", "exceptions")
+    .put("Exception", "exceptions")
+    .put("False", "constants")
+    .put("FileExistsError", "exceptions")
+    .put("FileNotFoundError", "exceptions")
+    .put("FloatingPointError", "exceptions")
+    .put("FutureWarning", "exceptions")
+    .put("GeneratorExit", "exceptions")
+    .put("IOError", "exceptions")
+    .put("ImportError", "exceptions")
+    .put("ImportWarning", "exceptions")
+    .put("IndentationError", "exceptions")
+    .put("IndexError", "exceptions")
+    .put("InterruptedError", "exceptions")
+    .put("IsADirectoryError", "exceptions")
+    .put("KeyError", "exceptions")
+    .put("KeyboardInterrupt", "exceptions")
+    .put("LookupError", "exceptions")
+    .put("MemoryError", "exceptions")
+    .put("ModuleNotFoundError", "exceptions")
+    .put("NameError", "exceptions")
+    .put("None", "constants")
+    .put("NotADirectoryError", "exceptions")
+    .put("NotImplemented", "constants")
+    .put("NotImplementedError", "exceptions")
+    .put("OSError", "exceptions")
+    .put("OSError.errno", "exceptions")
+    .put("OSError.filename", "exceptions")
+    .put("OSError.filename2", "exceptions")
+    .put("OSError.strerror", "exceptions")
+    .put("OSError.winerror", "exceptions")
+    .put("OverflowError", "exceptions")
+    .put("PendingDeprecationWarning", "exceptions")
+    .put("PermissionError", "exceptions")
+    .put("ProcessLookupError", "exceptions")
+    .put("RecursionError", "exceptions")
+    .put("ReferenceError", "exceptions")
+    .put("ResourceWarning", "exceptions")
+    .put("RuntimeError", "exceptions")
+    .put("RuntimeWarning", "exceptions")
+    .put("StopAsyncIteration", "exceptions")
+    .put("StopIteration", "exceptions")
+    .put("SyntaxError", "exceptions")
+    .put("SyntaxWarning", "exceptions")
+    .put("SystemError", "exceptions")
+    .put("SystemExit", "exceptions")
+    .put("SystemExit.code", "exceptions")
+    .put("TabError", "exceptions")
+    .put("TimeoutError", "exceptions")
+    .put("True", "constants")
+    .put("TypeError", "exceptions")
+    .put("UnboundLocalError", "exceptions")
+    .put("UnicodeDecodeError", "exceptions")
+    .put("UnicodeEncodeError", "exceptions")
+    .put("UnicodeError", "exceptions")
+    .put("UnicodeError.encoding", "exceptions")
+    .put("UnicodeError.end", "exceptions")
+    .put("UnicodeError.object", "exceptions")
+    .put("UnicodeError.reason", "exceptions")
+    .put("UnicodeError.start", "exceptions")
+    .put("UnicodeTranslateError", "exceptions")
+    .put("UnicodeWarning", "exceptions")
+    .put("UserWarning", "exceptions")
+    .put("ValueError", "exceptions")
+    .put("Warning", "exceptions")
+    .put("WindowsError", "exceptions")
+    .put("ZeroDivisionError", "exceptions")
+    .put("__debug__", "constants")
+    .put("__import__", "functions")
+    .put("abs", "functions")
+    .put("all", "functions")
+    .put("any", "functions")
+    .put("ascii", "functions")
+    .put("bin", "functions")
+    .put("binaryseq", "stdtypes")
+    .put("bool", "functions")
+    .put("boolean", "stdtypes")
+    .put("breakpoint", "functions")
+    .put("bytearray", "stdtypes")
+    .put("bytearray.capitalize", "stdtypes")
+    .put("bytearray.center", "stdtypes")
+    .put("bytearray.count", "stdtypes")
+    .put("bytearray.decode", "stdtypes")
+    .put("bytearray.endswith", "stdtypes")
+    .put("bytearray.expandtabs", "stdtypes")
+    .put("bytearray.find", "stdtypes")
+    .put("bytearray.fromhex", "stdtypes")
+    .put("bytearray.hex", "stdtypes")
+    .put("bytearray.index", "stdtypes")
+    .put("bytearray.isalnum", "stdtypes")
+    .put("bytearray.isalpha", "stdtypes")
+    .put("bytearray.isascii", "stdtypes")
+    .put("bytearray.isdigit", "stdtypes")
+    .put("bytearray.islower", "stdtypes")
+    .put("bytearray.isspace", "stdtypes")
+    .put("bytearray.istitle", "stdtypes")
+    .put("bytearray.isupper", "stdtypes")
+    .put("bytearray.join", "stdtypes")
+    .put("bytearray.ljust", "stdtypes")
+    .put("bytearray.lower", "stdtypes")
+    .put("bytearray.lstrip", "stdtypes")
+    .put("bytearray.maketrans", "stdtypes")
+    .put("bytearray.partition", "stdtypes")
+    .put("bytearray.replace", "stdtypes")
+    .put("bytearray.rfind", "stdtypes")
+    .put("bytearray.rindex", "stdtypes")
+    .put("bytearray.rjust", "stdtypes")
+    .put("bytearray.rpartition", "stdtypes")
+    .put("bytearray.rsplit", "stdtypes")
+    .put("bytearray.rstrip", "stdtypes")
+    .put("bytearray.split", "stdtypes")
+    .put("bytearray.splitlines", "stdtypes")
+    .put("bytearray.startswith", "stdtypes")
+    .put("bytearray.strip", "stdtypes")
+    .put("bytearray.swapcase", "stdtypes")
+    .put("bytearray.title", "stdtypes")
+    .put("bytearray.translate", "stdtypes")
+    .put("bytearray.upper", "stdtypes")
+    .put("bytearray.zfill", "stdtypes")
+    .put("bytes", "stdtypes")
+    .put("bytes.capitalize", "stdtypes")
+    .put("bytes.center", "stdtypes")
+    .put("bytes.count", "stdtypes")
+    .put("bytes.decode", "stdtypes")
+    .put("bytes.endswith", "stdtypes")
+    .put("bytes.expandtabs", "stdtypes")
+    .put("bytes.find", "stdtypes")
+    .put("bytes.fromhex", "stdtypes")
+    .put("bytes.hex", "stdtypes")
+    .put("bytes.index", "stdtypes")
+    .put("bytes.isalnum", "stdtypes")
+    .put("bytes.isalpha", "stdtypes")
+    .put("bytes.isascii", "stdtypes")
+    .put("bytes.isdigit", "stdtypes")
+    .put("bytes.islower", "stdtypes")
+    .put("bytes.isspace", "stdtypes")
+    .put("bytes.istitle", "stdtypes")
+    .put("bytes.isupper", "stdtypes")
+    .put("bytes.join", "stdtypes")
+    .put("bytes.ljust", "stdtypes")
+    .put("bytes.lower", "stdtypes")
+    .put("bytes.lstrip", "stdtypes")
+    .put("bytes.maketrans", "stdtypes")
+    .put("bytes.partition", "stdtypes")
+    .put("bytes.replace", "stdtypes")
+    .put("bytes.rfind", "stdtypes")
+    .put("bytes.rindex", "stdtypes")
+    .put("bytes.rjust", "stdtypes")
+    .put("bytes.rpartition", "stdtypes")
+    .put("bytes.rsplit", "stdtypes")
+    .put("bytes.rstrip", "stdtypes")
+    .put("bytes.split", "stdtypes")
+    .put("bytes.splitlines", "stdtypes")
+    .put("bytes.startswith", "stdtypes")
+    .put("bytes.strip", "stdtypes")
+    .put("bytes.swapcase", "stdtypes")
+    .put("bytes.title", "stdtypes")
+    .put("bytes.translate", "stdtypes")
+    .put("bytes.upper", "stdtypes")
+    .put("bytes.zfill", "stdtypes")
+    .put("callable", "functions")
+    .put("chr", "functions")
+    .put("class.__bases__", "stdtypes")
+    .put("class.__mro__", "stdtypes")
+    .put("class.__subclasses__", "stdtypes")
+    .put("class.mro", "stdtypes")
+    .put("classmethod", "functions")
+    .put("comparisons", "stdtypes")
+    .put("compile", "functions")
+    .put("complex", "functions")
+    .put("container.__iter__", "stdtypes")
+    .put("contextmanager.__enter__", "stdtypes")
+    .put("contextmanager.__exit__", "stdtypes")
+    .put("copyright", "constants")
+    .put("credits", "constants")
+    .put("definition.__name__", "stdtypes")
+    .put("definition.__qualname__", "stdtypes")
+    .put("delattr", "functions")
+    .put("dict", "stdtypes")
+    .put("dict.clear", "stdtypes")
+    .put("dict.copy", "stdtypes")
+    .put("dict.fromkeys", "stdtypes")
+    .put("dict.get", "stdtypes")
+    .put("dict.items", "stdtypes")
+    .put("dict.keys", "stdtypes")
+    .put("dict.pop", "stdtypes")
+    .put("dict.popitem", "stdtypes")
+    .put("dict.setdefault", "stdtypes")
+    .put("dict.update", "stdtypes")
+    .put("dict.values", "stdtypes")
+    .put("dir", "functions")
+    .put("divmod", "functions")
+    .put("enumerate", "functions")
+    .put("eval", "functions")
+    .put("exec", "functions")
+    .put("exit", "constants")
+    .put("filter", "functions")
+    .put("float", "functions")
+    .put("float.as_integer_ratio", "stdtypes")
+    .put("float.fromhex", "stdtypes")
+    .put("float.hex", "stdtypes")
+    .put("float.is_integer", "stdtypes")
+    .put("format", "functions")
+    .put("frozenset", "stdtypes")
+    .put("frozenset.add", "stdtypes")
+    .put("frozenset.clear", "stdtypes")
+    .put("frozenset.copy", "stdtypes")
+    .put("frozenset.difference", "stdtypes")
+    .put("frozenset.difference_update", "stdtypes")
+    .put("frozenset.discard", "stdtypes")
+    .put("frozenset.intersection", "stdtypes")
+    .put("frozenset.intersection_update", "stdtypes")
+    .put("frozenset.isdisjoint", "stdtypes")
+    .put("frozenset.issubset", "stdtypes")
+    .put("frozenset.issuperset", "stdtypes")
+    .put("frozenset.pop", "stdtypes")
+    .put("frozenset.remove", "stdtypes")
+    .put("frozenset.symmetric_difference", "stdtypes")
+    .put("frozenset.symmetric_difference_update", "stdtypes")
+    .put("frozenset.union", "stdtypes")
+    .put("frozenset.update", "stdtypes")
+    .put("functions", "stdtypes")
+    .put("getattr", "functions")
+    .put("globals", "functions")
+    .put("hasattr", "functions")
+    .put("hash", "functions")
+    .put("help", "functions")
+    .put("hex", "functions")
+    .put("input", "functions")
+    .put("instance.__class__", "stdtypes")
+    .put("int", "functions")
+    .put("int.bit_length", "stdtypes")
+    .put("int.from_bytes", "stdtypes")
+    .put("int.to_bytes", "stdtypes")
+    .put("isinstance", "functions")
+    .put("issubclass", "functions")
+    .put("iter", "functions")
+    .put("iterator.__iter__", "stdtypes")
+    .put("iterator.__next__", "stdtypes")
+    .put("len", "functions")
+    .put("license", "constants")
+    .put("list", "stdtypes")
+    .put("list.sort", "stdtypes")
+    .put("lists", "stdtypes")
+    .put("locals", "functions")
+    .put("map", "functions")
+    .put("max", "functions")
+    .put("memoryview", "stdtypes")
+    .put("memoryview.__eq__", "stdtypes")
+    .put("memoryview.c_contiguous", "stdtypes")
+    .put("memoryview.cast", "stdtypes")
+    .put("memoryview.contiguous", "stdtypes")
+    .put("memoryview.f_contiguous", "stdtypes")
+    .put("memoryview.format", "stdtypes")
+    .put("memoryview.hex", "stdtypes")
+    .put("memoryview.itemsize", "stdtypes")
+    .put("memoryview.nbytes", "stdtypes")
+    .put("memoryview.ndim", "stdtypes")
+    .put("memoryview.obj", "stdtypes")
+    .put("memoryview.readonly", "stdtypes")
+    .put("memoryview.release", "stdtypes")
+    .put("memoryview.shape", "stdtypes")
+    .put("memoryview.strides", "stdtypes")
+    .put("memoryview.suboffsets", "stdtypes")
+    .put("memoryview.tobytes", "stdtypes")
+    .put("memoryview.tolist", "stdtypes")
+    .put("methods", "stdtypes")
+    .put("min", "functions")
+    .put("modules", "stdtypes")
+    .put("next", "functions")
+    .put("object", "functions")
+    .put("object.__dict__", "stdtypes")
+    .put("oct", "functions")
+    .put("open", "functions")
+    .put("ord", "functions")
+    .put("pow", "functions")
+    .put("print", "functions")
+    .put("property", "functions")
+    .put("quit", "constants")
+    .put("range", "stdtypes")
+    .put("range.start", "stdtypes")
+    .put("range.step", "stdtypes")
+    .put("range.stop", "stdtypes")
+    .put("ranges", "stdtypes")
+    .put("repr", "functions")
+    .put("reversed", "functions")
+    .put("round", "functions")
+    .put("set", "stdtypes")
+    .put("setattr", "functions")
+    .put("slice", "functions")
+    .put("sorted", "functions")
+    .put("specialattrs", "stdtypes")
+    .put("staticmethod", "functions")
+    .put("stdcomparisons", "stdtypes")
+    .put("str", "stdtypes")
+    .put("str.capitalize", "stdtypes")
+    .put("str.casefold", "stdtypes")
+    .put("str.center", "stdtypes")
+    .put("str.count", "stdtypes")
+    .put("str.encode", "stdtypes")
+    .put("str.endswith", "stdtypes")
+    .put("str.expandtabs", "stdtypes")
+    .put("str.find", "stdtypes")
+    .put("str.format", "stdtypes")
+    .put("str.format_map", "stdtypes")
+    .put("str.index", "stdtypes")
+    .put("str.isalnum", "stdtypes")
+    .put("str.isalpha", "stdtypes")
+    .put("str.isascii", "stdtypes")
+    .put("str.isdecimal", "stdtypes")
+    .put("str.isdigit", "stdtypes")
+    .put("str.isidentifier", "stdtypes")
+    .put("str.islower", "stdtypes")
+    .put("str.isnumeric", "stdtypes")
+    .put("str.isprintable", "stdtypes")
+    .put("str.isspace", "stdtypes")
+    .put("str.istitle", "stdtypes")
+    .put("str.isupper", "stdtypes")
+    .put("str.join", "stdtypes")
+    .put("str.ljust", "stdtypes")
+    .put("str.lower", "stdtypes")
+    .put("str.lstrip", "stdtypes")
+    .put("str.maketrans", "stdtypes")
+    .put("str.partition", "stdtypes")
+    .put("str.replace", "stdtypes")
+    .put("str.rfind", "stdtypes")
+    .put("str.rindex", "stdtypes")
+    .put("str.rjust", "stdtypes")
+    .put("str.rpartition", "stdtypes")
+    .put("str.rsplit", "stdtypes")
+    .put("str.rstrip", "stdtypes")
+    .put("str.split", "stdtypes")
+    .put("str.splitlines", "stdtypes")
+    .put("str.startswith", "stdtypes")
+    .put("str.strip", "stdtypes")
+    .put("str.swapcase", "stdtypes")
+    .put("str.title", "stdtypes")
+    .put("str.translate", "stdtypes")
+    .put("str.upper", "stdtypes")
+    .put("str.zfill", "stdtypes")
+    .put("sum", "functions")
+    .put("super", "functions")
+    .put("textseq", "stdtypes")
+    .put("truth", "stdtypes")
+    .put("tuple", "stdtypes")
+    .put("tuples", "stdtypes")
+    .put("type", "functions")
+    .put("vars", "functions")
+    .put("warnings", "exceptions")
+    .put("zip", "functions")
+    .build();
 
   @Override
   public String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement) {
-    if (PyBuiltinCache.getInstance(element).isBuiltin(element)) return null;
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem) element : element.getContainingFile();
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
       file = file.getParent();
@@ -596,25 +1001,28 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     }
 
     final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
-    List<String> modules = pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModules : py2LibraryModules;
-    boolean foundModule = false;
-    for (String module : modules) {
-      if (qnameString.startsWith(module)) {
-        urlBuilder.append(module.toLowerCase());
-        urlBuilder.append(".html");
-        foundModule = true;
-        break;
-      }
+    final Map<String, String> moduleToWebpageName =
+      pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
+    final String webpageName = moduleToWebpageName.get(qnameString);
+
+    final boolean isBuiltin = "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
+    final String className = element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null ?
+                             ((PyFunction)element).getContainingClass().getName() : "";
+    final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
+    final String name2 = "__init__".equals(name) ? "" : name;
+    final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
+    final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
+    final boolean foundModule = webpageName2 != null;
+    if (foundModule) {
+      urlBuilder.append(webpageName2 + ".html");
     }
+
     if (foundModule && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
-      urlBuilder.append('#').append(moduleName).append(".");
-      if (element instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)element).getContainingClass();
-        if (containingClass != null) {
-          urlBuilder.append(containingClass.getName()).append('.');
-        }
+      urlBuilder.append('#');
+      if (!isBuiltin) {
+        urlBuilder.append(moduleName).append(".");
       }
-      urlBuilder.append(((PsiNamedElement)element).getName());
+      urlBuilder.append(qName);
     }
     return urlBuilder.toString();
   }
