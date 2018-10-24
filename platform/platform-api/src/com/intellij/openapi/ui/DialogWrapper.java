@@ -2072,7 +2072,7 @@ public abstract class DialogWrapper {
     }.start();
   }
 
-  private static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+  public static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
