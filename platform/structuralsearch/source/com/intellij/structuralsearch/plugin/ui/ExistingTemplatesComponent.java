@@ -287,8 +287,8 @@ public class ExistingTemplatesComponent {
       final Object userObject = treeNode.getUserObject();
       if (userObject == null) return;
 
-      final Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
-      final Color foreground = selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      Color background = UIUtil.getTreeBackground(selected, hasFocus);
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
 
       final String text;
       final int style;

@@ -432,7 +432,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
           button.setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
-          button.setForeground(UIUtil.getTreeTextForeground());
+          button.setForeground(UIUtil.getTreeForeground());
           button.setBackground(tree.getBackground());
         }
 
@@ -450,7 +450,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
           myLabel.setBackground(UIUtil.getTreeSelectionBackground());
         }
         else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
+          myLabel.setForeground(UIUtil.getTreeForeground());
           myLabel.setBackground(tree.getBackground());
         }
 

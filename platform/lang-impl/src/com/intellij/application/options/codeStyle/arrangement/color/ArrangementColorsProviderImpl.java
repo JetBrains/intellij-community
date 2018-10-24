@@ -50,7 +50,7 @@ public class ArrangementColorsProviderImpl implements ArrangementColorsProvider 
     myColorsAware = colorsAware;
 
     // Default settings.
-    myDefaultNormalAttributes.setForegroundColor(UIUtil.getTreeTextForeground());
+    myDefaultNormalAttributes.setForegroundColor(UIUtil.getTreeForeground());
     myDefaultNormalAttributes.setBackgroundColor(UIUtil.getPanelBackground());
     myDefaultSelectedAttributes.setForegroundColor(UIUtil.getTreeSelectionForeground());
     myDefaultSelectedAttributes.setBackgroundColor(UIUtil.getTreeSelectionBackground());
