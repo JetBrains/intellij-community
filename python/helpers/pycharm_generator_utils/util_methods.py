@@ -259,7 +259,9 @@ def cleanup(value):
         if replacement:
             result.append(value[prev:i])
             result.append(replacement)
+            prev = i + 1
         i += 1
+    result.append(value[prev:])
     return "".join(result)
 
 
