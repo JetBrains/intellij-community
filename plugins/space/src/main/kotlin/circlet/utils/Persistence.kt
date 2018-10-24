@@ -32,6 +32,10 @@ object IdeaPersistence : Persistence {
         TODO("not implemented")
     }
 
+    override suspend fun getAllKeys(): List<String> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override suspend fun clear() {
     }
 
