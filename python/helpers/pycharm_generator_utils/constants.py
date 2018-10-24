@@ -6,7 +6,7 @@ import string
 import time
 
 # !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.145"
+VERSION = "1.146"
 
 OUT_ENCODING = 'utf-8'
 
@@ -794,3 +794,8 @@ TYPELIB_MODULE_FNAME_PAT = re.compile("([a-zA-Z_]+[0-9a-zA-Z]*)[0-9a-zA-Z-.]*\\.
 
 MODULES_INSPECT_DIR = ['gi.repository']
 TENSORFLOW_CONTRIB_OPS_MODULE_PATTERN = re.compile(r'tensorflow\.contrib\.(?:.+)\.(?:python\.ops\.|_dataset_ops$)')
+
+CLASS_ATTR_BLACKLIST = [
+    'google.protobuf.pyext._message.Message._extensions_by_name',
+    'google.protobuf.pyext._message.Message._extensions_by_number',
+]
