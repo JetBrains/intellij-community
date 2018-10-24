@@ -1,18 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 
 /**
  * Implementation of {@link MultithreadSearcher.Listener} which decrease events rate and raise batch updates
  * each {@code throttlingDelay} milliseconds.
  * <br>
- * Not thread-safe. So could be notified in single thread only
+ * Not thread-safe and should be notified only in EDT
  */
 class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
 
@@ -23,6 +24,9 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
 
   private final Buffer myBuffer = new Buffer();
   private final BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> myFlushConsumer;
+
+  private final Alarm flushAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  private boolean flushScheduled;
 
   ThrottlingListenerWrapper(int throttlingDelay, MultithreadSearcher.Listener delegateListener, Executor delegateExecutor) {
     myThrottlingDelay = throttlingDelay;
@@ -40,33 +44,51 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   }
 
   public void clearBuffer() {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
     myBuffer.clear();
+    cancelScheduledFlush();
   }
 
   @Override
   public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
     myBuffer.addEvent(new Event(Event.ADD, list));
-    flushBufferIfNeeded();
+    scheduleFlushBuffer();
   }
 
   @Override
   public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
     myBuffer.addEvent(new Event(Event.REMOVE, list));
-    flushBufferIfNeeded();
+    scheduleFlushBuffer();
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
     myBuffer.flush(myFlushConsumer);
     myDelegateExecutor.execute(() -> myDelegateListener.searchFinished(hasMoreContributors));
+    cancelScheduledFlush();
   }
 
-  private void flushBufferIfNeeded() {
-    myBuffer.getOldestEventTime().ifPresent(time -> {
-      if (System.currentTimeMillis() - time > myThrottlingDelay) {
-        myBuffer.flush(myFlushConsumer);
-      }
-    });
+  //always notified in EDT!!!
+  private void scheduleFlushBuffer() {
+    Runnable flushTask = () -> {
+      if (!flushScheduled) return;
+      flushScheduled = false;
+      myBuffer.flush(myFlushConsumer);
+    };
+
+    if (!flushScheduled) {
+      flushAlarm.addRequest(flushTask, myThrottlingDelay);
+      flushScheduled = true;
+    }
+  }
+
+  //always notified in EDT!!!
+  private void cancelScheduledFlush() {
+    flushAlarm.cancelAllRequests();
+    flushScheduled = false;
   }
 
   private static class Event {
@@ -83,21 +105,16 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   }
 
   private static class Buffer {
-    private final Queue<Pair<Event, Long>> myQueue = new ArrayDeque<>();
+    private final Queue<Event> myQueue = new ArrayDeque<>();
 
     public void addEvent(Event event) {
-      myQueue.add(Pair.create(event, System.currentTimeMillis()));
-    }
-
-    public Optional<Long> getOldestEventTime() {
-      return Optional.ofNullable(myQueue.peek()).map(pair -> pair.second);
+      myQueue.add(event);
     }
 
     public void flush(BiConsumer<List<SESearcher.ElementInfo>, List<SESearcher.ElementInfo>> consumer) {
       List<SESearcher.ElementInfo> added = new ArrayList<>();
       List<SESearcher.ElementInfo> removed = new ArrayList<>();
-      myQueue.forEach(pair -> {
-        Event event = pair.first;
+      myQueue.forEach(event -> {
         if (event.type == Event.ADD) {
           added.addAll(event.items);
         } else {
