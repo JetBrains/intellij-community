@@ -40,6 +40,9 @@ import com.sun.javafx.application.PlatformImpl;
 interface GlobalMenuLib extends Library {
   void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
   void stopWatchDbus();
+
+  void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
+
   void execOnMainLoop(JRunnable run);
 
   Pointer registerWindow(long windowXid, EventHandler handler);
@@ -164,9 +167,15 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       };
 
       // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
-      PlatformImpl.startup(()-> {
-        ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-      });
+      try {
+        PlatformImpl.startup(() -> {
+          ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+        });
+      } catch (Throwable e) {
+        LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+        glibMain.start();
+      }
     } else {
       ourGLogger = null;
       ourProcessQueue = null;

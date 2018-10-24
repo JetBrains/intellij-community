@@ -93,6 +93,12 @@ void stopWatchDbus() {
   // _info("glib main loop is stopped");
 }
 
+// used when javaFX can't be started
+void runMainLoop(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
+  startWatchDbus(jlogger, onAppmenuServiceAppeared, onAppmenuServiceVanished);
+  g_main_loop_run(g_main_loop_new(NULL/*will be used g_main_context_default()*/, FALSE));
+}
+
 static void _onDbusOwnerChange(GObject *gobject, GParamSpec *pspec, gpointer user_data) {
   GDBusProxy *proxy = G_DBUS_PROXY(gobject);
 
