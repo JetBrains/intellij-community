@@ -96,9 +96,10 @@ class PyDataclassInspection : PyInspection() {
 
             processAttrsDefaultThroughDecorator(node)
             processAttrsInitializersAndValidators(node)
-            processAttrsAutoAttribs(node, dataclassParameters)
             processAttrIbFunctionCalls(node)
           }
+
+          processAnnotationsExistence(node, dataclassParameters)
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
@@ -433,8 +434,9 @@ class PyDataclassInspection : PyInspection() {
       )
     }
 
-    private fun processAttrsAutoAttribs(cls: PyClass, dataclassParameters: PyDataclassParameters) {
-      if (PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
+    private fun processAnnotationsExistence(cls: PyClass, dataclassParameters: PyDataclassParameters) {
+      if (dataclassParameters.type == PyDataclassParameters.Type.STD ||
+          PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
         cls.processClassLevelDeclarations { element, _ ->
           if (element is PyTargetExpression && element.annotation == null && PyDataclassFieldStubImpl.create(element) != null) {
             registerProblem(element, "Attribute '${element.name}' lacks a type annotation", ProblemHighlightType.GENERIC_ERROR)
