@@ -11,10 +11,17 @@ import junit.framework.TestCase
 
 class PyExternalDocTest : PyTestCase() {
 
+  private val pythonDocsLibrary = "https://docs.python.org/3.4 Mock SDK/library"
+
   fun testBuiltins() { // PY-9061
-    val pythonBuiltinsHelp = "https://docs.python.org/3.4 Mock SDK/library/functions.html"
+    val pythonBuiltinsHelp = "$pythonDocsLibrary/functions.html"
     doTest("x = su<caret>m([1, 2, 3,])", "${pythonBuiltinsHelp}#sum")
     doTest("f = ope<caret>n())", "${pythonBuiltinsHelp}#open")
+  }
+
+  fun testUnittestMock() { // PY-29887
+
+    doTest("from unittest.mock import Moc<caret>k", "$pythonDocsLibrary/unittest.mock.html#unittest.mock.Mock")
   }
 
   private fun doTest(text: String, expectedUrl: String) {
