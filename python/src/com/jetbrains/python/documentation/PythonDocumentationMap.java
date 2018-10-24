@@ -25,6 +25,14 @@ import java.util.Map;
  */
 @State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
+
+  public static final String PYQT4_DOC_URL =
+    "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}";
+
+  public static final String PYQT4_DOC_URL_OLD =
+    "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}";
+  public static final String PyQt4 = "PyQt4";
+
   public static PythonDocumentationMap getInstance() {
     return ServiceManager.getService(PythonDocumentationMap.class);
   }
@@ -82,7 +90,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     private List<Entry> myEntries = new ArrayList<>();
 
     public State() {
-      addEntry("PyQt4", "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}");
+      addEntry(PyQt4, PYQT4_DOC_URL);
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
@@ -128,6 +136,12 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
+    for (Entry e: myState.getEntries()) {
+      if (PyQt4.equals(e.myPrefix) && PYQT4_DOC_URL_OLD.equals(e.myUrlPattern)) {
+        // old URL is broken, switch to new one
+        e.setUrlPattern(PYQT4_DOC_URL);
+      }
+    }
   }
 
   public List<Entry> getEntries() {
