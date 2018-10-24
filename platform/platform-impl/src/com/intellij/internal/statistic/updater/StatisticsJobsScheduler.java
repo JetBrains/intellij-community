@@ -33,6 +33,7 @@ import static com.intellij.internal.statistic.service.fus.collectors.FUStatistic
 
 public class StatisticsJobsScheduler implements BaseComponent {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
+  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 2 * 60 * 60 * 1000;
   private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
 
   public static final int PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN = 30;
@@ -85,10 +86,13 @@ public class StatisticsJobsScheduler implements BaseComponent {
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
         runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
       }
-      if (FeatureUsageLogger.INSTANCE.isEnabled() && StatisticsUploadAssistant.isTimeToSendEventLog()) {
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), 3 * SEND_STATISTICS_DELAY_IN_MIN);
-      }
     }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, StatisticsUploadAssistant.getSendPeriodInMillis(), TimeUnit.MILLISECONDS);
+
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      if (FeatureUsageLogger.INSTANCE.isEnabled()) {
+        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+      }
+    }, 2 * SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {

@@ -49,11 +49,6 @@ public class StatisticsUploadAssistant {
     return Math.abs(timeDelta) > settings.getPeriod().getMillis();
   }
 
-  public static boolean isTimeToSendEventLog() {
-    final long timeDelta = System.currentTimeMillis() - UsageStatisticsPersistenceComponent.getInstance().getEventLogLastTimeSent();
-    return Math.abs(timeDelta) > UsageStatisticsPersistenceComponent.getInstance().getPeriod().getMillis();
-  }
-
   public static boolean isSendAllowed() {
     return isSendAllowed(UsageStatisticsPersistenceComponent.getInstance());
   }
