@@ -348,8 +348,7 @@ public class HotSwapUIImpl extends HotSwapUI {
         boolean aborted = executionResult.isAborted();
         if (errors == 0 && !aborted && myPerformHotswapAfterThisCompilation) {
           for (HotSwapVetoableListener listener : myListeners) {
-            if (!listener.shouldHotSwap(DummyCompileContext.getInstance()) ||
-                !listener.shouldHotSwap(context, executionResult)) {
+            if (!listener.shouldHotSwap(context, executionResult)) {
               return;
             }
           }
