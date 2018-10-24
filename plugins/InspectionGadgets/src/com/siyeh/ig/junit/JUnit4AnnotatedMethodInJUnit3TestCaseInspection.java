@@ -13,6 +13,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -191,7 +192,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(junit3Class);
-    if (conflicts == null) return; // check cancelled by user
+    if (conflicts == null) return; // cancelled by user
 
     final Runnable runnable = () -> {
       WriteAction.run(() -> {
@@ -241,7 +242,6 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
   @Nullable
   private static MultiMap<PsiElement, String> checkForConflicts(PsiClass junit3Class) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    final Query<PsiReference> search = ReferencesSearch.search(junit3Class, junit3Class.getUseScope());
     final String className = junit3Class.getQualifiedName();
     final PsiClass objectClass = ClassUtils.findObjectClass(junit3Class);
     junit3Class.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -282,6 +282,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
       }
     });
     if (className != null) {
+      final Query<PsiReference> search = ReferencesSearch.search(junit3Class, junit3Class.getUseScope());
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         search.forEach(reference -> {
           final PsiElement element = reference.getElement().getParent();
@@ -289,7 +290,8 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
             return true;
           }
           final PsiType expectedType = ExpectedTypeUtils.findExpectedType((PsiExpression)element, false);
-          if (InheritanceUtil.isInheritor(expectedType, "junit.framework.Test") && !InheritanceUtil.isInheritor(expectedType, className)) {
+          if (InheritanceUtil.isInheritor(expectedType, "junit.framework.Test") &&
+              PsiUtil.resolveClassInClassTypeOnly(expectedType) != junit3Class) {
             conflicts.putValue(element, "Reference " + CommonRefactoringUtil.htmlEmphasize(element.getText()) + " will not compile when " +
                                         RefactoringUIUtil.getDescription(junit3Class, false) + " is converted to JUnit 4");
           }

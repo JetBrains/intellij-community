@@ -14,6 +14,7 @@ public class ConvertToJUnit4FixTest extends IGQuickFixesTestCase {
 
   public void testOtherMethods() { doTest(); }
   public void testLocalMethod() { doTest(); }
+  public void testInheritance() { doTest(); }
 
   public void testSuiteCase() {
     final String name = getTestName(false);
