@@ -27,56 +27,56 @@ public class LombokUtilsAllGetterTest {
   }
 
   @Test
-  public void testToAllGetterNames_NonBoolean() throws Exception {
+  public void testToAllGetterNames_NonBoolean() {
     makeResults("myField", false, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getMyField")));
   }
 
   @Test
-  public void testToAllGetterNames_NonBoolean_Uppercase() throws Exception {
+  public void testToAllGetterNames_NonBoolean_Uppercase() {
     makeResults("myField", false, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getMyField")));
   }
 
   @Test
-  public void testToAllGetterNames_NonBoolean_Uppercase_Multiple() throws Exception {
+  public void testToAllGetterNames_NonBoolean_Uppercase_Multiple() {
     makeResults("MYField", false, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getMYField")));
   }
 
   @Test
-  public void testToAllGetterNames_Boolean() throws Exception {
+  public void testToAllGetterNames_Boolean() {
     makeResults("myField", true, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getMyField", "isMyField")));
   }
 
   @Test
-  public void testToAllGetterNames_Boolean_Uppercase() throws Exception {
+  public void testToAllGetterNames_Boolean_Uppercase() {
     makeResults("MyField", true, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getMyField", "isMyField")));
   }
 
   @Test
-  public void testToAllGetterNames_Boolean_is_Lowercase() throws Exception {
+  public void testToAllGetterNames_Boolean_is_Lowercase() {
     makeResults("ismyField", true, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("isIsmyField", "getIsmyField")));
   }
 
   @Test
-  public void testToAllGetterNames_Boolean_is_Uppercase() throws Exception {
+  public void testToAllGetterNames_Boolean_is_Uppercase() {
     makeResults("isMyField", true, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("isIsMyField", "getIsMyField", "getMyField", "isMyField")));
   }
 
   @Test
-  public void testToAllGetterNames_Boolean_IS() throws Exception {
+  public void testToAllGetterNames_Boolean_IS() {
     makeResults("ISmyField", true, DEFAULT_ACCESSORS);
 
     assertThat(result, is(Arrays.asList("getISmyField", "isISmyField")));
@@ -84,7 +84,7 @@ public class LombokUtilsAllGetterTest {
 
 
   @Test
-  public void testToAllGetterNames_NonBoolean_Fluent() throws Exception {
+  public void testToAllGetterNames_NonBoolean_Fluent() {
     makeResults("myField", false, AccessorsInfo.build(true, false, false));
 
     assertThat(result, is(Arrays.asList("myField")));

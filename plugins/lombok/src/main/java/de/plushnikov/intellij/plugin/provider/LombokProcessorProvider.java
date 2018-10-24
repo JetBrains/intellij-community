@@ -80,14 +80,14 @@ public class LombokProcessorProvider {
   @NotNull
   public Collection<Processor> getLombokProcessors(@NotNull Class supportedClass) {
     final Collection<Processor> result = lombokTypeProcessors.get(supportedClass);
-    return result == null ? Collections.<Processor>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   @NotNull
   public Collection<Processor> getProcessors(@NotNull PsiAnnotation psiAnnotation) {
     final String qualifiedName = psiAnnotation.getQualifiedName();
     final Collection<Processor> result = qualifiedName == null ? null : lombokProcessors.get(qualifiedName);
-    return result == null ? Collections.<Processor>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   private boolean verifyLombokAnnotationPresent(@NotNull PsiClass psiClass) {

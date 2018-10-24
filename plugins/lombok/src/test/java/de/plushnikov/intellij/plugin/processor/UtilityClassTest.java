@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class UtilityClassTest extends AbstractLombokParsingTestCase {
 
-  public void testUtilityclass$UtilityClassPlain() throws IOException {
+  public void testUtilityclass$UtilityClassPlain() {
     doTest(true);
   }
 }

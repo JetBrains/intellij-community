@@ -198,11 +198,9 @@ public class LombokInlineMethodHandler extends JavaInlineActionHandler {
   private boolean isThisReference(PsiReference reference) {
     if (reference != null) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement instanceof PsiJavaCodeReferenceElement &&
+      return referenceElement instanceof PsiJavaCodeReferenceElement &&
         referenceElement.getParent() instanceof PsiMethodCallExpression &&
-        "this".equals(((PsiJavaCodeReferenceElement) referenceElement).getReferenceName())) {
-        return true;
-      }
+        "this".equals(((PsiJavaCodeReferenceElement) referenceElement).getReferenceName());
     }
     return false;
   }

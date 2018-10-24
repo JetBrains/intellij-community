@@ -14,27 +14,27 @@ public class BuilderInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
-  public void testBuilderInvalidIdentifier() throws Exception {
+  public void testBuilderInvalidIdentifier() {
     doTest();
   }
 
-  public void testBuilderRightType() throws Exception {
+  public void testBuilderRightType() {
     doTest();
   }
 
-  public void testBuilderInvalidUse() throws Exception {
+  public void testBuilderInvalidUse() {
     doTest();
   }
 
-  public void testBuilderObtainVia() throws Exception {
+  public void testBuilderObtainVia() {
     doTest();
   }
 
-  public void testBuilderDefaultsWarnings() throws Exception {
+  public void testBuilderDefaultsWarnings() {
     doTest();
   }
 
-  public void testBuilderDefaultValue() throws Exception {
+  public void testBuilderDefaultValue() {
     doTest();
   }
 }

@@ -14,7 +14,7 @@ public class FieldDefaultsOnEnumInspectionTest extends LombokInspectionTest {
     return null;
   }
 
-  public void testEnumClass() throws Exception {
+  public void testEnumClass() {
     doTest();
   }
 }

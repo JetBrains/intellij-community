@@ -72,7 +72,7 @@ public class ChangeAnnotationParameterQuickFix implements IntentionAction, Local
     final Editor editor = CodeInsightUtil.positionCursor(project, file, myAnnotation);
     if (editor != null) {
       new WriteCommandAction(project, file) {
-        protected void run(@NotNull Result result) throws Throwable {
+        protected void run(@NotNull Result result) {
           final PsiNameValuePair valuePair = selectAnnotationAttribute();
 
           if (null != valuePair) {

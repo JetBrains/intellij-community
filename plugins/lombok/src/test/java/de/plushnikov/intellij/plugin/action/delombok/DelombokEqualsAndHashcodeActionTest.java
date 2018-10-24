@@ -33,4 +33,8 @@ public class DelombokEqualsAndHashcodeActionTest extends LombokLightActionTestCa
   public void testEqualsAndHashCodeCallSuper() throws Exception {
     doTest();
   }
+
+  public void testEqualsAndHashCodeIncludeExclude() throws Exception {
+    doTest();
+  }
 }

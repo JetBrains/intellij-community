@@ -40,6 +40,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
 
   private static final String INCLUDE_ANNOTATION_METHOD = "replaces";
+  private static final String EQUALSANDHASHCODE_INCLUDE = EqualsAndHashCode.Include.class.getName().replace("$", ".");
+  private static final String EQUALSANDHASHCODE_EXCLUDE = EqualsAndHashCode.Exclude.class.getName().replace("$", ".");
 
   private final EqualsAndHashCodeToStringHandler handler;
 
@@ -342,7 +344,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    addFieldsAnnotation(result, psiClass, EqualsAndHashCode.Include.class, EqualsAndHashCode.Exclude.class);
+    addFieldsAnnotation(result, psiClass, EQUALSANDHASHCODE_INCLUDE, EQUALSANDHASHCODE_EXCLUDE);
     return result;
   }
 

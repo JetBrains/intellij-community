@@ -36,9 +36,7 @@ public abstract class BaseRefactorAction extends AnAction {
     final VirtualFile file = getVirtualFiles(e);
     if (getEventProject(e) != null && file != null) {
       final FileType fileType = file.getFileType();
-      if (StdFileTypes.JAVA.equals(fileType)) {
-        return true;
-      }
+      return StdFileTypes.JAVA.equals(fileType);
     }
     return false;
   }

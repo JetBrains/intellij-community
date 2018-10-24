@@ -74,7 +74,7 @@ public class AccessorsInfo {
       containingClass = containingClass.getContainingClass();
     }
 
-    return buildAccessorsInfo(psiClass, null, null, Collections.<String>emptySet());
+    return buildAccessorsInfo(psiClass, null, null, Collections.emptySet());
   }
 
   @NotNull

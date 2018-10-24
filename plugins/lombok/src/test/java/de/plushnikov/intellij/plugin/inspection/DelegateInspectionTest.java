@@ -14,19 +14,19 @@ public class DelegateInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
-  public void testConcreteType() throws Exception {
+  public void testConcreteType() {
     doTest();
   }
 
-  public void testOnMethodWithParameter() throws Exception {
+  public void testOnMethodWithParameter() {
     doTest();
   }
 
-  public void testOnStaticFieldOrMethod() throws Exception {
+  public void testOnStaticFieldOrMethod() {
     doTest();
   }
 
-  public void testRecursionType() throws Exception {
+  public void testRecursionType() {
     doTest();
   }
 

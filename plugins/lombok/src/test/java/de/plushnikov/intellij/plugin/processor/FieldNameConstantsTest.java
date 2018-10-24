@@ -9,11 +9,11 @@ import java.io.IOException;
  */
 public class FieldNameConstantsTest extends AbstractLombokParsingTestCase {
 
-  public void testFieldnameconstants$FieldNameConstantsBasic() throws IOException {
+  public void testFieldnameconstants$FieldNameConstantsBasic() {
     doTest(true);
   }
 
-  public void testFieldnameconstants$FieldNameConstantsWeird() throws IOException {
+  public void testFieldnameconstants$FieldNameConstantsWeird() {
     doTest(true);
   }
 

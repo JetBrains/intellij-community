@@ -32,6 +32,9 @@ import java.util.List;
  */
 public class BuilderProcessor extends AbstractClassProcessor {
 
+  private static final String SINGULAR_CLASS = Singular.class.getName();
+  private static final String BUILDER_DEFAULT_CLASS = Builder.Default.class.getName().replace("$", ".");
+
   private final BuilderHandler builderHandler;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
 
@@ -51,7 +54,7 @@ public class BuilderProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    addFieldsAnnotation(result, psiClass, Singular.class, Builder.Default.class);
+    addFieldsAnnotation(result, psiClass, SINGULAR_CLASS, BUILDER_DEFAULT_CLASS);
     return result;
   }
 

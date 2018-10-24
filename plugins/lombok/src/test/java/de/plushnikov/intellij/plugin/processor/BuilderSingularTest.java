@@ -16,72 +16,72 @@ public class BuilderSingularTest extends AbstractLombokParsingTestCase {
     myFixture.addClass("package java.util;\n  public interface NavigableMap<K,V> extends java.util.SortedMap<K,V> {}");
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaBiMap() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaBiMap() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaCollection() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaCollection() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaList() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaList() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaMap() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaMap() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaSet() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaSet() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaSortedMap() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaSortedMap() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaSortedSet() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaSortedSet() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Guava$SingularGuavaTable() throws IOException {
+  public void testBuilder$Singular$Generic$Guava$SingularGuavaTable() {
     doTest(true);
   }
 
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularCollection() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularCollection() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularIterable() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularIterable() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularList() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularList() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularNavigableSet() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularNavigableSet() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularSet() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularSet() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Collection$SingularSortedSet() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Collection$SingularSortedSet() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Map$SingularMap() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Map$SingularMap() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Map$SingularNavigableMap() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Map$SingularNavigableMap() {
     doTest(true);
   }
 
-  public void testBuilder$Singular$Generic$Util$Map$SingularSortedMap() throws IOException {
+  public void testBuilder$Singular$Generic$Util$Map$SingularSortedMap() {
     doTest(true);
   }
 }

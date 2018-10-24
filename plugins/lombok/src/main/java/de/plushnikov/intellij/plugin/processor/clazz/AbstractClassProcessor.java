@@ -76,9 +76,9 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return result;
   }
 
-  protected void addFieldsAnnotation(Collection<PsiAnnotation> result, @NotNull PsiClass psiClass, Class<? extends Annotation>... annotations) {
+  protected void addFieldsAnnotation(Collection<PsiAnnotation> result, @NotNull PsiClass psiClass, String... annotationFQNs) {
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, annotations);
+      PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, annotationFQNs);
       if (null != psiAnnotation) {
         result.add(psiAnnotation);
       }

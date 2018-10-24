@@ -25,6 +25,11 @@ public class PsiAnnotationSearchUtil {
   }
 
   @Nullable
+  public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull String... annotationFQNs) {
+    return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationFQNs);
+  }
+
+  @Nullable
   public static PsiAnnotation findAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation> annotationType) {
     return findAnnotationQuick(psiModifierListOwner.getModifierList(), annotationType.getName());
   }

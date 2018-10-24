@@ -27,56 +27,56 @@ public class LombokUtilsAllWitherTest {
   }
 
   @Test
-  public void testToAllWitherNames_NonBoolean() throws Exception {
+  public void testToAllWitherNames_NonBoolean() {
     makeResults("myField", false);
 
     assertThat(result, is(Arrays.asList("withMyField")));
   }
 
   @Test
-  public void testToAllWitherNames_NonBoolean_Uppercase() throws Exception {
+  public void testToAllWitherNames_NonBoolean_Uppercase() {
     makeResults("myField", false);
 
     assertThat(result, is(Arrays.asList("withMyField")));
   }
 
   @Test
-  public void testToAllWitherNames_NonBoolean_Uppercase_Multiple() throws Exception {
+  public void testToAllWitherNames_NonBoolean_Uppercase_Multiple() {
     makeResults("MYField", false);
 
     assertThat(result, is(Arrays.asList("withMYField")));
   }
 
   @Test
-  public void testToAllWitherNames_Boolean() throws Exception {
+  public void testToAllWitherNames_Boolean() {
     makeResults("myField", true);
 
     assertThat(result, is(Arrays.asList("withMyField")));
   }
 
   @Test
-  public void testToAllWitherNames_Boolean_Uppercase() throws Exception {
+  public void testToAllWitherNames_Boolean_Uppercase() {
     makeResults("MyField", true);
 
     assertThat(result, is(Arrays.asList("withMyField")));
   }
 
   @Test
-  public void testToAllWitherNames_Boolean_is_Lowercase() throws Exception {
+  public void testToAllWitherNames_Boolean_is_Lowercase() {
     makeResults("ismyField", true);
 
     assertThat(result, is(Arrays.asList("withIsmyField")));
   }
 
   @Test
-  public void testToAllWitherNames_Boolean_is_Uppercase() throws Exception {
+  public void testToAllWitherNames_Boolean_is_Uppercase() {
     makeResults("isMyField", true);
 
     assertThat(result, is(Arrays.asList("withIsMyField", "withMyField")));
   }
 
   @Test
-  public void testToAllWitherNames_Boolean_IS() throws Exception {
+  public void testToAllWitherNames_Boolean_IS() {
     makeResults("ISmyField", true);
 
     assertThat(result, is(Arrays.asList("withISmyField")));

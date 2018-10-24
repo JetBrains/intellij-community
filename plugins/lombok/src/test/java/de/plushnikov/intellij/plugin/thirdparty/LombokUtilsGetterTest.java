@@ -20,70 +20,70 @@ public class LombokUtilsGetterTest {
   }
 
   @Test
-  public void testToGetterNames_dValue() throws Exception {
+  public void testToGetterNames_dValue() {
     String result = makeResults("dValue", false);
 
     assertThat(result, equalTo("getDValue"));
   }
 
   @Test
-  public void testToGetterNames_Value() throws Exception {
+  public void testToGetterNames_Value() {
     String result = makeResults("Value", false);
 
     assertThat(result, equalTo("getValue"));
   }
 
   @Test
-  public void testToGetterNames_NonBoolean() throws Exception {
+  public void testToGetterNames_NonBoolean() {
     String result = makeResults("myField", false);
 
     assertThat(result, equalTo("getMyField"));
   }
 
   @Test
-  public void testToGetterNames_NonBoolean_Uppercase() throws Exception {
+  public void testToGetterNames_NonBoolean_Uppercase() {
     String result = makeResults("myField", false);
 
     assertThat(result, equalTo("getMyField"));
   }
 
   @Test
-  public void testToGetterNames_NonBoolean_Uppercase_Multiple() throws Exception {
+  public void testToGetterNames_NonBoolean_Uppercase_Multiple() {
     String result = makeResults("MYField", false);
 
     assertThat(result, equalTo("getMYField"));
   }
 
   @Test
-  public void testToGetterNames_Boolean() throws Exception {
+  public void testToGetterNames_Boolean() {
     String result = makeResults("myField", true);
 
     assertThat(result, equalTo("isMyField"));
   }
 
   @Test
-  public void testToGetterNames_Boolean_Uppercase() throws Exception {
+  public void testToGetterNames_Boolean_Uppercase() {
     String result = makeResults("MyField", true);
 
     assertThat(result, equalTo("isMyField"));
   }
 
   @Test
-  public void testToGetterNames_Boolean_is_Lowercase() throws Exception {
+  public void testToGetterNames_Boolean_is_Lowercase() {
     String result = makeResults("ismyField", true);
 
     assertThat(result, equalTo("isIsmyField"));
   }
 
   @Test
-  public void testToGetterNames_Boolean_is_Uppercase() throws Exception {
+  public void testToGetterNames_Boolean_is_Uppercase() {
     String result = makeResults("isMyField", true);
 
     assertThat(result, equalTo("isMyField"));
   }
 
   @Test
-  public void testToGetterNames_Boolean_IS() throws Exception {
+  public void testToGetterNames_Boolean_IS() {
     String result = makeResults("ISmyField", true);
 
     assertThat(result, equalTo("isISmyField"));

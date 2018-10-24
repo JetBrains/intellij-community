@@ -15,27 +15,27 @@ public class FieldMayBeFinalInspectionTest extends LombokInspectionTest {
     return new FieldMayBeFinalInspection();
   }
 
-  public void testClassNormal() throws Exception {
+  public void testClassNormal() {
     doTest();
   }
 
-  public void testClassWithData() throws Exception {
+  public void testClassWithData() {
     doTest();
   }
 
-  public void testClassWithFieldSetter() throws Exception {
+  public void testClassWithFieldSetter() {
     doTest();
   }
 
-  public void testClassWithGetter() throws Exception {
+  public void testClassWithGetter() {
     doTest();
   }
 
-  public void testClassWithSetter() throws Exception {
+  public void testClassWithSetter() {
     doTest();
   }
 
-  public void testClassWithValue() throws Exception {
+  public void testClassWithValue() {
     doTest();
   }
 

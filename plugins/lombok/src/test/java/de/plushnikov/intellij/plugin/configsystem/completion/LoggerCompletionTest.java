@@ -19,7 +19,7 @@ public class LoggerCompletionTest extends AbstractLombokLightCodeInsightTestCase
     return super.getBasePath() + "/configsystem/completion";
   }
 
-  public void testLoggerCompletionTest() throws IOException {
+  public void testLoggerCompletionTest() {
     doTest("LOGGER1");
   }
 

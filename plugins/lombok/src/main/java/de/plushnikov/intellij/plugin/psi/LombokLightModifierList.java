@@ -113,11 +113,7 @@ public class LombokLightModifierList extends LightModifierList {
 
     LombokLightModifierList that = (LombokLightModifierList) o;
 
-    if (!myAnnotations.equals(that.myAnnotations)) {
-      return false;
-    }
-
-    return true;
+    return myAnnotations.equals(that.myAnnotations);
   }
 
   @Override

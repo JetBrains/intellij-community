@@ -33,6 +33,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
   private static final String INCLUDE_ANNOTATION_SKIP_NULL = "skipNull";
+  private static final String TOSTRING_INCLUDE = ToString.Include.class.getName().replace("$", ".");
+  private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getName().replace("$", ".");
 
   private final EqualsAndHashCodeToStringHandler handler;
 
@@ -180,7 +182,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
   @Override
   public Collection<PsiAnnotation> collectProcessedAnnotations(@NotNull PsiClass psiClass) {
     final Collection<PsiAnnotation> result = super.collectProcessedAnnotations(psiClass);
-    addFieldsAnnotation(result, psiClass, ToString.Include.class, ToString.Exclude.class);
+    addFieldsAnnotation(result, psiClass, TOSTRING_INCLUDE, TOSTRING_EXCLUDE);
     return result;
   }
 

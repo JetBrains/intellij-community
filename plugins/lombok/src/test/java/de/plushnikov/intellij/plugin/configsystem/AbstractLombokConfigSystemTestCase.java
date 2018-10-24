@@ -17,7 +17,7 @@ public abstract class AbstractLombokConfigSystemTestCase extends AbstractLombokP
     doTest(fullFileName, subPath + "/after/" + fileName);
   }
 
-  protected void doTest(final String beforeFileName, final String afterFileName) throws IOException {
+  protected void doTest(final String beforeFileName, final String afterFileName) {
     final PsiFile psiDelombokFile = loadToPsiFile(afterFileName);
     final PsiFile psiLombokFile = loadToPsiFile(beforeFileName);
 

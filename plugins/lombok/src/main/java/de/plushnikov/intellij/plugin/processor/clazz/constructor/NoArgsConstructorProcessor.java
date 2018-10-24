@@ -33,7 +33,7 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
     result = super.validate(psiAnnotation, psiClass, builder);
 
     final String staticConstructorName = getStaticConstructorName(psiAnnotation);
-    result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.<PsiField>emptyList(), builder);
+    result &= validateIsConstructorNotDefined(psiClass, staticConstructorName, Collections.emptyList(), builder);
 
     return result;
   }

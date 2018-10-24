@@ -27,56 +27,56 @@ public class LombokUtilsAllSetterTest {
   }
 
   @Test
-  public void testToAllSetterNames_NonBoolean() throws Exception {
+  public void testToAllSetterNames_NonBoolean() {
     makeResults("myField", false);
 
     assertThat(result, is(Arrays.asList("setMyField")));
   }
 
   @Test
-  public void testToAllSetterNames_NonBoolean_Uppercase() throws Exception {
+  public void testToAllSetterNames_NonBoolean_Uppercase() {
     makeResults("myField", false);
 
     assertThat(result, is(Arrays.asList("setMyField")));
   }
 
   @Test
-  public void testToAllSetterNames_NonBoolean_Uppercase_Multiple() throws Exception {
+  public void testToAllSetterNames_NonBoolean_Uppercase_Multiple() {
     makeResults("MYField", false);
 
     assertThat(result, is(Arrays.asList("setMYField")));
   }
 
   @Test
-  public void testToAllSetterNames_Boolean() throws Exception {
+  public void testToAllSetterNames_Boolean() {
     makeResults("myField", true);
 
     assertThat(result, is(Arrays.asList("setMyField")));
   }
 
   @Test
-  public void testToAllSetterNames_Boolean_Uppercase() throws Exception {
+  public void testToAllSetterNames_Boolean_Uppercase() {
     makeResults("MyField", true);
 
     assertThat(result, is(Arrays.asList("setMyField")));
   }
 
   @Test
-  public void testToAllSetterNames_Boolean_is_Lowercase() throws Exception {
+  public void testToAllSetterNames_Boolean_is_Lowercase() {
     makeResults("ismyField", true);
 
     assertThat(result, is(Arrays.asList("setIsmyField")));
   }
 
   @Test
-  public void testToAllSetterNames_Boolean_is_Uppercase() throws Exception {
+  public void testToAllSetterNames_Boolean_is_Uppercase() {
     makeResults("isMyField", true);
 
     assertThat(result, is(Arrays.asList("setMyField", "setIsMyField")));
   }
 
   @Test
-  public void testToAllSetterNames_Boolean_IS() throws Exception {
+  public void testToAllSetterNames_Boolean_IS() {
     makeResults("ISmyField", true);
 
     assertThat(result, is(Arrays.asList("setISmyField")));

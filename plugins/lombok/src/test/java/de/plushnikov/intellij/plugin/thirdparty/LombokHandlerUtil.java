@@ -243,7 +243,7 @@ public class LombokHandlerUtil {
     }
     if (!isBoolean) {
       String accessorName = toAccessorName(accessors, fieldName, false, booleanPrefix, normalPrefix, adhereToFluent);
-      return (accessorName == null) ? Collections.<String>emptyList() : Collections.singletonList(accessorName);
+      return (accessorName == null) ? Collections.emptyList() : Collections.singletonList(accessorName);
     }
 
     boolean explicitPrefix = accessors != null && false;//accessors.isExplicit("prefix");

@@ -76,7 +76,7 @@ public class PsiElementUtil {
     return true;
   }
 
-  public static boolean typesAreEquivalent(
+  private static boolean typesAreEquivalent(
     @Nullable PsiType type1, @Nullable PsiType type2) {
     if (type1 == null) {
       return type2 == null;

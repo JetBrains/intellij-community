@@ -43,7 +43,7 @@ public class ConfigDiscoveryTest {
   private VirtualFile parentVirtualFile;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     discovery = new ConfigDiscovery(fileBasedIndex);
 
     when(project.getUserData(any(Key.class))).thenReturn(globalSearchScope);
@@ -58,14 +58,14 @@ public class ConfigDiscoveryTest {
   }
 
   @Test
-  public void testDefaultStringConfigProperties() throws Exception {
+  public void testDefaultStringConfigProperties() {
     final String property = discovery.getStringLombokConfigProperty(ConfigKey.ACCESSORS_CHAIN, psiClass);
     assertNotNull(property);
     assertEquals(ConfigKey.ACCESSORS_CHAIN.getConfigDefaultValue(), property);
   }
 
   @Test
-  public void testStringConfigPropertySameDirectory() throws Exception {
+  public void testStringConfigPropertySameDirectory() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList(EXPECTED_VALUE));
@@ -76,7 +76,7 @@ public class ConfigDiscoveryTest {
   }
 
   @Test
-  public void testStringConfigPropertySubDirectory() throws Exception {
+  public void testStringConfigPropertySubDirectory() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList(EXPECTED_VALUE));
@@ -87,7 +87,7 @@ public class ConfigDiscoveryTest {
   }
 
   @Test
-  public void testStringConfigPropertySubDirectoryStopBubling() throws Exception {
+  public void testStringConfigPropertySubDirectoryStopBubling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_CHAIN;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList(EXPECTED_VALUE));
@@ -100,14 +100,14 @@ public class ConfigDiscoveryTest {
   }
 
   @Test
-  public void testMultipleStringConfigProperty() throws Exception {
+  public void testMultipleStringConfigProperty() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("+a;+b"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("-a;+cc"));
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e", configKey.getConfigKey()), globalSearchScope))
-      .thenReturn(Collections.<String>emptyList());
+      .thenReturn(Collections.emptyList());
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c/d/e/f", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("+_d;"));
 
@@ -121,7 +121,7 @@ public class ConfigDiscoveryTest {
   }
 
   @Test
-  public void testMultipleStringConfigPropertyWithStopBubbling() throws Exception {
+  public void testMultipleStringConfigPropertyWithStopBubbling() {
     final ConfigKey configKey = ConfigKey.ACCESSORS_PREFIX;
     when(fileBasedIndex.getValues(LombokConfigIndex.NAME, new ConfigIndexKey("/a/b/c", configKey.getConfigKey()), globalSearchScope))
       .thenReturn(Collections.singletonList("+a;+b"));

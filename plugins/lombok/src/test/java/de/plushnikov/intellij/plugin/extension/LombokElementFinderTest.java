@@ -42,12 +42,12 @@ public class LombokElementFinderTest {
   private GlobalSearchScope scope;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     doReturn(javaFileManager).when(elementFinder).getServiceManager(any(GlobalSearchScope.class));
   }
 
   @Test
-  public void findClass() throws Exception {
+  public void findClass() {
     final PsiClass psiBaseClass = mock(PsiClass.class);
     when(javaFileManager.findClass(BASE_CLASS, scope)).thenReturn(psiBaseClass);
 
@@ -73,11 +73,11 @@ public class LombokElementFinderTest {
   }
 
   @Test
-  public void findClassRecursion() throws Exception {
+  public void findClassRecursion() {
     // setup recursive calls of elementFinder
     when(javaFileManager.findClass(BASE_CLASS, scope)).thenAnswer(new Answer<PsiClass>() {
       @Override
-      public PsiClass answer(InvocationOnMock invocation) throws Throwable {
+      public PsiClass answer(InvocationOnMock invocation) {
         final String fqn = (String) invocation.getArguments()[0];
         final GlobalSearchScope searchScope = (GlobalSearchScope) invocation.getArguments()[1];
         return elementFinder.findClass(fqn + SOME_CLASS_BUILDER, searchScope);

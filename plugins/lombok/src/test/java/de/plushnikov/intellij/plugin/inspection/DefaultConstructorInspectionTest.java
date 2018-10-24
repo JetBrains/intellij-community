@@ -14,23 +14,23 @@ public class DefaultConstructorInspectionTest extends LombokInspectionTest {
     return new LombokInspection();
   }
 
-  public void testClassWithData() throws Exception {
+  public void testClassWithData() {
     doTest();
   }
 
-  public void testClassWithJavaConstructor() throws Exception {
+  public void testClassWithJavaConstructor() {
     doTest();
   }
 
-  public void testClassWithLombokConstructor() throws Exception {
+  public void testClassWithLombokConstructor() {
     doTest();
   }
 
-  public void testClassWithLombokDefaultConstructor() throws Exception {
+  public void testClassWithLombokDefaultConstructor() {
     doTest();
   }
 
-  public void testDataWithParentClassWithoutDefaultConstructor() throws Exception {
+  public void testDataWithParentClassWithoutDefaultConstructor() {
     doTest();
   }
 }

@@ -47,7 +47,7 @@ public class SneakyThrowsTest extends LightCodeInsightTestCase {
     return JavaSdk.getInstance().createJdk("java 1.7", "lib/mockJDK-1.7", false);
   }
 
-  private static PsiMethodCallExpression createCall(@NonNls final String body) throws Exception {
+  private static PsiMethodCallExpression createCall(@NonNls final String body) {
     final PsiFile file = createFile("test.java", "class Test { " + body +
       "void throwsMyException() throws MyException {}" +
       "void throwsSomeException() throws SomeException {}" +

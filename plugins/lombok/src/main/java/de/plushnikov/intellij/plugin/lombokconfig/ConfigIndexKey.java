@@ -31,11 +31,7 @@ public class ConfigIndexKey {
     if (configKey != null ? !configKey.equalsIgnoreCase(that.configKey) : that.configKey != null) {
       return false;
     }
-    if (directoryName != null ? !directoryName.equals(that.directoryName) : that.directoryName != null) {
-      return false;
-    }
-
-    return true;
+    return directoryName != null ? directoryName.equals(that.directoryName) : that.directoryName == null;
   }
 
   @Override

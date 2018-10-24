@@ -105,7 +105,7 @@ public class ProjectSettingsPage implements SearchableConfigurable, Configurable
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.LOMBOK_ENABLED_IN_PROJECT, myEnableLombokInProject.isSelected());
 
     ProjectSettings.setEnabled(myPropertiesComponent, ProjectSettings.IS_VAL_ENABLED, myEnableValSupport.isSelected());
