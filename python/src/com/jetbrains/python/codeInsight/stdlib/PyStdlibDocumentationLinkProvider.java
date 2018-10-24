@@ -26,7 +26,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -992,7 +991,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
       qnameString = "os.path";
     } else if (qnameString.equals("genericpath")) {
       qnameString = "os.path";
-      moduleNameStr = "";
+      moduleNameStr = qnameString;
     }
     else if (qnameString.equals("nt")) {
       qnameString = "os";

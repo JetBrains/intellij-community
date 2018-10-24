@@ -2,10 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.lang.documentation.CompositeDocumentationProvider
-import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.psi.PsiElement
-import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.fixtures.PyTestCase
 import junit.framework.TestCase
 
@@ -25,11 +22,10 @@ class PyExternalDocTest : PyTestCase() {
 
   fun testOsPath() { // PY-31223
     doTest("import os.path\n" +
-           "\n" +
-           "print(os.path.is<caret>link)", "")
+           "print(os.path.is<caret>link)", "https://docs.python.org/3.7 Mock SDK/library/os.path.html#os.path.islink")
 
     doTest("import os\n" +
-           "print(os.path.isfil<caret>e)", "")
+           "print(os.path.isfil<caret>e)", "https://docs.python.org/3.7 Mock SDK/library/os.path.html#os.path.isfile")
   }
 
   private fun doTest(text: String, expectedUrl: String) {
