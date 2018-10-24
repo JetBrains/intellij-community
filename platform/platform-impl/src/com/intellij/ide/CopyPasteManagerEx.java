@@ -209,7 +209,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   }
 
   private void deleteAfterAllowedMaximum() {
-    int max = UISettings.getInstance().getState().getMaxClipboardContents();
+    int max = UISettings.getInstance().getMaxClipboardContents();
     for (int i = myData.size() - 1; i >= max; i--) {
       myData.remove(i);
     }

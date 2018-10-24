@@ -29,7 +29,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     int modelSize = myList.getModel().getSize();
-    if (modelSize == 0 || !BookmarksAction.notFiltered(myList) || UISettings.getInstance().getState().getSortBookmarks()) {
+    if (modelSize == 0 || !BookmarksAction.notFiltered(myList) || UISettings.getInstance().getSortBookmarks()) {
       e.getPresentation().setEnabled(false);
     }
     else {

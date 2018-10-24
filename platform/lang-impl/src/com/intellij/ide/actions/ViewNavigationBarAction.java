@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class ViewNavigationBarAction extends ToggleAction implements DumbAware {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
-    return UISettings.getInstance().getState().getShowNavigationBar();
+    return UISettings.getInstance().getShowNavigationBar();
   }
 
   @Override

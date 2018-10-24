@@ -85,7 +85,7 @@ public class DefaultConsoleHistoryModel extends SimpleModificationTracker implem
 
   @Override
   public int getMaxHistorySize() {
-    return UISettings.getInstance().getState().getConsoleCommandHistoryLimit();
+    return UISettings.getInstance().getConsoleCommandHistoryLimit();
   }
 
   @Override
