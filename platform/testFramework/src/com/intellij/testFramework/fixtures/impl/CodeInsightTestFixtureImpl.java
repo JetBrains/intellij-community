@@ -30,6 +30,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.ide.structureView.StructureViewBuilder;
@@ -46,6 +47,7 @@ import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -109,7 +111,12 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
 import com.intellij.ui.components.breadcrumbs.Crumb;
+import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewContentManager;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -808,6 +815,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), flags);
     assertNotNull("Cannot find referenced element", targetElement);
     return findUsages(targetElement);
+  }
+
+  @NotNull
+  @Override
+  public Collection<Usage> testFindUsagesUsingAction(@NotNull String... fileNames) {
+    assertInitialized();
+    configureByFiles(fileNames);
+    EdtTestUtil.runInEdtAndWait(() -> {
+      UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
+      Content selectedContent;
+      while ((selectedContent = usageViewManager.getSelectedContent()) != null) {
+        usageViewManager.closeContent(selectedContent);
+      }
+
+      myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES);
+    });
+    return EdtTestUtil.runInEdtAndGet(() -> {
+      UsageView view;
+      while ((view = UsageViewManager.getInstance(getProject()).getSelectedUsageView()) == null || view.isSearchInProgress()) {
+        IdeEventQueue.getInstance().flushQueue();
+      }
+      return view.getUsages();
+    });
   }
 
   @NotNull
