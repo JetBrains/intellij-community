@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -204,7 +190,7 @@ public class FTManager {
   }
 
   void loadCustomizedContent() {
-    final File configRoot = getConfigRoot(false);
+    final File configRoot = getConfigRoot();
     final File[] configFiles = configRoot.listFiles();
     if (configFiles == null) {
       return;
@@ -259,10 +245,8 @@ public class FTManager {
   }
 
   private void saveTemplates(boolean removeDeleted) {
-    final File configRoot = getConfigRoot(true);
-
+    final File configRoot = getConfigRoot();
     final File[] files = configRoot.listFiles();
-
     final Set<String> allNames = new HashSet<>();
     final Map<String, File> templatesOnDisk = files != null && files.length > 0 ? new HashMap<>() : Collections.emptyMap();
     if (files != null) {
@@ -286,39 +270,45 @@ public class FTManager {
       allNames.add(name);
     }
 
-    if (!allNames.isEmpty()) {
-      final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
-      for (String name : allNames) {
-        final File customizedTemplateFile = templatesOnDisk.get(name);
-        final FileTemplateBase templateToSave = templatesToSave.get(name);
-        if (customizedTemplateFile == null) {
-          // template was not saved before
-          try {
+    if (allNames.isEmpty()) {
+      return;
+    }
+
+    if (!myTemplatesDir.exists() && !myTemplatesDir.mkdirs()) {
+      LOG.info("Cannot create directory: " + myTemplatesDir.getAbsolutePath());
+    }
+
+    final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
+    for (String name : allNames) {
+      final File customizedTemplateFile = templatesOnDisk.get(name);
+      final FileTemplateBase templateToSave = templatesToSave.get(name);
+      if (customizedTemplateFile == null) {
+        // template was not saved before
+        try {
+          saveTemplate(configRoot, templateToSave, lineSeparator);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to save template " + name, e);
+        }
+      }
+      else if (templateToSave == null) {
+        // template was removed
+        if (removeDeleted) {
+          FileUtil.delete(customizedTemplateFile);
+        }
+      }
+      else {
+        // both customized content on disk and corresponding template are present
+        try {
+          final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CharsetToolkit.UTF8_CHARSET));
+          final String templateText = templateToSave.getText();
+          if (!diskText.equals(templateText)) {
+            // save only if texts differ to avoid unnecessary file touching
             saveTemplate(configRoot, templateToSave, lineSeparator);
           }
-          catch (IOException e) {
-            LOG.error("Unable to save template " + name, e);
-          }
         }
-        else if (templateToSave == null) {
-          // template was removed
-          if (removeDeleted) {
-            FileUtil.delete(customizedTemplateFile);
-          }
-        }
-        else {
-          // both customized content on disk and corresponding template are present
-          try {
-            final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CharsetToolkit.UTF8_CHARSET));
-            final String templateText = templateToSave.getText();
-            if (!diskText.equals(templateText)) {
-              // save only if texts differ to avoid unnecessary file touching
-              saveTemplate(configRoot, templateToSave, lineSeparator);
-            }
-          }
-          catch (IOException e) {
-            LOG.error("Unable to save template " + name, e);
-          }
+        catch (IOException e) {
+          LOG.error("Unable to save template " + name, e);
         }
       }
     }
@@ -358,10 +348,7 @@ public class FTManager {
   }
 
   @NotNull
-  File getConfigRoot(boolean create) {
-    if (create && !myTemplatesDir.mkdirs() && !myTemplatesDir.exists()) {
-      LOG.info("Cannot create directory: " + myTemplatesDir.getAbsolutePath());
-    }
+  File getConfigRoot() {
     return myTemplatesDir;
   }
 

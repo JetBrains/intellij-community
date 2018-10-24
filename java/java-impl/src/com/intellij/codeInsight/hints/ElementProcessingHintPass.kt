@@ -23,7 +23,6 @@ abstract class ElementProcessingHintPass(
   editor: Editor,
   private val modificationStampHolder: ModificationStampHolder
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true) {
-  private val traverser: SyntaxTraverser<PsiElement> = SyntaxTraverser.psiTraverser(rootElement)
   private val hints = TIntObjectHashMap<SmartList<String>>()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
@@ -33,6 +32,7 @@ abstract class ElementProcessingHintPass(
     val virtualFile = rootElement.containingFile?.originalFile?.virtualFile ?: return
 
     if (isAvailable(virtualFile)) {
+      val traverser = SyntaxTraverser.psiTraverser(rootElement)
       traverser.forEach { collectElementHints(it,
                                               { offset, hint ->
                                                 var hintList = hints.get(offset)

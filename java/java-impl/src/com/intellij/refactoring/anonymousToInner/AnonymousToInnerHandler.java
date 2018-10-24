@@ -37,6 +37,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -59,7 +60,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   private PsiClass myTargetClass;
   protected String myNewClassName;
 
-  private VariableInfo[] myVariableInfos;
+  protected VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
   private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
 
@@ -176,13 +177,14 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
   private void doRefactoring() throws IncorrectOperationException {
     calculateTypeParametersToCreate();
-    PsiClass aClass = createClass(myNewClassName);
-    myTargetClass.add(aClass);
-
+    ChangeContextUtil.encodeContextInfo(myAnonClass, false);
+    PsiClass innerClass = (PsiClass)myTargetClass.add(createClass(myNewClassName));
+    ChangeContextUtil.decodeContextInfo(innerClass, myTargetClass, RefactoringChangeUtil.createThisExpression(myTargetClass.getManager(), myTargetClass));
+    
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
     @NonNls StringBuilder buf = new StringBuilder();
     buf.append("new ");
-    buf.append(aClass.getName());
+    buf.append(innerClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;

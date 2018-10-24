@@ -2,8 +2,9 @@
 
 package org.jetbrains.idea.eclipse;
 
+import com.intellij.application.options.ReplacePathToMacroMap;
+import com.intellij.configurationStore.JbXmlOutputter;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.PathMacroManager;
@@ -29,6 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.nio.file.Paths;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -55,7 +57,7 @@ public class EclipseImlTest extends IdeaTestCase {
     final String path = project.getBasePath() + relativePath;
 
     final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBaseDir().getPath());
+    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", project.getBasePath());
     if (!SystemInfo.isWindows) {
       fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
     }
@@ -73,24 +75,16 @@ public class EclipseImlTest extends IdeaTestCase {
     final Element actualImlElement = new Element("root");
     ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getState().writeExternal(actualImlElement);
 
-    String junit3PathMacro = "JUNIT3_PATH";
-    String junit4PathMacro = "JUNIT4_PATH";
     String junit3Path = ContainerUtil.getFirstItem(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"));
     String junit4Path = ContainerUtil.find(IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"),
                                            jarPath -> PathUtil.getFileName(jarPath).startsWith("junit"));
-    PathMacros pathMacros = PathMacros.getInstance();
-    pathMacros.setMacro(junit3PathMacro, junit3Path);
-    pathMacros.setMacro(junit4PathMacro, junit4Path);
-    try {
-      PathMacroManager.getInstance(module).collapsePaths(actualImlElement);
-      PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
-    }
-    finally {
-      pathMacros.removeMacro(junit3PathMacro);
-      pathMacros.removeMacro(junit4PathMacro);
-    }
-
-    assertThat(actualImlElement).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
+    ReplacePathToMacroMap macroMap = new ReplacePathToMacroMap(PathMacroManager.getInstance(module).getReplacePathMap());
+    macroMap.addMacroReplacement(junit3Path, "JUNIT3_PATH");
+    macroMap.addMacroReplacement(junit4Path, "JUNIT4_PATH");
+    StringWriter writer = new StringWriter();
+    JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroMap, null);
+    xmlWriter.output(actualImlElement, writer);
+    assertThat(writer.toString()).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {

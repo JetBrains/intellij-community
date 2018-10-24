@@ -220,7 +220,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         }
         if (!acceptedProxies.isEmpty()) {
           return acceptedProxies.stream()
-            .filter(proxy -> proxy.isSuite() == preferSuite)
+            .filter(proxy -> proxy.isSuite() == preferSuite && proxy.getParent() == parentSuite)
             .findFirst()
             .orElse(acceptedProxies.iterator().next());
         }

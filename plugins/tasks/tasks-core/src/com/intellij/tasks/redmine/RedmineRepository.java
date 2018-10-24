@@ -44,24 +44,26 @@ public class RedmineRepository extends NewBaseRepositoryImpl {
   private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
   private static final Logger LOG = Logger.getInstance(RedmineRepository.class);
   
-  public static final RedmineProject UNSPECIFIED_PROJECT = new RedmineProject() {
-    @NotNull
-    @Override
-    public String getName() {
-      return "-- from all projects --";
-    }
+  public static final RedmineProject UNSPECIFIED_PROJECT = createUnspecifiedProject();
 
-    @Nullable
-    @Override
-    public String getIdentifier() {
-      return getName();
-    }
+  @NotNull
+  private static RedmineProject createUnspecifiedProject() {
+    final RedmineProject unspecified = new RedmineProject() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "-- from all projects --";
+      }
 
-    @Override
-    public int getId() {
-      return -1;
-    }
-  };
+      @Nullable
+      @Override
+      public String getIdentifier() {
+        return getName();
+      }
+    };
+    unspecified.setId(-1);
+    return unspecified;
+  }
 
   private String myAPIKey = "";
   private RedmineProject myCurrentProject;

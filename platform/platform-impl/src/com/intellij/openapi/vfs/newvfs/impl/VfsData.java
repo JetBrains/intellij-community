@@ -19,11 +19,13 @@ import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
+import com.intellij.util.Functions;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
@@ -39,10 +41,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -290,59 +289,100 @@ public class VfsData {
 
   // non-final field accesses are synchronized on this instance, but this happens in VirtualDirectoryImpl
   public static class DirectoryData {
-    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> updater = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
+    private static final AtomicFieldUpdater<DirectoryData, KeyFMap> MY_USER_MAP_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, KeyFMap.class);
     @NotNull
     volatile KeyFMap myUserMap = KeyFMap.EMPTY_MAP;
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
+     * assigned under lock(this) only; never modified in-place
      * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     @NotNull
-    int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
-    private Set<CharSequence> myAdoptedNames; // guarded by this
+    volatile int[] myChildrenIds = ArrayUtil.EMPTY_INT_ARRAY; // guarded by this
+
+    private static final AtomicFieldUpdater<DirectoryData, Set> MY_ADOPTED_NAMES_UPDATER = AtomicFieldUpdater.forFieldOfType(DirectoryData.class, Set.class);
+    // assigned under lock(this) only; modified under lock(myAdoptedNames)
+    private volatile Set<CharSequence> myAdoptedNames;
 
     @NotNull
     VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
       assert fileId > 0;
-      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[myChildrenIds.length];
-      for (int i = 0; i < myChildrenIds.length; i++) {
-        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(myChildrenIds[i], parent));
+      int[] ids = myChildrenIds;
+      VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[ids.length];
+      for (int i = 0; i < ids.length; i++) {
+        children[i] = assertNotNull(parent.mySegment.vfsData.getFileById(ids[i], parent));
       }
       return children;
     }
 
     boolean changeUserMap(KeyFMap oldMap, KeyFMap newMap) {
-      return updater.compareAndSet(this, oldMap, newMap);
+      return MY_USER_MAP_UPDATER.compareAndSet(this, oldMap, newMap);
     }
 
-    boolean isAdoptedName(CharSequence name) {
-      return myAdoptedNames != null && myAdoptedNames.contains(name);
+    boolean isAdoptedName(@NotNull CharSequence name) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        return false;
+      }
+      synchronized (adopted) {
+        return adopted.contains(name);
+      }
     }
 
-    void removeAdoptedName(CharSequence name) {
-      if (myAdoptedNames != null) {
-        myAdoptedNames.remove(name);
-        if (myAdoptedNames.isEmpty()) {
-          myAdoptedNames = null;
+    /**
+     * must call removeAdoptedName() before adding new child with the same name
+     * or otherwise {@link VirtualDirectoryImpl#doFindChild(String, boolean, NewVirtualFileSystem, boolean)} would risk finding already non-existing child
+     */
+    void removeAdoptedName(@NotNull CharSequence name) {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) {
+        return;
+      }
+      synchronized (adopted) {
+        boolean removed = adopted.remove(name);
+        if (removed && adopted.isEmpty()) {
+          // if failed then somebody's nulled it already, no need to retry
+          MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, adopted, null);
         }
       }
     }
+
     void addAdoptedName(@NotNull CharSequence name, boolean caseSensitive) {
-      if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+      Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
+      CharSequence sequence = ByteArrayCharSequence.convertToBytesIfPossible(name);
+      synchronized (adopted) {
+        adopted.add(sequence);
       }
-      myAdoptedNames.add(ByteArrayCharSequence.convertToBytesIfPossible(name));
-    }
-    void addAdoptedNames(Collection<? extends CharSequence> names, boolean caseSensitive) {
-      if (myAdoptedNames == null) {
-        myAdoptedNames = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
-      }
-      myAdoptedNames.addAll(names);
     }
 
     @NotNull
-    Collection<CharSequence> getAdoptedNames() {
-      return myAdoptedNames == null ? Collections.emptyList() : myAdoptedNames;
+    private Set<CharSequence> getOrCreateAdoptedNames(boolean caseSensitive) {
+      Set<CharSequence> adopted;
+      while (true) {
+        adopted = myAdoptedNames;
+        if (adopted != null) break;
+        adopted = new THashSet<>(0, caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE);
+        if (MY_ADOPTED_NAMES_UPDATER.compareAndSet(this, null, adopted)) {
+          break;
+        }
+      }
+      return adopted;
+    }
+
+    void addAdoptedNames(@NotNull Collection<? extends CharSequence> names, boolean caseSensitive) {
+      Set<CharSequence> adopted = getOrCreateAdoptedNames(caseSensitive);
+      synchronized (adopted) {
+        adopted.addAll(names);
+      }
+    }
+
+    @NotNull
+    List<String> getAdoptedNames() {
+      Set<CharSequence> adopted = myAdoptedNames;
+      if (adopted == null) return Collections.emptyList();
+      synchronized (adopted) {
+        return ContainerUtil.map(adopted, Functions.TO_STRING());
+      }
     }
 
     void clearAdoptedNames() {

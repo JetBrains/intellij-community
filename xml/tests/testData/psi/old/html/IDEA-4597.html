@@ -5,7 +5,7 @@
   <tr class="${rowClass}">
      <td>${tableRow_index}</td>
      <td><input type    = "checkbox"
-               onclick = "listFieldCheckboxClicked( this, false )"/></td>
+               onclick = ""/></td>
      <#list tableRow as value>
        <td>${( value?trim?length < 1 )?string( '&nbsp;', value )}</td>
      </#list>

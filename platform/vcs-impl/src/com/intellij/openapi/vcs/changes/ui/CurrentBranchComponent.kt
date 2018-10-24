@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPO
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI.emptySize
 import com.intellij.util.ui.UIUtil.rightArrow
@@ -89,7 +90,7 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
 
   companion object {
     @JvmField
-    val TEXT_COLOR = JBColor(Color(0x7a7a7a), Color(0x909090))
+    val TEXT_COLOR: JBColor = namedColor("VersionControl.Ref.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
 
     fun getCurrentBranch(project: Project, change: Change) = getProviders(project).asSequence().mapNotNull {
       it.getCurrentBranch(getFilePath(change))

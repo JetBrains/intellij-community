@@ -204,12 +204,6 @@ internal class GitFetchSupportImpl(git: Git,
     override fun prunedRefs() = ""
   }
 
-  private class CancelledRepoResult() : RepoResult {
-    override fun totallySuccessful() = false
-    override fun error() = "cancelled"
-    override fun prunedRefs() = ""
-  }
-
   private class RepoResultPerRemote(val results: Map<GitRemote, SingleRemoteResult>) : RepoResult {
     /*
        For simplicity, remote and repository results are merged separately.

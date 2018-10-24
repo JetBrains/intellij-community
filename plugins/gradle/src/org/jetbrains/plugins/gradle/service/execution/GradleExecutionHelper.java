@@ -98,7 +98,7 @@ public class GradleExecutionHelper {
                              @NotNull final OutputStream standardOutput,
                              @NotNull final OutputStream standardError) {
     Set<String> jvmArgs = settings.getVmOptions();
-    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener);
+    BuildEnvironment buildEnvironment = getBuildEnvironment(connection, id, listener, null);
 
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {

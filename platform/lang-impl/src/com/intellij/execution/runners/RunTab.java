@@ -31,7 +31,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
   protected ExecutionEnvironment myEnvironment;
   protected final Project myProject;
-  private final GlobalSearchScope mySearchScope;
+  protected final GlobalSearchScope mySearchScope;
 
   private LogConsoleManagerBase logConsoleManager;
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -12,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 import sun.misc.Unsafe;
@@ -74,7 +73,7 @@ public class X11UiUtil {
 
         // reflect on Xlib method wrappers and important structures
         Class<?> XlibWrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        x11.unsafe = (Unsafe)field(XlibWrapper, "unsafe").get(null);
+        x11.unsafe = AtomicFieldUpdater.getUnsafe();
         x11.XGetWindowProperty = method(XlibWrapper, "XGetWindowProperty", 12);
         x11.XFree = method(XlibWrapper, "XFree", 1);
         x11.RootWindow = method(XlibWrapper, "RootWindow", 2);
@@ -248,8 +247,8 @@ public class X11UiUtil {
     if (X11 == null || !Registry.is("ide.x11.override.wm")) return;
 
     try {
-      if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        setWM("MUTTER_WM", "METACITY_WM");
+      if ("Muffin".equals(wmName)) {
+        setWM("MUTTER_WM");
       }
       else if ("Marco".equals(wmName)) {
         setWM("MARCO_WM", "METACITY_WM");

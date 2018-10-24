@@ -23,9 +23,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
@@ -77,6 +75,9 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class StructuralSearchDialog extends DialogWrapper {
+  @NonNls private static final String SEARCH_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
+  @NonNls private static final String REPLACE_DIMENSION_SERVICE_KEY = "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog";
+
   @NonNls private static final String RECURSIVE_STATE = "structural.search.recursive";
   @NonNls private static final String MATCH_CASE_STATE = "structural.search.match.case";
   @NonNls private static final String SHORTEN_FQN_STATE = "structural.search.shorten.fqn";
@@ -137,8 +138,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     setTitle(getDefaultTitle());
 
     init();
-    registerSwitchActions(ActionManager.getInstance().getAction("StructuralSearchPlugin.StructuralSearchAction"), false);
-    registerSwitchActions(ActionManager.getInstance().getAction("StructuralSearchPlugin.StructuralReplaceAction"), true);
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
       @Override
@@ -146,32 +145,6 @@ public class StructuralSearchDialog extends DialogWrapper {
         close(CANCEL_EXIT_CODE);
       }
     });
-  }
-
-  private void registerSwitchActions(AnAction action, boolean replace) {
-    new AnAction() {
-      @Override
-      public boolean isDumbAware() {
-        return action.isDumbAware();
-      }
-
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (myReplace == replace) return;
-        myReplace = replace;
-        setTitle(getDefaultTitle());
-        myReplacePanel.setVisible(replace);
-        myRecursive.setVisible(!replace);
-        loadConfiguration(myConfiguration);
-        final Dimension size = DimensionService.getInstance().getSize(getDimensionServiceKey());
-        if (size != null) {
-          setSize(size.width, size.height);
-        }
-        else {
-          pack();
-        }
-      }
-    }.registerCustomShortcutSet(action.getShortcutSet(), getRootPane());
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -199,8 +172,12 @@ public class StructuralSearchDialog extends DialogWrapper {
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
         TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
-        SubstitutionShortInfoHandler.install(editor, variableName ->
-          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
+        SubstitutionShortInfoHandler.install(editor, variableName -> {
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+          if (isFilterPanelEnabled()) {
+            myConfiguration.setCurrentVariableName(variableName);
+          }
+        });
         editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
         final Project project = getProject();
         final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getDocument());
@@ -443,7 +420,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new AnAction(getShowHistoryIcon()) {
+    final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new DumbAwareAction("History", null, getShowHistoryIcon()) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Object source = e.getInputEvent().getSource();
@@ -474,11 +451,12 @@ public class StructuralSearchDialog extends DialogWrapper {
                       .showUnderneathOf((Component)source);
       }
     });
+    final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbarImpl historyToolbar =
-      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
+      (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, historyActionGroup, true);
     historyToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     final JLabel label = new JLabel(SSRBundle.message("search.template"));
-    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration);
+    UIUtil.installCompleteMatchInfo(label, () -> myConfiguration, link -> showFilterPanel(link));
 
     myRecursive = new JCheckBox(SSRBundle.message("recursive.matching.checkbox"), true);
     myRecursive.setVisible(!myReplace);
@@ -514,14 +492,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     final JLabel fileTypeLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     fileTypeLabel.setLabelFor(myFileTypesComboBox);
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup(
-      new AnAction(SSRBundle.message("save.template.text.button")) {
+      new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       },
-      new AnAction(SSRBundle.message("copy.existing.template.button")) {
+      new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), false, myReplace);
@@ -533,21 +511,23 @@ public class StructuralSearchDialog extends DialogWrapper {
             setSearchPattern(configurations[0]);
           }
         }
-      }
+      },
+      Separator.getInstance(),
+      new SwitchAction()
     );
     templateActionGroup.setPopup(true);
     templateActionGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
 
-    final AnAction filterAction = new ToggleAction(null, "View variable filters", AllIcons.General.Filter) {
+    final AnAction filterAction = new DumbAwareToggleAction(null, "View variable filters", AllIcons.General.Filter) {
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return mySearchEditorPanel.getSecondComponent() != null;
+        return isFilterPanelEnabled();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        mySearchEditorPanel.setSecondComponent(state ? myFilterPanel.getComponent() : null);
+        setFilterPanelEnabled(state);
       }
 
       @Override
@@ -558,7 +538,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     };
     final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
     final ActionToolbarImpl optionsToolbar =
-      (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
+      (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
     optionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     optionsToolbar.setForceMinimumSize(true);
 
@@ -626,7 +606,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     return (handler == null) ? new SmartList<>() : new ArrayList<>(handler.getVariables());
   }
 
-  private Project getProject() {
+  Project getProject() {
     return mySearchContext.getProject();
   }
 
@@ -658,6 +638,26 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     initiateValidation();
     super.show();
+
+    // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
+    final DimensionService dimensionService = DimensionService.getInstance();
+    final Point location = dimensionService.getLocation(SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    if (location != null) {
+      setLocation(location);
+    }
+    final Dimension size = dimensionService.getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY, getProject());
+    if (size != null) {
+      setSize(size.width, size.height);
+    }
+    else {
+      pack();
+      // set width from replace if search not available and vice versa
+      final Dimension otherSize =
+        dimensionService.getSize(myReplace ? SEARCH_DIMENSION_SERVICE_KEY : REPLACE_DIMENSION_SERVICE_KEY, getProject());
+      if (otherSize != null) {
+        setSize(otherSize.width, getSize().height);
+      }
+    }
   }
 
   @Override
@@ -768,8 +768,29 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   public void showFilterPanel(String variableName) {
-    myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-    mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    if (myFilterButtonEnabled) {
+      myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
+      setFilterPanelEnabled(true);
+      myConfiguration.setCurrentVariableName(variableName);
+    }
+  }
+
+  void setFilterPanelEnabled(boolean enabled) {
+    if (enabled) {
+      if (!isFilterPanelEnabled()) {
+        mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+      }
+    }
+    else {
+      if (isFilterPanelEnabled()) {
+        mySearchEditorPanel.setSecondComponent(null);
+        myConfiguration.setCurrentVariableName(null);
+      }
+    }
+  }
+
+  boolean isFilterPanelEnabled() {
+    return mySearchEditorPanel.getSecondComponent() != null;
   }
 
   private void setSearchTargets(MatchOptions matchOptions) {
@@ -882,21 +903,35 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
+  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
-    return myReplace
-           ? "#com.intellij.structuralsearch.plugin.ui.StructuralReplaceDialog"
-           : "#com.intellij.structuralsearch.plugin.ui.StructuralSearchDialog";
+  protected final String getDimensionServiceKey() {
+    return null;
   }
 
   @Override
   public void dispose() {
+    if (myReplace) storeDimensions(REPLACE_DIMENSION_SERVICE_KEY, SEARCH_DIMENSION_SERVICE_KEY);
+    else storeDimensions(SEARCH_DIMENSION_SERVICE_KEY, REPLACE_DIMENSION_SERVICE_KEY);
+
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(false);
     myAlarm.cancelAllRequests();
     mySearchCriteriaEdit.removeNotify();
     myReplaceCriteriaEdit.removeNotify();
     super.dispose();
+  }
+
+  private void storeDimensions(String key1, String key2) {
+    // handle own dimension service to store dimensions correctly when switching between search/replace in the same dialog
+    final Dimension size = getSize();
+    final DimensionService dimensionService = DimensionService.getInstance();
+    dimensionService.setLocation(SEARCH_DIMENSION_SERVICE_KEY, getLocation(), getProject());
+    dimensionService.setSize(key1, size, getProject());
+    final Dimension otherSize = dimensionService.getSize(key2);
+    if (otherSize != null && otherSize.width != size.width) {
+      otherSize.width = size.width;
+      dimensionService.setSize(key2, otherSize, getProject());
+    }
   }
 
   @Override
@@ -906,5 +941,39 @@ public class StructuralSearchDialog extends DialogWrapper {
 
   private static Icon getShowHistoryIcon() {
     return ObjectUtils.coalesce(UIManager.getIcon("TextField.darcula.searchWithHistory.icon"), LafIconLookup.getIcon("searchWithHistory"));
+  }
+
+  private class SwitchAction extends AnAction implements DumbAware {
+
+    SwitchAction() {
+      init();
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myReplace = !myReplace;
+      setTitle(getDefaultTitle());
+      myReplacePanel.setVisible(myReplace);
+      myRecursive.setVisible(!myReplace);
+      loadConfiguration(myConfiguration);
+      final Dimension size =
+        DimensionService.getInstance().getSize(myReplace ? REPLACE_DIMENSION_SERVICE_KEY : SEARCH_DIMENSION_SERVICE_KEY);
+      if (size != null) {
+        setSize(getSize().width, size.height);
+      }
+      else {
+        pack();
+      }
+      init();
+    }
+
+    private void init() {
+      getTemplatePresentation().setText(myReplace ? "Switch to Search" : "Switch to Replace");
+      final ActionManager actionManager = ActionManager.getInstance();
+      registerCustomShortcutSet(myReplace
+                                ? actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet()
+                                : actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet(),
+                                getRootPane());
+    }
   }
 }

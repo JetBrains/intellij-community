@@ -413,12 +413,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));
 
     if (!myFirstSetup) {
-      ApplicationManager.getApplication().invokeLater(() -> updateEditorScheme(oldLaf));
+      ApplicationManager.getApplication().invokeLater(() -> updateEditorSchemeIfNecessary(oldLaf));
     }
     myFirstSetup = false;
   }
 
-  private static void updateEditorScheme(UIManager.LookAndFeelInfo oldLaf) {
+  private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf) {
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      if (((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().getEditorSchemeName() != null) {
+        return;
+      }
+    }
+
     boolean dark = UIUtil.isUnderDarcula();
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme current = colorsManager.getGlobalScheme();

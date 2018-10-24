@@ -91,6 +91,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
     { "button2",                  "EditorPasteFromX11", "GotoDeclaration"}, // False positive: see DefaultKeymapImpl, PasteFromX11Action.update()
+    { "ctrl alt F",               "IntroduceField", "ShowFilterPopup"}
     });
     put("Mac OS X 10.5+", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -178,7 +179,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control F10",              "Android.HotswapChanges", "RunToCursor", "UpdateRunningApplication"},
     { "control N",                "FileChooser.NewFolder", "Generate", },
     { "control P",                "ChangesView.GroupBy.Directory", "FileChooser.TogglePathShowing", "Print"},
-    { "control alt F",            "ReformatCode", "IntroduceField"},
+    { "control alt F",            "ReformatCode", "IntroduceField", "ShowFilterPopup"},
     { "shift F12",                "RestoreDefaultLayout", "FindUsagesInFile"},
     { "shift F2",                 "GotoPreviousError", "GotoDeclaration"},
     { "shift control F7",         "FindUsagesInFile", "HighlightUsagesInFile"},

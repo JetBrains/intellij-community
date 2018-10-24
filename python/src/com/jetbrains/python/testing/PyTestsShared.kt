@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -31,11 +32,10 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.remote.PathMappingProvider
+import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
-import com.jetbrains.extensions.asPsiElement
-import com.jetbrains.extensions.asVirtualFile
-import com.jetbrains.extensions.getQName
-import com.jetbrains.extensions.isWellFormed
+import com.jetbrains.extensions.*
 import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
@@ -51,6 +51,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -158,18 +159,31 @@ fun getElementByUrl(url: String,
                          evalContext)
 }
 
+private fun Sdk.getMapping(project: Project) = (sdkAdditionalData as? RemoteSdkAdditionalData<*>)?.let { data ->
+  PathMappingProvider.getSuitableMappingProviders(data).flatMap { it.getPathMappingSettings(project, data).pathMappings }
+} ?: emptyList()
+
+private fun getFolderFromMatcher(matcher: Matcher, module: Module): String? {
+  if (!matcher.matches()) {
+    return null
+  }
+  val folder = matcher.group(1)
+  val sdk = module.getSdk()
+  if (sdk != null && PySdkUtil.isRemote(sdk)) {
+    return sdk.getMapping(module.project).find { it.canReplaceRemote(folder) }?.mapToLocal(folder)
+  }
+  else {
+    return folder
+  }
+}
+
 private fun getElementByUrl(protocol: String,
                             path: String,
                             module: Module,
                             evalContext: TypeEvalContext,
                             matcher: Matcher = PATH_URL.matcher(protocol),
                             metainfo: String? = null): Location<out PsiElement>? {
-  val folder = if (matcher.matches()) {
-    LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
-  }
-  else {
-    null
-  }
+  val folder = getFolderFromMatcher(matcher, module)?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
   val qualifiedName = QualifiedName.fromDottedString(path)
   // Assume qname id good and resolve it directly

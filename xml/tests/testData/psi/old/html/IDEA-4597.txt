@@ -102,7 +102,6 @@ HtmlFile:test.html
             PsiWhiteSpace(' ')
             PsiElement(XML_ATTRIBUTE_VALUE)
               XmlToken:XML_ATTRIBUTE_VALUE_START_DELIMITER('"')
-              XmlToken:XML_ATTRIBUTE_VALUE_TOKEN('listFieldCheckboxClicked( this, false )')
               XmlToken:XML_ATTRIBUTE_VALUE_END_DELIMITER('"')
           XmlToken:XML_EMPTY_ELEMENT_END('/>')
         XmlToken:XML_END_TAG_START('</')

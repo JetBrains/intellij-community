@@ -570,13 +570,14 @@ update_install_dir:
   ${EndIf}
 done:
   pop $0
-  ${LogText} "silent installation dir: $INSTDIR"
+  ${LogText} "Silent installation dir: $INSTDIR"
 FunctionEnd
 
 
 Function silentConfigReader
   ; read Desktop.ini
-  ${LogText} "silent installation, options"
+  ${LogText} ""
+  ${LogText} "Silent installation, options"
   Call getInstallationOptionsPositions
   ${GetParameters} $R0
   ClearErrors
@@ -697,7 +698,8 @@ FunctionEnd
 
 
 Function searchCurrentVersion
-  ${LogText} "check if ${MUI_PRODUCT} ${VER_BUILD} already installed"
+  ${LogText} ""
+  ${LogText} "Check if ${MUI_PRODUCT} ${VER_BUILD} already installed"
   ; search current version of IDEA
   StrCpy $0 "HKCU"
   Call checkVersion
@@ -711,7 +713,8 @@ FunctionEnd
 Function uninstallOldVersion
   ;uninstallation mode
   !insertmacro INSTALLOPTIONS_READ $9 "UninstallOldVersions.ini" "Field 2" "State"
-  ${LogText} "uninstall old installation: $3"
+  ${LogText} ""
+  ${LogText} "Uninstall old installation: $3"
   ${If} $9 == "1"
     ExecWait '"$3\bin\Uninstall.exe" /S'
   ${else}
@@ -853,7 +856,7 @@ Function GUIInit
   Call searchCurrentVersion
 
 ; search old versions of IDEA installed from the user and admin.
-  ${LogText} "search if old versions of ${MUI_PRODUCT} were installed"
+  ${LogText} "Search if old versions of ${MUI_PRODUCT} were installed"
 
 user:
   StrCpy $4 0
@@ -920,7 +923,8 @@ FunctionEnd
 
 
 Function ProductRegistration
-  ${LogText} "do registration ${MUI_PRODUCT} ${VER_BUILD}"
+  ${LogText} ""
+  ${LogText} "Do registration ${MUI_PRODUCT} ${VER_BUILD}"
   StrCmp "${PRODUCT_WITH_VER}" "${MUI_PRODUCT} ${VER_BUILD}" eapInfo releaseInfo
 eapInfo:
   StrCpy $3 "${PRODUCT_WITH_VER}(EAP)"
@@ -940,7 +944,8 @@ FunctionEnd
 
 
 Function UpdateContextMenu
-  ${LogText} "update Context Menu"
+  ${LogText} ""
+  ${LogText} "Update Context Menu"
 
 ; add "Open with PRODUCT" action for files to Windows context menu
   StrCpy $0 "SHCTX"
@@ -996,7 +1001,8 @@ FunctionEnd
 
 
 Function ProductAssociation
-  ${LogText} "do associations ${MUI_PRODUCT} ${VER_BUILD}"
+  ${LogText} ""
+  ${LogText} "Do associations ${MUI_PRODUCT} ${VER_BUILD}"
   push $0
   push $1
   push $2
@@ -1059,7 +1065,7 @@ Function getPathEnvVar
   ClearErrors
   ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
   IfErrors do_not_change_path ;size of PATH is more than NSIS_MAX_STRLEN
-  ${LogText} "  Path: $pathEnvVar"
+  ${LogText} "  PATH: $pathEnvVar"
   Goto done
 do_not_change_path:
   ${LogText} "  an error occured on readyng value of PATH env var"
@@ -1083,8 +1089,11 @@ absent:
   ${LogText} "  update PATH: HKCU ${Environment} Path $pathEnvVar;%${MUI_PRODUCT}%"
   Goto done
 do_not_change_path:
-  ${LogText} "  PATH can not be updated. The size is very big."
-  MessageBox MB_OK|MB_ICONEXCLAMATION "PATH can not be updated. The size is very big."
+  ${LogText} ""
+  ${LogText} "  NOTE: Length of PATH is bigger than 8192 bytes."
+  ${LogText} "  Installer can not update it."
+  ${LogText} ""
+  MessageBox MB_OK|MB_ICONEXCLAMATION "Length of PATH is bigger than 8192 bytes.$\r$\nInstaller can not update it."
 done:
 FunctionEnd
 
@@ -1103,8 +1112,8 @@ Section "IDEA Files" CopyIdeaFiles
   ${Else}
      StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${EndIf}
-  ${LogText} "default launcher: $productLauncher"
-  DetailPrint "productLauncher: $productLauncher"
+  ${LogText} "Default launcher: $productLauncher"
+  DetailPrint "Default launcher: $productLauncher"
 
   StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
   ;download and install JRE x86
@@ -1115,18 +1124,18 @@ shortcuts:
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
   StrCmp $R2 1 "" add_to_path
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
+  ${LogText} "Create shortcut: $DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
 
 add_to_path:
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
-    ${LogText} "update PATH env var"
+    ${LogText} "Update PATH env var"
     Call getPathEnvVar
     Call createProductEnvVar
     CALL updatePathEnvVar
@@ -1176,7 +1185,8 @@ done:
 
 skip_ipr:
 ; readonly section
-  ${LogText} "copy files to $INSTDIR"
+  ${LogText} ""
+  ${LogText} "Copy files to $INSTDIR"
   SectionIn RO
   !include "idea_win.nsh"
 
@@ -1197,6 +1207,8 @@ skip_ipr:
   ShellLink::GetShortCutWorkingDirectory $7
   Pop $0
   DetailPrint "ShortCutWorkingDirectory: $0"
+  ${LogText} ""
+  ${LogText} "ShortCutWorkingDirectory: $0"
 
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
@@ -1242,6 +1254,7 @@ skip_ipr:
   ; Regenerating the Shared Archives for java x64 and x86 bit.
   ; http://docs.oracle.com/javase/8/docs/technotes/guides/vm/class-data-sharing.html
   IfFileExists $INSTDIR\jre64\bin\javaw.exe 0 skip_regeneration_shared_archive_for_java_64
+  ${LogText} ""
   ${LogText} "Regenerating the Shared Archives for java 64"
   ExecDos::exec /NOUNLOAD /ASYNC '"$INSTDIR\jre64\bin\javaw.exe" -Xshare:dump'
 
@@ -1262,7 +1275,7 @@ skip_regeneration_shared_archive_for_java_64:
   ${EndIf}
 
 ; reset icon cache
-  ${LogText} "reset icon cache"
+  ${LogText} "Reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
 
@@ -1320,7 +1333,7 @@ uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
 done:
-  ${LogText} "installation dir: $INSTDIR"
+  ${LogText} "Installation dir: $INSTDIR"
 ;  !insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 

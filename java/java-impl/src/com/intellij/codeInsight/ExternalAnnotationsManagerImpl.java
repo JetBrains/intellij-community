@@ -182,7 +182,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return false;
     }
-    String externalName = getExternalName(listOwner, false);
+    String externalName = getExternalName(listOwner);
     WriteCommandAction.writeCommandAction(project).run(() -> {
       appendChosenAnnotationsRoot(entry, newRoot);
       XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
@@ -279,7 +279,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
 
     Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
-    String externalName = getExternalName(listOwner, false);
+    String externalName = getExternalName(listOwner);
     WriteCommandAction.writeCommandAction(project).run(() -> {
       if (existingXml != null) {
         annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
@@ -355,7 +355,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
               .runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
                 PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
                 try {
-                  tag.setAttribute("name", StringUtil.escapeXml(getExternalName(element, false)));
+                  tag.setAttribute("name", StringUtil.escapeXml(getExternalName(element)));
                   commitChanges(file);
                 }
                 catch (IncorrectOperationException e) {
@@ -410,7 +410,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         if (rootTag == null) {
           continue;
         }
-        final String externalName = getExternalName(listOwner, false);
+        final String externalName = getExternalName(listOwner);
 
         final List<XmlTag> tagsToProcess = new ArrayList<>();
         for (XmlTag tag : rootTag.getSubTags()) {

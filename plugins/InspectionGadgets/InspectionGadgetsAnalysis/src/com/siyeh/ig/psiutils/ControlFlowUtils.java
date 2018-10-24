@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -1067,6 +1068,28 @@ public class ControlFlowUtils {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent) 
+   * @param ifStatement an {@code if} statement to add an else branch or expand it to the block
+   */
+  public static void ensureElseBranch(PsiIfStatement ifStatement) {
+    PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch != null) {
+      if (!(elseBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(elseBranch);
+      }
+    } else {
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      PsiBlockStatement emptyBlock = BlockUtils.createBlockStatement(ifStatement.getProject());
+      if (thenBranch == null) {
+        ifStatement.setThenBranch(emptyBlock);
+      } else if (!(thenBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(thenBranch);
+      }
+      ifStatement.setElseBranch(emptyBlock);
+    }
   }
 
   public enum InitializerUsageStatus {

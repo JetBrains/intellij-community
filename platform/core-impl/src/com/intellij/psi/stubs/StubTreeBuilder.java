@@ -26,6 +26,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.SmartList;
@@ -126,9 +127,20 @@ public class StubTreeBuilder {
     }
   }
 
-  /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
+  /**
+   * Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} if it provides stubbed root.
+   */
   @NotNull
   public static List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
+    return getStubbedRoots(viewProvider, false);
+  }
+
+  /**
+   * Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} if it provides stubbed root.
+   */
+  @NotNull
+  public static List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider,
+                                                                          boolean includeBinaryRoots) {
     final List<Trinity<Language, IStubFileElementType, PsiFile>> roots =
       new SmartList<>();
     final PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();
@@ -140,12 +152,21 @@ public class StubTreeBuilder {
           roots.add(Trinity.create(language, (IStubFileElementType)type, file));
         }
       }
+      else if (includeBinaryRoots && file instanceof PsiFileWithStubSupport) {
+        roots.add(Trinity.create(language, null, file));
+      }
     }
 
     ContainerUtil.sort(roots, (o1, o2) -> {
-      if (o1.third == stubBindingRoot) return o2.third == stubBindingRoot ? 0 : -1;
-      else if (o2.third == stubBindingRoot) return 1;
-      else return StringUtil.compare(o1.first.getID(), o2.first.getID(), false);
+      if (o1.third == stubBindingRoot) {
+        return o2.third == stubBindingRoot ? 0 : -1;
+      }
+      else if (o2.third == stubBindingRoot) {
+        return 1;
+      }
+      else {
+        return StringUtil.compare(o1.first.getID(), o2.first.getID(), false);
+      }
     });
 
     return ContainerUtil.map(roots, trinity -> Pair.create(trinity.second, trinity.third));

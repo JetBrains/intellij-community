@@ -33,12 +33,6 @@ HtmlFile:test.html
       HtmlTag:body
         XmlToken:XML_START_TAG_START('<')
         XmlToken:XML_NAME('body')
-        PsiWhiteSpace(' ')
-        PsiElement(XML_ATTRIBUTE)
-          XmlToken:XML_NAME('onload')
-          XmlToken:XML_EQ('=')
-          PsiElement(XML_ATTRIBUTE_VALUE)
-            XmlToken:XML_ATTRIBUTE_VALUE_TOKEN('parent.frames[0].location.href='?7';')
         XmlToken:XML_TAG_END('>')
         XmlToken:XML_END_TAG_START('</')
         XmlToken:XML_NAME('body')

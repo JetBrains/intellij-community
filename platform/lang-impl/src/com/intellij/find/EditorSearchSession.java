@@ -146,15 +146,37 @@ public class EditorSearchSession implements SearchSession,
     new SwitchToFind(getComponent());
     new SwitchToReplace(getComponent());
 
-    myFindModel.addObserver(findModel1 -> {
-      String stringToFind = myFindModel.getStringToFind();
-      if (!wholeWordsApplicable(stringToFind)) {
-        myFindModel.setWholeWordsOnly(false);
+    myFindModel.addObserver(new FindModel.FindModelObserver() {
+      boolean myReentrantLock = false;
+      boolean myIsGlobal = myFindModel.isGlobal();
+      boolean myIsReplace = myFindModel.isReplaceState();
+      @Override
+      public void findModelChanged(FindModel findModel1) {
+        if (myReentrantLock) return;
+        try {
+          myReentrantLock = true;
+          String stringToFind = myFindModel.getStringToFind();
+          if (!wholeWordsApplicable(stringToFind)) {
+            myFindModel.setWholeWordsOnly(false);
+          }
+          if (myIsGlobal != myFindModel.isGlobal() || myIsReplace != myFindModel.isReplaceState()) {
+            if (myFindModel.getStringToFind().isEmpty() && myFindModel.isGlobal()) {
+              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText(), ""));
+            }
+            if (!myFindModel.isGlobal() && myFindModel.getStringToFind().equals(myEditor.getSelectionModel().getSelectedText())) {
+              myFindModel.setStringToFind("");
+            }
+            myIsGlobal = myFindModel.isGlobal();
+            myIsReplace = myFindModel.isReplaceState();
+          }
+          EditorSearchSession.this.updateUIWithFindModel();
+          mySearchResults.clear();
+          EditorSearchSession.this.updateResults(true);
+          FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
+        } finally {
+          myReentrantLock = false;
+        }
       }
-      updateUIWithFindModel();
-      mySearchResults.clear();
-      updateResults(true);
-      FindUtil.updateFindInFileModel(getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
     });
 
     updateUIWithFindModel();

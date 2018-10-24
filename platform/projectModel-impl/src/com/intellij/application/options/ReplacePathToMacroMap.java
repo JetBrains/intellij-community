@@ -7,8 +7,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
-  private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
+  private final Map<String, String> myMacroMap = new LinkedHashMap<>();
 
   @NonNls public static final String[] PROTOCOLS;
   static {
@@ -40,6 +40,16 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       }
     }
     PROTOCOLS = ArrayUtil.toStringArray(protocols);
+  }
+
+  public ReplacePathToMacroMap() {
+  }
+
+  @SuppressWarnings("CopyConstructorMissesField")
+  public ReplacePathToMacroMap(@NotNull ReplacePathToMacroMap map) {
+    for (Map.Entry<String, String> entry : map.myMacroMap.entrySet()) {
+      myMacroMap.put(entry.getKey(), entry.getValue());
+    }
   }
 
   public void addMacroReplacement(String path, String macroName) {
@@ -161,13 +171,15 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     return newText.toString();
   }
 
-  private static int getIndex(@NotNull final Map.Entry<String, String> s) {
-    final String replacement = s.getValue();
+  private static int getIndex(@NotNull String replacement) {
     if (replacement.contains("..")) return 1;
     if (replacement.contains("$" + PathMacroUtil.USER_HOME_NAME + "$")) return 1;
     if (replacement.contains("$" + PathMacroUtil.APPLICATION_HOME_DIR + "$")) return 1;
-    if (replacement.contains(PathMacroUtil.DEPRECATED_MODULE_DIR)) return 3;
-    if (replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$")) return 3;
+    if (replacement.contains(PathMacroUtil.DEPRECATED_MODULE_DIR) ||
+        replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$") ||
+        replacement.contains("$" + PathMacrosImpl.MAVEN_REPOSITORY + "$")) {
+      return 3;
+    }
     return 2;
   }
 
@@ -185,13 +197,13 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
       List<Map.Entry<String, String>> entries = new ArrayList<>(myMacroMap.entrySet());
 
-      final TObjectIntHashMap<Map.Entry<String, String>> weights = new TObjectIntHashMap<>();
+      final TObjectIntHashMap<String> weights = new TObjectIntHashMap<>(entries.size());
       for (Map.Entry<String, String> entry : entries) {
-        weights.put(entry, getIndex(entry) * 512 + stripPrefix(entry.getKey()));
+        weights.put(entry.getKey(), getIndex(entry.getValue()) * 512 + stripPrefix(entry.getKey()));
       }
 
-      ContainerUtil.sort(entries, (o1, o2) -> weights.get(o2) - weights.get(o1));
-      myPathsIndex = ContainerUtil.map2List(entries, entry -> entry.getKey());
+      entries.sort((o1, o2) -> weights.get(o2.getKey()) - weights.get(o1.getKey()));
+      myPathsIndex = ContainerUtilRt.map2List(entries, entry -> entry.getKey());
     }
     return myPathsIndex;
   }

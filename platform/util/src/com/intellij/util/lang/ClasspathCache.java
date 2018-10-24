@@ -138,33 +138,36 @@ public class ClasspathCache {
 
   abstract static class LoaderIterator <ResultType, ParameterType, ParameterType2> {
     @Nullable
-    abstract ResultType process(Loader loader, ParameterType parameter, ParameterType2 parameter2);
+    abstract ResultType process(Loader loader, ParameterType parameter, ParameterType2 parameter2, String shortName);
   }
 
   @Nullable <ResultType, ParameterType, ParameterType2> ResultType iterateLoaders(
     String resourcePath,
     LoaderIterator<ResultType, ParameterType, ParameterType2> iterator,
     ParameterType parameter,
-    ParameterType2 parameter2) {
+    ParameterType2 parameter2, 
+    String shortName) {
+    Object o;
+    
     myLock.readLock().lock();
     try {
       IntObjectHashMap map = resourcePath.endsWith(UrlClassLoader.CLASS_EXTENSION) ?
                                       myClassPackagesCache : myResourcePackagesCache;
       
-      Object o = map.get(getPackageNameHash(resourcePath));
-
-      if (o == null) return null;
-      if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2);
-      Loader[] loaders = (Loader[])o;
-      for(Loader l:loaders) {
-        ResultType result = iterator.process(l, parameter, parameter2);
-        if (result != null) return result;
-      }
-      return null;
+      o = map.get(getPackageNameHash(resourcePath));
     }
     finally {
       myLock.readLock().unlock();
     }
+
+    if (o == null) return null;
+    if (o instanceof Loader) return iterator.process((Loader)o, parameter, parameter2, shortName);
+    Loader[] loaders = (Loader[])o;
+    for(Loader l:loaders) {
+      ResultType result = iterator.process(l, parameter, parameter2, shortName);
+      if (result != null) return result;
+    }
+    return null;
   }
 
   static int getPackageNameHash(String resourcePath) {
@@ -185,17 +188,10 @@ public class ClasspathCache {
     }
   }
 
-  public boolean loaderHasName(String name, String shortName, Loader loader) {
+  boolean loaderHasName(String name, String shortName, Loader loader) {
     if (StringUtil.isEmpty(name)) return true;
 
-    myLock.readLock().lock();
-
-    try {
-      return loader.containsName(name, shortName);
-    }
-    finally {
-      myLock.readLock().unlock();
-    }
+    return loader.containsName(name, shortName);
   }
 
   static String transformName(String name) {

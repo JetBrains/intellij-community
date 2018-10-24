@@ -62,7 +62,7 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
 
   public static void setPresentationMode(final Project project, final boolean inPresentation) {
     final UISettings settings = UISettings.getInstance();
-    settings.getState().setPresentationMode(inPresentation);
+    settings.setPresentationMode(inPresentation);
 
     final boolean layoutStored = storeToolWindows(project);
 

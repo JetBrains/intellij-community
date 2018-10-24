@@ -258,7 +258,7 @@ public class ParametrizedDuplicates {
     Map<Match, Map<PsiExpression, PsiExpression>> expressionsMapping = new HashMap<>();
     for (ClusterOfUsages usages : myUsagesList) {
       for (Match match : myMatches) {
-        ExtractedParameter parameter = usages.myParameters.get(match);
+        ExtractedParameter parameter = usages.getParameter(match);
         if (parameter == null) {
           Map<PsiExpression, PsiExpression> expressions =
             expressionsMapping.computeIfAbsent(match, unused -> {
@@ -277,8 +277,34 @@ public class ParametrizedDuplicates {
       }
     }
 
+    mergeDuplicateUsages(myUsagesList, myMatches);
     myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
     return true;
+  }
+
+  private static void mergeDuplicateUsages(@NotNull List<ClusterOfUsages> usagesList, @NotNull List<Match> matches) {
+    Set<ClusterOfUsages> duplicateUsages = new THashSet<>();
+    for (int i = 0; i < usagesList.size(); i++) {
+      ClusterOfUsages usages = usagesList.get(i);
+      if (duplicateUsages.contains(usages)) continue;
+
+      for (int j = i + 1; j < usagesList.size(); j++) {
+        ClusterOfUsages otherUsages = usagesList.get(j);
+
+        if (usages.isEquivalent(otherUsages, matches)) {
+          for (Match match : matches) {
+            ExtractedParameter parameter = usages.getParameter(match);
+            ExtractedParameter otherParameter = otherUsages.getParameter(match);
+            if (parameter != null && otherParameter != null) {
+              parameter.addUsages(otherParameter.myPattern);
+              match.getExtractedParameters().remove(otherParameter);
+            }
+          }
+          duplicateUsages.add(otherUsages);
+        }
+      }
+    }
+    usagesList.removeAll(duplicateUsages);
   }
 
   private static List<Match> filterNestedSubexpressions(List<Match> matches) {
@@ -319,8 +345,8 @@ public class ParametrizedDuplicates {
     List<ExtractedParameter> parameters = match.getExtractedParameters();
     for (ExtractedParameter parameter : parameters) {
       ClusterOfUsages usages = usagesMap.get(parameter.myPattern.getUsage());
-      if (usages != null && !usages.isEquivalent(parameter) ||
-          usages == null && ClusterOfUsages.isPresent(usagesMap, parameter)) {
+      if (usages != null && !usages.arePatternsEquivalent(parameter) ||
+          usages == null && ClusterOfUsages.isPatternPresent(usagesMap, parameter)) {
         return null;
       }
       if (usages == null) {
@@ -670,16 +696,40 @@ public class ParametrizedDuplicates {
       myFirstOffset = myPatterns.stream().mapToInt(PsiElement::getTextOffset).min().orElse(0);
     }
 
-    public void putParameter(Match match, ExtractedParameter parameter) {
+    void putParameter(@NotNull Match match, @NotNull ExtractedParameter parameter) {
       myParameters.put(match, parameter);
     }
 
-    public boolean isEquivalent(ExtractedParameter parameter) {
+    @Nullable
+    ExtractedParameter getParameter(@NotNull Match match) {
+      return myParameters.get(match);
+    }
+
+    boolean arePatternsEquivalent(@NotNull ExtractedParameter parameter) {
       return myPatterns.equals(parameter.myPatternUsages);
     }
 
-    public static boolean isPresent(Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
+    boolean isEquivalent(@NotNull ClusterOfUsages usages, @NotNull Collection<Match> matches) {
+      if (!myParameter.myPattern.isEquivalent(usages.myParameter.myPattern)) {
+        return false;
+      }
+      for (Match match : matches) {
+        ExtractedParameter parameter = getParameter(match);
+        ExtractedParameter otherParameter = usages.getParameter(match);
+        if (parameter == null || otherParameter == null || !parameter.myCandidate.isEquivalent(otherParameter.myCandidate)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    static boolean isPatternPresent(@NotNull Map<PsiExpression, ClusterOfUsages> usagesMap, @NotNull ExtractedParameter parameter) {
       return parameter.myPatternUsages.stream().anyMatch(usagesMap::containsKey);
+    }
+
+    @Override
+    public String toString() {
+      return StreamEx.of(myParameters.values()).map(p -> p.myPattern + "->" + p.myCandidate).joining(", ");
     }
   }
 }

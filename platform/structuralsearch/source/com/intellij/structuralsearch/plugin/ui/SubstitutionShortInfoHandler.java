@@ -18,6 +18,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent e) {
-    LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
+    LogicalPosition position  = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
 
     handleInputFocusMovement(position, false);
   }
@@ -75,16 +76,20 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
         if (variables.contains(variableName)) {
           final NamedScriptableDefinition variable = configuration.findVariable(variableName);
-          text = getShortParamString(variable);
+          text = getShortParamString(variable, !editor.isViewer() && !variableName.equals(configuration.getCurrentVariableName()));
           final boolean replacementVariable =
             variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
           final String currentVariableName = replacementVariable
                               ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
                               : variableName;
-          configuration.setCurrentVariableName(currentVariableName);
-          if (myCurrentVariableCallback != null && caret) {
-            myCurrentVariableCallback.accept(currentVariableName);
-            caret = false;
+          if (myCurrentVariableCallback != null) {
+            if (caret) {
+              myCurrentVariableCallback.accept(currentVariableName);
+              caret = false;
+            }
+          }
+          else {
+            configuration.setCurrentVariableName(currentVariableName);
           }
         }
       }
@@ -94,7 +99,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     if (variableName != null) {
-      showTooltip(editor, start, end + 1, text, variableName);
+        showTooltip(editor, start, end + 1, text, variableName);
     }
   }
 
@@ -108,12 +113,15 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @Override
-  public void mouseDragged(@NotNull EditorMouseEvent e) {
+  public void caretPositionChanged(@NotNull CaretEvent e) {
+    handleInputFocusMovement(e.getNewPosition(), true);
   }
 
   @Override
-  public void caretPositionChanged(@NotNull CaretEvent e) {
-    handleInputFocusMovement(e.getNewPosition(), true);
+  public void documentChanged(@NotNull DocumentEvent event) {
+    if (event.getOldLength() == event.getNewLength()) return;
+    // to handle backspace & delete (backspace strangely is not reported to the caret listener)
+    handleInputFocusMovement(editor.getCaretModel().getLogicalPosition(), true);
   }
 
   public List<String> getVariables() {
@@ -122,18 +130,19 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   @NotNull
-  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition) {
+  static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean editLink) {
+    final boolean newDialog = Registry.is("ssr.use.new.search.dialog");
     if (namedScriptableDefinition == null) {
-      return SSRBundle.message("no.constraints.specified.tooltip.message");
+      return newDialog ? "no filters" : SSRBundle.message("no.constraints.specified.tooltip.message");
     }
 
     final StringBuilder buf = new StringBuilder();
 
     final String inactiveTextColor = ColorUtil.toHtmlColor(UIUtil.getInactiveTextColor());
-    final boolean oldDialog = !Registry.is("ssr.use.new.search.dialog");
+    final String linkColor = ColorUtil.toHtmlColor(JBColor.link());
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
-      if (constraint.isPartOfSearchResults() && oldDialog) {
+      if (constraint.isPartOfSearchResults() && !newDialog) {
         append(buf, SSRBundle.message("target.tooltip.message"));
       }
       if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
@@ -177,7 +186,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (!Configuration.CONTEXT_VAR_NAME.equals(name)) {
         final int maxCount = constraint.getMaxCount();
         final int minCount = constraint.getMinCount();
-        if (oldDialog || minCount != 1 || maxCount != 1) {
+        if (!newDialog || minCount != 1 || maxCount != 1) {
           append(buf, SSRBundle.message("min.occurs.tooltip.message", minCount, (maxCount == Integer.MAX_VALUE) ? "∞" : maxCount));
         }
       }
@@ -189,8 +198,15 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       append(buf, str);
     }
 
-    if (buf.length() == 0 && oldDialog) {
-      return SSRBundle.message("no.constraints.specified.tooltip.message");
+    if (buf.length() == 0 && !editLink) {
+      buf.append(!newDialog ? SSRBundle.message("no.constraints.specified.tooltip.message") : "no filters");
+    }
+    if (editLink && newDialog) {
+      buf.append(" <a style=\"color:")
+        .append(linkColor)
+        .append("\" href=\"#ssr_edit_filters/")
+        .append(namedScriptableDefinition.getName())
+        .append("\">Edit filters</a>");
     }
     return buf.toString();
   }
@@ -218,16 +234,10 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final Point p = SwingUtilities.convertPoint(editor.getContentComponent(), bestPoint,
                                                 editor.getComponent().getRootPane().getLayeredPane());
-    final HintHint hint = new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setShowImmediately(true)
-      .setCalloutShift(editor.getLineHeight() / 2 - 1);
-    final String dressedText;
-    if (Registry.is("ssr.use.new.search.dialog")) {
-      dressedText = text + " <a href=\"#ssr_edit_filters/" + variableName + "\">Edit filters</a>";
-    }
-    else {
-      dressedText = text;
-    }
-    TooltipController.getInstance().showTooltip(editor, p, dressedText, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
+    final HintHint hint = new HintHint(editor, bestPoint)
+      .setAwtTooltip(true)
+      .setShowImmediately(true);
+    TooltipController.getInstance().showTooltip(editor, p, text, visibleArea.width, false, SS_INFO_TOOLTIP_GROUP, hint);
   }
 
   static SubstitutionShortInfoHandler retrieve(Editor editor) {

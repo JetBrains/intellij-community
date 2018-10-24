@@ -242,6 +242,6 @@ internal open class KeePassFileManager(private val file: Path,
       return
     }
 
-    askAndSetMasterKey(null, topNote = "Database file located in custom location,\ntherefore custom master password is required.")
+    askAndSetMasterKey(null, topNote = "Database in a custom location, therefore\ncustom master password is required.")
   }
 }

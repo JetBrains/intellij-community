@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -17,11 +16,11 @@ import org.jdesktop.swingx.graphics.ShadowRenderer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -49,7 +48,7 @@ public class SheetController implements Disposable {
 
   private final JCheckBox doNotAskCheckBox = new JCheckBox();
 
-  public static int SHADOW_BORDER = 5;
+  public static final int SHADOW_BORDER = 5;
 
   private static final int RIGHT_OFFSET = 10 - SHADOW_BORDER;
 
@@ -175,11 +174,9 @@ public class SheetController implements Disposable {
   }
 
   void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+    getGlobalInstance().doWhenFocusSettlesDown(() -> {
       if (myFocusedComponent != null) {
-        getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          getGlobalInstance().requestFocus(myFocusedComponent, true);
-        });
+        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myFocusedComponent, true));
       } else {
         LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
       }
@@ -238,7 +235,7 @@ public class SheetController implements Disposable {
         g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, getSheetAlpha()));
 
         g.setColor(new JBColor(Gray._230, UIUtil.getPanelBackground()));
-        Rectangle2D dialog  = new Rectangle2D.Double(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
+        Rectangle dialog  = new Rectangle(SHADOW_BORDER, 0, SHEET_WIDTH, SHEET_HEIGHT);
 
         paintShadow(g);
         // draw the sheet background
@@ -248,6 +245,12 @@ public class SheetController implements Disposable {
           //todo make bottom corners
           g.fill(dialog);
         }
+
+        Border border = UIManager.getBorder("Window.border");
+        if (border != null) {
+          border.paintBorder(this, g, dialog.x, dialog.y, dialog.width, dialog.height);
+        }
+
         paintShadowFromParent(g);
       }
 

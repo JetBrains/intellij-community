@@ -108,19 +108,19 @@ public class ClassPath {
   public Resource getResource(String s) {
     final long started = startTiming();
     try {
+      String shortName = ClasspathCache.transformName(s);
+      
       int i;
       if (myCanUseCache) {
         boolean allUrlsWereProcessed = myAllUrlsWereProcessed;
         i = allUrlsWereProcessed ? 0 : myLastLoaderProcessed.get();
 
-        Resource prevResource = myCache.iterateLoaders(s, ourResourceIterator, s, this);
+        Resource prevResource = myCache.iterateLoaders(s, ourResourceIterator, s, this, shortName);
         if (prevResource != null || allUrlsWereProcessed) return prevResource;
       }
       else {
         i = 0;
       }
-
-      String shortName = ClasspathCache.transformName(s);
 
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
@@ -292,12 +292,12 @@ public class ClassPath {
 
       if (myCanUseCache && myAllUrlsWereProcessed) {
         Collection<Loader> loadersSet = new LinkedHashSet<Loader>();
-        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this);
+        myCache.iterateLoaders(name, ourLoaderCollector, loadersSet, this, myShortName);
 
         if (name.endsWith("/")) {
-          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this);
+          myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this, myShortName);
         } else {
-          myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this);
+          myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this, myShortName);
         }
 
         loaders = new ArrayList<Loader>(loadersSet);
@@ -358,8 +358,8 @@ public class ClassPath {
 
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
-    Resource process(Loader loader, String s, ClassPath classPath) {
-      if (!classPath.myCache.loaderHasName(s, ClasspathCache.transformName(s), loader)) return null;
+    Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
+      if (!classPath.myCache.loaderHasName(s, shortName, loader)) return null;
       Resource resource = loader.getResource(s);
       if (resource != null) printOrder(loader, s, resource);
       return resource;
@@ -368,7 +368,7 @@ public class ClassPath {
 
   private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, Collection<Loader>, Object> {
     @Override
-    Object process(Loader loader, Collection<Loader> parameter, Object parameter2) {
+    Object process(Loader loader, Collection<Loader> parameter, Object parameter2, String shortName) {
       parameter.add(loader);
       return null;
     }
@@ -455,7 +455,7 @@ public class ClassPath {
       Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook for tracing classloading information") {
         @Override
         public void run() {
-          System.out.println("Classloading requests:" + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
+          System.out.println("Classloading requests:" + ClassPath.class.getClassLoader() + "," + ourTotalRequests + ", time:" + (ourTotalTime.get() / 1000000) + "ms");
         }
       });
     }

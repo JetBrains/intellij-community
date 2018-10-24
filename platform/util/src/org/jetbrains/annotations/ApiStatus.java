@@ -53,4 +53,25 @@ public class ApiStatus {
      */
     String inVersion() default "";
   }
+
+  /**
+   * Indicates that the annotated element firstly appeared in the specified version of the library, so the code which uses that element
+   * won't be compatible with older versions of the library. This information may be used by IDEs and static analysis tools.
+   * <br>
+   * This annotation can be used instead of '@since' javadoc tag if it's needed to keep that information in *.class files or if you need
+   * to generate them automatically.
+   * <p><strong>Do not write this annotation in sources of IntelliJ IDEA project.</strong> These annotations are automatically generated as
+   * external annotations for API from IntelliJ IDEA project.</p>
+   */
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+    ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
+  })
+  public @interface AvailableSince {
+    /**
+     * Specifies version where the annotation API firstly appeared.
+     */
+    String value();
+  }
 }

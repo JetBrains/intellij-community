@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.intention.impl.SplitConditionUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -20,6 +21,7 @@ import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,6 +66,15 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       if (!mySubExpressionValue) {
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
         if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) return true;
+        // code like "if (foo || alwaysFalseWithSideEffects) {}"
+        if (parent instanceof PsiPolyadicExpression) {
+          PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+          if (polyadic.getOperationTokenType().equals(JavaTokenType.OROR)
+              && PsiTreeUtil.isAncestor(ArrayUtil.getLastElement(polyadic.getOperands()), subExpression, false)
+              && PsiUtil.skipParenthesizedExprUp(parent.getParent()) instanceof PsiIfStatement) {
+            return true;
+          }
+        }
       }
     }
     return false;
@@ -125,17 +136,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (subExpression == null) return;
     CommentTracker ct = new CommentTracker();
     if (shouldExtractSideEffect()) {
-      if (!mySubExpressionValue) {
-        // Prevent extracting while condition to internal 'if'
-        PsiWhileStatement whileStatement = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(subExpression.getParent()), PsiWhileStatement.class);
-        if (whileStatement != null && whileStatement.getCondition() != null) {
-          PsiStatement replacement = JavaPsiFacade.getElementFactory(project)
-            .createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
-          PsiIfStatement ifStatement = (PsiIfStatement)whileStatement.replace(replacement);
-          subExpression = Objects.requireNonNull(ifStatement.getCondition());
-        }
-      }
-      subExpression = RefactoringUtil.ensureCodeBlock(subExpression);
+      subExpression = ensureCodeBlock(project, subExpression);
       if (subExpression == null) {
         LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
         return;
@@ -161,6 +162,50 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       expression = (PsiExpression)expression.getParent();
     }
     simplifyExpression(expression);
+  }
+
+  public PsiExpression ensureCodeBlock(@NotNull Project project, PsiExpression subExpression) {
+    if (!mySubExpressionValue) {
+      // Prevent extracting while condition to internal 'if'
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(subExpression.getParent());
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      if (parent instanceof PsiWhileStatement) {
+        PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+        if (whileStatement.getCondition() != null) {
+          PsiStatement replacement =
+            factory.createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
+          PsiIfStatement ifStatement = (PsiIfStatement)whileStatement.replace(replacement);
+          subExpression = Objects.requireNonNull(ifStatement.getCondition());
+        }
+      }
+      else if (parent instanceof PsiPolyadicExpression) {
+        PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+        if (JavaTokenType.OROR.equals(polyadicExpression.getOperationTokenType())) {
+          PsiExpression expression = expandLastIfDisjunct(polyadicExpression, subExpression, factory);
+          if (expression != null) {
+            return expression;
+          }
+        }
+      }
+    }
+    return RefactoringUtil.ensureCodeBlock(subExpression);
+  }
+
+  @Nullable
+  private static PsiExpression expandLastIfDisjunct(PsiPolyadicExpression orChain,
+                                                    PsiExpression subExpression,
+                                                    PsiElementFactory factory) {
+    PsiIfStatement ifStatement = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(orChain.getParent()), PsiIfStatement.class);
+    if (ifStatement == null) return null;
+    PsiExpression lastOperand = ArrayUtil.getLastElement(orChain.getOperands());
+    if (!PsiTreeUtil.isAncestor(lastOperand, subExpression, false)) return null;
+    orChain.replace(SplitConditionUtil.getLOperands(orChain, orChain.getTokenBeforeOperand(lastOperand)));
+    ControlFlowUtils.ensureElseBranch(ifStatement);
+    PsiBlockStatement elseBranch = (PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch());
+    PsiCodeBlock codeBlock = elseBranch.getCodeBlock();
+    PsiStatement replacement = factory.createStatementFromText("if(" + subExpression.getText() + ");", ifStatement);
+    PsiIfStatement alwaysFalseIf = (PsiIfStatement)codeBlock.addAfter(replacement, codeBlock.getLBrace());
+    return Objects.requireNonNull(alwaysFalseIf.getCondition());
   }
 
   private static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {

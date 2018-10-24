@@ -31,6 +31,7 @@ class JavacFileManager2 extends JpsJavacFileManager {
   private static final boolean isMac = _OS_NAME.startsWith("mac");
   private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
 
+  private final boolean myJavacBefore9;
   private final Collection<JavaSourceTransformer> mySourceTransformers;
   private final FileOperations myFileOperations;
   @Nullable
@@ -42,8 +43,9 @@ class JavacFileManager2 extends JpsJavacFileManager {
     }
   };
 
-  JavacFileManager2(final Context context, Collection<JavaSourceTransformer> transformers) {
+  JavacFileManager2(final Context context, boolean javacBefore9, Collection<JavaSourceTransformer> transformers) {
     super(context);
+    myJavacBefore9 = javacBefore9;
     mySourceTransformers = transformers;
     // for future: a different implementation of file operations can be provided if necessary
     myFileOperations = new DefaultFileOperations();
@@ -168,9 +170,13 @@ class JavacFileManager2 extends JpsJavacFileManager {
     StandardLocation.SOURCE_PATH,
     StandardLocation.ANNOTATION_PROCESSOR_PATH
   );
-  private static boolean isFileSystemLocation(Location location) {
+  private boolean isFileSystemLocation(Location location) {
     try {
-      return ourFSLocations.contains(StandardLocation.valueOf(location.getName()));
+      final StandardLocation loc = StandardLocation.valueOf(location.getName());
+      if (loc == StandardLocation.PLATFORM_CLASS_PATH) {
+        return myJavacBefore9;
+      }
+      return ourFSLocations.contains(loc);
     }
     catch (IllegalArgumentException ignored) {
       return false; // assume 'unknown' location is a non-FS location
@@ -179,67 +185,85 @@ class JavacFileManager2 extends JpsJavacFileManager {
 
   @Override
   public Iterable<JavaFileObject> list(Location location, String packageName, final Set<JavaFileObject.Kind> kinds, final boolean recurse) throws IOException {
-    if (!isFileSystemLocation(location)) {
-      // locations, not supported by this class should be handled by default javac file manager
-      return super.list(location, packageName, kinds, recurse);
-    }
-    // we consider here only locations that are known to be file-based
-    final Iterable<? extends File> locationRoots = getLocation(location);
-    if (locationRoots == null) {
-      return Collections.emptyList();
-    }
+    Iterable<JavaFileObject> allFiles;
+    try {
+      if (isFileSystemLocation(location)) {
+        // we consider here only locations that are known to be file-based
+        final Iterable<? extends File> locationRoots = getLocation(location);
+        if (locationRoots == null) {
+          return Collections.emptyList();
+        }
 
-    final List<Iterable<JavaFileObject>> result = new ArrayList<Iterable<JavaFileObject>>();
-    for (File root : locationRoots) {
-      final boolean isFile;
+        final List<Iterable<JavaFileObject>> result = new ArrayList<Iterable<JavaFileObject>>();
+        for (File root : locationRoots) {
+          final boolean isFile;
 
-      FileOperations.Archive archive = myFileOperations.lookupArchive(root);
-      if (archive != null) {
-        isFile = true;
-      }
-      else {
-        isFile = myFileOperations.isFile(root);
-      }
-
-      if (isFile) {
-        // Not a directory; either a file or non-existent, create the archive
-        try {
-          if (archive == null) {
-            archive = myFileOperations.openArchive(root, myEncodingName);
-          }
+          FileOperations.Archive archive = myFileOperations.lookupArchive(root);
           if (archive != null) {
-            result.add(archive.list(packageName.replace('.', '/'), kinds, recurse));
+            isFile = true;
           }
           else {
-            // fallback to default implementation
-            result.add(super.list(location, packageName, kinds, recurse));
+            isFile = myFileOperations.isFile(root);
+          }
+
+          if (isFile) {
+            // Not a directory; either a file or non-existent, create the archive
+            try {
+              if (archive == null) {
+                archive = myFileOperations.openArchive(root, myEncodingName);
+              }
+              if (archive != null) {
+                result.add(archive.list(packageName.replace('.', '/'), kinds, recurse));
+              }
+              else {
+                // fallback to default implementation
+                result.add(super.list(location, packageName, kinds, recurse));
+              }
+            }
+            catch (IOException ex) {
+              throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
+            }
+          }
+          else {
+            // is a directory or does not exist
+            final File dir = new File(root, packageName.replace('.', '/'));
+            final BooleanFunction<File> filter = recurse?
+              new BooleanFunction<File>() {
+                @Override
+                public boolean fun(File file) {
+                  return kinds.contains(getKind(file.getName()));
+                }
+              }:
+              new BooleanFunction<File>() {
+                final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
+                @Override
+                public boolean fun(File file) {
+                  return kinds.contains(getKind(file.getName())) && (!acceptUnknownFiles || myFileOperations.isFile(file));
+                }
+              };
+            result.add(JpsJavacFileManager.convert(JpsJavacFileManager.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
           }
         }
-        catch (IOException ex) {
-          throw new IOException("Error reading file " + root + ": " + ex.getMessage(), ex);
-        }
+        allFiles = JpsJavacFileManager.merge(result);
       }
       else {
-        // is a directory or does not exist
-        final File dir = new File(root, packageName.replace('.', '/'));
-        final BooleanFunction<File> filter = recurse?
-          new BooleanFunction<File>() {
-            @Override
-            public boolean fun(File file) {
-              return kinds.contains(getKind(file.getName()));
-            }
-          }:
-          new BooleanFunction<File>() {
-            final boolean acceptUnknownFiles = kinds.contains(JavaFileObject.Kind.OTHER);
-            @Override
-            public boolean fun(File file) {
-              return kinds.contains(getKind(file.getName())) && (!acceptUnknownFiles || myFileOperations.isFile(file));
-            }
-          };
-        result.add(JpsJavacFileManager.convert(JpsJavacFileManager.filter(myFileOperations.listFiles(dir, recurse), filter), myFileToInputFileObjectConverter));
+        // locations, not supported by this class should be handled by default javac file manager
+        allFiles = super.list(location, packageName, kinds, recurse);
       }
     }
-    final Iterable<JavaFileObject> allFiles = JpsJavacFileManager.merge(result);
+    catch (IllegalStateException e) {
+      if (e.getCause() instanceof UnsupportedOperationException) {
+        // fallback
+        allFiles = super.list(location, packageName, kinds, recurse);
+      }
+      else {
+        throw e;
+      }
+    }
+    catch (UnsupportedOperationException e) {
+      // fallback
+      allFiles = super.list(location, packageName, kinds, recurse);
+    }
     //noinspection unchecked
     return kinds.contains(JavaFileObject.Kind.SOURCE) ? (Iterable<JavaFileObject>)wrapJavaFileObjects(allFiles) : allFiles;
   }
