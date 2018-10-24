@@ -16,6 +16,7 @@
 
 package com.intellij.debugger.ui;
 
+import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.DummyCompileContext;
 import com.intellij.task.ProjectTaskContext;
@@ -39,6 +40,7 @@ public interface HotSwapVetoableListener {
    * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
    */
   default boolean shouldHotSwap(@NotNull ProjectTaskContext context, @NotNull ProjectTaskResult finishedTasksResult) {
-    return shouldHotSwap(DummyCompileContext.getInstance());
+    CompileContext compileContext = context.getUserData(CompileContextImpl.CONTEXT_KEY);
+    return shouldHotSwap(compileContext != null ? compileContext : DummyCompileContext.getInstance());
   }
 }
