@@ -7,6 +7,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -91,6 +92,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
     public State() {
       addEntry(PyQt4, PYQT4_DOC_URL);
+      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionOrProp.name}");
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
@@ -186,6 +188,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       macros.put("element.qname", "");
     }
     macros.put("function.name", element instanceof PyFunction ? element.getName() : "");
+    macros.put("functionOrProp.name", element instanceof PyFunction && element.getName() != null ? functionOrProp(element.getName()) : "");
     macros.put("module.name", moduleQName.toString());
     macros.put("python.version", pyVersion);
     final String pattern = transformPattern(urlPattern, macros);
@@ -193,6 +196,14 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       return rootForPattern(urlPattern);
     }
     return pattern;
+  }
+
+  private static String functionOrProp(@NotNull String name) {
+    String functionOrProp = StringUtil.getPropertyName(name);
+    if (!name.equals(functionOrProp)) {
+      functionOrProp += functionOrProp + "-prop";
+    }
+    return functionOrProp;
   }
 
   @Nullable
