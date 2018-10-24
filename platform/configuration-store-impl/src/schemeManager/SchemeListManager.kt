@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
@@ -14,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManagerImpl<T, *>) {
   private val schemesRef = AtomicReference(ContainerUtil.createLockFreeCopyOnWriteList<T>() as ConcurrentList<T>)
 
-  val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
+  internal val readOnlyExternalizableSchemes = ContainerUtil.newConcurrentMap<String, T>()
 
   val schemes: ConcurrentList<T>
     get() = schemesRef.get()

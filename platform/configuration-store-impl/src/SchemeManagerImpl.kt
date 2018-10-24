@@ -655,17 +655,17 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  override fun addScheme(scheme: T, replaceExisting: Boolean): Unit = schemeListManager.addScheme(scheme, replaceExisting)
+  override fun addScheme(scheme: T, replaceExisting: Boolean) = schemeListManager.addScheme(scheme, replaceExisting)
 
-  override fun findSchemeByName(schemeName: String): T? = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
+  override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String): T? = schemeListManager.removeFirstScheme(schemes) {processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = schemeListManager.removeFirstScheme(schemes) {processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T): Boolean = schemeListManager.removeFirstScheme(schemes) { it == scheme } != null
+  override fun removeScheme(scheme: T) = schemeListManager.removeFirstScheme(schemes) { it == scheme } != null
 
-  override fun isMetadataEditable(scheme: T): Boolean = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
+  override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
-  override fun toString(): String = fileSpec
+  override fun toString() = fileSpec
 }
 
 internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
