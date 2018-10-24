@@ -1,15 +1,12 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
 /**
  * @author Eugene Zhuravlev
  */
-@XmlRootElement
-public class Event {
-  
+public class Event implements Serializable {
   private CodeSnippet myCauseSnippet;
   private CodeSnippet mySnippet;
   private CodeSnippet.Status myPreviousStatus;
@@ -18,8 +15,8 @@ public class Event {
   private String myExceptionText;
   private String myDiagnostic;
 
-  public Event() {
-  }
+  @SuppressWarnings("unused")
+  public Event() { }
 
   public Event(CodeSnippet snippet, CodeSnippet causeSnippet,
                CodeSnippet.Status status, CodeSnippet.Status previousStatus,
@@ -35,52 +32,26 @@ public class Event {
     return myPreviousStatus;
   }
 
-  @XmlElement
-  public void setPreviousStatus(CodeSnippet.Status previousStatus) {
-    myPreviousStatus = previousStatus;
-  }
-
   public CodeSnippet.Status getStatus() {
     return myStatus;
-  }
-
-  @XmlElement
-  public void setStatus(CodeSnippet.Status status) {
-    myStatus = status;
   }
 
   public String getValue() {
     return myValue;
   }
 
-  @XmlElement
-  public void setValue(String value) {
-    myValue = value;
-  }
-
   public CodeSnippet getCauseSnippet() {
     return myCauseSnippet;
-  }
-
-  @XmlElement
-  public void setCauseSnippet(CodeSnippet causeSnippet) {
-    myCauseSnippet = causeSnippet;
   }
 
   public CodeSnippet getSnippet() {
     return mySnippet;
   }
 
-  @XmlElement
-  public void setSnippet(CodeSnippet snippet) {
-    mySnippet = snippet;
-  }
-
   public String getExceptionText() {
     return myExceptionText;
   }
 
-  @XmlElement
   public void setExceptionText(String exceptionText) {
     myExceptionText = exceptionText;
   }
@@ -88,8 +59,7 @@ public class Event {
   public String getDiagnostic() {
     return myDiagnostic;
   }
-  
-  @XmlElement
+
   public void setDiagnostic(String diagnostic) {
     myDiagnostic = diagnostic;
   }
