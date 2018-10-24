@@ -779,13 +779,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             UISettings settings = UISettings.getInstance();
             if (anchor == ToolWindowAnchor.LEFT) {
               if (settings.getLeftHorizontalSplit() != isSplitterHorizontalNow) {
-                settings.getState().setLeftHorizontalSplit(isSplitterHorizontalNow);
+                settings.setLeftHorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }
             if (anchor == ToolWindowAnchor.RIGHT) {
               if (settings.getRightHorizontalSplit() != isSplitterHorizontalNow) {
-                settings.getState().setRightHorizontalSplit(isSplitterHorizontalNow);
+                settings.setRightHorizontalSplit(isSplitterHorizontalNow);
                 settings.fireUISettingsChanged();
               }
             }

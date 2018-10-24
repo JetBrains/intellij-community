@@ -115,7 +115,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowIntentionBulbCheckBox.setSelected(editorSettings.isShowIntentionBulb());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
-    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getState().getShowEditorToolTip());
+    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowEditorToolTip());
 
     updateWhitespaceCheckboxesState();
 
@@ -162,8 +162,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //  uiSettingsModified = true;
     //}
 
-    if (uiSettings.getState().getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
-      uiSettings.getState().setShowEditorToolTip(myShowCodeLensInEditorCheckBox.isSelected());
+    if (uiSettings.getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
+      uiSettings.setShowEditorToolTip(myShowCodeLensInEditorCheckBox.isSelected());
       uiSettingsModified = true;
       lafSettingsModified = true;
     }
@@ -201,7 +201,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= isModified(myCbShowMethodSeparators, DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS);
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
-    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getState().getShowEditorToolTip();
+    isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getShowEditorToolTip();
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
 
     return isModified;
