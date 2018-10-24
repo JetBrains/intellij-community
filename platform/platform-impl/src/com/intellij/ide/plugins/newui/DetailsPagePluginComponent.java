@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -153,7 +154,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myNameComponent.setFont(font.deriveFont(Font.BOLD, 30));
     }
     if (!(myPlugin instanceof PluginNode) && !myPluginsModel.isEnabled(myPlugin)) {
-      myNameComponent.setForeground(PluginManagerConfigurableNew.DisabledColor);
+      myNameComponent.setForeground(ListPluginComponent.DisabledColor);
     }
 
     nameButtons.add(myNameComponent, BorderLayout.WEST);
@@ -356,7 +357,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
       myCenterPanel.add(errorPanel);
 
       JLabel errorMessage = new JLabel();
-      errorMessage.setForeground(JBColor.red);
+      errorMessage.setForeground(DialogWrapper.ERROR_FOREGROUND_COLOR);
       errorMessage.setOpaque(false);
       errorPanel.add(errorMessage);
 
@@ -569,7 +570,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
   private void updateEnabledState() {
     if (!(myPlugin instanceof PluginNode)) {
       boolean enabled = myPluginsModel.isEnabled(myPlugin);
-      myNameComponent.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
+      myNameComponent.setForeground(enabled ? null : ListPluginComponent.DisabledColor);
       myIconLabel.setEnabled(enabled);
     }
 

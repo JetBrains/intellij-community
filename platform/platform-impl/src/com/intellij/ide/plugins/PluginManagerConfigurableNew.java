@@ -86,7 +86,13 @@ public class PluginManagerConfigurableNew
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
   @SuppressWarnings("UseJBColor")
-  public static final Color MAIN_BG_COLOR = new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335));
+  public static final Color MAIN_BG_COLOR =
+    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+
+  private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SectionHeader.background", MAIN_BG_COLOR);
+
+  private static final Color SEARCH_FIELD_BORDER_COLOR =
+    JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
 
   private final TagBuilder myTagBuilder;
 
@@ -130,17 +136,7 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       public TagComponent createTagComponent(@NotNull String tag) {
-        Color color;
-        String tooltip = null;
-        if ("EAP".equals(tag)) {
-          color = new JBColor(0xF2D2CF, 0xF2D2CF);
-          tooltip = "The EAP version does not guarantee the stability\nand availability of the plugin.";
-        }
-        else {
-          color = new JBColor(0xEAEAEC, 0x4D4D4D);
-        }
-
-        return installTiny(new TagComponent(tag, tooltip, color));
+        return installTiny(new TagComponent(tag));
       }
     };
 
@@ -207,7 +203,7 @@ public class PluginManagerConfigurableNew
         }
       }
     };
-    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
+    mySearchTextField.setBorder(JBUI.Borders.customLine(SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(-24));
@@ -215,7 +211,7 @@ public class PluginManagerConfigurableNew
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
     editor.setOpaque(true);
-    editor.setBackground(MAIN_BG_COLOR);
+    editor.setBackground(SEARCH_BG_COLOR);
   }
 
   @NotNull
@@ -1591,8 +1587,6 @@ public class PluginManagerConfigurableNew
   public static int offset5() {
     return JBUI.scale(5);
   }
-
-  public static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
