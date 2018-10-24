@@ -19,7 +19,6 @@ import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PythonSdkType
 import javax.swing.JComponent
@@ -65,8 +64,6 @@ class PyStubPackagesCompatibilityInspection : PyInspection() {
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
     override fun visitPyFile(node: PyFile) {
-      if (node.languageLevel.isOlderThan(LanguageLevel.PYTHON37)) return
-
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
       val sdk = PythonSdkType.findPythonSdk(module) ?: return
 

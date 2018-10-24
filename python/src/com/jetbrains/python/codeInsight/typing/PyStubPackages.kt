@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -43,23 +42,18 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
 /**
  * Returns stub package directory in the specified [dir] for the package with [referencedName] as a name.
  *
- * Requires language level to be at least [LanguageLevel.PYTHON37], [withoutStubs] to be False, [dir] to be lib root.
+ * Requires [withoutStubs] to be False and [dir] to be lib root.
  */
-fun findStubPackage(containingFile: PsiFile?,
-                    dir: PsiDirectory,
+fun findStubPackage(dir: PsiDirectory,
                     referencedName: String,
                     checkForPackage: Boolean,
                     withoutStubs: Boolean): PsiDirectory? {
-  // check that stub packages are allowed and dir is lib root
-  if (!withoutStubs &&
-      containingFile != null &&
-      LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37) &&
-      dir.virtualFile.let { it == getClassOrContentOrSourceRoot(containingFile.project, it) }) {
+  if (!withoutStubs && dir.virtualFile.let { it == getClassOrContentOrSourceRoot(dir.project, it) }) {
     val stubPackageName = "$referencedName$STUBS_SUFFIX"
     val stubPackage = dir.findSubdirectory(stubPackageName)
 
     // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
-    if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, containingFile))) {
+    if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, dir))) {
       stubPackage.putUserData(STUB_PACKAGE_KEY, true)
       return stubPackage
     }
@@ -191,10 +185,7 @@ private fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
   val cached = element.getUserData(INLINE_PACKAGE_KEY)
   if (cached != null) return cached
 
-  val result = !pyi(element) &&
-               (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) &&
-               PyUtil.getLanguageLevelForModule(module).isAtLeast(LanguageLevel.PYTHON37) &&
-               getPyTyped(element) != null
+  val result = !pyi(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
   return result
