@@ -86,7 +86,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     List<VirtualFile> deniedFiles = Stream.of(files).filter(o -> !isWriteAccessAllowed(o, myProject)).collect(Collectors.toList());
     if (deniedFiles.isEmpty()) return Collections.emptyList();
 
-    UnlockOption unlockOption = askToUnlock(deniedFiles);
+    UnlockOption unlockOption = ApplicationManager.getApplication().isOnAir() ? UnlockOption.UNLOCK_ALL : askToUnlock(deniedFiles);
 
     if (unlockOption == null) return deniedFiles;
 
