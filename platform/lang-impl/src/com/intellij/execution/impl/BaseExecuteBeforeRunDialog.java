@@ -308,9 +308,9 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
       myCheckbox.setSelected(descriptor.isChecked());
 
-      myCheckbox.setBackground(UIUtil.getTreeTextBackground());
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
-      final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
+      myCheckbox.setBackground(UIUtil.getTreeBackground());
+      setBackground(UIUtil.getTreeBackground(selected, true));
+      Color foreground = UIUtil.getTreeForeground(selected, true);
       setForeground(foreground);
       myCheckbox.setForeground(foreground);
       myLabel.setForeground(foreground);

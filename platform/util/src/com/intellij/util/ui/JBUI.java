@@ -1751,6 +1751,23 @@ public class JBUI {
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
+    public static final class Tree {
+
+      public static Color background(boolean selected, boolean focused) {
+        if (!selected) return UIManager.getColor("Tree.background");
+        if (focused) return UIManager.getColor("Tree.selectionBackground");
+        Color background = UIManager.getColor("Tree.selectionInactiveBackground");
+        return background != null ? background : UIUtil.getTreeUnfocusedSelectionBackground();
+      }
+
+      public static Color foreground(boolean selected, boolean focused) {
+        if (!selected) return UIManager.getColor("Tree.foreground");
+        if (focused) return UIManager.getColor("Tree.selectionForeground");
+        Color foreground = UIManager.getColor("Tree.selectionInactiveForeground");
+        return foreground != null ? foreground : UIManager.getColor("Tree.foreground");
+      }
+    }
+
     //todo #UX-1 maybe move to popup
     public static class BigPopup {
       public static Color headerBackground() {

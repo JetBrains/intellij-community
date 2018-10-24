@@ -145,7 +145,7 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
       rComponent.setBackground(UIUtil.getTreeSelectionBackground(myComponent.hasFocus()));
     }
     else {
-      Color bg = UIUtil.getTreeTextBackground();
+      Color bg = UIUtil.getTreeBackground();
       if (myComponent instanceof Tree && ((Tree)myComponent).isFileColorsEnabled()) {
         TreePath path = myComponent.getPathForRow(key);
         Color color = path == null ? null : ((Tree)myComponent).getFileColorForPath(path);

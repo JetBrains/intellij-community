@@ -395,7 +395,7 @@ public class UIUtil {
     }
   };
 
-  private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
+  private static final Color UNFOCUSED_SELECTION_COLOR = new JBColor(0xD4D4D4, 0x0D293E);
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
   private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
@@ -1147,16 +1147,18 @@ public class UIUtil {
     return UIManager.getColor("TableHeader.background");
   }
 
+  @Deprecated
   public static Color getTreeTextForeground() {
-    return UIManager.getColor("Tree.textForeground");
+    return getTreeForeground();
   }
 
   public static Color getTreeSelectionBackground() {
-    return UIManager.getColor("Tree.selectionBackground");
+    return JBUI.CurrentTheme.Tree.background(true, true);
   }
 
+  @Deprecated
   public static Color getTreeTextBackground() {
-    return UIManager.getColor("Tree.textBackground");
+    return getTreeBackground();
   }
 
   public static Color getListSelectionForeground() {
@@ -1209,18 +1211,15 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionForeground() {
-    return UIManager.getColor("Tree.selectionForeground");
+    return JBUI.CurrentTheme.Tree.foreground(true, true);
   }
 
-  public static Color getTreeForeground(boolean selected, boolean hasFocus) {
-    if (!selected) {
-      return getTreeForeground();
-    }
-    Color fg = UIManager.getColor("Tree.selectionInactiveForeground");
-    if (!hasFocus && fg != null) {
-      return fg;
-    }
-    return getTreeSelectionForeground();
+  public static Color getTreeForeground(boolean selected, boolean focused) {
+    return JBUI.CurrentTheme.Tree.foreground(selected, focused);
+  }
+
+  public static Color getTreeBackground(boolean selected, boolean focused) {
+    return JBUI.CurrentTheme.Tree.background(selected, focused);
   }
 
   /**
@@ -1344,11 +1343,11 @@ public class UIUtil {
   }
 
   public static Color getTreeBackground() {
-    return UIManager.getColor("Tree.background");
+    return JBUI.CurrentTheme.Tree.background(false, true);
   }
 
   public static Color getTreeForeground() {
-    return UIManager.getColor("Tree.foreground");
+    return JBUI.CurrentTheme.Tree.foreground(false, true);
   }
 
   public static Color getTableFocusCellBackground() {
@@ -1360,7 +1359,7 @@ public class UIUtil {
   }
 
   public static Color getListUnfocusedSelectionBackground() {
-    return new JBColor(UNFOCUSED_SELECTION_COLOR, new Color(13, 41, 62));
+    return UNFOCUSED_SELECTION_COLOR;
   }
 
   public static Color getListSelectionBackground(boolean focused) {
@@ -1368,12 +1367,11 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionBackground(boolean focused) {
-    return focused ? getTreeSelectionBackground() : getTreeUnfocusedSelectionBackground();
+    return JBUI.CurrentTheme.Tree.background(true, focused);
   }
 
   public static Color getTreeUnfocusedSelectionBackground() {
-    Color background = getTreeTextBackground();
-    return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
+    return UNFOCUSED_SELECTION_COLOR;
   }
 
   public static Color getTableUnfocusedSelectionBackground() {
