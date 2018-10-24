@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -104,20 +105,29 @@ public final class GitVersion implements Comparable<GitVersion> {
     int minor = getIntGroup(m, 2);
     int rev = getIntGroup(m, 3);
     int patch = getIntGroup(m, 4);
-    boolean msys = (m.groupCount() >= 5) && m.group(5) != null && m.group(5).toLowerCase().contains("msysgit");
+
     Type type;
     if (SystemInfo.isWindows) {
-      type = msys ? Type.MSYS : Type.CYGWIN;
-    } else {
+      String suffix = getStringGroup(m, 5);
+      if (suffix.toLowerCase(Locale.ENGLISH).contains("msysgit") ||
+          suffix.toLowerCase(Locale.ENGLISH).contains("windows")) {
+        type = Type.MSYS;
+      }
+      else {
+        type = Type.CYGWIN;
+      }
+    }
+    else {
       type = Type.UNIX;
     }
+
     return new GitVersion(major, minor, rev, patch, type);
   }
 
   // Utility method used in parsing - checks that the given capture group exists and captured something - then returns the captured value,
   // otherwise returns 0.
   private static int getIntGroup(@NotNull Matcher matcher, int group) {
-    if (group > matcher.groupCount()+1) {
+    if (group > matcher.groupCount() + 1) {
       return 0;
     }
     final String match = matcher.group(group);
@@ -125,6 +135,19 @@ public final class GitVersion implements Comparable<GitVersion> {
       return 0;
     }
     return Integer.parseInt(match);
+  }
+
+  @NotNull
+  private static String getStringGroup(@NotNull Matcher matcher, int group) {
+    if (group > matcher.groupCount() + 1) {
+      return "";
+    }
+    final String match = matcher.group(group);
+    if (match == null) {
+      return "";
+    }
+
+    return match.trim();
   }
 
   /**
