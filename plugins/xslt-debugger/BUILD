@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.xslt.debugger",
     srcs = ["src"],
     iml_files = ["intellij.xslt.debugger.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     visibility = ["//visibility:public"],

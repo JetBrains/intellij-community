@@ -1,12 +1,5 @@
 # managed by go/iml_to_build
 java_import(
-    name = "plexus-utils-1.5.5",
-    jars = ["plexus-utils-1.5.5.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "maven-dependency-tree-1.2",
     jars = ["maven-dependency-tree-1.2.jar"],
     visibility = ["//visibility:public"],

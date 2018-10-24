@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.testng",
     srcs = ["src"],
     iml_files = ["intellij.testng.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = ["//tools/idea/platform/external-system-impl:intellij.platform.externalSystem.impl"],
     test_srcs = ["testSources"],

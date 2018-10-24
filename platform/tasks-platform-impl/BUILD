@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.platform.tasks.impl",
     srcs = ["src"],
     iml_files = ["intellij.platform.tasks.impl.iml"],
+    resources = ["resources"],
     test_runtime_deps = ["//tools/idea/images:intellij.platform.images"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

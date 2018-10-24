@@ -44,7 +44,6 @@ iml_module(
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:pty4j",
-        "//tools/idea/.idea/libraries:purejavacomm",
         "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/platform/diff-impl:intellij.platform.diff.impl[module]",
         "//tools/idea/.idea/libraries:Guava",

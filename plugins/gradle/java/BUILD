@@ -75,5 +75,6 @@ iml_module(
         "//tools/idea/plugins/gradle/tooling-extension-impl:intellij.gradle.toolingExtension.tests[module, test]",
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module, test]",
         "//tools/idea/.idea/libraries:mockito[test]",
+        "//tools/idea/plugins/groovy:intellij.groovy[module, test]",
     ],
 )

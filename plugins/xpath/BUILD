@@ -10,6 +10,7 @@ iml_module(
         "xpath-lang/gen",
     ],
     iml_files = ["intellij.xpath.iml"],
+    resources = ["xpath-lang/resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/images:intellij.platform.images",

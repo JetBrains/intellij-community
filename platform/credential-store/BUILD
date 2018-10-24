@@ -44,5 +44,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/platform/projectModel-impl:intellij.platform.projectModel.impl[module]",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
+        "//tools/idea/.idea/libraries:snakeyaml",
     ],
 )

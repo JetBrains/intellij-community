@@ -962,7 +962,11 @@ iml_module(
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
     ],
-    deps = ["//tools/idea:intellij.platform.jps.build_and_others[module]"],
+    # do not sort: must match IML order
+    deps = [
+        "//tools/idea:intellij.platform.jps.build_and_others[module]",
+        "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module, test]",
+    ],
 )
 
 # managed by go/iml_to_build

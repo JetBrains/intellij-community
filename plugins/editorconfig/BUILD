@@ -5,6 +5,7 @@ iml_module(
     name = "intellij.editorconfig",
     srcs = ["src"],
     iml_files = ["intellij.editorconfig.iml"],
+    resources = ["resources"],
     # do not sort: must match IML order
     test_runtime_deps = [
         "//tools/idea/xml/xml-analysis-impl:intellij.xml.analysis.impl",

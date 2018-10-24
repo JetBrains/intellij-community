@@ -29,7 +29,7 @@ iml_module(
         "//tools/idea/platform/util:intellij.platform.util[module]",
         "//tools/idea:intellij.platform.jps.build_and_others[module]",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization[module]",
-        "//tools/idea/plugins/maven/lib:plexus-utils-2.0.6",
+        "//tools/idea/.idea/libraries:plexus-utils",
         "//tools/idea/jps/model-serialization:intellij.platform.jps.model.serialization.tests[module, test]",
     ],
 )

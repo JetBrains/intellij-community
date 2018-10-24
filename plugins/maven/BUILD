@@ -96,7 +96,7 @@ iml_module(
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/maven/maven-server-api:intellij.maven.server[module]",
-        "//tools/idea/plugins/maven/maven2-server-impl/lib:plexus-utils-1.5.5",
+        "//tools/idea/.idea/libraries:plexus-utils",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:archetype-common-2.0-alpha-4-SNAPSHOT",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:maven-dependency-tree-1.2",
         "//tools/idea/plugins/maven/maven2-server-impl/lib/maven2/boot:classworlds-1.1",

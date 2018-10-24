@@ -47,5 +47,7 @@ iml_module(
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore[module]",
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
+        "//tools/idea/.idea/libraries:imgscalr",
+        "//tools/idea/.idea/libraries:miglayout-swing",
     ],
 )
