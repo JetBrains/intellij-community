@@ -273,7 +273,7 @@ public class XmlBlock extends AbstractXmlBlock {
     return createDefaultSpace(false, false);
   }
 
-  private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
+  protected Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
     if (type1 == XmlTokenType.XML_EQ || type2 == XmlTokenType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
       return Spacing

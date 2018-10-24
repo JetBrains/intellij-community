@@ -187,12 +187,12 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
    */
   @Deprecated
   @NotNull
-  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue) {
     return (FactoryMap<K, V>)create(computeValue);
   }
 
   @NotNull
-  public static <K, V> Map<K, V> create(@NotNull final Function<K, V> computeValue) {
+  public static <K, V> Map<K, V> create(@NotNull final Function<? super K, ? extends V> computeValue) {
     //noinspection deprecation
     return new FactoryMap<K, V>() {
       @Nullable

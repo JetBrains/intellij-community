@@ -31,14 +31,14 @@ import java.nio.charset.Charset;
 import java.util.List;
 
 public class PatchCreator {
-  public static void create(Project p, List<Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
+  public static void create(Project p, List<? extends Change> changes, String filePath, boolean isReverse, CommitContext commitContext)
     throws IOException, VcsException {
     create(p, ObjectUtils.assertNotNull(p.getBasePath()), changes, filePath, isReverse, commitContext, Charset.defaultCharset());
   }
 
   public static void create(Project p,
                             @NotNull String basePath,
-                            List<Change> changes,
+                            List<? extends Change> changes,
                             String filePath,
                             boolean isReverse,
                             CommitContext commitContext, Charset charset)

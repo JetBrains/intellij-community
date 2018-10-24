@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -55,7 +54,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
   @Nullable private final ProjectEx myProject;
 
-  private UndoProvider[] myUndoProviders;
+  private List<UndoProvider> myUndoProviders;
   private CurrentEditorProvider myEditorProvider;
 
   private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
@@ -86,15 +85,15 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl(CommandProcessor commandProcessor) {
-    this(null, commandProcessor);
+  public UndoManagerImpl() {
+    this(null);
   }
 
-  public UndoManagerImpl(@Nullable ProjectEx project, @NotNull CommandProcessor commandProcessor) {
+  public UndoManagerImpl(@Nullable ProjectEx project) {
     myProject = project;
 
     if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity(myProject, commandProcessor);
+      runStartupActivity(myProject);
     }
 
     myMerger = new CommandMerger(this);
@@ -109,10 +108,10 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void dispose() {
   }
 
-  private void runStartupActivity(@Nullable Project project, @NotNull CommandProcessor commandProcessor) {
+  private void runStartupActivity(@Nullable Project project) {
     myUndoProviders = project == null
-                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
-                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+                      ? UndoProvider.EP_NAME.getExtensionList()
+                      : UndoProvider.PROJECT_EP_NAME.getExtensionList(project);
     for (UndoProvider undoProvider : myUndoProviders) {
       if (undoProvider instanceof Disposable) {
         Disposer.register(this, (Disposable)undoProvider);

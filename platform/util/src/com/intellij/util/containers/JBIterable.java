@@ -217,7 +217,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     return (T)iterator();
   }
 
-  public final boolean processEach(@NotNull Processor<E> processor) {
+  public final boolean processEach(@NotNull Processor<? super E> processor) {
     return ContainerUtil.process(this, processor);
   }
 

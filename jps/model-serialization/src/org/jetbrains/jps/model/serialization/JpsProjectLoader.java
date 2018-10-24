@@ -339,7 +339,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  public static List<JpsModule> loadModules(@NotNull List<Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
+  public static List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();

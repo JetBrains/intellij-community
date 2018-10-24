@@ -152,7 +152,7 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
 
   public static void createProperty(@NotNull final Project project,
                                     @NotNull final PsiElement psiElement,
-                                    @NotNull final Collection<PropertiesFile> selectedPropertiesFiles,
+                                    @NotNull final Collection<? extends PropertiesFile> selectedPropertiesFiles,
                                     @NotNull final String key,
                                     @NotNull final String value) {
     for (PropertiesFile selectedFile : selectedPropertiesFiles) {

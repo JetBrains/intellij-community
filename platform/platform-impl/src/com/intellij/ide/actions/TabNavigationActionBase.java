@@ -158,7 +158,6 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent event) {
       super.update(event);
-      event.getPresentation().setVisible(false);
     }
   }
 

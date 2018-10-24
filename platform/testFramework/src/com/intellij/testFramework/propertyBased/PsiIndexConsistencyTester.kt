@@ -28,9 +28,9 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
+import com.intellij.util.ref.GCUtil
 import org.junit.Assert.fail
 
 /**
@@ -99,7 +99,7 @@ object PsiIndexConsistencyTester {
     }
 
     object Gc: SimpleAction() {
-      override fun performAction(model: Model) = PlatformTestUtil.tryGcSoftlyReachableObjects()
+      override fun performAction(model: Model) = GCUtil.tryGcSoftlyReachableObjects()
     }
     object Commit: SimpleAction() {
       override fun performAction(model: Model) {

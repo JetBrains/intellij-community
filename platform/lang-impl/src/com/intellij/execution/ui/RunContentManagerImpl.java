@@ -407,7 +407,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                                                                       @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName,
-                                                                      @Nullable Condition<Content> reuseCondition) {
+                                                                      @Nullable Condition<? super Content> reuseCondition) {
     Content content = null;
     if (descriptor != null) {
       //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -448,7 +448,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static Content getContentFromManager(ContentManager contentManager,
                                                @Nullable String preferredName,
                                                long executionId,
-                                               @Nullable Condition<Content> reuseCondition) {
+                                               @Nullable Condition<? super Content> reuseCondition) {
     ArrayList<Content> contents = new ArrayList<>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
     if (first != null && contents.remove(first)) {//selected content should be checked first

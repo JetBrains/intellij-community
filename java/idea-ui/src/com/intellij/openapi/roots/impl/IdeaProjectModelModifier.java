@@ -109,7 +109,6 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
           for (Module module : modules) {
             ModuleRootModificationUtil.addDependency(module, library, scope, false);
           }
-          ;
         });
       }
     }

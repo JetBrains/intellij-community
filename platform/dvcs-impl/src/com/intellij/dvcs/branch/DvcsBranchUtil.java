@@ -47,7 +47,7 @@ public class DvcsBranchUtil {
   }
 
   @NotNull
-  public static List<Change> swapRevisions(@NotNull List<Change> changes) {
+  public static List<Change> swapRevisions(@NotNull List<? extends Change> changes) {
     return ContainerUtil.map(changes, change -> {
       ContentRevision beforeRevision = change.getBeforeRevision();
       ContentRevision afterRevision = change.getAfterRevision();

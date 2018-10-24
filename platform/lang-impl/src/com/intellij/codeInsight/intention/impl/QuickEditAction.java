@@ -25,10 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -119,6 +116,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
       return handler;
     }
     handler = new QuickEditHandler(project, injectedFile, origFile, editor, this);
+    Disposer.register(project, handler);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // todo remove and hide QUICK_EDIT_HANDLER
       injectedFile.putUserData(QUICK_EDIT_HANDLER, handler);

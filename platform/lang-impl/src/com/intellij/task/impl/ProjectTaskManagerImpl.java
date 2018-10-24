@@ -191,7 +191,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private static void visitTasks(@NotNull Collection<? extends ProjectTask> tasks,
-                                 @NotNull Consumer<Collection<? extends ProjectTask>> consumer) {
+                                 @NotNull Consumer<? super Collection<? extends ProjectTask>> consumer) {
     for (ProjectTask child : tasks) {
       Collection<? extends ProjectTask> taskDependencies;
       if (child instanceof AbstractProjectTask) {

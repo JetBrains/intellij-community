@@ -1,0 +1,4 @@
+root:
+  with:
+    nesting: This is invalid
+  key2: value2

@@ -583,6 +583,11 @@ class CompilationContextImpl implements CompilationContext {
     messages.artifactBuilt(pathToReport)
   }
 
+  @Override
+  boolean isBundledJreModular() {
+    return options.bundledJreVersion >= 9
+  }
+
   private static String toCanonicalPath(String path) {
     FileUtil.toSystemIndependentName(new File(path).canonicalPath)
   }

@@ -284,7 +284,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   public static void startNewConsoleInstance(@NotNull final Project project,
-                                             @NotNull final Consumer<PyCodeExecutor> consumer,
+                                             @NotNull final Consumer<? super PyCodeExecutor> consumer,
                                              @Nullable String runFileText,
                                              @Nullable PythonRunConfiguration config) {
     PythonConsoleRunnerFactory consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance();

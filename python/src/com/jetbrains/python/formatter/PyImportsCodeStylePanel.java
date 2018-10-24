@@ -39,6 +39,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
   private JBCheckBox mySortImportsByTypeFirst;
   private JBCheckBox myJoinFromImportsWithSameSource;
   private JPanel myRootPanel;
+  private JBCheckBox mySortCaseInsensitively;
 
   public PyImportsCodeStylePanel(@NotNull CodeStyleSettings settings) {
     super(PythonLanguage.getInstance(), null, settings);
@@ -48,6 +49,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
       final boolean sortingEnabled = mySortImports.isSelected();
       mySortNamesInFromImports.setEnabled(sortingEnabled);
       mySortImportsByTypeFirst.setEnabled(sortingEnabled);
+      mySortCaseInsensitively.setEnabled(sortingEnabled);
     });
   }
 
@@ -87,6 +89,7 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = mySortNamesInFromImports.isSelected();
     pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = mySortImportsByTypeFirst.isSelected();
     pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = myJoinFromImportsWithSameSource.isSelected();
+    pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = mySortCaseInsensitively.isSelected();
   }
 
   @Override
@@ -96,7 +99,8 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     return mySortImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS ||
            mySortNamesInFromImports.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS ||
            mySortImportsByTypeFirst.isSelected() != pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST ||
-           myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE;
+           myJoinFromImportsWithSameSource.isSelected() != pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE ||
+           mySortCaseInsensitively.isSelected() != pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER;
   }
 
   @Nullable
@@ -115,5 +119,6 @@ public class PyImportsCodeStylePanel extends CodeStyleAbstractPanel {
     mySortImportsByTypeFirst.setSelected(pySettings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST);
     mySortImportsByTypeFirst.setEnabled(mySortImports.isSelected());
     myJoinFromImportsWithSameSource.setSelected(pySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE);
+    mySortCaseInsensitively.setSelected(pySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER);
   }
 }

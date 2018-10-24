@@ -39,10 +39,13 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
   private final long myAuthorTime;
   private final long myCommitTime;
   @NotNull private final String myFullMessage;
+  private final boolean myIsDeleted;
 
   @Nullable private byte[] myContent = null;
 
-  public VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata, @NotNull ContentRevision revision, @NotNull FilePath path) {
+  public VcsLogFileRevision(@NotNull VcsCommitMetadata commitMetadata,
+                            @NotNull ContentRevision revision,
+                            @NotNull FilePath path, boolean isDeleted) {
     myRevision = revision;
     myPath = path;
 
@@ -51,6 +54,7 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     myAuthorTime = commitMetadata.getAuthorTime();
     myCommitTime = commitMetadata.getCommitTime();
     myFullMessage = commitMetadata.getFullMessage();
+    myIsDeleted = isDeleted;
   }
 
   @Nullable
@@ -143,5 +147,10 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(myAuthorTime);
     return cal.getTime();
+  }
+
+  @Override
+  public boolean isDeleted() {
+    return myIsDeleted;
   }
 }

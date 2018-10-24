@@ -62,6 +62,11 @@ public class JsonHighlightingTest extends JsonHighlightingTestBase {
     doTestHighlighting(false, true, true);
   }
 
+  public void testTabInString() {
+    enableStandardComplianceInspection(true, true);
+    doTestHighlighting(false, true, true);
+  }
+
   public void testSemanticHighlighting() {
     // WEB-11239
     doTest();

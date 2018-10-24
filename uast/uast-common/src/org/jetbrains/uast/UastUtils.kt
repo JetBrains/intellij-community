@@ -115,8 +115,6 @@ fun UElement.getContainingVariable(): PsiVariable? = getContainingUVariable()?.p
             replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
 fun PsiElement?.getContainingClass(): PsiClass? = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
 
-fun PsiElement?.findContainingUClass(): UClass? = findContaining(UClass::class.java)
-
 fun <T : UElement> PsiElement?.findContaining(clazz: Class<T>): T? {
   var element = this
   while (element != null && element !is PsiFileSystemItem) {

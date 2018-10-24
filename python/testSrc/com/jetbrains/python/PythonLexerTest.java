@@ -388,11 +388,81 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("10_000_000J", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
   }
 
-  public void testFStringLiterals() {
-    doTest("s = f'{x}'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
-    doTest("s = rf\"{x}\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
-    doTest("s = fr'''{x}\n'''", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
-    doTest("s = f\"\"\"{x}\n\"\"\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+
+  public void testFStringMatchingQuoteRecoveryInsideContentOfNestedStringLiteral() {
+    doTest("s = f'{ur\"foo'bar\"}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:SINGLE_QUOTED_STRING", "Py:FSTRING_END", 
+           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringMatchingQuoteRecoveryQuoteOfNestedStringLiteralWithPrefix() {
+    doTest("s = f'{ur'foo'}'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_END", 
+           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringMatchingQuoteRecoveryQuoteOfNestedStringLiteralWithoutPrefix() {
+    doTest("s = f'{'foo'}'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:FSTRING_END",
+           "Py:IDENTIFIER", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
+  public void testNoStatementBreakInsideFragmentOfMultilineFString() {
+    doTest("s = f'''{1 + \n" +
+           "2}'''",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:INTEGER_LITERAL", "Py:SPACE", "Py:PLUS", "Py:LINE_BREAK", 
+           "Py:INTEGER_LITERAL", "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
+  public void testStatementBreakInsideFragmentOfSingleLineFString() {
+    doTest("s = f'{1 +\n" +
+           "    2}'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:INTEGER_LITERAL", "Py:SPACE", "Py:PLUS", "Py:STATEMENT_BREAK", 
+           "Py:LINE_BREAK", "Py:INDENT", "Py:INTEGER_LITERAL", "Py:RBRACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringUnmatchedQuotesAsTextParts() {
+    doTest("s = f'foo\"bar'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringUnmatchedLineBreaksAsTextParts() {
+    doTest("s = f'''foo\n" +
+           "bar'''",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringNamedUnicodeEscapes() {
+    doTest("s = f'\\N{LATIN SMALL LETTER A}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'\\N{LATIN SMALL LETTER A'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'\\N{'",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringBackslashEscapedBraces() {
+    doTest("s = f'foo\\{x}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
+           "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+    doTest("s = f'{x:foo\\{y}bar\\}'", 
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
+           "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", 
+           "Py:FSTRING_FRAGMENT_FORMAT_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
+           "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
   // PY-21697

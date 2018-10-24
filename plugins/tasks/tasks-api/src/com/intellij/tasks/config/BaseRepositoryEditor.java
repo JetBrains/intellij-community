@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CommitPlaceholderProvider;
@@ -151,8 +150,7 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
   private void setupPlaceholdersComment() {
     StringBuilder comment = new StringBuilder(myRepository.getComment());
 
-    CommitPlaceholderProvider[] extensions = Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME);
-    for (CommitPlaceholderProvider extension : extensions) {
+    for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(myRepository);
       for (String placeholder : placeholders) {
         comment.append(", {").append(placeholder).append("}");

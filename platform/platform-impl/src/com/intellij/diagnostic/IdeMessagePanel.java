@@ -205,8 +205,8 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
     layoutData.fadeoutTime = 5000;
-    layoutData.fillColor = new JBColor(0XF5E6E7, 0X593D41);
-    layoutData.borderColor = new JBColor(0XE0A8A9, 0X73454B);
+    layoutData.fillColor = JBColor.namedColor("Notification.Error.background", new JBColor(0XF5E6E7, 0X593D41));
+    layoutData.borderColor = JBColor.namedColor("Notification.Error.borderColor", new JBColor(0XE0A8A9, 0X73454B));
 
     assert myBalloon == null;
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);

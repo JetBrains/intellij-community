@@ -24,6 +24,11 @@ import com.intellij.util.DeprecatedMethodException;
  */
 @Deprecated
 public final class ConcurrentHashMap<K, V> extends java.util.concurrent.ConcurrentHashMap<K, V> {
+  /**
+   * @deprecated Use {@link ContainerUtil#newConcurrentMap()} or {@link java.util.concurrent.ConcurrentHashMap} instead.
+   * TODO to remove in IDEA 2018.1
+   */
+  @Deprecated
   public ConcurrentHashMap() {
     DeprecatedMethodException.report("Use java.util.concurrent.ConcurrentHashMap instead");
   }

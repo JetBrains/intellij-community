@@ -65,7 +65,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
-    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap * 2, false)
+    cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
@@ -89,10 +89,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
     lc.hideMode = 3
 
-    // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
     val rowConstraints = AC()
-    rowConstraints.align(if (isUseMagic) "baseline" else "top")
-
     (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
     var isLayoutInsetsAdjusted = false
     container.layout = object : MigLayout(lc, columnConstraints, rowConstraints) {
@@ -139,15 +136,18 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
           cc.wrap()
         }
 
-        if (row.noGrid) {
-          if (component === row.components.first()) {
+        if (component === row.components.first()) {
+          if (row.noGrid) {
             rowConstraints.noGrid(rowIndex)
           }
-        }
-        else if (component === row.components.first()) {
-          row.gapAfter?.let {
-            rowConstraints.gap(it, rowIndex)
+          else {
+            row.gapAfter?.let {
+              rowConstraints.gap(it, rowIndex)
+            }
           }
+          // if constraint specified only for rows 0 and 1, MigLayout will use constraint 1 for any rows with index 1+ (see LayoutUtil.getIndexSafe - use last element if index > size)
+          // so, we set for each row to make sure that constraints from previous row will be not applied
+          rowConstraints.align(if (isUseMagic) "baseline" else "top", rowIndex)
         }
 
         if (index >= row.rightIndex) {

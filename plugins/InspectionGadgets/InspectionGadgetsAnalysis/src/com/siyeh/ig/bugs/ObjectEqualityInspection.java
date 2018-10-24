@@ -112,7 +112,7 @@ public class ObjectEqualityInspection extends BaseInspection {
           (isThisReference(lhs, method.getContainingClass()) || isThisReference(rhs, method.getContainingClass()))) {
         return;
       }
-      if (m_ignoreEnums && TypeConversionUtil.isEnumType(lhs.getType())) {
+      if (m_ignoreEnums && (TypeConversionUtil.isEnumType(lhs.getType()) || TypeConversionUtil.isEnumType(rhs.getType()))) {
         return;
       }
       ProblemHighlightType highlightType;

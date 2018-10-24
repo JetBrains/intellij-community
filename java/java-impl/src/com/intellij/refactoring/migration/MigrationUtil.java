@@ -69,7 +69,7 @@ public class MigrationUtil {
     return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  static void doMigration(PsiElement elementToBind, String newQName, UsageInfo[] usages, ArrayList<SmartPsiElementPointer<PsiElement>> refsToShorten) {
+  static void doMigration(PsiElement elementToBind, String newQName, UsageInfo[] usages, ArrayList<? super SmartPsiElementPointer<PsiElement>> refsToShorten) {
     try {
       SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(elementToBind.getProject());
       // rename all references

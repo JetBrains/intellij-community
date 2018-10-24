@@ -88,7 +88,7 @@ public class DataInputOutputUtilRt {
    * Writes the given collection to the output using the given procedure to write each element.
    * Should be coupled with {@link #readSeq}
    */
-  public static <T> void writeSeq(@NotNull DataOutput out, @NotNull Collection<T> collection, @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
+  public static <T> void writeSeq(@NotNull DataOutput out, @NotNull Collection<? extends T> collection, @NotNull ThrowableConsumer<T, IOException> writeElement) throws IOException {
     writeINT(out, collection.size());
     for (T t : collection) {
       writeElement.consume(t);
@@ -100,7 +100,7 @@ public class DataInputOutputUtilRt {
    * Should be coupled with {@link #writeSeq}
    */
   @NotNull
-  public static <T> List<T> readSeq(@NotNull DataInput in, @NotNull ThrowableComputable<T, IOException> readElement) throws IOException {
+  public static <T> List<T> readSeq(@NotNull DataInput in, @NotNull ThrowableComputable<? extends T, IOException> readElement) throws IOException {
     int size = readINT(in);
     List<T> result = new ArrayList<T>(size);
     for (int i = 0; i < size; i++) {

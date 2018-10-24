@@ -89,7 +89,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     def jreDirectoryPath64 = arch != null ? buildContext.bundledJreManager.extractWinJre(arch) : null
     List<String> jreDirectoryPaths = [jreDirectoryPath64]
 
-    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32) {
+    if (customizer.getBaseDownloadUrlForJre() != null && arch != JvmArchitecture.x32 && !buildContext.isBundledJreModular()) {
       File archive = buildContext.bundledJreManager.findWinJreArchive(JvmArchitecture.x32)
       if (archive != null && archive.exists()) {
         //prepare folder with jre x86 for win archive
@@ -228,6 +228,7 @@ IDS_VM_OPTIONS=$vmOptions
 
   // Android Studio: modified by Change Idc07b110 / commit f20681e
   private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath) {
+    zipNameSuffix += buildContext.bundledJreManager.jreSuffix()
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
@@ -259,6 +260,6 @@ TODO(b/118034991): generate product-info.json files (or not) */
     def vmOptionsPath = "bin/${buildContext.productProperties.baseFileName}64.exe.vmoptions"
     def javaExecutablePath = isJreIncluded ? "jre64/bin/java.exe" : null
     new ProductInfoGenerator(buildContext)
-      .generateProductJson(targetDir, null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
+      .generateProductJson(targetDir, "bin", null, launcherPath, javaExecutablePath, vmOptionsPath, OsFamily.WINDOWS)
   }
 }

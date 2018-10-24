@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -21,7 +19,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -37,7 +34,7 @@ import java.util.List;
 
 public class BackspaceHandler extends EditorWriteActionHandler {
   private static final Logger LOGGER = Logger.getInstance(BackspaceHandler.class);
-  
+
   protected final EditorActionHandler myOriginalHandler;
 
   public BackspaceHandler(EditorActionHandler originalHandler) {
@@ -78,7 +75,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       }
     }
 
-    final BackspaceHandlerDelegate[] delegates = Extensions.getExtensions(BackspaceHandlerDelegate.EP_NAME);
+    final List<BackspaceHandlerDelegate> delegates = BackspaceHandlerDelegate.EP_NAME.getExtensionList();
     if (!toWordStart && Character.isBmpCodePoint(c)) {
       for(BackspaceHandlerDelegate delegate: delegates) {
         delegate.beforeCharDeleted((char)c, file, editor);
@@ -179,7 +176,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     }
     return new LogicalPosition(caretPos.line, column);
   }
-  
+
   public static void deleteToTargetPosition(@NotNull Editor editor, @NotNull LogicalPosition pos) {
     LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
     if (logicalPosition.line != pos.line) {

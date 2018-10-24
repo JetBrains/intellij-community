@@ -82,7 +82,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    private static List<Icon> fillInIcons(@NotNull Collection<SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
+    private static List<Icon> fillInIcons(@NotNull Collection<? extends SelectInTarget> targets, @NotNull SelectInContext selectInContext) {
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(selectInContext.getProject());
       List<Icon> list = new ArrayList<>();
       for (SelectInTarget target : targets) {

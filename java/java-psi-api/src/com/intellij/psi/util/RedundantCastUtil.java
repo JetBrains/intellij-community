@@ -60,34 +60,6 @@ public class RedundantCastUtil {
     return arg;
   }
 
-  public static PsiExpression removeCast(PsiTypeCastExpression castExpression) {
-    if (castExpression == null) return null;
-    PsiElement parent = castExpression.getParent();
-    PsiExpression operand = castExpression.getOperand();
-    if (operand instanceof PsiParenthesizedExpression) {
-      final PsiParenthesizedExpression parExpr = (PsiParenthesizedExpression)operand;
-      if (parent instanceof PsiExpression && !PsiPrecedenceUtil.areParenthesesNeeded(parExpr.getExpression(), (PsiExpression)parent, true)) {
-        operand = parExpr.getExpression();
-      }
-    }
-    if (operand == null) return null;
-
-    PsiExpression toBeReplaced = castExpression;
-
-    while (parent instanceof PsiParenthesizedExpression) {
-      toBeReplaced = (PsiExpression)parent;
-      parent = parent.getParent();
-    }
-
-    try {
-      return (PsiExpression)toBeReplaced.replace(operand);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return toBeReplaced;
-  }
-
   private static class MyCollectingVisitor extends MyIsRedundantVisitor {
     private final Set<PsiTypeCastExpression> myFoundCasts = new HashSet<>();
 

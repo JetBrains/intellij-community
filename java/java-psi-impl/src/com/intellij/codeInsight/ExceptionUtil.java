@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -54,7 +53,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  private static List<PsiClassType> filterOutUncheckedExceptions(@NotNull List<PsiClassType> exceptions) {
+  private static List<PsiClassType> filterOutUncheckedExceptions(@NotNull List<? extends PsiClassType> exceptions) {
     List<PsiClassType> array = ContainerUtil.newArrayList();
     for (PsiClassType exception : exceptions) {
       if (!isUncheckedException(exception)) array.add(exception);
@@ -67,13 +66,16 @@ public class ExceptionUtil {
     List<PsiClassType> result = new ArrayList<>();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       @Override
-      public void visitElement(PsiElement element) {
-        PsiElement parent = element.getParent();
-        // do not process any anonymous class children except its getArgumentList()
-        if (parent instanceof PsiAnonymousClass && !(element instanceof PsiExpressionList)) {
-          return;
+      public void visitElement(PsiElement psiElement) {
+        if (psiElement != element) {
+          PsiElement parent = psiElement.getParent();
+          // do not process any anonymous class children except its getArgumentList()
+          //if the visitor was not called from inside anonymous class
+          if (parent instanceof PsiAnonymousClass && !(psiElement instanceof PsiExpressionList)) {
+            return;
+          }
         }
-        super.visitElement(element);
+        super.visitElement(psiElement);
       }
 
       @Override
@@ -213,7 +215,7 @@ public class ExceptionUtil {
     return result;
   }
 
-  private static void addExceptions(@NotNull List<PsiClassType> array, @NotNull Collection<PsiClassType> exceptions) {
+  private static void addExceptions(@NotNull List<PsiClassType> array, @NotNull Collection<? extends PsiClassType> exceptions) {
     for (PsiClassType exception : exceptions) {
       addException(array, exception);
     }
@@ -503,7 +505,7 @@ public class ExceptionUtil {
     return getUnhandledExceptions(method, methodCall, topElement, substitutor);
   }
 
-  public static void retainExceptions(List<PsiClassType> ex, List<PsiClassType> thrownEx) {
+  public static void retainExceptions(List<PsiClassType> ex, List<? extends PsiClassType> thrownEx) {
     final List<PsiClassType> replacement = new ArrayList<>();
     for (Iterator<PsiClassType> iterator = ex.iterator(); iterator.hasNext(); ) {
       PsiClassType classType = iterator.next();
@@ -745,7 +747,7 @@ public class ExceptionUtil {
 
     static HandlePlace fromBoolean(boolean isHandled) {
       return isHandled ? UNKNOWN : UNHANDLED;
-    };
+    }
   }
 
   @NotNull
@@ -819,7 +821,7 @@ public class ExceptionUtil {
         return HandlePlace.fromBoolean(areAllConstructorsThrow(aClass, exceptionType));
       }
     } else {
-      for (CustomExceptionHandler exceptionHandler : Extensions.getExtensions(CustomExceptionHandler.KEY)) {
+      for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
         if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
       }
     }
@@ -902,7 +904,7 @@ public class ExceptionUtil {
     return false;
   }
 
-  public static void sortExceptionsByHierarchy(@NotNull List<PsiClassType> exceptions) {
+  public static void sortExceptionsByHierarchy(@NotNull List<? extends PsiClassType> exceptions) {
     if (exceptions.size() <= 1) return;
     sortExceptionsByHierarchy(exceptions.subList(1, exceptions.size()));
     for (int i=0; i<exceptions.size()-1;i++) {

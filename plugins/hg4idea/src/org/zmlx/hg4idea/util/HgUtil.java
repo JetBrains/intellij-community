@@ -204,7 +204,7 @@ public abstract class HgUtil {
    * @return a set of hg roots
    */
   @NotNull
-  public static Set<VirtualFile> hgRoots(@NotNull Project project, @NotNull Collection<FilePath> filePaths) {
+  public static Set<VirtualFile> hgRoots(@NotNull Project project, @NotNull Collection<? extends FilePath> filePaths) {
     HashSet<VirtualFile> roots = new HashSet<>();
     for (FilePath path : filePaths) {
       ContainerUtil.addIfNotNull(roots, getHgRootOrNull(project, path));
@@ -260,7 +260,7 @@ public abstract class HgUtil {
    * @return key is repository, values is the non-empty list of relative paths to files, which belong to this repository.
    */
   @NotNull
-  public static Map<VirtualFile, List<String>> getRelativePathsByRepository(Collection<HgFile> hgFiles) {
+  public static Map<VirtualFile, List<String>> getRelativePathsByRepository(Collection<? extends HgFile> hgFiles) {
     final Map<VirtualFile, List<String>> map = new HashMap<>();
     if (hgFiles == null) {
       return map;
@@ -314,7 +314,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
+  public static Map<VirtualFile, Collection<VirtualFile>> sortByHgRoots(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files) {
     Map<VirtualFile, Collection<VirtualFile>> sorted = new HashMap<>();
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
     for (VirtualFile file : files) {
@@ -334,7 +334,7 @@ public abstract class HgUtil {
 
   @NotNull
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
-                                                                               @NotNull Collection<FilePath> files) {
+                                                                               @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<>();
     if (project.isDisposed()) return sorted;
     HgRepositoryManager repositoryManager = getRepositoryManager(project);
@@ -544,7 +544,7 @@ public abstract class HgUtil {
     return shellCommand.execute(false, false);
   }
 
-  public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+  public static List<String> getNamesWithoutHashes(Collection<? extends HgNameWithHashInfo> namesWithHashes) {
     //return names without duplication (actually for several heads in one branch)
     List<String> names = new ArrayList<>();
     for (HgNameWithHashInfo hash : namesWithHashes) {
@@ -555,7 +555,7 @@ public abstract class HgUtil {
     return names;
   }
 
-  public static List<String> getSortedNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+  public static List<String> getSortedNamesWithoutHashes(Collection<? extends HgNameWithHashInfo> namesWithHashes) {
     return StreamEx.of(getNamesWithoutHashes(namesWithHashes)).sorted(StringUtil::naturalCompare).toList();
   }
 

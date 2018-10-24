@@ -84,6 +84,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
 
   private static Presentation doTest(AnAction action, ActionToolbarImpl toolbar) {
     TestActionEvent event = new TestActionEvent(toolbar.getPresentation(action));
+    event.IsFromActionToolbar = true;
     action.update(event);
     return event.getPresentation();
   }

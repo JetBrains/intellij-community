@@ -24,7 +24,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static VirtualFile getFile(final VirtualFile base, final String path, final List<String> tail) {
+  public static VirtualFile getFile(final VirtualFile base, final String path, final List<? super String> tail) {
     return getFile(new VirtualFilePathMerger(base), path, tail);
   }
 
@@ -34,7 +34,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static File getFile(final File base, final String path, final List<String> tail) {
+  public static File getFile(final File base, final String path, final List<? super String> tail) {
     return getFile(new IoFilePathMerger(base), path, tail);
   }
 
@@ -44,7 +44,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static FilePath getFile(final FilePath base, final String path, final List<String> tail) {
+  public static FilePath getFile(final FilePath base, final String path, final List<? super String> tail) {
     return getFile(new FilePathPathMerger(base), path, tail);
   }
 
@@ -62,7 +62,7 @@ public class PathMerger {
   }
 
   @Nullable
-  public static <T> T getFile(final FilePathMerger<T> merger, final String path, final List<String> tail) {
+  public static <T> T getFile(final FilePathMerger<T> merger, final String path, final List<? super String> tail) {
     final String[] pieces = RelativePathCalculator.split(path);
 
     for (int i = 0; i < pieces.length; i++) {

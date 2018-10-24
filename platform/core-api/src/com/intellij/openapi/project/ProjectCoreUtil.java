@@ -18,8 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,18 +32,8 @@ public class ProjectCoreUtil {
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) {
-      return true;
-    }
-
-    VirtualFile parent = file.isDirectory() ? file: file.getParent();
-    while (parent != null) {
-      if (Comparing.equal(parent.getNameSequence(), Project.DIRECTORY_STORE_FOLDER, SystemInfoRt.isFileSystemCaseSensitive)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
-    return false;
+    return fileType instanceof InternalFileType ||
+           VfsUtilCore.findContainingDirectory(file, Project.DIRECTORY_STORE_FOLDER) != null;
   }
 
   /**

@@ -46,7 +46,7 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class> {
     return buildExtensions(allSupers);
   }
 
-  private static void collectSupers(@NotNull Class classKey, @NotNull Set<String> allSupers) {
+  private static void collectSupers(@NotNull Class classKey, @NotNull Set<? super String> allSupers) {
     allSupers.add(classKey.getName());
     final Class[] interfaces = classKey.getInterfaces();
     for (final Class anInterface : interfaces) {

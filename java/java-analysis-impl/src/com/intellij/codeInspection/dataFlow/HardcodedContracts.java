@@ -196,11 +196,14 @@ public class HardcodedContracts {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
     else if (TypeUtils.isOptional(owner)) {
-      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) || "orElseThrow".equals(methodName)) {
+      if (DfaOptionalSupport.isOptionalGetMethodName(methodName) && paramCount == 0 || "orElseThrow".equals(methodName)) {
         return Arrays.asList(optionalAbsentContract(fail()), trivialContract(returnNotNull()));
       }
-      else if ("isPresent".equals(methodName)) {
+      else if ("isPresent".equals(methodName) && paramCount == 0) {
         return Arrays.asList(optionalAbsentContract(returnFalse()), trivialContract(returnTrue()));
+      }
+      else if ("isEmpty".equals(methodName) && paramCount == 0) {
+        return Arrays.asList(optionalAbsentContract(returnTrue()), trivialContract(returnFalse()));
       }
     }
     else if (MethodUtils.isEquals(method)) {

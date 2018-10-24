@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class JavaTypeInfo implements TypeInfo {
   private final ReferenceType referenceType;
 
-  public static List<TypeInfo> wrap(List<ReferenceType> types) {
+  public static List<TypeInfo> wrap(List<? extends ReferenceType> types) {
     return types.stream().map(JavaTypeInfo::new).collect(Collectors.toList());
   }
 

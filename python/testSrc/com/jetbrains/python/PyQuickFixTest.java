@@ -248,6 +248,10 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
+  public void testRedundantParenthesesMultipleParentheses() {
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
   // PY-15506
   public void testEmptyListOfBaseClasses() {
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);

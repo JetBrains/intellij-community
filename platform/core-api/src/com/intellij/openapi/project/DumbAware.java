@@ -35,10 +35,9 @@ package com.intellij.openapi.project;
  * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *
  * @author peter
- * @see com.intellij.openapi.project.DumbService
- * @see com.intellij.openapi.project.DumbAwareRunnable
+ * @see DumbService
+ * @see DumbAwareRunnable
  * @see PossiblyDumbAware
  */
-@SuppressWarnings("JavadocReference")
 public interface DumbAware {
 }

@@ -913,4 +913,8 @@ public class PyFormatterTest extends PyTestCase {
   public void testChainedAttributeAccessInParentheses() {
     doTest();
   }
+
+  public void testMultilineFStringExpressions() {
+    doTest();
+  }
 }

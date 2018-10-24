@@ -444,11 +444,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     @Override
     public Class getColumnClass(int columnIndex) {
-      switch (columnIndex) {
-        case ENABLED_COLUMN:
-          return Boolean.class;
-      }
-      return String.class;
+      return columnIndex == ENABLED_COLUMN ? Boolean.class : String.class;
     }
 
     CapturePoint get(int idx) {

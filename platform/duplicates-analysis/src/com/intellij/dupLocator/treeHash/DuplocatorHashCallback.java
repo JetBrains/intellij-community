@@ -347,7 +347,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeFragments(final List<PsiFragment> psiFragments,
+  private static void writeFragments(final List<? extends PsiFragment> psiFragments,
                                      final PrettyPrintWriter writer,
                                      Project project,
                                      final boolean shouldWriteOffsets) {

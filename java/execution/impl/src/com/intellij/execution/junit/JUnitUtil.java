@@ -160,7 +160,13 @@ public class JUnitUtil {
 
   public static boolean isTestClass(@NotNull PsiClass psiClass, boolean checkAbstract, boolean checkForTestCaseInheritance) {
     if (psiClass.getQualifiedName() == null) return false;
-    if (isJUnit5(psiClass) && isJUnit5TestClass(psiClass, checkAbstract)) {
+    if (isJUnit5(psiClass)) {
+      if (isJUnit5TestClass(psiClass, checkAbstract)) {
+        return true;
+      }
+    }
+    else if (MetaAnnotationUtil.isMetaAnnotated(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))) {
+      //no jupiter engine in the classpath
       return true;
     }
 
@@ -215,7 +221,7 @@ public class JUnitUtil {
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
+    if (modifierList == null) return false;
     if (psiClass.getQualifiedName() == null) return false; //skip local and anonymous classes
     PsiClass topLevelClass = getTopmostClass(psiClass);
 
@@ -257,7 +263,7 @@ public class JUnitUtil {
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
-    if (modifierList == null || JavaExecutionUtil.findModule(psiClass) == null) return false;
+    if (modifierList == null) return false;
 
     if (psiClass.isAnnotationType()) return false;
 
@@ -271,31 +277,26 @@ public class JUnitUtil {
 
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
-    Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (module != null) {
-      return CachedValuesManager.getCachedValue(psiClass, () -> {
-        boolean hasAnnotation = false;
-        for (final PsiMethod method : psiClass.getAllMethods()) {
-          ProgressManager.checkCanceled();
-          if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      boolean hasAnnotation = false;
+      for (final PsiMethod method : psiClass.getAllMethods()) {
+        ProgressManager.checkCanceled();
+        if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) {
+          hasAnnotation = true;
+          break;
+        }
+      }
+
+      if (!hasAnnotation) {
+        for (PsiClass aClass : psiClass.getAllInnerClasses()) {
+          if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
             hasAnnotation = true;
             break;
           }
         }
-
-        if (!hasAnnotation) {
-          for (PsiClass aClass : psiClass.getAllInnerClasses()) {
-            if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) {
-              hasAnnotation = true;
-              break;
-            }
-          }
-        }
-        return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      });
-    }
-
-    return false;
+      }
+      return CachedValueProvider.Result.create(hasAnnotation, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
   }
 
   public static boolean isJUnit5(@NotNull PsiElement element) {

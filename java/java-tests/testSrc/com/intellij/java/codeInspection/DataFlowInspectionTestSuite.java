@@ -65,6 +65,7 @@ import org.junit.runners.Suite;
   StreamFilterNotNullFixTest.class,
   RedundantInstanceofFixTest.class,
   ReplaceComputeWithComputeIfPresentFixTest.class,
+  DeleteSwitchLabelFixTest.class,
   })
 public class DataFlowInspectionTestSuite {
 }

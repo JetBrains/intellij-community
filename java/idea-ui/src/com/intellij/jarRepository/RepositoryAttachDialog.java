@@ -61,6 +61,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   @NonNls private static final String PROPERTY_DOWNLOAD_TO_PATH_ENABLED = "Downloaded.Files.Path.Enabled";
   @NonNls private static final String PROPERTY_ATTACH_JAVADOC = "Repository.Attach.JavaDocs";
   @NonNls private static final String PROPERTY_ATTACH_SOURCES = "Repository.Attach.Sources";
+  @NonNls private static final String PROPERTY_ATTACH_ANNOTATIONS = "Repository.Attach.Annotations";
   @NotNull private final Mode myMode;
 
   public enum Mode { SEARCH, DOWNLOAD }
@@ -79,6 +80,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
   private JBCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel mySearchOptionsPanel;
   private JBCheckBox myIncludeTransitiveDependenciesForSearchCheckBox;
+  private JBCheckBox myAnnotationsCheckBox;
 
   private final JComboBox myCombobox;
 
@@ -162,6 +164,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     });
     myJavaDocCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_JAVADOC));
     mySourcesCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_SOURCES));
+    mySourcesCheckBox.setSelected(storage.isTrueValue(PROPERTY_ATTACH_ANNOTATIONS));
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.putUserData(FileChooserDialog.PREFER_LAST_OVER_TO_SELECT, Boolean.TRUE);
@@ -204,6 +207,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
 
   public boolean getAttachSources() {
     return mySourcesCheckBox.isSelected();
+  }
+
+  public boolean getAttachExternalAnnotations() {
+    return myAnnotationsCheckBox.isSelected();
   }
 
   public boolean getIncludeTransitiveDependencies() {
@@ -371,6 +378,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
     storage.setValue(PROPERTY_DOWNLOAD_TO_PATH, downloadPath, myDefaultDownloadFolder);
     storage.setValue(PROPERTY_ATTACH_JAVADOC, String.valueOf(myJavaDocCheckBox.isSelected()));
     storage.setValue(PROPERTY_ATTACH_SOURCES, String.valueOf(mySourcesCheckBox.isSelected()));
+    storage.setValue(PROPERTY_ATTACH_ANNOTATIONS, String.valueOf(myAnnotationsCheckBox.isSelected()));
     super.dispose();
   }
 

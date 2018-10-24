@@ -79,7 +79,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@Nullable final Module module,
                                                                                            @NotNull Project project,
-                                                                                           @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
+                                                                                           @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, ? extends IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
     return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
 

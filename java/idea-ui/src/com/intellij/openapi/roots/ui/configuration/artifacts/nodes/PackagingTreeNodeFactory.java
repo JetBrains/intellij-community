@@ -39,11 +39,11 @@ public class PackagingTreeNodeFactory {
   }
 
   public static void addNodes(@NotNull List<? extends PackagingElement<?>> elements, @NotNull CompositePackagingElementNode parentNode,
-                               @NotNull CompositePackagingElement parentElement, @NotNull ArtifactEditorContext context,
-                               @NotNull ComplexElementSubstitutionParameters substitutionParameters, @NotNull Collection<PackagingNodeSource> nodeSources,
-                               @NotNull List<PackagingElementNode<?>> nodes,
-                               ArtifactType artifactType,
-                               Set<PackagingElement<?>> processed) {
+                              @NotNull CompositePackagingElement parentElement, @NotNull ArtifactEditorContext context,
+                              @NotNull ComplexElementSubstitutionParameters substitutionParameters, @NotNull Collection<PackagingNodeSource> nodeSources,
+                              @NotNull List<PackagingElementNode<?>> nodes,
+                              ArtifactType artifactType,
+                              Set<? super PackagingElement<?>> processed) {
     for (PackagingElement<?> element : elements) {
       final PackagingElementNode<?> prev = findEqual(nodes, element);
       if (prev != null) {
@@ -78,7 +78,7 @@ public class PackagingTreeNodeFactory {
   }
 
   @Nullable
-  private static PackagingElementNode<?> findEqual(List<PackagingElementNode<?>> children, PackagingElement<?> element) {
+  private static PackagingElementNode<?> findEqual(List<? extends PackagingElementNode<?>> children, PackagingElement<?> element) {
     for (PackagingElementNode<?> node : children) {
       if (node.getFirstElement().isEqualTo(element)) {
         return node;

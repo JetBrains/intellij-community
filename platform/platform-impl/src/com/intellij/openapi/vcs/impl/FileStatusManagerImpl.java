@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -53,7 +52,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     @NotNull
     @Override
     protected FileStatusProvider[] compute() {
-      return Extensions.getExtensions(FileStatusProvider.EP_NAME, myProject);
+      return FileStatusProvider.EP_NAME.getExtensions(myProject);
     }
   };
 

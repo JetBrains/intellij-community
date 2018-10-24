@@ -39,7 +39,6 @@ import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
-import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -89,7 +88,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     final FilePath currentFilePath = VcsUtil.getFilePath(file.getPath());
     final FilePath realFilePath;
     if (revision == null) {
-      realFilePath = GitHistoryUtils.getLastCommitName(myProject, currentFilePath);
+      realFilePath = VcsUtil.getLastCommitPath(myProject, currentFilePath);
     }
     else {
       realFilePath = ((VcsFileRevisionEx)revision).getPath();

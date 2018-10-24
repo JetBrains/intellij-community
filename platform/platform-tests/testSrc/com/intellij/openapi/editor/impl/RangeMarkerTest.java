@@ -670,48 +670,6 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     delete(mm, 0);
   }
 
-  public void _testRandomAddRemove() {
-    int N = 100;
-
-    for (int ti=0; ;ti++) {
-      if (ti%10000 ==0) System.out.println(ti);
-      DocumentEx document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
-
-      Random gen = new Random();
-      List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
-      List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
-
-
-      try {
-        for (int i = 0; i < 30; i++) {
-          int x = gen.nextInt(N);
-          int y = x + gen.nextInt(N - x);
-          if (gen.nextBoolean()) {
-            x = 0;
-            y = document.getTextLength();
-          }
-          RangeMarkerEx r = (RangeMarkerEx)document.createRangeMarker(x, y);
-          adds.add(Pair.create(r, TextRange.create(r)));
-        }
-        List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
-        while (!candidates.isEmpty()) {
-          int size = candidates.size();
-          int x = gen.nextInt(size);
-          Pair<RangeMarker, TextRange> c = candidates.remove(x);
-          RangeMarkerEx r = (RangeMarkerEx)c.first;
-          assertEquals(size-1, candidates.size());
-          dels.add(c);
-          r.dispose();
-        }
-      }
-      catch (AssertionError e) {
-        printFailingSteps(adds, dels, Collections.emptyList());
-        throw e;
-      }
-    }
-
-  }
-
   private static void edit(DocumentEx document, int... offsets) {
     for (int i = 0; i < offsets.length; i+=3) {
       int offset = offsets[i];
@@ -1398,7 +1356,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     document = null;
 
     while (ref.get() != null) {
-      GCUtil.tryForceGC();
+      GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
     }
   }
@@ -1442,7 +1400,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     persistentMarker[0] = null;
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     while (markerRef.get() != null || persistentMarkerRef.get() != null) {
-      GCUtil.tryForceGC();
+      GCUtil.tryGcSoftlyReachableObjects();
       UIUtil.dispatchAllInvocationEvents();
     }
 

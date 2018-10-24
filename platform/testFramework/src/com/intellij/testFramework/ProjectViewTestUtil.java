@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.ide.projectView.ProjectView;
@@ -22,7 +8,6 @@ import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -96,10 +81,7 @@ public class ProjectViewTestUtil {
         boolean actual = eachNode.contains(eachFile);
         boolean expected = map.get(eachFile).contains(eachNode);
         if (actual != expected) {
-          boolean actual1 = eachNode.contains(eachFile);
-          boolean expected1 = map.get(eachFile).contains(eachNode);
-
-          Assert.assertTrue("file=" + eachFile + " node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
+          Assert.assertTrue("file=" + eachFile + "\n node=" + eachNode.getTestPresentation() + " expected:" + expected, false);
         }
       }
     }
@@ -167,8 +149,7 @@ public class ProjectViewTestUtil {
     ToolWindow toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
 
     if (toolWindow == null) {
-      ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-      for (final ToolWindowEP bean : beans) {
+      for (final ToolWindowEP bean : ToolWindowEP.EP_NAME.getExtensionList()) {
         if (bean.id.equals(ToolWindowId.PROJECT_VIEW)) {
           toolWindow = toolWindowManager.registerToolWindow(bean.id, new JLabel(), ToolWindowAnchor.fromText(bean.anchor), project,
                                                             false, bean.canCloseContents);

@@ -15,7 +15,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.*;
@@ -823,11 +822,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return LoadTextUtil.processTextFromBinaryPresentationOrNull(bytes, length,
                                                                 file, true, true,
                                                                 PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
-        FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
+        List<FileTypeDetector> detectors = FileTypeDetector.EP_NAME.getExtensionList();
         if (toLog()) {
           log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + length +
               "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
-              ", detectors=" + Arrays.toString(detectors));
+              ", detectors=" + detectors);
         }
         FileType detected = null;
         ByteSequence firstBytes = new ByteArraySequence(bytes, 0, length);

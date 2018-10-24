@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.credentialStore.kdbx;
 
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +47,7 @@ import java.util.Arrays;
  */
 public class HashedBlockInputStream extends InputStream {
   private static final int HASH_SIZE = 32;
+  @SuppressWarnings("MismatchedReadAndWriteOfArray")
   private static final byte[] ZERO_HASH = new byte[HASH_SIZE];
 
   private long expectedSequenceNumber = 0;

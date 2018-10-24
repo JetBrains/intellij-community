@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.InstanceComponentAdapter;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.BiPredicate;
@@ -83,9 +82,9 @@ public class ServiceManagerImpl implements Disposable {
     extensionPoint.addExtensionPointListener(myExtensionPointListener);
   }
 
+  @NotNull
   public List<ServiceDescriptor> getAllDescriptors() {
-    ServiceDescriptor[] extensions = Extensions.getExtensions(myExtensionPointName);
-    return Arrays.asList(extensions);
+    return myExtensionPointName.getExtensionList();
   }
 
   public static void processAllImplementationClasses(@NotNull ComponentManagerImpl componentManager, @NotNull BiPredicate<? super Class<?>, ? super PluginDescriptor> processor) {

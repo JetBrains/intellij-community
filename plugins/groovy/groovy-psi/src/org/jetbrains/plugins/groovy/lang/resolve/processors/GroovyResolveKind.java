@@ -13,7 +13,6 @@ public enum GroovyResolveKind {
 
   VARIABLE(DeclarationKind.VARIABLE),
   BINDING(DeclarationKind.VARIABLE),
-  ENUM_CONST(DeclarationKind.ENUM_CONST),
   METHOD(DeclarationKind.METHOD),
   FIELD(DeclarationKind.FIELD),
   PROPERTY(DeclarationKind.METHOD, DeclarationKind.FIELD),

@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
@@ -308,7 +307,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement =
           navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :

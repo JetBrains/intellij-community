@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  */
 public class UnicodeCharacterNames {
 
-  public static void iterate(Consumer<String> consumer) {
+  public static void iterate(Consumer<? super String> consumer) {
     try {
       final Class<?> aClass = Class.forName("java.lang.CharacterName");
       final Method initNamePool = ReflectionUtil.getDeclaredMethod(aClass, "initNamePool");

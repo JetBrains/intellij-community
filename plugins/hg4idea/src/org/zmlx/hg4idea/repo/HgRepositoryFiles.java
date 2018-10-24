@@ -23,7 +23,7 @@ import java.util.Collection;
 
 
 /**
- * Stores paths to Hg service files (from .hg/ directory) that are used by IDEA, and provides methods to check if a file
+ * Stores paths to Hg service files that are used by IDEA, and provides methods to check if a file
  * matches once of them.
  *
  */

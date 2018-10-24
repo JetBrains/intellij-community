@@ -52,7 +52,7 @@ private class MyRunConfigurationTemplateProvider(private val project: Project) :
         (configuration as PersistentStateComponent<Any>).loadState(item.state!!)
       }
       else {
-        (configuration as RunConfigurationBase<*>).setState(item.state as BaseState)
+        (configuration as RunConfigurationBase<*>).setOptionsFromConfigurationFile(item.state as BaseState)
       }
       settings = RunnerAndConfigurationSettingsImpl(runManager, configuration, isTemplate = true)
       item.state = null

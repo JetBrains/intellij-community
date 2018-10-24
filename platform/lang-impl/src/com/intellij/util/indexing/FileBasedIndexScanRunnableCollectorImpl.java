@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -47,7 +46,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       tasks.add(() -> myProjectFileIndex.iterateContent(processor, file -> !file.isDirectory() || visitedRoots.add(file)));
 
       Set<VirtualFile> contributedRoots = new LinkedHashSet<>();
-      for (IndexableSetContributor contributor : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
+      for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         //important not to depend on project here, to support per-project background reindex
         // each client gives a project to FileBasedIndex
         if (myProject.isDisposed()) {
@@ -66,7 +65,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       }
 
       // iterate synthetic project libraries
-      for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+      for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         if (myProject.isDisposed()) {
           return tasks;
         }

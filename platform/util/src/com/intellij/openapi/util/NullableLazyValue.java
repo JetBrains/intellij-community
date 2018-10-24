@@ -44,7 +44,7 @@ public abstract class NullableLazyValue<T> {
   }
 
   @NotNull
-  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<T> value) {
+  public static <T> NullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
     return new NullableLazyValue<T>() {
 
       @Nullable

@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -64,7 +63,7 @@ public class CompletionUtil {
 
   @Nullable
   private static CompletionData getCompletionDataByFileType(FileType fileType) {
-    for(CompletionDataEP ep: Extensions.getExtensions(CompletionDataEP.EP_NAME)) {
+    for(CompletionDataEP ep: CompletionDataEP.EP_NAME.getExtensionList()) {
       if (ep.fileType.equals(fileType.getName())) {
         return ep.getHandler();
       }
@@ -210,8 +209,8 @@ public class CompletionUtil {
   }
 
   /**
-   * Filters _names for strings that match given matcher and sorts them. 
-   * "Start matching" items go first, then others. 
+   * Filters _names for strings that match given matcher and sorts them.
+   * "Start matching" items go first, then others.
    * Within both groups names are sorted lexicographically in a case-insensitive way.
    */
   public static LinkedHashSet<String> sortMatching(final PrefixMatcher matcher, Collection<String> _names) {

@@ -469,7 +469,7 @@ public class PyPsiUtils {
     return result;
   }
 
-  public static void sequenceToList(List<PyExpression> result, PyExpression value) {
+  public static void sequenceToList(List<? super PyExpression> result, PyExpression value) {
     value = flattenParens(value);
     if (value instanceof PySequenceExpression) {
       result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));

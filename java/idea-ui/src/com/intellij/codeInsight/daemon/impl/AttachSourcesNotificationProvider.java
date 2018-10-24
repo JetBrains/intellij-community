@@ -9,7 +9,6 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -95,7 +94,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
 
         PsiFile clsFile = PsiManager.getInstance(myProject).findFile(file);
         boolean hasNonLightAction = false;
-        for (AttachSourcesProvider each : Extensions.getExtensions(EXTENSION_POINT_NAME)) {
+        for (AttachSourcesProvider each : EXTENSION_POINT_NAME.getExtensionList()) {
           for (AttachSourcesProvider.AttachSourcesAction action : each.getActions(libraries, clsFile)) {
             if (hasNonLightAction) {
               if (action instanceof AttachSourcesProvider.LightAttachSourcesAction) {

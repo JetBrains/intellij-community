@@ -24,7 +24,7 @@ import java.util.List;
  * @author oleg
  */
 public class CheckinHandlerUtil {
-  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
+  public static List<VirtualFile> filterOutGeneratedAndExcludedFiles(@NotNull Collection<? extends VirtualFile> files, @NotNull Project project) {
     ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
     List<VirtualFile> result = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
@@ -35,7 +35,7 @@ public class CheckinHandlerUtil {
     return result;
   }
 
-  public static PsiFile[] getPsiFiles(final Project project, final Collection<VirtualFile> selectedFiles) {
+  public static PsiFile[] getPsiFiles(final Project project, final Collection<? extends VirtualFile> selectedFiles) {
     ArrayList<PsiFile> result = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
 

@@ -40,6 +40,7 @@ import java.util.*;
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 
   private final Set<Class> myExtraProjectModelClasses = new LinkedHashSet<Class>();
+  private final Set<Class> myTargetTypes = new LinkedHashSet<Class>();
   private final boolean myIsPreviewMode;
   private final boolean myIsGradleProjectDirSupported;
   private final boolean myIsCompositeBuildsSupported;
@@ -56,6 +57,10 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   public void addExtraProjectModelClasses(@NotNull Set<Class> projectModelClasses) {
     myExtraProjectModelClasses.addAll(projectModelClasses);
+  }
+
+  public void addTargetTypes(@NotNull Set<Class> targetTypes) {
+    myTargetTypes.addAll(targetTypes);
   }
 
   @Nullable
@@ -100,7 +105,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     return allModels;
   }
 
-  private static void configureAdditionalTypes(BuildController controller) {
+  private void configureAdditionalTypes(BuildController controller) {
     try {
       Field adapterField;
       try {
@@ -126,10 +131,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       //noinspection unchecked
       Map<String, Class<?>> targetTypes = (Map<String, Class<?>>)targetTypesField.get(typeProvider);
 
-      targetTypes.put(ExternalProjectDependency.class.getCanonicalName(), ExternalProjectDependency.class);
-      targetTypes.put(ExternalLibraryDependency.class.getCanonicalName(), ExternalLibraryDependency.class);
-      targetTypes.put(FileCollectionDependency.class.getCanonicalName(), FileCollectionDependency.class);
-      targetTypes.put(UnresolvedExternalDependency.class.getCanonicalName(), UnresolvedExternalDependency.class);
+      for (Class targetType : myTargetTypes) {
+        targetTypes.put(targetType.getCanonicalName(), targetType);
+      }
     }
     catch (Exception ignore) {
       // TODO handle error

@@ -53,6 +53,11 @@ public enum RegExpCapability {
   COMMENT_MODE,
 
   /**
+   * In comment mode, spaces, tabs, etc in a class are also whitespace. Comments also work inside classes (Java).
+   */
+  WHITESPACE_IN_CLASS,
+
+  /**
    * '\h'
    */
   ALLOW_HEX_DIGIT_CLASS,

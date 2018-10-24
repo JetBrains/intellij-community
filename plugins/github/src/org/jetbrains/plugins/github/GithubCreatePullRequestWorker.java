@@ -20,7 +20,10 @@ import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -33,6 +36,7 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
+import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -40,8 +44,6 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitCompareBranchesHelper;
-import git4idea.update.GitFetchResult;
-import git4idea.update.GitFetcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
@@ -66,6 +68,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
+
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
 public class GithubCreatePullRequestWorker {
   private static final Logger LOG = GithubUtil.LOG;
@@ -331,13 +335,13 @@ public class GithubCreatePullRequestWorker {
   }
 
   private void doFetchRemote(@NotNull ForkInfo fork) {
-    if (fork.getRemoteName() == null) return;
-
-    GitFetchResult result =
-      new GitFetcher(myProject, new EmptyProgressIndicator(), false).fetch(myGitRepository.getRoot(), fork.getRemoteName(), null);
-    if (!result.isSuccess()) {
-      GitFetcher.displayFetchResult(myProject, result, null, result.getErrors());
+    String remoteName = fork.getRemoteName();
+    if (remoteName == null) return;
+    GitRemote remote = GitUtil.findRemoteByName(myGitRepository, remoteName);
+    if (remote == null) {
+      LOG.warn("Couldn't find remote " + remoteName + " in " + myGitRepository);
     }
+    fetchSupport(myProject).fetch(myGitRepository, remote).showNotificationIfFailed();
   }
 
   @NotNull

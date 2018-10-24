@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopesLexer;
@@ -93,7 +78,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
     private PackageSet parsePattern() throws ParsingException {
       String scope = null;
-      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
+      for (PackageSetParserExtension extension : PackageSetParserExtension.EP_NAME.getExtensionList()) {
         scope = extension.parseScope(myLexer);
         if (scope != null) break;
       }
@@ -103,7 +88,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       if (myLexer.getTokenType() == ScopeTokenTypes.COLON) {
         myLexer.advance();
       }
-      for (PackageSetParserExtension extension : Extensions.getExtensions(PackageSetParserExtension.EP_NAME)) {
+      for (PackageSetParserExtension extension : PackageSetParserExtension.EP_NAME.getExtensionList()) {
         final PackageSet packageSet = extension.parsePackageSet(myLexer, scope, modulePattern);
         if (packageSet != null) return packageSet;
       }

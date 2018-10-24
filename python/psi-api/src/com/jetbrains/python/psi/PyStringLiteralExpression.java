@@ -23,9 +23,41 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+
+/**
+ * A string literal expression can consist of a number of implicitly concatenated string literals
+ * each with its own set of quotes and prefixes. For instance, the following string literal expression 
+ * in the right hand side of the assignment:
+ * <p>
+ * <code><pre>
+ * s = """foo""" + rb'\bar' + f'{baz}'
+ * </pre></code>
+ * <p>
+ * includes three distinct parts: a triple quoted string literal {@code """foo"""} without a prefix,
+ * a "raw" bytes literal {@code rb'\bar'} using apostrophes as quotes and a formatted string literal
+ * {@code f'{baz}'} containing the value of the expression {@code baz}.
+ * <p>
+ * PSI elements representing each of these parts can be acquired using {@link #getStringElements()} method.
+ * Both plain and formatted literals forming a whole string literal expression implement {@link PyStringElement}
+ * interface containing methods for retrieving general information about them such as quote types, prefixes,
+ * decoded value, etc.
+ *
+ * @see <a href="https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation">
+ *   https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation</a>
+ * @see #getStringElements()
+ * @see PyStringElement
+ * @see PyPlainStringElement
+ * @see PyFormattedStringElement
+ */
 public interface PyStringLiteralExpression extends PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
   @NotNull
   List<ASTNode> getStringNodes();
+
+  /**
+   * Returns a list of implicitly concatenated string elements composing this literal expression.  
+   */
+  @NotNull
+  List<PyStringElement> getStringElements();
 
   int valueOffsetToTextOffset(int valueOffset);
 
@@ -79,7 +111,7 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
    */
   @NotNull
   List<TextRange> getStringValueTextRanges();
-  
+
   /**
    * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
    */

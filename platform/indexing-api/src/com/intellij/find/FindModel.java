@@ -567,6 +567,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   /**
    * @deprecated and not used anymore
    */
+  @Deprecated
   public boolean isOpenInNewTabVisible() {
     return true;
   }
@@ -574,6 +575,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   /**
    * @deprecated and not used anymore
    */
+  @Deprecated
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
   }
 

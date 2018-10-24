@@ -209,7 +209,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return method;
   }
 
-  public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
+  public static void doCreate(PsiClass targetClass, PsiMethod method, List<? extends Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
     doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
   }

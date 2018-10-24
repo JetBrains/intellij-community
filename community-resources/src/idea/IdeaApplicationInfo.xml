@@ -6,7 +6,8 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
-  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
+  <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico" svg="/idea-ce.svg"/>
+  <icon-eap svg="/idea-ce-eap.svg"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
 

@@ -35,7 +35,7 @@ public class InvokeTemplateAction extends AnAction {
     myEditor = editor;
   }
 
-  public static String extractMnemonic(String caption, Set<Character> usedMnemonics) {
+  public static String extractMnemonic(String caption, Set<? super Character> usedMnemonics) {
     if (StringUtil.isEmpty(caption)) return "";
 
     for (int i = 0; i < caption.length(); i++) {

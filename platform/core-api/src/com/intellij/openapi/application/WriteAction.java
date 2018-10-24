@@ -81,7 +81,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
-    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
+    Class callerClass = ObjectUtils.notNull(ReflectionUtil.getCallerClass(3), WriteAction.class);
+    return start(callerClass);
   }
 
   /**
@@ -100,7 +101,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E {
-    AccessToken token = start();
+    AccessToken token = start(action.getClass());
     try {
       action.run();
     }
@@ -114,13 +115,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
    * Must be called from the EDT.
    */
   public static <T, E extends Throwable> T compute(@NotNull ThrowableComputable<T, E> action) throws E {
-    AccessToken token = start();
-    try {
-      return action.compute();
-    }
-    finally {
-      token.finish();
-    }
+    return ApplicationManager.getApplication().runWriteAction(action);
   }
 
   /**
@@ -153,13 +148,7 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeAndWait(@NotNull ThrowableComputable<T, E> action) throws E {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
-      AccessToken token = start(action.getClass());
-      try {
-        return action.compute();
-      }
-      finally {
-        token.finish();
-      }
+      return ApplicationManager.getApplication().runWriteAction(action);
     }
 
     if (application.isReadAccessAllowed()) {
@@ -168,15 +157,11 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
     final AtomicReference<T> result = new AtomicReference<>();
     final AtomicReference<Throwable> exception = new AtomicReference<>();
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      AccessToken token = start(action.getClass());
       try {
-        result.set(action.compute());
+        result.set(compute(action));
       }
       catch (Throwable e) {
         exception.set(e);
-      }
-      finally {
-        token.finish();
       }
     });
 

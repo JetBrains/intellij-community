@@ -1,0 +1,18 @@
+PyFile:SingleLineFStringContainsCommentInsteadOfExpression.py
+  PyAssignmentStatement
+    PyTargetExpression: s
+      PsiElement(Py:IDENTIFIER)('s')
+    PsiWhiteSpace(' ')
+    PsiElement(Py:EQ)('=')
+    PsiWhiteSpace(' ')
+    PyStringLiteralExpression: {# comment}'
+      PyFormattedStringElement
+        PsiElement(Py:FSTRING_START)('f'')
+        PyFStringFragment
+          PsiElement(Py:FSTRING_FRAGMENT_START)('{')
+          PsiErrorElement:expression expected
+            PsiComment(Py:END_OF_LINE_COMMENT)('# comment}'')
+          PsiErrorElement:type conversion, : or } expected
+            <empty list>
+        PsiErrorElement:' expected
+          <empty list>

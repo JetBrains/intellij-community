@@ -184,7 +184,7 @@ public class VfsImplUtil {
   @NotNull
   public static <T extends ArchiveHandler> T getHandler(@NotNull ArchiveFileSystem vfs,
                                                         @NotNull VirtualFile entryFile,
-                                                        @NotNull Function<String, T> producer) {
+                                                        @NotNull Function<? super String, ? extends T> producer) {
     String localPath = vfs.extractLocalPath(vfs.extractRootPath(entryFile.getPath()));
     checkSubscription();
 

@@ -48,6 +48,16 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     myColorScheme = colorScheme;
   }
 
+  @NotNull
+  public FileAnnotation getFileAnnotation() {
+    return myAnnotation;
+  }
+
+  @NotNull
+  public TextAnnotationPresentation getPresentation() {
+    return myPresentation;
+  }
+
   public boolean isGutterAction() {
     return false;
   }

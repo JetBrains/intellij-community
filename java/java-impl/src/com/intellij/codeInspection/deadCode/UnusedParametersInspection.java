@@ -58,7 +58,9 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       if (refMethod.isEntry()) return null;
 
-      final PsiElement element = refMethod.getUastElement().getJavaPsi();
+      UDeclaration uMethod = refMethod.getUastElement();
+      if (uMethod == null) return null;
+      final PsiElement element = uMethod.getJavaPsi();
       if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<>();

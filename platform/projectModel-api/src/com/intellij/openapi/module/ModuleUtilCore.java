@@ -137,7 +137,7 @@ public class ModuleUtilCore {
   }
 
   //ignores export flag
-  public static void getDependencies(@NotNull Module module, @NotNull Set<Module> modules) {
+  public static void getDependencies(@NotNull Module module, @NotNull Set<? super Module> modules) {
     if (modules.contains(module)) return;
     modules.add(module);
     Module[] dependencies = ModuleRootManager.getInstance(module).getDependencies();
@@ -151,7 +151,7 @@ public class ModuleUtilCore {
    * @param module to find dependencies on
    * @param result resulted set
    */
-  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<Module> result) {
+  public static void collectModulesDependsOn(@NotNull final Module module, @NotNull Set<? super Module> result) {
     if (!result.add(module)) {
       return;
     }

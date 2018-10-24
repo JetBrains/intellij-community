@@ -63,7 +63,7 @@ public class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<T> objects1, @NotNull List<T> objects2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull ProgressIndicator indicator)
     throws DiffTooBigException {
     // TODO: compare lists instead of arrays in Diff
     return diff(objects1.toArray(), objects2.toArray(), indicator);
@@ -204,7 +204,7 @@ public class DiffIterableUtil {
     }
   }
 
-  private static void verify(@NotNull Iterable<Range> iterable) {
+  private static void verify(@NotNull Iterable<? extends Range> iterable) {
     for (Range range : iterable) {
       // verify range
       assert range.start1 <= range.end1;
@@ -354,8 +354,8 @@ public class DiffIterableUtil {
 
   @SuppressWarnings("unused")
   @NotNull
-  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<T> objects1,
-                                                          @NotNull List<T> objects2,
+  public static <T> List<LineRangeData> extractDataRanges(@NotNull List<? extends T> objects1,
+                                                          @NotNull List<? extends T> objects2,
                                                           @NotNull DiffIterable iterable) {
     List<LineRangeData> result = ContainerUtil.newArrayList();
 

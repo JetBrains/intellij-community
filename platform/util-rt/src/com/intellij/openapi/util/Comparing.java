@@ -48,6 +48,7 @@ public class Comparing {
   @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
     if (arr1 == null || arr2 == null) {
+      //noinspection ArrayEquality
       return arr1 == arr2;
     }
     return Arrays.equals(arr1, arr2);
@@ -91,6 +92,7 @@ public class Comparing {
   @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
   public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
     if (arg1 == null || arg2 == null) {
+      //noinspection StringEquality
       return arg1 == arg2;
     }
     else {
@@ -123,6 +125,7 @@ public class Comparing {
 
   public static <T> boolean haveEqualElements(@Nullable T[] a, @Nullable T[] b) {
     if (a == null || b == null) {
+      //noinspection ArrayEquality
       return a == b;
     }
 
@@ -170,6 +173,7 @@ public class Comparing {
   }
 
   public static int compare(@Nullable byte[] o1, @Nullable byte[] o2) {
+    //noinspection ArrayEquality
     if (o1 == o2) return 0;
     if (o1 == null) return 1;
     if (o2 == null) return -1;
@@ -192,7 +196,7 @@ public class Comparing {
     return o1.compareTo(o2);
   }
 
-  public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<T> notNullComparator) {
+  public static <T> int compare(@Nullable T o1, @Nullable T o2, @NotNull Comparator<? super T> notNullComparator) {
     if (o1 == o2) return 0;
     if (o1 == null) return -1;
     if (o2 == null) return 1;

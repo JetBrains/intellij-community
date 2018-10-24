@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -40,7 +39,7 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
-    for (TreeCopyHandler handler : Extensions.getExtensions(TreeCopyHandler.EP_NAME)) {
+    for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
       handler.encodeInformation(element, original, state);
     }
 
@@ -66,7 +65,7 @@ public class ChangeUtil {
       child = child.getTreeNext();
     }
 
-    for (TreeCopyHandler handler : Extensions.getExtensions(TreeCopyHandler.EP_NAME)) {
+    for (TreeCopyHandler handler : TreeCopyHandler.EP_NAME.getExtensionList()) {
       final TreeElement handled = handler.decodeInformation(element, state);
       if (handled != null) return handled;
     }
@@ -131,7 +130,7 @@ public class ChangeUtil {
       return copyElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(original), table);
     }
     else {
-      for (TreeGenerator generator : Extensions.getExtensions(TreeGenerator.EP_NAME)) {
+      for (TreeGenerator generator : TreeGenerator.EP_NAME.getExtensionList()) {
         final TreeElement element = generator.generateTreeFor(original, table, manager);
         if (element != null) return element;
       }

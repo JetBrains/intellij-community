@@ -2,7 +2,7 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.util.io.FileUtil.ensureExists
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.testGuiFramework.framework.IdeTestApplication
+import com.intellij.testGuiFramework.framework.GuiTestPaths
 import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
@@ -28,7 +28,7 @@ class ScreenshotsDuringTest @JvmOverloads constructor(private val myPeriod: Int 
   override fun starting(description: Description) {
     val folderName = description.testClass.simpleName + "-" + description.methodName
     try {
-      myFolder = File(IdeTestApplication.getFailedTestScreenshotDirPath(), folderName)
+      myFolder = File(GuiTestPaths.failedTestScreenshotDir, folderName)
       ensureExists(myFolder!!)
     }
     catch (e: IOException) {

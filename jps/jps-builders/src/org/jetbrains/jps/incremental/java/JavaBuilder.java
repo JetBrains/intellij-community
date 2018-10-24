@@ -854,7 +854,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   /**
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
-  public static boolean addAnnotationProcessingOptions(List<String> options, @Nullable AnnotationProcessingConfiguration profile) {
+  public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
     if (profile == null || !profile.isEnabled()) {
       options.add("-proc:none");
       return false;

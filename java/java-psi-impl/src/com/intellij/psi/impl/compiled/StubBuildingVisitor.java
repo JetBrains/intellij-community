@@ -59,6 +59,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final Function<String, String> myMapping;
   private final boolean myAnonymousInner;
   private final boolean myLocalClassInner;
+  private boolean myNoAnnotationOffsets;
   private String myInternalName;
   private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
@@ -78,6 +79,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     myMapping = createMapping(classSource);
     myAnonymousInner = anonymousInner;
     myLocalClassInner = localClassInner;
+    //noinspection ConstantConditions
+    myNoAnnotationOffsets = ASM_API > Opcodes.ASM6 && !(classSource == null && innersStrategy.getClass().getName().startsWith("org.jetbrains.kotlin."));
   }
 
   public PsiClassStub<?> getResult() {
@@ -272,8 +275,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myInternalName.equals(outerName)) {
       T innerClass = myInnersStrategy.findInnerClass(jvmClassName, mySource);
       if (innerClass != null) {
-        myInnersStrategy.accept(
-          innerClass, new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner));
+        StubBuildingVisitor<T> visitor =
+          new StubBuildingVisitor<>(innerClass, myInnersStrategy, myResult, access, innerName, isAnonymousInner, isLocalClassInner);
+        visitor.myNoAnnotationOffsets = myNoAnnotationOffsets;
+        myInnersStrategy.accept(innerClass, visitor);
       }
     }
   }
@@ -388,7 +393,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     newReferenceList(JavaStubElementTypes.THROWS_LIST, stub, ArrayUtil.toStringArray(info.throwTypes));
 
     int localVarIgnoreCount = isEnumConstructor ? 3 : isStatic ? 0 : 1;
-    int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
+    int paramIgnoreCount = myNoAnnotationOffsets ? 0 : isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs, myMapping);
   }
 

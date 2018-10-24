@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -76,7 +77,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

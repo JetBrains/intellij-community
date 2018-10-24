@@ -28,6 +28,18 @@ public abstract class EditablePostfixTemplateWithMultipleExpressions<ConditionTy
     myUseTopmostExpression = useTopmostExpression;
   }
 
+  protected EditablePostfixTemplateWithMultipleExpressions(@NotNull String templateId,
+                                                           @NotNull String templateName,
+                                                           @NotNull String templateKey,
+                                                           @NotNull TemplateImpl liveTemplate,
+                                                           @NotNull String example,
+                                                           @NotNull Set<ConditionType> expressionConditions,
+                                                           boolean useTopmostExpression,
+                                                           @NotNull PostfixTemplateProvider provider) {
+    super(templateId, templateName, templateKey, liveTemplate, example, provider);
+    myExpressionConditions = expressionConditions;
+    myUseTopmostExpression = useTopmostExpression;
+  }
 
   @NotNull
   protected static TemplateImpl createTemplate(@NotNull String templateText) {

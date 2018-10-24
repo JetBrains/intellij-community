@@ -36,12 +36,12 @@ import java.util.List;
 /**
  * @author nik
  */
-public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase
+public class DeployToServerRunConfiguration<S extends ServerConfiguration, D extends DeploymentConfiguration> extends RunConfigurationBase<Element>
   implements LocatableConfiguration {
   private static final Logger LOG = Logger.getInstance(DeployToServerRunConfiguration.class);
   private static final String DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE = "type";
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
-  public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
+  private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
@@ -74,7 +74,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @NotNull
-  public DeploymentConfigurator<D, S> getDeploymentConfigurator() {
+  private DeploymentConfigurator<D, S> getDeploymentConfigurator() {
     return myDeploymentConfigurator;
   }
 
@@ -187,10 +187,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
       final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
       if (type != null) {
-        myDeploymentSource = ReadAction.compute(() -> {
-
-          return type.load(deploymentTag, getProject());
-        });
+        myDeploymentSource = ReadAction.compute(() -> type.load(deploymentTag, getProject()));
         myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
         ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
       }

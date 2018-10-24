@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 public abstract class BaseSplitter implements Splitter {
   public static final int MIN_RANGE_LENGTH = 3;
 
-  protected static void addWord(@NotNull Consumer<TextRange> consumer, boolean ignore, @Nullable TextRange found) {
+  protected static void addWord(@NotNull Consumer<? super TextRange> consumer, boolean ignore, @Nullable TextRange found) {
     if (found == null || ignore) {
       return;
     }

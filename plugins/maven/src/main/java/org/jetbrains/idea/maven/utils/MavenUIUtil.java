@@ -50,7 +50,7 @@ public class MavenUIUtil {
     }
   }
 
-  public static <E> void setElements(ElementsChooser<E> chooser, Collection<E> all, Collection<E> selected, Comparator<E> comparator) {
+  public static <E> void setElements(ElementsChooser<E> chooser, Collection<? extends E> all, Collection<? extends E> selected, Comparator<? super E> comparator) {
     List<E> selection = chooser.getSelectedElements();
     chooser.clear();
     Collection<E> sorted = new TreeSet<>(comparator);

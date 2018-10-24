@@ -64,7 +64,7 @@ public class VcsFileUtil {
   @NotNull
   public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
                                          int groupSize,
-                                         @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
+                                         @NotNull ThrowableNotNullFunction<? super List<String>, ? extends List<? extends T>, ? extends VcsException> processor)
     throws VcsException {
     List<T> result = ContainerUtil.newArrayList();
 
@@ -85,7 +85,7 @@ public class VcsFileUtil {
    */
   public static void foreachChunk(@NotNull List<String> arguments,
                                   int groupSize,
-                                  @NotNull ThrowableConsumer<List<String>, VcsException> consumer)
+                                  @NotNull ThrowableConsumer<? super List<String>, ? extends VcsException> consumer)
     throws VcsException {
     List<List<String>> chunks = chunkArguments(arguments, groupSize);
 
@@ -158,7 +158,7 @@ public class VcsFileUtil {
    * @param files the file list
    * @return chunked relative paths
    */
-  public static List<List<String>> chunkPaths(VirtualFile root, Collection<FilePath> files) {
+  public static List<List<String>> chunkPaths(VirtualFile root, Collection<? extends FilePath> files) {
     return chunkArguments(toRelativePaths(root, files));
   }
 
@@ -169,7 +169,7 @@ public class VcsFileUtil {
    * @param files the file list
    * @return chunked relative paths
    */
-  public static List<List<String>> chunkFiles(@NotNull VirtualFile root, @NotNull Collection<VirtualFile> files) {
+  public static List<List<String>> chunkFiles(@NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files) {
     return chunkArguments(toRelativeFiles(root, files));
   }
 
@@ -286,7 +286,7 @@ public class VcsFileUtil {
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
    */
-  public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<FilePath> filePaths) {
+  public static List<String> toRelativePaths(@NotNull VirtualFile root, @NotNull final Collection<? extends FilePath> filePaths) {
     ArrayList<String> rc = new ArrayList<>(filePaths.size());
     for (FilePath path : filePaths) {
       rc.add(relativePath(root, path));
@@ -302,7 +302,7 @@ public class VcsFileUtil {
    * @return a list of relative paths
    * @throws IllegalArgumentException if some path is not under root.
    */
-  public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<VirtualFile> files) {
+  public static List<String> toRelativeFiles(@NotNull VirtualFile root, @NotNull final Collection<? extends VirtualFile> files) {
     ArrayList<String> rc = new ArrayList<>(files.size());
     for (VirtualFile file : files) {
       rc.add(relativePath(root, file));
@@ -310,7 +310,7 @@ public class VcsFileUtil {
     return rc;
   }
 
-  public static void markFilesDirty(@NotNull Project project, @NotNull Collection<VirtualFile> affectedFiles) {
+  public static void markFilesDirty(@NotNull Project project, @NotNull Collection<? extends VirtualFile> affectedFiles) {
     final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
     for (VirtualFile file : affectedFiles) {
       if (file.isDirectory()) {
@@ -322,7 +322,7 @@ public class VcsFileUtil {
     }
   }
 
-  public static void markFilesDirty(@NotNull Project project, @NotNull List<FilePath> affectedFiles) {
+  public static void markFilesDirty(@NotNull Project project, @NotNull List<? extends FilePath> affectedFiles) {
     final VcsDirtyScopeManager dirty = VcsDirtyScopeManager.getInstance(project);
     for (FilePath file : affectedFiles) {
       if (file.isDirectory()) {
@@ -347,7 +347,7 @@ public class VcsFileUtil {
    * @param virtualFiles collection of virtual files to add; directories being added recursively
    */
   public static void addFilesToVcsWithConfirmation(@NotNull Project project,
-                                                   @NotNull Collection<VirtualFile> virtualFiles) {
+                                                   @NotNull Collection<? extends VirtualFile> virtualFiles) {
     if (virtualFiles.isEmpty()) {
       return;
     }

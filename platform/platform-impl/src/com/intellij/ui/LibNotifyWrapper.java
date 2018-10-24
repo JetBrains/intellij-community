@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -59,7 +58,7 @@ class LibNotifyWrapper implements SystemNotificationsImpl.Notifier {
       throw new IllegalStateException("notify_init failed");
     }
 
-    String icon = AppUIUtil.findIcon(PathManager.getBinPath());
+    String icon = AppUIUtil.findIcon();
     myIcon = icon != null ? icon : "dialog-information";
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();

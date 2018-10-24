@@ -32,7 +32,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 public class ShelfFileProcessorUtil {
   public static void savePatchFile(@Nullable Project project,
                                    @NotNull File patchFile,
-                                   List<FilePatch> patches,
+                                   List<? extends FilePatch> patches,
                                    @Nullable PatchEP[] extensions,
                                    @NotNull CommitContext context) throws IOException {
     try (Writer writer = new OutputStreamWriter(new FileOutputStream(patchFile), CharsetToolkit.UTF8_CHARSET)) {

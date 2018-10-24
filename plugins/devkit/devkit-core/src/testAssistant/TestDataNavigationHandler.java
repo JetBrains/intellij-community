@@ -61,12 +61,11 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     }
 
     if (collectByExistingFiles && (fileNames == null || fileNames.isEmpty())) {
-      fileNames = TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method);
+      fileNames = new ArrayList<>();
+      fileNames.addAll(TestDataGuessByExistingFilesUtil.collectTestDataByExistingFiles(method));
+      fileNames.addAll(TestDataGuessByTestDiscoveryUtil.collectTestDataByExistingFiles(method));
     }
-    if (fileNames == null) {
-      fileNames = Collections.emptyList();
-    }
-    return fileNames;
+    return fileNames == null ? Collections.emptyList() : fileNames;
   }
 
   public static void navigate(@NotNull RelativePoint point,

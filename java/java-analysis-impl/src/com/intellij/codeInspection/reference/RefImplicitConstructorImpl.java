@@ -82,7 +82,8 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
   @Nullable
   @Override
   public PsiElement getPsiElement() {
-    return Objects.requireNonNull(getOwnerClass()).getPsiElement();
+    RefClass ownerClass = getOwnerClass();
+    return ownerClass == null ? null : ownerClass.getPsiElement();
   }
 
   @Override

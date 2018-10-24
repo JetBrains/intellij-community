@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
@@ -8,7 +6,6 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
@@ -100,7 +97,7 @@ public class CommandLineProcessor {
     if (args.isEmpty()) return null;
 
     String command = args.get(0);
-    for (ApplicationStarter starter : Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
+    for (ApplicationStarter starter : ApplicationStarter.EP_NAME.getExtensionList()) {
       if (command.equals(starter.getCommandName())) {
         if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);

@@ -31,6 +31,7 @@ class GithubPullRequestChangesComponent(project: Project,
 
   private val changesBrowser = PullRequestChangesBrowserWithError(project, actionManager)
   val toolbarComponent: JComponent = changesBrowser.toolbar.component
+  val diffAction = changesBrowser.diffAction
   private val changesLoadingPanel = JBLoadingPanel(BorderLayout(), this,
                                                    ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 

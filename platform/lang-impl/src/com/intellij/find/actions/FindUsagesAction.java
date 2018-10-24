@@ -86,7 +86,7 @@ public class FindUsagesAction extends AnAction {
 
   static void chooseAmbiguousTargetAndPerform(@NotNull final Project project,
                                               final Editor editor,
-                                              @NotNull PsiElementProcessor<PsiElement> processor) {
+                                              @NotNull PsiElementProcessor<? super PsiElement> processor) {
     if (editor == null) {
       Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());

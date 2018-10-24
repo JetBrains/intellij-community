@@ -79,7 +79,7 @@ class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpo
     myBreakpoint.setSuspend(suspend);
   }
 
-  public static List<RemoteBreakpoint> convert(List<Breakpoint> list) throws RemoteException {
+  public static List<RemoteBreakpoint> convert(List<? extends Breakpoint> list) throws RemoteException {
     final ArrayList<RemoteBreakpoint> breakpoints = new ArrayList<RemoteBreakpoint>(list.size());
     for (Breakpoint breakpoint : list) {
       breakpoints.add(create(breakpoint));

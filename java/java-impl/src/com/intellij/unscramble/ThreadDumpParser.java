@@ -116,7 +116,7 @@ public class ThreadDumpParser {
     return null;
   }
 
-  public static void sortThreads(List<ThreadState> result) {
+  public static void sortThreads(List<? extends ThreadState> result) {
     Collections.sort(result, (o1, o2) -> getInterestLevel(o2) - getInterestLevel(o1));
   }
 

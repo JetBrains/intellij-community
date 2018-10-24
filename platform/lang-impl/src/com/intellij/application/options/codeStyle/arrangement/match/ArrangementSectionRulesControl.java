@@ -52,8 +52,8 @@ public class ArrangementSectionRulesControl extends ArrangementMatchingRulesCont
     myColorsProvider = colorsProvider;
   }
 
-  private static void appendBufferedSectionRules(@NotNull List<ArrangementSectionRule> result,
-                                                 @NotNull List<StdArrangementMatchRule> buffer,
+  private static void appendBufferedSectionRules(@NotNull List<? super ArrangementSectionRule> result,
+                                                 @NotNull List<? extends StdArrangementMatchRule> buffer,
                                                  @Nullable String currentSectionStart) {
     if (currentSectionStart == null) {
       return;

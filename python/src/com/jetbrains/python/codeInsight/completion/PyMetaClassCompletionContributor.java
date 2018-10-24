@@ -63,7 +63,7 @@ public class PyMetaClassCompletionContributor extends CompletionContributor {
            });
   }
 
-  public static FilterPattern hasLanguageLevel(@NotNull final Processor<LanguageLevel> processor) {
+  public static FilterPattern hasLanguageLevel(@NotNull final Processor<? super LanguageLevel> processor) {
     return new FilterPattern(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {

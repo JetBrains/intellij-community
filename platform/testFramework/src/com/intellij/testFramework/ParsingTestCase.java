@@ -18,6 +18,8 @@ package com.intellij.testFramework;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -46,6 +48,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -392,5 +395,11 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
                                      });
 
     TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
+  }
+
+  public void registerMockInjectedLanguageManager() {
+    registerExtensionPoint(Extensions.getArea(myProject), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+    registerExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
+    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
   }
 }

@@ -374,8 +374,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testVararg() throws Exception {
     disableVirtualComma();
 
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     type("\"a");
     next();
@@ -870,8 +870,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   public void testNoLinksInParameterJavadoc() throws Exception {
     disableVirtualComma();
 
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
@@ -1215,8 +1215,8 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
     setParameterHintsLimit(1);
 
-    configureJava("class C { void m() { String.for<caret> } }");
-    complete();
+    configureJava("class C { void m() { String.f<caret> } }");
+    complete("format(String format, Object... args)");
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\",args:\"/>) } }");
     type("\"a");
     next();
@@ -1553,9 +1553,9 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     configureJava("class C {\n" +
                   "  void some(int a) {}\n" +
                   "  void some(int a, int b) {}\n" +
-                  "  void other() { som<caret> }\n" +
+                  "  void other() { s<caret> }\n" +
                   "}");
-    complete();
+    complete("some(int a)");
     checkResultWithInlays("class C {\n" +
                           "  void some(int a) {}\n" +
                           "  void some(int a, int b) {}\n" +
@@ -1609,6 +1609,24 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("getProperty(String key, String def)");
     checkResultWithInlays("System.getProperty(<caret>)"); // At the moment, we assure that neither hints, nor comma appear.
                                                           // Later we might make it work correctly for code fragments.
+  }
+
+  public void testAutoCompletionOfOverloadedMethod() throws Exception {
+    configureJava("class C {\n" +
+                  "  void some(int a, int b) {}\n" +
+                  "  void some(int c, int d, int e) {}" +
+                  "  void m() { som<caret> }\n" +
+                  "}");
+    complete();
+    checkResultWithInlays("class C {\n" +
+                          "  void some(int a, int b) {}\n" +
+                          "  void some(int c, int d, int e) {}" +
+                          "  void m() { some(<caret>); }\n" +
+                          "}");
+    waitForAllAsyncStuff();
+    checkHintContents("[<html><b>int a</b>, int b</html>]\n" +
+                      "-\n" +
+                      "<html><b>int c</b>, int d, int e</html>");
   }
 
   private void checkResultWithInlays(String text) {

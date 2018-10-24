@@ -5,10 +5,8 @@ import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,14 +29,6 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
 
     add("ChangesView.AddUnversioned", manager, actions);
     add("Git.ResolveConflicts", manager, actions);
-
-    // Github
-    addSeparator(actions);
-    final AnAction githubRebase = manager.getAction("Github.Rebase");
-    if (githubRebase != null) {
-      actions.add(new Separator(GitBundle.message("vcs.popup.git.github.section")));
-      actions.add(githubRebase);
-    }
   }
 
   @Override

@@ -11,8 +11,8 @@ public class Test {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  void f<caret>oo() {
+  @SuppressWarnings("unche<caret>cked")
+  void foo() {
     foo(new ArrayList<String>()).addAll(foo1(new ArrayList<String>);
   }
 }

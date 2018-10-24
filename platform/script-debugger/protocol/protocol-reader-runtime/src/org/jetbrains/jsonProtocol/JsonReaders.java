@@ -91,7 +91,7 @@ public final class JsonReaders {
     }
   }
 
-  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<T> factory) {
+  public static <T> List<T> readObjectArray(@NotNull JsonReaderEx reader, @NotNull ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;
@@ -112,7 +112,7 @@ public final class JsonReaders {
     return result;
   }
 
-  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<T> factory) {
+  public static <T> Map<String, T> readMap(@NotNull JsonReaderEx reader, @Nullable ObjectFactory<? extends T> factory) {
     if (reader.peek() == JsonToken.NULL) {
       reader.skipValue();
       return null;

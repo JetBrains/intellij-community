@@ -7,11 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,7 +35,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
       String stringText = string.getText();
-      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       stringText = stringText.substring(prefixLength);
 
       if (stringText.length() >= 6) {
@@ -66,7 +62,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
       final String stringText = string.getText();
-      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       final String text = stringText.substring(prefixLength);
 
       if (text.startsWith("'") && text.endsWith("'")) {

@@ -19,6 +19,7 @@ public abstract class ActionsCollector {
    * If no context class is provided then nothing will be recorded.
    * @deprecated use {@link #record(String, Class)} instead
    */
+  @Deprecated
   public void record(String actionId) {}
 
   /**

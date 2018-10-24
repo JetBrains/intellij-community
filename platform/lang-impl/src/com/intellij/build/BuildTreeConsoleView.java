@@ -522,7 +522,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                        String nodeName,
                                                        String nodeTitle,
                                                        boolean autoExpandNode,
-                                                       @Nullable Supplier<Icon> iconProvider,
+                                                       @Nullable Supplier<? extends Icon> iconProvider,
                                                        @Nullable Navigatable navigatable,
                                                        Map<Object, ExecutionNode> nodesMap,
                                                        Project project) {

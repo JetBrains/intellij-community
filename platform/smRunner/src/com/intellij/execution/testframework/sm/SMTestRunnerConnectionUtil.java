@@ -14,8 +14,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -200,11 +198,9 @@ public class SMTestRunnerConnectionUtil {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
-          outputConsumer.finishTesting();
-          Disposer.dispose(outputConsumer);
-        });
+        outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
+        outputConsumer.finishTesting();
+        Disposer.dispose(outputConsumer);
       }
 
       @Override
@@ -322,11 +318,11 @@ public class SMTestRunnerConnectionUtil {
   @SuppressWarnings("deprecation")
   private static class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
-    private final TestLocationProvider[] myLocators;
+    private final List<TestLocationProvider> myLocators;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {
       myPrimaryLocator = primaryLocator;
-      myLocators = Extensions.getExtensions(TestLocationProvider.EP_NAME);
+      myLocators = TestLocationProvider.EP_NAME.getExtensionList();
     }
 
     @NotNull

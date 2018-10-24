@@ -173,7 +173,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
   @Nullable
   public static TemplateImpl findFullMatchedApplicableTemplate(@NotNull Editor editor,
                                                                int offset,
-                                                               @NotNull Collection<TemplateImpl> availableTemplates) {
+                                                               @NotNull Collection<? extends TemplateImpl> availableTemplates) {
     Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, true, false);
     if (templates.size() == 1) {
       TemplateImpl template = ContainerUtil.getFirstItem(templates.keySet());

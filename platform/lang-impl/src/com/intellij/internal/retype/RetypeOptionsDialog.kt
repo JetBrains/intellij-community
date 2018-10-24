@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.components.CheckBox
 import com.intellij.ui.layout.*
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -24,6 +25,8 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     private set
   var retypeExtension: String by propComponentProperty(project, "")
     private set
+  var recordScript: Boolean by propComponentProperty(project, true)
+    private set
 
   private val typeDelaySpinner = JBIntSpinner(retypeDelay,0, 5000, 50)
   private val threadDumpDelaySpinner = JBIntSpinner(threadDumpDelay,50, 5000, 50)
@@ -31,6 +34,7 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
   private val retypeRandomFiles = JRadioButton("Retype")
   private val fileCountSpinner = JBIntSpinner(fileCount, 1, 5000)
   private val extensionTextField = JTextField(retypeExtension,5)
+  private val recordCheckBox = CheckBox("Record script for performance testing plugin",true)
 
   init {
     init()
@@ -64,6 +68,9 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
           extensionTextField()
         }
       }
+      row {
+        recordCheckBox()
+      }
     }
   }
 
@@ -77,6 +84,7 @@ class RetypeOptionsDialog(project: Project, private val editor: Editor?) : Dialo
     threadDumpDelay = threadDumpDelaySpinner.number
     fileCount = fileCountSpinner.number
     retypeExtension = extensionTextField.text
+    recordScript = recordCheckBox.isSelected
 
     super.doOKAction()
   }

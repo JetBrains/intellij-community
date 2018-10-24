@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -34,7 +33,7 @@ public class GlobalCompilingVisitor {
   private static final Set<String> ourReservedWords = new HashSet<>(Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME));
 
   static {
-    for (StructuralSearchProfile profile : Extensions.getExtensions(StructuralSearchProfile.EP_NAME)) {
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensionList()) {
       ourReservedWords.addAll(profile.getReservedWords());
     }
   }

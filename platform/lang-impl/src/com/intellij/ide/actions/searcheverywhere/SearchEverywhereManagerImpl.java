@@ -56,10 +56,12 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     }
 
     Project project = initEvent.getProject();
+    Component contextComponent = initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     List<SearchEverywhereContributor> serviceContributors = Arrays.asList(
-      new TopHitSEContributor(project, initEvent.getData(PlatformDataKeys.CONTEXT_COMPONENT),
+      new TopHitSEContributor(project, contextComponent,
                               s -> mySearchEverywhereUI.getSearchField().setText(s)),
-      new RecentFilesSEContributor(project, GotoActionBase.getPsiContext(initEvent))
+      new RecentFilesSEContributor(project, GotoActionBase.getPsiContext(initEvent)),
+      new RunConfigurationsSEContributor(project, contextComponent, () ->  mySearchEverywhereUI.getSearchField().getText())
     );
 
     List<SearchEverywhereContributor> contributors = new ArrayList<>();

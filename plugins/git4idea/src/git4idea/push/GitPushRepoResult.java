@@ -44,7 +44,7 @@ public class GitPushRepoResult {
     REJECTED_NO_FF,
     REJECTED_OTHER,
     ERROR,
-    NOT_PUSHED;
+    NOT_PUSHED
   }
 
   static Comparator<Type> TYPE_COMPARATOR = (o1, o2) -> o1.ordinal() - o2.ordinal();

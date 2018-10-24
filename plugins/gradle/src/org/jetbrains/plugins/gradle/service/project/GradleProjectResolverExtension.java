@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -102,6 +103,14 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   @NotNull
   Set<Class> getToolingExtensionsClasses();
+
+  /**
+   * add target types to be used in the polymorphic containers
+   * @return
+   */
+  default Set<Class> getTargetTypes() {
+    return Collections.emptySet();
+  }
 
   @NotNull
   List<Pair<String, String>> getExtraJvmArgs();

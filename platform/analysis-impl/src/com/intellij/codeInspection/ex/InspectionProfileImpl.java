@@ -689,6 +689,15 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
+  public void resetToBase(String toolId, NamedScope scope, Project project) {
+    ToolsImpl tools = myBaseProfile.getToolsOrNull(toolId, null);
+    if (tools == null) return;
+    InspectionToolWrapper baseDefaultWrapper = tools.getDefaultState().getTool();
+    ScopeToolState state = myTools.get(toolId).getTools().stream().filter(s -> scope == s.getScope(project)).findFirst().orElseThrow(IllegalStateException::new);
+    state.setTool(copyToolSettings(baseDefaultWrapper));
+    schemeState = SchemeState.POSSIBLY_CHANGED;
+  }
+
   public void convert(@NotNull Element element, @NotNull Project project) {
     final Element scopes = element.getChild("scopes");
     if (scopes == null) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -77,7 +76,7 @@ public class HgUserFilterTest extends HgPlatformTest {
 
   public static HgLogProvider findLogProvider(@NotNull Project project) {
     List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project),
+      ContainerUtil.filter(VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project),
                            provider -> provider.getSupportedVcs().equals(HgVcs.getKey()));
     TestCase.assertEquals("Incorrect number of HgLogProviders", 1, providers.size());
     return (HgLogProvider)providers.get(0);

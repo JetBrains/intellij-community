@@ -69,18 +69,18 @@ public class UniqueNameGenerator implements Condition<String> {
   }
 
   @NotNull
-  public static String generateUniqueName(final String defaultName, final Condition<String> validator) {
+  public static String generateUniqueName(final String defaultName, final Condition<? super String> validator) {
     return generateUniqueName(defaultName, "", "", validator);
   }
 
   @NotNull
-  public static String generateUniqueName(final String defaultName, final String prefix, final String suffix, final Condition<String> validator) {
+  public static String generateUniqueName(final String defaultName, final String prefix, final String suffix, final Condition<? super String> validator) {
     return generateUniqueName(defaultName, prefix, suffix, "", "", validator);
   }
 
   @NotNull
   public static String generateUniqueName(final String defaultName, final String prefix, final String suffix,
-                                          final String beforeNumber, final String afterNumber, final Condition<String> validator) {
+                                          final String beforeNumber, final String afterNumber, final Condition<? super String> validator) {
     final String defaultFullName = prefix + defaultName + suffix;
     if (validator.value(defaultFullName)) {
       return defaultFullName;

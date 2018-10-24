@@ -38,7 +38,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * @author Jeka
+ * @deprecated use {@link BaseCompilerTestCase} instead
  */
 public abstract class CompilerTestCase extends ModuleTestCase {
   private static final int COMPILING_TIMEOUT = 2 * 60 * 1000;

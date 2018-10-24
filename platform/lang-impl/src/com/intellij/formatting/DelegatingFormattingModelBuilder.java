@@ -16,6 +16,13 @@
 
 package com.intellij.formatting;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+
 public interface DelegatingFormattingModelBuilder extends FormattingModelBuilder {
   boolean dontFormatMyModel();
+
+  default boolean dontFormatMyModel(@NotNull PsiElement element) {
+    return dontFormatMyModel();
+  }
 }

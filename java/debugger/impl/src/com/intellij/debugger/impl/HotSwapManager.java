@@ -108,7 +108,7 @@ public class HotSwapManager {
     }
   }
 
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<? extends DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> result = new HashMap<>();
     List<Pair<DebuggerSession, Long>> sessionWithStamps = new ArrayList<>();
     for (DebuggerSession session : sessions) {
@@ -135,7 +135,7 @@ public class HotSwapManager {
   }
 
 
-  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(final List<DebuggerSession> sessions,
+  public static Map<DebuggerSession, Map<String, HotSwapFile>> scanForModifiedClasses(final List<? extends DebuggerSession> sessions,
                                                                                       final HotSwapProgress swapProgress) {
     final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses = new HashMap<>();
 

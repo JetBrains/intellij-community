@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -400,7 +399,7 @@ public class BraceMatchingUtil {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
     if (braceMatcher != null) return braceMatcher;
 
-    for (FileTypeExtensionPoint<BraceMatcher> ext : Extensions.getExtensions(BraceMatcher.EP_NAME)) {
+    for (FileTypeExtensionPoint<BraceMatcher> ext : BraceMatcher.EP_NAME.getExtensionList()) {
       if (fileType.getName().equals(ext.filetype)) {
         braceMatcher = ext.getInstance();
         BRACE_MATCHERS.put(fileType, braceMatcher);

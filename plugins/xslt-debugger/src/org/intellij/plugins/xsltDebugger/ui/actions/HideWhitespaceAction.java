@@ -33,7 +33,7 @@ public class HideWhitespaceAction extends ToggleAction {
     myStructureTree = structureTree;
     myEventModel = eventModel;
 
-    getTemplatePresentation().setIcon(XsltDebuggerIcons.Actions.FilterWhitespace);
+    getTemplatePresentation().setIcon(XsltDebuggerIcons.FilterWhitespace);
   }
 
   @Override

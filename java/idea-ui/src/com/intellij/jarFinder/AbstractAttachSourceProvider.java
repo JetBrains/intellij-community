@@ -62,7 +62,7 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
   }
 
   @Nullable
-  protected static Library getLibraryFromOrderEntriesList(List<LibraryOrderEntry> orderEntries) {
+  protected static Library getLibraryFromOrderEntriesList(List<? extends LibraryOrderEntry> orderEntries) {
     if (orderEntries.isEmpty()) return null;
 
     Library library = orderEntries.get(0).getLibrary();

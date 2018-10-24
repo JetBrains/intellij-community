@@ -187,7 +187,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
             }));
       }
     }
-    return ContainerUtil.toArray(actions, AnAction.EMPTY_ARRAY);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private void disableForFile(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {

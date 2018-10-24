@@ -7,7 +7,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.vcs.log.VcsLogDataKeys;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
     String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);

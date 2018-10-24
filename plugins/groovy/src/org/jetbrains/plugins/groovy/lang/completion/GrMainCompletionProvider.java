@@ -149,7 +149,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   public static void addAllClasses(CompletionParameters parameters,
-                                   final Consumer<LookupElement> consumer,
+                                   final Consumer<? super LookupElement> consumer,
                                    final JavaCompletionSession inheritors, final PrefixMatcher matcher) {
     final PsiElement position = parameters.getPosition();
     final boolean afterNew = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position);
@@ -167,7 +167,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
                                     final GrReferenceElement reference,
                                     final JavaCompletionSession inheritorsHolder,
                                     final PrefixMatcher matcher,
-                                    final Consumer<LookupElement> _consumer) {
+                                    final Consumer<? super LookupElement> _consumer) {
     final Consumer<LookupElement> consumer = new Consumer<LookupElement>() {
       final Set<LookupElement> added = ContainerUtil.newHashSet();
       @Override

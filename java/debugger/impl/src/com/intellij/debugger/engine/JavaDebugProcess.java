@@ -27,7 +27,6 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -88,7 +87,7 @@ public class JavaDebugProcess extends XDebugProcess {
     final DebugProcessImpl process = javaSession.getProcess();
 
     myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
-      .append(Extensions.getExtensions(JavaBreakpointHandlerFactory.EP_NAME))
+      .append(JavaBreakpointHandlerFactory.EP_NAME.getExtensionList())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 

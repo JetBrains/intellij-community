@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 /** @deprecated use {@link NotNullLazyValue#createValue(NotNullFactory)} */
+@Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
 public final class LazyUtil {
   public static <T> NotNullLazyValue<T> create(@SuppressWarnings("BoundedWildcard") @NotNull Supplier<T> supplier) {

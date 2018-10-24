@@ -164,9 +164,7 @@ public class IncrementDecrementUsedAsExpressionInspection
         text.append(elementText);
       }
       text.append('}');
-      final PsiCodeBlock codeBlock =
-        factory.createCodeBlockFromText(text.toString(), parent);
-      statement.replace(codeBlock);
+      statement.replace(factory.createStatementFromText(text.toString(), parent));
       return;
     }
     final PsiStatement newStatement =

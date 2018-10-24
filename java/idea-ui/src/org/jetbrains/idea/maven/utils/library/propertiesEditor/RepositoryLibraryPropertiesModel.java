@@ -17,15 +17,16 @@ package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.idea.maven.aether.ArtifactKind;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
-  private boolean downloadSources;
-  private boolean downloadJavaDocs;
+  private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.of(ArtifactKind.ARTIFACT);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
 
@@ -35,16 +36,20 @@ public class RepositoryLibraryPropertiesModel {
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(version, ArtifactKind.kindsOf(downloadSources, downloadJavaDocs), includeTransitiveDependencies, excludedDependencies);
+  }
+
+  public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
+                                          boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     this.version = version;
-    this.downloadSources = downloadSources;
-    this.downloadJavaDocs = downloadJavaDocs;
+    this.myArtifactKinds.addAll(artifactKinds);
     this.includeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = new ArrayList<>(excludedDependencies);
   }
 
   @Override
   public RepositoryLibraryPropertiesModel clone() {
-    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs, includeTransitiveDependencies,
+    return new RepositoryLibraryPropertiesModel(version, myArtifactKinds, includeTransitiveDependencies,
                                                 new ArrayList<>(myExcludedDependencies));
   }
 
@@ -69,19 +74,43 @@ public class RepositoryLibraryPropertiesModel {
   }
 
   public boolean isDownloadSources() {
-    return downloadSources;
+    return myArtifactKinds.contains(ArtifactKind.SOURCES);
   }
 
   public void setDownloadSources(boolean downloadSources) {
-    this.downloadSources = downloadSources;
+    if (downloadSources) {
+      myArtifactKinds.add(ArtifactKind.SOURCES);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.SOURCES);
+    }
   }
 
   public boolean isDownloadJavaDocs() {
-    return downloadJavaDocs;
+    return myArtifactKinds.contains(ArtifactKind.JAVADOC);
   }
 
   public void setDownloadJavaDocs(boolean downloadJavaDocs) {
-    this.downloadJavaDocs = downloadJavaDocs;
+    if (downloadJavaDocs) {
+      myArtifactKinds.add(ArtifactKind.JAVADOC);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.JAVADOC);
+    }
+  }
+
+  public boolean isDownloadAnnotations() {
+    return myArtifactKinds.contains(ArtifactKind.ANNOTATIONS);
+  }
+
+  public void setDownloadAnnotations(boolean downloadAnnotations) {
+    if (downloadAnnotations) {
+      myArtifactKinds.add(ArtifactKind.ANNOTATIONS);
+    } else {
+      myArtifactKinds.remove(ArtifactKind.ANNOTATIONS);
+    }
+  }
+
+  public EnumSet<ArtifactKind> getArtifactKinds() {
+    return EnumSet.copyOf(myArtifactKinds);
   }
 
   public String getVersion() {
@@ -99,8 +128,7 @@ public class RepositoryLibraryPropertiesModel {
 
     RepositoryLibraryPropertiesModel model = (RepositoryLibraryPropertiesModel)o;
 
-    if (downloadSources != model.downloadSources) return false;
-    if (downloadJavaDocs != model.downloadJavaDocs) return false;
+    if (!myArtifactKinds.equals(model.myArtifactKinds)) return false;
     if (includeTransitiveDependencies != model.includeTransitiveDependencies) return false;
     if (version != null ? !version.equals(model.version) : model.version != null) return false;
     if (!myExcludedDependencies.equals(model.myExcludedDependencies)) return false;
@@ -109,8 +137,7 @@ public class RepositoryLibraryPropertiesModel {
 
   @Override
   public int hashCode() {
-    int result = (downloadSources ? 1 : 0);
-    result = 31 * result + (downloadJavaDocs ? 1 : 0);
+    int result = myArtifactKinds.hashCode();
     result = 31 * result + (includeTransitiveDependencies ? 1 : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + myExcludedDependencies.hashCode();

@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -881,12 +880,7 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;
@@ -989,9 +983,9 @@ public class UiDropperAction extends ToggleAction implements DumbAware {
     UiDropper() {
       Toolkit.getDefaultToolkit()
         .addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_WHEEL_EVENT_MASK | AWTEvent.CONTAINER_EVENT_MASK);
-      UiDropperActionExtension[] extensions = Extensions.getExtensions(UiDropperActionExtension.EP_NAME);
-      if (extensions.length > 0) {
-        AnAction action = extensions[0].getAnAction();
+      List<UiDropperActionExtension> extensions = UiDropperActionExtension.EP_NAME.getExtensionList();
+      if (extensions.size() > 0) {
+        AnAction action = extensions.get(0).getAnAction();
         setClickAction(action);
         return;
       }

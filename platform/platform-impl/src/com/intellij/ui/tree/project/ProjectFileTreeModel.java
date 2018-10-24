@@ -251,7 +251,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       return list;
     }
 
-    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<VirtualFile, AreaInstance> consumer) {
+    private static void visitContentRoots(@Nullable Project project, @NotNull BiConsumer<? super VirtualFile, ? super AreaInstance> consumer) {
       VirtualFile ancestor = ProjectFileNode.findBaseDir(project);
       if (ancestor != null && project == ProjectFileNode.findArea(ancestor, project)) {
         consumer.accept(ancestor, project);

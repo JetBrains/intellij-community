@@ -63,6 +63,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JButton myReloadButton;
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
+  private JBCheckBox downloadAnnotationsCheckBox;
   private JBLabel mavenCoordinates;
   private final ThreeStateCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
@@ -200,6 +201,15 @@ public class RepositoryLibraryPropertiesEditor {
         onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
       }
     });
+    downloadAnnotationsCheckBox.setSelected(model.isDownloadAnnotations());
+    downloadAnnotationsCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        model.setDownloadAnnotations(downloadAnnotationsCheckBox.isSelected());
+        onChangeListener.onChange(RepositoryLibraryPropertiesEditor.this);
+      }
+    });
+
     updateIncludeTransitiveDepsCheckBoxState();
     myIncludeTransitiveDepsCheckBox.addChangeListener(new ChangeListener() {
       @Override

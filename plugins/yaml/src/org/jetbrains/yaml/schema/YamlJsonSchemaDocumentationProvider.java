@@ -43,7 +43,7 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
     if (virtualFile == null) return null;
     JsonSchemaObject schemaObject = jsonSchemaService.getSchemaObject(virtualFile);
     if (schemaObject == null) return null;
-    return JsonSchemaDocumentationProvider.generateDoc(element, schemaObject, preferShort);
+    return JsonSchemaDocumentationProvider.generateDoc(element, schemaObject, preferShort, null);
   }
 
   @Nullable

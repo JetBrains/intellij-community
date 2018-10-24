@@ -92,6 +92,25 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}");
   }
 
+  public void testInsideAnonymous() {
+    doTest("import java.util.*;" +
+           "class A<T> {{" +
+           "Iterator<T> i = new Iterator<T>() {" +
+           "  Enumeration<T> myEnumeration;" +
+           "  public boolean hasNext() {" +
+           "    return myEnumeration.hasMoreElements();" +
+           "  }" +
+           "  public T next() {" +
+           "    if (this.hasNext()) {\n" +
+           "      return null;\n" +
+           "    }\n" +
+           "    throw new NoSuchElementException();" +
+           "  }" +
+           "  public void remove() {}" +
+           "};" +
+           "}}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

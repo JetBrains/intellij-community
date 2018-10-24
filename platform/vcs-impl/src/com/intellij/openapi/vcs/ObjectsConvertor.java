@@ -29,12 +29,12 @@ import static com.intellij.util.containers.ContainerUtil.map;
 public class ObjectsConvertor {
 
   @NotNull
-  public static List<VirtualFile> fp2vf(@NotNull Collection<FilePath> in) {
+  public static List<VirtualFile> fp2vf(@NotNull Collection<? extends FilePath> in) {
     return map(in, FilePath::getVirtualFile);
   }
 
   @NotNull
-  public static List<FilePath> vf2fp(@NotNull List<VirtualFile> in) {
+  public static List<FilePath> vf2fp(@NotNull List<? extends VirtualFile> in) {
     return map(in, VcsUtil::getFilePath);
   }
 
@@ -44,7 +44,7 @@ public class ObjectsConvertor {
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   @Deprecated
   @NotNull
-  public static <T, S> List<S> convert(@NotNull Collection<T> in, @NotNull Convertor<T, S> convertor) {
+  public static <T, S> List<S> convert(@NotNull Collection<? extends T> in, @NotNull Convertor<? super T, ? extends S> convertor) {
     return map(in, convertor::convert);
   }
 }

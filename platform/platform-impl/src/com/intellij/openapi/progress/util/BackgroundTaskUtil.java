@@ -147,8 +147,8 @@ public class BackgroundTaskUtil {
 
   @Nullable
   @CalledInAny
-  public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<T> computable,
-                                                    @NotNull Consumer<T> asyncCallback,
+  public static <T> T computeInBackgroundAndTryWait(@NotNull Computable<? extends T> computable,
+                                                    @NotNull Consumer<? super T> asyncCallback,
                                                     long waitMillis) {
     Pair<T, ProgressIndicator> pair = computeInBackgroundAndTryWait(
       indicator -> computable.compute(),

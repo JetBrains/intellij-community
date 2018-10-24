@@ -137,7 +137,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
 
     configuration.restoreOriginalModule(originalModule);
     Module module = configuration.getConfigurationModule().getModule();
-    if (module == null) {
+    if (module == null && psiClass.getManager().isInProject(psiClass)) {
       PsiFile containingFile = psiClass.getContainingFile();
       LOG.error("No module found", new Attachment("context.txt",
                                                   "generated name:" + configuration.getName() +
@@ -145,7 +145,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
                                                   "; physical: " + psiClass.isPhysical() +
                                                   "; className: " + psiClass.getQualifiedName() +
                                                   "; file: " + containingFile +
-                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass) +
+                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile()) +
                                                   "; original module: " + originalModule));
       return false;
     }

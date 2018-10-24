@@ -89,8 +89,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
-    //noinspection unchecked
+  public <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> configurableClass) {
     showSettingsDialog(project, configurableClass, null);
   }
 

@@ -64,19 +64,19 @@ public abstract class VcsIntegrationEnabler {
     }
   }
 
-  private boolean isProjectBelowVcs(@NotNull Collection<VirtualFile> roots) {
+  private boolean isProjectBelowVcs(@NotNull Collection<? extends VirtualFile> roots) {
     //check if there are vcs roots strictly above the project dir
     return ContainerUtil.exists(roots, root -> VfsUtilCore.isAncestor(root, myProject.getBaseDir(), true));
   }
 
   @NotNull
-  public static String joinRootsPaths(@NotNull Collection<VirtualFile> roots) {
+  public static String joinRootsPaths(@NotNull Collection<? extends VirtualFile> roots) {
     return StringUtil.join(roots, VirtualFile::getPresentableUrl, ", ");
   }
 
   protected abstract boolean initOrNotifyError(@NotNull final VirtualFile projectDir);
 
-  protected void notifyAddedRoots(Collection<VirtualFile> roots) {
+  protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = String.format("Added %s %s: %s", myVcs.getName(), pluralize("root", roots.size()), joinRootsPaths(roots));
     VcsNotifier.getInstance(myProject).notifySuccess(message);
   }

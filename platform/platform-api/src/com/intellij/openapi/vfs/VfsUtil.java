@@ -369,7 +369,7 @@ public class VfsUtil extends VfsUtilCore {
     return result;
   }
 
-  public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor) {
+  public static void processFileRecursivelyWithoutIgnored(@NotNull VirtualFile root, @NotNull Processor<? super VirtualFile> processor) {
     FileTypeManager ftm = FileTypeManager.getInstance();
     visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull

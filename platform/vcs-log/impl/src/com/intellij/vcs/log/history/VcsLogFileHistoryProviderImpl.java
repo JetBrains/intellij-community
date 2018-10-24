@@ -18,7 +18,6 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFileHistoryProvider;
@@ -42,7 +41,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   public boolean canShowFileHistory(@NotNull Project project, @NotNull FilePath path) {
     if (!Registry.is("vcs.new.history")) return false;
 
-    VirtualFile root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(path);
+    VirtualFile root = VcsLogUtil.getActualRoot(project, path);
     if (root == null) return false;
 
     VcsLogData dataManager = VcsProjectLog.getInstance(project).getDataManager();
@@ -53,7 +52,7 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
 
   @Override
   public void showFileHistory(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
-    FilePath correctedPath = getCorrectedPath(project, path);
+    FilePath correctedPath = getCorrectedPath(project, path, revisionNumber);
 
     Hash hash = (revisionNumber != null) ? HashImpl.build(revisionNumber) : null;
     FileHistoryUi fileHistoryUi = VcsLogContentUtil.findAndSelect(project, FileHistoryUi.class,
@@ -76,11 +75,16 @@ public class VcsLogFileHistoryProviderImpl implements VcsLogFileHistoryProvider 
   }
 
   @NotNull
-  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path) {
+  private static FilePath getCorrectedPath(@NotNull Project project, @NotNull FilePath path, @Nullable String revisionNumber) {
     VirtualFile root = assertNotNull(VcsLogUtil.getActualRoot(project, path));
     if (!root.equals(VcsUtil.getVcsRootFor(project, path)) && path.isDirectory()) {
-      return VcsUtil.getFilePath(path.getPath(), false);
+      path = VcsUtil.getFilePath(path.getPath(), false);
     }
+
+    if (revisionNumber == null) {
+      return VcsUtil.getLastCommitPath(project, path);
+    }
+
     return path;
   }
 }

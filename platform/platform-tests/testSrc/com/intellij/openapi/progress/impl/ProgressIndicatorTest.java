@@ -40,8 +40,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DoubleArrayList;
-import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
 import org.assertj.core.util.VisibleForTesting;
@@ -129,9 +127,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       @Override
       public void computeInReadAction(@NotNull ProgressIndicator indicator) {
         insideReadAction.set(true);
-        while (true) {
-          ProgressManager.checkCanceled();
-        }
+        waitForPCE();
       }
 
       @Override
@@ -384,14 +380,18 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
         progress.cancel();
         assertTrue(CoreProgressManager.threadsUnderCanceledIndicator.contains(Thread.currentThread()));
         assertTrue(progress.isCanceled());
-        while (true) { // wait for PCE
-          ProgressManager.checkCanceled();
-        }
+        waitForPCE();
       }, ProgressWrapper.wrap(progress));
       fail("PCE must have been thrown");
     }
     catch (ProcessCanceledException ignored) {
 
+    }
+  }
+
+  private static void waitForPCE() {
+    while (true) {
+      ProgressManager.checkCanceled();
     }
   }
 
@@ -458,24 +458,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
 
     @Override
     public void initStateFrom(@NotNull ProgressIndicator indicator) {
-    }
-
-    @NotNull
-    @Override
-    public Stack<String> getTextStack() {
-      throw new RuntimeException();
-    }
-
-    @NotNull
-    @Override
-    public DoubleArrayList getFractionStack() {
-      throw new RuntimeException();
-    }
-
-    @NotNull
-    @Override
-    public Stack<String> getText2Stack() {
-      throw new RuntimeException();
     }
 
     @Override

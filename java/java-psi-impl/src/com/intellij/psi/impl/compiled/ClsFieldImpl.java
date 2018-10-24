@@ -3,7 +3,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
@@ -175,7 +174,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+    for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
         PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;

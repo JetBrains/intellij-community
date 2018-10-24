@@ -102,7 +102,7 @@ public class TemplateFormatUtil {
     PsiElement currElement = startElement;
     int lastOffset = -1;
     while (currElement != null && (lastOffset = currElement.getTextRange().getEndOffset()) <= range.getEndOffset()) {
-      boolean isTemplateLanguage = currElement.getLanguage().is(templateLanguage);
+      boolean isTemplateLanguage = templateLanguage.isKindOf(currElement.getLanguage());
       if (fromTemplate == isTemplateLanguage) {
         targetList.add(currElement);
       }

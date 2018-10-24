@@ -78,8 +78,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -237,12 +237,6 @@ public class PlatformTestUtil {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, new TreePath(tree.getModel().getRoot()), false, null, null);
-    final List<String> expectedNodes = StringUtil.split(expected, "\n");
-    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
-  }
-
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     assertEquals(expected.trim(), treeStringPresentation.trim());
@@ -264,7 +258,11 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis) {
-    assert getMillisSince(startTimeMillis) <= MAX_WAIT_TIME : "the waiting takes too long";
+    assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -314,6 +312,11 @@ public class PlatformTestUtil {
 
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME);
+  }
+
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.onProcessed(ignore -> complete.set(true));
@@ -326,7 +329,7 @@ public class PlatformTestUtil {
       }
       catch (Exception ignore) {
       }
-      assertMaxWaitTimeSince(start);
+      assertMaxWaitTimeSince(start, timeout);
     }
     while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
@@ -833,10 +836,6 @@ public class PlatformTestUtil {
   @NotNull
   public static String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
-  }
-
-  public static void tryGcSoftlyReachableObjects() {
-    GCUtil.tryGcSoftlyReachableObjects();
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {

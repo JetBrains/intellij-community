@@ -4,6 +4,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCatchSection;
@@ -28,7 +29,7 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
   @NotNull
   public String getName() {
     if (removeTryCatch) {
-      return InspectionGadgetsBundle.message("remove.try.catch.quickfix");
+      return CommonQuickFixBundle.message("fix.remove.statement", "try-catch");
     }
     else {
       return InspectionGadgetsBundle.message("delete.catch.section.quickfix");

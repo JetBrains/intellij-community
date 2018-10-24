@@ -49,7 +49,7 @@ public class ZipUtil {
     @NotNull String progressTitle,
     @NotNull final File zipArchive,
     @NotNull final File extractToDir,
-    @Nullable final NullableFunction<String, String> pathConvertor,
+    @Nullable final NullableFunction<? super String, String> pathConvertor,
     final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
@@ -88,7 +88,7 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull File zipArchive,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
@@ -107,7 +107,7 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull ZipInputStream stream,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
@@ -141,7 +141,7 @@ public class ZipUtil {
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final InputStream entryContentStream,
                                       @NotNull final File extractToDir,
-                                      @Nullable NullableFunction<String, String> pathConvertor,
+                                      @Nullable NullableFunction<? super String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
     if (pathConvertor != null) {

@@ -1058,7 +1058,7 @@ public class ResolveUtil {
                                                    @NotNull PsiScopeProcessor processor,
                                                    @NotNull ResolveState state,
                                                    @Nullable PsiElement lastParent, @NotNull PsiElement place) {
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+    for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
       if (!scope.processDeclarations(each, state, lastParent, place)) return false;
     }
     return true;

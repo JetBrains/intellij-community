@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.DefaultRawTypedHandler;
 import com.intellij.openapi.editor.impl.EditorActionManagerImpl;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -107,8 +106,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   public static QuoteHandler getQuoteHandlerForType(@NotNull FileType fileType) {
     if (!quoteHandlers.containsKey(fileType)) {
       QuoteHandler handler = null;
-      final QuoteHandlerEP[] handlerEPs = Extensions.getExtensions(QuoteHandlerEP.EP_NAME);
-      for(QuoteHandlerEP ep: handlerEPs) {
+      for(QuoteHandlerEP ep: QuoteHandlerEP.EP_NAME.getExtensionList()) {
         if (ep.fileType.equals(fileType.getName())) {
           handler = ep.getHandler();
           break;
@@ -129,7 +127,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     if (COMPLEX_CHARS.contains(c) || Character.isSurrogate(c)) return;
 
-    for (TypedHandlerDelegate delegate : Extensions.getExtensions(TypedHandlerDelegate.EP_NAME)) {
+    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
       if (!delegate.isImmediatePaintingEnabled(editor, c, context)) return;
     }
 
@@ -166,7 +164,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       PsiFile file = editor == originalEditor ? originalFile : psiDocumentManager.getPsiFile(editor.getDocument());
 
 
-      final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
+      final List<TypedHandlerDelegate> delegates = TypedHandlerDelegate.EP_NAME.getExtensionList();
 
       if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
         boolean handled = false;
@@ -225,7 +223,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
       type(originalEditor, charTyped);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
-      
+
       if (editor.isDisposed()) { // can be that injected editor disappear
         return;
       }
@@ -276,7 +274,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, null);
     }
   }
-  
+
   public static void commitDocumentIfCurrentCaretIsNotTheFirstOne(@NotNull Editor editor, @NotNull Project project) {
     if (ContainerUtil.getFirstItem(editor.getCaretModel().getAllCarets()) != editor.getCaretModel().getCurrentCaret()) {
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -370,7 +368,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (!iterator.atEnd()) {
       iterator.advance();
 
-      if (!iterator.atEnd() && 
+      if (!iterator.atEnd() &&
           !BraceMatchingUtil.isPairedBracesAllowedBeforeTypeInFileType(braceTokenType, iterator.getTokenType(), fileType)) {
         return;
       }

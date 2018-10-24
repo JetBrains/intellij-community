@@ -798,10 +798,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertSameElements(variants, "int", "integer", "invisibleType");
   }
 
+  public void testEnumeratedTypeUnion() {
+    List<String> variants = myFixture.getCompletionVariants("enumerations.xml", "enumerations.xsd");
+    assertSameElements(variants, "A", "B");
+  }
+
   private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyle.getSettings(myFixture.getProject())
                     .getCustomSettings(HtmlCodeStyleSettings.class);
   }
-
 }
 

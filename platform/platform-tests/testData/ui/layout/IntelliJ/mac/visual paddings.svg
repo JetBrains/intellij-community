@@ -118,7 +118,7 @@
     <g fill="white" font-family="sans-serif" transform="translate(131,299)" stroke="white">
       <rect x="0" width="568" height="47" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="silver" font-family="sans-serif" transform="translate(131,299)" stroke="silver">
+    <g fill="rgb(50,50,50)" font-family="sans-serif" transform="translate(131,299)" stroke="rgb(50,50,50)">
       <rect x="0" width="1" height="47" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="0" width="568" height="1" y="0" clip-path="url(#1)" stroke="none"/>
       <rect x="567" width="1" height="47" y="0" clip-path="url(#1)" stroke="none"/>
@@ -148,7 +148,7 @@
     <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(452,265)" stroke="white">
       <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 21 C3 22.6569 4.3431 24 6 24 L86 24 C87.6569 24 89 22.6569 89 21 L89 6 C89 4.3431 87.6569 3 86 3 Z" stroke="none" clip-path="url(#6)"/>
     </g>
-    <g fill="rgb(252,252,252)" font-weight="bold" font-family="sans-serif" transform="translate(460,269)" stroke="rgb(252,252,252)">
+    <g fill="white" font-weight="bold" font-family="sans-serif" transform="translate(460,269)" stroke="white">
       <rect x="0" width="81" height="19" y="0" clip-path="url(#7)" stroke="none"/>
       <text fill="rgb(29,29,29)" x="1" xml:space="preserve" y="14" clip-path="url(#7)" stroke="none">c1</text>
     </g>
@@ -240,7 +240,7 @@
     <g fill="white" text-rendering="optimizeLegibility" font-weight="bold" font-family="sans-serif" transform="translate(128,59)" stroke="white">
       <path d="M6 3 C4.3431 3 3 4.3431 3 6 L3 21 C3 22.6569 4.3431 24 6 24 L568 24 C569.6569 24 571 22.6569 571 21 L571 6 C571 4.3431 569.6569 3 568 3 Z" stroke="none" clip-path="url(#16)"/>
     </g>
-    <g fill="rgb(252,252,252)" font-weight="bold" font-family="sans-serif" transform="translate(136,63)" stroke="rgb(252,252,252)">
+    <g fill="white" font-weight="bold" font-family="sans-serif" transform="translate(136,63)" stroke="white">
       <rect x="0" width="563" height="19" y="0" clip-path="url(#27)" stroke="none"/>
       <text fill="rgb(29,29,29)" x="1" xml:space="preserve" y="14" clip-path="url(#27)" stroke="none">one</text>
     </g>

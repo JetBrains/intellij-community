@@ -93,7 +93,8 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   @NotNull
   public static String getDefaultShelfPath(@NotNull Project project) {
     return VcsUtil
-      .getFilePath(chooseNotNull(ProjectKt.getProjectStoreDirectory(project.getBaseDir()), project.getBaseDir()), SHELVE_MANAGER_DIR_PATH)
+      .getFilePath(chooseNotNull(ProjectKt.getProjectStoreDirectory(project.getBaseDir()), project.getBaseDir()),
+                   ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH)
       .getPath();
   }
 

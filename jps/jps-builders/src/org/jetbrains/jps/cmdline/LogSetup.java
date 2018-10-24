@@ -32,9 +32,8 @@ import java.nio.charset.StandardCharsets;
  */
 public class LogSetup {
 
-  private static final String LOG_CONFIG_FILE_NAME = "build-log.properties";
+  public static final String LOG_CONFIG_FILE_NAME = "build-log.properties";
   private static final String LOG_FILE_NAME = "build.log";
-  private static final String DEFAULT_LOGGER_CONFIG = "defaultLogConfig.properties";
   private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
 
   public static void initLoggers() {
@@ -64,7 +63,7 @@ public class LogSetup {
   private static void ensureLogConfigExists(final File logConfig) throws IOException {
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
-      try(InputStream in = LogSetup.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG)) {
+      try(InputStream in = readDefaultLogConfig()) {
         if (in != null) {
           try (FileOutputStream out = new FileOutputStream(logConfig)) {
             FileUtil.copy(in, out);
@@ -72,6 +71,10 @@ public class LogSetup {
         }
       }
     }
+  }
+
+  public static InputStream readDefaultLogConfig() {
+    return LogSetup.class.getResourceAsStream("/defaultLogConfig.properties");
   }
 
   private static class MyLoggerFactory implements Logger.Factory {

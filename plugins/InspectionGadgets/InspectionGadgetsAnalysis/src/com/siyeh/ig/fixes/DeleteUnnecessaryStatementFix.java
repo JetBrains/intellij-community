@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,16 +57,17 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
   }
 
   public static void deleteUnnecessaryStatement(PsiStatement statement) {
+    CommentTracker ct = new CommentTracker();
     final PsiElement parent = statement.getParent();
     if (parent instanceof PsiIfStatement ||
         parent instanceof PsiWhileStatement ||
         parent instanceof PsiDoWhileStatement ||
         parent instanceof PsiForeachStatement ||
         parent instanceof PsiForStatement) {
-      PsiReplacementUtil.replaceStatement(statement, "{}");
+      ct.replaceAndRestoreComments(statement, "{}");
     }
     else {
-      deleteElement(statement);
+      ct.deleteAndRestoreComments(statement);
     }
   }
 }

@@ -524,7 +524,7 @@ public abstract class RadComponent extends PropertiesContainer {
     return siblingLists;
   }
 
-  public static Set<RadComponent> getParents(List<RadComponent> components) {
+  public static Set<RadComponent> getParents(List<? extends RadComponent> components) {
     Set<RadComponent> parents = new HashSet<>();
     for (RadComponent component : components) {
       RadComponent parent = component.getParent();

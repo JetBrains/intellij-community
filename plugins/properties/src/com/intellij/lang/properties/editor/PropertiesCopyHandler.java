@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -17,7 +18,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,11 +47,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author Dmitry Batkovich
@@ -231,17 +228,15 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
                                   return true;
                                 }, BundleNameEvaluator.BASE_NAME);
 
-      final List<PsiFileSystemItem> resourceBundlesAsFileSystemItems = propertiesFiles
+      PsiFileSystemItem[] resourceBundlesAsFileSystemItems = propertiesFiles
         .stream()
         .map(PropertiesFile::getResourceBundle)
         .distinct()
         .filter(b -> b.getBaseDirectory() != null)
-        .sorted((o1, o2) -> Comparing.compare(o1.getBaseName(), o2.getBaseName()))
+        .sorted(Comparator.comparing(ResourceBundle::getBaseName))
         .map(ResourceBundleAsFileSystemItem::new)
-        .collect(Collectors.toList());
-
-      final ComboBox<PsiFileSystemItem> resourceBundleComboBox =
-        new ComboBox<>(resourceBundlesAsFileSystemItems.toArray(new PsiFileSystemItem[0]));
+        .toArray(PsiFileSystemItem[]::new);
+      final ComboBox<PsiFileSystemItem> resourceBundleComboBox = new ComboBox<>(resourceBundlesAsFileSystemItems);
       new ComboboxSpeedSearch(resourceBundleComboBox) {
         @Override
         protected String getElementText(Object element) {

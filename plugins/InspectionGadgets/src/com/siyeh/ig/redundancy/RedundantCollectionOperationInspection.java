@@ -95,7 +95,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
 
     @NotNull
     default String getFixName() {
-      return InspectionGadgetsBundle.message("replace.with", getReplacement());
+      return CommonQuickFixBundle.message("fix.replace.with.x", getReplacement());
     }
   }
 

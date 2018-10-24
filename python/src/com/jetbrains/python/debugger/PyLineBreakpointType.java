@@ -78,7 +78,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                          Document document,
                                          Class[] unstoppablePsiElements,
                                          Set<IElementType> unstoppableElementTypes,
-                                         Ref<Boolean> stoppable) {
+                                         Ref<? super Boolean> stoppable) {
     if ((file.getFileType() == fileType || isPythonScratch(project, file)) && !isSkeleton(project, file)) {
       XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
 

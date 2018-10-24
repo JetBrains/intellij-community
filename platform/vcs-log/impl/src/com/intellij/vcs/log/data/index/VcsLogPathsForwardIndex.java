@@ -24,36 +24,36 @@ import java.util.Map;
 import java.util.Set;
 
 public abstract class VcsLogPathsForwardIndex
-  extends MapBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>, List<Collection<Integer>>> {
+  extends MapBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeKind>, List<Collection<Integer>>> {
 
-  protected VcsLogPathsForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeData>, VcsIndexableDetails> extension)
+  protected VcsLogPathsForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeKind>, VcsIndexableDetails> extension)
     throws IOException {
     super(extension);
   }
 
   @Override
-  protected InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> getDiffBuilder(int inputId,
+  protected InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> getDiffBuilder(int inputId,
                                                                                             @Nullable List<Collection<Integer>> oldData) {
     return new VcsLogPathsDiffBuilder(inputId, oldData);
   }
 
   @Override
-  protected List<Collection<Integer>> convertToMapValueType(int inputId, @NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> map) {
+  protected List<Collection<Integer>> convertToMapValueType(int inputId, @NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> map) {
     return convertToMapValueType(map);
   }
 
   @NotNull
-  static List<Collection<Integer>> convertToMapValueType(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> map) {
+  static List<Collection<Integer>> convertToMapValueType(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> map) {
     SmartList<Collection<Integer>> result = new SmartList<>();
 
-    for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeData>> entry : map.entrySet()) {
+    for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeKind>> entry : map.entrySet()) {
       Integer fileId = entry.getKey();
-      List<VcsLogPathsIndex.ChangeData> changes = entry.getValue();
+      List<VcsLogPathsIndex.ChangeKind> changes = entry.getValue();
       while (result.size() < changes.size()) {
         result.add(ContainerUtil.newHashSet());
       }
       for (int i = 0; i < changes.size(); i++) {
-        if (changes.get(i) != VcsLogPathsIndex.ChangeData.NOT_CHANGED) {
+        if (changes.get(i) != VcsLogPathsIndex.ChangeKind.NOT_CHANGED) {
           result.get(i).add(fileId);
         }
       }
@@ -93,7 +93,7 @@ public abstract class VcsLogPathsForwardIndex
     }
   }
 
-  static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
+  static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeKind>> {
     @Nullable private final List<? extends Collection<Integer>> myOldData;
 
     VcsLogPathsDiffBuilder(int id, @Nullable List<? extends Collection<Integer>> oldData) {
@@ -102,9 +102,9 @@ public abstract class VcsLogPathsForwardIndex
     }
 
     @Override
-    public boolean differentiate(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor,
-                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> updateProcessor,
+    public boolean differentiate(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> newData,
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeKind>> addProcessor,
+                                 @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeKind>> updateProcessor,
                                  @NotNull RemovedKeyProcessor<? super Integer> removeProcessor) throws StorageException {
 
       if (myOldData == null) {
@@ -113,14 +113,14 @@ public abstract class VcsLogPathsForwardIndex
 
       // we are only here if reindexWithRenames happens (no new data, unless copies are tracked)
       // or if myOldData is empty
-      Map<Integer, List<VcsLogPathsIndex.ChangeData>> newFiles = ContainerUtil.filter(newData, it -> !isFileInOldData(it));
+      Map<Integer, List<VcsLogPathsIndex.ChangeKind>> newFiles = ContainerUtil.filter(newData, it -> !isFileInOldData(it));
       return processNewFiles(newFiles, addProcessor);
     }
 
-    public boolean processNewFiles(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> newData,
-                                   @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeData>> addProcessor)
+    public boolean processNewFiles(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeKind>> newData,
+                                   @NotNull KeyValueUpdateProcessor<? super Integer, ? super List<VcsLogPathsIndex.ChangeKind>> addProcessor)
       throws StorageException {
-      for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeData>> entry : newData.entrySet()) {
+      for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeKind>> entry : newData.entrySet()) {
         addProcessor.process(entry.getKey(), entry.getValue(), myInputId);
       }
       return !newData.isEmpty();

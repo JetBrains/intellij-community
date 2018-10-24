@@ -20,8 +20,6 @@ import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.update.GitFetchResult;
-import git4idea.update.GitFetcher;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitPreservingProcess;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.CHECKOUT;
+import static git4idea.fetch.GitFetchSupport.fetchSupport;
 
 public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
   private static final Logger LOG = GithubUtil.LOG;
@@ -188,13 +187,13 @@ public class GithubRebaseAction extends AbstractGithubUrlGroupingAction {
       }
     }
 
-    private boolean fetchParent(@NotNull ProgressIndicator indicator) {
-      GitFetchResult result = new GitFetcher(myProject, indicator, false).fetch(myRepository.getRoot(), "upstream", null);
-      if (!result.isSuccess()) {
-        GitFetcher.displayFetchResult(myProject, result, null, result.getErrors());
+    private boolean fetchParent(@NotNull final ProgressIndicator indicator) {
+      GitRemote remote = GitUtil.findRemoteByName(myRepository, "upstream");
+      if (remote == null) {
+        LOG.warn("Couldn't find remote " + " remoteName " + " in " + myRepository);
         return false;
       }
-      return true;
+      return fetchSupport(myProject).fetch(myRepository, remote).showNotificationIfFailed();
     }
 
     private void rebaseCurrentBranch(@NotNull ProgressIndicator indicator) {

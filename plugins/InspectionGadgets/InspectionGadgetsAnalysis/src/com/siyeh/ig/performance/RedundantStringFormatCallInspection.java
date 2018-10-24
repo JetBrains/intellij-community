@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -60,7 +61,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("replace.printf.with.print.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "printf()", "print()");
     }
 
     @Override

@@ -79,4 +79,9 @@ public class YamlByJsonSchemaHeavyCompletionTest extends JsonBySchemaHeavyComple
   public void testRequiredPropsLast() throws Exception {
     // do nothing
   }
+
+  @Override
+  public void testWhitespaceAfterColon() throws Exception {
+    // do nothing
+  }
 }

@@ -8,6 +8,8 @@ import com.intellij.util.generateAesKey
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.MessageDigest
+import java.security.NoSuchAlgorithmException
+import java.security.SecureRandom
 import java.util.*
 import javax.crypto.spec.SecretKeySpec
 
@@ -100,3 +102,12 @@ internal class SecureString(value: ByteArray) {
 }
 
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
+
+fun createSecureRandom(): SecureRandom {
+  try {
+    return SecureRandom.getInstanceStrong()
+  }
+  catch (e: NoSuchAlgorithmException) {
+    return SecureRandom()
+  }
+}

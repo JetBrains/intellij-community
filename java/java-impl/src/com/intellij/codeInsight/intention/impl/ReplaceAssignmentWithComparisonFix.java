@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +58,6 @@ public class ReplaceAssignmentWithComparisonFix extends LocalQuickFixAndIntentio
   @NotNull
   @Override
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", "==");
   }
 }

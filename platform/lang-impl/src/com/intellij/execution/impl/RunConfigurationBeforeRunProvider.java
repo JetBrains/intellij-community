@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -165,9 +164,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
                                       @NotNull final RunnerAndConfigurationSettings settings,
                                       @Nullable final ExecutionTarget target) {
-    final Executor executor = RunManagerImpl.canRunConfiguration(settings, env.getExecutor())
-                              ? env.getExecutor()
-                              : DefaultRunExecutor.getRunExecutorInstance();
+    final Executor executor = env.getExecutor();
     final String executorId = executor.getId();
     ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(executor, settings);
     if (builder == null) {
@@ -264,7 +261,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   private static void beforeRun(@NotNull ExecutionEnvironment environment) {
-    for (RunConfigurationBeforeRunProviderDelegate delegate : Extensions.getExtensions(RunConfigurationBeforeRunProviderDelegate.EP_NAME)) {
+    for (RunConfigurationBeforeRunProviderDelegate delegate : RunConfigurationBeforeRunProviderDelegate.EP_NAME.getExtensionList()) {
       delegate.beforeRun(environment);
     }
   }

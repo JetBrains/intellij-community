@@ -28,13 +28,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 public abstract class GlobalSearchScope extends SearchScope implements ProjectAwareFileFilter {
   public static final GlobalSearchScope[] EMPTY_ARRAY = new GlobalSearchScope[0];
@@ -187,9 +187,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   @NotNull
   @Contract(pure = true)
   public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
-    if (scope == this) return scope;
-
-    return new UnionScope(this, scope);
+    return UnionScope.create(new GlobalSearchScope[]{this, scope});
   }
 
   @NotNull
@@ -201,7 +199,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     if (scopes.length == 1) {
       return scopes[0];
     }
-    return new UnionScope(scopes);
+    return UnionScope.create(scopes);
   }
 
   @NotNull
@@ -509,28 +507,29 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   private static class UnionScope extends GlobalSearchScope {
     private final GlobalSearchScope[] myScopes;
 
-    private UnionScope(@NotNull GlobalSearchScope scope1, @NotNull GlobalSearchScope scope2) {
-      this(new GlobalSearchScope[]{scope1, scope2});
-    }
-
-    private UnionScope(@NotNull GlobalSearchScope[] scopes) {
-      super(Stream.of(scopes).map(scope->scope.getProject()).findFirst().orElse(null));
-      if (scopes.length <= 1) throw new IllegalArgumentException("Too few scopes: "+ Arrays.asList(scopes));
-      List<GlobalSearchScope> result = null;
-      for (int i = 0; i < scopes.length; i++) {
-        GlobalSearchScope scope = scopes[i];
+    @NotNull
+    static GlobalSearchScope create(@NotNull GlobalSearchScope[] scopes) {
+      Set<GlobalSearchScope> result = new THashSet<>(scopes.length);
+      Project project = null;
+      for (GlobalSearchScope scope : scopes) {
+        if (scope == EMPTY_SCOPE) continue;
+        Project scopeProject = scope.getProject();
+        if (scopeProject != null) project = scopeProject;
         if (scope instanceof UnionScope) {
-          if (result == null) {
-            result = new ArrayList<>(scopes.length + ((UnionScope)scope).myScopes.length);
-            result.addAll(Arrays.asList(scopes).subList(0, i));
-          }
           ContainerUtil.addAll(result, ((UnionScope)scope).myScopes);
         }
-        else if (result != null) {
+        else {
           result.add(scope);
         }
       }
-      myScopes = result == null ? scopes : result.toArray(result.toArray(EMPTY_ARRAY));
+      if (result.isEmpty()) return EMPTY_SCOPE;
+      if (result.size() == 1) return result.iterator().next();
+      return new UnionScope(project, result.toArray(EMPTY_ARRAY));
+    }
+
+    private UnionScope(Project project, @NotNull GlobalSearchScope[] scopes) {
+      super(project);
+      myScopes = scopes;
     }
 
     @NotNull
@@ -624,7 +623,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (scope instanceof UnionScope) {
         GlobalSearchScope[] newScopes = ArrayUtil.mergeArrays(myScopes, ((UnionScope)scope).myScopes);
-        return new UnionScope(newScopes);
+        return create(newScopes);
       }
       return super.uniteWith(scope);
     }
@@ -796,10 +795,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private final boolean mySearchOutsideRootModel;
     private volatile Boolean myHasFilesOutOfProjectRoots;
 
-    /**
-     * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
-     */
-    @Deprecated
     private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
       this(project, files, null, false);
     }

@@ -21,9 +21,9 @@ class ProductInfoGenerator {
     this.context = context
   }
 
-  void generateProductJson(@NotNull String targetDirectory, @Nullable String startupWmClass, @NotNull String launcherPath,
+  void generateProductJson(@NotNull String targetDirectory, @NotNull String relativePathToBin, @Nullable String startupWmClass, @NotNull String launcherPath,
                            @Nullable String javaExecutablePath, @NotNull String vmOptionsFilePath, @NotNull OsFamily os) {
-    generateMultiPlatformProductJson(targetDirectory, [
+    generateMultiPlatformProductJson(targetDirectory, relativePathToBin, [
       new ProductInfoLaunchData(
         os: os.osName,
         startupWmClass: startupWmClass,
@@ -33,12 +33,13 @@ class ProductInfoGenerator {
     )])
   }
 
-  void generateMultiPlatformProductJson(@NotNull String targetDirectory, @NotNull List<ProductInfoLaunchData> launch) {
+  void generateMultiPlatformProductJson(@NotNull String targetDirectory, @NotNull String relativePathToBin, @NotNull List<ProductInfoLaunchData> launch) {
     def json = new ProductInfoData(
       name: context.applicationInfo.productName,
       version: context.applicationInfo.fullVersion,
       buildNumber: context.buildNumber,
       productCode: context.productProperties.productCode,
+      svgIconPath: context.applicationInfo.svgRelativePath != null ? "$relativePathToBin/${context.productProperties.baseFileName}.svg" : null,
       launch: launch
     )
     def file = new File(targetDirectory, FILE_NAME)

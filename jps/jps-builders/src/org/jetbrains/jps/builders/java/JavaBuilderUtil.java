@@ -61,11 +61,11 @@ public class JavaBuilderUtil {
     registerFilesToCompile(context, Collections.singleton(file));
   }
 
-  public static void registerFilesToCompile(CompileContext context, Collection<File> files) {
+  public static void registerFilesToCompile(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
   }
 
-  public static void registerFilesWithErrors(CompileContext context, Collection<File> files) {
+  public static void registerFilesWithErrors(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, COMPILED_WITH_ERRORS_KEY).addAll(files);
   }
 
@@ -73,7 +73,7 @@ public class JavaBuilderUtil {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
 
-  public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
+  public static void registerSuccessfullyCompiled(CompileContext context, Collection<? extends File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
 

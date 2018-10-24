@@ -29,7 +29,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -128,7 +127,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {
-            final String moduleName = modifiableModuleModel.getActualName(entry.getOwnerModule()); ;
+            final String moduleName = modifiableModuleModel.getActualName(entry.getOwnerModule());
             //noinspection unchecked
             if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
               //noinspection unchecked

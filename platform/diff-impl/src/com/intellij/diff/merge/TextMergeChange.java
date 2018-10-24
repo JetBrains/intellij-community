@@ -275,13 +275,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
       if (mySide == ThreeSide.BASE) {
-        switch (myType) {
-          case RESOLVE:
-            if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
-            return createResolveRenderer();
-          default:
-            throw new IllegalArgumentException(myType.name());
+        if (myType == OperationType.RESOLVE) {
+          if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
+          return createResolveRenderer();
         }
+        throw new IllegalArgumentException(myType.name());
       }
       else {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);

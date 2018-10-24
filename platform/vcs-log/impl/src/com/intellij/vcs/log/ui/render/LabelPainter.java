@@ -75,7 +75,7 @@ public class LabelPainter {
   }
 
   @Nullable
-  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<VcsRef> references) {
+  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
     if (!references.isEmpty()) {
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
       return logData.getLogProvider(root).getReferenceManager();

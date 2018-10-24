@@ -58,4 +58,12 @@ class D  {
             }
         }
     }
+
+    private <T> T foo(Class<T> type) {
+        T result = null;
+        if (type == Boolean.class) {
+            result = type.cast( true);
+        }
+        return result;
+    }
 }

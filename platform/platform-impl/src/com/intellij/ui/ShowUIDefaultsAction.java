@@ -4,11 +4,9 @@ package com.intellij.ui;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -20,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
@@ -59,21 +56,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   }
 
   public void perform(Project project) {
-    final UIDefaults defaults = UIManager.getDefaults();
-    Enumeration keys = defaults.keys();
-    final Object[][] data = new Object[defaults.size()][2];
-    int i = 0;
-    while (keys.hasMoreElements()) {
-      Object key = keys.nextElement();
-      Pair<Object, Object> row = Pair.create(key, defaults.get(key));
-      data[i][0] = row;
-      data[i][1] = row;
-      i++;
-    }
-
-    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair)o1[0]).first.toString(), ((Pair)o2[0]).first.toString()));
-
-    new DialogWrapper(project) {
+    new DialogWrapper(project, true) {
       {
         setTitle("Edit LaF Defaults");
         setModal(false);
@@ -100,21 +83,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       protected JComponent createCenterPanel() {
         mySearchField = new JBTextField(40);
         JPanel top = UI.PanelFactory.panel(mySearchField).withLabel("Filter:").createPanel();
-        DefaultTableModel model = new DefaultTableModel(data, new Object[]{"Name", "Value"}) {
-          @Override
-          public boolean isCellEditable(int row, int column) {
-            if (column != 1) return false;
-            Object value = ((Pair)getValueAt(row, column)).second;
-            return (value instanceof Color ||
-                    value instanceof Integer ||
-                    value instanceof Border ||
-                    value instanceof UIUtil.GrayFilter ||
-                    value instanceof Font);
-          }
-        };
-        FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);
-        filteringTableModel.setFilter(null);
-        final JBTable table = new JBTable(filteringTableModel) {
+        final JBTable table = new JBTable(createFilteringModel()) {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
@@ -221,7 +190,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           }
         });
-        final JBScrollPane pane = new JBScrollPane(table);
+
         new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         myTable = table;
@@ -249,6 +218,10 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             updateFilter();
           }
         });
+        JPanel pane = ToolbarDecorator.createDecorator(myTable)
+          .setToolbarPosition(ActionToolbarPosition.BOTTOM)
+          .setAddAction((x) -> addNewValue())
+          .createPanel();
         BorderLayoutPanel panel = simplePanel(simplePanel(pane).withBorder(JBUI.Borders.empty(5, 0)))
           .addToTop(top)
           .addToBottom(myColorsOnly);
@@ -275,6 +248,43 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         DataManager.registerDataProvider(myTable, provider);
         DataManager.registerDataProvider(mySearchField, provider);
         return panel;
+      }
+
+      private void addNewValue() {
+        ApplicationManager.getApplication().invokeLater(() -> new DialogWrapper(myTable, true) {
+          JBTextField name = new JBTextField(40);
+          JBTextField value = new JBTextField(40);
+          {
+            setTitle("Add New Value");
+            init();
+          }
+
+          @Override
+          protected JComponent createCenterPanel() {
+            return UI.PanelFactory.grid()
+              .add(UI.PanelFactory.panel(name).withLabel("Name:"))
+              .add(UI.PanelFactory.panel(value).withLabel("Value:"))
+              .createPanel();
+          }
+
+          @Nullable
+          @Override
+          public JComponent getPreferredFocusedComponent() {
+            return name;
+          }
+
+          @Override
+          protected void doOKAction() {
+            String key = name.getText().trim();
+            String val = value.getText().trim();
+            if (!key.isEmpty() && !val.isEmpty()) {
+              UIManager.put(key, UITheme.parseValue(key, val));
+              myTable.setModel(createFilteringModel());
+              updateFilter();
+            }
+            super.doOKAction();
+          }
+        }.show());
       }
 
       private void updateFilter() {
@@ -425,6 +435,45 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
     }.show();
   }
+
+
+  @NotNull
+  private static Object[][] getUIDefaultsData() {
+    final UIDefaults defaults = UIManager.getDefaults();
+    Enumeration keys = defaults.keys();
+    final Object[][] data = new Object[defaults.size()][2];
+    int i = 0;
+    while (keys.hasMoreElements()) {
+      Object key = keys.nextElement();
+      Pair<Object, Object> row = Pair.create(key, defaults.get(key));
+      data[i][0] = row;
+      data[i][1] = row;
+      i++;
+    }
+
+    Arrays.sort(data, (o1, o2) -> StringUtil.naturalCompare(((Pair)o1[0]).first.toString(), ((Pair)o2[0]).first.toString()));
+    return data;
+  }
+
+  @NotNull
+  private static FilteringTableModel<Object> createFilteringModel() {
+    DefaultTableModel model = new DefaultTableModel(getUIDefaultsData(), new Object[]{"Name", "Value"}) {
+      @Override
+      public boolean isCellEditable(int row, int column) {
+        if (column != 1) return false;
+        Object value = ((Pair)getValueAt(row, column)).second;
+        return (value instanceof Color ||
+                value instanceof Integer ||
+                value instanceof Border ||
+                value instanceof UIUtil.GrayFilter ||
+                value instanceof Font);
+      }
+    };
+    FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);
+    filteringTableModel.setFilter(null);
+    return filteringTableModel;
+  }
+
 
   private static class IconWrap implements Icon {
     private final Icon myIcon;

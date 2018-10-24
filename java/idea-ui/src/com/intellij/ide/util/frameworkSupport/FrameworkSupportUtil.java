@@ -97,7 +97,7 @@ public class FrameworkSupportUtil {
   }
 
   @Nullable
-  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<FrameworkSupportInModuleProvider> providers) {
+  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<? extends FrameworkSupportInModuleProvider> providers) {
     for (FrameworkSupportInModuleProvider provider : providers) {
       String frameworkId = provider.getFrameworkType().getId();
       if (id.equals(frameworkId)

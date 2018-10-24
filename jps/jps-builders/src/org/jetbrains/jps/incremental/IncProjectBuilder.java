@@ -605,7 +605,7 @@ public class IncProjectBuilder {
   private enum Applicability {
     NONE, PARTIAL, ALL;
 
-    static <T> Applicability calculate(Predicate<T> p, Collection<T> collection) {
+    static <T> Applicability calculate(Predicate<? super T> p, Collection<? extends T> collection) {
       int count = 0;
       int item = 0;
       for (T elem : collection) {

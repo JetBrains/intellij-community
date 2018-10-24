@@ -14,13 +14,13 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public class JvmAnalysisTestsUastUtil {
-  public static <T extends UElement> Set<T> getUElementsOfTypeFromFile(@NotNull PsiFile file, @NotNull Class<T> type) {
+  public static <T extends UElement> Set<T> getUElementsOfTypeFromFile(@NotNull PsiFile file, @NotNull Class<? extends T> type) {
     return getUElementsOfTypeFromFile(file, type, null);
   }
 
   public static <T extends UElement> Set<T> getUElementsOfTypeFromFile(@NotNull PsiFile file,
-                                                                       @NotNull Class<T> type,
-                                                                       @Nullable Predicate<T> filter) {
+                                                                       @NotNull Class<? extends T> type,
+                                                                       @Nullable Predicate<? super T> filter) {
     Set<T> result = new HashSet<>();
     PsiTreeUtil.processElements(file, new PsiElementProcessor() {
       @Override

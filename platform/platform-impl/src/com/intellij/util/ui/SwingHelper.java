@@ -243,7 +243,7 @@ public class SwingHelper {
   }
 
   public static <T> void updateItems(@NotNull JComboBox<T> comboBox,
-                                     @NotNull List<T> newItems,
+                                     @NotNull List<? extends T> newItems,
                                      @Nullable T newSelectedItemIfSelectionCannotBePreserved) {
     if (!shouldUpdate(comboBox, newItems)) {
       return;
@@ -317,7 +317,7 @@ public class SwingHelper {
   }
 
   public static void addHistoryOnExpansion(@NotNull final TextFieldWithHistory textFieldWithHistory,
-                                           @NotNull final NotNullProducer<List<String>> historyProvider) {
+                                           @NotNull final NotNullProducer<? extends List<String>> historyProvider) {
     textFieldWithHistory.addPopupMenuListener(new PopupMenuListener() {
       @Override
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -480,7 +480,7 @@ public class SwingHelper {
     return false;
   }
 
-  private static void getAllElements(Element root, List<Element> list, List<String> toCheck) {
+  private static void getAllElements(Element root, List<? super Element> list, List<String> toCheck) {
     if (toCheck.contains(root.getName().toLowerCase(Locale.US))) {
       list.add(root);
     }
@@ -631,7 +631,7 @@ public class SwingHelper {
   public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
                                                                                                 @NotNull String browseDialogTitle,
                                                                                                 @NotNull FileChooserDescriptor fileChooserDescriptor,
-                                                                                                @Nullable NotNullProducer<List<String>> historyProvider) {
+                                                                                                @Nullable NotNullProducer<? extends List<String>> historyProvider) {
     return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
   }
 
@@ -741,7 +741,7 @@ public class SwingHelper {
   }
 
   public static JEditorPane createHtmlLabel(@NotNull final String innerHtml, @Nullable String disabledHtml,
-                                            @Nullable final Consumer<String> hyperlinkListener) {
+                                            @Nullable final Consumer<? super String> hyperlinkListener) {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();
     String html = buildHtml(

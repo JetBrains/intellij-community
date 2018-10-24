@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -23,19 +9,19 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class JetgroovyIcons {
+public final class JetgroovyIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, JetgroovyIcons.class);
   }
 
 
-  public static class Griffon {
+  public final static class Griffon {
     public static final Icon Griffon = load("/icons/griffon/griffon.png"); // 16x16
     public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.svg"); // 13x13
 
   }
 
-  public static class Groovy {
+  public final static class Groovy {
     public static final Icon AbstractClass = load("/icons/groovy/abstractClass.png"); // 16x16
     public static final Icon AbstractField = load("/icons/groovy/abstractField.png"); // 16x16
     public static final Icon AbstractMethod = load("/icons/groovy/abstractMethod.png"); // 16x16
@@ -65,7 +51,7 @@ public class JetgroovyIcons {
 
   }
 
-  public static class Mvc {
+  public final static class Mvc {
     public static final Icon Action_method = load("/icons/mvc/action_method.png"); // 16x16
     public static final Icon Config_folder_closed = load("/icons/mvc/config_folder_closed.png"); // 16x16
     public static final Icon Controller = load("/icons/mvc/controller.png"); // 16x16

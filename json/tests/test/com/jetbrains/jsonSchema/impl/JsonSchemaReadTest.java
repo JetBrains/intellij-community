@@ -15,6 +15,7 @@ import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.junit.Assert;
 
 import java.io.File;

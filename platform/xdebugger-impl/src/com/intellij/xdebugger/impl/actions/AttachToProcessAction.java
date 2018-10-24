@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -14,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -155,7 +152,7 @@ public class AttachToProcessAction extends AnAction {
 
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
-    for (XAttachHostProvider hostProvider : Extensions.getExtensions(XAttachHostProvider.EP)) {
+    for (XAttachHostProvider hostProvider : XAttachHostProvider.EP.getExtensionList()) {
       indicator.checkCanceled();
       //noinspection unchecked
       Set<XAttachHost> hosts = ContainerUtil.newHashSet(hostProvider.getAvailableHosts(project));
@@ -174,7 +171,7 @@ public class AttachToProcessAction extends AnAction {
   }
 
   @NotNull
-  private static List<AttachToProcessItem> getRecentItems(@NotNull List<AttachToProcessItem> currentItems,
+  private static List<AttachToProcessItem> getRecentItems(@NotNull List<? extends AttachToProcessItem> currentItems,
                                                           @NotNull XAttachHost host,
                                                           @NotNull Project project,
                                                           @NotNull UserDataHolder dataHolder) {
@@ -239,9 +236,9 @@ public class AttachToProcessAction extends AnAction {
   @NotNull
   static List<AttachToProcessItem> doCollectAttachProcessItems(@NotNull final Project project,
                                                                @NotNull XAttachHost host,
-                                                               @NotNull List<ProcessInfo> processInfos,
+                                                               @NotNull List<? extends ProcessInfo> processInfos,
                                                                @NotNull ProgressIndicator indicator,
-                                                               @NotNull List<XAttachDebuggerProvider> providers) {
+                                                               @NotNull List<? extends XAttachDebuggerProvider> providers) {
     UserDataHolderBase dataHolder = new UserDataHolderBase();
 
     List<AttachToProcessItem> currentItems = ContainerUtil.newArrayList();

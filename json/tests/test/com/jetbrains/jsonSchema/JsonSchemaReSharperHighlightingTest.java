@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 

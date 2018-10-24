@@ -50,7 +50,7 @@ public class DownloadUtil {
                                            @NotNull String url,
                                            @NotNull File outputFile,
                                            @NotNull File tempFile,
-                                           @Nullable Predicate<String> contentChecker) throws IOException {
+                                           @Nullable Predicate<? super String> contentChecker) throws IOException {
     try {
       downloadContentToFile(indicator, url, tempFile);
       if (contentChecker != null) {
@@ -104,7 +104,7 @@ public class DownloadUtil {
     @Nullable Project project,
     @NotNull String progressTitle,
     @NotNull final String actionShortDescription,
-    @NotNull final Callable<V> supplier,
+    @NotNull final Callable<? extends V> supplier,
     @Nullable Producer<Boolean> tryAgainProvider) {
     int attemptNumber = 1;
     while (true) {

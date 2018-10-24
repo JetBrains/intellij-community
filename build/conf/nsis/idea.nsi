@@ -505,6 +505,11 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 !endif
 
 
+Function .onInstSuccess
+  SetErrorLevel 0
+FunctionEnd
+
+
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
@@ -519,6 +524,7 @@ custom_silent_config:
   Call customSilentConfigReader
 validate_install_dir:
   Call silentInstallDirValidate
+  Call OnDirectoryPageLeave
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
   StrCmp $silentMode "admin" uac_elevate done
@@ -1237,6 +1243,11 @@ uninstaller_relocated:
     MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
     Abort
 Done:
+FunctionEnd
+
+
+Function un.onUninstSuccess
+  SetErrorLevel 0
 FunctionEnd
 
 

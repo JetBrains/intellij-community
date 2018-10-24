@@ -60,7 +60,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   @NotNull
-  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull Iterable<T> items) {
+  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull Iterable<? extends T> items) {
     DefaultListModel<T> model = new DefaultListModel<>();
     for (T item : items) {
       model.add(model.getSize(), item);

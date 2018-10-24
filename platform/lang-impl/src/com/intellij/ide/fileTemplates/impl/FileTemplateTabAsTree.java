@@ -129,6 +129,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
           }
         }
       }
+      if (sel) setBackgroundSelectionColor(UIUtil.getTreeSelectionBackground(hasFocus));
       return this;
     }
   }

@@ -185,7 +185,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  public static boolean isChooserNeeded(List<PsiExpression> exprs) {
+  public static boolean isChooserNeeded(List<? extends PsiExpression> exprs) {
     if (exprs.size() == 1) {
       final PsiExpression expression = exprs.get(0);
       return expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getAnonymousClass() != null;
@@ -204,7 +204,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
            isPreferStatements();
   }
 
-  public static int preferredSelection(PsiElement[] statementsInRange, List<PsiExpression> expressions) {
+  public static int preferredSelection(PsiElement[] statementsInRange, List<? extends PsiExpression> expressions) {
     int selection;
     if (statementsInRange.length == 1 &&
         statementsInRange[0] instanceof PsiExpressionStatement &&

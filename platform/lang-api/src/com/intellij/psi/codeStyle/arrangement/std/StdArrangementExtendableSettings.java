@@ -55,7 +55,7 @@ public class StdArrangementExtendableSettings extends StdArrangementSettings imp
   }
 
   public static StdArrangementExtendableSettings createByMatchRules(@NotNull List<ArrangementGroupingRule> groupingRules,
-                                                                    @NotNull List<StdArrangementMatchRule> matchRules,
+                                                                    @NotNull List<? extends StdArrangementMatchRule> matchRules,
                                                                     @NotNull Collection<StdArrangementRuleAliasToken> rulesAliases) {
     final List<ArrangementSectionRule> sectionRules = new ArrayList<>();
     for (StdArrangementMatchRule rule : matchRules) {

@@ -161,7 +161,7 @@ public class CustomizationUtil {
 
   private static void computeDiff(final ActionUrl[] defaultUserObjects,
                                   final ActionUrl[] currentUserObjects,
-                                  @NotNull List<ActionUrl> actions) {
+                                  @NotNull List<? super ActionUrl> actions) {
     Diff.Change change = null;
     try {
       change = Diff.buildChanges(defaultUserObjects, currentUserObjects);

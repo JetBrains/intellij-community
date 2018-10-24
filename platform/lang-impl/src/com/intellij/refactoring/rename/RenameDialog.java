@@ -5,7 +5,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -158,8 +157,7 @@ public class RenameDialog extends RefactoringDialog {
       result.add(initialName);
     }
     result.add(UsageViewUtil.getShortName(myPsiElement));
-    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    for(NameSuggestionProvider provider: providers) {
+    for(NameSuggestionProvider provider: NameSuggestionProvider.EP_NAME.getExtensionList()) {
       SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
       if (info != null) {
         mySuggestedNameInfo = info;
@@ -252,7 +250,7 @@ public class RenameDialog extends RefactoringDialog {
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+    for(AutomaticRenamerFactory factory: AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
         gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutoRenamerFactories.size() % 2;

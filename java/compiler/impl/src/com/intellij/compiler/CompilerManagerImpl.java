@@ -11,7 +11,6 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -72,7 +71,7 @@ public class CompilerManagerImpl extends CompilerManager {
     myEventPublisher = messageBus.syncPublisher(CompilerTopics.COMPILATION_STATUS);
 
     // predefined compilers
-    for(Compiler compiler: Extensions.getExtensions(Compiler.EP_NAME, myProject)) {
+    for(Compiler compiler: Compiler.EP_NAME.getExtensions(myProject)) {
       addCompiler(compiler);
     }
     for (CompilerFactory factory : CompilerFactory.EP_NAME.getExtensionList(project)) {

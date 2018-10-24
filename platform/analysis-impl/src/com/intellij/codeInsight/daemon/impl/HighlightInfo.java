@@ -647,7 +647,7 @@ public class HighlightInfo implements Segment {
 
   private static final String ANNOTATOR_INSPECTION_SHORT_NAME = "Annotator";
 
-  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<Annotation.QuickFixInfo> fixes) {
+  private static void appendFixes(@Nullable TextRange fixedRange, @NotNull HighlightInfo info, @Nullable List<? extends Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         TextRange range = fixedRange != null ? fixedRange : quickFixInfo.textRange;

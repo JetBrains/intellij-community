@@ -142,7 +142,7 @@ public abstract class FileBasedIndex {
   public static void iterateRecursively(@Nullable final VirtualFile root,
                                         @NotNull final ContentIterator processor,
                                         @Nullable final ProgressIndicator indicator,
-                                        @Nullable final Set<VirtualFile> visitedRoots,
+                                        @Nullable final Set<? super VirtualFile> visitedRoots,
                                         @Nullable final ProjectFileIndex projectFileIndex) {
     if (root == null) {
       return;

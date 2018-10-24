@@ -93,13 +93,13 @@ public class JBTabbedTerminalWidget extends AbstractTabbedTerminalWidget<JBTabIn
   }
 
   public static void convertActions(@NotNull JComponent component,
-                                    @NotNull List<TerminalAction> actions) {
+                                    @NotNull List<? extends TerminalAction> actions) {
     convertActions(component, actions, null);
   }
 
   public static void convertActions(@NotNull JComponent component,
-                                    @NotNull List<TerminalAction> actions,
-                                    @Nullable final Predicate<KeyEvent> elseAction) {
+                                    @NotNull List<? extends TerminalAction> actions,
+                                    @Nullable final Predicate<? super KeyEvent> elseAction) {
     for (final TerminalAction action : actions) {
       if (action.isHidden()) {
         continue;

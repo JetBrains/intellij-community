@@ -29,7 +29,7 @@ import java.util.function.Function;
 import static java.util.stream.Collectors.*;
 
 public class AddModuleWizard extends AbstractProjectWizard {
-  private final ProjectImportProvider[] myImportProviders;
+  private final List<ProjectImportProvider> myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
 
@@ -38,7 +38,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
    */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, filePath);
-    myImportProviders = importProviders;
+    myImportProviders = Arrays.asList(importProviders);
     myModulesProvider = DefaultModulesProvider.createForProject(project);
     initModuleWizard(project, filePath);
   }
@@ -48,7 +48,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
    */
   public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, dialogParent);
-    myImportProviders = importProviders;
+    myImportProviders = Arrays.asList(importProviders);
     myModulesProvider = DefaultModulesProvider.createForProject(project);
     initModuleWizard(project, filePath);
   }
@@ -81,8 +81,8 @@ public class AddModuleWizard extends AbstractProjectWizard {
     for (ProjectImportProvider provider : myImportProviders) {
       provider.getBuilder().setFileToImport(defaultPath);
     }
-    if (myImportProviders.length == 1) {
-      final ProjectImportBuilder builder = myImportProviders[0].getBuilder();
+    if (myImportProviders.size() == 1) {
+      final ProjectImportBuilder builder = myImportProviders.get(0).getBuilder();
       myWizardContext.setProjectBuilder(builder);
       builder.setUpdate(getWizardContext().getProject() != null);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -44,12 +43,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
@@ -74,8 +75,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
@@ -926,7 +927,7 @@ public class PyUtil {
     if (isInit(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
-        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+        for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
           final PyType providedClassType = provider.getGenericType(cls, context);
           if (providedClassType != null) {
             return providedClassType;
@@ -962,7 +963,7 @@ public class PyUtil {
   }
 
   public static class KnownDecoratorProviderHolder {
-    public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+    public static final List<PyKnownDecoratorProvider> KNOWN_DECORATOR_PROVIDERS = PyKnownDecoratorProvider.EP_NAME.getExtensionList();
 
     private KnownDecoratorProviderHolder() {
     }
@@ -1915,14 +1916,16 @@ public class PyUtil {
     private final TextRange myContentRange;
 
     public StringNodeInfo(@NotNull ASTNode node) {
-      if (!PyTokenTypes.STRING_NODES.contains(node.getElementType())) {
-        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + node.getElementType() + " was given");
+      final IElementType nodeType = node.getElementType();
+      // TODO Migrate to newer PyStringElement API
+      if (!PyTokenTypes.STRING_NODES.contains(nodeType) && nodeType != PyElementTypes.FSTRING_NODE) {
+        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + nodeType + " was given");
       }
       myNode = node;
       final String nodeText = node.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       myPrefix = nodeText.substring(0, prefixLength);
-      myContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+      myContentRange = PyStringLiteralUtil.getContentRange(nodeText);
       myQuote = nodeText.substring(prefixLength, myContentRange.getStartOffset());
     }
 

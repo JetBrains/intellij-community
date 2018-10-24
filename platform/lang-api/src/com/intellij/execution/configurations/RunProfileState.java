@@ -27,10 +27,9 @@ import org.jetbrains.annotations.Nullable;
  * variables, working directory etc.
  *
  * @see CommandLineState
- * @see RunConfiguration#getState(com.intellij.execution.Executor, com.intellij.execution.runners.ExecutionEnvironment)
+ * @see RunConfiguration#getState(Executor, com.intellij.execution.runners.ExecutionEnvironment)
  * @see com.intellij.execution.configuration.EmptyRunProfileState
  */
-@SuppressWarnings("JavadocReference")
 public interface RunProfileState {
   /**
    * Starts the process.

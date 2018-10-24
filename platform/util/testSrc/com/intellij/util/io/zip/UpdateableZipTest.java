@@ -100,11 +100,42 @@ public class UpdateableZipTest extends TestCase {
     }
 
     try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry presentEntry = utilZip.getEntry("/first");
+      assertNotNull(presentEntry);
       ZipEntry removedEntry = utilZip.getEntry("/second");
       assertNull(removedEntry);
     }
   }
-  
+
+  public void testGc() throws Exception {
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
+
+      assertEntryWithContentExists(jbZip, "/first", "first");
+      assertEntryWithContentExists(jbZip, "/second", "second");
+
+      jbZip.getEntry("/second").erase();
+      jbZip.gc();
+    }
+
+    try (JBZipFile jbZip = new JBZipFile(zipFile)) {
+      assertEntryWithContentExists(jbZip, "/first", "first");
+    }
+
+    try (ZipFile utilZip = new ZipFile(zipFile)) {
+      ZipEntry presentEntry = utilZip.getEntry("/first");
+      assertNotNull(presentEntry);
+      ZipEntry removedEntry = utilZip.getEntry("/second");
+      assertNull(removedEntry);
+    }
+
+    try (RandomAccessFile file = new RandomAccessFile(zipFile, "r")) {
+      int length = (int)file.length();
+      byte[] buffer = new byte[length];
+      file.readFully(buffer, 0, length);
+      assertFalse(new String(buffer, CharsetToolkit.US_ASCII_CHARSET).contains("second"));
+    }
+  }
+
   public void testReadWrite1() throws Exception {
     try (JBZipFile jbZip = new JBZipFile(zipFile)) {
       assertEntryWithContentExists(jbZip, "/first", "first");

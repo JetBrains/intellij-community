@@ -16,6 +16,7 @@
 
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -112,8 +113,7 @@ public class IndexOfReplaceableByContainsInspection
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "replace.indexof.with.contains.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", "indexOf()", "contains()");
     }
   }
 

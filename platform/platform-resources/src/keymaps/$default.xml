@@ -633,7 +633,6 @@
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
-  <action id="RunGc"/>
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="control shift Z"/>
     <keyboard-shortcut first-keystroke="alt shift BACK_SPACE"/>

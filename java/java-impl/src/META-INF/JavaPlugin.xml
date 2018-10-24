@@ -92,6 +92,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
+    <extensionPoint qualifiedName="com.intellij.externalAnnotationsArtifactsResolver"
+                    interface="com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver"/>
     <!-- Android Studio: Added extension point for variable manipulation used by Instant Run and Profiler. Should be upstreamed. -->
     <extensionPoint qualifiedName="com.intellij.debuggerExtension" interface="com.intellij.debugger.engine.DebuggerExtension"/>
   </extensionPoints>
@@ -928,6 +930,16 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="SortedCollectionWithNonComparableKeys"
+                     key="inspection.sorted.collection.with.non.comparable.keys.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SortedCollectionWithNonComparableKeysInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="JoinDeclarationAndAssignmentJava"
+                     key="inspection.join.declaration.and.assignment.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.JoinDeclarationAndAssignmentJavaInspection" />
 
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
@@ -1067,10 +1079,6 @@
       <category>Java/Declaration</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.JoinDeclarationAndAssignmentAction</className>
-      <category>Java/Declaration</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitDeclarationAction</className>
       <category>Java/Declaration</category>
     </intentionAction>
@@ -1195,5 +1203,6 @@
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
     </intentionAction>
+    <externalAnnotationsArtifactsResolver implementation="com.intellij.jarRepository.ExternalAnnotationsRepositoryResolver"/>
   </extensions>
 </idea-plugin>

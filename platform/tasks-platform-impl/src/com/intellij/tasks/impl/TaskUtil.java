@@ -7,7 +7,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -71,7 +70,7 @@ public class TaskUtil {
   }
 
   private static String formatFromExtensions(@NotNull LocalTask task, String format) {
-    for (CommitPlaceholderProvider extension : Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME)) {
+    for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {
         String value = extension.getPlaceholderValue(task, placeholder);
@@ -267,7 +266,7 @@ public class TaskUtil {
     }
   }
 
-  public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
+  public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
     final com.intellij.util.text.Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks,
                                     (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);

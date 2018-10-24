@@ -33,7 +33,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
-  public static String configValueForKey(List<OutPair> outPairs, String key) {
+  public static String configValueForKey(List<? extends OutPair> outPairs, String key) {
     for (OutPair outPair : outPairs) {
       if (outPair.getKey().equals(key)) {
         String val = outPair.getVal();

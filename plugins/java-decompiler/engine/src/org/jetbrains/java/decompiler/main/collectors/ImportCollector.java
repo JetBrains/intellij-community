@@ -1,10 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
@@ -20,6 +20,7 @@ public class ImportCollector {
   private final Set<String> setNotImportedNames = new HashSet<>();
   // set of field names in this class and all its predecessors.
   private final Set<String> setFieldNames = new HashSet<>();
+  private final Set<String> setInnerClassNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -37,15 +38,35 @@ public class ImportCollector {
     }
 
     Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
+    LinkedList<String> queue = new LinkedList<>();
     StructClass currentClass = root.classStruct;
     while (currentClass != null) {
+      if (currentClass.superClass != null) {
+        queue.add(currentClass.superClass.getString());
+      }
+
+      Collections.addAll(queue, currentClass.getInterfaceNames());
+
       // all field names for the current class ..
       for (StructField f : currentClass.getFields()) {
         setFieldNames.add(f.getName());
       }
 
+      // .. all inner classes for the current class ..
+      StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+      if (attribute != null) {
+        for (StructInnerClassesAttribute.Entry entry : attribute.getEntries()) {
+          if (entry.enclosingName != null && entry.enclosingName.equals(currentClass.qualifiedName)) {
+            setInnerClassNames.add(entry.simpleName);
+          }
+        }
+      }
+
       // .. and traverse through parent.
-      currentClass = currentClass.superClass != null ? classes.get(currentClass.superClass.getString()) : null;
+      currentClass = !queue.isEmpty() ? classes.get(queue.removeFirst()) : null;
+      while (currentClass == null && !queue.isEmpty()) {
+        currentClass = classes.get(queue.removeFirst());
+      }
     }
   }
 
@@ -105,12 +126,14 @@ public class ImportCollector {
 
     StructContext context = DecompilerContext.getStructContext();
 
-    // check for another class which could 'shadow' this one. Two cases:
+    // check for another class which could 'shadow' this one. Three cases:
     // 1) class with the same short name in the current package
     // 2) class with the same short name in the default package
+    // 3) inner class with the same short name in the current class, a super class, or an implemented interface
     boolean existsDefaultClass =
       (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
-      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty());  // default package
+      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty()) || // default package
+      setInnerClassNames.contains(shortName); // inner class
 
     if (existsDefaultClass ||
         (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {

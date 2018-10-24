@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class ApiStatus {
   public @interface Experimental {}
 
   /**
-   * Indicates that a public API of the annotated element (class, method or field) is is subject to removal in a future version. It's a stronger
+   * Indicates that a public API of the annotated element (class, method or field) is subject to removal in a future version. It's a stronger
    * variant of {@link Deprecated} annotation.
    * <br>
    * Since many tools aren't aware of this annotation it should be used as an addition to {@code @Deprecated} annotation or {@code @deprecated} javadoc tag only.

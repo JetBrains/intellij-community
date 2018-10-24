@@ -59,6 +59,7 @@ public final class GroovyResolverProcessorBuilder {
     final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
     result.remove(CLASS);
     result.remove(PACKAGE);
+    result.remove(TYPE_PARAMETER);
 
     if (ref.isQualified()) result.remove(BINDING);
     if (!(ref.getParent() instanceof GrMethodCall)) result.remove(METHOD);

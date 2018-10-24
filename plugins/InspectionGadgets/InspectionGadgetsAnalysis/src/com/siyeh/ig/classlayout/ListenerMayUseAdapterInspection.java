@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
@@ -77,7 +78,7 @@ public class ListenerMayUseAdapterInspection extends BaseInspection {
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("listener.may.use.adapter.quickfix", adapterName);
+      return CommonQuickFixBundle.message("fix.replace.with.x", "extends " + adapterName);
     }
 
     @NotNull

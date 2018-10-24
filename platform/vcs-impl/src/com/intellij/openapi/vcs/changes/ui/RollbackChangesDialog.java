@@ -123,7 +123,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   }
 
   @NotNull
-  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<Change> changes) {
+  public static String operationNameByChanges(@NotNull Project project, @NotNull Collection<? extends Change> changes) {
     return RollbackUtil.getRollbackOperationName(ChangesUtil.getAffectedVcses(changes, project));
   }
 

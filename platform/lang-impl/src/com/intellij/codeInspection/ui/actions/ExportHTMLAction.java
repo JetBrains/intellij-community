@@ -48,6 +48,8 @@ import java.util.Set;
 public class ExportHTMLAction extends AnAction implements DumbAware {
   private final InspectionResultsView myView;
   @NonNls private static final String PROBLEMS = "problems";
+  @NonNls private static final String ROOT = "root";
+  @NonNls private static final String AGGREGATE = "_aggregate";
   @NonNls private static final String HTML = "HTML";
   @NonNls private static final String XML = "XML";
 
@@ -120,6 +122,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final IOException[] ex = new IOException[1];
 
       final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
+      final Element aggregateRoot = new Element(ROOT);
       TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
@@ -132,15 +135,13 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             InspectionToolPresentation presentation = myView.getGlobalInspectionContext().getPresentation(wrapper);
             if (!toolNode.isExcluded()) {
               presentation.exportResults(problems, presentation::isExcluded, presentation::isExcluded);
+              presentation.exportAggregateResults(aggregateRoot, presentation::isExcluded, presentation::isExcluded);
             }
           }
           PathMacroManager.getInstance(myView.getProject()).collapsePaths(problems);
           try {
-            if (problems.getContentSize() != 0) {
-              JDOMUtil.writeDocument(new Document(problems),
-                                     outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                     CodeStyle.getDefaultSettings().getLineSeparator());
-            }
+            writeDocument(problems, outputDirectoryName, toolWrapper.getShortName());
+            writeDocument(aggregateRoot, outputDirectoryName, toolWrapper.getShortName() + AGGREGATE);
           }
           catch (IOException e) {
             ex[0] = e;
@@ -162,6 +163,14 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
     catch (IOException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));
+    }
+  }
+
+  private static void writeDocument(@NotNull Element problems, String outputDirectoryName, String name) throws IOException {
+    if (problems.getContentSize() != 0) {
+      JDOMUtil.writeDocument(new Document(problems),
+                             outputDirectoryName + File.separator + name + InspectionApplication.XML_EXTENSION,
+                             CodeStyle.getDefaultSettings().getLineSeparator());
     }
   }
 

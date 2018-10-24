@@ -30,7 +30,7 @@ public class SequenceIterator<T> implements Iterator<T> {
     myIterators = new Iterator[iterators.length];
     System.arraycopy(iterators, 0, myIterators, 0, iterators.length);
   }
-  public SequenceIterator(@NotNull Collection<Iterator<T>> iterators) {
+  public SequenceIterator(@NotNull Collection<? extends Iterator<? extends T>> iterators) {
     //noinspection unchecked
     this(iterators.toArray(new Iterator[0]));
   }

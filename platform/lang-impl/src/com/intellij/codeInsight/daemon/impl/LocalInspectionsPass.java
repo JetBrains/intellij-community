@@ -40,10 +40,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.containers.WeakInterner;
@@ -241,7 +238,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionToolWrapper toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
       if (suppressor instanceof RedundantSuppressionDetector) {
-        Set<String> activeTools = toolWrappers.stream().map(tool -> tool.getID()).collect(Collectors.toSet());
+        Set<String> activeTools = toolWrappers.stream().filter(tool -> !tool.isUnfair()).map(tool -> tool.getID()).collect(Collectors.toSet());
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
         ProblemsHolder holder = new ProblemsHolder(iManager, getFile(), true);
@@ -255,7 +252,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           PsiElement element = descriptor.getPsiElement();
           if (element != null) {
             Document thisDocument = documentManager.getDocument(getFile());
-            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument, new LocalInspectionToolWrapper(localTool), severity, descriptor, element);
+            createHighlightsForDescriptor(myInfos, emptyActionRegistered, ilManager, getFile(), thisDocument, 
+                                          new LocalInspectionToolWrapper(localTool), severity, descriptor, element, false);
           }
         }
       }
@@ -273,13 +271,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final List<InspectionContext> init = new ArrayList<>();
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<>(toolToSpecifiedLanguageIds.entrySet());
 
-    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor =
-      pair -> {
+    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = pair ->
+      AstLoadingFilter.disallowTreeLoading(() -> {
         LocalInspectionToolWrapper toolWrapper = pair.getKey();
         Set<String> dialectIdsSpecifiedForTool = pair.getValue();
         runToolOnElements(toolWrapper, dialectIdsSpecifiedForTool, iManager, isOnTheFly, indicator, elements, session, init, elementDialectIds);
         return true;
-      };
+      });
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
     if (!result) throw new ProcessCanceledException();
     return init;
@@ -332,7 +330,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       context -> {
         ProgressManager.checkCanceled();
         ApplicationManager.getApplication().assertReadAccessAllowed();
-        InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool);
+        AstLoadingFilter.disallowTreeLoading(
+          () -> InspectionEngine.acceptElements(elements, context.visitor, elementDialectIds, context.dialectIdsSpecifiedForTool)
+        );
         advanceProgress(1);
         context.tool.getTool().inspectionFinished(session, context.holder);
 
@@ -433,7 +433,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
       infos.clear();
-      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
+      createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement,
+                                    myIgnoreSuppressed);
       for (HighlightInfo info : infos) {
         final EditorColorsScheme colorsScheme = getColorsScheme();
         UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getFile(),
@@ -491,7 +492,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
             ProgressManager.checkCanceled();
             PsiElement element = descriptor.getPsiElement();
             if (element != null) {
-              createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element);
+              createHighlightsForDescriptor(outInfos, emptyActionRegistered, ilManager, file, documentRange, tool, severity, descriptor, element,
+                                            myIgnoreSuppressed);
             }
           }
         }
@@ -507,9 +509,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
-                                             @NotNull PsiElement element) {
+                                             @NotNull PsiElement element, boolean ignoreSuppressed) {
     LocalInspectionTool tool = toolWrapper.getTool();
-    if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) {
+    if (ignoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) {
       mySuppressedElements.computeIfAbsent(toolWrapper.getID(), shortName -> new HashSet<>()).add(element);
       return;
     }

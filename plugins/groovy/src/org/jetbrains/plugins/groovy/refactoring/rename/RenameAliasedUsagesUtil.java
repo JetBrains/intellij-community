@@ -28,7 +28,7 @@ public class RenameAliasedUsagesUtil {
   private RenameAliasedUsagesUtil() {
   }
 
-  public static Collection<PsiReference> filterAliasedRefs(Collection<PsiReference> refs, PsiElement element) {
+  public static Collection<PsiReference> filterAliasedRefs(Collection<? extends PsiReference> refs, PsiElement element) {
     Map<GroovyFile, String> aliases = new HashMap<>();
 
     ArrayList<PsiReference> result = new ArrayList<>();

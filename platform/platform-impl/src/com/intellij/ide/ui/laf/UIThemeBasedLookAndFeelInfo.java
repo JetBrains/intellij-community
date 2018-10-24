@@ -21,6 +21,7 @@ import java.util.Map;
  */
 public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   private final UITheme myTheme;
+  private boolean myInitialised;
 
   public UIThemeBasedLookAndFeelInfo(UITheme theme) {
     super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
@@ -45,6 +46,12 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
     installBackgroundImage();
     installEditorScheme();
+
+    myInitialised = true;
+  }
+
+  public boolean isInitialised() {
+    return myInitialised;
   }
 
   private void installEditorScheme() {

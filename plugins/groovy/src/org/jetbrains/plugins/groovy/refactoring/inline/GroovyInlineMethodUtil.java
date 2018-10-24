@@ -309,7 +309,7 @@ public class GroovyInlineMethodUtil {
   }
 
 
-  static void addQualifiersToInnerReferences(GrMethod method, Collection<ReferenceExpressionInfo> infos, @NotNull GrExpression qualifier)
+  static void addQualifiersToInnerReferences(GrMethod method, Collection<? extends ReferenceExpressionInfo> infos, @NotNull GrExpression qualifier)
       throws IncorrectOperationException {
     Set<GrReferenceExpression> exprs = new HashSet<>();
     for (ReferenceExpressionInfo info : infos) {

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class ClassLiteralGetter {
 
   public static void addCompletions(@NotNull final JavaSmartCompletionParameters parameters,
-                                    @NotNull Consumer<LookupElement> result, final PrefixMatcher matcher) {
+                                    @NotNull Consumer<? super LookupElement> result, final PrefixMatcher matcher) {
     PsiType expectedType = parameters.getDefaultType();
     if (!InheritanceUtil.isInheritor(expectedType, CommonClassNames.JAVA_LANG_CLASS)) {
       expectedType = parameters.getExpectedType();

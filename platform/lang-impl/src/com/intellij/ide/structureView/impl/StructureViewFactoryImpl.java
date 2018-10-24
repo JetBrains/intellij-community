@@ -9,7 +9,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.MultiValuesMap;
@@ -47,8 +46,7 @@ public final class StructureViewFactoryImpl extends StructureViewFactoryEx imple
     protected MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> compute() {
       MultiValuesMap<Class<? extends PsiElement>, StructureViewExtension> map =
         new MultiValuesMap<>();
-      StructureViewExtension[] extensions = Extensions.getExtensions(StructureViewExtension.EXTENSION_POINT_NAME);
-      for (StructureViewExtension extension : extensions) {
+      for (StructureViewExtension extension : StructureViewExtension.EXTENSION_POINT_NAME.getExtensionList()) {
         map.put(extension.getType(), extension);
       }
       return map;

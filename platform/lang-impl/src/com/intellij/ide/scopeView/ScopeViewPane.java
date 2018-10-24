@@ -34,9 +34,9 @@ import com.intellij.ui.stripe.TreeUpdater;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -288,7 +288,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   public String[] getSubIds() {
     LinkedHashMap<String, NamedScopeFilter> map = myFilters;
     if (map == null || map.isEmpty()) return EMPTY_STRING_ARRAY;
-    return ContainerUtil.toArray(map.keySet(), EMPTY_STRING_ARRAY);
+    return ArrayUtil.toStringArray(map.keySet());
   }
 
   @NotNull

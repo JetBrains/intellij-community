@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
@@ -22,6 +23,11 @@ public class AnnotationGutterLineConvertorProxy implements ActiveAnnotationGutte
   public AnnotationGutterLineConvertorProxy(final UpToDateLineNumberProvider getUpToDateLineNumber, final ActiveAnnotationGutter delegate) {
     myGetUpToDateLineNumber = getUpToDateLineNumber;
     myDelegate = delegate;
+  }
+
+  @NotNull
+  public ActiveAnnotationGutter getDelegate() {
+    return myDelegate;
   }
 
   @Override

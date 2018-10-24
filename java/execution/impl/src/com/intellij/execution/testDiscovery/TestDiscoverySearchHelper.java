@@ -80,7 +80,7 @@ public class TestDiscoverySearchHelper {
   }
 
   private static void collectPatterns(@NotNull Project project,
-                                      @NotNull Set<String> patterns,
+                                      @NotNull Set<? super String> patterns,
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       byte frameworkId) {

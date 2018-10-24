@@ -1295,14 +1295,14 @@ public abstract class DialogWrapper {
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
+    if (!isVisualPaddingCompensatedOnComponentLevel) {
+      southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+    }
     root.add(southSection, BorderLayout.SOUTH);
 
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
-      if (!isVisualPaddingCompensatedOnComponentLevel) {
-        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
-      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1979,7 +1979,8 @@ public abstract class DialogWrapper {
 
         SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
       });
-    } else if (!myInfo.isEmpty()) {
+    }
+    else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
           myErrorText.appendError(vi.message);

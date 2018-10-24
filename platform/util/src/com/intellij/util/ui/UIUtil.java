@@ -88,6 +88,8 @@ public class UIUtil {
 
   private static final StyleSheet DEFAULT_HTML_KIT_CSS;
 
+  public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
+
   static {
     blockATKWrapper();
     // save the default JRE CSS and ..
@@ -113,13 +115,20 @@ public class UIUtil {
 
   // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
   public static void markAsTypeAheadAware(Window window) {
-    if (window instanceof RootPaneContainer) {
-      ((RootPaneContainer)window).getRootPane().putClientProperty("TypeAheadAwareWindow", Boolean.TRUE);
-    }
+    putWindowClientProperty(window, "TypeAheadAwareWindow", Boolean.TRUE);
   }
 
   public static boolean isTypeAheadAware(Window window) {
-    return (window instanceof RootPaneContainer && isClientPropertyTrue(((RootPaneContainer)window).getRootPane(), "TypeAheadAwareWindow"));
+    return isWindowClientPropertyTrue(window, "TypeAheadAwareWindow");
+  }
+
+  // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
+  public static void markAsPossibleOwner(Dialog dialog) {
+    putWindowClientProperty(dialog, "PossibleOwner", Boolean.TRUE);
+  }
+
+  public static boolean isPossibleOwner(Dialog dialog) {
+    return isWindowClientPropertyTrue(dialog, "PossibleOwner");
   }
 
   private static void blockATKWrapper() {
@@ -387,21 +396,11 @@ public class UIUtil {
   };
 
   private static final Color UNFOCUSED_SELECTION_COLOR = Gray._212;
-  private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", new Color(0xa0bad5));
+  private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
   private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
 
-  public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(new NotNullProducer<Color>() {
-    final Color color = new JBColor(0x9b9b9b, 0x4b4b4b);
-    @NotNull
-    @Override
-    public Color produce() {
-      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
-        return Gray.xC9;
-      }
-      return color;
-    }
-  }));
+  public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(Gray.x9B, Gray.x4B));
 
   public static final Color SIDE_PANEL_BACKGROUND = JBColor.namedColor("SidePanel.background", new JBColor(0xE6EBF0, 0x3E434C));
 
@@ -709,6 +708,29 @@ public class UIUtil {
     String name = "apple.awt.contentScaleFactor";
     for (PropertyChangeListener each : toolkit.getPropertyChangeListeners(name)) {
       toolkit.removePropertyChangeListener(name, each);
+    }
+  }
+
+  public static boolean isWindowClientPropertyTrue(Window window, @NotNull Object key) {
+    return Boolean.TRUE.equals(getWindowClientProperty(window, key));
+  }
+
+  public static Object getWindowClientProperty(Window window, @NotNull Object key) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        return pane.getClientProperty(key);
+      }
+    }
+    return null;
+  }
+
+  public static void putWindowClientProperty(Window window, @NotNull Object key, Object value) {
+    if (window instanceof RootPaneContainer) {
+      JRootPane pane = ((RootPaneContainer)window).getRootPane();
+      if (pane != null) {
+        pane.putClientProperty(key, value);
+      }
     }
   }
 
@@ -1090,7 +1112,7 @@ public class UIUtil {
   }
 
   public static Color getContextHelpForeground() {
-    return Gray.x78;
+    return JBColor.namedColor("Label.grayForeground", Gray.x78);
   }
 
   @NotNull
@@ -1627,7 +1649,15 @@ public class UIUtil {
   }
 
   public static boolean isUnderWin10LookAndFeel() {
-    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
+    if (SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui")) {
+      LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+      if (lookAndFeel instanceof UserDataHolder) {
+        Boolean value = ((UserDataHolder)lookAndFeel).getUserData(LAF_WITH_THEME_KEY);
+        return value == null || !value.booleanValue();
+      }
+      return true;
+    }
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -2608,7 +2638,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<? super Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2631,6 +2661,15 @@ public class UIUtil {
       }
     }
     return component;
+  }
+
+  public static void layoutRecursively(@NotNull Component component) {
+    if (component instanceof JComponent) {
+      component.doLayout();
+      for (Component child : ((JComponent)component).getComponents()) {
+        layoutRecursively(child);
+      }
+    }
   }
 
   @Language("HTML")
@@ -3598,7 +3637,7 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<T> cls) {
+  public static <T extends JComponent> List<T> findComponentsOfType(JComponent parent, Class<? extends T> cls) {
     final ArrayList<T> result = new ArrayList<T>();
     findComponentsOfType(parent, cls, result);
     return result;

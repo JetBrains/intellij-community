@@ -22,9 +22,9 @@ public class BackwardReferenceIndexUtil {
 
   static void registerFile(String filePath,
                            TObjectIntHashMap<? extends JavacRef> refs,
-                           Collection<JavacDef> defs,
-                           Collection<JavacTypeCast> casts,
-                           Collection<JavacRef> implicitToString,
+                           Collection<? extends JavacDef> defs,
+                           Collection<? extends JavacTypeCast> casts,
+                           Collection<? extends JavacRef> implicitToString,
                            final JavaBackwardReferenceIndexWriter writer) {
 
     try {

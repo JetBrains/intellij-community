@@ -75,10 +75,8 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
               NotificationType.WARNING,
               (notification, event) -> {
                 if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                  switch (event.getDescription()) {
-                    case "accept":
-                      acceptAndRestore(project, unacceptedLevels.get(level), level);
-                      break;
+                  if (event.getDescription().equals("accept")) {
+                    acceptAndRestore(project, unacceptedLevels.get(level), level);
                   }
                   notification.expire();
                 }

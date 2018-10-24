@@ -29,11 +29,6 @@ class GroovyCallResolverProcessorImpl extends GroovyResolverProcessorImpl {
       return variables;
     }
 
-    final List<GroovyResolveResult> enumConstants = getCandidates(ENUM_CONST);
-    if (!enumConstants.isEmpty()) {
-      return enumConstants;
-    }
-
     final List<? extends GroovyResolveResult> methods = getAllCandidates(METHOD);
     final List<? extends GroovyResolveResult> properties = getAllCandidates(PROPERTY);
     final List<? extends GroovyResolveResult> fields = getAllCandidates(FIELD);

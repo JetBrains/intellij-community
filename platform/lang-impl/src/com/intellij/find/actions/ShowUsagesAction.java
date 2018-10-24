@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -48,39 +46,27 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   public static final String ID = "ShowUsages";
@@ -89,11 +75,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
   }
 
-  static final Usage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
-  static final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
-
   private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;
-  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, USAGES_OUTSIDE_SCOPE_SEPARATOR);
+  private static final UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR);
 
   private static final Comparator<UsageNode> USAGE_NODE_COMPARATOR = (c1, c2) -> {
     if (c1 instanceof StringNode || c2 instanceof StringNode) {
@@ -105,8 +88,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     Usage o1 = c1.getUsage();
     Usage o2 = c2.getUsage();
-    int weight1 = o1 == USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == MORE_USAGES_SEPARATOR ? 1 : 0;
-    int weight2 = o2 == USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == MORE_USAGES_SEPARATOR ? 1 : 0;
+    int weight1 = o1 == ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o1 == ShowUsagesTable.MORE_USAGES_SEPARATOR ? 1 : 0;
+    int weight2 = o2 == ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR ? 2 : o2 == ShowUsagesTable.MORE_USAGES_SEPARATOR ? 1 : 0;
     if (weight1 != weight2) return weight1 - weight2;
 
     if (o1 instanceof Comparable && o2 instanceof Comparable) {
@@ -213,11 +196,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     showElementUsages(editor, popupPosition, handler, maxUsages, handler.getFindUsagesOptions(DataManager.getInstance().getDataContext()));
   }
 
-  private void showElementUsages(final Editor editor,
-                                 @NotNull final RelativePoint popupPosition,
-                                 @NotNull final FindUsagesHandler handler,
-                                 final int maxUsages,
-                                 @NotNull final FindUsagesOptions options) {
+  void showElementUsages(final Editor editor,
+                         @NotNull final RelativePoint popupPosition,
+                         @NotNull final FindUsagesHandler handler,
+                         final int maxUsages,
+                         @NotNull final FindUsagesOptions options) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
     final ShowUsagesSettings showUsagesSettings = ShowUsagesSettings.getInstance();
@@ -245,7 +228,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       usageViewSettings.loadState(savedGlobalSettings);
     });
 
-    final MyTable table = new MyTable();
+    final ShowUsagesTable table = new ShowUsagesTable();
     final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
@@ -254,11 +237,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final Set<UsageNode> visibleNodes = new LinkedHashSet<>();
     final List<UsageNode> data = collectData(usages, visibleNodes, usageView, presentation);
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
-    setTableModel(table, usageView, data, outOfScopeUsages, options.searchScope);
+    table.setTableModel(usageView, data, outOfScopeUsages, options.searchScope);
 
 
     boolean isPreviewMode = Boolean.TRUE == PreviewManager.SERVICE.preview(handler.getProject(), UsagesPreviewPanelProvider.ID, Pair.create(usageView, table), false);
-    Runnable itemChosenCallback = prepareTable(table, editor, popupPosition, handler, maxUsages, options, isPreviewMode);
+    Runnable itemChosenCallback = table.prepareTable(editor, popupPosition, handler, maxUsages, options, isPreviewMode, this);
 
     @Nullable final JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
                                            maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
@@ -296,7 +279,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       if (!UsageViewManagerImpl.isInScope(usage, options.searchScope)) {
         if (outOfScopeUsages.getAndIncrement() == 0) {
           visibleNodes.add(USAGES_OUTSIDE_SCOPE_NODE);
-          usages.add(USAGES_OUTSIDE_SCOPE_SEPARATOR);
+          usages.add(ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR);
         }
         return true;
       }
@@ -310,7 +293,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           boolean continueSearch = true;
           if (visibleNodes.size() == maxUsages) {
             visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
-            usages.add(MORE_USAGES_SEPARATOR);
+            usages.add(ShowUsagesTable.MORE_USAGES_SEPARATOR);
             continueSearch = false;
           }
           pingEDT.ping();
@@ -344,7 +327,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
              if (usages.size() == 1) {
                //the only usage
                Usage usage = visibleNodes.iterator().next().getUsage();
-               if (usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+               if (usage == ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
                  hint(editor, UsageViewManagerImpl.outOfScopeMessage(outOfScopeUsages.get(), options.searchScope), handler, popupPosition, maxUsages, options, true);
                }
                else {
@@ -381,46 +364,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static UsageNode createStringNode(@NotNull final Object string) {
+  static UsageNode createStringNode(@NotNull final Object string) {
     return new StringNode(string);
-  }
-
-  private static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
-    private MyModel(@NotNull List<UsageNode> data, int cols) {
-      super(cols(cols), data, 0);
-    }
-
-    @NotNull
-    private static ColumnInfo[] cols(int cols) {
-      ColumnInfo<UsageNode, UsageNode> o = new ColumnInfo<UsageNode, UsageNode>("") {
-        @Nullable
-        @Override
-        public UsageNode valueOf(UsageNode node) {
-          return node;
-        }
-      };
-      List<ColumnInfo<UsageNode, UsageNode>> list = Collections.nCopies(cols, o);
-      return list.toArray(ColumnInfo.EMPTY_ARRAY);
-    }
-
-    @Override
-    public void addToModel(int idx, Object element) {
-      UsageNode node = element instanceof UsageNode ? (UsageNode)element : createStringNode(element);
-
-      if (idx < getRowCount()) {
-        insertRow(idx, node);
-      }
-      else {
-        addRow(node);
-      }
-    }
-
-    @Override
-    public void removeRangeFromModel(int start, int end) {
-      for (int i=end; i>=start; i--) {
-        removeRow(i);
-      }
-    }
   }
 
   private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
@@ -502,106 +447,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   @NotNull
   private static String searchScopePresentableName(@NotNull FindUsagesOptions options) {
     return options.searchScope.getDisplayName();
-  }
-
-  @NotNull
-  private Runnable prepareTable(final MyTable table,
-                                final Editor editor,
-                                final RelativePoint popupPosition,
-                                final FindUsagesHandler handler,
-                                final int maxUsages,
-                                @NotNull final FindUsagesOptions options,
-                                final boolean previewMode) {
-
-    SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(table);
-    speedSearch.setComparator(new SpeedSearchComparator(false));
-
-    table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
-    table.setShowGrid(false);
-    table.setShowVerticalLines(false);
-    table.setShowHorizontalLines(false);
-    table.setTableHeader(null);
-    table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
-    table.setIntercellSpacing(new Dimension(0, 0));
-
-    final AtomicReference<List<Object>> selectedUsages = new AtomicReference<>();
-    final AtomicBoolean moreUsagesSelected = new AtomicBoolean();
-    final AtomicBoolean outsideScopeUsagesSelected = new AtomicBoolean();
-    table.getSelectionModel().addListSelectionListener(e -> {
-      selectedUsages.set(null);
-      outsideScopeUsagesSelected.set(false);
-      moreUsagesSelected.set(false);
-      List<Object> usages = null;
-
-      for (int i : table.getSelectedRows()) {
-        Object value = table.getValueAt(i, 0);
-        if (value instanceof UsageNode) {
-          Usage usage = ((UsageNode)value).getUsage();
-          if (usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) {
-            outsideScopeUsagesSelected.set(true);
-            usages = null;
-            break;
-          }
-          else if (usage == MORE_USAGES_SEPARATOR) {
-            moreUsagesSelected.set(true);
-            usages = null;
-            break;
-          }
-          else {
-            if (usages == null) usages = new ArrayList<>();
-            usages.add(usage instanceof UsageInfo2UsageAdapter ? ((UsageInfo2UsageAdapter)usage).getUsageInfo().copy() : usage);
-          }
-        }
-      }
-
-      selectedUsages.set(usages);
-    });
-
-    final Runnable itemChosenCallback = () -> {
-      if (moreUsagesSelected.get()) {
-        appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
-        return;
-      }
-
-      if (outsideScopeUsagesSelected.get()) {
-        options.searchScope = GlobalSearchScope.projectScope(handler.getProject());
-        showElementUsages(editor, popupPosition, handler, maxUsages, options);
-        return;
-      }
-
-      List<Object> usages = selectedUsages.get();
-      if (usages != null) {
-        for (Object usage : usages) {
-          if (usage instanceof UsageInfo) {
-            UsageViewUtil.navigateTo((UsageInfo)usage, true);
-          }
-          else if (usage instanceof Navigatable) {
-            ((Navigatable)usage).navigate(true);
-          }
-        }
-      }
-    };
-
-    if (previewMode) {
-      table.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          if (UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED) && !UIUtil.isSelectionButtonDown(e) && !e.isConsumed()) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-      table.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-            itemChosenCallback.run();
-          }
-        }
-      });
-    }
-
-    return itemChosenCallback;
   }
 
   @NotNull
@@ -841,33 +686,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  private static MyModel setTableModel(@NotNull JTable table,
-                                       @NotNull UsageViewImpl usageView,
-                                       @NotNull final List<UsageNode> data,
-                                       @NotNull AtomicInteger outOfScopeUsages,
-                                       @NotNull SearchScope searchScope) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final int columnCount = calcColumnCount(data);
-    MyModel model = table.getModel() instanceof MyModel ? (MyModel)table.getModel() : null;
-    if (model == null || model.getColumnCount() != columnCount) {
-      model = new MyModel(data, columnCount);
-      table.setModel(model);
-
-      ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView, outOfScopeUsages, searchScope);
-      for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
-        TableColumn column = table.getColumnModel().getColumn(i);
-        column.setPreferredWidth(0);
-        column.setCellRenderer(renderer);
-      }
-    }
-    return model;
-  }
-
-  private static int calcColumnCount(@NotNull List<UsageNode> data) {
-    return data.isEmpty() || data.get(0) instanceof StringNode ? 1 : 3;
-  }
-
-  @NotNull
   private static List<UsageNode> collectData(@NotNull List<? extends Usage> usages,
                                              @NotNull Collection<? extends UsageNode> visibleNodes,
                                              @NotNull UsageViewImpl usageView,
@@ -923,7 +741,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private void rebuildTable(@NotNull final UsageViewImpl usageView,
                             @NotNull final List<Usage> usages,
                             @NotNull List<UsageNode> nodes,
-                            @NotNull final JTable table,
+                            @NotNull final ShowUsagesTable table,
                             @Nullable final JBPopup popup,
                             @NotNull final UsageViewPresentation presentation,
                             @NotNull final RelativePoint popupPosition,
@@ -932,11 +750,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                             @NotNull SearchScope searchScope) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    boolean shouldShowMoreSeparator = usages.contains(MORE_USAGES_SEPARATOR);
+    boolean shouldShowMoreSeparator = usages.contains(ShowUsagesTable.MORE_USAGES_SEPARATOR);
     if (shouldShowMoreSeparator) {
       nodes.add(MORE_USAGES_SEPARATOR_NODE);
     }
-    boolean hasOutsideScopeUsages = usages.contains(USAGES_OUTSIDE_SCOPE_SEPARATOR);
+    boolean hasOutsideScopeUsages = usages.contains(ShowUsagesTable.USAGES_OUTSIDE_SCOPE_SEPARATOR);
     if (hasOutsideScopeUsages && !shouldShowMoreSeparator) {
       nodes.add(USAGES_OUTSIDE_SCOPE_NODE);
     }
@@ -948,7 +766,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     List<UsageNode> data = collectData(usages, nodes, usageView, presentation);
-    MyModel tableModel = setTableModel(table, usageView, data, outOfScopeUsages, searchScope);
+    ShowUsagesTable.MyModel tableModel = table.setTableModel(usageView, data, outOfScopeUsages, searchScope);
     List<UsageNode> existingData = tableModel.getItems();
 
     int row = table.getSelectedRow();
@@ -976,7 +794,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   // returns new selection
-  private static int updateModel(@NotNull MyModel tableModel, @NotNull List<UsageNode> listOld, @NotNull List<UsageNode> listNew, int oldSelection) {
+  private static int updateModel(@NotNull ShowUsagesTable.MyModel tableModel, @NotNull List<UsageNode> listOld, @NotNull List<UsageNode> listNew, int oldSelection) {
     UsageNode[] oa = listOld.toArray(new UsageNode[0]);
     UsageNode[] na = listNew.toArray(new UsageNode[0]);
     List<ModelDiff.Cmd> cmds = ModelDiff.createDiffCmds(tableModel, oa, na);
@@ -1044,7 +862,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return bounds;
   }
 
-  private void appendMoreUsages(Editor editor,
+  void appendMoreUsages(Editor editor,
                                 @NotNull RelativePoint popupPosition,
                                 @NotNull FindUsagesHandler handler,
                                 int maxUsages,
@@ -1137,64 +955,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return newFileEditor instanceof TextEditor ? ((TextEditor)newFileEditor).getEditor() : null;
   }
 
-  private static class MyTable extends JBTable implements DataProvider {
-    private static final int MARGIN = 2;
-
-    MyTable() {
-      ScrollingUtil.installActions(this);
-      HintUpdateSupply.installDataContextHintUpdateSupply(this);
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportWidth() {
-      return true;
-    }
-
-    @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        final int[] selected = getSelectedRows();
-        if (selected.length == 1) {
-          return getPsiElementForHint(getValueAt(selected[0], 0));
-        }
-      }
-      else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-        return PopupUtil.getPopupContainerFor(this);
-      }
-      return null;
-    }
-
-    @Override
-    public int getRowHeight() {
-      return super.getRowHeight() + 2 * MARGIN;
-    }
-    
-    @NotNull
-    @Override
-    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
-      Component component = super.prepareRenderer(renderer, row, column);
-      if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
-      }
-      return component;
-    }
-
-    @Nullable
-    private static PsiElement getPsiElementForHint(Object selectedValue) {
-      if (selectedValue instanceof UsageNode) {
-        final Usage usage = ((UsageNode)selectedValue).getUsage();
-        if (usage instanceof UsageInfo2UsageAdapter) {
-          final PsiElement element = ((UsageInfo2UsageAdapter)usage).getElement();
-          if (element != null) {
-            final PsiElement view = UsageToPsiElementProvider.findAppropriateParentFrom(element);
-            return view == null ? element : view;
-          }
-        }
-      }
-      return null;
-    }
-  }
-
   static class StringNode extends UsageNode {
     @NotNull private final Object myString;
 
@@ -1206,54 +966,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     @Override
     public String toString() {
       return myString.toString();
-    }
-  }
-
-  private static class MySpeedSearch extends SpeedSearchBase<JTable> {
-    MySpeedSearch(@NotNull MyTable table) {
-      super(table);
-    }
-
-    @Override
-    protected int getSelectedIndex() {
-      return getTable().getSelectedRow();
-    }
-
-    @Override
-    protected int convertIndexToModel(int viewIndex) {
-      return getTable().convertRowIndexToModel(viewIndex);
-    }
-
-    @NotNull
-    @Override
-    protected Object[] getAllElements() {
-      return ((MyModel)getTable().getModel()).getItems().toArray();
-    }
-
-    @Override
-    protected String getElementText(@NotNull Object element) {
-      if (!(element instanceof UsageNode)) return element.toString();
-      UsageNode node = (UsageNode)element;
-      if (node instanceof StringNode) return "";
-      Usage usage = node.getUsage();
-      if (usage == MORE_USAGES_SEPARATOR || usage == USAGES_OUTSIDE_SCOPE_SEPARATOR) return "";
-      GroupNode group = (GroupNode)node.getParent();
-      String groupText = group == null ? "" : group.getGroup().getText(null);
-      return groupText + usage.getPresentation().getPlainText();
-    }
-
-    @Override
-    protected void selectElement(Object element, String selectedText) {
-      List<UsageNode> data = ((MyModel)getTable().getModel()).getItems();
-      int i = data.indexOf(element);
-      if (i == -1) return;
-      final int viewRow = getTable().convertRowIndexToView(i);
-      getTable().getSelectionModel().setSelectionInterval(viewRow, viewRow);
-      TableUtil.scrollSelectionToVisible(getTable());
-    }
-
-    private MyTable getTable() {
-      return (MyTable)myComponent;
     }
   }
 }

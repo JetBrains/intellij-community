@@ -14,7 +14,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="purejavacomm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

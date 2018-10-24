@@ -22,7 +22,8 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     "io.reactivex.annotations.Experimental",
     "rx.annotations.Experimental",
     "rx.annotations.Beta",
-    "org.apache.http.annotation.Beta"
+    "org.apache.http.annotation.Beta",
+    "org.gradle.api.Incubating"
   );
 
   @NotNull

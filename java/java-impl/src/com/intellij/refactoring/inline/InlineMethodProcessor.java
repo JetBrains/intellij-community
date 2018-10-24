@@ -1565,7 +1565,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static boolean checkUnableToInsertCodeBlock(final PsiCodeBlock methodBody,
                                                       final PsiElement element,
-                                                      final Predicate<PsiMethodCallExpression> errorCondition) {
+                                                      final Predicate<? super PsiMethodCallExpression> errorCondition) {
     PsiStatement[] statements = methodBody.getStatements();
     if (statements.length > 1 || statements.length == 1 && !(statements[0] instanceof PsiExpressionStatement)) {
       PsiMethodCallExpression expr = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class, true, PsiStatement.class);

@@ -62,6 +62,12 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
   fun methodCallParameter(parameterIndex: Int, methodPattern: ElementPattern<out PsiMethod>): Self =
     callParameter(parameterIndex, callExpression().withAnyResolvedMethod(methodPattern))
 
+  fun arrayAccessParameterOf(receiverClassPattern: ElementPattern<PsiClass>): Self = filter { self ->
+    val aae: UArrayAccessExpression = self.uastParent as? UArrayAccessExpression ?: return@filter false
+    val receiverClass = (aae.receiver.getExpressionType() as? PsiClassType)?.resolve() ?: return@filter false
+    receiverClassPattern.accepts(receiverClass)
+  }
+
   class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 

@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -394,7 +393,7 @@ public class TemplateState implements Disposable {
 
   @NotNull
   private static TemplateImpl substituteTemplate(@NotNull PsiFile file, int caretOffset, @NotNull TemplateImpl template) {
-    for (TemplateSubstitutor substitutor : Extensions.getExtensions(TemplateSubstitutor.EP_NAME)) {
+    for (TemplateSubstitutor substitutor : TemplateSubstitutor.EP_NAME.getExtensionList()) {
       final TemplateImpl substituted = substitutor.substituteTemplate(file, caretOffset, template);
       if (substituted != null) {
         template = substituted;
@@ -404,7 +403,7 @@ public class TemplateState implements Disposable {
   }
 
   private void preprocessTemplate(final PsiFile file, int caretOffset, final String textToInsert) {
-    for (TemplatePreprocessor preprocessor : Extensions.getExtensions(TemplatePreprocessor.EP_NAME)) {
+    for (TemplatePreprocessor preprocessor : TemplatePreprocessor.EP_NAME.getExtensionList()) {
       preprocessor.preprocessTemplate(myEditor, file, caretOffset, textToInsert, myTemplate.getTemplateText());
     }
   }
@@ -483,7 +482,7 @@ public class TemplateState implements Disposable {
       if (file != null) {
         IntArrayList indices = initEmptyVariables();
         mySegments.setSegmentsGreedy(false);
-        for (TemplateOptionalProcessor processor : Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME)) {
+        for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
           processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }
         mySegments.setSegmentsGreedy(true);
@@ -939,7 +938,7 @@ public class TemplateState implements Disposable {
     }
     if (item != null) {
       ExpressionContext context = getCurrentExpressionContext();
-      for (TemplateCompletionProcessor processor : Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
+      for (TemplateCompletionProcessor processor : TemplateCompletionProcessor.EP_NAME.getExtensionList()) {
         if (!processor.nextTabOnItemSelected(context, item)) {
           return;
         }
@@ -1239,7 +1238,7 @@ public class TemplateState implements Disposable {
     if (file != null) {
       CodeStyleManager style = CodeStyleManager.getInstance(myProject);
       DumbService dumbService = DumbService.getInstance(myProject);
-      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(Extensions.getExtensions(TemplateOptionalProcessor.EP_NAME))) {
+      for (TemplateOptionalProcessor processor : dumbService.filterByDumbAwareness(TemplateOptionalProcessor.EP_NAME.getExtensionList())) {
         try {
           processor.processText(myProject, myTemplate, myDocument, myTemplateRange, myEditor);
         }

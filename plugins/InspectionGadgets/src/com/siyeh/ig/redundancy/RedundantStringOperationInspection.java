@@ -323,7 +323,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

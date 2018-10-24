@@ -494,7 +494,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  public static Property findProperty(List<Property> properties, String name) {
+  public static Property findProperty(List<? extends Property> properties, String name) {
     for (Property property : properties) {
       if (name.equals(property.getName())) {
         return property;
@@ -503,7 +503,7 @@ public abstract class PropertyTable extends JBTable {
     return null;
   }
 
-  public static int findProperty(List<Property> properties, Property property) {
+  public static int findProperty(List<? extends Property> properties, Property property) {
     String name = property.getName();
     int size = properties.size();
 
@@ -517,7 +517,7 @@ public abstract class PropertyTable extends JBTable {
     return -1;
   }
 
-  private static int findFullPathProperty(List<Property> properties, Property property) {
+  private static int findFullPathProperty(List<? extends Property> properties, Property property) {
     Property parent = property.getParent();
     if (parent == null) {
       return findProperty(properties, property);
@@ -543,7 +543,7 @@ public abstract class PropertyTable extends JBTable {
     return builder.toString();
   }
 
-  public static void moveProperty(List<Property> source, String name, List<Property> destination, int index) {
+  public static void moveProperty(List<? extends Property> source, String name, List<? super Property> destination, int index) {
     Property property = extractProperty(source, name);
     if (property != null) {
       if (index == -1) {
@@ -556,7 +556,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   @Nullable
-  public static Property extractProperty(List<Property> properties, String name) {
+  public static Property extractProperty(List<? extends Property> properties, String name) {
     int size = properties.size();
     for (int i = 0; i < size; i++) {
       if (name.equals(properties.get(i).getName())) {

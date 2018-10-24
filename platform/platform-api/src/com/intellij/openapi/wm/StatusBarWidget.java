@@ -62,7 +62,7 @@ public interface StatusBarWidget extends Disposable {
 
     @NotNull
     @Deprecated
-    default String getMaxPossibleText() { return ""; };
+    default String getMaxPossibleText() { return ""; }
 
     float getAlignment();
   }

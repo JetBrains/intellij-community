@@ -908,6 +908,11 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"
+            text="Annotated Line Operations">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </action>
+
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
         <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
@@ -928,6 +933,8 @@
         <reference id="Start.Use.Vcs"/>
         <reference id="Vcs.Checkout"/>
       </group>
+      <separator/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>

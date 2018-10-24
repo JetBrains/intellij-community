@@ -106,12 +106,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static void addDependenciesNode(@NotNull ExternalProjectsView externalProjectsView,
                                           @NotNull MultiMap<Key<?>, DataNode<?>> dataNodes,
-                                          @NotNull List<ExternalSystemNode<?>> result) {
+                                          @NotNull List<? super ExternalSystemNode<?>> result) {
     final Collection<DataNode<?>> moduleDeps = dataNodes.get(ProjectKeys.MODULE_DEPENDENCY);
     final Collection<DataNode<?>> libDeps = dataNodes.get(ProjectKeys.LIBRARY_DEPENDENCY);
 
     if (!moduleDeps.isEmpty() || !libDeps.isEmpty()) {
-      final ExternalSystemNode depNode = new MyDependenciesNode(externalProjectsView);
+      final ExternalSystemNode<?> depNode = new MyDependenciesNode(externalProjectsView);
 
       for (DataNode<?> dataNode : moduleDeps) {
         if (!(dataNode.getData() instanceof ModuleDependencyData)) continue;
@@ -155,7 +155,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
 
   private static void addModuleNodes(@NotNull ExternalProjectsView externalProjectsView,
                                      @NotNull MultiMap<Key<?>, DataNode<?>> dataNodes,
-                                     @NotNull List<ExternalSystemNode<?>> result) {
+                                     @NotNull List<? super ExternalSystemNode<?>> result) {
     final Collection<DataNode<?>> moduleDataNodes = dataNodes.get(ProjectKeys.MODULE);
     if (!moduleDataNodes.isEmpty()) {
       final AbstractExternalSystemSettings systemSettings =

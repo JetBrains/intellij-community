@@ -93,6 +93,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
+  public void testWhitespaceAfterColon() throws Exception {
+    baseInsertTest("addWhitespaceAfterColon", "colon");
+  }
+
   public void testArrayLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
     complete();

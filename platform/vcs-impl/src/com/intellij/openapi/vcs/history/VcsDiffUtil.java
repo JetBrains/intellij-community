@@ -46,7 +46,7 @@ public class VcsDiffUtil {
 
   @CalledInAwt
   public static void showDiffFor(@NotNull Project project,
-                                 @NotNull final Collection<Change> changes,
+                                 @NotNull final Collection<? extends Change> changes,
                                  @NotNull final String revNumTitle1,
                                  @NotNull final String revNumTitle2,
                                  @NotNull final FilePath filePath) {
@@ -86,7 +86,7 @@ public class VcsDiffUtil {
   }
 
   @CalledInAwt
-  public static void showChangesDialog(@NotNull Project project, @NotNull String title, @NotNull List<Change> changes) {
+  public static void showChangesDialog(@NotNull Project project, @NotNull String title, @NotNull List<? extends Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
 
     dialogBuilder.setTitle(title);

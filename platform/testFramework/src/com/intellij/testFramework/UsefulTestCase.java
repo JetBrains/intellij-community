@@ -440,7 +440,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(@NotNull Iterable<T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
@@ -465,7 +465,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
   }
 
   @SafeVarargs
-  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<T> actual, @NotNull T... expected) {
+  public static <T> void assertOrderedEquals(String errorMsg, @NotNull Iterable<? extends T> actual, @NotNull T... expected) {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
@@ -528,14 +528,14 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+  public static <T> void assertSameElements(@NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     assertSameElements(null, actual, expected);
   }
 
   /**
    * Checks {@code actual} contains same elements (in {@link #equals(Object)} meaning) as {@code expected} irrespective of their order
    */
-  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<T> expected) {
+  public static <T> void assertSameElements(String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
     if (actual.size() != expected.size() || !new HashSet<>(expected).equals(new HashSet<T>(actual))) {
       Assert.assertEquals(message, new HashSet<>(expected), new HashSet<T>(actual));
     }
@@ -546,7 +546,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
     assertContainsOrdered(collection, Arrays.asList(expected));
   }
 
-  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+  public static <T> void assertContainsOrdered(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     ArrayList<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
     assertOrderedEquals(toString(collection), copy, expected);
@@ -557,7 +557,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
     assertContainsElements(collection, Arrays.asList(expected));
   }
 
-  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<T> expected) {
+  public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     ArrayList<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
     assertSameElements(toString(collection), copy, expected);
@@ -573,7 +573,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
     assertDoesntContain(collection, Arrays.asList(notExpected));
   }
 
-  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<T> notExpected) {
+  public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
     ArrayList<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
     assertSameElements(collection, expected);
@@ -667,8 +667,8 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
     return t;
   }
 
-  public static <T> T assertOneElement(@NotNull Collection<T> collection) {
-    Iterator<T> iterator = collection.iterator();
+  public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
+    Iterator<? extends T> iterator = collection.iterator();
     String toString = toString(collection);
     Assert.assertTrue(toString, iterator.hasNext());
     T t = iterator.next();
@@ -718,7 +718,7 @@ TODO(b/117719261): fails after IDEA 183.2153.8 merge */
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<T> collection) {
+  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<? extends T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 

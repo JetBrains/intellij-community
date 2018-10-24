@@ -23,11 +23,11 @@ import java.util.*;
 
 
 public class InferenceVariablesOrder {
-  public static List<InferenceVariable> resolveOrder(Collection<InferenceVariable> vars, InferenceSession session) {
+  public static List<InferenceVariable> resolveOrder(Collection<? extends InferenceVariable> vars, InferenceSession session) {
     return resolveOrderIterator(vars, session).next();
   }
   
-  public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<InferenceVariable> vars, InferenceSession session) {
+  public static Iterator<List<InferenceVariable>> resolveOrderIterator(Collection<? extends InferenceVariable> vars, InferenceSession session) {
     Map<InferenceVariable, InferenceGraphNode<InferenceVariable>> nodes =
       new LinkedHashMap<>();
     for (InferenceVariable var : vars) {
@@ -49,7 +49,7 @@ public class InferenceVariablesOrder {
     return ContainerUtil.map(acyclicNodes, node -> node.getValue()).iterator();
   }
 
-  public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<InferenceGraphNode<T>> nodes) {
+  public static <T> List<List<InferenceGraphNode<T>>> tarjan(Collection<? extends InferenceGraphNode<T>> nodes) {
     final ArrayList<List<InferenceGraphNode<T>>> result = new ArrayList<>();
     final Stack<InferenceGraphNode<T>> currentStack = new Stack<>();
     int index = 0;
@@ -61,7 +61,7 @@ public class InferenceVariablesOrder {
     return result;
   }
 
-  public static <T> ArrayList<InferenceGraphNode<T>> initNodes(Collection<InferenceGraphNode<T>> allNodes) {
+  public static <T> ArrayList<InferenceGraphNode<T>> initNodes(Collection<? extends InferenceGraphNode<T>> allNodes) {
     final List<List<InferenceGraphNode<T>>> nodes = tarjan(allNodes);
     final ArrayList<InferenceGraphNode<T>> acyclicNodes = new ArrayList<>();
     for (List<InferenceGraphNode<T>> cycle : nodes) {
@@ -94,8 +94,8 @@ public class InferenceVariablesOrder {
     }
 
 
-    private static <T> InferenceGraphNode<T> merge(final List<InferenceGraphNode<T>> cycle,
-                                                   final Collection<InferenceGraphNode<T>> allNodes) {
+    private static <T> InferenceGraphNode<T> merge(final List<? extends InferenceGraphNode<T>> cycle,
+                                                   final Collection<? extends InferenceGraphNode<T>> allNodes) {
       assert !cycle.isEmpty();
       final InferenceGraphNode<T> root = cycle.get(0);
       if (cycle.size() > 1) {
@@ -140,7 +140,7 @@ public class InferenceVariablesOrder {
     private static <T> int strongConnect(InferenceGraphNode<T> currentNode,
                                          int index,
                                          Stack<InferenceGraphNode<T>> currentStack,
-                                         ArrayList<List<InferenceGraphNode<T>>> result) {
+                                         ArrayList<? super List<InferenceGraphNode<T>>> result) {
       currentNode.index = index;
       currentNode.lowlink = index;
       index++;

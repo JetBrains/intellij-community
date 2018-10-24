@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -90,14 +91,6 @@ public class PyImportOptimizer implements ImportOptimizer {
   }
 
   private static class ImportSorter {
-    private static final Comparator<PyImportElement> IMPORT_ELEMENT_COMPARATOR = (o1, o2) -> {
-      final int byImportedName = Comparing.compare(o1.getImportedQName(), o2.getImportedQName());
-      if (byImportedName != 0) {
-        return byImportedName;
-      }
-      return Comparing.compare(o1.getAsName(), o2.getAsName());
-    };
-
     private final PyFile myFile;
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
@@ -120,6 +113,16 @@ public class PyImportOptimizer implements ImportOptimizer {
       for (ImportPriority priority : ImportPriority.values()) {
         myGroups.put(priority, new ArrayList<>());
       }
+    }
+
+    @NotNull
+    private Comparator<PyImportElement> getFromNamesComparator() {
+      final Comparator<String> stringComparator =
+        myPySettings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      final Comparator<QualifiedName> qNamesComparator = Comparator.comparing(QualifiedName::toString, stringComparator);
+      return Comparator
+        .comparing(PyImportElement::getImportedQName, Comparator.nullsFirst(qNamesComparator))
+        .thenComparing(PyImportElement::getAsName, Comparator.nullsFirst(stringComparator));
     }
 
     public void run() {
@@ -201,6 +204,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           final List<PyImportElement> newStatementElements = new ArrayList<>();
           boolean forceParentheses = false;
 
+          final Comparator<PyImportElement> fromNamesComparator = getFromNamesComparator();
           // We can neither sort, nor combine star imports
           if (!fromImport.isStarImport()) {
             final Collection<PyFromImportStatement> sameSourceImports = myOldFromImportBySources.get(source);
@@ -220,7 +224,7 @@ public class PyImportOptimizer implements ImportOptimizer {
             }
             else if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
               final List<PyImportElement> originalElements = Arrays.asList(fromImport.getImportElements());
-              if (!Ordering.from(IMPORT_ELEMENT_COMPARATOR).isOrdered(originalElements)) {
+              if (!Ordering.from(fromNamesComparator).isOrdered(originalElements)) {
                 ContainerUtil.addAll(newStatementElements, originalElements);
               }
             }
@@ -228,7 +232,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
           if (!newStatementElements.isEmpty()) {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
-              Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
+              Collections.sort(newStatementElements, fromNamesComparator);
             }
             String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
             if (forceParentheses) {

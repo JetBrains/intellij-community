@@ -67,7 +67,7 @@ public class UITheme {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
     theme.providerClassLoader = provider;
-    if (!theme.icons.isEmpty()) {
+    if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
         @Override
@@ -309,13 +309,16 @@ public class UITheme {
 
   @SuppressWarnings("UseJBColor")
   private static Color parseColor(String value) {
-    if (value != null && value.length() == 8) {
-      final Color color = ColorUtil.fromHex(value.substring(0, 6));
-      try {
-        int alpha = Integer.parseInt(value.substring(6, 8), 16);
-        return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
-      } catch (Exception ignore){}
-      return null;
+    if (value != null) {
+      value = StringUtil.trimStart(value, "#");
+      if (value.length() == 8) {
+        final Color color = ColorUtil.fromHex(value.substring(0, 6));
+        try {
+          int alpha = Integer.parseInt(value.substring(6, 8), 16);
+          return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+        } catch (Exception ignore){}
+        return null;
+      }
     }
     return ColorUtil.fromHex(value, null);
   }

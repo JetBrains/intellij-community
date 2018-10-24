@@ -18,10 +18,32 @@ package com.intellij.internal.statistic.utils
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.util.*
+
+fun getProjectId(project: Project): String {
+  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+}
+
+fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
+  if (project == null && context == null) return Collections.emptyMap()
+
+  val data = ContainerUtil.newHashMap<String, Any>()
+  if (context != null) {
+    data.putAll(context.data)
+  }
+
+  if (project != null) {
+    data["project"] = getProjectId(project)
+  }
+  return data
+}
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)

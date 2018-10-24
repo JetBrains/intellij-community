@@ -29,5 +29,5 @@ public interface SyntheticTypeComponentProvider {
   //override this method to prevent other providers treating type component as synthetic
   default boolean isNotSynthetic(TypeComponent typeComponent) {
     return false;
-  };
+  }
 }

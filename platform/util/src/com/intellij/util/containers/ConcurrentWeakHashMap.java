@@ -82,6 +82,7 @@ public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V
   }
 
   ConcurrentWeakHashMap(float loadFactor) {
+    this(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, ContainerUtil.canonicalStrategy());
   }
 
   ConcurrentWeakHashMap(int initialCapacity,

@@ -31,7 +31,8 @@ import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper;
+import com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx;
+import com.intellij.xml.breadcrumbs.PsiFileBreadcrumbsCollector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     myFile = file;
     myEditor = editor;
     final FileViewProvider viewProvider = file.getManager().findViewProvider(file.getVirtualFile());
-    myInfoProvider = BreadcrumbsXmlWrapper.findInfoProvider(editor, viewProvider);
+    myInfoProvider = BreadcrumbsUtilEx.findProvider(false, viewProvider);
   }
 
   @Override
@@ -74,9 +75,9 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
 
     final int offset = myEditor.getCaretModel().getOffset();
-    PsiElement[] elements = BreadcrumbsXmlWrapper.getLinePsiElements(offset,
-                                                                     myFile.getVirtualFile(),
-                                                                     myProject, myInfoProvider);
+    PsiElement[] elements = PsiFileBreadcrumbsCollector.getLinePsiElements(offset,
+                                                                           myFile.getVirtualFile(),
+                                                                           myProject, myInfoProvider);
 
     if (elements == null || elements.length == 0 || !XmlTagTreeHighlightingUtil.containsTagsWithSameName(elements)) {
       elements = PsiElement.EMPTY_ARRAY;

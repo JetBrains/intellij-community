@@ -156,7 +156,7 @@ public class PsiMethodReferenceUtil {
   private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                 JavaResolveResult result,
                                                 PsiType functionalInterfaceType,
-                                                Ref<String> errorMessage) {
+                                                Ref<? super String> errorMessage) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod != null) {

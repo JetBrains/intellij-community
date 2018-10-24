@@ -114,7 +114,7 @@ public abstract class ExtensionLocator {
   private static void processExtensionDeclarations(@Nullable String name,
                                                    @NotNull Project project,
                                                    boolean strictMatch,
-                                                   @NotNull BiFunction<Extension, XmlTag, Boolean> callback) {
+                                                   @NotNull BiFunction<? super Extension, ? super XmlTag, Boolean> callback) {
     if (name == null) return;
     GlobalSearchScope scope = PluginRelatedLocatorsUtils.getCandidatesScope(project);
 

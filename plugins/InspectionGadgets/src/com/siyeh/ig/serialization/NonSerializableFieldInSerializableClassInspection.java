@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NonSerializableFieldInSerializableClassInspection extends
-                                                               SerializableInspectionBase {
+public class NonSerializableFieldInSerializableClassInspection extends SerializableInspectionBase {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-
-  @Override
-  public JComponent createOptionsPanel() {
-    return SerializableInspectionUtil.createOptions(this);
-  }
 
   @NotNull
   @Override

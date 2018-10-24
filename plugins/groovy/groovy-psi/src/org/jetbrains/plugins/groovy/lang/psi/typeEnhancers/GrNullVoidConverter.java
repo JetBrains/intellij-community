@@ -60,13 +60,12 @@ public class GrNullVoidConverter extends GrTypeConverter {
       }
     }
     else if (actualType == PsiType.NULL) {
-      switch (currentPosition) {
-        case RETURN_VALUE:
-          // We can return null from method returning primitive type, but runtime error will occur.
-          if (targetType instanceof PsiPrimitiveType) return WARNING;
-          break;
-        default:
-          return targetType instanceof PsiPrimitiveType ? ERROR : OK;
+      if (currentPosition == ApplicableTo.RETURN_VALUE) {
+        // We can return null from method returning primitive type, but runtime error will occur.
+        if (targetType instanceof PsiPrimitiveType) return WARNING;
+      }
+      else {
+        return targetType instanceof PsiPrimitiveType ? ERROR : OK;
       }
     }
     return null;

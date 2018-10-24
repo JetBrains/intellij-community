@@ -33,6 +33,7 @@ import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -114,7 +115,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       return getIssues(query, offset + limit, withClosed);
     }
     catch (GithubRateLimitExceededException e) {
-      return new Task[0];
+      return Task.EMPTY_ARRAY;
     }
     catch (GithubAuthenticationException | GithubStatusCodeException e) {
       throw new Exception(e.getMessage(), e); // Wrap to show error message
@@ -152,14 +153,27 @@ public class GithubRepository extends BaseRepositoryImpl {
     else {
       issues = GithubIssuesLoadingHelper.search(executor, indicator, server, getRepoAuthor(), getRepoName(), withClosed, assigned, query);
     }
+    List<Task> tasks = new ArrayList<>();
 
-    return ContainerUtil.map2Array(issues, Task.class, issue -> createTask(issue));
+    for (GithubIssueBase issue : issues) {
+      List<GithubIssueComment> comments = GithubApiPagesLoader
+        .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
+      tasks.add(createTask(issue, comments));
+    }
+
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   @NotNull
-  private Task createTask(final GithubIssueBase issue) {
+  private Task createTask(@NotNull GithubIssueBase issue, @NotNull List<GithubIssueComment> comments) {
     return new Task() {
-      @NotNull String myRepoName = getRepoName();
+      @NotNull private final String myRepoName = getRepoName();
+      @NotNull private final Comment[] myComments =
+        ContainerUtil.map2Array(comments, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
+                                                                                      comment.getUser().getLogin(),
+                                                                                      comment.getBodyHtml(),
+                                                                                      comment.getUser().getAvatarUrl(),
+                                                                                      comment.getUser().getHtmlUrl()));
 
       @Override
       public boolean isIssue() {
@@ -191,13 +205,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       @NotNull
       @Override
       public Comment[] getComments() {
-        try {
-          return fetchComments(issue.getNumber());
-        }
-        catch (Exception e) {
-          LOG.warn("Error fetching comments for " + issue.getNumber(), e);
-          return Comment.EMPTY_ARRAY;
-        }
+        return myComments;
       }
 
       @NotNull
@@ -239,21 +247,6 @@ public class GithubRepository extends BaseRepositoryImpl {
     };
   }
 
-  private Comment[] fetchComments(final long id) throws Exception {
-    GithubApiRequestExecutor executor = getExecutor();
-    ProgressIndicator indicator = getProgressIndicator();
-
-    List<GithubIssueComment> result = GithubApiPagesLoader
-      .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(getServer(),
-                                                                                  getRepoAuthor(), getRepoName(), Long.toString(id)));
-
-    return ContainerUtil.map2Array(result, Comment.class, comment -> new GithubComment(comment.getCreatedAt(),
-                                                                                       comment.getUser().getLogin(),
-                                                                                       comment.getBodyHtml(),
-                                                                                       comment.getUser().getAvatarUrl(),
-                                                                                       comment.getUser().getHtmlUrl()));
-  }
-
   @Override
   @Nullable
   public String extractId(@NotNull String taskName) {
@@ -274,7 +267,9 @@ public class GithubRepository extends BaseRepositoryImpl {
     GithubIssue issue = executor.execute(indicator,
                                          GithubApiRequests.Repos.Issues.get(getServer(), getRepoAuthor(), getRepoName(), numericId));
     if (issue == null) return null;
-    return createTask(issue);
+    List<GithubIssueComment> comments = GithubApiPagesLoader
+      .loadAll(executor, indicator, GithubApiRequests.Repos.Issues.Comments.pages(issue.getCommentsUrl()));
+    return createTask(issue, comments);
   }
 
   @Override

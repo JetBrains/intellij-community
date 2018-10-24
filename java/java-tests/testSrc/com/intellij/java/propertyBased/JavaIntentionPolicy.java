@@ -83,6 +83,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Fix doc comment") || //change formatting settings
            actionText.startsWith("Add Javadoc") ||
+           actionText.equals("Collapse 'catch' blocks") || // IDEA-195991
            super.shouldSkipIntention(actionText);
   }
 
@@ -178,6 +179,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
+          parent instanceof PsiAnnotationMethod ||
           parent instanceof PsiArrayInitializerMemberValue ||
           parent instanceof PsiSwitchLabelStatement) {
         break;

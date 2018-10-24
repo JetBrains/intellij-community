@@ -123,7 +123,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     return dialog.showAndGet();
   }
 
-  public static void applySkipDirs(final List<FilePatch> patches, final int skipDirs) {
+  public static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
     if (skipDirs < 1) {
       return;
     }

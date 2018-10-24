@@ -16,5 +16,5 @@
 package com.intellij.codeInsight.editorActions;
 
 public enum SmartBackspaceMode {
-  OFF, AUTOINDENT, INDENT;
+  OFF, AUTOINDENT, INDENT
 }

@@ -237,7 +237,7 @@ public class GroovyCompletionUtil {
     return result;
   }
 
-  public static List<LookupElement> getCompletionVariants(List<GroovyResolveResult> candidates,
+  public static List<LookupElement> getCompletionVariants(List<? extends GroovyResolveResult> candidates,
                                                           boolean afterNew,
                                                           PrefixMatcher matcher,
                                                           PsiElement position) {

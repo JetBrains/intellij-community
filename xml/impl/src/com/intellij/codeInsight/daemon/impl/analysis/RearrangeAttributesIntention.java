@@ -81,7 +81,7 @@ public class RearrangeAttributesIntention implements IntentionAction {
     if (parent != null) return parent;
 
     element = file.findElementAt(offset - 1);
-    parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);;
+    parent = PsiTreeUtil.getParentOfType(element, XmlTag.class);
     if (parent != null) return parent;
     return null;
   }

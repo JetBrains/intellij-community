@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.configuration
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
@@ -56,7 +58,13 @@ class TestNGRunConfigurationImporter: RunConfigurationImporter {
       }
     }
 
-
+    consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
+      try {
+        runConfiguration.shortenCommandLine = ShortenCommandLine.valueOf(it)
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Illegal value of 'shortenCommandLine': $it", e)
+      }
+    }
   }
 
   override fun canImport(typeName: String): Boolean = "testng" == typeName
@@ -64,4 +72,8 @@ class TestNGRunConfigurationImporter: RunConfigurationImporter {
   override fun getConfigurationFactory(): ConfigurationFactory = ConfigurationTypeUtil
     .findConfigurationType<TestNGConfigurationType>(TestNGConfigurationType::class.java)
     .configurationFactories[0]
+
+  companion object {
+    val LOG: Logger = Logger.getInstance(TestNGRunConfigurationImporter::class.java)
+  }
 }

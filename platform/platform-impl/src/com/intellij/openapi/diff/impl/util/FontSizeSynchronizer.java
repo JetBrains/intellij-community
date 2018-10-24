@@ -32,7 +32,7 @@ public class FontSizeSynchronizer {
     myEditors.remove(editor);
   }
 
-  public static void attachTo(ArrayList<EditorPlace> editorPlaces) {
+  public static void attachTo(ArrayList<? extends EditorPlace> editorPlaces) {
     final FontSizeSynchronizer synchronizer = new FontSizeSynchronizer();
     for (EditorPlace editorPlace : editorPlaces) {
       editorPlace.addListener(new EditorPlace.EditorListener() {

@@ -100,14 +100,14 @@ public class TextBlockTransferable implements Transferable {
 
   @NotNull
   public static String convertLineSeparators(@NotNull Editor editor, @NotNull String input,
-                                             @NotNull Collection<TextBlockTransferableData> itemsToUpdate) {
+                                             @NotNull Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     // converting line separators to spaces matches the behavior of Swing text components on paste
     return convertLineSeparators(input, editor.isOneLineMode() ? " " : "\n", itemsToUpdate);
   }
 
   public static String convertLineSeparators(String text,
                                              String newSeparator,
-                                             Collection<TextBlockTransferableData> itemsToUpdate) {
+                                             Collection<? extends TextBlockTransferableData> itemsToUpdate) {
     if (itemsToUpdate.size() > 0){
       int size = 0;
       for(TextBlockTransferableData data: itemsToUpdate) {

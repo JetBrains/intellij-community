@@ -328,7 +328,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
   }
 
-  protected static enum ToolbarPosition {
+  protected enum ToolbarPosition {
     TOP(BorderLayout.NORTH),
     LEFT(BorderLayout.WEST),
     RIGHT(BorderLayout.EAST),
@@ -336,7 +336,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
 
     private final String myPosition;
 
-    private ToolbarPosition(final String position) {
+    ToolbarPosition(final String position) {
       myPosition = position;
     }
 

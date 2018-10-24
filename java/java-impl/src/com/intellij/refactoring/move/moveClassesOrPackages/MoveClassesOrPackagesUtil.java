@@ -85,7 +85,7 @@ public class MoveClassesOrPackagesUtil {
                                        boolean searchInNonJavaFiles,
                                        final PsiElement element,
                                        final String newQName,
-                                       ArrayList<UsageInfo> results) {
+                                       ArrayList<? super UsageInfo> results) {
     final String stringToSearch = getStringToSearch(element);
     if (stringToSearch == null) return;
     TextOccurrencesUtil.findNonCodeUsages(element, stringToSearch, searchInStringsAndComments, searchInNonJavaFiles, newQName, results);
@@ -146,7 +146,7 @@ public class MoveClassesOrPackagesUtil {
     moveDirectoryRecursively(dir, destination, new HashSet<>());
   }
 
-  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<VirtualFile> movedPaths) throws IncorrectOperationException {
+  private static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination, HashSet<? super VirtualFile> movedPaths) throws IncorrectOperationException {
     final VirtualFile destVFile = destination.getVirtualFile();
     final VirtualFile sourceVFile = dir.getVirtualFile();
     if (movedPaths.contains(sourceVFile)) return;
@@ -316,7 +316,7 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static VirtualFile chooseSourceRoot(final PackageWrapper targetPackage,
-                                             final List<VirtualFile> contentSourceRoots,
+                                             final List<? extends VirtualFile> contentSourceRoots,
                                              final PsiDirectory initialDirectory) {
     Project project = targetPackage.getManager().getProject();
     //ensure that there would be no duplicates: e.g. when one content root is subfolder of another root (configured via excluded roots)
@@ -339,8 +339,8 @@ public class MoveClassesOrPackagesUtil {
   }
 
   public static void buildDirectoryList(PackageWrapper aPackage,
-                                        List<VirtualFile> contentSourceRoots,
-                                        LinkedHashSet<PsiDirectory> targetDirectories,
+                                        List<? extends VirtualFile> contentSourceRoots,
+                                        LinkedHashSet<? super PsiDirectory> targetDirectories,
                                         Map<PsiDirectory, String> relativePathsToCreate) {
 
     final PsiDirectory[] directories = aPackage.getDirectories();

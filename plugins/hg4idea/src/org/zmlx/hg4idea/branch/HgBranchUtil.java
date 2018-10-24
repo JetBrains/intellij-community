@@ -32,16 +32,16 @@ public class HgBranchUtil {
    * Only common hg heavy branches
    */
   @NotNull
-  public static List<String> getCommonBranches(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBranches(@NotNull Collection<? extends HgRepository> repositories) {
     return getCommonNames(repositories, false);
   }
 
   @NotNull
-  public static List<String> getCommonBookmarks(@NotNull Collection<HgRepository> repositories) {
+  public static List<String> getCommonBookmarks(@NotNull Collection<? extends HgRepository> repositories) {
     return getCommonNames(repositories, true);
   }
 
-  private static List<String> getCommonNames(@NotNull Collection<HgRepository> repositories, boolean bookmarkType) {
+  private static List<String> getCommonNames(@NotNull Collection<? extends HgRepository> repositories, boolean bookmarkType) {
     Collection<String> common = null;
     for (HgRepository repository : repositories) {
       Collection<String> names =

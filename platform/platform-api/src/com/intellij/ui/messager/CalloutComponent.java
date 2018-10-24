@@ -199,9 +199,8 @@ public class CalloutComponent {
     myMulticastListener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
-        switch (event.getID()) {
-          case MouseEvent.MOUSE_PRESSED:
-            dispose();
+        if (event.getID() == MouseEvent.MOUSE_PRESSED) {
+          dispose();
         }
       }
     };
@@ -301,7 +300,7 @@ public class CalloutComponent {
   }
 
   private int getPointerShift() {
-    return (int) Math.sqrt(POINTER_LENGTH * POINTER_LENGTH / 2);
+    return (int) Math.sqrt(POINTER_LENGTH * POINTER_LENGTH / 2.0);
   }
 
   private Color getFillColor() {
@@ -377,7 +376,7 @@ public class CalloutComponent {
     }
   }
 
-  private JLayeredPane getLayeredPane(Window window) {
+  private static JLayeredPane getLayeredPane(Window window) {
     if (window instanceof JFrame) {
       return ((JFrame) window).getRootPane().getLayeredPane();
     } else if (window instanceof JDialog) {

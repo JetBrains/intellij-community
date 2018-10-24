@@ -14,7 +14,7 @@ public abstract class DiffProviderEx implements DiffProvider {
     return getCurrentRevisions(files, this);
   }
 
-  public static Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(Iterable<VirtualFile> file, DiffProvider provider) {
+  public static Map<VirtualFile, VcsRevisionNumber> getCurrentRevisions(Iterable<? extends VirtualFile> file, DiffProvider provider) {
     Map<VirtualFile, VcsRevisionNumber> result = ContainerUtil.newHashMap();
     for (VirtualFile virtualFile : file) {
       result.put(virtualFile, provider.getCurrentRevision(virtualFile));

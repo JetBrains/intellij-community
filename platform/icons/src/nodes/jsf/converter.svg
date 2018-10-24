@@ -4,7 +4,7 @@
     <polygon fill="#9AA7B0" points="1 11 10 11 10 9.999 1 9.999"/>
     <polygon fill="#9AA7B0" points="1 13 10 13 10 12 1 12"/>
     <polygon fill="#9AA7B0" points="1 15 10 15 10 14 1 14"/>
-    <polygon fill="#D9A343" points="5 0 1.073 3.5 5 7 5 5 8.001 5 8.001 2.001 5 2.001" opacity=".8"/>
-    <polygon fill="#D9A343" points="12 0 12 2.001 9 2.001 9 5 12 5 12 7 15.927 3.5" opacity=".8"/>
+    <polygon fill="#F4AF3D" fill-opacity=".7" points="5 0 1.073 3.5 5 7 5 5 8.001 5 8.001 2.001 5 2.001"/>
+    <polygon fill="#F4AF3D" fill-opacity=".7" points="12 0 12 2.001 9 2.001 9 5 12 5 12 7 15.927 3.5"/>
   </g>
 </svg>

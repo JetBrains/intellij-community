@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunConfigurationBeforeRunProvider;
 import com.intellij.execution.impl.RunConfigurationSelector;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunManagerImplKt;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
@@ -54,7 +55,7 @@ public class CompoundRunConfigurationSettingsEditor extends SettingsEditor<Compo
 
   private boolean canBeAdded(@NotNull RunConfiguration candidate, @NotNull final CompoundRunConfiguration root) {
     if (candidate.getType() == root.getType() && candidate.getName().equals(root.getName())) return false;
-    List<BeforeRunTask<?>> tasks = myRunManager.getBeforeRunTasks(candidate);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(candidate);
     for (BeforeRunTask task : tasks) {
       if (task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
         RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runTask

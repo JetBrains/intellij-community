@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.usageView.impl.UsageViewManagerImpl;
@@ -30,8 +29,7 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
       assertFalse(layout.isToolWindowRegistered(ID));
     }
 
-    ToolWindowEP[] extensions = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (ToolWindowEP extension : extensions) {
+    for (ToolWindowEP extension : ToolWindowEP.EP_NAME.getExtensionList()) {
       if (Arrays.asList(ToolWindowId.TODO_VIEW, ToolWindowId.FIND, ToolWindowId.PROJECT_VIEW).contains(extension.id)) {
         myManager.initToolWindow(extension);
       }

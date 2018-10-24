@@ -43,7 +43,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -78,8 +77,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
@@ -179,8 +178,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     myFilters = new CompositeFilter(project, usePredefinedMessageFilter ? computeConsoleFilters(project, searchScope) : new SmartList<>());
     myFilters.setForceUseAllFilters(true);
 
-    ConsoleInputFilterProvider[] inputFilters = Extensions.getExtensions(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
-    if (inputFilters.length > 0) {
+    List<ConsoleInputFilterProvider> inputFilters = ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS.getExtensionList();
+    if (inputFilters.size() > 0) {
       CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
       myInputMessageFilter = compositeInputFilter;
       for (ConsoleInputFilterProvider eachProvider : inputFilters) {
@@ -925,7 +924,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (group == null) {
       group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
     }
-    final ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
+    final List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
     AnAction[] result = group.getChildren(null);
 
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
@@ -1418,7 +1417,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     for (int i = 0; i < customActions.size(); ++i) {
       consoleActions[i + 6] = customActions.get(i);
     }
-    ConsoleActionsPostProcessor[] postProcessors = Extensions.getExtensions(ConsoleActionsPostProcessor.EP_NAME);
+    List<ConsoleActionsPostProcessor> postProcessors = ConsoleActionsPostProcessor.EP_NAME.getExtensionList();
     AnAction[] result = consoleActions;
     for (ConsoleActionsPostProcessor postProcessor : postProcessors) {
       result = postProcessor.postProcess(this, result);
@@ -1528,7 +1527,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (!myState.isCommandLine(text)) {
         return null;
       }
-      
+
       int index = 0;
       if (text.charAt(0) == '"') {
         index = text.indexOf('"', 1) + 1;

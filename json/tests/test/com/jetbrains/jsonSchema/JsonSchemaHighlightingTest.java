@@ -9,7 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.Predicate;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
 
 import java.io.File;

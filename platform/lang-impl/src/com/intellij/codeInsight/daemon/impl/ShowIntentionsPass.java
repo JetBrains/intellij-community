@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -68,7 +67,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                                                                 final int passId) {
     return getAvailableFixes(editor, file, passId, ((EditorEx)editor).getExpectedCaretOffset());
   }
-  
+
   @NotNull
   public static List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull final Editor editor,
                                                                                 @NotNull final PsiFile file,
@@ -254,7 +253,7 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                                       int passIdToShowIntentionsFor) {
     getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, hostEditor.getCaretModel().getOffset());
   }
-  
+
 
   public static void getActionsToShow(@NotNull final Editor hostEditor,
                                       @NotNull final PsiFile hostFile,
@@ -296,14 +295,14 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       }
     }
 
-    for (IntentionMenuContributor extension : Extensions.getExtensions(IntentionMenuContributor.EP_NAME)) {
+    for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
       extension.collectActions(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, offset);
     }
 
     intentions.filterActions(hostFile);
   }
 
-  public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor, 
+  public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,
                                                         @NotNull IntentionsInfo intentions,
                                                         @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> fixes) {
     final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;

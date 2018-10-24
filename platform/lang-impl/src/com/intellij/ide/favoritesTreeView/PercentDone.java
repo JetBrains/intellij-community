@@ -20,7 +20,7 @@ public enum PercentDone {
 
   private final int myPercent;
 
-  private PercentDone(int percent) {
+  PercentDone(int percent) {
     myPercent = percent;
   }
 

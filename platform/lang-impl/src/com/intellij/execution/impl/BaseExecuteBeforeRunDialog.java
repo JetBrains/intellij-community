@@ -202,7 +202,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   protected abstract boolean isRunning(T task);
 
   private void update(RunConfiguration config, boolean enabled, RunManagerImpl runManager) {
-    List<BeforeRunTask<?>> tasks = runManager.getBeforeRunTasks(config);
+    List<BeforeRunTask<?>> tasks = RunManagerImplKt.doGetBeforeRunTasks(config);
     BeforeRunTaskProvider<T> provider = BeforeRunTaskProvider.getProvider(myProject, getTaskID());
     if (provider == null) {
       return;

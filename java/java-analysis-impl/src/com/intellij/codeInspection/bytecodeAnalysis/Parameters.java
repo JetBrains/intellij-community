@@ -24,14 +24,14 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 abstract class PResults {
   // SoP = sum of products
-  static Set<Set<EKey>> join(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+  static Set<Set<EKey>> join(Set<? extends Set<EKey>> sop1, Set<? extends Set<EKey>> sop2) {
     Set<Set<EKey>> sop = new HashSet<>();
     sop.addAll(sop1);
     sop.addAll(sop2);
     return sop;
   }
 
-  static Set<Set<EKey>> meet(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+  static Set<Set<EKey>> meet(Set<? extends Set<EKey>> sop1, Set<? extends Set<EKey>> sop2) {
     Set<Set<EKey>> sop = new HashSet<>();
     for (Set<EKey> prod1 : sop1) {
       for (Set<EKey> prod2 : sop2) {
@@ -82,7 +82,7 @@ abstract class PResults {
       sop.add(prod);
     }
 
-    static void checkLimit(Set<Set<EKey>> sop) throws AnalyzerException {
+    static void checkLimit(Set<? extends Set<EKey>> sop) throws AnalyzerException {
       int size = sop.stream().mapToInt(Set::size).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
         throw new AnalyzerException(null, "HEquation size is too big");

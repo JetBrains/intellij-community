@@ -202,13 +202,13 @@ public class FSOperations {
     return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursivelyExportedOnly().getModules();
   }
 
-  public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+  public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor<JavaSourceRootDescriptor, ? super ModuleBuildTarget> processor) throws IOException {
     for (ModuleBuildTarget target : chunk.getTargets()) {
       processFilesToRecompile(context, target, processor);
     }
   }
 
-  public static void processFilesToRecompile(CompileContext context, @NotNull ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
+  public static void processFilesToRecompile(CompileContext context, @NotNull ModuleBuildTarget target, FileProcessor<JavaSourceRootDescriptor, ? super ModuleBuildTarget> processor) throws IOException {
     context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
   }
 

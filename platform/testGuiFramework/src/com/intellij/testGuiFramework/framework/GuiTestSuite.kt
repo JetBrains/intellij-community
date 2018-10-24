@@ -15,10 +15,9 @@
  */
 package com.intellij.testGuiFramework.framework
 
-import com.intellij.testGuiFramework.remote.IdeProcessControlManager
+import com.intellij.testGuiFramework.remote.IdeControl
 import org.junit.AfterClass
 import org.junit.BeforeClass
-
 
 open class GuiTestSuite {
 
@@ -31,8 +30,7 @@ open class GuiTestSuite {
     @AfterClass
     @JvmStatic
     fun tearDown() {
-      // todo: GUI-142 GuiTestRunner needs refactoring
-      IdeProcessControlManager.killIdeProcess()
+      IdeControl.closeIde()
     }
   }
 }

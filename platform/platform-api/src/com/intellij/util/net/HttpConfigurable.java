@@ -557,7 +557,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @Deprecated
   @SuppressWarnings({"deprecation", "unused"})
   @NotNull
-  public static List<String> convertArguments(@NotNull final List<KeyValue<String, String>> list) {
+  public static List<String> convertArguments(@NotNull final List<? extends KeyValue<String, String>> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }

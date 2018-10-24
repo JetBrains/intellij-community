@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
@@ -16,6 +17,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException
 import org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestKeys
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import org.jetbrains.plugins.github.pullrequest.search.GithubPullRequestSearchComponent
@@ -26,18 +28,19 @@ import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 import javax.swing.event.ListSelectionEvent
 
-class GithubPullRequestsListComponent(project: Project,
-                                      actionManager: ActionManager,
-                                      autoPopupController: AutoPopupController,
-                                      private val selectionModel: GithubPullRequestsListSelectionModel,
-                                      private val loader: GithubPullRequestsLoader)
+internal class GithubPullRequestsListComponent(project: Project,
+                                               actionManager: ActionManager,
+                                               autoPopupController: AutoPopupController,
+                                               private val selectionModel: GithubPullRequestsListSelectionModel,
+                                               private val loader: GithubPullRequestsLoader,
+                                               avatarIconsProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : BorderLayoutPanel(), Disposable,
     GithubPullRequestsLoader.PullRequestsLoadingListener, SingleWorkerProcessExecutor.ProcessStateListener,
     DataProvider {
 
-  private val tableModel = GithubPullRequestsTableModel()
-  private val table = GithubPullRequestsTable(tableModel)
-  private val scrollPane = ScrollPaneFactory.createScrollPane(table,
+  private val listModel = CollectionListModel<GithubSearchedIssue>()
+  private val list = GithubPullRequestsList(avatarIconsProviderFactory, listModel)
+  private val scrollPane = ScrollPaneFactory.createScrollPane(list,
                                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER).apply {
     border = JBUI.Borders.empty()
@@ -64,10 +67,10 @@ class GithubPullRequestsListComponent(project: Project,
       }
     }, this)
 
-    table.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
+    list.selectionModel.addListSelectionListener { e: ListSelectionEvent ->
       if (!e.valueIsAdjusting) {
-        if (table.selectedRow < 0) selectionModel.current = null
-        else selectionModel.current = tableModel.getValueAt(table.selectedRow, 0)
+        if (list.selectedIndex < 0) selectionModel.current = null
+        else selectionModel.current = listModel.getElementAt(list.selectedIndex)
       }
     }
 
@@ -81,7 +84,7 @@ class GithubPullRequestsListComponent(project: Project,
 
     val popupHandler = object : PopupHandler() {
       override fun invokePopup(comp: Component, x: Int, y: Int) {
-        if (TableUtil.isPointOnSelection(table, x, y)) {
+        if (ListUtil.isPointOnSelection(list, x, y)) {
           val popupMenu = actionManager
             .createActionPopupMenu("GithubPullRequestListPopup",
                                    actionManager.getAction("Github.PullRequest.ToolWindow.List.Popup") as ActionGroup)
@@ -90,7 +93,7 @@ class GithubPullRequestsListComponent(project: Project,
         }
       }
     }
-    table.addMouseListener(popupHandler)
+    list.addMouseListener(popupHandler)
 
     tableToolbarWrapper = Wrapper(toolbar.component)
 
@@ -104,6 +107,8 @@ class GithubPullRequestsListComponent(project: Project,
     addToTop(headerPanel)
 
     resetSearch()
+
+    Disposer.register(this, list)
   }
 
   override fun getData(dataId: String): Any? {
@@ -137,7 +142,7 @@ class GithubPullRequestsListComponent(project: Project,
   }
 
   override fun processStarted() {
-    table.emptyText.text = "Loading pull requests..."
+    list.emptyText.text = "Loading pull requests..."
     errorPanel.setError(null)
     progressStripe.startLoading()
   }
@@ -148,16 +153,16 @@ class GithubPullRequestsListComponent(project: Project,
 
   override fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {
     if (searchModel.query.isEmpty()) {
-      table.emptyText.text = "No pull requests loaded."
+      list.emptyText.text = "No pull requests loaded."
     }
     else {
-      table.emptyText.text = "No pull requests matching filters."
-      table.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
+      list.emptyText.text = "No pull requests matching filters."
+      list.emptyText.appendSecondaryText("Reset Filters", SimpleTextAttributes.LINK_ATTRIBUTES) {
         resetSearch()
       }
     }
     loadOnScrollThreshold = hasNext
-    tableModel.addItems(data)
+    listModel.add(data)
 
     //otherwise scrollbar will have old values (before data insert)
     scrollPane.viewport.validate()
@@ -170,18 +175,19 @@ class GithubPullRequestsListComponent(project: Project,
 
   override fun loaderReset() {
     loadOnScrollThreshold = false
-    tableModel.clear()
+    list.selectionModel.clearSelection()
+    listModel.removeAll()
     loader.requestLoadMore()
   }
 
   override fun loadingErrorOccurred(error: Throwable) {
     loadOnScrollThreshold = false
-    val prefix = if (table.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
-    table.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
+    val prefix = if (list.isEmpty) "Cannot load pull requests." else "Cannot load full pull requests list."
+    list.emptyText.clear().appendText(prefix, SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(getLoadingErrorText(error), SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("  ", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
       .appendSecondaryText("Retry", SimpleTextAttributes.LINK_ATTRIBUTES) { loadMore() }
-    if (!table.isEmpty) {
+    if (!list.isEmpty) {
       //language=HTML
       val errorText = "<html><body>$prefix<br/>${getLoadingErrorText(error, "<br/>")}<a href=''>Retry</a></body></html>"
       errorPanel.setError(errorText, linkActivationListener = { loadMore() })

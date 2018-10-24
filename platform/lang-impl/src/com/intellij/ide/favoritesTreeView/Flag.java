@@ -30,7 +30,7 @@ public enum Flag {
 
   private final Color myColor;
 
-  private Flag(Color color) {
+  Flag(Color color) {
     myColor = color;
   }
 

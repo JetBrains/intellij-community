@@ -8,7 +8,6 @@ import com.intellij.psi.NonClasspathClassFinder
 import com.intellij.psi.PsiPackage
 import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.GroovyFileType
 
 class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(project, GroovyFileType.DEFAULT_EXTENSION) {
@@ -26,6 +25,6 @@ class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(proje
       val subPackageFqn = getQualifiedName(pkgName, name)
       PsiPackageImpl(psiManager, subPackageFqn)
     }
-    return ContainerUtil.toArray(packages, PsiPackage.EMPTY_ARRAY)
+    return if (packages.isEmpty()) PsiPackage.EMPTY_ARRAY else packages.toTypedArray()
   }
 }

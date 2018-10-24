@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Couple;
@@ -152,7 +151,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   public static QualifiedName canonizeQualifiedName(QualifiedName qname, PsiElement foothold) {
-    for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+    for (PyCanonicalPathProvider provider : PyCanonicalPathProvider.EP_NAME.getExtensionList()) {
       final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
       if (restored != null) {
         return restored;

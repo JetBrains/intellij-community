@@ -74,8 +74,8 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager {
-  public static final Color FILL_COLOR = new JBColor(Gray._242, new Color(78, 80, 82));
-  public static final Color BORDER_COLOR = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
+  public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
+  public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
@@ -939,7 +939,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       @Override
       protected Color getTextColor() {
-        return new JBColor(0x666666, 0x8C8C8C);
+        return JBColor.namedColor("Notification.MoreButton.foreground", new JBColor(0x666666, 0x8C8C8C));
       }
     };
 
@@ -962,9 +962,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(new JBColor(0xE3E3E3, 0x3A3C3D));
+        g.setColor(JBColor.namedColor("Notification.MoreButton.background", new JBColor(0xE3E3E3, 0x3A3C3D)));
         ((Graphics2D)g).fill(new Rectangle2D.Double(1.5, 1, getWidth() - 2.5, getHeight() - 2));
-        g.setColor(new JBColor(0xDBDBDB, 0x353738));
+        g.setColor(JBColor.namedColor("Notification.MoreButton.innerBorderColor", new JBColor(0xDBDBDB, 0x353738)));
         if (SystemInfo.isMac) {
           ((Graphics2D)g).draw(new Rectangle2D.Double(2, 0, getWidth() - 3.5, 0.5));
         }

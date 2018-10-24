@@ -186,7 +186,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       if (!decodeSuccessful) {
         // if there are invalid chars, adjust the range
         int offsetInHost = textEscaper.getOffsetInHost(outChars.length() - before, info.registeredRangeInsideHost);
-        relevantRange = relevantRange.intersection(new ProperTextRange(0, offsetInHost));
+        relevantRange = relevantRange.intersection(new ProperTextRange(0, Math.max(0,offsetInHost)));
       }
     }
     outChars.append(info.suffix);

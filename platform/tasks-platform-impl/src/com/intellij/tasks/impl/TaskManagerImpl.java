@@ -639,8 +639,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    myContextManager.pack(200, 50);
-
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
@@ -662,6 +660,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myContextManager.pack(200, 50));
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {

@@ -29,7 +29,6 @@ import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.BombedProgressIndicator
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
@@ -109,7 +108,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       WriteCommandAction.runWriteCommandAction(project) {
         ((PsiJavaFile) file).importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar$i"))
       }
-      PlatformTestUtil.tryGcSoftlyReachableObjects()
+      GCUtil.tryGcSoftlyReachableObjects()
       assert !file.contentsLoaded
 
       List<Future> futuresToWait = []
@@ -152,7 +151,7 @@ class ConcurrentIndexTest extends JavaCodeInsightFixtureTestCase {
       WriteCommandAction.runWriteCommandAction(project) {
         ((PsiJavaFile) file).importList.add(JavaPsiFacade.getElementFactory(project).createImportStatementOnDemand("foo.bar$i"))
       }
-      PlatformTestUtil.tryGcSoftlyReachableObjects()
+      GCUtil.tryGcSoftlyReachableObjects()
       assert !file.contentsLoaded
 
       myFixture.addFileToProject("Foo" + i + ".java", "class Foo" + i + " {" + ("public void foo() {}\n") * 1000 + "}")

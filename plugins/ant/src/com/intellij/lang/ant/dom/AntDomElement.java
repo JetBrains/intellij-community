@@ -34,7 +34,7 @@ import java.util.NoSuchElementException;
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
-  public static enum Role {
+  public enum Role {
     TASK, DATA_TYPE
   }
   public static final Key<Role> ROLE = Key.create("element_role");

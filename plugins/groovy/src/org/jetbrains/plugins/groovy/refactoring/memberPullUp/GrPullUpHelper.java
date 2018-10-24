@@ -193,7 +193,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
-  private static boolean willBeUsedInSubclass(PsiElement member, Set<PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
+  private static boolean willBeUsedInSubclass(PsiElement member, Set<? extends PsiMember> movedMembers, PsiClass superclass, PsiClass subclass) {
     for (PsiReference ref : ReferencesSearch.search(member, new LocalSearchScope(subclass), false)) {
       PsiElement element = ref.getElement();
       if (!RefactoringHierarchyUtil.willBeInTargetClass(element, movedMembers, superclass, false)) {
@@ -309,7 +309,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   }
 
   public static void replaceMovedMemberTypeParameters(final PsiElement member,
-                                                      final Iterable<PsiTypeParameter> parametersIterable,
+                                                      final Iterable<? extends PsiTypeParameter> parametersIterable,
                                                       final PsiSubstitutor substitutor,
                                                       final GroovyPsiElementFactory factory) {
     final Map<PsiElement, PsiElement> replacement = new LinkedHashMap<>();

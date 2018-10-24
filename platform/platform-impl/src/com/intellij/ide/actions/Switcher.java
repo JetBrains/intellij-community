@@ -459,20 +459,11 @@ public class Switcher extends AnAction implements DumbAware {
 
       final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
         JPanel myPanel = new JPanel(new BorderLayout());
-        JLabel myLabel = new JLabel() {
-          @Override
-          protected void paintComponent(@NotNull Graphics g) {
-            GraphicsConfig config = new GraphicsConfig(g);
-            ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-            super.paintComponent(g);
-            config.restore();
-          }
-        };
+        JLabel myLabel = createPaleLabel("* ");
 
         {
           myPanel.setOpaque(false);
           myPanel.setBackground(UIUtil.getListBackground());
-          myLabel.setText("* ");
         }
 
         @NotNull
@@ -1248,5 +1239,18 @@ public class Switcher extends AnAction implements DumbAware {
       }
       return myNameForRendering;
     }
+  }
+
+  @NotNull
+  public static JLabel createPaleLabel(@NotNull String text) {
+    return new JLabel(text) {
+      @Override
+      protected void paintComponent(@NotNull Graphics g) {
+        GraphicsConfig config = new GraphicsConfig(g);
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        super.paintComponent(g);
+        config.restore();
+      }
+    };
   }
 }

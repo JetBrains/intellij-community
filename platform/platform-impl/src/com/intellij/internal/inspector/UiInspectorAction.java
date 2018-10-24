@@ -1360,12 +1360,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public Object getValueAt(int row, int column) {
       final PropertyBean bean = myProperties.get(row);
       if (bean != null) {
-        switch (column) {
-          case 0:
-            return bean.propertyName;
-          default:
-            return bean.propertyValue;
-        }
+        return column == 0 ? bean.propertyName : bean.propertyValue;
       }
 
       return null;

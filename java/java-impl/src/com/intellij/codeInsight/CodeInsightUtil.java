@@ -306,7 +306,7 @@ public class CodeInsightUtil {
                                      final PsiElement context,
                                      boolean getRawSubtypes,
                                      @NotNull final PrefixMatcher matcher,
-                                     Consumer<PsiType> consumer) {
+                                     Consumer<? super PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
@@ -383,7 +383,7 @@ public class CodeInsightUtil {
                                                               PsiClassType baseType,
                                                               int arrayDim,
                                                               boolean getRawSubtypes,
-                                                              Consumer<PsiType> result,
+                                                              Consumer<? super PsiType> result,
                                                               @NotNull PsiClass baseClass,
                                                               PsiSubstitutor baseSubstitutor) {
     PsiManager manager = context.getManager();

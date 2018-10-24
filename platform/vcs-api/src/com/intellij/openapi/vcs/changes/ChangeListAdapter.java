@@ -42,6 +42,11 @@ public class ChangeListAdapter implements ChangeListListener {
   }
 
   @Override
+  public void changeListDataChanged(ChangeList list) {
+    changeListsChanged();
+  }
+
+  @Override
   public void changeListCommentChanged(ChangeList list, String oldComment) {
     changeListsChanged();
   }

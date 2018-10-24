@@ -350,7 +350,7 @@ public class MessageBusImpl implements MessageBus {
     }
   }
 
-  private static void pumpWaitingBuses(List<MessageBusImpl> buses) {
+  private static void pumpWaitingBuses(List<? extends MessageBusImpl> buses) {
     List<Throwable> exceptions = null;
     for (MessageBusImpl bus : buses) {
       if (bus.myDisposed) continue;
@@ -360,7 +360,7 @@ public class MessageBusImpl implements MessageBus {
     rethrowExceptions(exceptions);
   }
 
-  private static List<Throwable> appendExceptions(List<Throwable> exceptions, List<Throwable> busExceptions) {
+  private static List<Throwable> appendExceptions(List<Throwable> exceptions, List<? extends Throwable> busExceptions) {
     if (!busExceptions.isEmpty()) {
       if (exceptions == null) exceptions = new SmartList<Throwable>();
       exceptions.addAll(busExceptions);

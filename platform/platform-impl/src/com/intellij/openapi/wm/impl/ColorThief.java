@@ -708,7 +708,7 @@ public class ColorThief {
     /**
      * Inner function to do the iteration.
      */
-    private static void iter(List<VBox> lh, Comparator<VBox> comparator, int target, int[] histo) {
+    private static void iter(List<VBox> lh, Comparator<? super VBox> comparator, int target, int[] histo) {
       int ncolors = 1;
       int niters = 0;
       VBox vbox;

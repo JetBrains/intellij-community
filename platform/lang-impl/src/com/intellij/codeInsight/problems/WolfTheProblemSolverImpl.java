@@ -8,7 +8,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,7 +25,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -337,7 +338,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myFilters) {
       if (!myFiltersLoaded) {
         myFiltersLoaded = true;
-        myFilters.addAll(Arrays.asList(Extensions.getExtensions(FILTER_EP_NAME, myProject)));
+        myFilters.addAll(Arrays.asList(FILTER_EP_NAME.getExtensions(myProject)));
       }
     }
     for (final Condition<VirtualFile> filter : myFilters) {

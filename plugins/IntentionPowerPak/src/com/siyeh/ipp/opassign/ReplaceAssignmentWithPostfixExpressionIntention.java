@@ -15,10 +15,10 @@
  */
 package com.siyeh.ipp.opassign;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -55,9 +55,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention extends MutablyName
     else {
       replacementText = lhsText + "++";
     }
-    return IntentionPowerPackBundle.message(
-      "replace.some.operator.with.other.intention.name", "=",
-      replacementText);
+    return CommonQuickFixBundle.message("fix.replace.x.with.y", "=", replacementText);
   }
 
   @Override

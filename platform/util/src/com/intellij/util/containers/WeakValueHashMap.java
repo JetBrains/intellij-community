@@ -42,6 +42,10 @@ public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
     }
   }
 
+  /**
+   * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
+   */
+  @Deprecated
   public WeakValueHashMap() {
     DeprecatedMethodException.report("Use ContainerUtil#createWeakValueMap() instead");
   }

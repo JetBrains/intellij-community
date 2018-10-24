@@ -3,7 +3,6 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementSettingsPanel;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 
@@ -21,7 +20,7 @@ public class XmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
     addTab(new CodeStyleXmlPanel(settings));
     addTab(new ArrangementSettingsPanel(settings, XMLLanguage.INSTANCE));
 
-    for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
+    for (CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       if (provider.getLanguage() == XMLLanguage.INSTANCE && !provider.hasSettingsPage()) {
         createTab(provider);
       }

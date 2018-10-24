@@ -7,6 +7,7 @@ import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -270,7 +271,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     final RunConfiguration runConfiguration = (RunConfiguration)profile;
-    final List<BeforeRunTask> beforeRunTasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(runConfiguration);
+    final List<BeforeRunTask<?>> beforeRunTasks = RunManagerImplKt.doGetBeforeRunTasks(runConfiguration);
     if (beforeRunTasks.isEmpty()) {
       startRunnable.run();
     }
@@ -279,6 +280,21 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
       final DataContext projectContext = context != null ? context : SimpleDataContext.getProjectContext(myProject);
       final long finalId = id;
       final Long executionSessionId = new Long(id);
+      Map<BeforeRunTask, Executor> runBeforeRunExecutorMap = Collections.synchronizedMap(new LinkedHashMap<>());
+      for (BeforeRunTask task : beforeRunTasks) {
+        @SuppressWarnings("unchecked")
+        BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
+        if (provider != null && task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
+          RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runBeforeRun =
+            (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
+          RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
+          if (settings != null) {
+            runBeforeRunExecutorMap.put(task, RunManagerImpl.canRunConfiguration(settings, environment.getExecutor())
+                                              ? environment.getExecutor()
+                                              : DefaultRunExecutor.getRunExecutorInstance());
+          }
+        }
+      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (BeforeRunTask task : beforeRunTasks) {
           if (myProject.isDisposed()) {
@@ -290,7 +306,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
             continue;
           }
-          ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(environment).contentToReuse(null).build();
+          ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(null);
+          Executor executor = runBeforeRunExecutorMap.get(task);
+          if (executor != null) {
+            builder.executor(executor);
+          }
+          ExecutionEnvironment taskEnvironment = builder.build();
           taskEnvironment.setExecutionId(finalId);
           EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
           if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {

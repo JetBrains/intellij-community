@@ -232,7 +232,7 @@ class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<PsiReference> array) {
+  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<? extends PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;
     PsiElement scope = parameter.getDeclarationScope();

@@ -10,10 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipException;
 
 /**
@@ -424,10 +421,40 @@ public class JBZipFile implements Closeable {
     }
   }
 
+  /**
+   * Removes entry from the directory list.<br/>
+   * NB: it will NOT remove entry content from the stream, please call {@link JBZipFile#gc()} manually when you've finished modifying the
+   * archive.<br/>
+   * {@link JBZipFile#gc()} is not called on {@link JBZipFile#close()} due to potential performance impact of removing small entry from a
+   * big archive.
+   */
   public void eraseEntry(JBZipEntry entry) throws IOException {
     getOutputStream(); // Ensure OutputStream created, so we'll print out central directory at the end;
     entries.remove(entry);
     nameMap.remove(entry.getName());
+  }
+
+  public void gc() throws IOException {
+    if (myOutputStream != null) {
+      myOutputStream = null;
+
+      final Map<JBZipEntry, byte[]> existingEntries = new LinkedHashMap<JBZipEntry, byte[]>();
+      for (JBZipEntry entry : entries) {
+        existingEntries.put(entry, entry.getData());
+      }
+
+      currentCfdOffset = 0;
+      nameMap.clear();
+      entries.clear();
+      for (Map.Entry<JBZipEntry, byte[]> entry : existingEntries.entrySet()) {
+        JBZipEntry zipEntry = getOrCreateEntry(entry.getKey().getName());
+        zipEntry.setComment(entry.getKey().getComment());
+        zipEntry.setExtra(entry.getKey().getExtra());
+        zipEntry.setMethod(entry.getKey().getMethod());
+        zipEntry.setTime(entry.getKey().getTime());
+        zipEntry.setData(entry.getValue());
+      }
+    }
   }
 
   JBZipOutputStream getOutputStream() throws IOException {

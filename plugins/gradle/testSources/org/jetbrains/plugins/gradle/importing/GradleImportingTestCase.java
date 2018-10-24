@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.application.PathManager;
@@ -22,9 +8,7 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
 import com.intellij.openapi.externalSystem.test.ExternalSystemImportingTestCase;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.Messages;
@@ -95,7 +79,9 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         ProjectJdkTable.getInstance().removeJdk(oldJdk);
       }
       VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, SimpleJavaSdkType.getInstance(), true, null, GRADLE_JDK_NAME);
+      JavaSdk javaSdk = JavaSdk.getInstance();
+      SdkType javaSdkType = javaSdk == null ? SimpleJavaSdkType.getInstance() : javaSdk;
+      Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, javaSdkType, true, null, GRADLE_JDK_NAME);
       assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
       ProjectJdkTable.getInstance().addJdk(jdk);
     });
@@ -120,7 +106,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       return;
     }
     Sdk jdk = ProjectJdkTable.getInstance().findJdk(GRADLE_JDK_NAME);
-    if(jdk != null) {
+    if (jdk != null) {
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(jdk));
     }
 
@@ -193,12 +179,12 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
     config = "allprojects {\n" +
-              "  repositories {\n" +
-              "    maven {\n" +
-              "        url 'http://maven.labs.intellij.net/repo1'\n" +
-              "    }\n" +
-              "  }" +
-              "}\n" + config;
+             "  repositories {\n" +
+             "    maven {\n" +
+             "        url 'http://maven.labs.intellij.net/repo1'\n" +
+             "    }\n" +
+             "  }" +
+             "}\n" + config;
     return config;
   }
 

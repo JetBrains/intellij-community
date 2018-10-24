@@ -253,7 +253,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
       return myItem.canNavigateToSource();
     }
 
-    public static void add(final NavigationItem item, Collection<NavigationItem> symbolNavItems) {
+    public static void add(final NavigationItem item, Collection<? super NavigationItem> symbolNavItems) {
       final ItemPresentation presentation;
       if (item instanceof PsiMetaOwner) {
         final PsiMetaData data = ((PsiMetaOwner)item).getMetaData();

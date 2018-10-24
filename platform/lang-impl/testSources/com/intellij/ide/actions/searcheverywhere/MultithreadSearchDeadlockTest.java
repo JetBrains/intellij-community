@@ -24,6 +24,8 @@ import java.util.function.Function;
  */
 public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtureTestCase {
 
+  private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider());
+
   @Override
   protected boolean runInDispatchThread() {
     return false;
@@ -42,7 +44,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     searcher.search(contributorsMap, "", false, ignrd -> null);
 
     try {
@@ -65,7 +67,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     searcher.search(contributorsMap, "", false, ignrd -> null);
 
     try {
@@ -93,7 +95,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
 
     Collector collector = new Collector();
     Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, getTestRootDisposable());
-    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0));
+    MultithreadSearcher searcher = new MultithreadSearcher(collector, command -> alarm.addRequest(command, 0), ourEqualityProviders);
     searcher.search(contributorsMap, "", false, ignrd -> null);
 
     try {

@@ -960,6 +960,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   /**
    * @deprecated and won't be used anymore
    */
+  @Deprecated
   protected boolean shouldDrawMacShadow() {
     return false;
   }

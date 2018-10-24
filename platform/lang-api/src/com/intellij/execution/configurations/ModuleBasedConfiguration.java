@@ -118,10 +118,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @Override
   public void loadState(@NotNull T state) {
     super.loadState(state);
-    
+
     myModule.setModuleName(getOptions().getModule());
   }
-  
+
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
@@ -162,7 +162,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
         configuration.doCopyOptionsFrom(this);
       }
     }
-    
+
     if (isUseReadWriteExternal) {
       final Element element = new Element(TO_CLONE_ELEMENT_NAME);
       try {
@@ -172,7 +172,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
         // so, we have to call copyFrom to ensure that state is fully cloned
         // MUST BE AFTER readExternal because readExternal set options to a new instance
         configuration.setAllowRunningInParallel(isAllowRunningInParallel());
-        return configuration;
       }
       catch (InvalidDataException | WriteExternalException e) {
         LOG.error(e);

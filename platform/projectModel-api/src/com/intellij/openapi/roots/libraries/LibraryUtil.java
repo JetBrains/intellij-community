@@ -48,7 +48,7 @@ public class LibraryUtil {
     return isClassAvailableInLibrary(Arrays.asList(files), fqn);
   }
 
-  public static boolean isClassAvailableInLibrary(List<VirtualFile> files, final String fqn) {
+  public static boolean isClassAvailableInLibrary(List<? extends VirtualFile> files, final String fqn) {
     for (VirtualFile file : files) {
       if (findInFile(file, new StringTokenizer(fqn, "."))) return true;
     }

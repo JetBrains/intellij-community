@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -106,9 +107,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   public InspectionGadgetsFix buildFix(Object... infos) {
     final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
     if (replacementExpression == null) return null;
-    final String name = InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.fix.name",
-      replacementExpression);
+    final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
@@ -130,7 +129,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Simplify";
+      return CommonQuickFixBundle.message("fix.simplify");
     }
 
     @Override

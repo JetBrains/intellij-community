@@ -50,7 +50,7 @@ public class StatisticsInfo {
     myConjuncts = conjuncts;
   }
 
-  public static StatisticsInfo createComposite(List<StatisticsInfo> conjuncts) {
+  public static StatisticsInfo createComposite(List<? extends StatisticsInfo> conjuncts) {
     if (conjuncts.isEmpty()) {
       return EMPTY;
     }

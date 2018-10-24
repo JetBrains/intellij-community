@@ -582,7 +582,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = null;
     myCurrentStackFrame = null;
     myTopFramePosition = null;
-    myActiveNonLineBreakpoint = null;
+    clearActiveNonLineBreakpoint();
     updateExecutionPosition();
   }
 
@@ -863,7 +863,7 @@ public class XDebugSessionImpl implements XDebugSession {
   }
 
   public void positionReached(@NotNull XSuspendContext suspendContext, boolean attract) {
-    myActiveNonLineBreakpoint = null;
+    clearActiveNonLineBreakpoint();
     positionReachedInternal(suspendContext, attract);
   }
 
@@ -999,7 +999,7 @@ public class XDebugSessionImpl implements XDebugSession {
     @Override
     public void breakpointRemoved(@NotNull final XBreakpoint<?> breakpoint) {
       if (getActiveNonLineBreakpoint() == breakpoint) {
-        myActiveNonLineBreakpoint = null;
+        clearActiveNonLineBreakpoint();
       }
       processRemove(breakpoint);
     }
@@ -1021,6 +1021,10 @@ public class XDebugSessionImpl implements XDebugSession {
       processRemove(breakpoint);
       processAdd(breakpoint);
     }
+  }
+
+  public void clearActiveNonLineBreakpoint() {
+    myActiveNonLineBreakpoint = null;
   }
 
   private class MyDependentBreakpointListener implements XDependentBreakpointListener {

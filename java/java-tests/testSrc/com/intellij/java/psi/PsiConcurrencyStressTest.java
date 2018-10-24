@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -156,7 +155,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
             super.visitElement(element);
 
             final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            for (HighlightVisitor visitor : Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, getProject())) {
+            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensions(getProject())) {
               HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
               v.analyze(myFile, true, infoHolder, () -> v.visit(element));
             }

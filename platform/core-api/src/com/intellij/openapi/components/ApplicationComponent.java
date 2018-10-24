@@ -4,6 +4,7 @@ package com.intellij.openapi.components;
 /**
  * @deprecated Not used anymore.
  */
+@Deprecated
 public interface ApplicationComponent extends BaseComponent {
   /**
    * @deprecated Not used anymore.
