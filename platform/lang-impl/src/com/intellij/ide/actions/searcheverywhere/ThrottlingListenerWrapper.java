@@ -74,6 +74,7 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   //always notified in EDT!!!
   private void scheduleFlushBuffer() {
     Runnable flushTask = () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
       if (!flushScheduled) return;
       flushScheduled = false;
       myBuffer.flush(myFlushConsumer);
