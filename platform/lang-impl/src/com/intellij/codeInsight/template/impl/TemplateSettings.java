@@ -354,7 +354,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     myState.defaultShortcut = defaultShortcutChar;
   }
 
-  public Collection<TemplateImpl> getTemplates(@NonNls String key) {
+  @NotNull
+  public Collection<TemplateImpl> getTemplates(@NotNull String key) {
     return myTemplates.get(key);
   }
 
@@ -685,8 +686,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return mySchemeManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
+  @NotNull
+  public List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
+    if (templates.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {
