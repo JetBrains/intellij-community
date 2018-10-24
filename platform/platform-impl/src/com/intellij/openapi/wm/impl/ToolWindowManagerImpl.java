@@ -1326,10 +1326,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     }
 
     final BalloonHyperlinkListener listenerWrapper = new BalloonHyperlinkListener(listener);
-    final Balloon balloon =
-      JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
-        .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
+    final Balloon balloon = JBPopupFactory.getInstance()
+      .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getTitleForeground(), type.getPopupBackground(), listenerWrapper)
+      .setBorderColor(type.getBorderColor()).setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
     NotificationsManagerImpl.frameActivateBalloonListener(balloon, () -> {
       final Alarm alarm = new Alarm();
       alarm.addRequest(() -> {

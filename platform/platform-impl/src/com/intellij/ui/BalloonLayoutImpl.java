@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
@@ -62,8 +60,6 @@ public class BalloonLayoutImpl implements BalloonLayout {
     fireRelayout();
   };
 
-  private LafManagerListener myLafListener;
-
   private final List<Runnable> myListeners = new ArrayList<>();
 
   public BalloonLayoutImpl(@NotNull JRootPane parent, @NotNull Insets insets) {
@@ -75,10 +71,6 @@ public class BalloonLayoutImpl implements BalloonLayout {
 
   public void dispose() {
     myLayeredPane.removeComponentListener(myResizeListener);
-    if (myLafListener != null) {
-      LafManager.getInstance().removeLafManagerListener(myLafListener);
-      myLafListener = null;
-    }
     for (Balloon balloon : new ArrayList<>(myBalloons)) {
       Disposer.dispose(balloon);
     }
@@ -144,20 +136,6 @@ public class BalloonLayoutImpl implements BalloonLayout {
         queueRelayout();
       }
     });
-
-    if (myLafListener == null && layoutData != null) {
-      myLafListener = new LafManagerListener() {
-        @Override
-        public void lookAndFeelChanged(@NotNull LafManager source) {
-          for (BalloonLayoutData layoutData : myLayoutData.values()) {
-            if (layoutData.lafHandler != null) {
-              layoutData.lafHandler.run();
-            }
-          }
-        }
-      };
-      LafManager.getInstance().addLafManagerListener(myLafListener);
-    }
 
     calculateSize();
     relayout();
