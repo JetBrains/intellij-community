@@ -24,7 +24,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
   private val LOG = Logger.getInstance("#org.jetbrains.idea.maven.importing.MavenCompilerImporter")
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
-    return super.isApplicable(mavenProject) && !Registry.`is`("maven.disable.compiler.arguments.import", false)
+    return super.isApplicable(mavenProject) && Registry.`is`("maven.import.compiler.arguments", true)
   }
 
   override fun processChangedModulesOnly(): Boolean {
