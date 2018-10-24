@@ -1,5 +1,6 @@
 package com.intellij.openapi.options;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -43,5 +44,23 @@ public interface SchemeImporter <T extends Scheme> {
   @Nullable
   default String getAdditionalImportInfo(@NotNull T scheme) {
     return null;
+  }
+
+  /**
+   * @return File to import scheme. If it's {@code null} than file chooser is shown.
+   */
+  @Nullable
+  default VirtualFile getImportFile() {
+    return null;
+  }
+
+  /**
+   * @return Message to be shown after successful importing
+   * @param presentableUrl Url of file that has been imported
+   * @param newSchemeName New created scheme name
+   */
+  @NotNull
+  default String getAfterImportMessage(@NotNull String presentableUrl, @NotNull String newSchemeName) {
+    return ApplicationBundle.message("settings.editor.scheme.import.success", presentableUrl, newSchemeName);
   }
 }
