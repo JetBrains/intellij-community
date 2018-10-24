@@ -75,7 +75,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
            //may break catches with explicit exceptions
            actionText.matches("Replace with throws .*") ||
-           actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
+           actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'"); // Suspicious toArray may introduce compilation error
   }
 
 }
