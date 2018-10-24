@@ -120,8 +120,8 @@ public final class GutterTooltipHelper {
 
   private static void appendPackageName(@NotNull StringBuilder sb, @Nullable String name) {
     if (StringUtil.isEmpty(name)) return; // no package name
-    sb.append(" <font color=").append(toHex(CONTEXT_HELP_FOREGROUND));
-    sb.append("><code>(").append(name).append(")</code></font>");
+    sb.append(" <font color='#").append(toHex(CONTEXT_HELP_FOREGROUND));
+    sb.append("'><code>(").append(name).append(")</code></font>");
   }
 
   private static void appendContextHelp(@NotNull StringBuilder sb, @Nullable String actionId) {
@@ -130,7 +130,7 @@ public final class GutterTooltipHelper {
     if (action == null) return; // action is not exist
     String text = getPreferredShortcutText(action.getShortcutSet().getShortcuts());
     if (StringUtil.isEmpty(text)) return; // action have no shortcuts
-    sb.append("<br><div style='margin-top: 5px'><font size='2' color='");
+    sb.append("<br><div style='margin-top: 5px'><font size='2' color='#");
     sb.append(toHex(CONTEXT_HELP_FOREGROUND));
     sb.append("'>Press ").append(text).append(" to navigate</font></div>");
   }
