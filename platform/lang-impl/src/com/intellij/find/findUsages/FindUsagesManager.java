@@ -45,7 +45,7 @@ import com.intellij.psi.search.*;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
@@ -309,7 +309,7 @@ public class FindUsagesManager {
   }
 
   private boolean mustOpenInNewTab() {
-    Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     return selectedContent != null && selectedContent.isPinned();
   }
 
