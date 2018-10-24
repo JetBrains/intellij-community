@@ -154,8 +154,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       public void mouseClicked(MouseEvent e) {
         if (myTabs.findInfo(e) != null || isFloating()) return;
         if (!e.isPopupTrigger() && SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          final ActionManager mgr = ActionManager.getInstance();
-          mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+          doHideAll(e);
         }
       }
     });
@@ -543,8 +542,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
           myActionClickCount++;
         }
         if (myActionClickCount > 1 && !isFloating()) {
-          final ActionManager mgr = ActionManager.getInstance();
-          mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
+          doHideAll(e);
         }
       }
     }
@@ -559,6 +557,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         }
       }
     }
+  }
+
+  public void doHideAll(MouseEvent e) {
+    if (!Registry.is("editor.maximize.on.double.click")) return;
+    final ActionManager mgr = ActionManager.getInstance();
+    mgr.tryToExecute(mgr.getAction("HideAllWindows"), e, null, ActionPlaces.UNKNOWN, true);
   }
 
   class MyDragOutDelegate implements TabInfo.DragOutDelegate {
