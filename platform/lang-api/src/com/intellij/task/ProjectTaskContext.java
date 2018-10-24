@@ -63,6 +63,9 @@ public class ProjectTaskContext extends UserDataHolderBase {
     return myRunConfiguration;
   }
 
+  /**
+   * @return true indicates that the task was started automatically, e.g. resources compilation on frame deactivation
+   */
   public boolean isAutoRun() {
     return myAutoRun;
   }
