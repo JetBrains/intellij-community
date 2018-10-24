@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.impl.gradleReimport
 import com.intellij.testGuiFramework.impl.waitAMoment
@@ -76,12 +77,18 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
   }
 
   companion object {
+    private val nativeSuffix = when(SystemInfo.getSystemType()){
+      SystemInfo.SystemType.WINDOWS -> "mingw"
+      SystemInfo.SystemType.UNIX -> "linux"
+      SystemInfo.SystemType.MAC -> "macos"
+    }
+
     private val suffixes = mapOf(
       TargetPlatform.JVM16 to "jvm",
       TargetPlatform.JVM18 to "jvm",
       TargetPlatform.JavaScript to "js",
       TargetPlatform.Common to "common",
-      TargetPlatform.Native to "mingw"
+      TargetPlatform.Native to nativeSuffix
     )
 
     private val mobileSuffixes = mapOf(
