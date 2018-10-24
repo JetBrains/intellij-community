@@ -2,6 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -16,7 +17,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.BaseScaleContext.UpdateListener;
 import com.intellij.util.ui.JBUI.RasterJBIcon;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.openapi.util.IconLoader.CachedImageIcon.HandleNotFound;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -556,7 +556,7 @@ public final class IconLoader {
     return icon;
   }
 
-  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+  public static final class CachedImageIcon extends com.intellij.util.ui.JBUI.RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
     @Nullable private final String myOriginalPath;
@@ -770,7 +770,7 @@ public final class IconLoader {
     }
 
     @Nullable
-    private URL getURL() {
+    public URL getURL() {
       return myResolver.getURL();
     }
 
