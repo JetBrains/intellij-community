@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeFileTracker
+import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -323,7 +324,8 @@ internal class SchemeManagerTest {
     val dir = tempDirManager.newPath()
     val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
       @Suppress("UNCHECKED_CAST")
-      ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager as SchemeManagerImpl<Any, Any>, null))
+      ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(
+        schemeManager as SchemeManagerImpl<Any, Any>, null))
     })
 
     val a = TestScheme("a", "a")

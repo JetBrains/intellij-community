@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore
+package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.configurationStore.schemeManager.*
+import com.intellij.configurationStore.*
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.runUndoTransparentWriteAction
@@ -135,7 +135,8 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
         externalInfo.schemeKey = schemeKey
 
-        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider, true)
+        val scheme = (processor as LazySchemeProcessor).createScheme(
+          SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider, true)
         val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = schemeListManager.readOnlyExternalizableSchemes.put(schemeKey, scheme)

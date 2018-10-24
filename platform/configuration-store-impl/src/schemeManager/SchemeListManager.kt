@@ -2,7 +2,6 @@
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.SchemeManagerImpl
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.util.Condition
 import com.intellij.util.containers.ConcurrentList

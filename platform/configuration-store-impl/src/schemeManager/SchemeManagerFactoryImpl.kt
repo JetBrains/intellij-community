@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore
+package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.schemeManager.SchemeFileTracker
+import com.intellij.configurationStore.LOG
+import com.intellij.configurationStore.SchemeNameToFileName
+import com.intellij.configurationStore.StateStorageManagerImpl
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
@@ -40,13 +43,15 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
                                                     isAutoSave: Boolean): SchemeManager<T> {
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
-                                    processor,
-                                    streamProvider ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
-                                    directoryPath ?: pathToFile(path),
-                                    roamingType,
-                                    presentableName,
-                                    schemeNameToFileName,
-                                    if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null else createFileChangeSubscriber())
+                                                                                  processor,
+                                                                                  streamProvider
+                                                                                  ?: (componentManager?.stateStore?.storageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
+                                                                                  directoryPath ?: pathToFile(path),
+                                                                                  roamingType,
+                                                                                  presentableName,
+                                                                                  schemeNameToFileName,
+                                                                                  if (streamProvider != null && streamProvider.isApplicable(path, roamingType)) null
+                                                                                  else createFileChangeSubscriber())
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
       managers.add(manager as SchemeManagerImpl<Scheme, Scheme>)
@@ -112,7 +117,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)!!
+    override fun pathToFile(path: String) = Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(
+      ROOT_CONFIG), path)!!
   }
 
   @Suppress("unused")
