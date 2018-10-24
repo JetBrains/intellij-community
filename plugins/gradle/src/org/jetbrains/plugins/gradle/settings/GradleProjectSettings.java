@@ -3,8 +3,8 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
@@ -25,7 +25,8 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
-  private boolean resolveModulePerSourceSet = ExternalSystemApiUtil.isJavaCompatibleIde();
+  private boolean resolveModulePerSourceSet =
+    SystemProperties.getBooleanProperty("gradle.resolve.module.per.source.set.default", true);
   private boolean resolveExternalAnnotations;
   @Nullable private CompositeBuild myCompositeBuild;
 
