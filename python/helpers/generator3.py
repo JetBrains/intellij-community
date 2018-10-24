@@ -405,6 +405,14 @@ def get_help_text():
 
 
 if __name__ == "__main__":
+    try:
+        # Get traces after segmentation faults
+        import faulthandler
+
+        faulthandler.enable()
+    except ImportError:
+        pass
+
     from getopt import getopt
 
     helptext = get_help_text()
