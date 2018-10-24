@@ -47,6 +47,7 @@ import com.jetbrains.python.console.PythonDebugConsoleCommunication;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.DebugAwareConfiguration;
@@ -376,6 +377,17 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportQtDebugging()) {
       String pyQtBackend = PyDebuggerOptionsProvider.getInstance(project).getPyQtBackend().toLowerCase();
       debugParams.addParameter(String.format("--qt-support=%s", pyQtBackend));
+    }
+  }
+
+  public static void disableBuiltinBreakpoint(@Nullable Sdk sdk, Map<String, String> env) {
+    if (sdk != null) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null) {
+        if (flavor.getLanguageLevel(sdk) == LanguageLevel.PYTHON37) {
+          env.put("PYTHONBREAKPOINT", "0");
+        }
+      }
     }
   }
 
