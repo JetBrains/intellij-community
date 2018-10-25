@@ -172,12 +172,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   private static int getIndex(@NotNull String replacement) {
-    if (replacement.contains("..")) return 1;
-    if (replacement.contains("$" + PathMacroUtil.USER_HOME_NAME + "$")) return 1;
-    if (replacement.contains("$" + PathMacroUtil.APPLICATION_HOME_DIR + "$")) return 1;
-    if (replacement.contains(PathMacroUtil.DEPRECATED_MODULE_DIR) ||
-        replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$") ||
+    if (replacement.contains("..") ||
+        replacement.contains("$" + PathMacroUtil.USER_HOME_NAME + "$") ||
+        replacement.contains("$" + PathMacroUtil.APPLICATION_HOME_DIR + "$") ||
         replacement.contains("$" + PathMacrosImpl.MAVEN_REPOSITORY + "$")) {
+      return 1;
+    }
+    if (replacement.contains(PathMacroUtil.DEPRECATED_MODULE_DIR) ||
+        replacement.contains("$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$")) {
       return 3;
     }
     return 2;
@@ -193,7 +195,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   }
 
   @NotNull
-  public List<String> getPathIndex() {
+  private List<String> getPathIndex() {
     if (myPathsIndex == null || myPathsIndex.size() != myMacroMap.size()) {
       List<Map.Entry<String, String>> entries = new ArrayList<>(myMacroMap.entrySet());
 
