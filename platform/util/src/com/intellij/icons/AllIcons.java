@@ -1917,6 +1917,7 @@ public class AllIcons {
     public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/nodes/testSourceFolder.svg"); // 16x16
+    public static final Icon Type = IconLoader.getIcon("/nodes/type.svg"); // 16x16
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.svg"); // 16x16
     public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.svg"); // 16x16
     public static final Icon UpFolder = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
