@@ -86,7 +86,9 @@ public class TestPackage extends TestObject {
             instance.setAlternativeResolveEnabled(true);
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
-            searchTests(module, classFilter, myClassNames);
+            if (!JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) { //junit 5 process tests automatically
+              searchTests(module, classFilter, myClassNames);
+            }
           }
           catch (CantRunException ignored) {}
           finally {
@@ -118,10 +120,6 @@ public class TestPackage extends TestObject {
 
 
   protected void searchTests(Module module, TestClassFilter classFilter, Set<? super String> names) throws CantRunException {
-     if (JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-       //junit 5 process tests automatically
-       return;
-     }
     Set<PsiClass> classes = new THashSet<>();
     if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
       Condition<PsiClass> acceptClassCondition = aClass -> ReadAction.compute(() -> aClass.isValid() && classFilter.isAccepted(aClass));
