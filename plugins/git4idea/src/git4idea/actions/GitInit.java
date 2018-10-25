@@ -69,7 +69,7 @@ public class GitInit extends DumbAwareAction {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           refreshAndConfigureVcsMappings(project, root, root.getPath());
-          GitUtil.generateGitignoreFileIfNeeded(project, root);
+          GitUtil.proposeUpdateGitignore(project, root);
         }
       });
     });

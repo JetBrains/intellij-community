@@ -15,4 +15,6 @@ import java.io.IOException;
 public interface IgnoredFileGenerator {
 
   boolean generateFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException;
+
+  boolean appendFile(@NotNull VirtualFile ignoreFileRoot, @NotNull AbstractVcs vcs) throws IOException;
 }

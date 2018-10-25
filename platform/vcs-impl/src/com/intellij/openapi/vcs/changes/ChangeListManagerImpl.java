@@ -1548,41 +1548,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @NotNull
     @Override
-    public Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot) {
-      Set<String> masks = ContainerUtil.newLinkedHashSet();
-      @SystemIndependent String projectBasePath = project.getBasePath();
-      if (projectBasePath == null) return masks;
-      if (!FileUtil.isAncestor(ignoreFileRoot.getPath(), projectBasePath, false)) return masks;
+    public Set<IgnoredFileDescriptor> getIgnoredFiles(@NotNull Project project) {
+      Set<IgnoredFileBean> ignored = ContainerUtil.newLinkedHashSet();
 
       String shelfPath = ShelveChangesManager.getShelfPath(project);
-      if (FileUtil.isAncestor(ignoreFileRoot.getPath(), shelfPath, false)) {
-        String relativeShelfPath =
-          FileUtil.getRelativePath(ignoreFileRoot.getPath(), shelfPath, '/');
-        if (relativeShelfPath != null) {
-          masks.add("/" + relativeShelfPath + "/");
-        }
+      ignored.add(IgnoredBeanFactory.ignoreUnderDirectory(shelfPath, project));
+
+      String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
+      if (workspaceFilePath != null) {
+        ignored.add(IgnoredBeanFactory.ignoreFile(workspaceFilePath, project));
       }
 
-      if (ProjectKt.isDirectoryBased(project)) {
-        String workspaceFilePath = ProjectKt.getStateStore(project).getWorkspaceFilePath();
-        if (workspaceFilePath != null && FileUtil.isAncestor(ignoreFileRoot.getPath(), workspaceFilePath, false)) {
-          String relativeWorkspaceFilePath =
-            FileUtil.getRelativePath(ignoreFileRoot.getPath(), workspaceFilePath, '/');
-          if (relativeWorkspaceFilePath != null) {
-            masks.add("/" + relativeWorkspaceFilePath);
-          }
-        }
-      }
-      else {
-        masks.add("*." + WorkspaceFileType.DEFAULT_EXTENSION);
-      }
-
-      return ContainerUtil.unmodifiableOrEmptySet(masks);
+      return ContainerUtil.unmodifiableOrEmptySet(ignored);
     }
 
     @NotNull
     @Override
-    public String getMasksGroupDescription() {
+    public String getIgnoredGroupDescription() {
       return "Default ignored files";
     }
   }
