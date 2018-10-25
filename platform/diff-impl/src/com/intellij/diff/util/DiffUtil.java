@@ -866,7 +866,7 @@ public class DiffUtil {
       }
 
       Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
-      lines.set(pair.first.line, pair.second.line);
+      lines.set(pair.first.line, Math.max(pair.second.line, pair.first.line + 1));
       if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
