@@ -323,7 +323,7 @@ public class CompilerTester {
     }
 
     private static boolean isSpamMessage(String text) {
-      return text.contains("Compilation completed successfully") ||
+      return text.contains(CompilerBundle.message("status.compilation.completed.successfully")) ||
              text.contains("used to compile") ||
              text.contains("illegal reflective") ||
              text.contains("Picked up") ||
