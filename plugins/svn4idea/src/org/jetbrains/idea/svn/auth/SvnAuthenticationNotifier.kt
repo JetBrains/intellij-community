@@ -5,12 +5,14 @@ import com.intellij.concurrency.JobScheduler
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.Messages.getWarningIcon
+import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NamedRunnable
@@ -25,7 +27,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ThreeState
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
-import org.jetbrains.idea.svn.RootsToWorkingCopies
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnConfigurable.selectConfigurationDirectory
 import org.jetbrains.idea.svn.SvnConfiguration
@@ -36,7 +37,6 @@ import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
-import org.jetbrains.idea.svn.info.Info
 import org.jetbrains.idea.svn.info.InfoClient
 import java.awt.Component
 import java.awt.Point
@@ -45,31 +45,27 @@ import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
 import java.net.URISyntaxException
-import java.util.*
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
+private val LOG = logger<SvnAuthenticationNotifier>()
+
+private val AUTH_KINDS = listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username",
+                                "svn.ssl.server", "svn.ssh.server")
+
 class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
   myVcs.project, myVcs.displayName, "Not Logged In to Subversion", NotificationType.ERROR) {
-  private val myRootsToWorkingCopies: RootsToWorkingCopies
-  private val myCopiesPassiveResults: MutableMap<Url, Boolean>
+  private val myCopiesPassiveResults = synchronizedMap(mutableMapOf<Url, Boolean>())
   private var myTimer: ScheduledFuture<*>? = null
   @Volatile
-  private var myVerificationInProgress: Boolean = false
-
-  init {
-    myRootsToWorkingCopies = myVcs.rootsToWorkingCopies
-    myCopiesPassiveResults = synchronizedMap(HashMap())
-    myVerificationInProgress = false
-  }
+  private var myVerificationInProgress = false
 
   fun init() {
     if (myTimer != null) {
       stop()
     }
-    // every 10 minutes
     myTimer = JobScheduler.getScheduler().scheduleWithFixedDelay({ myCopiesPassiveResults.clear() }, 10, 10 * 60, TimeUnit.SECONDS)
   }
 
@@ -79,14 +75,17 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
   }
 
   override fun ask(obj: AuthenticationRequest, description: String?): Boolean {
-    if (myVerificationInProgress) return showAlreadyChecking()
+    if (myVerificationInProgress) {
+      showAlreadyChecking()
+      return false
+    }
     myVerificationInProgress = true
 
     val resultRef = Ref<Boolean>()
     val checker = {
       try {
         val result = interactiveValidation(obj.myProject, obj.url, obj.realm, obj.kind)
-        LOG.debug("ask result for: " + obj.url + " is: " + result)
+        LOG.debug("ask result for: ${obj.url} is: $result")
         resultRef.set(result)
         if (result) {
           onStateChangedToSuccess(obj)
@@ -97,49 +96,45 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
       }
     }
     // also do not show auth if thread does not have progress indicator
-    if (getApplication().isReadAccessAllowed || !ProgressManager.getInstance().hasProgressIndicator()) {
+    return if (getApplication().isReadAccessAllowed || !ProgressManager.getInstance().hasProgressIndicator()) {
       getApplication().executeOnPooledThread(checker)
+      false
     }
     else {
       checker()
-      return resultRef.get()
+      resultRef.get()
     }
-    return false
   }
 
-  private fun showAlreadyChecking(): Boolean {
+  private fun showAlreadyChecking() {
     val frameFor = WindowManagerEx.getInstanceEx().findFrameFor(myProject)
     if (frameFor != null) {
       val component = frameFor.component
-      var point: Point? = component.mousePosition
-      if (point == null) {
-        point = Point((component.width * 0.7).toInt(), 0)
-      }
+      val point = component.mousePosition ?: Point((component.width * 0.7).toInt(), 0)
+
       SwingUtilities.convertPointToScreen(point, component)
       JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null).createBalloon().show(
         RelativePoint(point), Balloon.Position.below)
     }
-    return false
   }
 
   private fun onStateChangedToSuccess(obj: AuthenticationRequest) {
     myCopiesPassiveResults[getKey(obj)] = true
     myVcs.invokeRefreshSvnRoots()
 
-    val outdatedRequests = ArrayList<Url>()
+    val outdatedRequests = mutableListOf<Url>()
     for (key in allCurrentKeys) {
-      val commonURLAncestor = key.commonAncestorWith(obj.url)
-      if (commonURLAncestor != null && !isEmptyOrSpaces(commonURLAncestor.host) && !isEmptyOrSpaces(commonURLAncestor.path)) {
+      val commonAncestor = key.commonAncestorWith(obj.url)
+      if (commonAncestor != null && !isEmptyOrSpaces(commonAncestor.host) && !isEmptyOrSpaces(commonAncestor.path)) {
         outdatedRequests.add(key)
       }
     }
     LOG.debug("on state changed ")
     getApplication().invokeLater(
       {
-        for (key in outdatedRequests) {
-          removeLazyNotificationByKey(key)
-        }
-      }, ModalityState.NON_MODAL)
+        outdatedRequests.forEach { removeLazyNotificationByKey(it) }
+      }, ModalityState.NON_MODAL
+    )
   }
 
   override fun ensureNotify(obj: AuthenticationRequest): Boolean {
@@ -147,19 +142,14 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
     return super.ensureNotify(obj)
   }
 
-  override fun onFirstNotification(obj: AuthenticationRequest): Boolean {
-    return ProgressManager.getInstance().hasProgressIndicator() && ask(obj, null)
-  }
-
-  public override fun getKey(obj: AuthenticationRequest): Url {
-    return obj.wcUrl!!
-  }
+  override fun onFirstNotification(obj: AuthenticationRequest) = ProgressManager.getInstance().hasProgressIndicator() && ask(obj, null)
+  override fun getKey(obj: AuthenticationRequest) = obj.wcUrl!!
 
   fun getWcUrl(obj: AuthenticationRequest): Url? {
     if (obj.isOutsideCopies) return null
     if (obj.wcUrl != null) return obj.wcUrl
 
-    val copy = myRootsToWorkingCopies.getMatchingCopy(obj.url)
+    val copy = myVcs.rootsToWorkingCopies.getMatchingCopy(obj.url)
     if (copy != null) {
       obj.isOutsideCopies = false
       obj.wcUrl = copy.url
@@ -174,9 +164,8 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
    * Bases on presence of notifications!
    */
   fun isAuthenticatedFor(vf: VirtualFile, factory: ClientFactory?): ThreeState {
-    val wcCopy = myRootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
+    val wcCopy = myVcs.rootsToWorkingCopies.getWcRoot(vf) ?: return ThreeState.UNSURE
 
-    // check there's no cancellation yet
     val haveCancellation = getStateFor(wcCopy.url)
     if (haveCancellation) return ThreeState.NO
 
@@ -184,15 +173,12 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
     if (java.lang.Boolean.TRUE == keptResult) return ThreeState.YES
     if (java.lang.Boolean.FALSE == keptResult) return ThreeState.NO
 
-    // check have credentials
     val calculatedResult = if (factory == null) passiveValidation(myVcs, wcCopy.url) else passiveValidation(factory, wcCopy.url)
     myCopiesPassiveResults[wcCopy.url] = calculatedResult
-    return if (calculatedResult) ThreeState.YES else ThreeState.NO
+    return ThreeState.fromBoolean(calculatedResult)
   }
 
-  override fun getNotificationContent(obj: AuthenticationRequest): String {
-    return "<a href=\"\">Click to fix.</a> Not logged In to Subversion '" + obj.realm + "' (" + obj.url.toDecodedString() + ")"
-  }
+  override fun getNotificationContent(obj: AuthenticationRequest) = "<a href=\"\">Click to fix.</a> Not logged In to Subversion '${obj.realm}' (${obj.url.toDecodedString()})"
 
   class AuthenticationRequest(val myProject: Project, val kind: String, val url: Url, val realm: String) {
     var wcUrl: Url? = null
@@ -200,25 +186,15 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
   }
 
   companion object {
-    private val LOG = Logger.getInstance(SvnAuthenticationNotifier::class.java)
-
-    private val ourAuthKinds = listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username",
-                                      "svn.ssl.server", "svn.ssh.server")
-
     // TODO: Looks like passive authentication for command line integration could show dialogs for proxy errors. So, it could make sense to
     // TODO: reuse some logic from validationImpl().
     // TODO: Also SvnAuthenticationNotifier is not called for command line integration (ensureNotify() is called only in SVNKit lifecycle).
     // TODO: Though its logic with notifications seems rather convenient. Fix this.
-    private fun passiveValidation(factory: ClientFactory, url: Url): Boolean {
-      var info: Info? = null
-
-      try {
-        info = factory.create(InfoClient::class.java, false).doInfo(Target.on(url), Revision.UNDEFINED)
-      }
-      catch (ignore: SvnBindException) {
-      }
-
-      return info != null
+    private fun passiveValidation(factory: ClientFactory, url: Url) = try {
+      factory.create(InfoClient::class.java, false).doInfo(Target.on(url), Revision.UNDEFINED) != null
+    }
+    catch (ignore: SvnBindException) {
+      false
     }
 
     @JvmStatic
@@ -246,30 +222,26 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
       var proxyToRelease: Proxy? = null
       if (!interactive && configuration.isIsUseDefaultProxy) {
         val instance = HttpConfigurable.getInstance()
-        if (instance.USE_HTTP_PROXY &&
-            instance.PROXY_AUTHENTICATION &&
-            (isEmptyOrSpaces(instance.proxyLogin) || isEmptyOrSpaces(instance.plainProxyPassword))) {
+        if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (isEmptyOrSpaces(instance.proxyLogin) || isEmptyOrSpaces(
+            instance.plainProxyPassword))) {
           return false
         }
         if (instance.USE_PROXY_PAC) {
-          val select: List<Proxy>?
-          try {
-            select = CommonProxy.getInstance().select(URI(url.toString()))
+          val select = try {
+            CommonProxy.getInstance().select(URI(url.toString()))
           }
           catch (e: URISyntaxException) {
             LOG.info("wrong URL: " + url.toString())
             return false
           }
 
-          if (select != null && !select.isEmpty()) {
-            for (proxy in select) {
-              if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP == proxy.type()) {
-                val address = proxy.address() as InetSocketAddress
-                val password = HttpConfigurable.getInstance().getGenericPassword(address.hostName, address.port)
-                if (password == null) {
-                  CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
-                  proxyToRelease = proxy
-                }
+          for (proxy in select) {
+            if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP == proxy.type()) {
+              val address = proxy.address() as InetSocketAddress
+              val password = HttpConfigurable.getInstance().getGenericPassword(address.hostName, address.port)
+              if (password == null) {
+                CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
+                proxyToRelease = proxy
               }
             }
           }
@@ -292,7 +264,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
         if (interactive) {
           showAuthenticationFailedWithHotFixes(project, configuration, e)
         }
-        return false /// !!!! any exception means user should be notified that authorization failed
+        return false
       }
       finally {
         if (!interactive && configuration.isIsUseDefaultProxy && proxyToRelease != null) {
@@ -318,39 +290,30 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
       return false
     }
 
-    private fun showAuthenticationFailedWithHotFixes(project: Project, configuration: SvnConfiguration, e: SvnBindException) {
+    private fun showAuthenticationFailedWithHotFixes(project: Project, configuration: SvnConfiguration, e: SvnBindException) =
       getApplication().invokeLater(Runnable {
         showOverChangesView(
           project, "Authentication failed: " + e.message, MessageType.ERROR,
           object : NamedRunnable(message("confirmation.title.clear.authentication.cache")) {
-            override fun run() {
-              clearAuthenticationCache(project, null, configuration.configurationDirectory)
-            }
+            override fun run() = clearAuthenticationCache(project, null, configuration.configurationDirectory)
           },
           object : NamedRunnable(message("action.title.select.configuration.directory")) {
-            override fun run() {
-              selectConfigurationDirectory(configuration.configurationDirectory,
-                                           { s -> configuration.setConfigurationDirParameters(false, s) },
-                                           project, null)
-            }
+            override fun run() = selectConfigurationDirectory(
+              configuration.configurationDirectory, { configuration.setConfigurationDirParameters(false, it) }, project, null)
           }
         )
       }, ModalityState.NON_MODAL, project.disposed)
-    }
 
     @JvmStatic
     fun clearAuthenticationCache(project: Project, component: Component?, configDirPath: String?) {
       if (configDirPath != null) {
-        val result: Int
-        if (component == null) {
-          result = Messages.showYesNoDialog(project, message("confirmation.text.delete.stored.authentication.information"),
-                                            message("confirmation.title.clear.authentication.cache"),
-                                            Messages.getWarningIcon())
+        val result = if (component == null) {
+          showYesNoDialog(project, message("confirmation.text.delete.stored.authentication.information"),
+                          message("confirmation.title.clear.authentication.cache"), getWarningIcon())
         }
         else {
-          result = Messages.showYesNoDialog(component, message("confirmation.text.delete.stored.authentication.information"),
-                                            message("confirmation.title.clear.authentication.cache"),
-                                            Messages.getWarningIcon())
+          showYesNoDialog(component, message("confirmation.text.delete.stored.authentication.information"),
+                          message("confirmation.title.clear.authentication.cache"), getWarningIcon())
         }
         if (result == Messages.YES) {
           SvnConfiguration.RUNTIME_AUTH_CACHE.clear()
@@ -365,16 +328,12 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
       if (authDir.exists()) {
         val process = {
           val ind = ProgressManager.getInstance().progressIndicator
-          if (ind != null) {
-            ind.isIndeterminate = true
-            ind.text = "Clearing stored credentials in " + authDir.absolutePath
-          }
-          val files = authDir.listFiles { dir, name -> ourAuthKinds.contains(name) }
+          ind?.isIndeterminate = true
+          ind?.text = "Clearing stored credentials in ${authDir.absolutePath}"
+          val files = authDir.listFiles { _, name -> AUTH_KINDS.contains(name) }
 
           for (dir in files!!) {
-            if (ind != null) {
-              ind.text = "Deleting " + dir.absolutePath
-            }
+            ind?.text = "Deleting ${dir.absolutePath}"
             FileUtil.delete(dir)
           }
         }
