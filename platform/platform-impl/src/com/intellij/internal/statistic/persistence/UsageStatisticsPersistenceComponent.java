@@ -5,11 +5,13 @@ package com.intellij.internal.statistic.persistence;
 import com.android.annotations.NonNull;
 import com.android.tools.analytics.AnalyticsPublisher;
 import com.android.tools.analytics.AnalyticsSettings;
+import com.android.tools.analytics.AnalyticsSettingsData;
 import com.android.tools.analytics.UsageTracker;
 import com.android.utils.ILogger;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.configurable.SendPeriod;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -180,7 +182,14 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     // As we cannot control when IJ calls into this code, we need to load the AnalyticsSettings if
     // we're not initialized yet, to ensure we properly return opt-in status.
     if (!AnalyticsSettings.getInitialized()) {
-      AnalyticsSettings.initialize(getAndroidLogger());
+      Application application = ApplicationManager.getApplication();
+      if (application != null && application.isUnitTestMode()) {
+        AnalyticsSettingsData analyticsSettings = new AnalyticsSettingsData();
+        analyticsSettings.setOptedIn(false);
+        AnalyticsSettings.setInstanceForTest(analyticsSettings);
+      } else {
+        AnalyticsSettings.initialize(getAndroidLogger());
+      }
     }
     return AnalyticsSettings.getOptedIn();
   }
