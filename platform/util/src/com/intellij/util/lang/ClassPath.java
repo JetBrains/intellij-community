@@ -125,7 +125,7 @@ public class ClassPath {
       Loader loader;
       while ((loader = getLoader(i++)) != null) {
         if (myCanUseCache) {
-          if (!myCache.loaderHasName(s, shortName, loader)) continue;
+          if (!loader.containsName(s, shortName)) continue;
         }
         Resource resource = loader.getResource(s);
         if (resource != null) {
@@ -315,7 +315,7 @@ public class ClassPath {
         if (myLoaders != null) {
           while (myIndex < myLoaders.size()) {
             loader = myLoaders.get(myIndex++);
-            if (!myCache.loaderHasName(myName, myShortName, loader)) {
+            if (!loader.containsName(myName, myShortName)) {
               myRes = null;
               continue;
             }
@@ -325,7 +325,7 @@ public class ClassPath {
         }
         else {
           while ((loader = getLoader(myIndex++)) != null) {
-            if (myCanUseCache && !myCache.loaderHasName(myName, myShortName, loader)) continue;
+            if (myCanUseCache && !loader.containsName(myName, myShortName)) continue;
             myRes = loader.getResource(myName);
             if (myRes != null) return true;
           }
@@ -359,9 +359,9 @@ public class ClassPath {
   private static class ResourceStringLoaderIterator extends ClasspathCache.LoaderIterator<Resource, String, ClassPath> {
     @Override
     Resource process(Loader loader, String s, ClassPath classPath, String shortName) {
-      if (!classPath.myCache.loaderHasName(s, shortName, loader)) return null;
+      if (!loader.containsName(s, shortName)) return null;
       Resource resource = loader.getResource(s);
-      if (resource != null) printOrder(loader, s, resource);
+      if (resource != null && ourDumpOrder) printOrder(loader, s, resource);
       return resource;
     }
   }
@@ -431,14 +431,24 @@ public class ClassPath {
   static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");
   private static final AtomicLong ourTotalTime = new AtomicLong();
   private static final AtomicInteger ourTotalRequests = new AtomicInteger();
+  private static final ThreadLocal<Boolean> ourDoingTiming = new ThreadLocal<Boolean>();
 
   private static long startTiming() {
-    return ourLogTiming ? System.nanoTime() : 0;
-  }
+    if (!ourLogTiming) return 0;
+    if (ourDoingTiming.get() != null) {
+      return 0;
+    }
+    ourDoingTiming.set(Boolean.TRUE);
+    return System.nanoTime();
+  }                                            
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logTiming(ClassPath path, long started, String msg) {
     if (!ourLogTiming) return;
+    if (started == 0) {
+      return;
+    }
+    ourDoingTiming.set(null);
 
     long time = System.nanoTime() - started;
     long totalTime = ourTotalTime.addAndGet(time);
