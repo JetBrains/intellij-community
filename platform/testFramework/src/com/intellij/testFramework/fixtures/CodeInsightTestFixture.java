@@ -393,7 +393,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void testCompletionVariants(@NotNull @TestDataFile String fileBefore, @NotNull String... items);
 
   /**
-   * Launches renaming refactoring on the PSI element at caret and checks the result.
+   * Opens the specified file in the editor, Launches renaming refactoring on the PSI element at caret and checks the result.
+   * For new tests, please use{@link #testRenameUsingHandler(String, String, String, String...)} instead of this method.
    *
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter  result file to be checked against.
@@ -406,8 +407,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                   @TestDataFile @NotNull String... additionalFiles);
 
   /**
-   * Launches renaming refactoring using the rename handler (using the high-level rename API, as opposed to retrieving the PSI element
-   * at caret and invoking the PSI rename on it) and checks the result.
+   * Opens the specified file in the editor, launches the rename refactoring using the rename handler (using the high-level
+   * rename API, as opposed to retrieving the PSI element at caret and invoking the PSI rename on it) and checks the result.
    *
    * @param fileBefore original file path. Use {@link #CARET_MARKER} to mark the element to rename.
    * @param fileAfter  result file to be checked against.
@@ -419,10 +420,22 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
                               @NotNull String newName,
                               @TestDataFile @NotNull String... additionalFiles);
 
+  /**
+   * Launches the rename refactoring on the PSI element at caret and checks the result. For new tests, please use
+   * {@link #testRenameUsingHandler(String, String)} instead of this method.
+   */
   void testRename(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
+  /**
+   * launches the rename refactoring using the rename handler (using the high-level rename API, as opposed to
+   * retrieving the PSI element at caret and invoking the PSI rename on it) and checks the result.
+   */
   void testRenameUsingHandler(@NotNull @TestDataFile String fileAfter, @NotNull String newName);
 
+  /**
+   * Invokes the Find Usages handler for the PSI element at caret and returns the usages returned by it.
+   * For new tests, please use {@link #testFindUsagesUsingAction} instead of this method.
+   */
   @NotNull
   Collection<UsageInfo> testFindUsages(@TestDataFile @NotNull String... fileNames);
 

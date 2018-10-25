@@ -3,7 +3,6 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.HashSet;
 
 /**
  * @author peter
@@ -32,7 +32,7 @@ public class TestDataProvider implements DataProvider, DataContext {
     this(project, false);
   }
 
-  public TestDataProvider(@NotNull Project project, boolean withRules) {
+  private TestDataProvider(@NotNull Project project, boolean withRules) {
     myProject = project;
     myWithRules = withRules;
     if (myWithRules) {
@@ -41,6 +41,10 @@ public class TestDataProvider implements DataProvider, DataContext {
     else {
       myDelegateWithoutRules = this;
     }
+  }
+
+  public static TestDataProvider withRules(Project project) {
+    return new TestDataProvider(project, true);
   }
 
   @Override
@@ -81,10 +85,7 @@ public class TestDataProvider implements DataProvider, DataContext {
       }
 
       if (myWithRules) {
-        GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
-        if (rule != null) {
-          return rule.getData(myDelegateWithoutRules);
-        }
+        return ((DataManagerImpl)DataManager.getInstance()).getDataFromProvider(myDelegateWithoutRules, dataId, new HashSet<>());
       }
       return null;
     }
