@@ -569,6 +569,9 @@
     </item>
     <item name='org.apache.commons.collections.list.SetUniqueList java.util.List subList(int, int)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val val="&quot;_,_-&gt;new&quot;"/>
+      </annotation>
     </item>
     <item name='org.apache.commons.collections.list.SetUniqueList java.util.ListIterator listIterator()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -580,6 +583,9 @@
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
+    </item>
+    <item name='org.apache.commons.collections.list.SetUniqueList java.util.Set createSetBasedOnList(java.util.Set, java.util.List) 0'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.SetUniqueList org.apache.commons.collections.list.SetUniqueList decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>

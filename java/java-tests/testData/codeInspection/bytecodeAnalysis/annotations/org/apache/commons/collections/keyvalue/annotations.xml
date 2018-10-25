@@ -106,13 +106,22 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.collections.keyvalue.MultiKey java.lang.Object readResolve()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;this&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.keyvalue.MultiKey java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.keyvalue.TiedMapEntry TiedMapEntry(java.util.Map, java.lang.Object)'>
+  <item name='org.apache.commons.collections.keyvalue.MultiKey void calculateHashCode(java.lang.Object[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='org.apache.commons.collections.keyvalue.TiedMapEntry TiedMapEntry(java.util.Map, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
