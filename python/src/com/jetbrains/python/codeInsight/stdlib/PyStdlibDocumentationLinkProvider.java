@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -985,28 +986,13 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
-    String qnameString = moduleName.toString();
-    String moduleNameStr = moduleName.toString();
-    if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
-      qnameString = "os.path";
-    } else if (qnameString.equals("genericpath")) {
-      qnameString = "os.path";
-      moduleNameStr = qnameString;
-    }
-    else if (qnameString.equals("nt")) {
-      qnameString = "os";
-    }
-    else if (qnameString.equals("cPickle")) {
-      qnameString = "pickle";
-    }
-    else if (qnameString.equals("pyexpat")) {
-      qnameString = "xml.parsers.expat";
-    }
+
+    Pair<String, String> modName = getModuleName(moduleName.toString(), moduleName.toString());
 
     final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
     final Map<String, String> moduleToWebpageName =
       pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
-    final String webpageName = moduleToWebpageName.get(qnameString);
+    final String webpageName = moduleToWebpageName.get(modName.first);
 
     final boolean isBuiltin = "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
     final String className = element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null ?
@@ -1023,11 +1009,37 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     if (webpageName2 != null && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
       urlBuilder.append('#');
       if (!isBuiltin) {
-        urlBuilder.append(moduleNameStr).append(".");
+        urlBuilder.append(modName.second).append(".");
       }
       urlBuilder.append(qName);
     }
     return urlBuilder.toString();
+  }
+
+  private static Pair<String, String> getModuleName(String qname, String moduleName) {
+    if (qname.equals("ntpath") || qname.equals("posixpath")) {
+      qname = "os.path";
+    } else if (qname.equals("genericpath")) {
+      qname = "os.path";
+      moduleName = qname;
+    }
+    else if (qname.equals("nt")) {
+      qname = "os";
+    }
+    else if (qname.equals("cPickle")) {
+      qname = "pickle";
+    }
+    else if (qname.equals("pyexpat")) {
+      qname = "xml.parsers.expat";
+    }
+
+    return Pair.create(qname, moduleName);
+  }
+
+  public String getModuleNameForDocumentationUrl(PsiElement element, PsiElement originalElement) {
+    QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
+
+    return getModuleName(qName.toString(), qName.toString()).second;
   }
 
   private static final class MyBuilder extends ImmutableMap.Builder<String, String> {
