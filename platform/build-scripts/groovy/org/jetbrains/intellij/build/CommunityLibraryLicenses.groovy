@@ -84,6 +84,8 @@ class CommunityLibraryLicenses {
                        url: "http://commons.apache.org/beanutils/"),
     new LibraryLicense(name: "Apache Commons Codec", libraryName: "commons-codec", version: "1.8", license: "Apache 2.0",
                        url: "http://commons.apache.org/codec/", licenseUrl: "http://www.apache.org/licenses/"),
+    new LibraryLicense(name: "Apache Commons Collections", libraryName: "commons-collections", version: "3.2.2", license: "Apache 2.0",
+                       url: "https://commons.apache.org/proper/commons-collections/"),
     new LibraryLicense(name: "Apache Commons Compress", libraryName: "commons-compress", version: "1.10", license: "Apache 2.0",
                        url: "http://commons.apache.org/proper/commons-compress/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "Apache Commons Discovery", libraryName: "commons-discovery", version: "0.4", license: "Apache 2.0",
