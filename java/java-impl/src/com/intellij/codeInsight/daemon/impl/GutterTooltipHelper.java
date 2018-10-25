@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.actions.QualifiedNameProvider;
+import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
@@ -160,11 +160,7 @@ public final class GutterTooltipHelper {
   private static String getQualifiedName(@NotNull PsiElement element) {
     PsiClass psiClass = element instanceof PsiClass ? (PsiClass)element : getStubOrPsiParentOfType(element, PsiClass.class);
     if (psiClass instanceof PsiAnonymousClass) return null;
-    for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensionList()) {
-      String name = provider.getQualifiedName(element);
-      if (name != null) return name;
-    }
-    return null;
+    return QualifiedNameProviderUtil.getQualifiedName(element);
   }
 
   @Nullable
