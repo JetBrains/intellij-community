@@ -64,7 +64,7 @@ public class JavaGotoSuperTest extends LightDaemonAnalyzerTestCase {
     if (CodeInsightTestFixtureImpl.processGuttersAtCaret(getEditor(), getProject(), mark -> {
       Shortcut shortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_SUPER).getShortcutSet().getShortcuts()[0];
       assertEquals(
-        "<html><body>Overrides method in <a href=\"#element/I#run\"><code>I</code></a><br><div style='margin-top: 5px'><font size='2' color='787878'>Press " +
+        "<html><body>Overrides method in <a href=\"#element/I#run\"><code>I</code></a><br><div style='margin-top: 5px'><font size='2' color='#787878'>Press " +
         KeymapUtil.getShortcutText(shortcut) +
         " to navigate</font></div></body></html>",
         mark.getTooltipText());
