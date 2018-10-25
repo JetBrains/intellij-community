@@ -38,7 +38,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
     Color background = UIUtil.getTreeBackground(selected, reallyHasFocus);
     UIUtil.changeBackGround(component, background);
     Color foreground =
-      selected ? UIUtil.getTreeSelectionForeground() : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeForeground();
+      selected ? UIUtil.getTreeSelectionForeground(reallyHasFocus) : node.isProperSetting() ? PlatformColors.BLUE : UIUtil.getTreeForeground();
 
     int style = SimpleTextAttributes.STYLE_PLAIN;
     String hint = null;

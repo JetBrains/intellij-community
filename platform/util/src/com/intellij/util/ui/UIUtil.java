@@ -1212,6 +1212,10 @@ public class UIUtil {
     return JBUI.CurrentTheme.Tree.foreground(true, true);
   }
 
+  public static Color getTreeSelectionForeground(boolean focused) {
+    return JBUI.CurrentTheme.Tree.foreground(true, focused);
+  }
+
   public static Color getTreeForeground(boolean selected, boolean focused) {
     return JBUI.CurrentTheme.Tree.foreground(selected, focused);
   }

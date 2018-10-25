@@ -50,16 +50,7 @@ public class BegCellRenderer extends JLabel implements TreeCellRenderer, ListCel
     mySelected = selected;
     String text = tree.convertValueToText(obj, selected, expanded, leaf, i1, hasFocus);
     setText(text);
-    if (selected){
-      if(hasFocus){
-        setForeground(getSelectionForeground());
-      }else{
-        setForeground(getTextForeground());
-      }
-    }
-    else{
-      setForeground(getTextForeground());
-    }
+    setForeground(UIUtil.getTreeForeground(selected, hasFocus));
     Icon icon = getIcon(tree, obj, selected, expanded, leaf, i1, hasFocus);
     setIcon(icon);
     return this;

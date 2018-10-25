@@ -119,16 +119,8 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
       borderW -= myIcon.getIconWidth();
     }
 
-    Color bgColor;
-    Color fgColor;
-    if (mySelected && myHasFocus){
-      bgColor = UIUtil.getTreeSelectionBackground();
-      fgColor = UIUtil.getTreeSelectionForeground();
-    }
-    else{
-      bgColor = UIUtil.getTreeBackground();
-      fgColor = getForeground();
-    }
+    Color bgColor = UIUtil.getTreeBackground(mySelected, myHasFocus);
+    Color fgColor = UIUtil.getTreeForeground(mySelected, myHasFocus);
 
     // fill background
     if (!WideSelectionTreeUI.isWideSelection(myTree)) {
