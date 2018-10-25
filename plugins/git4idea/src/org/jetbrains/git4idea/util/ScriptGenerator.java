@@ -33,11 +33,6 @@ import java.util.ArrayList;
  */
 public class ScriptGenerator {
   /**
-   * The extension of the ssh script name
-   */
-  public static final String SCRIPT_EXT = SystemInfo.isWindows ? ".bat" : ".sh";
-
-  /**
    * The script prefix
    */
   private final String myPrefix;
@@ -114,20 +109,27 @@ public class ScriptGenerator {
     return this;
   }
 
-  /**
-   * Generate script according to specified parameters
-   *
-   * @return the path to generated script
-   * @throws IOException if there is a problem with creating script
-   */
   @NotNull
-  public static File generate(@NotNull String fileName, @NotNull String commandLine) throws IOException {
-    String title = SystemInfo.isWindows ? "@echo off" : "#!/bin/sh";
-    String parametersPassthrough = SystemInfo.isWindows ? " %*" : " \"$@\"";
-    String content = title + "\n" + commandLine + parametersPassthrough + "\n";
-    File file = new File(PathManager.getTempPath(), fileName + SCRIPT_EXT);
+  private static File generateBatch(@NotNull String fileName, @NotNull String commandLine) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("@echo off").append("\n");
+    sb.append(commandLine).append(" %*").append("\n");
+    return createTempExecutable(fileName + ".bat", sb.toString());
+  }
+
+  @NotNull
+  private static File generateShell(@NotNull String fileName, @NotNull String commandLine) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    sb.append("#!/bin/sh").append("\n");
+    sb.append(commandLine).append(" \"$@\"").append("\n");
+    return createTempExecutable(fileName + ".sh", sb.toString());
+  }
+
+  @NotNull
+  private static File createTempExecutable(@NotNull String fileName, @NotNull String content) throws IOException {
+    File file = new File(PathManager.getTempPath(), fileName);
     if (SystemInfo.isWindows && file.getPath().contains(" ")) {
-      file = new File(FileUtil.getTempDirectory(), fileName + SCRIPT_EXT);
+      file = new File(FileUtil.getTempDirectory(), fileName);
     }
     FileUtil.writeToFile(file, content);
     FileUtil.setExecutableAttribute(file.getPath(), true);
@@ -136,7 +138,13 @@ public class ScriptGenerator {
 
   @NotNull
   public File generate() throws IOException {
-    return generate(myPrefix, commandLine());
+    String commandLine = commandLine();
+    if (SystemInfo.isWindows) {
+      return generateBatch(myPrefix, commandLine);
+    }
+    else {
+      return generateShell(myPrefix, commandLine);
+    }
   }
 
   /**
