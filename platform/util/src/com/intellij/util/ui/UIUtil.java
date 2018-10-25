@@ -395,7 +395,6 @@ public class UIUtil {
     }
   };
 
-  private static final Color UNFOCUSED_SELECTION_COLOR = new JBColor(0xD4D4D4, 0x0D293E);
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
   private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
@@ -1160,11 +1159,7 @@ public class UIUtil {
   }
 
   public static Color getListSelectionForeground() {
-    final Color color = UIManager.getColor("List.selectionForeground");
-    if (color == null) {
-      return UIManager.getColor("List[Selected].textForeground");  // Nimbus
-    }
-    return color;
+    return JBUI.CurrentTheme.List.foreground(true, true);
   }
 
   public static Color getFieldForegroundColor() {
@@ -1201,11 +1196,11 @@ public class UIUtil {
   }
 
   public static Font getTreeFont() {
-    return UIManager.getFont("Tree.font");
+    return JBUI.CurrentTheme.Tree.font();
   }
 
   public static Font getListFont() {
-    return UIManager.getFont("List.font");
+    return JBUI.CurrentTheme.List.font();
   }
 
   public static Color getTreeSelectionForeground() {
@@ -1321,19 +1316,19 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    return UIManager.getColor("List.background");
+    return JBUI.CurrentTheme.List.background();
   }
 
-  public static Color getListBackground(boolean isSelected) {
-    return isSelected ? getListSelectionBackground() : getListBackground();
+  public static Color getListBackground(boolean selected) {
+    return JBUI.CurrentTheme.List.background(selected, true);
   }
 
   public static Color getListForeground() {
-    return UIManager.getColor("List.foreground");
+    return JBUI.CurrentTheme.List.foreground();
   }
 
-  public static Color getListForeground(boolean isSelected) {
-    return isSelected ? getListSelectionForeground() : getListForeground();
+  public static Color getListForeground(boolean selected) {
+    return JBUI.CurrentTheme.List.foreground(selected, true);
   }
 
   public static Color getPanelBackground() {
@@ -1345,7 +1340,7 @@ public class UIUtil {
   }
 
   public static Color getTreeBackground() {
-    return JBUI.CurrentTheme.Tree.background(false, true);
+    return JBUI.CurrentTheme.Tree.background();
   }
 
   public static Color getTreeForeground() {
@@ -1357,15 +1352,15 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    return UIManager.getColor("List.selectionBackground");
+    return JBUI.CurrentTheme.List.background(true, true);
   }
 
   public static Color getListUnfocusedSelectionBackground() {
-    return UNFOCUSED_SELECTION_COLOR;
+    return JBUI.CurrentTheme.List.background(true, false);
   }
 
   public static Color getListSelectionBackground(boolean focused) {
-    return focused ? getListSelectionBackground() : getListUnfocusedSelectionBackground();
+    return JBUI.CurrentTheme.List.background(true, focused);
   }
 
   public static Color getTreeSelectionBackground(boolean focused) {
@@ -1373,7 +1368,7 @@ public class UIUtil {
   }
 
   public static Color getTreeUnfocusedSelectionBackground() {
-    return UNFOCUSED_SELECTION_COLOR;
+    return JBUI.CurrentTheme.Tree.background(true, false);
   }
 
   public static Color getTableUnfocusedSelectionBackground() {
