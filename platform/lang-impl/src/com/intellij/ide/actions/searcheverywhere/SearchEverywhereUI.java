@@ -1181,7 +1181,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private static JLabel groupInfoLabel(String text) {
     JLabel label = new JLabel(text);
-    label.setForeground(UIUtil.getLabelDisabledForeground());
+    label.setForeground(JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
     label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
     label.setOpaque(false);
     return label;
