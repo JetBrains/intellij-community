@@ -1,14 +1,8 @@
 <!-- Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
-<project name="IntelliJ IDEA CE build file" default="layout">
+<project name="IntelliJ IDEA CE developer's update" default="layout">
   <dirname property="build" file="${ant.file}"/>
   <property name="project.home" value="${build}/../"/>
   <property name="gant.home" value="${project.home}/build/lib/gant"/>
-
-  <condition property="gradle.executable"
-             value="${project.home}/build/dependencies/gradlew.bat"
-             else="${project.home}/build/dependencies/gradlew">
-    <os family="windows"/>
-  </condition>
 
   <macrodef name="run">
     <attribute name="script"/>
@@ -16,13 +10,8 @@
     <attribute name="deploy"/>
 
     <sequential>
-      <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
-        <arg value="--no-daemon"/>
-        <arg value="setupKotlinPlugin"/>
-      </exec>
-
-      <java failonerror="true" classname="org.apache.tools.ant.Main" fork="true">
-        <jvmarg line="-Xms64m -Xmx512m"/>
+      <java classname="org.apache.tools.ant.Main" dir="${project.home}" fork="true" failonerror="true">
+        <jvmarg line="-Xmx512m"/>
         <jvmarg line="&quot;-Ddeploy=@{deploy}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
