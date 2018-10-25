@@ -3,8 +3,10 @@ package com.intellij.ide.projectWizard.kotlin.model
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.fileInsertFromBegin
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
+import com.intellij.testGuiFramework.framework.GuiTestUtil.isFileContainsLine
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
@@ -525,7 +527,36 @@ fun KotlinGuiTestCase.editSettingsGradle(){
   //   if project is configured to old Kotlin version, it must be released and no changes are required in the settings.gradle file
   if (!KotlinTestProperties.isActualKotlinUsed()) return
   val fileName = Paths.get(projectFolder, "settings.gradle")
-  if (KotlinTestProperties.isArtifactOnlyInDevRep) addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
+  if (KotlinTestProperties.isArtifactOnlyInDevRep) {
+    if(isFileContainsLine(fileName, "repositories"))
+      addDevRepositoryToBuildGradle(fileName, isKotlinDslUsed = false)
+    else {
+      val pluginManagement = "pluginManagement"
+      val repositoriesLines = listOf(
+        "repositories {",
+          "mavenCentral()",
+          "maven { url 'https://dl.bintray.com/kotlin/kotlin-dev' }",
+        "}"
+      )
+
+      if(isFileContainsLine(fileName, pluginManagement)){
+        println("editSettingsGradle: file '$fileName' contains `$pluginManagement`")
+        fileSearchAndReplace(fileName){
+          if(it.contains(pluginManagement))
+            listOf(it, *repositoriesLines.toTypedArray()).joinToString(separator = "\n")
+          else it
+        }
+      }
+      else{
+        println("editSettingsGradle: file '$fileName' does NOT contain `$pluginManagement`")
+        fileInsertFromBegin(fileName, listOf(
+          "pluginManagement {",
+          *repositoriesLines.toTypedArray(),
+          "}"
+        ))
+      }
+    }
+  }
 }
 
 fun KotlinGuiTestCase.editBuildGradle(
