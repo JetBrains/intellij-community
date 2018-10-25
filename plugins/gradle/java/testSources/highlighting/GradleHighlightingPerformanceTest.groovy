@@ -8,10 +8,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
+/* TODO(b/111900968): compile intellij.groovy tests, even though the dependency here seems dubious
 import org.jetbrains.plugins.groovy.util.Slow
+TODO(b/111900968): compile intellij.groovy tests, even though the dependency here seems dubious */
 import org.junit.Test
 
+/* TODO(b/111900968): compile intellij.groovy tests, even though the dependency here seems dubious
 @Slow
+TODO(b/111900968): compile intellij.groovy tests, even though the dependency here seems dubious */
 class GradleHighlightingPerformanceTest extends GradleHighlightingBaseTest {
   @Test
   void testPerformance() throws Exception {
