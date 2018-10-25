@@ -137,14 +137,10 @@ public class ScriptGenerator {
   }
 
   @NotNull
-  public File generate() throws IOException {
+  public File generate(boolean useBatchFile) throws IOException {
     String commandLine = commandLine();
-    if (SystemInfo.isWindows) {
-      return generateBatch(myPrefix, commandLine);
-    }
-    else {
-      return generateShell(myPrefix, commandLine);
-    }
+    return useBatchFile ? generateBatch(myPrefix, commandLine)
+                        : generateShell(myPrefix, commandLine);
   }
 
   /**
