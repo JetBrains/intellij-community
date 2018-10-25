@@ -1751,20 +1751,90 @@ public class JBUI {
       public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
+    private static final Color SELECTION_INACTIVE_BACKGROUND = new JBColor(0xD4D4D4, 0x0D293E);
+
     public static final class Tree {
 
       public static Color background(boolean selected, boolean focused) {
-        if (!selected) return UIManager.getColor("Tree.background");
-        if (focused) return UIManager.getColor("Tree.selectionBackground");
+        return !selected ? background() : focused ? backgroundSelection() : backgroundSelectionInactive();
+      }
+
+      public static Color background() {
+        return UIManager.getColor("Tree.background");
+      }
+
+      private static Color backgroundSelection() {
+        return UIManager.getColor("Tree.selectionBackground");
+      }
+
+      private static Color backgroundSelectionInactive() {
         Color background = UIManager.getColor("Tree.selectionInactiveBackground");
-        return background != null ? background : UIUtil.getTreeUnfocusedSelectionBackground();
+        return background != null ? background : SELECTION_INACTIVE_BACKGROUND;
       }
 
       public static Color foreground(boolean selected, boolean focused) {
-        if (!selected) return UIManager.getColor("Tree.foreground");
-        if (focused) return UIManager.getColor("Tree.selectionForeground");
+        return !selected ? foreground() : focused ? foregroundSelection() : foregroundSelectionInactive();
+      }
+
+      public static Color foreground() {
+        return UIManager.getColor("Tree.foreground");
+      }
+
+      private static Color foregroundSelection() {
+        return UIManager.getColor("Tree.selectionForeground");
+      }
+
+      private static Color foregroundSelectionInactive() {
         Color foreground = UIManager.getColor("Tree.selectionInactiveForeground");
-        return foreground != null ? foreground : UIManager.getColor("Tree.foreground");
+        return foreground != null ? foreground : foreground();
+      }
+
+      public static Font font() {
+        Font font = UIManager.getFont("Tree.font");
+        return font != null ? font : UIManager.getFont("Label.font");
+      }
+    }
+
+    public static final class List {
+
+      public static Color background(boolean selected, boolean focused) {
+        return !selected ? background() : focused ? backgroundSelection() : backgroundSelectionInactive();
+      }
+
+      public static Color background() {
+        return UIManager.getColor("List.background");
+      }
+
+      private static Color backgroundSelection() {
+        return UIManager.getColor("List.selectionBackground");
+      }
+
+      private static Color backgroundSelectionInactive() {
+        Color background = UIManager.getColor("List.selectionInactiveBackground");
+        return background != null ? background : SELECTION_INACTIVE_BACKGROUND;
+      }
+
+      public static Color foreground(boolean selected, boolean focused) {
+        return !selected ? foreground() : focused ? foregroundSelection() : foregroundSelectionInactive();
+      }
+
+      public static Color foreground() {
+        return UIManager.getColor("List.foreground");
+      }
+
+      private static Color foregroundSelection() {
+        Color foreground = UIManager.getColor("List.selectionForeground");
+        return foreground != null ? foreground : UIManager.getColor("List[Selected].textForeground");  // Nimbus
+      }
+
+      private static Color foregroundSelectionInactive() {
+        Color foreground = UIManager.getColor("List.selectionInactiveForeground");
+        return foreground != null ? foreground : foreground();
+      }
+
+      public static Font font() {
+        Font font = UIManager.getFont("List.font");
+        return font != null ? font : UIManager.getFont("Label.font");
       }
     }
 
