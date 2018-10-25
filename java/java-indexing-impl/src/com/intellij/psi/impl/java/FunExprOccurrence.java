@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ApproximateResolver;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -144,18 +143,26 @@ public class FunExprOccurrence {
     String paramClassName = paramType instanceof PsiClassType ? ((PsiClassType)paramType).getClassName() : null;
     if (paramClassName == null) return false;
 
-    if (paramClassName.equals(sam.getName())) return true;
+    if (paramClassName.equals(sam.getName())) {
+      return sam.equals(((PsiClassType)paramType).resolve());
+    }
 
-    JBIterable<String> typeParameters = JBIterable.generate(place, PsiElement::getContext)
+    return isTypeParameterVisible(paramClassName, place) &&
+           ((PsiClassType)paramType).resolve() instanceof PsiTypeParameter &&
+           hasSuperTypeAssignableFromSam(sam, paramType);
+  }
+
+  private static boolean isTypeParameterVisible(String name, PsiElement fromPlace) {
+    JBIterable<String> typeParameters = JBIterable.generate(fromPlace, PsiElement::getContext)
       .takeWhile(c -> !(c instanceof PsiFile))
       .filter(PsiTypeParameterListOwner.class)
       .flatMap(o -> Arrays.asList(o.getTypeParameters()))
       .map(PsiNamedElement::getName);
-    if (typeParameters.contains(paramClassName)) {
-      PsiClass functionalCandidate = ((PsiClassType)paramType).resolve();
-      return functionalCandidate instanceof PsiTypeParameter &&
-             InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(paramType)), true);
-    }
-    return false;
+    return typeParameters.contains(name);
+  }
+
+  private static boolean hasSuperTypeAssignableFromSam(PsiClass sam, PsiType type) {
+    return !InheritanceUtil.processSuperTypes(type, false, superType ->
+      !InheritanceUtil.isInheritorOrSelf(sam, PsiUtil.resolveClassInClassTypeOnly(superType), true));
   }
 }
