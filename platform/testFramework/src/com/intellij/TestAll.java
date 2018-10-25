@@ -329,21 +329,17 @@ public class TestAll implements Test {
           else {
             String name = ((TestCase)test).getName();
             if ("warning".equals(name)) return; // Mute TestSuite's "no tests found" warning
-            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass)))
+            if (!isIncludingPerformanceTestsRun() && (isPerformanceTestsRun() ^ isPerformanceTest(name, testCaseClass))) {
               return;
+            }
 
             Method method = findTestMethod((TestCase)test);
-            if (method == null) {
+            Bombed methodBomb = method == null ? null : method.getAnnotation(Bombed.class);
+            if (methodBomb == null) {
               doAddTest(test);
             }
-            else {
-              Bombed methodBomb = method.getAnnotation(Bombed.class);
-              if (methodBomb == null) {
-                doAddTest(test);
-              }
-              else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
-                doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
-              }
+            else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
+              doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
             }
           }
         }
