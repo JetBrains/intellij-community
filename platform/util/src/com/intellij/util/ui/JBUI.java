@@ -1786,7 +1786,11 @@ public class JBUI {
       }
 
       public static Color listSeparatorColor() {
-        return JBColor.namedColor("SearchEverywhere.List.Separator.Color", 0xdcdcdc);
+        return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
+      }
+
+      public static Color listTitleLabelForeground() {
+        return JBColor.namedColor("SearchEverywhere.List.Separator.foreground", UIUtil.getLabelDisabledForeground());
       }
 
       public static Color searchFieldGrayForeground()  {

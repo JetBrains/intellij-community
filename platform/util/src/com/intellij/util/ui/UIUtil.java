@@ -1105,9 +1105,7 @@ public class UIUtil {
   }
 
   public static Color getLabelDisabledForeground() {
-    final Color color = UIManager.getColor("Label.disabledForeground");
-    if (color != null) return color;
-    return UIManager.getColor("Label.disabledText");
+    return JBColor.namedColor("Label.disabledForeground", JBColor.GRAY);
   }
 
   public static Color getContextHelpForeground() {
