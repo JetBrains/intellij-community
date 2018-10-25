@@ -65,15 +65,16 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
       projectPath = projectFolder,
       gradleOptions = gradleOptions
     )
+    val projectName = testMethod.methodName
     waitAMoment()
-    waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
+    waitForGradleReimport(projectName)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = gradleOptions.useKotlinDsl
     )
     gradleReimport()
-    waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
+    assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
     waitAMoment()
 
     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(

@@ -46,7 +46,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
       )
     )
     waitAMoment()
-    waitForGradleReimport(projectName, waitForProject = false)
+    waitForGradleReimport(projectName)
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
@@ -54,7 +54,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     )
      waitAMoment()
     gradleReimport()
-     waitForGradleReimport(projectName, waitForProject = true)
+     assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
      waitAMoment()
 
      projectStructureDialogScenarios.checkGradleExplicitModuleGroups(

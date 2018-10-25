@@ -635,6 +635,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   expectedFacet: FacetStructure,
   gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   if (!isIdeFrameRun()) return
+  val projectName = testMethod.methodName
   createGradleProject(
     projectPath = projectFolder,
     gradleOptions = gradleOptions)
@@ -645,7 +646,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
     else -> throw IllegalStateException("Cannot configure to Common or Native kind.")
   }
   waitAMoment()
-  waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
+  waitForGradleReimport(projectName)
   saveAndCloseCurrentEditor()
   editSettingsGradle()
   editBuildGradle(
@@ -654,7 +655,7 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   )
   waitAMoment()
   gradleReimport()
-  waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
+  assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   waitAMoment()
 
   projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
