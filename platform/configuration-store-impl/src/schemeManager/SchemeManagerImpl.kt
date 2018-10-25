@@ -11,7 +11,6 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_EXT
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
-import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -32,10 +31,8 @@ import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import org.jdom.Document
 import org.jdom.Element
-import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.IOException
-import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -157,11 +154,21 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private fun getFileExtension(fileName: CharSequence, allowAny: Boolean): String {
+  internal fun createSchemeLoader(isDuringLoad: Boolean = false): SchemeLoader<T, MUTABLE_SCHEME> {
+    val filesToDelete = THashSet(filesToDelete)
+    // caller must call SchemeLoader.apply to bring back scheduled for delete files
+    this.filesToDelete.removeAll(filesToDelete)
+    // SchemeLoader can use retain list to bring back previously  scheduled for delete file,
+    // but what if someone will call save() during load and file will be deleted, although should be loaded by a new load session
+    // (because modified on disk)
+    return SchemeLoader(this, schemes, filesToDelete, isDuringLoad)
+  }
+
+  internal fun getFileExtension(fileName: CharSequence, isAllowAny: Boolean): String {
     return when {
       StringUtilRt.endsWithIgnoreCase(fileName, schemeExtension) -> schemeExtension
       StringUtilRt.endsWithIgnoreCase(fileName, DEFAULT_EXT) -> DEFAULT_EXT
-      allowAny -> PathUtil.getFileExtension(fileName.toString())!!
+      isAllowAny -> PathUtil.getFileExtension(fileName.toString())!!
       else -> throw IllegalStateException("Scheme file extension $fileName is unknown, must be filtered out")
     }
   }
@@ -172,13 +179,12 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     try {
-      val filesToDelete = THashSet<String>()
-      val oldSchemes = schemes
-      val schemes = oldSchemes.toMutableList()
-      val newSchemesOffset = schemes.size
+      // isDuringLoad is true even if loadSchemes called not first time, but on reload,
+      // because scheme processor should use cumulative event `reloaded` to update runtime state/caches
+      val schemeLoader = createSchemeLoader(isDuringLoad = true)
       if (provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
-          val scheme = loadScheme(name, input, schemes, filesToDelete)
+          val scheme = schemeLoader.loadScheme(name, input)
           if (readOnly && scheme != null) {
             schemeListManager.readOnlyExternalizableSchemes.put(processor.getSchemeKey(scheme), scheme)
           }
@@ -194,26 +200,22 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
             }
 
             catchAndLog(file.fileName.toString()) { filename ->
-              file.inputStream().use { loadScheme(filename, it, schemes, filesToDelete) }
+              file.inputStream().use { schemeLoader.loadScheme(filename, it) }
             }
           }
         }
       }
 
-      this.filesToDelete.addAll(filesToDelete)
-      schemeListManager.replaceSchemeList(oldSchemes, schemes)
-
-      @Suppress("UNCHECKED_CAST")
-      for (i in newSchemesOffset until schemes.size) {
-        val scheme = schemes.get(i) as MUTABLE_SCHEME
-        processor.initScheme(scheme)
-        @Suppress("UNCHECKED_CAST")
-        processPendingCurrentSchemeName(scheme)
+      val newSchemes = schemeLoader.apply()
+      for (newScheme in newSchemes) {
+        if (processPendingCurrentSchemeName(newScheme)) {
+          break
+        }
       }
 
       fileChangeSubscriber?.invoke(this)
 
-      return schemes.subList(newSchemesOffset, schemes.size)
+      return newSchemes
     }
     finally {
       isLoadingSchemes.set(false)
@@ -248,109 +250,6 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       processor.onSchemeDeleted(scheme as MUTABLE_SCHEME)
     }
     retainExternalInfo()
-  }
-
-  private fun isOverwriteOnLoad(existingScheme: T): Boolean {
-    val info = schemeToInfo.get(existingScheme)
-    // scheme from file with old extension, so, we must ignore it
-    return info != null && schemeExtension != info.fileExtension
-  }
-
-  internal fun loadScheme(fileName: String, input: InputStream, schemes: MutableList<T>, filesToDelete: MutableSet<String>? = null): MUTABLE_SCHEME? {
-    val extension = getFileExtension(fileName, false)
-    if (filesToDelete != null && filesToDelete.contains(fileName)) {
-      LOG.warn("Scheme file \"$fileName\" is not loaded because marked to delete")
-      return null
-    }
-
-    val fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length)
-    fun checkExisting(schemeName: String): Boolean {
-      if (filesToDelete == null) {
-        return true
-      }
-
-      schemes.firstOrNull { processor.getSchemeKey(it) == schemeName}?.let { existingScheme ->
-        if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
-          // so, bundled scheme is shadowed
-          schemeListManager.removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
-          return true
-        }
-        else if (processor.isExternalizable(existingScheme) && isOverwriteOnLoad(existingScheme)) {
-          schemeListManager.removeFirstScheme(schemes) { it === existingScheme }
-        }
-        else {
-          if (schemeExtension != extension && schemeToInfo.get(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension) {
-            // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
-            filesToDelete.add(fileName)
-          }
-          else {
-            // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
-            // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
-            LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeName\"")
-          }
-          return false
-        }
-      }
-
-      return true
-    }
-
-    fun createInfo(schemeName: String, element: Element?): ExternalInfo {
-      val info = ExternalInfo(fileNameWithoutExtension, extension)
-      element?.let {
-        info.digest = it.digest()
-      }
-      info.schemeKey = schemeName
-      return info
-    }
-
-    val duringLoad = filesToDelete != null
-    var scheme: MUTABLE_SCHEME? = null
-    if (processor is LazySchemeProcessor) {
-      val bytes = input.readBytes()
-      lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
-        val attributeProvider = Function<String, String?> {
-          if (parser.eventType == XmlPullParser.START_TAG) {
-            parser.getAttributeValue(null, it)
-          }
-          else {
-            null
-          }
-        }
-        val schemeName = name
-                         ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
-                         ?: throw nameIsMissed(bytes)
-        if (!checkExisting(schemeName)) {
-          return null
-        }
-
-        val externalInfo = createInfo(schemeName, null)
-        scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeName, attributeProvider)
-        schemeToInfo.put(scheme, externalInfo)
-        this.filesToDelete.remove(fileName)
-      }
-    }
-    else {
-      val element = loadElement(input)
-      scheme = (processor as NonLazySchemeProcessor).readScheme(element, duringLoad) ?: return null
-      val schemeKey = processor.getSchemeKey(scheme!!)
-      if (!checkExisting(schemeKey)) {
-        return null
-      }
-
-      schemeToInfo.put(scheme, createInfo(schemeKey, element))
-      this.filesToDelete.remove(fileName)
-    }
-
-    if (schemes === this.schemes) {
-      @Suppress("UNCHECKED_CAST")
-      addScheme(scheme as T, true)
-    }
-    else {
-      @Suppress("UNCHECKED_CAST")
-      schemes.add(scheme as T)
-    }
-    return scheme
   }
 
   internal fun getFileName(scheme: T) = schemeToInfo.get(scheme)?.fileNameWithoutExtension
@@ -631,7 +530,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       return result
     }
 
-  override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?): Unit = schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
+  override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) = schemeListManager.setSchemes(newSchemes, newCurrentScheme, removeCondition)
 
   internal fun retainExternalInfo() {
     if (schemeToInfo.isEmpty()) {

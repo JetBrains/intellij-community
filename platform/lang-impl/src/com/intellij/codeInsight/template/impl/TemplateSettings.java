@@ -199,12 +199,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
       @Override
       public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
-        for (TemplateGroup group : groups) {
-          for (TemplateImpl template : group.getElements()) {
-            addTemplateImpl(template);
-          }
-        }
-        loadDefaultLiveTemplates();
+        doLoadTemplates(groups);
       }
 
       @NotNull
@@ -250,13 +245,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
       @Override
-      public void initScheme(@NotNull final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getElements()) {
-          addTemplateImpl(template);
-        }
-      }
-
-      @Override
       public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
@@ -271,12 +259,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
     });
 
-    for (TemplateGroup group : mySchemeManager.loadSchemes()) {
+    doLoadTemplates(mySchemeManager.loadSchemes());
+  }
+
+  private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
+    for (TemplateGroup group : groups) {
       for (TemplateImpl template : group.getElements()) {
         addTemplateImpl(template);
       }
     }
-
     loadDefaultLiveTemplates();
   }
 
