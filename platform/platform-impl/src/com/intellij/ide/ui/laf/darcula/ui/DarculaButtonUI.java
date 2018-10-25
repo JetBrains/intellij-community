@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 
 import javax.swing.*;
@@ -214,6 +215,8 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     Insets i = c.getInsets();
+    prefSize = ObjectUtils.notNull(prefSize, JBUI.emptySize());
+
     if (UIUtil.isHelpButton(c) || isSquare(c)) {
       int helpDiam = HELP_BUTTON_DIAMETER.get();
       return new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),

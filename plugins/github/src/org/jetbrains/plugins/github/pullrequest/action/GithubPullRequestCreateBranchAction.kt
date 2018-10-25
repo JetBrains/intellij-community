@@ -20,17 +20,17 @@ class GithubPullRequestCreateBranchAction : DumbAwareAction("Create New Local Br
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     val pullRequest = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
-    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null
+    val dataProvider = e.getData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER)
+    e.presentation.isEnabled = project != null && !project.isDefault && pullRequest != null && dataProvider != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(CommonDataKeys.PROJECT)
     val pullRequest = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST)
     val repository = e.getRequiredData(GithubPullRequestKeys.REPOSITORY)
-    val branchFetcher = e.getRequiredData(GithubPullRequestKeys.PULL_REQUESTS_BRANCHES_FETCHER)
     val repositoryList = listOf(repository)
 
-    val hashesFuture = branchFetcher.request ?: return
+    val hashesFuture = e.getRequiredData(GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER).branchFetchRequest
     val options = GitBranchUtil.getNewBranchNameFromUser(project, repositoryList,
                                                          "Checkout New Branch From Pull Request #${pullRequest.number}",
                                                          "pull/${pullRequest.number}") ?: return

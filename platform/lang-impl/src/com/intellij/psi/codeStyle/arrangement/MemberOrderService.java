@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
@@ -23,14 +9,10 @@ import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The whole arrangement idea is to allow to change file entries order according to the user-provided rules.
@@ -58,7 +40,6 @@ public class MemberOrderService {
    *                  given 'context' element if given member should be the first child
    *                  {@code null} otherwise
    */
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public PsiElement getAnchor(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @NotNull PsiElement context) {
     Language language = context.getLanguage();
@@ -103,8 +84,7 @@ public class MemberOrderService {
       anchorEntry = nonArranged.get(nonArranged.size() - 1);
     }
     else {
-      Set<ArrangementEntry> entriesBelow = new HashSet<>();
-      entriesBelow.addAll(arranged.subList(i + 1, arranged.size()));
+      Set<ArrangementEntry> entriesBelow = new HashSet<>(arranged.subList(i + 1, arranged.size()));
       for (ArrangementEntry entry : nonArranged) {
         if (entriesBelow.contains(entry)) {
           break;

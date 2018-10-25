@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import java.util.concurrent.TimeUnit
 
@@ -21,6 +22,10 @@ object Timeouts {
   val minutes15 = Timeout.timeout(15, TimeUnit.MINUTES)
   val hours01 = Timeout.timeout(1, TimeUnit.HOURS)
 
+}
+
+fun Timeout.wait() {
+  Pause.pause(this.duration())
 }
 
 fun Timeout.toPrintable(): String {

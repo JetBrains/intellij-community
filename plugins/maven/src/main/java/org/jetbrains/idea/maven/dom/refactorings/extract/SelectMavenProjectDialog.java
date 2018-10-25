@@ -34,7 +34,7 @@ import java.awt.event.ItemListener;
 import java.util.Set;
 
 public class SelectMavenProjectDialog extends DialogWrapper {
-  private final Set<MavenDomProjectModel> myMavenDomProjectModels;
+  private final Set<? extends MavenDomProjectModel> myMavenDomProjectModels;
   private final boolean myHasExclusions;
 
   private JComboBox myMavenProjectsComboBox;
@@ -44,11 +44,11 @@ public class SelectMavenProjectDialog extends DialogWrapper {
   private boolean myHasUsagesInProjects = false;
 
   private ItemListener myReplaceAllListener;
-  private final Function<MavenDomProjectModel, Set<MavenDomDependency>> myOccurrencesCountFunction;
+  private final Function<? super MavenDomProjectModel, ? extends Set<MavenDomDependency>> myOccurrencesCountFunction;
 
   public SelectMavenProjectDialog(@NotNull Project project,
-                                  @NotNull Set<MavenDomProjectModel> mavenDomProjectModels,
-                                  @NotNull Function<MavenDomProjectModel, Set<MavenDomDependency>> funOccurrences,
+                                  @NotNull Set<? extends MavenDomProjectModel> mavenDomProjectModels,
+                                  @NotNull Function<? super MavenDomProjectModel, ? extends Set<MavenDomDependency>> funOccurrences,
                                   @NotNull boolean hasExclusions) {
     super(project, true);
     myMavenDomProjectModels = mavenDomProjectModels;

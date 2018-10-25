@@ -27,7 +27,6 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    * @throws IOException if there is IO problem
    */
   GitSSHXmlRpcClient(final int port, final boolean batchMode, String token) throws IOException {
-    //noinspection HardCodedStringLiteral
     if (!batchMode) {
       URL url = new URL("http", "localhost", port, "/RPC2");
       DefaultXmlRpcTransportFactory factory = new DefaultXmlRpcTransportFactory(url);

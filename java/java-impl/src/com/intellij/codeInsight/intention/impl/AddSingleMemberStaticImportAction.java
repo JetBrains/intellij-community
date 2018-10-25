@@ -297,7 +297,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   private static PsiJavaCodeReferenceElement rebind(PsiJavaCodeReferenceElement reference, PsiClass targetClass) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(reference.getProject());
     PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
     reference = (PsiReferenceExpression)reference.replace(copy);
     PsiReferenceExpression qualifier = Objects.requireNonNull((PsiReferenceExpression)reference.getQualifier());

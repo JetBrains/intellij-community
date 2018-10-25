@@ -57,7 +57,6 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Dis
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public void readExternal(Element element) throws InvalidDataException {
     final List<Element> children = element.getChildren("file");
     for (Element child : children) {
@@ -158,7 +157,6 @@ class FileAssociationsManagerImpl extends FileAssociationsManager implements Dis
       if (pointer.getUrl().equals(virtualFile.getUrl())) {
         VirtualFilePointerContainer container = myAssociations.get(pointer);
         if (container != null) {
-          //noinspection ConstantConditions
           final VirtualFilePointer p = container.findByUrl(assoc.getVirtualFile().getUrl());
           if (p != null) {
             container.remove(p);

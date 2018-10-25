@@ -38,8 +38,8 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
     this(ContainerUtil.skipNulls(Arrays.asList(branchFilter, userFilter, hashFilter, dateFilter, textFilter, structureFilter, rootFilter)));
   }
 
-  public VcsLogFilterCollectionImpl(@NotNull Collection<VcsLogFilter> filters) {
-    for (VcsLogFilter filter: filters) {
+  public VcsLogFilterCollectionImpl(@NotNull Collection<? extends VcsLogFilter> filters) {
+    for (VcsLogFilter filter : filters) {
       myFilters.put(filter.getKey(), filter);
     }
   }

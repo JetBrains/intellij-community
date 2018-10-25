@@ -63,7 +63,7 @@ public final class LanguageConsoleBuilder {
   private String processInputStateKey;
 
   // todo to be removed
-  public LanguageConsoleBuilder(@SuppressWarnings("NullableProblems") @NotNull LanguageConsoleView consoleView) {
+  public LanguageConsoleBuilder(@NotNull LanguageConsoleView consoleView) {
     this.consoleView = consoleView;
   }
 

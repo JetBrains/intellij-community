@@ -28,7 +28,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionTool {
   @NonNls private static final String TESTNG_PREFIX = "testng.";
-  private static final String DISPLAY_NAME = "Convert TestNG Javadoc to 1.5 annotations";
+  static final String FIX_NAME = "Convert TestNG Javadoc to 1.5 annotations";
+  private static final String INSPECTION_NAME = "TestNG Javadoc can be converted to annotations";
 
   @Override
   @Nls
@@ -41,7 +42,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
   @Nls
   @NotNull
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return INSPECTION_NAME;
   }
 
   @Override
@@ -57,7 +58,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     return new JavaElementVisitor() {
       @Override public void visitDocTag(final PsiDocTag tag) {
         if (tag.getName().startsWith(TESTNG_PREFIX)) {
-          holder.registerProblem(tag, DISPLAY_NAME, new ConvertJavadocQuickfix());
+          holder.registerProblem(tag, INSPECTION_NAME, new ConvertJavadocQuickfix());
         }
       }
     };
@@ -69,7 +70,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     @NotNull
     public String getFamilyName() {
-      return DISPLAY_NAME;
+      return FIX_NAME;
     }
 
     @Override
@@ -150,7 +151,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
       try {
         PsiModifierList modifierList = member.getModifierList();
         PsiAnnotation annotation =
-          JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createAnnotationFromText(annotationText.toString(), member);
+          JavaPsiFacade.getElementFactory(tag.getProject()).createAnnotationFromText(annotationText.toString(), member);
         final PsiElement inserted = modifierList.addBefore(annotation, modifierList.getFirstChild());
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(inserted);
 
@@ -164,7 +165,7 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
           if (element instanceof PsiWhiteSpace) continue;
           if (!(element instanceof PsiDocToken)) return;
           PsiDocToken docToken = (PsiDocToken)element;
-          if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && docToken.getText().trim().length() > 0) {
+          if (docToken.getTokenType() == JavaDocTokenType.DOC_COMMENT_DATA && !docToken.getText().trim().isEmpty()) {
             return;
           }
         }

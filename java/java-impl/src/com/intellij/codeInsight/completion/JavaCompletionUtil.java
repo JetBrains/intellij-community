@@ -132,7 +132,6 @@ public class JavaCompletionUtil {
     return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
-  @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
     if (!type.isValid()) {

@@ -41,4 +41,6 @@ public class VcsLogActionPlaces {
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
   public static final String CHECKIN_PROJECT_ACTION = "CheckinProject";
   public static final String VCS_LOG_GO_TO_HASH_OR_REF_ACTION = "Vcs.Log.GoToRef";
+  public static final String VCS_LOG_GO_TO_CHILD_ACTION = "Vcs.Log.GoToChild";
+  public static final String VCS_LOG_GO_TO_PARENT_ACTION = "Vcs.Log.GoToParent";
 }

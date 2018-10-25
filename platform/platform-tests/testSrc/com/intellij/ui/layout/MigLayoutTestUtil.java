@@ -10,7 +10,6 @@ import java.util.List;
 class MigLayoutTestUtil {
   @SuppressWarnings("unchecked")
   static List<int[]> getRectangles(@NotNull Grid grid) throws NoSuchFieldException, IllegalAccessException {
-    @SuppressWarnings("SpellCheckingInspection")
     Field field = Grid.class.getDeclaredField("debugRects");
     field.setAccessible(true);
 

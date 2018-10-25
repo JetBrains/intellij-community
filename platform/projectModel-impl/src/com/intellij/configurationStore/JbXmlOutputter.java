@@ -70,7 +70,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
 
-@SuppressWarnings("Duplicates")
 public final class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
@@ -222,7 +221,6 @@ public final class JbXmlOutputter {
    * @param out     <code>Writer</code> to use.
    */
   private void printDocType(Writer out, DocType docType) throws IOException {
-
     String publicID = docType.getPublicID();
     String systemID = docType.getSystemID();
     String internalSubset = docType.getInternalSubset();
@@ -342,7 +340,7 @@ public final class JbXmlOutputter {
    * This will handle printing a string.  Escapes the element entities,
    * trims interior whitespace, etc. if necessary.
    */
-  private void printString(Writer out, String str) throws IOException {
+  private void printString(@NotNull Writer out, String str) throws IOException {
     if (format.getTextMode() == Format.TextMode.NORMALIZE) {
       str = Text.normalizeString(str);
     }
@@ -366,7 +364,7 @@ public final class JbXmlOutputter {
    * @param out     <code>Writer</code> to use.
    * @param level   <code>int</code> level of indention.
    */
-  public void printElement(Writer out, Element element, int level) throws IOException {
+  public void printElement(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
     if (elementFilter != null && !elementFilter.accept(element, level)) {
       return;
     }
@@ -432,7 +430,7 @@ public final class JbXmlOutputter {
    */
   private void printContentRange(Writer out, List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
-    Object next;       // Node we're about to print
+    Content next;       // Node we're about to print
     int first, index;  // Indexes into the list of content
 
     index = start;
@@ -491,62 +489,56 @@ public final class JbXmlOutputter {
    * @param end     index of last content node (exclusive).
    * @param out     <code>Writer</code> to use.
    */
-  private void printTextRange(Writer out, List<Content> content, int start, int end) throws IOException {
-    String previous; // Previous text printed
-    Object node;     // Next node to print
-    String next;     // Next text to print
-
-    previous = null;
-
+  private void printTextRange(@NotNull Writer out, List<Content> content, int start, int end) throws IOException {
     // remove leading whitespace-only nodes
     start = skipLeadingWhite(content, start);
+    if (start >= content.size()) {
+      return;
+    }
 
-    int size = content.size();
-    if (start < size) {
-      // and remove trialing whitespace-only nodes
-      end = skipTrailingWhite(content, end);
+    // and remove trialing whitespace-only nodes
+    end = skipTrailingWhite(content, end);
 
-      for (int i = start; i < end; i++) {
-        node = content.get(i);
+    String previous = null;
+    for (int i = start; i < end; i++) {
+      Content node = content.get(i);
 
-        // get the unmangled version of the text we are about to print
-        if (node instanceof Text) {
-          next = ((Text)node).getText();
-        }
-        else if (node instanceof EntityRef) {
-          next = "&" + ((EntityRef)node).getValue() + ";";
-        }
-        else {
-          throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
-        }
-
-        // this may save a little time
-        if (next == null || next.isEmpty()) {
-          continue;
-        }
-
-        // determine if we need to pad the output (padding is only need in trim or normalizing mode)
-        if (previous != null) { // Not 1st node
-          if (format.getTextMode() == Format.TextMode.NORMALIZE || format.getTextMode() == Format.TextMode.TRIM) {
-            if (endsWithWhite(previous) || startsWithWhite(next)) {
-              out.write(' ');
-            }
-          }
-        }
-
-        // Print the node
-        if (node instanceof CDATA) {
-          printCDATA(out, (CDATA)node);
-        }
-        else if (node instanceof EntityRef) {
-          printEntityRef(out, (EntityRef)node);
-        }
-        else {
-          printString(out, next);
-        }
-
-        previous = next;
+      // get the unmangled version of the text we are about to print
+      String next;
+      if (node instanceof Text) {
+        next = ((Text)node).getText();
       }
+      else if (node instanceof EntityRef) {
+        next = "&" + node.getValue() + ";";
+      }
+      else {
+        throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
+      }
+
+      // this may save a little time
+      if (next == null || next.isEmpty()) {
+        continue;
+      }
+
+      // determine if we need to pad the output (padding is only need in trim or normalizing mode)
+      if (previous != null && (format.getTextMode() == Format.TextMode.NORMALIZE || format.getTextMode() == Format.TextMode.TRIM)) {
+        if (endsWithWhite(previous) || startsWithWhite(next)) {
+          out.write(' ');
+        }
+      }
+
+      // print the node
+      if (node instanceof CDATA) {
+        printCDATA(out, (CDATA)node);
+      }
+      else if (node instanceof EntityRef) {
+        printEntityRef(out, (EntityRef)node);
+      }
+      else {
+        printString(out, next);
+      }
+
+      previous = next;
     }
   }
 
@@ -607,7 +599,7 @@ public final class JbXmlOutputter {
   // index = content.size() is returned if content contains
   // all whitespace.
   // @param start index to begin search (inclusive)
-  private int skipLeadingWhite(List<Content> content, int start) {
+  private int skipLeadingWhite(@NotNull List<Content> content, int start) {
     if (start < 0) {
       start = 0;
     }
@@ -663,7 +655,7 @@ public final class JbXmlOutputter {
     int index = start;
     int size = content.size();
     while (index < size) {
-      Object node = content.get(index);
+      Content node = content.get(index);
       if (!(node instanceof Text || node instanceof EntityRef)) {
         return index;
       }
@@ -672,14 +664,9 @@ public final class JbXmlOutputter {
     return size;
   }
 
-  // Determine if a Object is all whitespace
-  private static boolean isAllWhitespace(Object obj) {
+  private static boolean isAllWhitespace(Content obj) {
     String str;
-
-    if (obj instanceof String) {
-      str = (String)obj;
-    }
-    else if (obj instanceof Text) {
+    if (obj instanceof Text) {
       str = ((Text)obj).getText();
     }
     else {

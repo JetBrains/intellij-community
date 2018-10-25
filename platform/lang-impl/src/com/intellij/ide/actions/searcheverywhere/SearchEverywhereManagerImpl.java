@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBInsets;
@@ -150,8 +151,21 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       Component parent = UIUtil.findUltimateParent(window);
 
       if (parent != null) {
-        Dimension balloonSize = balloon.getContent().getPreferredSize();
-        RelativePoint showPoint = new RelativePoint(parent, new Point((parent.getSize().width - balloonSize.width) / 2, parent.getHeight() / 4 - balloonSize.height / 2));
+        JComponent content = balloon.getContent();
+        Dimension balloonSize = content.getPreferredSize();
+
+        Point screenPoint = new Point((parent.getSize().width - balloonSize.width) / 2, parent.getHeight() / 4 - balloonSize.height / 2);
+        SwingUtilities.convertPointToScreen(screenPoint, parent);
+
+        Rectangle screenRectangle = ScreenUtil.getScreenRectangle(screenPoint);
+        Insets insets = content.getInsets();
+        int bottomEdge = screenPoint.y + mySearchEverywhereUI.getExpandedSize().height + insets.bottom + insets.top;
+        int shift = bottomEdge - (int) screenRectangle.getMaxY();
+        if (shift > 0) {
+          screenPoint.y = Integer.max(screenPoint.y - shift, screenRectangle.y);
+        }
+
+        RelativePoint showPoint = new RelativePoint(screenPoint);
         balloon.show(showPoint);
         return;
       }

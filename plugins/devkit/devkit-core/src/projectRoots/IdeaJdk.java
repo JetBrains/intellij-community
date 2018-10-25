@@ -142,6 +142,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return null;
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";

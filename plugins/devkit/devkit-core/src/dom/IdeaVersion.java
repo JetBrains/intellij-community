@@ -41,7 +41,6 @@ public interface IdeaVersion extends DomElement {
   /**
    * @deprecated Use {@link #getUntilBuild()}
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   @Deprecated
   GenericAttributeValue<String> getMax();

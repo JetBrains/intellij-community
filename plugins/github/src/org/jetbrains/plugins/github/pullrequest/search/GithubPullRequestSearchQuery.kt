@@ -7,7 +7,7 @@ import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
+internal class GithubPullRequestSearchQuery(private val terms: List<Term<*>>) {
   fun buildApiSearchQuery(searchQueryBuilder: GithubApiSearchQueryBuilder) {
     for (term in terms) {
       when (term) {

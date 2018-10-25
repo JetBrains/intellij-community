@@ -25,7 +25,7 @@ public class JBColor extends Color {
   }
 
   private final Color darkColor;
-  private final NotNullProducer<Color> func;
+  private final NotNullProducer<? extends Color> func;
 
   public JBColor(int rgb, int darkRGB) {
     this(new Color(rgb), new Color(darkRGB));
@@ -37,7 +37,7 @@ public class JBColor extends Color {
     func = null;
   }
 
-  public JBColor(@NotNull NotNullProducer<Color> function) {
+  public JBColor(@NotNull NotNullProducer<? extends Color> function) {
     super(0);
     darkColor = null;
     func = function;

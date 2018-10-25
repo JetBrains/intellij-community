@@ -7,7 +7,9 @@ import com.intellij.testFramework.TestDataPath
 
 @TestDataPath("/testData/codeInspection/unstableApiUsage")
 class UnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
-  override fun getBasePath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
+  override fun getBasePath() = ""
+
+  override fun getTestDataPath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/unstableApiUsage"
 
   fun testInspection() {
     getInspection().myIgnoreInsideImports = false

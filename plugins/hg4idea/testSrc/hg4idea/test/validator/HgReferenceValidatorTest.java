@@ -66,7 +66,7 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
     EdtTestUtil.runInEdtAndWait(() -> super.tearDown());
   }
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedParameters"})
+  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
   public HgReferenceValidatorTest(@NotNull String name, @NotNull String branchName, boolean expected) {
     myBranchName = branchName;
     myExpected = expected;

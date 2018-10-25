@@ -63,6 +63,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -155,7 +156,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull Consumer<Element> problemSink,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
@@ -167,7 +168,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
       if (skipEntryPoints(refElement)) return;
 
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
+      Element element = refEntity.getRefManager().export(refEntity, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
@@ -194,8 +195,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
+      problemSink.accept(element);
     }
-    super.exportResults(parentNode, refEntity, excludedDescriptions);
+    super.exportResults(problemSink, refEntity, excludedDescriptions);
   }
 
   @NotNull

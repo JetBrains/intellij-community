@@ -50,7 +50,6 @@ public class GradleExecutionHelper {
 
   private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -64,7 +63,6 @@ public class GradleExecutionHelper {
     return result;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
@@ -85,7 +83,6 @@ public class GradleExecutionHelper {
                                projectResolverContext.getCancellationTokenSource());
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,
@@ -94,7 +91,6 @@ public class GradleExecutionHelper {
     prepare(operation, id, settings, listener, connection, new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,
@@ -598,7 +594,6 @@ public class GradleExecutionHelper {
    * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
    */
   @Deprecated
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
                                              @NotNull final ExternalSystemTaskId id,
@@ -616,7 +611,6 @@ public class GradleExecutionHelper {
    * @deprecated {@link #getBuildLauncher(ExternalSystemTaskId, ProjectConnection, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
   @Deprecated
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
@@ -652,7 +646,6 @@ public class GradleExecutionHelper {
    * @deprecated to be removed in future version
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
@@ -668,7 +661,6 @@ public class GradleExecutionHelper {
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection)}
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
@@ -685,7 +677,6 @@ public class GradleExecutionHelper {
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection, OutputStream, OutputStream)}
    */
   @Deprecated
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @NotNull GradleExecutionSettings settings,

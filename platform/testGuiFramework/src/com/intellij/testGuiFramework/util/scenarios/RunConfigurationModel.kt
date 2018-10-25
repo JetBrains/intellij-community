@@ -194,7 +194,7 @@ class RunConfigurationModel(testCase: GuiTestCase) : TestUtilsClass(testCase) {
 val GuiTestCase.runConfigModel by RunConfigurationModel
 
 fun RunConfigurationModel.connectDialog(): JDialogFixture =
-  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true, Timeouts.defaultTimeout)
+  guiTestCase.dialog(RunConfigurationModel.Constants.runConfigTitle, true)
 
 fun RunConfigurationModel.checkConfigurationExistsAndSelect(vararg configuration: String) {
   with(connectDialog()) {

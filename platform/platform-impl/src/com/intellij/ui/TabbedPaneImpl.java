@@ -88,7 +88,6 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
     }
   }
 
-  @SuppressWarnings("NonStaticInitializer")
   private void installKeyboardNavigation(final PrevNextActionsDescriptor installKeyboardNavigation){
     myNextTabAction = new AnAction() {
       {

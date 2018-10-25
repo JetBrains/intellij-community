@@ -53,7 +53,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Wilfried Middleton
  * @version 5.3, January 10, 2007
  */
-@SuppressWarnings({"AssignmentToForLoopParameter","UnnecessaryThis"})
+@SuppressWarnings({"UnnecessaryThis"})
 final class ImmutableText extends ImmutableCharSequence implements CharArrayExternalizable, CharSequenceWithStringHash {
   /**
    * Holds the default size for primitive blocks of characters.

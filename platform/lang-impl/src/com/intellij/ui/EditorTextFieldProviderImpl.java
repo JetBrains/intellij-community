@@ -40,9 +40,9 @@ public class EditorTextFieldProviderImpl implements EditorTextFieldProvider {
 
   private static class MyEditorTextField extends LanguageTextField {
 
-    @NotNull private final Iterable<EditorCustomization> myCustomizations;
+    @NotNull private final Iterable<? extends EditorCustomization> myCustomizations;
 
-    MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<EditorCustomization> customizations) {
+    MyEditorTextField(@NotNull Language language, @NotNull Project project, @NotNull Iterable<? extends EditorCustomization> customizations) {
       super(language, project, "", false);
       myCustomizations = customizations;
     }

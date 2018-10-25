@@ -73,7 +73,6 @@ public class TextDiffTypeFactory {
     @NotNull private final TextAttributesKey myKey;
     @NotNull private final String myName;
 
-    @SuppressWarnings("SpellCheckingInspection")
     public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull String name) {
       myKey = key;
       myName = name;

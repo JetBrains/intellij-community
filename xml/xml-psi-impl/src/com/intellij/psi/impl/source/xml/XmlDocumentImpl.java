@@ -146,7 +146,6 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
   }
 
   @Override
-  @SuppressWarnings("ConstantConditions")
   public XmlNSDescriptor getRootTagNSDescriptor() {
     XmlTag rootTag = getRootTag();
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;

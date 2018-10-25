@@ -61,12 +61,12 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   public static final String TEST_OUTPUT_TAG = "output-test";
   public static final String INHERIT_COMPILER_OUTPUT_ATTRIBUTE = "inherit-compiler-output";
   public static final String EXCLUDE_OUTPUT_TAG = "exclude-output";
-  private static final String ANNOTATION_PATHS_TAG = "annotation-paths";
-  private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
-  private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
+  public static final String ANNOTATION_PATHS_TAG = "annotation-paths";
+  public static final String JAVADOC_PATHS_TAG = "javadoc-paths";
+  public static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
   public static final String ROOT_TAG = "root";
-  private static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
-  private static final String IS_GENERATED_ATTRIBUTE = "generated";
+  public static final String RELATIVE_OUTPUT_PATH_ATTRIBUTE = "relativeOutputPath";
+  public static final String IS_GENERATED_ATTRIBUTE = "generated";
   public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
 

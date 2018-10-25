@@ -32,7 +32,6 @@ import java.util.Set;
 
 public class NonReproducibleMathCallInspection extends BaseInspection {
 
-  @SuppressWarnings("StaticCollection")
   @NonNls private static final Set<String> nonReproducibleMethods =
     new HashSet<>(20);
 

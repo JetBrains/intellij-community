@@ -61,7 +61,6 @@ public abstract class BundleBase {
 
   public static String replaceMnemonicAmpersand(@Nullable final String value) {
     if (value == null) {
-      //noinspection ConstantConditions
       return null;
     }
 

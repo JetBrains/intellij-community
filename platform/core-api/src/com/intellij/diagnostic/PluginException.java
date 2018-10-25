@@ -21,8 +21,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author stathik
- * @since Jan 8, 2004
+ * Represents an internal error caused by a plugin. It may happen if the plugin's code fails with an exception, or if the plugin violates
+ * some contract of IntelliJ Platform. If such exceptions are reported to JetBrains they may be automatically attributed to corresponding
+ * plugins.
+ *
+ * @see com.intellij.ide.plugins.PluginManagerCore#createPluginException
  */
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;

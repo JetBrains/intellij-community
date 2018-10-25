@@ -162,7 +162,6 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @SuppressWarnings("MethodOverloadsMethodOfSuperclass")
   public boolean textMatches(@NotNull final CharSequence buf, int start, int end) {
     final CharSequence text = getChars();
     final int len = text.length();

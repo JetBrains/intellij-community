@@ -20,7 +20,6 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseJBColor")
 public class DefaultEditorTabsPainter extends JBEditorTabsPainter {
 
   public DefaultEditorTabsPainter(JBEditorTabs tabs) {

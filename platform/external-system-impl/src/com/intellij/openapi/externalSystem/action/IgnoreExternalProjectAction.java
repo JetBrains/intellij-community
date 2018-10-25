@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
@@ -65,6 +66,7 @@ public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
     if (projectNodes.isEmpty()) return;
 
     final Project project = getProject(e);
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
 
     projectNodes.forEach(projectNode -> projectNode.setIgnored(state));
 

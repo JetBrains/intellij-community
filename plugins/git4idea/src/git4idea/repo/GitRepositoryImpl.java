@@ -22,6 +22,8 @@ import java.util.Collection;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
@@ -207,8 +209,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo, isShallow);
+    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), newLinkedHashSet(remotes),
+                           newHashMap(state.getLocalBranches()), newHashMap(state.getRemoteBranches()), newLinkedHashSet(trackInfos),
+                           submodules, hooksInfo, isShallow);
   }
 
   @NotNull

@@ -149,7 +149,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  @SuppressWarnings("Duplicates")
   private static List<URL> filterClassPath(List<URL> classpath) {
     String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
     if (ignoreProperty != null) {

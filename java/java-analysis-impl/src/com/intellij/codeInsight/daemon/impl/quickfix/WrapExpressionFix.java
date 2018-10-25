@@ -118,7 +118,7 @@ public class WrapExpressionFix implements IntentionAction {
     assert type != null;
     PsiMethod wrapper = findWrapper(type, myExpectedType, myPrimitiveExpected);
     assert wrapper != null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
     @NonNls String methodCallText = "Foo." + wrapper.getName() + "()";
     PsiMethodCallExpression call = (PsiMethodCallExpression)factory.createExpressionFromText(methodCallText,
                                                                                              null);

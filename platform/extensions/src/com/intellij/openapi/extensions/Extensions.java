@@ -86,7 +86,7 @@ public class Extensions {
   }
 
   /**
-   * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)} )}
+   * @deprecated Use {@link ProjectExtensionPointName#getExtensions(AreaInstance)}
    */
   @Deprecated
   @NotNull
@@ -101,13 +101,13 @@ public class Extensions {
     return extensionPoint.getExtensions();
   }
 
+  /**
+   * @deprecated Use {@link ExtensionPointName#findExtensionOrFail(Class)}
+   */
+  @Deprecated
   @NotNull
   public static <T, U extends T> U findExtension(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<U> extClass) {
-    U result = extensionPointName.findExtension(extClass);
-    if (result == null) {
-      throw new IllegalArgumentException("could not find extension implementation " + extClass);
-    }
-    return result;
+    return extensionPointName.findExtensionOrFail(extClass);
   }
 
   @NotNull

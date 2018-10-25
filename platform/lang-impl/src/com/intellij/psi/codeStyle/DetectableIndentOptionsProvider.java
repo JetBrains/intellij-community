@@ -25,6 +25,7 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -142,7 +143,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     final VirtualFile virtualFile = file.getVirtualFile();
     final Project project = file.getProject();
     final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
-    final String projectOptionsTip = FileIndentOptionsProvider.getTooltip(projectOptions, "project");
+    final String projectOptionsTip = FileIndentOptionsProvider.getTooltip(projectOptions, null);
     if (indentOptions instanceof TimeStampedIndentOptions) {
       if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
         actions.add(
@@ -163,6 +164,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               );
               myDiscardedOptions.remove(virtualFile);
             }));
+        actions.add(Separator.getInstance());
         actions.add(
           DumbAwareAction.create(
             ApplicationBundle.message("code.style.indent.detector.disable"),
@@ -206,11 +208,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     return null;
   }
 
-  private static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
-    //noinspection deprecation
-    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
-  }
-
   private static void showDisabledDetectionNotification(@NotNull Project project) {
     DetectionDisabledNotification notification = new DetectionDisabledNotification(project);
     notification.notify(project);
@@ -218,12 +215,11 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   private static class DetectionDisabledNotification extends Notification {
     private DetectionDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(),
-            ApplicationBundle.message("code.style.indent.detector.notification.title"),
+      super(NOTIFICATION_GROUP.getDisplayId(), "",
             ApplicationBundle.message("code.style.indent.detector.notification.content"),
             NotificationType.INFORMATION);
       addAction(new ReEnableDetection(project, this));
-      addAction(new ShowIndentDetectionOptionAction(ApplicationBundle.message("code.style.indent.detector.notification.settings")));
+      addAction(new ShowIndentDetectionOptionAction(ApplicationBundle.message("code.style.indent.provider.notification.settings")));
     }
   }
 
@@ -243,7 +239,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     private final Notification myNotification;
 
     private ReEnableDetection(@NotNull Project project, Notification notification) {
-      super(ApplicationBundle.message("code.style.indent.detector.notification.enable"));
+      super(ApplicationBundle.message("code.style.indent.provider.notification.re.enable"));
       myProject = project;
       myNotification = notification;
     }

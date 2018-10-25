@@ -157,7 +157,7 @@ public class JavaGenericsUtil {
         if (operandClassType.isRaw()) return true;
         if (castClass.isInheritor(operandClass, true)) {
           PsiSubstitutor castSubstitutor = castResult.getSubstitutor();
-          PsiElementFactory factory = JavaPsiFacade.getInstance(castClass.getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(castClass.getProject());
           for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(castClass)) {
             PsiSubstitutor modifiedSubstitutor = castSubstitutor.put(typeParameter, null);
             PsiClassType otherType = factory.createType(castClass, modifiedSubstitutor);

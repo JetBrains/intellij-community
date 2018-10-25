@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.Set;
 
 public class EvalContextProvider extends ContextProvider {
-  private final List<Debugger.Variable> myVariables;
+  private final List<? extends Debugger.Variable> myVariables;
 
-  public EvalContextProvider(List<Debugger.Variable> model) {
+  public EvalContextProvider(List<? extends Debugger.Variable> model) {
     myVariables = model;
   }
 

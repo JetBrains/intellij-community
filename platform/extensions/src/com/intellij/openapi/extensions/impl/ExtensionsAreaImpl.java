@@ -325,7 +325,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       myEPTraces.put(name, new Throwable("Original registration for " + name));
     }
   }

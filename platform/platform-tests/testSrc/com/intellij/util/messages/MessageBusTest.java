@@ -281,7 +281,6 @@ public class MessageBusTest extends TestCase {
           try {
             int remains = iterationsNumber;
             while (remains-- > 0) {
-              //noinspection ThrowableResultOfMethodCallIgnored
               if (exception.get() != null) {
                 break;
               }

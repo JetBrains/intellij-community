@@ -48,7 +48,6 @@ public abstract class OrderEntryBaseImpl extends RootModelComponentBase implemen
   }
 
   @Override
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public final boolean equals(Object obj) {
     return obj == this;
   }

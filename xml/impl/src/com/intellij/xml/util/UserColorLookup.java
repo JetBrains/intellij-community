@@ -64,7 +64,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
     context.setLaterRunnable(() -> {
       if (editor.isDisposed() || project.isDisposed()) return;
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
-      Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(project),
+      Color color = ColorChooser.chooseColor(project, WindowManager.getInstance().suggestParentWindow(project),
                                              XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
       if (color != null) {
         WriteCommandAction.runWriteCommandAction(project, () -> {

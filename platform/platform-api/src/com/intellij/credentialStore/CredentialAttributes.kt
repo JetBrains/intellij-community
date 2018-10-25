@@ -49,7 +49,7 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
   /**
  * DEPRECATED. Never use it in a new code.
  */
-fun CredentialAttributes(requestor: Class<*>, userName: String?): CredentialAttributes = CredentialAttributes(requestor.name, userName, requestor)
+fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")
 fun Credentials?.isFulfilled(): Boolean = this != null && userName != null && !password.isNullOrEmpty()

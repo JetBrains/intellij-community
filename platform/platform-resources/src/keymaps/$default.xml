@@ -1109,4 +1109,11 @@
   <action id="BraceOrQuoteOut">
     <keyboard-shortcut first-keystroke="TAB"/>
   </action>
+
+  <action id="EditorFocusGutter">
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="F"/>
+  </action>
+  <action id="EditorShowGutterIconTooltip">
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="T"/>
+  </action>
 </keymap>

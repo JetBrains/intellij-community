@@ -5,7 +5,7 @@ import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document

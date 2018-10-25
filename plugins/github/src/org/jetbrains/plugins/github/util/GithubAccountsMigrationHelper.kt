@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -58,7 +59,7 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
     LOG.debug("Migrating old auth")
     val login = settings.login
     val host = settings.host
-    val password = passwordSafe.getPassword(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY)
+    val password = passwordSafe.getPassword(CredentialAttributes(GithubSettings::class.java, GITHUB_SETTINGS_PASSWORD_KEY))
     val authType = settings.authType
     LOG.debug("Old auth data: { login: $login, host: $host, authType: $authType, password null: ${password == null} }")
 

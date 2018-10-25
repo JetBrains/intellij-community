@@ -122,7 +122,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private final Set<String> myMentionedCategories = new LinkedHashSet<>();
   private volatile boolean myTestsRunning = true;
   private AbstractTestProxy myLastSelected;
-  private boolean myDisposed = false;
+  private volatile boolean myDisposed = false;
   private SMTestProxy myLastFailed;
   private final Set<Update> myRequests = Collections.synchronizedSet(new HashSet<>());
   private final Alarm myUpdateTreeRequests = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this); 
@@ -141,7 +141,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myProject = consoleProperties.getProject();
 
     //Create tests common suite root
-    //noinspection HardCodedStringLiteral
     myTestsRootNode = new SMTestProxy.SMRootTestProxy(consoleProperties.isPreservePresentableName());
     //todo myTestsRootNode.setOutputFilePath(runConfiguration.getOutputFilePath());
 
@@ -332,8 +331,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                        Math.max(0, myFinishedTestCount - myFailedTestCount - myIgnoredTestCount),
                        myTotalTestCount - myStartedTestCount,
                        myIgnoredTestCount);
-    UIUtil.invokeLaterIfNeeded(() -> TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation));
-    addToHistory(testsRoot, myProperties, this);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      TestsUIUtil.notifyByBalloon(myProperties.getProject(), testsRoot, myProperties, presentation);
+      addToHistory(testsRoot, myProperties, this);
+    });
+    
   }
 
   private void addToHistory(final SMTestProxy.SMRootTestProxy root,

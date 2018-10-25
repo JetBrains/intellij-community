@@ -22,7 +22,7 @@ import com.intellij.util.ui.ColumnInfo;
 import java.util.function.Predicate;
 
 public abstract class SimpleParameterTablePanel extends AbstractParameterTablePanel<AbstractVariableData> {
-  public SimpleParameterTablePanel(Predicate<String> parameterNameValidator) {
+  public SimpleParameterTablePanel(Predicate<? super String> parameterNameValidator) {
     super(new PassParameterColumnInfo(), new NameColumnInfo(parameterNameValidator));
   }
 

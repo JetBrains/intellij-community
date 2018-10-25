@@ -140,7 +140,7 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param skipIfExist skip (do not add) if method already exists
    * @return newly added methods
    */
-  static List<PyElement> moveMethods(final PyClass from, final Collection<PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
+  static List<PyElement> moveMethods(final PyClass from, final Collection<? extends PyFunction> methodsToMove, final boolean skipIfExist, final PyClass... to) {
     final List<PyElement> result = new ArrayList<>();
     for (final PyClass destClass : to) {
       //We move copies here because there may be several destinations

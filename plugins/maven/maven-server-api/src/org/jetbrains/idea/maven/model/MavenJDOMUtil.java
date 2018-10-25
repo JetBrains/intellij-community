@@ -52,7 +52,6 @@ class MavenJDOMUtil {
     return c1 instanceof Element && c2 instanceof Element && areElementsEqual((Element)c1, (Element)c2);
   }
 
-  @SuppressWarnings("DuplicateDetector")
   private static boolean isAttributesEqual(@NotNull List<Attribute> l1, @NotNull List<Attribute> l2) {
     if (l1.size() != l2.size()) return false;
     for (int i = 0; i < l1.size(); i++) {

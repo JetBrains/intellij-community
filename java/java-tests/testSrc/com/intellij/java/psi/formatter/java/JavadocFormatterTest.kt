@@ -989,8 +989,8 @@ public void test() {
   }
 
   fun testContinuationDescriptionFormatting() {
-    currentCodeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 40)
-    currentCodeStyleSettings.getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
+    getCurrentCodeStyleSettings(getProject()).setRightMargin(JavaLanguage.INSTANCE, 40)
+    getCurrentCodeStyleSettings(getProject()).getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2
     getJavaSettings().JD_INDENT_ON_CONTINUATION = true
     getJavaSettings().JD_ALIGN_PARAM_COMMENTS = false
     getJavaSettings().JD_ALIGN_EXCEPTION_COMMENTS = false

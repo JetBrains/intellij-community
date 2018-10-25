@@ -101,7 +101,6 @@ public abstract class XDebugProcess {
    */
   @Deprecated
   public void startForceStepInto(){
-    //noinspection deprecation
     startStepInto();
   }
 

@@ -252,7 +252,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
   private void updateTargetClass() {
     final PsiClass targetClass = getSelectedTargetClass();
     PsiManager psiManager = myClass.getManager();
-    PsiType superType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(targetClass);
+    PsiType superType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(targetClass);
     SuggestedNameInfo suggestedNameInfo =
       JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(VariableKind.FIELD, null, null, superType);
     myFieldNameField.setSuggestions(suggestedNameInfo.names);

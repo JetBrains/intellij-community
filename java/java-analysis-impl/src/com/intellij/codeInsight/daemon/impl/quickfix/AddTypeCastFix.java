@@ -97,7 +97,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     if (type.equals(PsiType.NULL)) return null;
     if (type instanceof PsiEllipsisType) type = ((PsiEllipsisType)type).toArrayType();
     String text = "(" + type.getCanonicalText(false) + ")value";
-    PsiElementFactory factory = JavaPsiFacade.getInstance(original.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(original.getProject());
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText(text, original);
     typeCast = (PsiTypeCastExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(typeCast);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);

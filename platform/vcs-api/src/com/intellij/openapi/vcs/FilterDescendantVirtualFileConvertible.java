@@ -28,10 +28,10 @@ import static java.util.Collections.sort;
 import static java.util.Comparator.comparing;
 
 public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChildren<T> {
-  @NotNull private final Comparator<T> myComparator;
-  @NotNull private final Function<T, VirtualFile> myConvertor;
+  @NotNull private final Comparator<? super T> myComparator;
+  @NotNull private final Function<? super T, ? extends VirtualFile> myConvertor;
 
-  public FilterDescendantVirtualFileConvertible(@NotNull Function<T, VirtualFile> convertor, @NotNull Comparator<VirtualFile> comparator) {
+  public FilterDescendantVirtualFileConvertible(@NotNull Function<? super T, ? extends VirtualFile> convertor, @NotNull Comparator<? super VirtualFile> comparator) {
     myConvertor = convertor;
     myComparator = comparing(myConvertor, comparator);
   }

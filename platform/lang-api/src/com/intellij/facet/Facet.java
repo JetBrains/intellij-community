@@ -102,7 +102,6 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
     return super.hashCode();
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public final boolean equals(Object obj) {
     return super.equals(obj);
   }

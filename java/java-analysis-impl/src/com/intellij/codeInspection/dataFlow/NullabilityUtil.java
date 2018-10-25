@@ -99,8 +99,7 @@ public class NullabilityUtil {
 
     if (!isCheapEnoughToSearch(field, name)) return false;
 
-    return ReferencesSearch
-      .search(field).forEach(
+    return ReferencesSearch.search(field).allMatch(
         reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
   }
 

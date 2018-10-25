@@ -204,7 +204,6 @@ public class UserDefinedJsonSchemaConfiguration {
     if (!Objects.equals(name, info.name)) return false;
     if (!Objects.equals(relativePathToSchema, info.relativePathToSchema)) return false;
 
-    //noinspection RedundantIfStatement
     return Objects.equals(patterns, info.patterns);
   }
 
@@ -311,7 +310,6 @@ public class UserDefinedJsonSchemaConfiguration {
       Item item = (Item)o;
 
       if (mappingKind != item.mappingKind) return false;
-      //noinspection RedundantIfStatement
       return Objects.equals(path, item.path);
     }
 

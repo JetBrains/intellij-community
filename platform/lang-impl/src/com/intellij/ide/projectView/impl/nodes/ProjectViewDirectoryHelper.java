@@ -413,7 +413,7 @@ public class ProjectViewDirectoryHelper {
   }
 
   @NotNull
-  public Collection<AbstractTreeNode> createFileAndDirectoryNodes(@NotNull List<? extends VirtualFile> files, @Nullable ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> createFileAndDirectoryNodes(@NotNull List<? extends VirtualFile> files, ViewSettings viewSettings) {
     final List<AbstractTreeNode> children = new ArrayList<>(files.size());
     final PsiManager psiManager = PsiManager.getInstance(myProject);
     for (final VirtualFile virtualFile : files) {

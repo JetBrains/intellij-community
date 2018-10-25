@@ -52,7 +52,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
   @Override
-  @SuppressWarnings({"SSBasedInspection"})
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     DictionarySuggestionProvider provider = findProvider();
     if (provider != null) {

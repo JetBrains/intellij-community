@@ -121,7 +121,6 @@ public class CommonCodeStyleSettings {
     return myForceArrangeMenuAvailable;
   }
 
-  @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
@@ -264,6 +263,11 @@ public class CommonCodeStyleSettings {
    * Keep up to this amount of blank lines in code
    */
   public int KEEP_BLANK_LINES_IN_CODE = 2;
+
+  /**
+   * Keep up to this amount of blank lines between package declaration and header
+   */
+  public int KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER = 2;
 
   public int KEEP_BLANK_LINES_BEFORE_RBRACE = 2;
 

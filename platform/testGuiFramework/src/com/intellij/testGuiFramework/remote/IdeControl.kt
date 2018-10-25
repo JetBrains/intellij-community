@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.remote
 
-import com.intellij.openapi.util.Pair.pair
-import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.RESUME_LABEL
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.remote.server.JUnitServer
@@ -11,7 +9,6 @@ import com.intellij.testGuiFramework.remote.transport.JUnitTestContainer
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.apache.log4j.Logger
-import org.junit.runner.RunWith
 import org.junit.runners.model.FrameworkMethod
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -34,7 +31,9 @@ object IdeControl {
   }
 
   private val myServer: JUnitServer
-    get() = JUnitServerHolder.getServer()
+    get() {
+      return JUnitServerHolder.getServer()
+    }
 
   /**
    * adds a new IDE processStdIn to control
@@ -86,6 +85,7 @@ object IdeControl {
   }
 
   private fun sendCloseIdeSignal() {
+    if (!myServer.isStarted()) return
     myServer.send(TransportMessage(MessageType.CLOSE_IDE))
     IdeControl.waitForCurrentProcess(2, TimeUnit.MINUTES)
   }

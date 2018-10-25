@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -1080,6 +1080,15 @@ public class ContainerUtil extends ContainerUtilRt {
     return result;
   }
 
+  public static <T> boolean all(@NotNull Collection<? extends T> collection, @NotNull Condition<? super T> condition) {
+    for (T t : collection) {
+      if (!condition.value(t)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
     Set<T> collected = newHashSet();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
@@ -1407,7 +1416,7 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @SuppressWarnings({"unchecked", "LambdaUnfriendlyMethodOverload"})
+  @SuppressWarnings({"unchecked"})
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {

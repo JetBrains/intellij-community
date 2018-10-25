@@ -275,7 +275,6 @@ public final class NavigationUtil {
 
     return getPsiElementPopup(elements, itemsMap, title, showContainingModules, element -> {
       if (element instanceof PsiElement) {
-        //noinspection SuspiciousMethodCalls
         itemsMap.get(element).navigate();
       }
       else {
@@ -376,7 +375,6 @@ public final class NavigationUtil {
       @Override
       public String getIndexedString(Object value) {
         if (value instanceof GotoRelatedItem) {
-          //noinspection ConstantConditions
           return ((GotoRelatedItem)value).getCustomName();
         }
         PsiElement element = (PsiElement)value;

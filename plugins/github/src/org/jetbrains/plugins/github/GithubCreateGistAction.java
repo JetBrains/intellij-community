@@ -210,7 +210,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
                            @NotNull GithubApiRequestExecutor executor,
                            @NotNull ProgressIndicator indicator,
                            @NotNull GithubServerPath server,
-                           @NotNull List<FileContent> contents,
+                           @NotNull List<? extends FileContent> contents,
                            final boolean isSecret,
                            @NotNull final String description,
                            @Nullable String filename) {

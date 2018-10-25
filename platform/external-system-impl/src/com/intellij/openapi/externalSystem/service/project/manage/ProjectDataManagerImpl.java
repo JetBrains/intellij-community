@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -30,7 +31,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -262,8 +262,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final List<Runnable> onSuccessImportTasks,
                                 @NotNull final List<Runnable> onFailureImportTasks) {
     if (project.isDisposed()) return;
-    if (project instanceof ProjectImpl) {
-      assert ((ProjectImpl)project).isComponentsCreated();
+    if (project instanceof ComponentManagerImpl) {
+      assert ((ComponentManagerImpl)project).isComponentsCreated();
     }
 
     final List<DataNode<T>> toImport = ContainerUtil.newSmartList();

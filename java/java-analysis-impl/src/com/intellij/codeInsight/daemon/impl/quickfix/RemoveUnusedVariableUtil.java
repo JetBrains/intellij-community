@@ -54,9 +54,9 @@ public class RemoveUnusedVariableUtil {
     return !writes.isEmpty();
   }
 
-  static PsiElement replaceElementWithExpression(PsiExpression expression,
-                                                 PsiElementFactory factory,
-                                                 PsiElement element) throws IncorrectOperationException {
+  public static PsiElement replaceElementWithExpression(PsiExpression expression,
+                                                        PsiElementFactory factory,
+                                                        PsiElement element) throws IncorrectOperationException {
     PsiElement elementToReplace = element;
     PsiElement expressionToReplaceWith = expression;
     if (element.getParent() instanceof PsiExpressionStatement) {
@@ -130,7 +130,7 @@ public class RemoveUnusedVariableUtil {
   static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return null;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     while (element != null) {
       if (element instanceof PsiAssignmentExpression) {
         PsiAssignmentExpression expression = (PsiAssignmentExpression)element;

@@ -398,7 +398,6 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  @SuppressWarnings("UnusedParameters")
   @Deprecated
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {

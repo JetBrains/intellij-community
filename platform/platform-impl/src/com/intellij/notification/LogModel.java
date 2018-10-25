@@ -19,7 +19,6 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.StatusBar;
@@ -32,7 +31,10 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -140,7 +142,6 @@ public class LogModel implements Disposable {
   }
 
   public Project getProject() {
-    //noinspection ConstantConditions
     return myProject;
   }
 

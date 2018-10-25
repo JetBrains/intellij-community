@@ -56,10 +56,8 @@ public class DeprecatedIsStillUsedInspection extends LocalInspectionTool {
       return false;
     }
 
-    return !ReferencesSearch.search(element, searchScope, false).forEach(reference -> {
-      PsiElement referenceElement = reference.getElement();
-      return isInsideDeprecated(referenceElement);
-    });
+    return ReferencesSearch.search(element, searchScope, false)
+      .anyMatch(reference -> !isInsideDeprecated(reference.getElement()));
   }
 
   private static boolean isInsideDeprecated(PsiElement element) {

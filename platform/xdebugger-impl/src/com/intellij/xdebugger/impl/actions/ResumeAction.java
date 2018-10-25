@@ -23,8 +23,8 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
     if (project == null) return false;
 
     XDebugSessionImpl session = (XDebugSessionImpl)XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null && !session.isReadOnly() && !session.isStopped()) {
-      return session.isPaused();
+    if (session != null && !session.isStopped()) {
+      return !session.isReadOnly() && session.isPaused();
     }
     // Android Studio: we don't want the resume action to ever start and show the debug config popup
     //return e.getInputEvent() instanceof KeyEvent;

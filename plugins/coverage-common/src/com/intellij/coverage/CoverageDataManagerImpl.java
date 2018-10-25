@@ -425,7 +425,6 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     if (project.isDisposed()) return;
     final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
     final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
-    //noinspection ConstantConditions
     final CoverageSuite coverageSuite = coverageEnabledConfiguration.getCurrentCoverageSuite();
     if (coverageSuite != null) {
       ((BaseCoverageSuite)coverageSuite).setConfiguration(configuration);

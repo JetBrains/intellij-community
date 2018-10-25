@@ -240,6 +240,11 @@ public class InspectionApplication {
           logMessageLn(2, text);
         }
       });
+      File resultsDataFile = new File(resultsDataPath);
+      if (!resultsDataFile.exists() && !resultsDataFile.mkdirs()) {
+        logError("Unable to create output directory " + resultsDataPath);
+        gracefulExit();
+      }
       final String descriptionsFile = resultsDataPath + File.separatorChar + DESCRIPTIONS + XML_EXTENSION;
       describeInspections(descriptionsFile,
                           myRunWithEditorSettings ? null : inspectionProfile.getName(),

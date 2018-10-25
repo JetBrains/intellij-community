@@ -36,13 +36,13 @@ public class BuildAndRestartConsoleAction extends AnAction {
   private final Project myProject;
   private final Executor myExecutor;
   private final RunContentDescriptor myContentDescriptor;
-  private final Consumer<Module> myRestarter;
+  private final Consumer<? super Module> myRestarter;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
-                                      @NotNull Consumer<Module> restarter) {
+                                      @NotNull Consumer<? super Module> restarter) {
     super("Build and restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
     myModule = module;
     myProject = project;

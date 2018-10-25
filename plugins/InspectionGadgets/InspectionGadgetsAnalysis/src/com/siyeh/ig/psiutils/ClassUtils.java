@@ -37,17 +37,14 @@ import java.util.stream.Stream;
 public class ClassUtils {
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<String> immutableTypes = new HashSet<>(19);
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<PsiType> primitiveNumericTypes = new HashSet<>(7);
 
   /**
-   * @noinspection StaticCollection
    */
   private static final Set<PsiType> integralTypes = new HashSet<>(5);
 

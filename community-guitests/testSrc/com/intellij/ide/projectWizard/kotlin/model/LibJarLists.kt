@@ -11,6 +11,16 @@ val kotlinJvmMppGradle = mapOf(
     "org.jetbrains:annotations:13.0"
   ))
 
+val kotlinJvmMobileLibrary = mapOf(
+  "" to listOf(
+//    "org.jetbrains.kotlin:kotlin-stdlib-jdk7:",
+//    "org.jetbrains.kotlin:kotlin-stdlib-jdk8:",
+    "org.jetbrains.kotlin:kotlin-stdlib:",
+    "org.jetbrains.kotlin:kotlin-test-junit:",
+    "org.jetbrains.kotlin:kotlin-test:",
+    "org.jetbrains:annotations:13.0"
+  ))
+
 val kotlinCommonMpp = mapOf(
   "" to listOf(
     "org.jetbrains.kotlin:kotlin-stdlib-common:",

@@ -30,5 +30,6 @@ import org.junit.runners.Suite
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
 @Suite.SuiteClasses(CommandLineProjectGuiTest::class,
-                    DockedModeGuiTest::class)
+                    DockedModeGuiTest::class,
+                    SaveFilesOnFrameDeactivationGuiTest::class)
 class CommunityTestSuite : GuiTestSuite()

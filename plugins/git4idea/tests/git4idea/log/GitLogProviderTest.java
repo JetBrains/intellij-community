@@ -100,7 +100,6 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     createTaggedBranch();
     List<VcsCommitMetadata> expectedLog = log();
     List<TimedVcsCommit> collector = ContainerUtil.newArrayList();
-    //noinspection unchecked
     myLogProvider.readAllHashes(projectRoot, new CollectConsumer<>(collector));
     assertOrderedEquals(expectedLog, collector);
   }

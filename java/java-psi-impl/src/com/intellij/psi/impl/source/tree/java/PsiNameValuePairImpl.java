@@ -180,7 +180,7 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
           PsiImplUtil.setName(nameIdentifier, newElementName);
         }
         else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getNode().getFirstChildNode().getElementType())) {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
           nameIdentifier = factory.createIdentifier(newElementName);
           addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getNode().getFirstChildNode()));
         }

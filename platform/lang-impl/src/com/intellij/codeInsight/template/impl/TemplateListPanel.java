@@ -423,7 +423,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
       if (o instanceof TemplateGroup) {
-        //noinspection SuspiciousMethodCalls
         myTemplateGroups.remove(o);
         removeNodeFromParent(node);
       } else if (o instanceof TemplateImpl) {

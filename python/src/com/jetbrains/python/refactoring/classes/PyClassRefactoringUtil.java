@@ -73,7 +73,7 @@ public final class PyClassRefactoringUtil {
    * @return new (copied) fields
    */
   @NotNull
-  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<PyAssignmentStatement> assignmentStatements,
+  public static List<PyAssignmentStatement> copyFieldDeclarationToStatement(@NotNull final Collection<? extends PyAssignmentStatement> assignmentStatements,
                                                                             @NotNull final PyStatementList superClassStatement,
                                                                             @Nullable final PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
@@ -131,7 +131,7 @@ public final class PyClassRefactoringUtil {
   }
 
   @NotNull
-  public static List<PyFunction> copyMethods(Collection<PyFunction> methods, PyClass superClass, boolean skipIfExist ) {
+  public static List<PyFunction> copyMethods(Collection<? extends PyFunction> methods, PyClass superClass, boolean skipIfExist ) {
     if (methods.isEmpty()) {
       return Collections.emptyList();
     }
@@ -278,7 +278,7 @@ public final class PyClassRefactoringUtil {
     }
   }
 
-  public static void insertImport(PsiElement anchor, Collection<PsiNamedElement> elements) {
+  public static void insertImport(PsiElement anchor, Collection<? extends PsiNamedElement> elements) {
     for (PsiNamedElement newClass : elements) {
       insertImport(anchor, newClass);
     }

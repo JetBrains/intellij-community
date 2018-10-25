@@ -63,7 +63,6 @@ public class ZipUtil {
     );
     Boolean result = outcome.get();
     if (result == null) {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Exception e = outcome.getException();
       if (e != null) {
         throw new GeneratorException("Unpacking failed, downloaded archive is broken");

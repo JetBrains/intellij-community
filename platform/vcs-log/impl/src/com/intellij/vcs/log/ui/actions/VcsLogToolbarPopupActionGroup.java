@@ -43,10 +43,9 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    ListPopup popup = JBPopupFactory.getInstance()
-                                    .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.MNEMONICS,
-                                                            true,
-                                                            VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(),
+                                                                          JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
+                                                                          VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
     Component component = e.getInputEvent().getComponent();
     if (component instanceof ActionButtonComponent) {
       popup.showUnderneathOf(component);

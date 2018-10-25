@@ -155,7 +155,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
       }
 
       WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
-        //noinspection ConstantConditions
         final String url = sameFile ? myFixture.getFile().getVirtualFile().getUrl() :
                            myFixture.getFile().getVirtualFile().getParent().getUrl();
         PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, url);
@@ -181,7 +180,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     final VirtualFile base_dir = myFixture.getFile().getVirtualFile().getParent();
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
-      //noinspection ConstantConditions
       final String path = base_dir.getPath() + "/a/b";
       PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
     });
@@ -222,7 +220,6 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
       //TODO: Test via presenter
-      //noinspection ConstantConditions
       final String path = base_dir.getPath() + "/a/b";
       PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path + "/foo.py");
     });

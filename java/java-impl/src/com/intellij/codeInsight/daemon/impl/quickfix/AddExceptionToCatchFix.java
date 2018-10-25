@@ -90,7 +90,7 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
   private static PsiCodeBlock addCatchStatement(PsiTryStatement tryStatement,
                                                 PsiClassType exceptionType,
                                                 PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(tryStatement.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(tryStatement.getProject());
 
     if (tryStatement.getTryBlock() == null) {
       addTryBlock(tryStatement, factory);
@@ -176,7 +176,6 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
       }
     }
 
-    @SuppressWarnings({"unchecked"})
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class, PsiFunctionalExpression.class);
     if (parent == null || parent instanceof PsiMethod || parent instanceof PsiFunctionalExpression) return null;
     final PsiTryStatement statement = (PsiTryStatement) parent;

@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -63,6 +64,7 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     final T data = getExternalData(e, myExternalDataClazz);
     if (data == null) return;
 
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
     perform(project, projectSystemId, data, e);
   }
 
@@ -78,7 +80,6 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
 
-  @SuppressWarnings("unchecked")
   protected boolean isIgnoredNode(@NotNull AnActionEvent e) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();

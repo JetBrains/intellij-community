@@ -403,7 +403,6 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     return Disposer.isDisposed(this);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   public T getSelectedValue() {
     return myList.getSelectedValue();

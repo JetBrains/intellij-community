@@ -224,7 +224,6 @@ public class JarsBuilder {
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             packedFilePaths.add(fullManifestPath);
-            //noinspection IOResourceOpenedButNotSafelyClosed
             return createManifest(new FileInputStream(manifestFile), manifestFile);
           }
         }

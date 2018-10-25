@@ -129,12 +129,12 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
 
   private static class BlockingMethodInNonBlockingContextVisitor extends PsiElementVisitor {
     private final ProblemsHolder myHolder;
-    private final List<BlockingMethodChecker> myBlockingMethodCheckers;
-    private final List<NonBlockingContextChecker> myNonBlockingContextCheckers;
+    private final List<? extends BlockingMethodChecker> myBlockingMethodCheckers;
+    private final List<? extends NonBlockingContextChecker> myNonBlockingContextCheckers;
 
     BlockingMethodInNonBlockingContextVisitor(@NotNull ProblemsHolder holder,
-                                                     List<BlockingMethodChecker> blockingMethodCheckers,
-                                                     List<NonBlockingContextChecker> nonBlockingContextCheckers) {
+                                              List<? extends BlockingMethodChecker> blockingMethodCheckers,
+                                              List<? extends NonBlockingContextChecker> nonBlockingContextCheckers) {
       myHolder = holder;
       this.myBlockingMethodCheckers = blockingMethodCheckers;
       this.myNonBlockingContextCheckers = nonBlockingContextCheckers;
@@ -165,7 +165,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     private static CachedValueProvider<Boolean> getIsBlockingProvider(PsiMethod referencedMethod,
-                                                                      List<BlockingMethodChecker> blockingMethodCheckers) {
+                                                                      List<? extends BlockingMethodChecker> blockingMethodCheckers) {
       return () -> {
         boolean isBlocking =
           StreamEx.of(referencedMethod).append(referencedMethod.findDeepestSuperMethods())
@@ -182,7 +182,7 @@ public class BlockingMethodInNonBlockingContextInspection extends AbstractBaseUa
     }
 
     private static boolean isMethodBlocking(PsiMethod method,
-                                            List<BlockingMethodChecker> blockingMethodCheckers) {
+                                            List<? extends BlockingMethodChecker> blockingMethodCheckers) {
       return blockingMethodCheckers.stream().anyMatch(extension -> {
         ProgressIndicatorProvider.checkCanceled();
         return extension.isMethodBlocking(method);

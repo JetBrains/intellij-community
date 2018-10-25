@@ -66,7 +66,7 @@ public class AddNewArrayExpressionFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiManager manager = file.getManager();
     PsiType type = getType();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     @NonNls String text = "new " + type.getCanonicalText() + "[]{}";
     PsiNewExpression newExpr = (PsiNewExpression) factory.createExpressionFromText(text, null);
     newExpr.getArrayInitializer().replace(myInitializer);

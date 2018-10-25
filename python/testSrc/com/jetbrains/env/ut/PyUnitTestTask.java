@@ -210,7 +210,6 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     else {
       environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
     }
-    //noinspection ConstantConditions
 
     Assert.assertTrue(environment.getRunner().canRun(DefaultRunExecutor.EXECUTOR_ID, config));
 

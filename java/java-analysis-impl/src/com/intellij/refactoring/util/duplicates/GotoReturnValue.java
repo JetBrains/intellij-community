@@ -29,7 +29,7 @@ public abstract class GotoReturnValue implements ReturnValue {
   @Nullable
   public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType) throws IncorrectOperationException {
     if (!TypeConversionUtil.isBooleanType(extractedMethod.getReturnType())) return null;
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodCallExpression.getProject());
     final PsiIfStatement statement = (PsiIfStatement)elementFactory.createStatementFromText(getGotoStatement(), null);
     final PsiExpression condition = statement.getCondition();
     assert condition != null;

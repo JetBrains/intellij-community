@@ -84,6 +84,10 @@ class SingleThreadSearcher implements SESearcher {
     UpdateInfo res = new UpdateInfo();
 
     contributor.fetchElements(pattern, everywhere, (SearchEverywhereContributorFilter<T>) filter, progressIndicator, newElement -> {
+      if (newElement == null) {
+        return true;
+      }
+
       if (res.addedElements.size() >= limit) {
         res.hasMore = true;
         return false;

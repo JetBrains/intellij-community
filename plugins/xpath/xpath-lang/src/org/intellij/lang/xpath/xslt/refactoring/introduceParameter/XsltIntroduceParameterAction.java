@@ -32,7 +32,6 @@ public class XsltIntroduceParameterAction extends BaseIntroduceAction<IntroduceP
     }
 
     @Override
-    @SuppressWarnings({"ConstantConditions"})
     protected String getCommandName() {
         return null;
     }

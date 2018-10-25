@@ -34,7 +34,6 @@ public class GoToInstruction extends BranchingInstruction {
     this.isReturn = isReturn;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     final String sRole = "["+role.toString()+"]";
     return "GOTO " + sRole + " " + offset + (isReturn ? " RETURN" : "");

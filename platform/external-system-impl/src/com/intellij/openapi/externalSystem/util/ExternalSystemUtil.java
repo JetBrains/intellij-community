@@ -290,7 +290,6 @@ public class ExternalSystemUtil {
     }
   }
 
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   private static String extractDetails(@NotNull Throwable e) {
     final Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -390,7 +389,7 @@ public class ExternalSystemUtil {
 
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
 
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+      @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         if (project.isDisposed()) return;

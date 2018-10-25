@@ -161,7 +161,6 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
     assert selected != null;
 
-    //noinspection ConstantConditions
     return (SvnConfiguration.SshConnectionType)selected.getClientProperty("value");
   }
 

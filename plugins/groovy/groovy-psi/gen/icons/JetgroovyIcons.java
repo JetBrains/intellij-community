@@ -15,12 +15,6 @@ public final class JetgroovyIcons {
   }
 
 
-  public final static class Griffon {
-    public static final Icon Griffon = load("/icons/griffon/griffon.png"); // 16x16
-    public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.svg"); // 13x13
-
-  }
-
   public final static class Groovy {
     public static final Icon AbstractClass = load("/icons/groovy/abstractClass.png"); // 16x16
     public static final Icon AbstractField = load("/icons/groovy/abstractField.png"); // 16x16

@@ -37,7 +37,7 @@ public abstract class Intention implements IntentionAction {
   private final PsiElementPredicate predicate;
 
   /**
-   * @noinspection AbstractMethodCallInConstructor, OverridableMethodCallInConstructor
+   * @noinspection AbstractMethodCallInConstructor
    */
   protected Intention() {
     super();

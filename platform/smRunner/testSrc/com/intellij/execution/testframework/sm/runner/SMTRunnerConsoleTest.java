@@ -500,7 +500,6 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   public void testStopCollectingOutput() {
     myResultsViewer.selectAndNotify(myResultsViewer.getTestsRootNode());
-    //noinspection NullableProblems
     myConsole.attachToProcess(null);
 
     myEventsProcessor.onStartTesting();

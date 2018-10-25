@@ -165,7 +165,7 @@ public class AbstractTreeBuilder implements Disposable {
     return ui == null ? null : ui.getRootNode();
   }
 
-  public final void setNodeDescriptorComparator(Comparator<NodeDescriptor> nodeDescriptorComparator) {
+  public final void setNodeDescriptorComparator(Comparator<? super NodeDescriptor> nodeDescriptorComparator) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.setNodeDescriptorComparator(nodeDescriptorComparator);
   }

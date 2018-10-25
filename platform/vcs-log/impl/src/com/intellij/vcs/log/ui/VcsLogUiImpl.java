@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -21,6 +22,7 @@ import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +39,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
+  @NotNull private final History myHistory;
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -53,6 +56,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
+
+    myHistory = VcsLogUiUtil.installNavigationHistory(this);
   }
 
   @Override
@@ -177,6 +182,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return HELP_ID;
   }
 
+  @Nullable
+  @Override
+  public History getNavigationHistory() {
+    return myHistory;
+  }
+
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesListener);
@@ -230,7 +241,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
 
     private void onShowLongEdgesChanged() {
       myVisiblePack.getVisibleGraph().getActionController()
-                   .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
+        .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
   }
 }

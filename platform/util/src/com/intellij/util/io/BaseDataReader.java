@@ -171,6 +171,7 @@ public abstract class BaseDataReader {
         if (!stopSignalled) {
           // if process stopped, there is no sense to sleep,
           // just check if there is unread output in the stream
+          beforeSleeping(read);
           synchronized (mySleepMonitor) {
             mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
           }
@@ -192,6 +193,8 @@ public abstract class BaseDataReader {
       }
     }
   }
+
+  protected void beforeSleeping(boolean hasJustReadSomething) {}
 
   private void resumeReading() {
     synchronized (mySleepMonitor) {

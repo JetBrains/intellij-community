@@ -218,7 +218,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
             final PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement)psiElement;
-            final PsiType psiType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(classRef);
+            final PsiType psiType = JavaPsiFacade.getElementFactory(psiManager.getProject()).createType(classRef);
             removeException(refMethod, psiType, refsToDelete, psiMethod);
           } else {
             final PsiReferenceList throwsList = psiMethod.getThrowsList();

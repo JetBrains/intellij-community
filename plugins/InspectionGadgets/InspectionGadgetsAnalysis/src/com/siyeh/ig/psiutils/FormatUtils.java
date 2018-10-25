@@ -28,12 +28,10 @@ import java.util.Set;
 public class FormatUtils {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls
   public static final Set<String> formatMethodNames = new HashSet<>(2);
   /**
-   * @noinspection StaticCollection
    */
   public static final Set<String> formatClassNames = new HashSet<>(4);
 

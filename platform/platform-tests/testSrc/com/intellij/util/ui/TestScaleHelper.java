@@ -10,7 +10,9 @@ import com.intellij.util.ui.JBUI.BaseScaleContext;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.BeforeClass;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +29,6 @@ import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 /**
  * @author tav
  */
-@SuppressWarnings("JUnitTestCaseWithNoTests")
 public class TestScaleHelper {
   private static final String STANDALONE_PROP = "intellij.test.standalone";
 

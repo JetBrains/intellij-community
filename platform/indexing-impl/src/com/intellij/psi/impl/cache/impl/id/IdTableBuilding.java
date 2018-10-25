@@ -6,7 +6,6 @@ import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Language;
 import com.intellij.lang.cacheBuilder.*;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.InternalFileType;
@@ -66,8 +65,7 @@ public class IdTableBuilding {
 
     if (fileType instanceof LanguageFileType) {
       final Language lang = ((LanguageFileType)fileType).getLanguage();
-      final FindUsagesProvider findUsagesProvider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-      WordsScanner scanner = findUsagesProvider == null ? null : findUsagesProvider.getWordsScanner();
+      WordsScanner scanner = LanguageFindUsages.getWordsScanner(lang);
       if (scanner == null) {
         scanner = new SimpleWordsScanner();
       }

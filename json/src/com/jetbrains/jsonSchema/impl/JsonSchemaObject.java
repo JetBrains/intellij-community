@@ -129,7 +129,6 @@ public class JsonSchemaObject {
                                                  @NotNull JsonSchemaType otherType) {
     if (otherType == JsonSchemaType._any) return selfType;
     if (selfType == JsonSchemaType._any) return otherType;
-    //noinspection EnumSwitchStatementWhichMissesCases
     switch (selfType) {
       case _string:
         return otherType == JsonSchemaType._string || otherType == JsonSchemaType._string_number ? JsonSchemaType._string : null;
@@ -1057,7 +1056,15 @@ public class JsonSchemaObject {
   private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
                                                          @NotNull final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter) {
     final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
+    if (StringUtil.isEmptyOrSpaces(path)) {
+      final String id = splitter.getSchemaId();
+      if (id != null && id.startsWith("#")) {
+        final String resolvedId = JsonCachedValues.resolveId(schema.getJsonObject().getContainingFile(), id);
+        if (resolvedId == null || id.equals("#" + resolvedId)) return null;
+        return findRelativeDefinition(schema, new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter("#" + resolvedId));
+      }
+      return schema;
+    }
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
     if (definition == null) {
       LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));

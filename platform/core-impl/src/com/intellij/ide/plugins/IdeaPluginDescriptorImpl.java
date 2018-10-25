@@ -173,7 +173,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     String internalVersionString = pluginBean.formatVersion;
     if (internalVersionString != null) {
       try {
-        //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(internalVersionString);
       }
       catch (NumberFormatException e) {
@@ -323,7 +322,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return build;
   }
 
-  void registerExtensionPoints(@NotNull ExtensionsArea area) {
+  public void registerExtensionPoints(@NotNull ExtensionsArea area) {
     if (myExtensionsPoints != null) {
       for (Element element : myExtensionsPoints.get(StringUtil.notNullize(area.getAreaClass()))) {
         area.registerExtensionPoint(this, element);

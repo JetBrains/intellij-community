@@ -33,7 +33,7 @@ public class HgPushParseTest {
   @NotNull private final String myOutput;
   private final int myExpected;
 
-  @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public HgPushParseTest(@NotNull String name, @NotNull String output, int expected) {
     myOutput = output;
     myExpected = expected;

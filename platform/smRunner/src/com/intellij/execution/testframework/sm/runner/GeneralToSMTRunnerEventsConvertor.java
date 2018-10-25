@@ -7,6 +7,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,7 +21,7 @@ import java.util.*;
  */
 public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
 
-  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = new HashMap<>();
+  private final Map<String, SMTestProxy> myRunningTestsFullNameToProxy = ContainerUtil.newConcurrentMap();
   private final TestSuiteStack mySuitesStack;
   private final Map<String, List<SMTestProxy>> myCurrentChildren = new HashMap<>();
 
@@ -473,7 +474,6 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   @Override
   public void dispose() {
     super.dispose();
-    disconnectListeners();
     if (!myRunningTestsFullNameToProxy.isEmpty()) {
       final Application application = ApplicationManager.getApplication();
       if (!application.isHeadlessEnvironment() && !application.isUnitTestMode()) {
@@ -487,15 +487,23 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
 
   private SMTestProxy findCurrentTestOrSuite() {
     //if we can locate test - we will send output to it, otherwise to current test suite
-    final SMTestProxy currentProxy;
-    if (myRunningTestsFullNameToProxy.size() == 1) {
+    SMTestProxy currentProxy = null;
+    Iterator<SMTestProxy> iterator = myRunningTestsFullNameToProxy.values().iterator();
+    if (iterator.hasNext()) {
       //current test
-      currentProxy = myRunningTestsFullNameToProxy.values().iterator().next();
-    } else {
+      currentProxy = iterator.next();
+
+      if (iterator.hasNext()) { //if there are multiple tests running call put output to the suite
+        currentProxy = null;
+      }
+    }
+    
+    if (currentProxy == null) {
       //current suite
       //
       // ProcessHandler can fire output available event before processStarted event
-      currentProxy = mySuitesStack.isEmpty() ? myTestsRootProxy : getCurrentSuite();
+      final SMTestProxy currentSuite = mySuitesStack.getCurrentSuite();
+      currentProxy = currentSuite != null ? currentSuite : myTestsRootProxy;
     }
     return currentProxy;
   }

@@ -314,7 +314,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected GroovyFileImpl clone() {
     GroovyFileImpl clone = (GroovyFileImpl)super.clone();
     clone.myContext = myContext;

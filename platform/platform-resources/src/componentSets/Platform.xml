@@ -147,6 +147,10 @@
     <component>
       <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.openapi.util.registry.RegistryExtensionCollector</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

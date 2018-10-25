@@ -4,21 +4,22 @@
 # upgrade your working IDEA to the latest changes.
 #
 # Before you run the script, ensure you have the following:
-# 1. Your project for IntelliJ IDEA CE is fully built (do 'Rebuild Project' if you're not sure)
-# 2. WORK_IDEA_HOME points to the directory of IntelliJ IDEA build you want to upgrade
-# 3. DEV_IDEA_HOME points to the directory of the project you built at step 1
-# 4. You quit IntelliJ IDEA
+# 1. Your IntelliJ IDEA project is fully built (do 'Rebuild Project' if unsure).
+# 2. WORK_IDEA_HOME points to the directory of IntelliJ IDEA build you want to upgrade.
+# 3. DEV_IDEA_HOME points to the directory of the project you built at step 1.
+# 4. 'java' is on the PATH or JAVA_HOME points to a valid JDK installation.
+# 5. You quit IntelliJ IDEA.
 
 if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" -a -f "$WORK_IDEA_HOME/Contents/bin/inspect.sh" ]; then
   WORK_IDEA_HOME="$WORK_IDEA_HOME/Contents"
 fi
 if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" ]; then
-  echo "WORK_IDEA_HOME must be defined and point to the installation you're updating."
+  echo "WORK_IDEA_HOME must be defined and point to the installation you're updating"
   exit 1
 fi
 
 if [ ! -f "$DEV_IDEA_HOME/build/update.sh" ]; then
-  echo "DEV_IDEA_HOME must be defined and point to the source base you're updating from."
+  echo "DEV_IDEA_HOME must be defined and point to the source base you're updating from"
   exit 1
 fi
 
@@ -26,7 +27,7 @@ JAVA_BIN="java"
 if [ -n "$JAVA_HOME" ]; then
   JAVA_BIN="$JAVA_HOME/bin/java"
   if [ ! -x "$JAVA_BIN" ]; then
-    echo "JAVA_HOME must point to a valid Java installation"
+    echo "'java' should be on the PATH or JAVA_HOME must point to a valid JDK installation"
     exit 1
   fi
 fi
@@ -34,11 +35,11 @@ fi
 echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
-"$JAVA_BIN" -Xms64m -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
- -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME" ${TARGET}
+"$JAVA_BIN" -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
+ -f "$DEV_IDEA_HOME/build/update.xml" -Dwork.idea.home="$WORK_IDEA_HOME"
 
 if [ "$?" != "0" ]; then
-  echo "Update failed; work IDEA build not modified."
+  echo "Update failed; work IDEA build not modified"
   rm -rf "$WORK_IDEA_HOME/___tmp___"
   exit 2
 fi

@@ -49,9 +49,9 @@ import java.util.Set;
 
 public class RegisterExtensionFix implements IntentionAction {
   private final PsiClass myExtensionClass;
-  private final Set<ExtensionPointCandidate> myEPCandidates;
+  private final Set<? extends ExtensionPointCandidate> myEPCandidates;
 
-  public RegisterExtensionFix(PsiClass extensionClass, Set<ExtensionPointCandidate> epCandidates) {
+  public RegisterExtensionFix(PsiClass extensionClass, Set<? extends ExtensionPointCandidate> epCandidates) {
     myExtensionClass = extensionClass;
     myEPCandidates = epCandidates;
   }

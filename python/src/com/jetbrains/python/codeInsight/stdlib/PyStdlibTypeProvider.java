@@ -137,7 +137,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
         return getOpenFunctionCallType(function, (PyCallExpression)callSite, LanguageLevel.forElement(callSite), context);
       }
-      else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+      else if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
       }
       else if ("tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {

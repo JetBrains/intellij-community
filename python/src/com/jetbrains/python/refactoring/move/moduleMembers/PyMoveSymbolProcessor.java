@@ -44,14 +44,14 @@ public class PyMoveSymbolProcessor {
   private final PsiNamedElement myMovedElement;
   private final PyFile myDestinationFile;
   private final List<UsageInfo> myUsages;
-  private final List<SmartPsiElementPointer<PsiNamedElement>> myAllMovedElements;
+  private final List<? extends SmartPsiElementPointer<PsiNamedElement>> myAllMovedElements;
   private final List<PsiFile> myFilesWithStarUsages = new ArrayList<>();
   private final Set<ScopeOwner> myScopeOwnersWithGlobal = new HashSet<>();
 
   public PyMoveSymbolProcessor(@NotNull final PsiNamedElement element,
                                @NotNull PyFile destination,
                                @NotNull Collection<UsageInfo> usages,
-                               @NotNull List<SmartPsiElementPointer<PsiNamedElement>> otherElements) {
+                               @NotNull List<? extends SmartPsiElementPointer<PsiNamedElement>> otherElements) {
     myMovedElement = element;
     myDestinationFile = destination;
     myAllMovedElements = otherElements;

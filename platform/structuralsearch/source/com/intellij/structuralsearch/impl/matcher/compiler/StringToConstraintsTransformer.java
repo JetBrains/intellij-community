@@ -3,7 +3,10 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -429,7 +432,6 @@ public class StringToConstraintsTransformer {
 
   private static void checkRegex(@NotNull String regex) {
     try {
-      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(regex);
     }
     catch (PatternSyntaxException e) {

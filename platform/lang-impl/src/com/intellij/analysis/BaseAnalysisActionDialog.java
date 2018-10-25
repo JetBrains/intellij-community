@@ -79,7 +79,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   public BaseAnalysisActionDialog(@NotNull String title,
                                    @NotNull String analysisNoon,
                                    @NotNull Project project,
-                                   @NotNull List<ModelScopeItem> items,
+                                   @NotNull List<? extends ModelScopeItem> items,
                                    @NotNull AnalysisUIOptions options,
                                    final boolean rememberScope,
                                    final boolean showInspectTestSource) {

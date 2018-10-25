@@ -14,7 +14,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrVa
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 
-@SuppressWarnings("Duplicates")
 class GroovyCallResolverProcessorImpl extends GroovyResolverProcessorImpl {
 
   GroovyCallResolverProcessorImpl(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {

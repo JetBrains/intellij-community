@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
@@ -55,6 +56,7 @@ public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
                          @NotNull ProjectSystemId projectSystemId,
                          @NotNull TaskData taskData,
                          @NotNull AnActionEvent e) {
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
     final ExternalSystemShortcutsManager shortcutsManager = ExternalProjectsManagerImpl.getInstance(project).getShortcutsManager();
     final String actionId = shortcutsManager.getActionId(taskData.getLinkedExternalProjectPath(), taskData.getName());
     if (actionId != null) {

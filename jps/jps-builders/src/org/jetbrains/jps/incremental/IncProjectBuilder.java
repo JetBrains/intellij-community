@@ -15,7 +15,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.io.MappingFailedException;
-import com.intellij.util.io.PersistentEnumerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -1021,7 +1020,6 @@ public class IncProjectBuilder {
           context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
         }
       };
-      //noinspection unchecked
       BuildOutputConsumerImpl outputConsumer = new BuildOutputConsumerImpl(target, context);
       long start = System.nanoTime();
       ((TargetBuilder<R, T>)builder).build(target, holder, outputConsumer, context);

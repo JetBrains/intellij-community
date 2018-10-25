@@ -72,7 +72,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       return -1;
     }
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     final PsiExpression initializerExpression = getInitializerExpression(var, assignment);
     if (initializerExpression == null) return -1;
 

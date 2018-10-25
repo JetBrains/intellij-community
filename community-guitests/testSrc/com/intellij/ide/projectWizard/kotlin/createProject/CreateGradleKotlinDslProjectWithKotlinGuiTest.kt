@@ -16,7 +16,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     createGradleWith(
       projectName = testMethod.methodName,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleKProject,
+      project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!)
   }
 
@@ -26,7 +26,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     createGradleWith(
       projectName = testMethod.methodName,
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleKProject,
+      project = kotlinProjects.getValue(Projects.GradleKProjectJs),
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!)
   }
 
@@ -50,7 +50,7 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
     editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = true
+      isKotlinDslUsed = project.isKotlinDsl
     )
      waitAMoment()
     gradleReimport()
@@ -60,5 +60,6 @@ class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
      projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
        project, kotlinVersion, projectName, expectedFacet
      )
+     waitAMoment()
   }
 }

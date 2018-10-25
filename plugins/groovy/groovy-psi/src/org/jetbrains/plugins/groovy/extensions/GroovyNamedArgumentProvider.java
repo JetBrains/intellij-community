@@ -66,7 +66,6 @@ public abstract class GroovyNamedArgumentProvider {
           super.put(key, oldValue);
         }
 
-        //noinspection ConstantConditions
         return oldValue;
       }
     };

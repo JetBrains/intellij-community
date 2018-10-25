@@ -233,7 +233,7 @@ public final class ObjectTree<T> {
     myRootObjects.remove(object);
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void assertIsEmpty(boolean throwError) {
     synchronized (treeLock) {
       for (T object : myRootObjects) {

@@ -555,7 +555,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     private static boolean canUseAsNonFinal(PsiVariable var) {
       if (!(var instanceof PsiLocalVariable)) return false;
       PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
-      return block != null && ReferencesSearch.search(var).forEach(ref -> {
+      return block != null && ReferencesSearch.search(var).allMatch(ref -> {
         PsiElement context = PsiTreeUtil.getParentOfType(ref.getElement(), PsiClass.class, PsiLambdaExpression.class);
         return context == null || PsiTreeUtil.isAncestor(context, block, false);
       });

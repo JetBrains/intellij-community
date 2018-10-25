@@ -5,7 +5,6 @@ import java.util.Arrays;
 
 class C {
     void m(File file) throws IOException {
-        //comment
         int len;
         boolean empty;
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
@@ -20,7 +19,7 @@ class C {
                 empty = false;
             }
             while (read != -1);
-        }
+        }//comment
         System.out.println(len);
         System.out.println(empty);
     }

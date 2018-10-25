@@ -22,9 +22,9 @@ import org.jetbrains.plugins.github.api.search.GithubIssueSearchSort
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
-class GithubPullRequestSearchComponent(project: Project,
-                                       private val autoPopupController: AutoPopupController,
-                                       private val model: GithubPullRequestSearchModel) : BorderLayoutPanel() {
+internal class GithubPullRequestSearchComponent(project: Project,
+                                                private val autoPopupController: AutoPopupController,
+                                                private val model: GithubPullRequestSearchModel) : BorderLayoutPanel() {
 
   private val searchField = object : TextFieldWithCompletion(project, SearchCompletionProvider(), "", true, true, false, false) {
 

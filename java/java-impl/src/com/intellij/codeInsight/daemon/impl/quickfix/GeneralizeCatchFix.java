@@ -86,7 +86,7 @@ public class GeneralizeCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myElement.getProject());
     PsiTypeElement type = factory.createTypeElement(myUnhandledException);
     myCatchParameter.getTypeElement().replace(type);
   }

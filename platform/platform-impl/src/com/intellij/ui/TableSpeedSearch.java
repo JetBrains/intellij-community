@@ -33,7 +33,7 @@ import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
 
 public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   private static final PairFunction<Object, Cell, String> TO_STRING = (o, cell) -> o == null || o instanceof Boolean ? "" : o.toString();
-  private final PairFunction<Object, Cell, String> myToStringConvertor;
+  private final PairFunction<Object, ? super Cell, String> myToStringConvertor;
 
   public TableSpeedSearch(JTable table) {
     this(table, TO_STRING);
@@ -43,7 +43,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     this(table, (o, c) -> toStringConvertor.convert(o));
   }
 
-  public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {
+  public TableSpeedSearch(JTable table, final PairFunction<Object, ? super Cell, String> toStringConvertor) {
     super(table);
 
     myToStringConvertor = toStringConvertor;

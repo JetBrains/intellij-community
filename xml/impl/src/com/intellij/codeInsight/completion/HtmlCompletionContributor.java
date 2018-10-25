@@ -69,6 +69,9 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       "rm", "rn", "ro", "ru", "rw", "sa", "sc", "sd", "se", "sg", "si", "sk", "sl", "sm", "sn", "so", "sq", "sr", "ss", "st", "su", "sv",
       "sw", "ta", "te", "tg", "th", "ti", "tk", "tl", "tn", "to", "tr", "ts", "tt", "tw", "ty", "ug", "uk", "ur", "uz", "ve", "vi", "vo",
       "wa", "wo", "xh", "yi", "yo", "za", "zh", "zu",};
+  public static final String[] VUE_SCRIPT_LANGUAGE = {"js", "ts", "Flow JS"};
+  public static final String[] VUE_STYLE_LANGUAGE = {"scss", "sass", "stylus", "css", "less", "postcss"};
+  public static final String[] VUE_TEMPLATE_LANGUAGE = {"html", "pug"};
 
   public HtmlCompletionContributor() {
     extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlAttributeValue()), new CompletionProvider<CompletionParameters>() {
@@ -117,7 +120,21 @@ public class HtmlCompletionContributor extends CompletionContributor implements 
       if ("target".equals(name) || "formtarget".equals(name)) {
         return TARGET;
       }
-      else if ("lang".equals(name) || "xml:lang".equals(name)) {
+      else if ("lang".equals(name)) {
+        if (tagName.equalsIgnoreCase("script")) {
+          return VUE_SCRIPT_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("style")) {
+          return VUE_STYLE_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("template")) {
+          return VUE_TEMPLATE_LANGUAGE;
+        }
+        else if (tagName.equalsIgnoreCase("html")) {
+          return LANG;
+        }
+      }
+      else if (tagName.equalsIgnoreCase("html") && "xml:lang".equals(name)) {
         return LANG;
       }
       else if ("enctype".equals(name)) {

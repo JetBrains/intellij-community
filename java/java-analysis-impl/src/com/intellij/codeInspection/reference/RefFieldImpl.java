@@ -110,7 +110,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (uField != null) {
       final RefJavaUtil refUtil = RefJavaUtil.getInstance();
       refUtil.addReferencesTo(uField, this, uField.getUastInitializer());
-      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getAnnotations().toArray(new UElement[0]));
+      refUtil.addReferencesTo(uField, this, ((UAnnotated)uField).getAnnotations().toArray(UElementKt.EMPTY_ARRAY));
       if (uField instanceof UEnumConstant) {
         refUtil.addReferencesTo(uField, this, uField);
       }

@@ -42,6 +42,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UParameter;
 import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
@@ -118,7 +119,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           if (minimalUsageCount != 0 && refParameter.getUsageCount() < minimalUsageCount) continue;
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
+          UParameter parameter = refParameter.getUastElement();
+          if (parameter == null) continue;
+          problems.add(registerProblem(manager, (PsiParameter)parameter.getJavaPsi(), value, refParameter.isUsedForWriting()));
         }
       }
     }
@@ -272,7 +275,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getInstance(project).getElementFactory()
+        defToInline = JavaPsiFacade.getElementFactory(project)
                                    .createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {

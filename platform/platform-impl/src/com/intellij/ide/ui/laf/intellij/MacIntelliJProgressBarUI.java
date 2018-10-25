@@ -43,4 +43,9 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
   protected Color getStartColor() {
     return UIUtil.isGraphite() ? Gray.xD4 : super.getStartColor();
   }
+
+  @Override
+  protected Color getEndColor() {
+    return UIUtil.isGraphite() ? getFinishedColor() : super.getEndColor();
+  }
 }

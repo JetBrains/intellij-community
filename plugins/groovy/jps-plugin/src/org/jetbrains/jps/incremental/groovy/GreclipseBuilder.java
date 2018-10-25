@@ -184,7 +184,6 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       
       List<GroovycOutputParser.OutputItem> items = ContainerUtil.newArrayList();
       for (String src : outputMap.keySet()) {
-        //noinspection ConstantConditions
         for (String classFile : outputMap.get(src)) {
           items.add(new GroovycOutputParser.OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
                                                            FileUtil.toSystemIndependentName(src)));

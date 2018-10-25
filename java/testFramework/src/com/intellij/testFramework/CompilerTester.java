@@ -68,7 +68,7 @@ public class CompilerTester {
     this(module.getProject(), Collections.singletonList(module), null);
   }
 
-  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<Module> modules) throws Exception {
+  public CompilerTester(@NotNull IdeaProjectTestFixture fixture, @NotNull List<? extends Module> modules) throws Exception {
     this(fixture.getProject(), modules, fixture.getTestRootDisposable());
   }
 

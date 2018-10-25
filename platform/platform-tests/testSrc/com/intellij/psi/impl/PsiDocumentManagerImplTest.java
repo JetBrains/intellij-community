@@ -758,7 +758,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(invoked.get());
   }
 
-  @SuppressWarnings("ConstantConditions")
   public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
     Document document = createDocument();
 

@@ -153,7 +153,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
@@ -174,7 +173,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return element;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
                                    final Map<String, SmartRefElementPointer> persistentEntryPoints,
                                    final JDOMExternalizableStringList additional_annotations) {

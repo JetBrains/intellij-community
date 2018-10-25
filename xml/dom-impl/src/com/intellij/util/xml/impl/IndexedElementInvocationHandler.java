@@ -48,7 +48,6 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     myIndex = index;
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   public boolean equals(final Object obj) {
     return super.equals(obj) && myIndex == ((IndexedElementInvocationHandler)obj).myIndex;
   }

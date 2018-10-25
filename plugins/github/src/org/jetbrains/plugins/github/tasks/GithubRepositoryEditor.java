@@ -34,7 +34,7 @@ public class GithubRepositoryEditor extends BaseRepositoryEditor<GithubRepositor
   private JBLabel myRepositoryLabel;
   private JBLabel myTokenLabel;
 
-  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<GithubRepository> changeListener) {
+  public GithubRepositoryEditor(final Project project, final GithubRepository repository, Consumer<? super GithubRepository> changeListener) {
     super(project, repository, changeListener);
     myUrlLabel.setVisible(false);
     myUsernameLabel.setVisible(false);

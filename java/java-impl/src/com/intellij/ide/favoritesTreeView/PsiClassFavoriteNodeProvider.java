@@ -44,7 +44,7 @@ import java.util.Collection;
 
 public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, final ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> getFavoriteNodes(final DataContext context, @NotNull final ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
@@ -77,7 +77,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull final ViewSettings viewSettings) {
     if (element instanceof PsiClass && checkClassUnderSources((PsiElement)element, project)) {
       return new ClassSmartPointerNode(project, (PsiClass)element, viewSettings);
     }

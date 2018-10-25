@@ -32,7 +32,6 @@ import java.util.NoSuchElementException;
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AbstractClassNeverImplemented"})
 public abstract class AntDomElement implements DomElement {
   public enum Role {
     TASK, DATA_TYPE

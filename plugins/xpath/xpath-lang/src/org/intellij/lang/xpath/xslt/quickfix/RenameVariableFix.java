@@ -41,7 +41,7 @@ public class RenameVariableFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        final String type = LanguageFindUsages.INSTANCE.forLanguage(myElement.getLanguage()).getType(myElement);
+        final String type = LanguageFindUsages.getType(myElement);
         return "Rename " + myPlace + " " + StringUtil.capitalize(type);
     }
 

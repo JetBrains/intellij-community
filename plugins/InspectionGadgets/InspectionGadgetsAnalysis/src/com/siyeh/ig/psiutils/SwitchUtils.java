@@ -34,9 +34,9 @@ public class SwitchUtils {
   private SwitchUtils() {}
 
   /**
-   * Calculates number of non-default cases in the specified switch statement.
+   * Calculates the number of branches in the specified switch statement.
    * When a default case is present the count will be returned as a negative number,
-   * e.g. if a switch statement contains 4 cases and a default case, it will return -4
+   * e.g. if a switch statement contains 4 labeled cases and a default case, it will return -5
    * @param statement  the statement to count the cases of.
    * @return a negative number if a default case was encountered.
    */
@@ -55,7 +55,7 @@ public class SwitchUtils {
         branches++;
       }
     }
-    return defaultFound ? -branches : branches;
+    return defaultFound ? -branches - 1 : branches;
   }
 
   @Nullable

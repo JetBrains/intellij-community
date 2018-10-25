@@ -19,7 +19,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
   @NotNull private final TObjectHashingStrategy<? super M> myHashingStrategy;
   @NotNull private final Function<? super T, ? extends M> myMapper;
 
-  public UniqueResultsQuery(@NotNull Query<T> original) {
+  public UniqueResultsQuery(@NotNull Query<? extends T> original) {
     //noinspection unchecked
     this(original, ContainerUtil.canonicalStrategy(), Function.ID);
   }

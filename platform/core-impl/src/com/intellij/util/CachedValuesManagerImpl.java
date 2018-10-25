@@ -54,7 +54,6 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
                                                         @NotNull Key<CachedValue<T>> key,
                                                         @NotNull CachedValueProvider<T> provider,
                                                         boolean trackValue) {
-    CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
     CachedValue<T> value;
     if (dataHolder instanceof UserDataHolderEx) {
       UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
@@ -67,6 +66,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
         value = dh.getUserData(key);
       }
       if (value == null) {
+        CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
         value = createCachedValue(provider, trackValue);
         assert ((CachedValueBase)value).isFromMyProject(myProject);
         value = dh.putUserDataIfAbsent(key, value);
@@ -79,6 +79,7 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
           value = null;
         }
         if (value == null) {
+          CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
           value = createCachedValue(provider, trackValue);
           dataHolder.putUserData(key, value);
         }

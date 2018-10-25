@@ -58,7 +58,6 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
 
   @Override
   public boolean isOptionEnabled() {
-    //noinspection ConstantConditions
     return optionalDescriptor(myId).map(IdeaPluginDescriptor::isEnabled).orElse(false);
   }
 

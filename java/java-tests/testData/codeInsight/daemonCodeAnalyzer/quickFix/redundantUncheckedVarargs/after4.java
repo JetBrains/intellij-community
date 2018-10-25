@@ -9,6 +9,9 @@ public class Test {
 
   void foo() {
       List<ArrayList<String>> list = foo(new ArrayList<String>());
+
+    //noinspection unchecked
+    ArrayList<String> list = new ArrayList();
   }
 }
 

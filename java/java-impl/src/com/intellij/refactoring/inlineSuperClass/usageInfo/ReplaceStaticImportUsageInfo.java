@@ -36,7 +36,7 @@ public class ReplaceStaticImportUsageInfo extends FixableUsageInfo {
   @Override
   public void fixUsage() throws IncorrectOperationException {
     final String memberName = myStaticImportStatement.getReferenceName();
-    myStaticImportStatement.replace(JavaPsiFacade.getInstance(myStaticImportStatement.getProject()).getElementFactory().createImportStaticStatement(myTargetClasses[0],
+    myStaticImportStatement.replace(JavaPsiFacade.getElementFactory(myStaticImportStatement.getProject()).createImportStaticStatement(myTargetClasses[0],
                                                                                                                                                     memberName != null ? memberName : "*"));
   }
 

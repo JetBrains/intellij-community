@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.plugincomponents;
 
 import com.intellij.openapi.application.PathManager;
@@ -9,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SimpleModificationTracker;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValueImpl;
+import org.editorconfig.EditorConfigRegistry;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
 import org.editorconfig.core.EditorConfig.OutPair;
@@ -66,7 +67,7 @@ public class SettingsProviderComponent extends SimpleModificationTracker {
   }
 
   public Set<String> getRootDirs(final Project project) {
-    if (!Registry.is("editor.config.stop.at.project.root")) {
+    if (!EditorConfigRegistry.shouldStopAtProjectRoot()) {
       return Collections.emptySet();
     }
 

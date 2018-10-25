@@ -52,7 +52,15 @@ public interface UsageView extends Disposable {
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic);
   void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text);
   void addButtonToLowerPane(@NotNull Action action);
-  void setReRunActivity(@NotNull Runnable runnable);
+
+  /**
+   * @deprecated see {@link UsageView#setRerunAction(Action)}
+   * @param runnable
+   */
+  default void setReRunActivity(@NotNull Runnable runnable) {};
+
+  //This action would be called to run search again (only if it's enabled)
+  default void setRerunAction(@NotNull Action rerunAction) {};
 
   void setAdditionalComponent(@Nullable JComponent component);
 

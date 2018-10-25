@@ -6,7 +6,10 @@ import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiReference;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,7 +61,6 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     return panel;
   }
 
-  @SuppressWarnings("Duplicates")
   private static boolean isLibraryElement(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return true;

@@ -31,7 +31,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public abstract class EdtInvocationManager {
 
-  @NotNull private static final EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
+  @NotNull private static EdtInvocationManager ourInstance = new SwingEdtInvocationManager();
 
   public abstract boolean isEventDispatchThread();
 
@@ -42,6 +42,11 @@ public abstract class EdtInvocationManager {
   @NotNull
   public static EdtInvocationManager getInstance() {
     return ourInstance;
+  }
+
+  @SuppressWarnings("unused") // Used in upsource
+  public static void setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
+    ourInstance = edtInvocationManager;
   }
 
   /**
@@ -61,7 +66,6 @@ public abstract class EdtInvocationManager {
 
     @Override
     public void invokeAndWait(@NotNull Runnable task) throws InvocationTargetException, InterruptedException {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeAndWait(task);
     }
   }

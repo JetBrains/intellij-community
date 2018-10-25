@@ -418,6 +418,12 @@ public class PyMoveTest extends PyTestCase {
     doMoveFileTest("b.py", "pkg");
   }
 
+  // PY-20100
+  public void testMoveDoesntMergeFromImportsAccordingToCodeStyle() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    doMoveSymbolsTest("dst.py", "func");
+  }
+
   private void doMoveFileTest(String fileName, String toDirName) {
     Project project = myFixture.getProject();
     PsiManager manager = PsiManager.getInstance(project);

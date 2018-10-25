@@ -607,12 +607,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void cleanUpTempVariables() {
-    List<DfaVariableValue> values = ContainerUtil.filter(myVariableStates.keySet(), ControlFlowAnalyzer::isTempVariable);
-    values.forEach(this::flushVariable);
-  }
-
-  @Override
   public boolean castTopOfStack(@NotNull DfaPsiType type) {
     DfaValue value = unwrap(peek());
 
@@ -1125,7 +1119,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   @Nullable
-  @SuppressWarnings("unchecked")
   public <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
@@ -1201,7 +1194,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (value instanceof DfaConstValue) {
       Object constant = ((DfaConstValue)value).getValue();
       if (Double.valueOf(-0.0).equals(constant)) {
-        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE, null);
+        return myFactory.getConstFactory().createFromValue(0.0, PsiType.DOUBLE);
       }
     }
     return value;

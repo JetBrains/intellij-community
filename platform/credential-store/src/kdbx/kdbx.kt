@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.inputStream
 import com.intellij.util.loadElement
@@ -68,7 +69,7 @@ internal fun save(rootElement: Element, outputStream: OutputStream, encryption: 
 }
 
 private fun load(inputStream: InputStream, encryption: KdbxEncryption): Element {
-  val rootElement = loadElement(inputStream)
+  val rootElement = JDOMUtil.load(inputStream)
   rootElement.getChild("Root")?.getChild("Group")?.let { rootGroupElement ->
     processEntries(rootGroupElement) { _, valueElement ->
       if (valueElement.getAttributeValue("Protected", "false").equals("true", ignoreCase = true)) {

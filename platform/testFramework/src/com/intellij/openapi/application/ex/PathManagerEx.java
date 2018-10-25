@@ -247,7 +247,6 @@ public class PathManagerEx {
     return result;
   }
 
-  @SuppressWarnings({"ThrowableInstanceNeverThrown"})
   @Nullable
   private static TestDataLookupStrategy guessTestDataLookupStrategyOnClassLocation() {
     if (isLocatedInCommunity()) return TestDataLookupStrategy.COMMUNITY;

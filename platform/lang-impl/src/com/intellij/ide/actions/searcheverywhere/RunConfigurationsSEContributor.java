@@ -14,6 +14,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -123,7 +124,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
                             @NotNull ProgressIndicator progressIndicator,
                             @NotNull Function<Object, Boolean> consumer) {
 
-    if (pattern.isEmpty()) return;
+    if (StringUtil.isEmptyOrSpaces(pattern)) return;
 
     pattern = filterString(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
@@ -151,33 +152,33 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     } else if (isCommand(searchText, RUN_COMMAND)) {
       return RUN_MODE;
     } else {
-      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? RUN_MODE : DEBUG_MODE;
+      return (modifiers & InputEvent.SHIFT_MASK) == 0 ? DEBUG_MODE : RUN_MODE;
     }
   }
 
-  private String filterString(String input) {
-    if (input.contains(" ")) {
-      String firstWord = input.split(" ")[0];
-      if (RUN_COMMAND.getCommandWithPrefix().startsWith(firstWord) || DEBUG_COMMAND.getCommandWithPrefix().startsWith(firstWord)) {
-        return input.substring(firstWord.length() + 1);
-      }
+  private static Optional<String> extractFirstWord(String input) {
+    if (!StringUtil.isEmptyOrSpaces(input) && input.contains(" ")) {
+      return Optional.of(input.split(" ")[0]);
     }
 
-    return input;
+    return Optional.empty();
+  }
+
+  private String filterString(String input) {
+    return extractFirstWord(input)
+      .filter(firstWord -> RUN_COMMAND.getCommandWithPrefix().startsWith(firstWord) || DEBUG_COMMAND.getCommandWithPrefix().startsWith(firstWord))
+      .map(firstWord -> input.substring(firstWord.length() + 1))
+      .orElse(input);
   }
 
   private static boolean isCommand(String input, SearchEverywhereCommandInfo command) {
     if (input == null) {
       return false;
-
     }
 
-    if (input.contains(" ")) {
-      String firstWord = input.split(" ")[0];
-      return command.getCommandWithPrefix().startsWith(firstWord);
-    }
-
-    return false;
+    return extractFirstWord(input)
+      .map(firstWord -> command.getCommandWithPrefix().startsWith(firstWord))
+      .orElse(false);
   }
 
   private final Renderer renderer = new Renderer();
@@ -205,23 +206,31 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
 
       setBackground(UIUtil.getListBackground(isSelected));
       setFont(list.getFont());
-      runConfigInfo.append(wrapper.getText());
+      Color foreground = isSelected ? list.getSelectionForeground() : list.getForeground();
+      runConfigInfo.append(wrapper.getText(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, foreground));
       runConfigInfo.setIcon(wrapper.getIcon());
 
-      fillExecutorInfo(wrapper);
+      fillExecutorInfo(wrapper, list, isSelected);
 
       return this;
     }
 
-    private void fillExecutorInfo(ChooseRunConfigurationPopup.ItemWrapper wrapper) {
+    private void fillExecutorInfo(ChooseRunConfigurationPopup.ItemWrapper wrapper, JList<?> list, boolean selected) {
+
+      SimpleTextAttributes commandAttributes = selected
+                                               ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getSelectionForeground())
+                                               : SimpleTextAttributes.GRAYED_ATTRIBUTES;
+      SimpleTextAttributes shortcutAttributes = selected
+                                                ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getSelectionForeground())
+                                                : SimpleTextAttributes.GRAY_ATTRIBUTES;
 
       String input = myCommandSupplier.get();
       if (isCommand(input, RUN_COMMAND)) {
-        fillWithMode(wrapper, RUN_MODE);
+        fillWithMode(wrapper, RUN_MODE, commandAttributes);
         return;
       }
       if (isCommand(input, DEBUG_COMMAND)) {
-        fillWithMode(wrapper, DEBUG_MODE);
+        fillWithMode(wrapper, DEBUG_MODE, commandAttributes);
         return;
       }
 
@@ -231,25 +240,26 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-        executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       } else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-          executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
     }
 
-    private void fillWithMode(ChooseRunConfigurationPopup.ItemWrapper wrapper, @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
+    private void fillWithMode(ChooseRunConfigurationPopup.ItemWrapper wrapper, @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode,
+                              SimpleTextAttributes attributes) {
      Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
        .map(settings -> findExecutor(settings, mode))
        .ifPresent(executor -> {
-         executorInfo.append(executor.getId(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+         executorInfo.append(executor.getId(), attributes);
          executorInfo.setIcon(executor.getToolWindowIcon());
        });
     }

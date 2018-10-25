@@ -38,7 +38,6 @@ public class ExtConnection extends ConnectionOnProcess {
   @Override
   public void open() throws AuthenticationException {
     try {
-      //noinspection HardCodedStringLiteral
       open(new String[]{"cvs", "server"}, null, null);
     }
     catch (IOException e) {
@@ -59,7 +58,6 @@ public class ExtConnection extends ConnectionOnProcess {
     }
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   private void check(ICvsCommandStopper stopper, String expectedResult) throws IOException, AuthenticationException {
     InputStreamWrapper streamWrapper = new InputStreamWrapper(myInputStream, stopper, new ReadWriteStatistics());
     try {

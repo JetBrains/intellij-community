@@ -218,7 +218,7 @@ public class UrlClassLoader extends ClassLoader {
    * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
    * <b>Note:</b> Used via reflection because of classLoaders incompatibility
    */
-  @SuppressWarnings({"unused", "deprecation", "DeprecatedIsStillUsed"})
+  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   @Deprecated
   public void addURL(URL url) {
     getClassPath().addURL(url);
@@ -363,7 +363,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   // called by a parent class on Java 7+
-  @SuppressWarnings({"unused", "override"})
+  @SuppressWarnings({"unused"})
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;

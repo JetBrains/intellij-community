@@ -54,7 +54,7 @@ class SameNamesJoiner implements TreeStructureProvider {
     for (Object each : executed.keySet()) {
       Collection<AbstractTreeNode> objects = executed.get(each);
       if (objects.size() > 1) {
-        result.add(new JoinedNode(objects, new Joined(findPsiFileIn(objects))));
+        result.add(new JoinedNode(objects, new Joined(findPsiFileIn(objects)), settings));
       }
       else if (objects.size() == 1) {
         result.add(objects.iterator().next());
@@ -121,8 +121,8 @@ class SameNamesJoiner implements TreeStructureProvider {
       return myChildren;
     }
 
-    JoinedNode(Collection<AbstractTreeNode> children, @NotNull Joined formFile) {
-      super(null, formFile, null);
+    JoinedNode(Collection<AbstractTreeNode> children, @NotNull Joined formFile, ViewSettings settings) {
+      super(null, formFile, settings);
       myChildren = children;
     }
 

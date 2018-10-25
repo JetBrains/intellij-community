@@ -39,7 +39,6 @@ import java.util.Set;
  *   </ul>
  * </ul>
  * @author Eugene Zhuravlev
- * @noinspection UnusedParameters
  */
 public abstract class AnnotationsChangeTracker {
 

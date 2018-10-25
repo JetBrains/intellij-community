@@ -33,7 +33,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @NotNull private final String mySchemaFilePath;
   @NotNull private final UserDefinedJsonSchemaConfiguration mySchema;
   @Nullable private final TreeUpdater myTreeUpdater;
-  @NotNull private final Function<String, String> myNameCreator;
+  @NotNull private final Function<? super String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
   private String myDisplayName;
   private String myError;
@@ -41,7 +41,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
                                 @Nullable TreeUpdater updateTree,
-                                @NotNull Function<String, String> nameCreator) {
+                                @NotNull Function<? super String, String> nameCreator) {
     super(true, () -> {
       if (updateTree != null) {
         updateTree.updateTree(true);

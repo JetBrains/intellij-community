@@ -182,7 +182,6 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
         }
         final XmlAttribute attribute = myParam.getNameAttribute();
         assert attribute != null;
-        //noinspection ConstantConditions
         return attribute.getValueElement();
       }
 

@@ -39,10 +39,9 @@ class Test {
 """
 
 fun List<LogEvent>.assertOrder(vararg actions: Action) {
-  Assertions.assertThat(size).isEqualTo(actions.size)
-  zip(actions).forEach {
-    val event = it.first
-    val action = it.second
+  val completionEvents = filter { it.actionType != Action.PERFORMANCE && it.actionType != Action.CUSTOM }
+  Assertions.assertThat(completionEvents.size).isEqualTo(actions.size)
+  completionEvents.zip(actions).forEach { (event, action) ->
     Assertions.assertThat(event.actionType).isEqualTo(action)
   }
 }

@@ -299,6 +299,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20100
+  public void testSplittingOfFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
+    doTest();
+  }
+
   private void doMultiFileTest() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

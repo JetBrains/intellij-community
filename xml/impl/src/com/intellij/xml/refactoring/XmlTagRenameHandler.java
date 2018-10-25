@@ -61,7 +61,6 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
         return false;
       }
     }
-    //noinspection ConstantConditions
     return isDeclarationOutOfProjectOrAbsent(element.getProject(), dataContext);
   }
 

@@ -429,7 +429,7 @@ public abstract class InspectionRVContentProvider {
     }
   }
 
-  @SuppressWarnings({"ConstantConditions"}) //class cast suppression
+  //class cast suppression
   public static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     return ReadAction.compute(() -> {
       if (merge) {

@@ -60,7 +60,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public static PsiElement appendToMethod(PyFunction init, Function<String, PyStatement> callback) {
+  public static PsiElement appendToMethod(PyFunction init, Function<? super String, ? extends PyStatement> callback) {
     // add this field as the last stmt of the constructor
     final PyStatementList statementList = init.getStatementList();
     // name of 'self' may be different for fancier styles
@@ -141,7 +141,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  public static PsiElement addFieldToInit(Project project, PyClass cls, String itemName, Function<String, PyStatement> callback) {
+  public static PsiElement addFieldToInit(Project project, PyClass cls, String itemName, Function<? super String, ? extends PyStatement> callback) {
     if (cls != null && itemName != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false, null);
       if (init != null) {

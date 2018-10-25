@@ -31,7 +31,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -276,7 +279,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     private WatcherOp myLastOp;
     private final List<String> myLines = ContainerUtil.newArrayList();
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
       super(process, commandLine, CHARSET);
       myWriter = new BufferedWriter(writer(process.getOutputStream()));

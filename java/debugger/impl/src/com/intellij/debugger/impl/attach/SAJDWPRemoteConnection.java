@@ -10,8 +10,6 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.PathUtil;
-import com.jetbrains.sa.SaJdwp;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
@@ -27,11 +25,13 @@ import java.util.Map;
  */
 public class SAJDWPRemoteConnection extends PidRemoteConnection {
   private static final Logger LOG = Logger.getInstance(SAJDWPRemoteConnection.class);
+  private final List<String> myCommands;
 
-  public SAJDWPRemoteConnection(String pid) {
+  public SAJDWPRemoteConnection(String pid, List<String> commands) {
     super(pid);
     setServerMode(true);
     setAddress("0");
+    myCommands = commands;
   }
 
   @Override
@@ -39,13 +39,8 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
     return new SAJDWPListeningConnector(debugProcess);
   }
 
-  public static boolean isAvailable() {
-    return true;
-  }
-
   public class SAJDWPListeningConnector extends SocketListeningConnector {
     private final DebugProcessImpl myDebugProcess;
-    private String myCurrentAddress;
 
     public SAJDWPListeningConnector(DebugProcessImpl process) {
       myDebugProcess = process;
@@ -53,16 +48,15 @@ public class SAJDWPRemoteConnection extends PidRemoteConnection {
 
     @Override
     public String startListening(Map<String, ? extends Argument> arguments) throws IOException, IllegalConnectorArgumentsException {
-      myCurrentAddress = super.startListening(null, arguments);
-      return myCurrentAddress;
+      String address = super.startListening(null, arguments);
+      myCommands.set(myCommands.size() - 1, address); // last argument is a port, replace with the real value
+      return address;
     }
 
     @Override
     public VirtualMachine accept(Map<String, ? extends Argument> map) throws IOException, IllegalConnectorArgumentsException {
       try {
-        List<String> commands = SaJdwp.getServerProcessCommand(getPid(), myCurrentAddress, false, PathUtil.getJarPathForClass(SaJdwp.class));
-        GeneralCommandLine commandLine = new GeneralCommandLine(commands);
-        startServer(commandLine, false);
+        startServer(new GeneralCommandLine(myCommands), false);
       } catch (IOException e) {
         throw e;
       } catch (Exception e) {

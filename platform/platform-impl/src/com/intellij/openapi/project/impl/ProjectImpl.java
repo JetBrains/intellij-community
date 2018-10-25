@@ -319,6 +319,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     save(false);
   }
 
+  @Override
   public void save(boolean isForce) {
     if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save

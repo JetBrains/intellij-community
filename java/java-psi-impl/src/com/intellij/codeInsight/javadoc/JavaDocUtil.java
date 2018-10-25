@@ -164,7 +164,7 @@ public class JavaDocUtil {
       StringTokenizer tokenizer = new StringTokenizer(parmsText.replaceAll("[*]", ""), ",");
       PsiType[] types = PsiType.createArray(tokenizer.countTokens());
       int i = 0;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       while (tokenizer.hasMoreTokens()) {
         String parmText = tokenizer.nextToken().trim();
         try {

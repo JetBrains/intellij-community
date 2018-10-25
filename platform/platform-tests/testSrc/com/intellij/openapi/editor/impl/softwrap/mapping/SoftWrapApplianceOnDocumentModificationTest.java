@@ -807,7 +807,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     VisualPosition caretPositionBefore = getEditor().getCaretModel().getVisualPosition();
 
     // Change tab size.
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(PlainTextFileType.INSTANCE);
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings(ourProject).getIndentOptions(PlainTextFileType.INSTANCE);
 
     assertNotNull(indentOptions);
     indentOptions.TAB_SIZE++;

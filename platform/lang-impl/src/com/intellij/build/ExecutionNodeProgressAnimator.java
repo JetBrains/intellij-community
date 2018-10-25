@@ -35,14 +35,14 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   }
 
   static {
-    FRAMES[0] = AllIcons.Process.State.GreyProgr_1;
-    FRAMES[1] = AllIcons.Process.State.GreyProgr_2;
-    FRAMES[2] = AllIcons.Process.State.GreyProgr_3;
-    FRAMES[3] = AllIcons.Process.State.GreyProgr_4;
-    FRAMES[4] = AllIcons.Process.State.GreyProgr_5;
-    FRAMES[5] = AllIcons.Process.State.GreyProgr_6;
-    FRAMES[6] = AllIcons.Process.State.GreyProgr_7;
-    FRAMES[7] = AllIcons.Process.State.GreyProgr_8;
+    FRAMES[0] = AllIcons.Process.Step_1;
+    FRAMES[1] = AllIcons.Process.Step_2;
+    FRAMES[2] = AllIcons.Process.Step_3;
+    FRAMES[3] = AllIcons.Process.Step_4;
+    FRAMES[4] = AllIcons.Process.Step_5;
+    FRAMES[5] = AllIcons.Process.Step_6;
+    FRAMES[6] = AllIcons.Process.Step_7;
+    FRAMES[7] = AllIcons.Process.Step_8;
   }
 
   public static int getCurrentFrameIndex() {
@@ -80,7 +80,7 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
 
     // running nodes likely will not receive stop event yet after stop build event
     for (ExecutionNode node : myNodes) {
-      node.setIconProvider(() -> AllIcons.Process.State.YellowStr);
+      node.setIconProvider(() -> AllIcons.RunConfigurations.TestIgnored);
       node.setEndTime(System.currentTimeMillis());
     }
     myNodes.clear();

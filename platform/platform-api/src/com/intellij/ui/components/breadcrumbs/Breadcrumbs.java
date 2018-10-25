@@ -120,8 +120,9 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     repaint();
   }
 
-  public int getBaseline() {
-    return views.isEmpty() ? 0 : views.get(0).getBaseline();
+  @Override
+  public int getBaseline(int width, int height) {
+    return views.isEmpty() ? -1 : views.get(0).getBaseline();
   }
 
   @Override
@@ -434,6 +435,10 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     }
 
     private int getBaseline() {
+      if (crumb == null) {
+        return -1;
+      }
+
       if (font == null) {
         update();
       }
@@ -449,7 +454,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
         }
       }
 
-      return 0;
+      return -1;
     }
 
     private void paint(Graphics2D g) {

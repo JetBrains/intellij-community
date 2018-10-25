@@ -90,7 +90,7 @@ public class ReplaceWithListAccessFix implements IntentionAction {
 
     if (indexExpression == null) return;
 
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
 
     final PsiElement parent = myArrayAccessExpression.getParent();

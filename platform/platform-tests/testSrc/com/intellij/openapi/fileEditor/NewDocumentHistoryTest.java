@@ -2,11 +2,13 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.junit.Assert;
 
 /**
  * @author Dmitry Avdeev
@@ -55,5 +57,20 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     VirtualFile[] files = myManager.getSelectedFiles();
     assertEquals(1, files.length);
     assertEquals("1.txt", files[0].getName());
+  }
+
+  public void testMergingCommands() {
+    VirtualFile file1 = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+    VirtualFile file3 = getFile("/src/3.txt");
+
+    myManager.openFile(file1, true);
+    myManager.openFile(file2, true);
+    Object group = new Object();
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {}, null, group);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> myManager.openFile(file3, true), null, group);
+    myHistory.back();
+    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
+    Assert.assertArrayEquals(new VirtualFile[] {file2}, selectedFiles);
   }
 }

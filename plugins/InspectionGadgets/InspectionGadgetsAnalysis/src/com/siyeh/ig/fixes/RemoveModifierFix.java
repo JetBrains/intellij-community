@@ -18,7 +18,6 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +46,8 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement modifierElement = descriptor.getPsiElement();
-    if (modifierElement instanceof PsiKeyword) {
+    //if (modifierElement instanceof PsiKeyword) {
       deleteElement(modifierElement);
-    }
+    //}
   }
 }

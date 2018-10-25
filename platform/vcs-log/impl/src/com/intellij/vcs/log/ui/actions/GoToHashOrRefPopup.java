@@ -40,19 +40,19 @@ public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 
   @NotNull private final TextFieldWithProgress myTextField;
-  @NotNull private final Function<String, Future> myOnSelectedHash;
-  @NotNull private final Function<VcsRef, Future> myOnSelectedRef;
+  @NotNull private final Function<? super String, ? extends Future> myOnSelectedHash;
+  @NotNull private final Function<? super VcsRef, ? extends Future> myOnSelectedRef;
   @NotNull private final JBPopup myPopup;
   @Nullable private Future myFuture;
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull Project project,
                             @NotNull VcsLogRefs variants,
-                            @NotNull Collection<VirtualFile> roots,
-                            @NotNull Function<String, Future> onSelectedHash,
-                            @NotNull Function<VcsRef, Future> onSelectedRef,
+                            @NotNull Collection<? extends VirtualFile> roots,
+                            @NotNull Function<? super String, ? extends Future> onSelectedHash,
+                            @NotNull Function<? super VcsRef, ? extends Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
-                            @NotNull Comparator<VcsRef> comparator) {
+                            @NotNull Comparator<? super VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
     VcsRefDescriptor vcsRefDescriptor = new VcsRefDescriptor(project, colorManager, comparator, roots);
@@ -128,13 +128,13 @@ public class GoToHashOrRefPopup {
   private class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
-    @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
     @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
 
     private VcsRefDescriptor(@NotNull Project project,
                              @NotNull VcsLogColorManager manager,
-                             @NotNull Comparator<VcsRef> comparator,
-                             @NotNull Collection<VirtualFile> roots) {
+                             @NotNull Comparator<? super VcsRef> comparator,
+                             @NotNull Collection<? extends VirtualFile> roots) {
       myProject = project;
       myColorManager = manager;
       myReferenceComparator = comparator;

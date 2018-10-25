@@ -1499,7 +1499,7 @@ public class Mappings {
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
 
-              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) != 0)) {
+              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && (d.removedModifiers() & Opcodes.ACC_PRIVATE) == 0) {
                 if (!constrained) {
                   debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {

@@ -165,7 +165,7 @@ public class PyInjectionUtil {
           }
           else {
             subsRanges = StreamEx.of(((PyFormattedStringElement)stringElem).getFragments())
-                                 .map(f -> f.getTextRange().shiftLeft(stringElem.getTextOffset()))
+                                 .map(PsiElement::getTextRangeInParent)
                                  .toList();
           }
           if (!subsRanges.isEmpty()) {

@@ -125,7 +125,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   @Override
   public void processClassPrepare(DebugProcess process, ReferenceType refType) {
     DebugProcessImpl debugProcess = (DebugProcessImpl)process;
-    if (shouldCreateRequest(debugProcess, true)) {
+    if (shouldCreateRequest(debugProcess, true) && !debugProcess.getRequestsManager().checkReadOnly(this)) {
       // trying to create a request
       RequestManagerImpl manager = debugProcess.getRequestsManager();
       manager.enableRequest(manager.createExceptionRequest(this, refType, isNotifyCaught(), isNotifyUncaught()));

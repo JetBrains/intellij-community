@@ -262,7 +262,6 @@ public class TracRepository extends BaseRepositoryImpl {
     }
   }
 
-  @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   @Override
   public boolean equals(Object o) {
     return super.equals(o) && Comparing.equal(((TracRepository)o).getDefaultSearch(), getDefaultSearch());

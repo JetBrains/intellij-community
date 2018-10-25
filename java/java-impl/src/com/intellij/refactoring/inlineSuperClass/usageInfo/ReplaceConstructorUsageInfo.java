@@ -93,7 +93,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
   public void fixUsage() throws IncorrectOperationException {
     final PsiNewExpression newExpression = (PsiNewExpression)getElement();
     if (newExpression != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
 
       final StringBuilder buf = new StringBuilder();
       buf.append("new ").append(myNewType.getCanonicalText());

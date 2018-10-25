@@ -25,12 +25,12 @@ import com.intellij.stats.completion.ValidationStatus
 abstract class LogEvent(
         @Transient var userUid: String,
         @Transient var sessionUid: String,
-        @Transient var actionType: Action
+        @Transient var actionType: Action,
+        @Transient var timestamp: Long
 ) {
 
     @Transient var recorderId: String = "completion-stats"
     @Transient var recorderVersion: String = "4"
-    @Transient var timestamp: Long = System.currentTimeMillis()
     @Transient var bucket: String = "-1"
     var validationStatus: ValidationStatus = ValidationStatus.UNKNOWN
 
@@ -44,8 +44,9 @@ abstract class LookupStateLogData(
         action: Action,
         @JvmField var completionListIds: List<Int>,
         @JvmField var newCompletionListItems: List<LookupEntryInfo>,
-        @JvmField var currentPosition: Int
-) : LogEvent(userId, sessionId, action) {
+        @JvmField var currentPosition: Int,
+        timestamp: Long
+) : LogEvent(userId, sessionId, action, timestamp) {
 
 
     @JvmField var originalCompletionType: String = ""

@@ -95,7 +95,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     super(project);
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
-    myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(project);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
   }

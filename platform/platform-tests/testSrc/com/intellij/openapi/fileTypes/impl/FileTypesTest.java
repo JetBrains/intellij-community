@@ -372,7 +372,6 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testRemovedMappingsSerialization() {
     HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
-    //noinspection unchecked
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
 
     ArchiveFileType fileType = ArchiveFileType.INSTANCE;
@@ -398,7 +397,6 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testRemovedExactNameMapping() {
     HashSet<FileType> fileTypes = new HashSet<>(Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
-    //noinspection unchecked
     FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
 
     FileType fileType = ArchiveFileType.INSTANCE;

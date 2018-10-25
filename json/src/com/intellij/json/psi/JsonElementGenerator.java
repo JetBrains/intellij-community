@@ -49,7 +49,7 @@ public class JsonElementGenerator {
   @NotNull
   public JsonObject createObject(@NotNull String content) {
     final PsiFile file = createDummyFile("{" + content + "}");
-    //noinspection unchecked,ConstantConditions
+    // noinspection ConstantConditions
     return (JsonObject) file.getFirstChild();
   }
 
@@ -67,7 +67,7 @@ public class JsonElementGenerator {
   @NotNull
   public JsonProperty createProperty(@NotNull final String name, @NotNull final String value) {
     final PsiFile file = createDummyFile("{\"" + name + "\": " + value + "}");
-    //noinspection unchecked,ConstantConditions
+    // noinspection ConstantConditions
     return ((JsonObject) file.getFirstChild()).getPropertyList().get(0);
   }
 

@@ -209,7 +209,6 @@ public class StubSerializationHelper {
   private void deserializeStubList(FileLocalStringEnumerator storage, StubInputStream inputStream, StubBase<?> root, ObjectStubSerializer rootType)
     throws IOException, SerializerNotFoundException {
     int stubCount = DataInputOutputUtil.readINT(inputStream);
-    //noinspection MismatchedQueryAndUpdateOfCollection
     LazyStubList stubList = new LazyStubList(stubCount, root, rootType);
 
     MostlyUShortIntList parentsAndStarts = new MostlyUShortIntList(stubCount * 2);

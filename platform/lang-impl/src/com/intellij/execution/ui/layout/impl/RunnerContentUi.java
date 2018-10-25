@@ -58,8 +58,8 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
@@ -85,7 +85,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   JBRunnerTabs myTabs;
   private final Comparator<TabInfo> myTabsComparator = (o1, o2) -> {
-    //noinspection ConstantConditions
     TabImpl tab1 = getTabFor(o1);
     TabImpl tab2 = getTabFor(o2);
     int index1 = tab1 != null ? tab1.getIndex() : -1;
@@ -1212,7 +1211,6 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myMinimizeActionEnabled = enabled;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   public void setMovetoGridActionEnabled(final boolean enabled) {
     myMoveToGridActionEnabled = enabled;
   }

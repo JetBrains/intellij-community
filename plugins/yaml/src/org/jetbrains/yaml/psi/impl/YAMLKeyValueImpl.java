@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psi.impl;
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
@@ -21,14 +22,19 @@ import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.stubs.YAMLKeyStub;
 
 import javax.swing.*;
 
 /**
  * @author oleg
  */
-public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue {
+public class YAMLKeyValueImpl extends StubBasedPsiElementBase<YAMLKeyStub> implements YAMLKeyValue {
   public static final Icon YAML_KEY_ICON = PlatformIcons.PROPERTY_ICON;
+
+  public YAMLKeyValueImpl(@NotNull YAMLKeyStub stub) {
+    super(stub, YAMLElementTypes.KEY_VALUE_PAIR);
+  }
 
   public YAMLKeyValueImpl(@NotNull final ASTNode node) {
     super(node);
@@ -67,6 +73,11 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @Override
   @NotNull
   public String getKeyText() {
+    YAMLKeyStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getKeyText();
+    }
+
     final PsiElement keyElement = getKey();
     if (keyElement == null) {
       return "";
@@ -128,6 +139,16 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     else {
       add(value);
     }
+  }
+
+  @NotNull
+  @Override
+  public String getConfigFullPath() {
+    YAMLKeyStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getKeyPath();
+    }
+    return YAMLUtil.getConfigFullName(this);
   }
 
   private void adjustWhitespaceToContentType(boolean isScalar) {

@@ -34,7 +34,8 @@ internal fun KeePassCredentialStore(newDb: Map<CredentialAttributes, Credentials
     entry.password = credentials.password?.let(::SecureString)
     group.addEntry(entry)
   }
-  return KeePassCredentialStore(baseDirectory = getDefaultKeePassBaseDirectory(), preloadedDb = keepassDb)
+  val baseDir = getDefaultKeePassBaseDirectory()
+  return KeePassCredentialStore(baseDir.resolve(DB_FILE_NAME), baseDir.resolve(MASTER_KEY_FILE_NAME), preloadedDb = keepassDb)
 }
 
 internal fun getDefaultKeePassBaseDirectory() = Paths.get(PathManager.getConfigPath())
@@ -50,16 +51,11 @@ internal fun createInMemoryKeePassCredentialStore(): KeePassCredentialStore {
 /**
  * preloadedMasterKey [MasterKey.value] will be cleared
  */
-internal class KeePassCredentialStore constructor(dbFile: Path,
+internal class KeePassCredentialStore constructor(internal val dbFile: Path,
                                                   internal val masterKeyFile: Path,
                                                   preloadedMasterKey: MasterKey? = null,
                                                   preloadedDb: KeePassDatabase? = null,
                                                   isMemoryOnly: Boolean = false) : PasswordStorage, CredentialStore {
-  constructor(baseDirectory: Path, preloadedMasterKey: MasterKey? = null, preloadedDb: KeePassDatabase? = null) : this(dbFile = baseDirectory.resolve(DB_FILE_NAME),
-                                                                                                                       masterKeyFile = baseDirectory.resolve(MASTER_KEY_FILE_NAME),
-                                                                                                                       preloadedMasterKey = preloadedMasterKey,
-                                                                                                                       preloadedDb = preloadedDb)
-
   constructor(dbFile: Path, masterKeyFile: Path) : this(dbFile = dbFile, masterKeyFile = masterKeyFile, isMemoryOnly = false)
 
   var isMemoryOnly = isMemoryOnly
@@ -68,17 +64,6 @@ internal class KeePassCredentialStore constructor(dbFile: Path,
         isNeedToSave.set(true)
       }
       field = value
-    }
-
-  internal var dbFile: Path = dbFile
-    set(path) {
-      if (field == path) {
-        return
-      }
-
-      field = path
-      isNeedToSave.set(true)
-      save()
     }
 
   private var db: KeePassDatabase

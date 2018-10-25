@@ -24,11 +24,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 class TypeListCreatingVisitor implements RefactoringHierarchyUtil.SuperTypeVisitor {
-  private final ArrayList<PsiType> myList;
+  private final ArrayList<? super PsiType> myList;
   private final PsiElementFactory myFactory;
   private final HashSet<PsiType> mySet;
 
-  TypeListCreatingVisitor(ArrayList<PsiType> result, PsiElementFactory factory) {
+  TypeListCreatingVisitor(ArrayList<? super PsiType> result, PsiElementFactory factory) {
     myList = result;
     myFactory = factory;
     mySet = new HashSet<>();

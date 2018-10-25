@@ -24,12 +24,12 @@ import java.util.List;
  */
 public class TurnRefsToSuperDialog extends RefactoringDialog {
   private final PsiClass mySubClass;
-  private final List<PsiClass> mySuperClasses;
+  private final List<? extends PsiClass> mySuperClasses;
 
   private JList<PsiClass> mySuperClassesList;
   private final JCheckBox myCbReplaceInstanceOf = new JCheckBox();
 
-  TurnRefsToSuperDialog(Project project, @NotNull PsiClass subClass, List<PsiClass> superClasses) {
+  TurnRefsToSuperDialog(Project project, @NotNull PsiClass subClass, List<? extends PsiClass> superClasses) {
     super(project, true);
 
     mySubClass = subClass;

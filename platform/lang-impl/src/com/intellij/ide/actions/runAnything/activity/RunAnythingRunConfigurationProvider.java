@@ -19,11 +19,7 @@ public abstract class RunAnythingRunConfigurationProvider extends RunAnythingPro
   @NotNull
   @Override
   public String getCommand(@NotNull ChooseRunConfigurationPopup.ItemWrapper value) {
-    Object runConfiguration = value.getValue();
-    if (!(runConfiguration instanceof RunnerAndConfigurationSettings)) {
-      return value.getText();
-    }
-    return ((RunnerAndConfigurationSettings)runConfiguration).getName();
+    return value.getText();
   }
 
   @Override

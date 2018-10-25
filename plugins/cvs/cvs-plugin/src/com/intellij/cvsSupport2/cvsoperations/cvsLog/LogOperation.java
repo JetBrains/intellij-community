@@ -22,7 +22,7 @@ import java.util.Set;
 public class LogOperation extends CvsOperationOnFiles implements BranchesProvider{
   private final Set<String> branches = new THashSet<>();
 
-  public LogOperation(Collection<FilePath> files){
+  public LogOperation(Collection<? extends FilePath> files){
     for (final FilePath file : files) {
       addFile(file.getIOFile());
     }

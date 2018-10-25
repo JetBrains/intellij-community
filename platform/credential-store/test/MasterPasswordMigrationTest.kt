@@ -19,6 +19,7 @@ internal class MasterPasswordMigrationTest {
 
   @Test
   fun emptyPass() {
+    @Suppress("SpellCheckingInspection")
     val passwordSafe = convertOldDb(getDb("""<State>
       <option name="MASTER_PASSWORD_INFO" value="" />
       <option name="PASSWORDS">
@@ -42,13 +43,14 @@ internal class MasterPasswordMigrationTest {
 
     val provider = KeePassCredentialStore(passwordSafe!!)
     @Suppress("DEPRECATION")
-    assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
+    assertThat(provider.getPassword(CredentialAttributes(MasterKeyPasswordSafeTest::class.java, "TEST"))).isEqualTo("test")
   }
 
   @Test
   fun nonEmptyPass() {
     var passwordSafe: Map<CredentialAttributes, Credentials>? = null
     runInEdtAndWait {
+      @Suppress("SpellCheckingInspection")
       passwordSafe = convertOldDb(getDb("""<State>
         <option name="MASTER_PASSWORD_INFO" value="" />
         <option name="PASSWORDS">
@@ -72,7 +74,7 @@ internal class MasterPasswordMigrationTest {
     assertThat(passwordSafe).isNotEmpty
     val provider = KeePassCredentialStore(passwordSafe!!)
     @Suppress("DEPRECATION")
-    assertThat(provider.getPassword(MasterKeyPasswordSafeTest::class.java, "TEST")).isEqualTo("test")
+    assertThat(provider.getPassword(CredentialAttributes(MasterKeyPasswordSafeTest::class.java, "TEST"))).isEqualTo("test")
   }
 
   @Suppress("DEPRECATION")

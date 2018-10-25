@@ -35,10 +35,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -89,7 +87,11 @@ public class InvokeIntention extends ActionOnFile {
     assert editor != null;
 
     boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
-    boolean hasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+    List<HighlightInfo> errors = highlightErrors(project, editor);
+    boolean hasErrors = !errors.isEmpty() || containsErrorElements;
+
+    String treesBefore = getFile().getViewProvider().getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
+      Collectors.joining("\n\n"));
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;
@@ -145,6 +147,13 @@ public class InvokeIntention extends ActionOnFile {
           message += ".\nIf it's by design that " + intentionString + " doesn't change source files, " +
                      "it should return false from 'startInWriteAction'";
         }
+        message += "\n  Debug info: " + treesBefore + "\n\nafter:" +
+                   file.getViewProvider().getAllFiles().stream().map(
+                     f ->
+                       DebugUtil.psiToString(f, false) +
+                       "\n\n" +
+                       SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).toList()
+                   ).collect(Collectors.joining("\n\n"));
         throw new AssertionError(message);
       }
 

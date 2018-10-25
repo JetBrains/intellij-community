@@ -326,7 +326,8 @@ public class LabelPainter {
         g2.setColor(myGreyBackground);
         g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING.get() / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING.get(),
                                             icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING.get() / 3,
-                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(), LABEL_ARC.get()));
+                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(),
+                                            LABEL_ARC.get()));
       }
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);

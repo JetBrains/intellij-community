@@ -54,7 +54,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("VALIDATING");
@@ -161,7 +160,6 @@ public class ValidateAction extends AnAction {
     });
   }
 
-  @SuppressWarnings({ "ThrowableInstanceNeverThrown" })
   private static void doValidation(VirtualFile instanceFile, VirtualFile schemaFile, org.xml.sax.ErrorHandler eh) {
     final SchemaReader sr = schemaFile.getFileType() == RncFileType.getInstance() ?
             CompactSchemaReader.getInstance() :

@@ -8,12 +8,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +103,8 @@ public class ShowAnnotateOperationsPopup extends DumbAwareAction {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, myFile, () -> {
+      FilePath filePath = VcsUtil.getFilePath(myFile);
+      AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myFileAnnotation.getProject(), myRevisionNumber, filePath, () -> {
         return myChangesProvider.getChangesIn(myLine);
       });
     }

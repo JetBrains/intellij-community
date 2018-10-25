@@ -19,7 +19,7 @@ import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 import kotlin.properties.Delegates
 
-class GithubPullRequestDetailsPanel(private val project: Project) : Wrapper(), ComponentWithEmptyText {
+internal class GithubPullRequestDetailsPanel(private val project: Project) : Wrapper(), ComponentWithEmptyText {
 
   private val emptyText = object : StatusText() {
     override fun isStatusVisible() = details == null

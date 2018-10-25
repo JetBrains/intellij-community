@@ -61,8 +61,8 @@ import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
@@ -72,7 +72,7 @@ import static javax.swing.KeyStroke.getKeyStroke;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "SSBasedInspection"})
+@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class Switcher extends AnAction implements DumbAware {
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color BORDER_COLOR = Gray._135;
@@ -298,7 +298,7 @@ public class Switcher extends AnAction implements DumbAware {
       }
     };
 
-    @SuppressWarnings({"ManualArrayToCollectionCopy", "ConstantConditions"})
+    @SuppressWarnings({"ConstantConditions"})
     SwitcherPanel(@NotNull final Project project, @NotNull String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;

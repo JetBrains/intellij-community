@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
@@ -18,8 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDef
 import org.jetbrains.plugins.groovy.lang.psi.api.types.CodeReferenceKind
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
-internal fun GroovyFileImpl.getScriptDeclarations(topLevelOnly: Boolean): Array<out GrVariableDeclaration> {
-  val tree = stubTree ?: return collectScriptDeclarations(topLevelOnly)
+internal fun getScriptDeclarations(fileImpl: GroovyFileImpl, topLevelOnly: Boolean): Array<out GrVariableDeclaration> {
+  val tree = fileImpl.stubTree ?: return fileImpl.collectScriptDeclarations(topLevelOnly)
   return if (topLevelOnly) {
     val root: StubElement<*> = tree.root
     root.getChildrenByType(GroovyElementTypes.VARIABLE_DEFINITION, GrVariableDeclaration.EMPTY_ARRAY)
@@ -76,7 +76,7 @@ fun getQualifiedReferenceName(reference: GrReferenceElement<*>): String? {
     val name = current.referenceName ?: return null
     parts.add(name)
     val qualifier = current.qualifier ?: break
-    qualifier as? GrReferenceElement<*> ?: return null
+    if (qualifier !is GrReferenceElement<*>) return null
     current = qualifier
   }
   return parts.reversed().joinToString(separator = ".")

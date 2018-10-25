@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@SuppressWarnings({"UndesirableClassUsage", "UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
+@SuppressWarnings({"UseJBColor", "UseDPIAwareInsets", "UseDPIAwareBorders"})
 public abstract class SwingUpdaterUI implements UpdaterUI {
 
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
@@ -211,7 +211,6 @@ Android Studio: removed by Change Ia67907f7 / commit 82a9fb9 */
     SwingUtilities.invokeLater(runnable);
   }
 
-  @SuppressWarnings("SSBasedInspection")
   protected static void invokeAndWait(Runnable runnable) {
     try {
       SwingUtilities.invokeAndWait(runnable);

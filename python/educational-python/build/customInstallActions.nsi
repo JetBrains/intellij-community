@@ -154,7 +154,14 @@ python3:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 9" "State"
   StrCpy $R7 ""
   StrCpy $R8 "$R0.exe"
-  StrCpy $R9 "InstallAllUsers=1 /quiet"
+; install python 3.7 with add to path option only if installation was run from admin
+  StrCmp $baseRegKey "HKLM" admin user
+admin:
+  StrCpy $R9 "InstallAllUsers=1 PrependPath=1 /quiet"
+  Goto install
+user:
+  StrCpy $R9 "InstallAllUsers=0 /quiet"
+install:
   StrCmp $R2 1 "" skip_python_download
   StrCpy $R2 $R0
   StrCpy $R3 $R1

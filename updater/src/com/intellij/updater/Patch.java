@@ -50,7 +50,7 @@ public class Patch {
   }
 
   public Patch(InputStream patchIn) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataInputStream in = new DataInputStream(patchIn);
+    DataInputStream in = new DataInputStream(patchIn);
     myOldBuild = in.readUTF();
     myNewBuild = in.readUTF();
     myRoot = in.readUTF();
@@ -150,7 +150,7 @@ public class Patch {
   }
 
   public void write(OutputStream out) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream dataOut = new DataOutputStream(out);
+    DataOutputStream dataOut = new DataOutputStream(out);
     try {
       dataOut.writeUTF(myOldBuild);
       dataOut.writeUTF(myNewBuild);

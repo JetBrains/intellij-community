@@ -86,8 +86,8 @@ class Foobar extends Foo {
     @Override
     public String toString() {
         return "Foobar{" +
-                "bar=" + bar +
-                ", foo=" + foo +
+                "foo=" + foo +
+                ", bar=" + bar +
                 '}';
     }
 }
@@ -119,8 +119,8 @@ class Foobar extends Foo {
     @Override
     public String toString() {
         return "Foobar{" +
-                "bar=" + bar +
-                ", foo=" + getFoo() +
+                "foo=" + getFoo() +
+                ", bar=" + bar +
                 '}';
     }
 }
@@ -134,6 +134,48 @@ class Foo  {
    }
    finally {
      config.enableMethods = false
+   }
+  }
+
+  void testPrivateFieldWithGetterInSuperSortSuperFirst() throws Exception {
+   def config = GenerateToStringContext.getConfig()
+   config.enableMethods = true
+   config.sortElements = 3
+   try {
+     doTest('''\
+class Foobar extends Foo {
+    private int bar;
+    <caret> 
+}
+class Foo  {
+    private int foo;
+    public int getFoo() {
+       return foo;
+    }
+}
+''', '''\
+class Foobar extends Foo {
+    private int bar;
+
+    @Override
+    public String toString() {
+        return "Foobar{" +
+                "foo=" + getFoo() +
+                ", bar=" + bar +
+                '}';
+    }
+}
+class Foo  {
+    private int foo;
+    public int getFoo() {
+       return foo;
+    }
+}
+''', ReplacePolicy.instance)
+   }
+   finally {
+     config.enableMethods = false
+     config.sortElements = 0
    }
   }
 
@@ -175,7 +217,14 @@ class Foo  {
   @NotNull
   private static Collection<PsiMember> collectMembers(@NotNull PsiClass clazz) {
     def memberElements = GenerateToStringActionHandlerImpl.buildMembersToShow(clazz)
-    memberElements.collect {mem -> (PsiMember) mem.element}
+    memberElements.collect {mem -> (PsiMember) mem.element}. sort { o1, o2 -> compareMembers(o1, o2) }
+  }
+
+  private static int compareMembers(PsiMember o1, PsiMember o2) {
+    def c1 = o1.getContainingClass()
+    def c2 = o2.getContainingClass()
+    c1 == c2 ? o2.getName() <=> o1.getName() //descending
+             : c1.isInheritor(c2, true) ? 1 : -1
   }
 
   @NotNull

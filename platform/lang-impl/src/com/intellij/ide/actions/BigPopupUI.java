@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.JBList;
@@ -15,6 +14,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +119,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   }
 
   public void init() {
-    withBackground(JBUI.CurrentTheme.BigPopup.dialogBackground());
+    withBackground(JBUI.CurrentTheme.BigPopup.headerBackground());
 
     myResultsList = createList();
 
@@ -195,6 +195,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     JScrollPane resultsScroll = new JBScrollPane(myResultsList);
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    UIUtil.putClientProperty(resultsScroll.getVerticalScrollBar(), JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true);
 
     resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.BigPopup.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
@@ -209,8 +210,9 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   private JLabel createHint() {
     String hint = getInitialHint();
     JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
-    hintLabel.setOpaque(false);
-    hintLabel.setForeground(JBColor.GRAY);
+    hintLabel.setForeground(JBUI.CurrentTheme.BigPopup.advertiserForeground());
+    hintLabel.setBackground(JBUI.CurrentTheme.BigPopup.advertiserBackground());
+    hintLabel.setOpaque(true);
     Dimension size = hintLabel.getPreferredSize();
     size.height = JBUI.scale(17);
     hintLabel.setPreferredSize(size);
@@ -230,6 +232,10 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   @Override
   public Dimension getPreferredSize() {
     return calcPrefSize(myViewType);
+  }
+
+  public Dimension getExpandedSize() {
+    return calcPrefSize(ViewType.FULL);
   }
 
   private Dimension calcPrefSize(ViewType viewType) {

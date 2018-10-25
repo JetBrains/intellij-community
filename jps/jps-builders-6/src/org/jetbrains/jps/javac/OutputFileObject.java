@@ -30,7 +30,7 @@ import java.net.URI;
  */
 public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable
-  private final JavacFileManager.Context myContext;
+  private final JpsJavacFileManager.Context myContext;
   @Nullable
   private final File myOutputRoot;
   private final String myRelativePath;
@@ -42,7 +42,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
   private final File mySourceFile;
   private final String myEncodingName;
 
-  public OutputFileObject(@NotNull JavacFileManager.Context context,
+  public OutputFileObject(@NotNull JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
                           String relativePath,
                           @NotNull File file,
@@ -53,7 +53,7 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     this(context, outputRoot, relativePath, file, kind, className, sourceUri, encodingName, null);
   }
 
-  public OutputFileObject(@Nullable JavacFileManager.Context context,
+  public OutputFileObject(@Nullable JpsJavacFileManager.Context context,
                           @Nullable File outputRoot,
                           String relativePath,
                           @NotNull File file,

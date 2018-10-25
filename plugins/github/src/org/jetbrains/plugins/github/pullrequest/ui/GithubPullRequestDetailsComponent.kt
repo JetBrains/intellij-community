@@ -6,52 +6,35 @@ import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.panels.Wrapper
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDetailsLoader
-import org.jetbrains.plugins.github.pullrequest.data.SingleWorkerProcessExecutor
 import java.awt.BorderLayout
 
-class GithubPullRequestDetailsComponent(project: Project, loader: GithubPullRequestsDetailsLoader)
-  : Wrapper(), Disposable,
-    SingleWorkerProcessExecutor.ProcessStateListener,
-    GithubPullRequestsDetailsLoader.LoadingListener {
+internal class GithubPullRequestDetailsComponent(project: Project) : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
   private val detailsPanel = GithubPullRequestDetailsPanel(project)
-
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   init {
-    loader.addProcessListener(this, this)
-    loader.addLoadingListener(this, this)
-
     loadingPanel.add(detailsPanel)
     setContent(loadingPanel)
   }
 
-  override fun processStarted() {
-    loadingPanel.startLoading()
-    detailsPanel.details = null
+  override fun reset() {
     detailsPanel.emptyText.clear()
-  }
-
-  override fun processFinished() {
-    loadingPanel.stopLoading()
-  }
-
-  override fun detailsLoaded(details: GithubPullRequestDetailedWithHtml) {
-    detailsPanel.details = details
-  }
-
-  override fun errorOccurred(error: Throwable) {
     detailsPanel.details = null
-    detailsPanel.emptyText.appendText("Cannot load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
+  }
+
+  override fun handleResult(result: GithubPullRequestDetailedWithHtml) {
+    detailsPanel.details = result
+  }
+
+  override fun handleError(error: Throwable) {
+    detailsPanel.emptyText
+      .clear()
+      .appendText("Cannot load details", SimpleTextAttributes.ERROR_ATTRIBUTES)
       .appendSecondaryText(error.message ?: "Unknown error", SimpleTextAttributes.ERROR_ATTRIBUTES, null)
   }
 
-  override fun loaderCleared() {
-    detailsPanel.details = null
-    detailsPanel.emptyText.clear()
-  }
+  override fun setBusy(busy: Boolean) = if (busy) loadingPanel.startLoading() else loadingPanel.stopLoading()
 
   override fun dispose() {}
 }

@@ -105,7 +105,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
                        : myUnresolvedReference;
 
     while(child.getParent() != commonParent) child = child.getParent();
-    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText("int i = 0", null);
+    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
     PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(myOutOfScopeVariable);
     if (variable.getInitializer() != null) {
       variable.getInitializer().delete();
@@ -126,7 +126,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     //Leave initializer assignment
     PsiExpression initializer = myOutOfScopeVariable.getInitializer();
     if (initializer != null) {
-      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText(myOutOfScopeVariable
+      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText(myOutOfScopeVariable
         .getName() + "= e;", null);
       ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
       assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(assignment);
@@ -153,7 +153,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   private static void initialize(final PsiLocalVariable variable) throws IncorrectOperationException {
     PsiType type = variable.getType();
     String init = PsiTypesUtil.getDefaultValueOfType(type);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     PsiExpression initializer = factory.createExpressionFromText(init, variable);
     variable.setInitializer(initializer);
   }

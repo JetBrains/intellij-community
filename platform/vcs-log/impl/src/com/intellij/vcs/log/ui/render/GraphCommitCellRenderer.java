@@ -144,11 +144,11 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     private AffineTransform myAffineTransform;
 
     MyComponent(@NotNull VcsLogData data,
-                       @NotNull GraphCellPainter painter,
-                       @NotNull VcsLogGraphTable table,
-                       @NotNull LabelIconCache iconCache,
-                       boolean compact,
-                       boolean showTags) {
+                @NotNull GraphCellPainter painter,
+                @NotNull VcsLogGraphTable table,
+                @NotNull LabelIconCache iconCache,
+                boolean compact,
+                boolean showTags) {
       myLogData = data;
       myPainter = painter;
       myGraphTable = table;
@@ -191,7 +191,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       AffineTransform origTx = PaintUtil.alignTxToInt(g2d, null, false, true, RoundingMode.ROUND_FLOOR_BIAS);
       try {
         UIUtil.drawImage(g, myGraphImage.getImage(), 0, 0, null);
-      } finally {
+      }
+      finally {
         if (origTx != null) g2d.setTransform(origTx);
       }
     }

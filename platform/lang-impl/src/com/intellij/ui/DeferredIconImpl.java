@@ -109,7 +109,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
     this(baseIcon, param, true, evaluator, listener, autoUpdatable);
   }
 
-  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
+  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
     this(baseIcon, param, needReadAction, evaluator, null, false);
   }
 

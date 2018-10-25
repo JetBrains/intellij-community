@@ -20,6 +20,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,7 @@ public class EditExternalSystemRunConfigurationAction extends ExternalSystemActi
 
     RunnerAndConfigurationSettings settings = ((RunConfigurationNode)selectedNodes.get(0)).getSettings();
     assert settings != null;
+    ExternalSystemActionsCollector.trigger(project, getSystemId(e), this, e);
     RunManager.getInstance(project).setSelectedConfiguration(settings);
     EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();

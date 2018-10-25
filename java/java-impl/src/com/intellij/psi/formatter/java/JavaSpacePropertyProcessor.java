@@ -691,7 +691,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     else if (myType2 == JavaElementType.PACKAGE_STATEMENT) {
       int lf = mySettings.BLANK_LINES_BEFORE_PACKAGE + 1;
-      myResult = Spacing.createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
+      // special case when header before package
+      int keepLines = myType1 == JavaTokenType.C_STYLE_COMMENT
+                      ? mySettings.KEEP_BLANK_LINES_BETWEEN_PACKAGE_DECLARATION_AND_HEADER
+                      : mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS;
+      myResult = Spacing.createSpacing(0, 0, lf, mySettings.KEEP_LINE_BREAKS,keepLines);
     }
 
     else if (myType1 == JavaElementType.IMPORT_LIST) {

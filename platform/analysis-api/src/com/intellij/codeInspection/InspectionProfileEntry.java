@@ -384,7 +384,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    *
    * @return serialization filter.
    */
-  @SuppressWarnings({"MethodMayBeStatic", "DeprecatedIsStillUsed"})
+  @SuppressWarnings({"DeprecatedIsStillUsed"})
   @Nullable
   @Deprecated
   protected SerializationFilter getSerializationFilter() {

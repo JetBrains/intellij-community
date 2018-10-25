@@ -86,7 +86,7 @@ public class AppUIUtil {
       }
     }
 
-    images.add(ImageLoader.loadFromResource(appInfo.getIconUrl()));
+    images.add(loadApplicationIcon(window, 32, appInfo.getIconUrl()));
     images.add(ImageLoader.loadFromResource(appInfo.getSmallIconUrl()));
 
     for (int i = 0; i < images.size(); i++) {
@@ -292,7 +292,6 @@ public class AppUIUtil {
         runnable.run();
       } else {
         try {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {

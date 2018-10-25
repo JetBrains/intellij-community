@@ -82,6 +82,8 @@ public final class ActionMenu extends JBMenu {
     myContext = context;
   }
 
+  public AnAction getAnAction() { return myGroup.getAction(); }
+
   @Override
   public void addNotify() {
     super.addNotify();

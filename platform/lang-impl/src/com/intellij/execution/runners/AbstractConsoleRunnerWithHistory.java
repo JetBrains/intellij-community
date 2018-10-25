@@ -168,9 +168,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
   public static void registerActionShortcuts(final List<? extends AnAction> actions, final JComponent component) {
     for (AnAction action : actions) {
-      if (action.getShortcutSet() != null) {
-        action.registerCustomShortcutSet(action.getShortcutSet(), component);
-      }
+      action.registerCustomShortcutSet(action.getShortcutSet(), component);
     }
   }
 

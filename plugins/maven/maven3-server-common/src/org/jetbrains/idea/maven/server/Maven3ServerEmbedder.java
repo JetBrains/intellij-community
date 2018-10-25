@@ -318,10 +318,8 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     return MAVEN_VERSION;
   }
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz, String roleHint);
 
-  @SuppressWarnings({"unchecked"})
   public abstract <T> T getComponent(Class<T> clazz);
 
   public abstract void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable);

@@ -380,7 +380,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
       PsiType initializerType = getInitializerType(myForcedType, myParameterInitializer, myLocalVariable);
       setForcedType(initializerType);
 
@@ -485,7 +485,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
     final PsiMethod delegate = (PsiMethod)methodToReplaceIn.copy();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
     ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
     final PsiExpressionList argumentList = callExpression.getArgumentList();
@@ -548,7 +548,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
       if (myMethodToReplaceIn == myMethodToSearchFor && PsiTreeUtil.isAncestor(methodCall, myParameterInitializer, false)) return;
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(methodCall.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(methodCall.getProject());
       PsiExpression expression = factory.createExpressionFromText(myParameterName, null);
       final PsiExpressionList argList = methodCall.getArgumentList();
       final PsiExpression[] exprs = argList.getExpressions();

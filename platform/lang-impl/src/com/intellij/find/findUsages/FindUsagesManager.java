@@ -614,7 +614,7 @@ public class FindUsagesManager {
   }
 
   public static String getHelpID(@NotNull PsiElement element) {
-    return LanguageFindUsages.INSTANCE.forLanguage(element.getLanguage()).getHelpId(element);
+    return LanguageFindUsages.getHelpId(element);
   }
 
   public void rerunAndRecallFromHistory(@NotNull ConfigurableUsageTarget usageTarget) {

@@ -48,7 +48,6 @@ import java.util.Map;
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 import static com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper.findLastFieldInGroup;
 
-@SuppressWarnings("BoundedWildcard")
 public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlock, ReservedWrapsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.AbstractJavaBlock");
 

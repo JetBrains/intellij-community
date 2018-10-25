@@ -138,7 +138,6 @@ public abstract class BasicAction extends DumbAwareAction {
   /**
    * @return true if the action could be applied recursively
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   protected boolean isRecursive() {
     return true;
   }
@@ -150,7 +149,7 @@ public abstract class BasicAction extends DumbAwareAction {
    * @param file    the file to check
    * @return true if the action is applicable to the virtual file
    */
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  @SuppressWarnings({"UnusedDeclaration"})
   protected boolean appliesTo(@NotNull Project project, @NotNull VirtualFile file) {
     return !file.isDirectory();
   }

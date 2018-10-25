@@ -62,7 +62,6 @@ public class XsltCommandLineState extends CommandLineState {
     private int myPort;
     private UserDataHolder myExtensionData;
 
-    @SuppressWarnings({ "RawUseOfParameterizedType" })
     public XsltCommandLineState(XsltRunConfiguration xsltRunConfiguration, ExecutionEnvironment environment) {
         super(environment);
 

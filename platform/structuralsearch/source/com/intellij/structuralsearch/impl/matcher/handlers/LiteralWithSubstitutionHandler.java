@@ -10,9 +10,9 @@ import java.util.regex.Pattern;
 public class LiteralWithSubstitutionHandler extends MatchingHandler {
   private final String matchExpression;
   private Matcher matcher;
-  private final List<SubstitutionHandler> handlers;
+  private final List<? extends SubstitutionHandler> handlers;
 
-  public LiteralWithSubstitutionHandler(String _matchedExpression, List<SubstitutionHandler> _handlers) {
+  public LiteralWithSubstitutionHandler(String _matchedExpression, List<? extends SubstitutionHandler> _handlers) {
     matchExpression = _matchedExpression;
     handlers = _handlers;
   }

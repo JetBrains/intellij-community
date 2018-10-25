@@ -422,10 +422,10 @@ public class CopiesPanel {
   }
 
   public static class OverrideEqualsWrapper<T> {
-    private final EqualityPolicy<T> myPolicy;
+    private final EqualityPolicy<? super T> myPolicy;
     private final T myT;
 
-    public OverrideEqualsWrapper(EqualityPolicy<T> policy, T t) {
+    public OverrideEqualsWrapper(EqualityPolicy<? super T> policy, T t) {
       myPolicy = policy;
       myT = t;
     }

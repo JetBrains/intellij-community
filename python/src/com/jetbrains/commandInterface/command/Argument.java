@@ -147,7 +147,6 @@ public final class Argument {
     if (myType == ArgumentType.INTEGER) {
       try {
         // We just getCommandLineInfo it to get exception
-        //noinspection ResultOfMethodCallIgnored
         Integer.parseInt(value);
       }
       catch (final NumberFormatException ignored) {

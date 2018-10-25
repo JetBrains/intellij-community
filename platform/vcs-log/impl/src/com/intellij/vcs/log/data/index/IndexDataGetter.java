@@ -35,6 +35,7 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntObjectHashMap;
 import kotlin.jvm.functions.Function1;
@@ -51,13 +52,13 @@ import java.util.Set;
 public class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   @NotNull private final Project myProject;
-  @NotNull private final Set<VirtualFile> myRoots;
+  @NotNull private final Set<? extends VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
   @NotNull private final VcsLogStorage myLogStorage;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
 
   public IndexDataGetter(@NotNull Project project,
-                         @NotNull Set<VirtualFile> roots,
+                         @NotNull Set<? extends VirtualFile> roots,
                          @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
                          @NotNull VcsLogStorage logStorage,
                          @NotNull FatalErrorHandler fatalErrorsConsumer) {
@@ -147,15 +148,18 @@ public class IndexDataGetter {
 
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
-    for (VcsLogDetailsFilter filter : filters) {
+
+    return ContainerUtil.all(filters, filter -> {
       if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
+          filter instanceof VcsLogUserFilter) {
+        return true;
+      }
+      if (filter instanceof VcsLogStructureFilter) {
+        Collection<FilePath> files = ((VcsLogStructureFilter)filter).getFiles();
+        return ContainerUtil.find(files, file -> file.isDirectory() && myRoots.contains(file.getVirtualFile())) == null;
       }
       return false;
-    }
-    return true;
+    });
   }
 
   @NotNull
@@ -197,7 +201,11 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       TIntHashSet result = new TIntHashSet();
       for (FilePath path : paths) {
-        TroveUtil.addAll(result, createFileNamesData(path).getCommits());
+        Set<Integer> commits = createFileNamesData(path).getCommits();
+        if (commits.isEmpty() && !path.isDirectory()) {
+          commits = createFileNamesData(VcsUtil.getFilePath(path.getPath(), true)).getCommits();
+        }
+        TroveUtil.addAll(result, commits);
       }
       return result;
     }, new TIntHashSet());

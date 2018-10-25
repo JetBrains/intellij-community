@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.containers.ContainerUtil.or;
 
@@ -61,7 +62,7 @@ public class PackageDirectoryCache {
   @NotNull
   public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
     PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.emptyList() : info.myPackageDirectories;
+    return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
   }
 
   @Nullable
@@ -130,7 +131,7 @@ public class PackageDirectoryCache {
     @NotNull
     final String myQname;
     @NotNull
-    final List<VirtualFile> myPackageDirectories;
+    final List<? extends VirtualFile> myPackageDirectories;
     final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages = new VolatileNotNullLazyValue<MultiMap<String, VirtualFile>>() {
       @NotNull
       @Override
@@ -149,7 +150,7 @@ public class PackageDirectoryCache {
       }
     };
 
-    PackageInfo(@NotNull String qname, @NotNull List<VirtualFile> packageDirectories) {
+    PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
       myQname = qname;
       myPackageDirectories = packageDirectories;
     }

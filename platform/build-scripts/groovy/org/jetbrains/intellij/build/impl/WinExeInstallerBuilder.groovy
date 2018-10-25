@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName
@@ -117,6 +118,12 @@ class WinExeInstallerBuilder {
         generator.addDirectory(jreDirectoryPath)
       }
       generator.generateInstallerFile(new File(box, "nsiconf/idea_win.nsh"))
+      if (buildContext.bundledJreManager.is32bitArchSupported()) {
+        String jre32Dir = buildContext.bundledJreManager.extractWinJre(JvmArchitecture.x32)
+        if (jre32Dir != null) {
+          generator.addDirectory(jre32Dir)
+        }
+      }
       generator.generateUninstallerFile(new File(box, "nsiconf/unidea_win.nsh"))
     }
     catch (IOException e) {

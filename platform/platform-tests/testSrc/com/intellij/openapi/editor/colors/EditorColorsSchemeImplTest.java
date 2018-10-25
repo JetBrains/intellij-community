@@ -340,7 +340,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       keyC = TextAttributesKey.createTextAttributesKey(keyC.getExternalName(), keyB);
       fail("Must fail");
     }
-    catch (IllegalStateException e) {
+    catch (IllegalStateException | AssertionError e) {
       assertTrue(e.getMessage().contains("already registered"));
     }
     finally {

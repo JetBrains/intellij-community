@@ -7,6 +7,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.applicable
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.mapParametersToArguments
@@ -40,7 +41,12 @@ class MethodCandidate(val method: PsiMethod,
   private val typeComputer: (Argument) -> PsiType? = { it ->
     val type = if (it.expression != null) getTopLevelTypeCached(it.expression) else it.type
 
-    type ?: TypesUtil.getJavaLangObject(context)
+
+    if (type is GrMapType) {
+      TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, context)
+    } else {
+      type ?: TypesUtil.getJavaLangObject(context)
+    }
   }
 
   private val completionTypeComputer: (Argument) -> PsiType? = { it ->

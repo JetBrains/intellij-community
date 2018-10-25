@@ -20,7 +20,6 @@ public class PropertiesResourceBundleUtil {
    * @param text  'raw' property value text
    * @return      'user-friendly' text to show at the resource bundle editor
    */
-  @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static String fromPropertyValueToValueEditor(@NotNull String text) {
     StringBuilder buffer = new StringBuilder();

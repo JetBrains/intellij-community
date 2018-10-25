@@ -229,7 +229,6 @@ public class Utils{
                                               String place,
                                               boolean checkVisible,
                                               boolean checkEnabled) {
-    //noinspection InstanceofIncompatibleInterface
     if (group instanceof AlwaysVisibleActionGroup) {
       return true;
     }

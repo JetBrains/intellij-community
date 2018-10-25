@@ -354,7 +354,6 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       }
     }
 
-    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
       return this == obj;

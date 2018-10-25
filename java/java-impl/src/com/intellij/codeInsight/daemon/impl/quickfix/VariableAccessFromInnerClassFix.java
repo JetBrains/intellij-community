@@ -171,7 +171,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     variable.normalizeDeclaration();
     PsiType type = variable.getType();
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiType newType = type.createArrayType();
 
     PsiDeclarationStatement variableDeclarationStatement;
@@ -205,7 +205,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   private static void copyToFinal(PsiVariable variable, PsiElement context) throws IncorrectOperationException {
     PsiManager psiManager = context.getManager();
     final Project project = psiManager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiExpression initializer = factory.createExpressionFromText(variable.getName(), context);
     String newName = suggestNewName(project, variable);
     PsiType type = variable.getType();

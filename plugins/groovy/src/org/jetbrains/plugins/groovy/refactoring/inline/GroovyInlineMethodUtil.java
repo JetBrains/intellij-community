@@ -48,7 +48,6 @@ import java.util.*;
 /**
  * @author ilyas
  */
-@SuppressWarnings({"SuspiciousMethodCalls"})
 public class GroovyInlineMethodUtil {
   public static final String REFACTORING_NAME = GroovyRefactoringBundle.message("inline.method.title");
 

@@ -123,7 +123,6 @@ public class WizardContext extends UserDataHolderBase {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
-    //noinspection HardCodedStringLiteral
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     return userHome.replace('/', File.separatorChar) + File.separator + productName.replace(" ", "") + "Projects";
   }

@@ -44,12 +44,15 @@ void execOnMainLoop(jrunnable run);
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid
 void releaseWindowOnMainLoop(WndInfo* wi);
 
+void createMenuRootForWnd(WndInfo *wi);
 void clearRootMenu(WndInfo* wi);
 void clearMenu(DbusmenuMenuitem* menu);
 
 DbusmenuMenuitem* addRootMenu(WndInfo* wi, int uid, const char * label);
 DbusmenuMenuitem* addMenuItem(DbusmenuMenuitem * parent, int uid, const char * label, int type);
 DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid);
+
+void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item);
 
 void setItemLabel(DbusmenuMenuitem* item, const char * label);
 void setItemEnabled(DbusmenuMenuitem* item, bool isEnabled);

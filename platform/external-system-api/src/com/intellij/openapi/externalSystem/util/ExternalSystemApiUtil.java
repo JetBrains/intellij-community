@@ -254,7 +254,6 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   public static <T> DataNode<T> findParent(@NotNull DataNode<?> node, @NotNull Key<T> key) {
     return findParent(node, key, null);
@@ -272,7 +271,6 @@ public class ExternalSystemApiUtil {
            ? (DataNode<T>)parent : findParent(parent, key, predicate);
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
     return getChildren(parent, key);
@@ -350,7 +348,6 @@ public class ExternalSystemApiUtil {
       if (predicate.fun(node)) {
         return node;
       }
-      //noinspection unchecked
       queue.addAll(node.getChildren());
     }
     return null;
@@ -436,7 +433,6 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Nullable
   public static String normalizePath(@Nullable String s) {
     return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
@@ -547,7 +543,7 @@ public class ExternalSystemApiUtil {
    * @param e exception to process
    * @return error message for the given exception
    */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public static String buildErrorMessage(@NotNull Throwable e) {
     Throwable unwrapped = RemoteUtil.unwrap(e);
@@ -572,7 +568,6 @@ public class ExternalSystemApiUtil {
     return writer.toString();
   }
 
-  @SuppressWarnings("unchecked")
   @NotNull
   public static AbstractExternalSystemSettings getSettings(@NotNull Project project, @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException {

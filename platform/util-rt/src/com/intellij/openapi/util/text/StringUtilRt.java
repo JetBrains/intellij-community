@@ -15,7 +15,6 @@ import java.util.List;
  *
  * @since 12.0
  */
-@SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class StringUtilRt {
   @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {

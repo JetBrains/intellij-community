@@ -137,8 +137,7 @@ public class FindByXPathAction extends AnAction {
 
     private static boolean validateExpression(Project project, String expression) {
         try {
-            //noinspection unchecked
-            XPathSupport.getInstance().createXPath(null, expression, Collections.emptyList());
+          XPathSupport.getInstance().createXPath(null, expression, Collections.emptyList());
             return true;
         } catch (XPathSyntaxException e) {
             Messages.showErrorDialog(project, e.getMultilineMessage(), "XPath Syntax Error");

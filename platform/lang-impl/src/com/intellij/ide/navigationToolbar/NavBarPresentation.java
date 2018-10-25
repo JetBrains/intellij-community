@@ -44,7 +44,6 @@ public class NavBarPresentation {
     myProject = project;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public Icon getIcon(final Object object) {
     if (!NavBarModel.isValid(object)) return null;
@@ -81,7 +80,6 @@ public class NavBarPresentation {
     return null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getPresentableText(final Object object) {
     if (!NavBarModel.isValid(object)) {

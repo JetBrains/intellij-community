@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +48,7 @@ public abstract class Alignment {
    *      </pre>
    *      <p/>
    *      Here {@code '='} block of {@code 'int start  = 1'} statement is shifted one symbol right in order to align
-   *      to the {@code '='} block of {@code 'int finish  = 1'} statement.
+   *      to the {@code '='} block of {@code 'int finish  = 2'} statement.
    *   </li>
    *   <li>
    *     <b>Anchor</b>
@@ -99,7 +85,7 @@ public abstract class Alignment {
   public static Alignment createAlignment(boolean allowBackwardShift, @NotNull Anchor anchor) {
     return myFactory.createAlignment(allowBackwardShift, anchor);
   }
-  
+
   /**
    * Allows to create alignment with the following feature - aligned blocks are aligned to block with the current alignment if the one
    * if found; block with the given {@code 'base'} alignment is checked otherwise.

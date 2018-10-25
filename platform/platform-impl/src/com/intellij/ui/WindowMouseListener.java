@@ -137,11 +137,16 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
           if (isStateSet(Frame.MAXIMIZED_VERT, state)) dy = 0;
         }
         updateBounds(bounds, view, dx, dy);
-        if (!bounds.equals(view.getBounds())) {
+        Rectangle viewBounds = view.getBounds();
+        if (!bounds.equals(viewBounds)) {
+          boolean moved = bounds.x != viewBounds.x || bounds.y != viewBounds.y;
+          boolean resized = bounds.width != viewBounds.width || bounds.height != viewBounds.height;
           view.setBounds(bounds);
           view.invalidate();
           view.validate();
           view.repaint();
+          if (moved) notifyMoved();
+          if (resized) notifyResized();
         }
       }
       if (stop) {
@@ -194,4 +199,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   static boolean isStateSet(int mask, int state) {
     return mask == (mask & state);
   }
+
+  protected void notifyMoved() {}
+
+  protected void notifyResized() {}
 }

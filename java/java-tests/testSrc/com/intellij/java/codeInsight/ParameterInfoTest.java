@@ -378,7 +378,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() throws Exception {
+  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
     configureJava("class A {\n" +
                   "    void foo() {}\n" +
                   "    void foo(int a, int b, int c) {}\n" +

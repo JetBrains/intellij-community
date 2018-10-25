@@ -50,7 +50,6 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
    * @param splitterProperty               Key to store(project level) latest value of testTree/consoleTab splitter. E.g. "RSpec.Splitter.Proportion"
    */
   @Deprecated
-  @SuppressWarnings("UnusedParameters")
   public SMTRunnerConsoleView(final TestConsoleProperties consoleProperties,
                               final ExecutionEnvironment environment,
                               @Nullable final String splitterProperty) {

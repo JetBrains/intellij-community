@@ -428,7 +428,6 @@ public class ReflectionUtil {
     }
 
     // error will be thrown
-    //noinspection ConstantConditions
     return null;
   }
 

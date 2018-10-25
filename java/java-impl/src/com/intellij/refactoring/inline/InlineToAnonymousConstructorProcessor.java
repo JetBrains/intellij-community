@@ -74,7 +74,7 @@ class InlineToAnonymousConstructorProcessor {
     myNewExpression = psiNewExpression;
     mySuperType = superType;
     myNewStatement = PsiTreeUtil.getParentOfType(myNewExpression, PsiStatement.class, PsiLambdaExpression.class);
-    myElementFactory = JavaPsiFacade.getInstance(myClass.getProject()).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(myClass.getProject());
   }
 
   public void run() throws IncorrectOperationException {

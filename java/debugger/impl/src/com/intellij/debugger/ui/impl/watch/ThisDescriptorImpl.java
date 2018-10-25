@@ -44,7 +44,7 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText("this", null);
     }

@@ -172,11 +172,9 @@ public class GitHandlerUtil {
       if (myHandler.errors().isEmpty()) {
         String text = getErrorText();
         if ((text == null || text.length() == 0) && myHandler.errors().isEmpty()) {
-          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(GitBundle.message("git.error.exit", exitCode)));
         }
         else {
-          //noinspection ThrowableInstanceNeverThrown
           myHandler.addError(new VcsException(text));
         }
       }
@@ -192,7 +190,6 @@ public class GitHandlerUtil {
      */
     @Override
     public void startFailed(@NotNull final Throwable exception) {
-      //noinspection ThrowableInstanceNeverThrown
       myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
       if (myShowErrors) {
         EventQueue.invokeLater(() -> GitUIUtil.showOperationError(myHandler.project(), myOperationName, exception.getMessage()));
@@ -254,7 +251,6 @@ public class GitHandlerUtil {
     @Override
     public void onLineAvailable(final String line, final Key outputType) {
       if (isErrorLine(line.trim())) {
-        //noinspection ThrowableInstanceNeverThrown
         myHandler.addError(new VcsException(line));
       }
       if (myProgressIndicator != null) {

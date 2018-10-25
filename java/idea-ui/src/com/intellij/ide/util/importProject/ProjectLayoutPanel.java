@@ -133,7 +133,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return list;
   }
 
-  public final Collection getDependencies(final List<T> entries) {
+  public final Collection getDependencies(final List<? extends T> entries) {
     final Set deps = new HashSet();
     for (T et : entries) {
       deps.addAll(getDependencies(et));

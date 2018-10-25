@@ -1826,7 +1826,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
           final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
 
-          //noinspection ForLoopReplaceableByForEach
           boolean scheduleForUpdate = false;
 
           //noinspection ForLoopReplaceableByForEach
@@ -2352,7 +2351,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private boolean currentVersionCorrupted;
     private SerializationManagerEx mySerializationManagerEx;
 
-    FileIndexDataInitialization(@NotNull List<FileBasedIndexExtension> extensions) {
+    FileIndexDataInitialization(@NotNull List<? extends FileBasedIndexExtension> extensions) {
       // init contentless indices first
       if (!extensions.isEmpty()) {
         extensions = ContainerUtil.copyList(extensions);

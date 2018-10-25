@@ -20,6 +20,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
+@JvmField
+val EMPTY_ARRAY: Array<UElement> = emptyArray()
 /**
  * The common interface for all Uast elements.
  */

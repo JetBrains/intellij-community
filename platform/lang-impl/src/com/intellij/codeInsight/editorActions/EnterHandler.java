@@ -357,7 +357,7 @@ public class EnterHandler extends BaseEnterHandler {
         Language language = myDataContext instanceof UserDataHolder ? CONTEXT_LANGUAGE.get((UserDataHolder)myDataContext):null;
         Commenter langCommenter = language != null ? LanguageCommenters.INSTANCE.forLanguage(language) : null;
         CodeDocumentationUtil.CommentContext commentContext
-          = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, myOffset, lineStart);
+          = CodeDocumentationUtil.tryParseCommentContext(langCommenter, chars, lineStart);
 
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(getProject());
         if (commentContext.docStart) {
@@ -445,9 +445,7 @@ public class EnterHandler extends BaseEnterHandler {
 
         boolean docIndentApplied = false;
         CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-        if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
-            || commentContext.slashSlash)
-        {
+        if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk) {
           final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
           if (offset >= 0) {
             myOffset = offset;
@@ -467,7 +465,7 @@ public class EnterHandler extends BaseEnterHandler {
           }
         }
 
-        if ((commentContext.docAsterisk || commentContext.docStart || commentContext.slashSlash) && !docIndentApplied) {
+        if ((commentContext.docAsterisk || commentContext.docStart) && !docIndentApplied) {
           if (myInsertSpace) {
             if (myOffset == myDocument.getTextLength()) {
               myDocument.insertString(myOffset, " ");
@@ -481,8 +479,8 @@ public class EnterHandler extends BaseEnterHandler {
           }
         }
 
-        if ((commentContext.docAsterisk || commentContext.slashSlash) && !commentContext.docStart) {
-          myCaretAdvance += commentContext.slashSlash ? commentContext.commenter.getLineCommentPrefix().trim().length() : 1;
+        if (commentContext.docAsterisk && !commentContext.docStart) {
+          myCaretAdvance += 1;
         }
       }
       catch (IncorrectOperationException e) {

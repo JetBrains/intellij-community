@@ -18,7 +18,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -122,8 +122,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project instanceof ProjectImpl) {
-        (((ProjectImpl)project)).save(true);
+      if (project instanceof ProjectEx) {
+        (((ProjectEx)project)).save(true);
       }
       else {
         project.save();

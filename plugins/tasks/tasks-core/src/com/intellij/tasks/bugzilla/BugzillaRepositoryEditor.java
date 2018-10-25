@@ -29,7 +29,7 @@ public class BugzillaRepositoryEditor extends BaseRepositoryEditor<BugzillaRepos
 
   public BugzillaRepositoryEditor(Project project,
                                   BugzillaRepository repository,
-                                  Consumer<BugzillaRepository> changeListener) {
+                                  Consumer<? super BugzillaRepository> changeListener) {
     super(project, repository, changeListener);
 
     myUseHttpAuthenticationCheckBox.setVisible(false);

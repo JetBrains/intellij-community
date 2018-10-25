@@ -499,7 +499,7 @@ public class GenerateMembersUtil {
 
   @NotNull
   private static JVMElementFactory getFactory(@NotNull Project p, @Nullable PsiElement target) {
-    return target == null ? JavaPsiFacade.getInstance(p).getElementFactory() : JVMElementFactories.requireFactory(target.getLanguage(), p);
+    return target == null ? JavaPsiFacade.getElementFactory(p) : JVMElementFactories.requireFactory(target.getLanguage(), p);
   }
 
   private static boolean isBaseNameGenerated(@NotNull JavaCodeStyleManager csManager, @NotNull PsiType parameterType, @NotNull String paramName) {
@@ -662,7 +662,7 @@ public class GenerateMembersUtil {
                                              boolean ignoreInvalidTemplate,
                                              TemplatesManager templatesManager) {
     Project project = field.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String template = templatesManager.getDefaultTemplate().getTemplate();
     String methodText = GenerationUtil.velocityGenerateCode(psiClass, Collections.singletonList(field), new HashMap<>(), template, 0, false);
 

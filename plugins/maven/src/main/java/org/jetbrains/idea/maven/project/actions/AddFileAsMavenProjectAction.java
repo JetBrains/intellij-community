@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -30,6 +31,7 @@ import java.util.Collections;
 public class AddFileAsMavenProjectAction extends MavenAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     MavenProjectsManager manager = MavenActionUtil.getProjectsManager(context);
     if (manager != null) {

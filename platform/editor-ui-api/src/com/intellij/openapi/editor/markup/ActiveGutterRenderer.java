@@ -16,9 +16,11 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.util.ui.accessibility.SimpleAccessible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
@@ -27,7 +29,7 @@ import java.awt.event.MouseEvent;
  *
  * @author max
  */
-public interface ActiveGutterRenderer extends LineMarkerRenderer {
+public interface ActiveGutterRenderer extends LineMarkerRenderer, SimpleAccessible {
   /**
    * Returns the text of the tooltip displayed when the mouse is over the renderer area.
    *
@@ -57,5 +59,31 @@ public interface ActiveGutterRenderer extends LineMarkerRenderer {
 
   default boolean canDoAction(@NotNull MouseEvent e) {
     return false;
+  }
+
+  @NotNull
+  @Override
+  default String getAccessibleName() {
+    return "marker: unknown";
+  }
+
+  @Nullable
+  @Override
+  default String getAccessibleTooltipText() {
+    return getTooltipText();
+  }
+
+  /**
+   * Calculates the rectangular bounds enclosing the marker.
+   * Returns null if the marker is not rendered for the provided line.
+   *
+   * @param editor the editor the renderer belongs to
+   * @param lineNum the line which the marker should intersect
+   * @param preferredBounds the preferred bounds to take into account
+   * @return the new calculated bounds or the preferred bounds or null
+   */
+  @Nullable
+  default Rectangle calcBounds(@NotNull Editor editor, int lineNum, @NotNull Rectangle preferredBounds) {
+    return preferredBounds;
   }
 }

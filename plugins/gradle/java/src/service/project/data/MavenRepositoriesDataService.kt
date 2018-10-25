@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryData, Void>() {
   override fun getTargetDataKey(): Key<MavenRepositoryData> = MavenRepositoryData.KEY
@@ -18,6 +19,19 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
                                projectData: ProjectData?,
                                project: Project,
                                modelsProvider: IdeModelsProvider) {
+
+    projectData?.apply {
+      GradleSettings
+        .getInstance(project)
+        .linkedProjectsSettings
+        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+        ?.let {
+          if (!it.isResolveExternalAnnotations) {
+            return@onSuccessImport
+          }
+        }
+    }
+
 
     val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 

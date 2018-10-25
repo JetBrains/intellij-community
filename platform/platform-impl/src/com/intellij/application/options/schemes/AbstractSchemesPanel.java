@@ -160,7 +160,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.selectScheme(scheme);
   }
   
-  public final void resetSchemes(@NotNull Collection<T> schemes) {
+  public final void resetSchemes(@NotNull Collection<? extends T> schemes) {
     mySchemesCombo.resetSchemes(schemes);
   }
   

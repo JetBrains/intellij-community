@@ -53,7 +53,6 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  * @author Vladislav.Soroka
  * @since 6/30/2014
  */
-@SuppressWarnings("JUnit4AnnotatedMethodInJUnit3TestCase")
 public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   @Override

@@ -641,7 +641,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  public void markRootsForRefresh() { }
+  @Override
+  public void markRootsForRefresh() {
+
+  }
 
   @NotNull
   public VirtualFilePointerListener getRootsValidityChangedListener() {

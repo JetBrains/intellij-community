@@ -7,8 +7,7 @@ public class Test {
   void test(Object c) {
       //noinspection unchecked
       /*inside*/
-      // after
-      List<String> list = new ArrayList<>((/*cast!*/Collection<String>) c);
-    System.out.println(list);
+      List<String> list = new ArrayList<>((/*cast!*/Collection<String>) c); // after
+      System.out.println(list);
   }
 }

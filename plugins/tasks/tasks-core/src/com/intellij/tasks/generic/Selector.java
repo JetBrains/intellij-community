@@ -16,7 +16,6 @@ public final class Selector {
   /**
    * Serialization constructor
    */
-  @SuppressWarnings({"UnusedDeclatation"})
   public Selector() {
     // empty
   }

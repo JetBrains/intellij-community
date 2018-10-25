@@ -26,14 +26,16 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
 
   public DeleteSwitchLabelFix(PsiSwitchLabelStatement label) {
     myName = Objects.requireNonNull(label.getCaseValue()).getText();
+    myBranch = shouldRemoveBranch(label);
+  }
+
+  private static boolean shouldRemoveBranch(PsiSwitchLabelStatement label) {
     PsiStatement nextStatement = PsiTreeUtil.getNextSiblingOfType(label, PsiStatement.class);
     if (nextStatement instanceof PsiSwitchLabelStatement) {
-      myBranch = false;
+      return false;
     }
-    else {
-      PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(label, PsiStatement.class);
-      myBranch = prevStatement == null || !ControlFlowUtils.statementMayCompleteNormally(prevStatement);
-    }
+    PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(label, PsiStatement.class);
+    return prevStatement == null || !ControlFlowUtils.statementMayCompleteNormally(prevStatement);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -56,7 +58,7 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiSwitchLabelStatement label = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchLabelStatement.class);
     if (label == null) return;
-    if (myBranch) {
+    if (shouldRemoveBranch(label)) {
       PsiCodeBlock scope = ObjectUtils.tryCast(label.getParent(), PsiCodeBlock.class);
       if (scope == null) return;
       PsiSwitchLabelStatement nextLabel = PsiTreeUtil.getNextSiblingOfType(label, PsiSwitchLabelStatement.class);
@@ -73,9 +75,8 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
         if (e instanceof PsiDeclarationStatement && nextLabel != null) {
           PsiDeclarationStatement declaration = (PsiDeclarationStatement)e;
           PsiElement[] elements = declaration.getDeclaredElements();
-          boolean declarationIsReused = Stream.of(elements).anyMatch(
-            element -> !ReferencesSearch.search(element, new LocalSearchScope(scope))
-              .forEach(ref -> ref.getElement().getTextOffset() < end));
+          boolean declarationIsReused = Stream.of(elements).anyMatch(element ->
+              ReferencesSearch.search(element, new LocalSearchScope(scope)).anyMatch(ref -> ref.getElement().getTextOffset() > end));
           if (declarationIsReused) {
             StreamEx.of(elements).select(PsiVariable.class).map(PsiVariable::getInitializer).nonNull().into(toDelete);
             declarations.add(declaration);

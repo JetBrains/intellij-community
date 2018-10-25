@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -130,20 +129,13 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
 
     private static int[] getRedundantOperandIndices(PsiPolyadicExpression context, List<PsiExpression> operands, boolean and) {
       assert !operands.isEmpty();
-      List<PsiExpression> reversedOperands;
-      Predicate<PsiExpression> isOperand;
-      PsiExpression expressionToAnalyze;
       if (operands.size() == 1) {
-        expressionToAnalyze = operands.get(0);
-        reversedOperands = operands;
-        isOperand = Predicate.isEqual(PsiUtil.skipParenthesizedExprDown(expressionToAnalyze));
+        Object value = DfaUtil.computeValue(operands.get(0));
+        return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtil.EMPTY_INT_ARRAY;
       }
-      else {
-        expressionToAnalyze = JavaPsiFacade.getElementFactory(context.getProject())
-          .createExpressionFromText(StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || "), context);
-        reversedOperands = Arrays.asList(((PsiPolyadicExpression)expressionToAnalyze).getOperands());
-        isOperand = expression -> PsiUtil.skipParenthesizedExprUp(expression.getParent()) == expressionToAnalyze;
-      }
+      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(context.getProject())
+        .createExpressionFromText(StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || "), context);
+      List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
       DataFlowRunner runner = new StandardDataFlowRunner(false, context);
       Map<PsiExpression, ThreeState> values = new HashMap<>();
       StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
@@ -160,7 +152,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
                                             @Nullable TextRange range,
                                             @NotNull DfaMemoryState state) {
           super.beforeExpressionPush(value, expression, range, state);
-          if (!isOperand.test(expression)) return;
+          if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
           ThreeState old = values.get(expression);
           if (old == ThreeState.UNSURE) return;
           ThreeState result = ThreeState.UNSURE;

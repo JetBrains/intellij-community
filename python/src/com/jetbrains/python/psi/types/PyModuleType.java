@@ -487,7 +487,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @NotNull
   public static List<LookupElement> collectImportedSubmodulesAsLookupElements(@NotNull PsiFileSystemItem pyPackage,
                                                                               @NotNull PsiElement location,
-                                                                              @Nullable final Set<String> existingNames) {
+                                                                              @Nullable final Set<? super String> existingNames) {
 
 
     final List<PsiElement> elements = new ArrayList<>();
@@ -512,7 +512,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @NotNull
   public static List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
                                                          @NotNull PsiElement location,
-                                                         @Nullable Set<String> namesAlready) {
+                                                         @Nullable Set<? super String> namesAlready) {
     final List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
@@ -526,7 +526,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<String> existingNames) {
+  public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<? super String> existingNames) {
     final String s = FileUtil.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {

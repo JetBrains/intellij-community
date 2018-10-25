@@ -31,7 +31,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
 
   @Override
   @NotNull
-  @SuppressWarnings({"RawUseOfParameterizedType", "unchecked"})
+  @SuppressWarnings({"RawUseOfParameterizedType"})
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
     Collection<AbstractTreeNode> l = children;
     int i = 0;

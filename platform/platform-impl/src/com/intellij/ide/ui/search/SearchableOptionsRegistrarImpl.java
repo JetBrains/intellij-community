@@ -225,7 +225,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     else {
       configs = ArrayUtil.indexOf(configs, packed) == -1 ? ArrayUtil.append(configs, packed) : configs;
     }
-    myStorage.put(ByteArrayCharSequence.convertToBytesIfAsciiString(option), configs);
+    myStorage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
   @Override

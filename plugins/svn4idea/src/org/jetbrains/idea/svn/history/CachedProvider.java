@@ -10,14 +10,14 @@ import java.util.Iterator;
 import java.util.List;
 
 public abstract class CachedProvider implements BunchProvider {
-  private final Iterator<ChangesBunch> myIterator;
+  private final Iterator<? extends ChangesBunch> myIterator;
   private long myEarliestKeepedRevision;
   protected ChangesBunch myAlreadyReaded;
   protected Origin myOrigin;
 
   private boolean myHadBeenAccessed;
 
-  protected CachedProvider(final Iterator<ChangesBunch> iterator, final Origin origin) {
+  protected CachedProvider(final Iterator<? extends ChangesBunch> iterator, final Origin origin) {
     myIterator = iterator;
     myEarliestKeepedRevision = -1;
     myAlreadyReaded = null;
@@ -26,7 +26,7 @@ public abstract class CachedProvider implements BunchProvider {
 
   public abstract void doCacheUpdate(final List<List<Fragment>> fragments);
 
-  protected static List<CommittedChangeList> getAllBeforeVisuallyCached(final List<List<Fragment>> fragmentsListList) {
+  protected static List<CommittedChangeList> getAllBeforeVisuallyCached(final List<? extends List<Fragment>> fragmentsListList) {
     final List<CommittedChangeList> lists = new ArrayList<>();
     // take those _after_ committed
     for (List<Fragment> fragmentList : fragmentsListList) {

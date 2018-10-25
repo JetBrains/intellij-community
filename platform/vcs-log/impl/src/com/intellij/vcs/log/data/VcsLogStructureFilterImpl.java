@@ -35,7 +35,7 @@ import java.util.Set;
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
   @NotNull private final Collection<FilePath> myFiles;
 
-  public VcsLogStructureFilterImpl(@NotNull Set<VirtualFile> files) {
+  public VcsLogStructureFilterImpl(@NotNull Set<? extends VirtualFile> files) {
     this(ContainerUtil.map(files, file -> VcsUtil.getFilePath(file)));
   }
 

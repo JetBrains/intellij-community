@@ -34,10 +34,10 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
-  @Nullable private final Consumer<String> myCurrentVariableCallback;
+  @Nullable private final Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 
-  SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<String> currentVariableCallback) {
+  SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<? super String> currentVariableCallback) {
     editor = _editor;
     myCurrentVariableCallback = currentVariableCallback;
   }
@@ -234,7 +234,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, @Nullable Consumer<String> currentVariableCallback) {
+  static void install(Editor editor, @Nullable Consumer<? super String> currentVariableCallback) {
     final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
     editor.addEditorMouseMotionListener(handler);
     editor.getDocument().addDocumentListener(handler);

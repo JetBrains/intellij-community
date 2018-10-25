@@ -96,7 +96,6 @@ public class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   private static void pushSizePolicy(final FormSourceCodeGenerator generator, final int value) {
     final String className = GridConstraints.class.getName();
 
-    //noinspection NonConstantStringShouldBeStringBuffer
     @NonNls String presentation;
     if (GridConstraints.SIZEPOLICY_FIXED == value) {
       presentation = className + ".SIZEPOLICY_FIXED";

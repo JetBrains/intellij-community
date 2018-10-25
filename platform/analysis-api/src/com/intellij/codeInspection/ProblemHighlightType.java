@@ -30,6 +30,9 @@ public enum ProblemHighlightType {
   /** The same as {@link #LIKE_UNKNOWN_SYMBOL} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   ERROR,
 
+  /** Enforces {@link com.intellij.codeHighlighting.HighlightDisplayLevel#WARNING} severity level */
+  WARNING,
+
   /** The same as {@link #GENERIC_ERROR_OR_WARNING} with enforced {@link com.intellij.codeHighlighting.HighlightDisplayLevel#ERROR} severity level */
   GENERIC_ERROR,
 

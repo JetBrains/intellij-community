@@ -26,7 +26,6 @@ abstract class AbstractTestWithTextFile {
 
   protected final String myDirectory;
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected AbstractTestWithTextFile(String directory) {
     this.myDirectory = PathManagerEx.findFileUnderCommunityHome(BASE_DIRECTORY + directory).getPath();
   }

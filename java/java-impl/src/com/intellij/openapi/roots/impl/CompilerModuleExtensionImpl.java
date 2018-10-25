@@ -224,6 +224,8 @@ public class CompilerModuleExtensionImpl extends CompilerModuleExtension {
 
   @Override
   public void inheritCompilerOutputPath(final boolean inherit) {
+    if (myInheritedCompilerOutput == inherit) return;
+
     assertWritable();
     myInheritedCompilerOutput = inherit;
   }

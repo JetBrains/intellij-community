@@ -552,7 +552,6 @@ public class StringUtilTest {
     assertEquals("", StringUtil.getPackageName("Number"));
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
   @Test
   public void testIndexOf_1() {
     char[] chars = new char[]{'a','b','c','d','a','b','c','d','A','B','C','D'};
@@ -742,5 +741,17 @@ public class StringUtilTest {
     assertEquals(LineColumn.of(1, 0), StringUtil.offsetToLineColumn("abc\r\nabc", 5));
     assertEquals(LineColumn.of(2, 1), StringUtil.offsetToLineColumn("abc\n\nabc", 6));
     assertEquals(LineColumn.of(1, 1), StringUtil.offsetToLineColumn("abc\r\nabc", 6));
+  }
+
+  @Test
+  public void testFirstLastDontConvertCharSequenceToString() {
+    CharSequence s = ByteArrayCharSequence.convertToBytesIfPossible("test");
+    assertTrue(s instanceof ByteArrayCharSequence);
+    CharSequence first = StringUtil.first(s, 1, false);
+    assertTrue(String.valueOf(first.getClass()), first instanceof CharSequenceSubSequence);
+    assertEquals("t", first.toString());
+    CharSequence last = StringUtil.last(s, 1, false);
+    assertTrue(String.valueOf(last.getClass()), last instanceof CharSequenceSubSequence);
+    assertEquals("t", last.toString());
   }
 }

@@ -52,7 +52,7 @@ public class ConversionResultImpl implements ConversionResult {
     myErrorOccurred = errorOccurred;
   }
 
-  public ConversionResultImpl(List<ConversionRunner> converters) {
+  public ConversionResultImpl(List<? extends ConversionRunner> converters) {
     this(true, false, false);
     for (ConversionRunner converter : converters) {
       myChangedFiles.addAll(converter.getAffectedFiles());

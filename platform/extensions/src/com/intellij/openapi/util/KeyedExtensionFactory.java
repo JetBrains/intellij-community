@@ -106,7 +106,6 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
         }
       }
     }
-    //noinspection ConstantConditions
     return (T)result;
   }
 

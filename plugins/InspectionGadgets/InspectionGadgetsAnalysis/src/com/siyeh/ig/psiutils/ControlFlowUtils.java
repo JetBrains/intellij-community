@@ -679,11 +679,10 @@ public class ControlFlowUtils {
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
             .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
           if (hasLoopVarCheck) {
-            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+            return ReferencesSearch.search(variable).allMatch(ref -> {
               PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
               return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
             });
-            if (notWritten) return true;
           }
         }
       }
@@ -922,7 +921,15 @@ public class ControlFlowUtils {
       if (checkExecuted && parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
-        if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
+        if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
+                 (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
+                 (polyParent instanceof PsiLambdaExpression);
+        }
+        else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
           // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
           return false;
         }
@@ -945,6 +952,7 @@ public class ControlFlowUtils {
         return false;
       }
     }
+    if (parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == cur) return true;
     if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();

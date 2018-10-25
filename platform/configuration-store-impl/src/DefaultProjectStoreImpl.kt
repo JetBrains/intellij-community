@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectImpl
 import org.jdom.Element
 import java.io.Writer
 import java.nio.file.Path
@@ -52,7 +51,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
-class DefaultProjectStoreImpl(override val project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
+class DefaultProjectStoreImpl(override val project: Project, private val pathMacroManager: PathMacroManager) : ComponentStoreImpl() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD

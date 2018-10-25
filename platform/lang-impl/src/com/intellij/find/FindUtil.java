@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -254,9 +255,14 @@ public class FindUtil {
 
   @Nullable
   public static List<Usage> findAll(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (psiFile == null) return null;
+    return findAll(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
+  }
+
+  @Nullable
+  private static List<Usage> findAll(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
+    if (psiFile == null || project.isDisposed()) return null;
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+    if (document == null) return null;
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -264,7 +270,7 @@ public class FindUtil {
     findModel.setForward(true); // when find all there is no diff in direction
 
     int offset = 0;
-    VirtualFile virtualFile = getVirtualFile(editor);
+    VirtualFile virtualFile = psiFile.getVirtualFile();
 
     final List<Usage> usages = new ArrayList<>();
     while (offset < textLength) {
@@ -285,11 +291,27 @@ public class FindUtil {
   }
 
   public static void findAllAndShow(@NotNull Project project, @NotNull Editor editor, @NotNull FindModel findModel) {
-    List<Usage> usages = findAll(project, editor, findModel);
+    findAllAndShow(project, PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()), findModel);
+  }
+
+  private static void findAllAndShow(@NotNull Project project, @Nullable PsiFile psiFile, @NotNull FindModel findModel) {
+    List<Usage> usages = findAll(project, psiFile, findModel);
     if (usages == null) return;
     final UsageTarget[] usageTargets = {new FindInProjectUtil.StringUsageTarget(project, findModel)};
     final UsageViewPresentation usageViewPresentation = FindInProjectUtil.setupViewPresentation(false, findModel);
-    UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), usageViewPresentation);
+    UsageView view =
+      UsageViewManager.getInstance(project).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), usageViewPresentation);
+    view.setRerunAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        findAllAndShow(project, psiFile, findModel);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !project.isDisposed() && psiFile.isValid();
+      }
+    });
   }
 
   public static void searchBack(Project project, FileEditor fileEditor, @Nullable DataContext dataContext) {

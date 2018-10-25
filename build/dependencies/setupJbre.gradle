@@ -1,11 +1,20 @@
-task setupJbre {}
+def setupJbre = task setupJbre {}
 
 def jdkRepo = 'https://cache-redirector.jetbrains.com/intellij-jdk'
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
 def isBundledJreModular = bundledJreVersion >= 9
-def jreArtifactPrefix = System.getProperty("intellij.build.bundled.jre.prefix", "jbrex8")
 def jreArtifactBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
+def jreArtifactPrefix
+if (bundledJreVersion == 8) {
+  jreArtifactPrefix = 'jbrex8'
+}
+else if (bundledJreVersion == 9) {
+  jreArtifactPrefix = 'jbsdk9'
+}
+else {
+  throw new IllegalArgumentException("Unable to determine bundled JRE artifact prefix by JRE version $bundledJreVersion")
+}
 
 jrePlatformsToDownload(targetOs).each { platform ->
   archToDownload(platform, !isBundledJreModular).each { arch ->
@@ -136,7 +145,7 @@ def createTarJbreTask(String taskName,
         }
       }
       arguments += [dirToTar]
-      commandLine arguments
+      commandLine = arguments
     }
   }
 }

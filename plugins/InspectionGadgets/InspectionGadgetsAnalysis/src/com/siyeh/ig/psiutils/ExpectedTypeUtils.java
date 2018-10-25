@@ -59,7 +59,6 @@ public class ExpectedTypeUtils {
   private static class ExpectedTypeVisitor extends JavaElementVisitor {
 
     /**
-     * @noinspection StaticCollection
      */
     private static final Set<IElementType> arithmeticOps = new THashSet<>(5);
 

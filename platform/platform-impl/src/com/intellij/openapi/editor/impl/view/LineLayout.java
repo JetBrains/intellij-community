@@ -26,8 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.Bidi;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -252,7 +252,6 @@ abstract class LineLayout {
     }
   }
   
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, 
                                    FontFallbackIterator it) {
     assert start < end;

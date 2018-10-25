@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public abstract class FileIndentOptionsProvider {
    * @return The indent options source hint or {@code null} if not available.
    */
   @Nullable
-  protected String getHint(@NotNull IndentOptions indentOptions) {
+  public String getHint(@NotNull IndentOptions indentOptions) {
     return null;
   }
 
@@ -100,7 +101,8 @@ public abstract class FileIndentOptionsProvider {
       sb.append("Tab");
     }
     else {
-      sb.append(indentOptions.INDENT_SIZE).append(" spaces");
+      int indent = indentOptions.INDENT_SIZE;
+      sb.append(indentOptions.INDENT_SIZE).append(indent > 1 ? " spaces" : " space");
     }
     if (hint != null) sb.append(" (").append(hint).append(')');
     return sb.toString();
@@ -120,4 +122,7 @@ public abstract class FileIndentOptionsProvider {
     return null;
   }
 
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
+  }
 }

@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"ConstantConditions"})
 public class XPathEmbeddedContentImpl extends XPathElementImpl implements XmlTagChild {
     public XPathEmbeddedContentImpl(ASTNode node) {
         super(node);

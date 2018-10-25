@@ -36,7 +36,9 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns {@code null} for default project.
    *
    * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
-   * @deprecated Use {@link #getBasePath()}
+   * @see #getBasePath()
+   *
+   * @deprecated No such concept as "project root". Project consists of module set, each has own content root set.
    */
   @Deprecated
   VirtualFile getBaseDir();
@@ -44,7 +46,7 @@ public interface Project extends ComponentManager, AreaInstance {
   /**
    * Returns a path to a project base directory (see {@linkplain #getBaseDir()}).<br/>
    * Returns {@code null} for default project.
-   * 
+   *
    * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
    */
   @Nullable

@@ -51,6 +51,7 @@ envs {
       pythonDirectory = new File(bootstrapDirectory, pythonName)
     }
 
+    print("Python dir: $pythonDirectory\n")
     project.tasks.create("Misc for $pythonName") {
       shouldRunAfter 'build_envs'
 
@@ -76,9 +77,9 @@ envs {
     }
   }
 
-  createPython("py2_django18_full",
+  createPython("py2_django11_full",
                "2.7.15",
-               ["django==1.8", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
+               ["django==1.11", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
                 + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ) //win32api is required for pypiwin32
                ,
                "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose",
@@ -97,9 +98,9 @@ envs {
                "python3.4",
                true)
 
-  createPython("py36_django1_11",
+  createPython("py36_django2_1",
                "3.6.6",
-               ["django==1.11", "jinja2", "pandas"],
+               ["django==2.1", "jinja2", "pandas"],
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
 

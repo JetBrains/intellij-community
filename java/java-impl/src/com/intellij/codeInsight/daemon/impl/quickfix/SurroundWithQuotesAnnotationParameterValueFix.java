@@ -55,7 +55,7 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
     String newText = myValue.getText();
     newText = StringUtil.unquoteString(newText);
     newText = "\"" + newText + "\"";
-    PsiElement newToken = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newText, null);
+    PsiElement newToken = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, null);
     final PsiElement newElement = myValue.replace(newToken);
     editor.getCaretModel().moveToOffset(newElement.getTextOffset() + newElement.getTextLength());
   }

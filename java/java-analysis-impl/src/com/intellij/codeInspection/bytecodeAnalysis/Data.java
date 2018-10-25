@@ -93,10 +93,10 @@ final class Equation {
 }
 
 class Equations {
-  @NotNull final List<DirectionResultPair> results;
+  @NotNull final List<? extends DirectionResultPair> results;
   final boolean stable;
 
-  Equations(@NotNull List<DirectionResultPair> results, boolean stable) {
+  Equations(@NotNull List<? extends DirectionResultPair> results, boolean stable) {
     this.results = results;
     this.stable = stable;
   }

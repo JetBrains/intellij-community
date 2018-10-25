@@ -12,10 +12,10 @@ import java.util.function.Supplier;
  * Usage: {@code setUp() { tracker = new CodeStyleSettingsTracker(...); } tearDown() { tracker.checkForSettingsDamage(); } }
 */
 public class CodeStyleSettingsTracker {
-  private final Supplier<CodeStyleSettings> myCurrentSettingsSupplier;
+  private final Supplier<? extends CodeStyleSettings> myCurrentSettingsSupplier;
   private CodeStyleSettings myOldSettings;
 
-  public CodeStyleSettingsTracker(@NotNull Supplier<CodeStyleSettings> currentSettingsSupplier) {
+  public CodeStyleSettingsTracker(@NotNull Supplier<? extends CodeStyleSettings> currentSettingsSupplier) {
     myCurrentSettingsSupplier = currentSettingsSupplier;
     CodeStyleSettings settings = currentSettingsSupplier.get();
     if (settings != null) {

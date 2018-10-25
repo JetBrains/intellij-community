@@ -74,15 +74,15 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   private final String myClassName;
   private final TreeMap<Integer, LineData> myLines;
   private final boolean myCoverageByTestApplicable;
-  private final Function<Integer, Integer> myNewToOldConverter;
-  private final Function<Integer, Integer> myOldToNewConverter;
+  private final Function<? super Integer, Integer> myNewToOldConverter;
+  private final Function<? super Integer, Integer> myOldToNewConverter;
   private final CoverageSuitesBundle myCoverageSuite;
   private final boolean mySubCoverageActive;
 
   protected CoverageLineMarkerRenderer(final TextAttributesKey textAttributesKey, @Nullable final String className, final TreeMap<Integer, LineData> lines,
                              final boolean coverageByTestApplicable,
-                             final Function<Integer, Integer> newToOldConverter,
-                             final Function<Integer, Integer> oldToNewConverter,
+                             final Function<? super Integer, Integer> newToOldConverter,
+                             final Function<? super Integer, Integer> oldToNewConverter,
                              final CoverageSuitesBundle coverageSuite, boolean subCoverageActive) {
     myKey = textAttributesKey;
     myClassName = className;
@@ -116,8 +116,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
                                                        final TreeMap<Integer, LineData> lines,
                                                        final boolean coverageByTestApplicable,
                                                        @NotNull final CoverageSuitesBundle coverageSuite,
-                                                       final Function<Integer, Integer> newToOldConverter,
-                                                       final Function<Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+                                                       final Function<? super Integer, Integer> newToOldConverter,
+                                                       final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
     return new CoverageLineMarkerRenderer(getAttributesKey(lineNumber, lines), className, lines, coverageByTestApplicable, newToOldConverter,
                                           oldToNewConverter, coverageSuite, subCoverageActive);
   }
@@ -460,5 +460,11 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
         colorAndFontOptions.disposeUIResources();
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public String getAccessibleName() {
+    return "marker: code coverage";
   }
 }

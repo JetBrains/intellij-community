@@ -16,9 +16,9 @@ import java.util.List;
  */
 public class FilteredQuery<T> implements Query<T> {
   private final Query<T> myOriginal;
-  private final Condition<T> myFilter;
+  private final Condition<? super T> myFilter;
 
-  public FilteredQuery(@NotNull Query<T> original, @NotNull Condition<T> filter) {
+  public FilteredQuery(@NotNull Query<T> original, @NotNull Condition<? super T> filter) {
     myOriginal = original;
     myFilter = filter;
   }

@@ -135,9 +135,9 @@ public class HeavyAwareExecutor implements Disposable {
     @Nullable private ScheduledFuture<?> myFuture = null;
 
     CancellingOnHeavyOrPowerSaveListener(@NotNull Project project,
-                                                @NotNull ProgressIndicator indicator,
-                                                int logActivityDurationMs,
-                                                @NotNull Disposable disposable) {
+                                         @NotNull ProgressIndicator indicator,
+                                         int logActivityDurationMs,
+                                         @NotNull Disposable disposable) {
       myIndicator = indicator;
       myLongActivityDurationMs = logActivityDurationMs;
 
@@ -229,7 +229,8 @@ public class HeavyAwareExecutor implements Disposable {
     public void run() {
       try {
         myFuture.set(myComputable.compute());
-      } catch (Throwable t) {
+      }
+      catch (Throwable t) {
         myFuture.setException(t);
       }
     }

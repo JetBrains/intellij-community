@@ -229,7 +229,6 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void clearCaches() {
   }
 
-  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public final boolean equals(Object obj) {
     return obj == this;
   }

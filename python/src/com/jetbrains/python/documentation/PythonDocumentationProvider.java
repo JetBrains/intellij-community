@@ -7,7 +7,6 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -633,7 +632,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         }
       }
       final PyStdlibDocumentationLinkProvider stdlibDocumentationLinkProvider =
-        Extensions.findExtension(PythonDocumentationLinkProvider.EP_NAME, PyStdlibDocumentationLinkProvider.class);
+        PythonDocumentationLinkProvider.EP_NAME.findExtensionOrFail(PyStdlibDocumentationLinkProvider.class);
       final String url = stdlibDocumentationLinkProvider.getExternalDocumentationUrl(element, element);
       if (url == null) {
         return null;

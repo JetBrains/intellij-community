@@ -142,9 +142,8 @@ public class IteratorDeclaration {
     if (!(previous instanceof PsiDeclarationStatement)) return null;
     IteratorDeclaration declaration = extract((PsiStatement)previous);
     if (declaration == null || !declaration.isHasNextCall(statement.getCondition())) return null;
-    if (!ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope()).forEach(ref -> {
-      return PsiTreeUtil.isAncestor(statement, ref.getElement(), true);
-    })) {
+    if (ReferencesSearch.search(declaration.myIterator, declaration.myIterator.getUseScope())
+      .anyMatch(ref -> !PsiTreeUtil.isAncestor(statement, ref.getElement(), true))) {
       return null;
     }
     return declaration;

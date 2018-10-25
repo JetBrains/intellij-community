@@ -15,7 +15,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author max
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseJBColor")
 public class IdeaActionButtonLook extends ActionButtonLook {
 
   /**

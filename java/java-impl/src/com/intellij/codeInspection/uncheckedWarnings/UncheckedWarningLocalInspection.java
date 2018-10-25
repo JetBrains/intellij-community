@@ -507,7 +507,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
       if (!PsiUtil.isRawSubstitutor(method, substitutor)) {
         if (JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_8)) {
-          for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(method)) {
+          for (PsiTypeParameter parameter : method.getTypeParameters()) {
             final PsiClassType[] extendsListTypes = parameter.getExtendsListTypes();
             if (extendsListTypes.length > 0) {
               final PsiType subst = substitutor.substitute(parameter);
@@ -565,7 +565,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
             return ellipsisType.getComponentType().accept(this);
           }
         }).booleanValue()) {
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
           PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
           return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
                                                          JavaHighlightUtil.formatMethod(method),

@@ -397,8 +397,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
         try {
           final String modifierText = PsiModifier.PACKAGE_LOCAL.equals(modifier) ? "" : modifier + " ";
-          final PsiField field = JavaPsiFacade
-            .getInstance(psiManager.getProject()).getElementFactory().createFieldFromText(modifierText + "int xxx;", targetClass);
+          final PsiField field = JavaPsiFacade.getElementFactory(psiManager.getProject()).createFieldFromText(modifierText + "int xxx;", targetClass);
           if (!JavaResolveUtil.isAccessible(field, targetClass, field.getModifierList(), occurrence, targetClass, null)) {
             iterator.remove();
           }

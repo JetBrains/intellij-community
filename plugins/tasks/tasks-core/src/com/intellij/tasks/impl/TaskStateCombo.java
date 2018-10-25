@@ -45,7 +45,7 @@ public abstract class TaskStateCombo extends JPanel {
     this(null, null);
   }
 
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer", "unchecked"})
+  @SuppressWarnings({"unchecked"})
   public TaskStateCombo(Project project, Task task) {
     myProject = project;
     myTask = task;

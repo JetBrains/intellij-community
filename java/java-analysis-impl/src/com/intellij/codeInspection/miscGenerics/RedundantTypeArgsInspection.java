@@ -191,7 +191,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
       try {
         final PsiMethodCallExpression expr =
-          (PsiMethodCallExpression)JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText("foo()", null);
+          (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("foo()", null);
         typeArgumentList.replace(expr.getTypeArgumentList());
       }
       catch (IncorrectOperationException e) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -34,5 +36,17 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           List<ColorPickerListener> listeners,
                           boolean opacityInPercent) {
     return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
+  }
+
+  @Nullable
+  @Override
+  public Color showDialog(Project project,
+                          Component parent,
+                          @Nls(capitalization = Nls.Capitalization.Title) String caption,
+                          Color preselectedColor,
+                          boolean enableOpacity,
+                          List<ColorPickerListener> listeners,
+                          boolean opacityInPercent) {
+    return showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 }

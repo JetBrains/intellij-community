@@ -34,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
@@ -501,7 +501,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private void createUIComponents() {
     myTree = new Tree() {
       @Override
-      @SuppressWarnings("NonStaticInitializer")
       public JToolTip createToolTip() {
         final JToolTip toolTip = new JToolTip() {
           {
@@ -847,7 +846,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   protected static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable(false, null) {

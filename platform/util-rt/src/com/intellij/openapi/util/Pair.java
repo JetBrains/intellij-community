@@ -22,7 +22,6 @@ public class Pair<A, B> {
   }
 
   @NotNull
-  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static <A, B> Pair<A, B> pair(A first, B second) {
     //noinspection DontUsePairConstructor
     return new Pair<A, B>(first, second);
@@ -45,7 +44,6 @@ public class Pair<A, B> {
     return pair != null ? pair.second : null;
   }
 
-  @SuppressWarnings("unchecked")
   private static final Pair EMPTY = create(null, null);
 
   @SuppressWarnings("unchecked")

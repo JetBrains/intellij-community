@@ -440,7 +440,6 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       }
     };
 
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (filesInProcessing) { //ensure that only one thread calculates dsl executor
       final boolean isNewRequest = !filesInProcessing.containsKey(fileUrl);
       filesInProcessing.putValue(fileUrl, queue);

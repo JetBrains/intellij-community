@@ -62,6 +62,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   }
 
   private void buildMap(Collection<TodoItem> todoItems) {
+    myMap.clear();
     for (TodoItem todoItem : todoItems) {
       myMap.putValue(todoItem.getFile(), todoItem);
     }

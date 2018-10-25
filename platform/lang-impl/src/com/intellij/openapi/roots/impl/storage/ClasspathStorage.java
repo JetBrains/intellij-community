@@ -10,6 +10,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -48,7 +49,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  private final PathMacroSubstitutor myPathMacroSubstitutor;
 
   public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
     String storageType = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
@@ -167,7 +168,9 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
-      myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
+      if (myPathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+        ((TrackingPathMacroSubstitutor)myPathMacroSubstitutor).addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
+      }
     }
 
     getStorageDataRef().set(true);

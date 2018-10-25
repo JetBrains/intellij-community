@@ -156,7 +156,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();

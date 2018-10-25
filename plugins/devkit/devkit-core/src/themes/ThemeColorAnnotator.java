@@ -102,13 +102,15 @@ public class ThemeColorAnnotator implements Annotator, DumbAware {
           Color currentColor = getColor(myColorHex);
           if (currentColor == null) return;
 
-          Color newColor = ColorChooser.chooseColor(editor.getComponent(),
+          boolean withAlpha = isRgbaColorHex(myColorHex);
+          Color newColor = ColorChooser.chooseColor(editor.getProject(),
+                                                    editor.getComponent(),
                                                     DevKitBundle.message("theme.choose.color.dialog.title"),
                                                     currentColor,
-                                                    isRgbaColorHex(myColorHex));
+                                                    withAlpha);
           if (newColor == null || newColor.equals(currentColor)) return;
 
-          String newColorHex = "#" + ColorUtil.toHex(newColor, true);
+          String newColorHex = "#" + ColorUtil.toHex(newColor, withAlpha);
           Project project = myLiteral.getProject();
           JsonStringLiteral newLiteral = new JsonElementGenerator(project).createStringLiteral(newColorHex);
 

@@ -169,7 +169,7 @@ public class JavaTestGenerator implements TestGenerator {
     final PsiReferenceList extendsList = targetClass.getExtendsList();
     if (extendsList == null) return;
 
-    PsiElementFactory ef = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory ef = JavaPsiFacade.getElementFactory(project);
     PsiJavaCodeReferenceElement superClassRef;
 
     PsiClass superClass = findClass(project, superClassName);

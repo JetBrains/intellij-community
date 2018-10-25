@@ -50,6 +50,7 @@ public class MavenImportingSettings implements Cloneable {
 
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
+  private boolean downloadAnnotationsAutomatically = false;
 
   private GeneratedSourcesFolder generatedSourcesFolder = GeneratedSourcesFolder.AUTODETECT;
 
@@ -187,6 +188,14 @@ public class MavenImportingSettings implements Cloneable {
     this.downloadDocsAutomatically = value;
   }
 
+  public boolean isDownloadAnnotationsAutomatically() {
+    return downloadAnnotationsAutomatically;
+  }
+
+  public void setDownloadAnnotationsAutomatically(boolean value) {
+    this.downloadAnnotationsAutomatically = value;
+  }
+
   @Property
   @NotNull
   public GeneratedSourcesFolder getGeneratedSourcesFolder() {
@@ -212,6 +221,7 @@ public class MavenImportingSettings implements Cloneable {
     if (!dependencyTypes.equals(that.dependencyTypes)) return false;
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
+    if (downloadAnnotationsAutomatically != that.downloadAnnotationsAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
     if (excludeTargetFolder != that.excludeTargetFolder) return false;
@@ -246,6 +256,8 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically) result++;
     result <<= 1;
     if (downloadDocsAutomatically) result++;
+    result <<= 1;
+    if (downloadAnnotationsAutomatically) result++;
     result <<= 1;
 
     result = 31 * result + (updateFoldersOnImportPhase != null ? updateFoldersOnImportPhase.hashCode() : 0);

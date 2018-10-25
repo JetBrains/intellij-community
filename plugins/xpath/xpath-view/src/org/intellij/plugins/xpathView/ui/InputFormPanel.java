@@ -18,7 +18,7 @@ package org.intellij.plugins.xpathView.ui;
 import javax.swing.*;
 
 public class InputFormPanel extends JPanel implements InputForm {
-    @SuppressWarnings({ "UNUSED_SYMBOL", "FieldCanBeLocal" })
+    @SuppressWarnings({ "UNUSED_SYMBOL"})
     private JPanel myRoot;
 
     private JLabel myIcon;

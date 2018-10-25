@@ -131,7 +131,6 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private static String validateRegexpAndGet(final String regexp, final String message) throws ConfigurationException {
     try {
       if (!StringUtil.isEmptyOrSpaces(regexp)) {
-        //noinspection ResultOfMethodCallIgnored
         Pattern.compile(regexp);
       }
     }

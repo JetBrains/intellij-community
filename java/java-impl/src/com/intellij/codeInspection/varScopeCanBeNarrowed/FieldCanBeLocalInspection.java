@@ -70,13 +70,11 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
 
     for (final PsiField field : candidates) {
       if (usedFields.contains(field) && !hasImplicitReadOrWriteUsage(field, implicitUsageProviders)) {
-        if (!ReferencesSearch.search(field, new LocalSearchScope(aClass)).forEach(reference -> {
+        if (ReferencesSearch.search(field, new LocalSearchScope(aClass)).anyMatch(reference -> {
           final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
-            return qualifier == null || qualifier instanceof PsiThisExpression && ((PsiThisExpression)qualifier).getQualifier() == null;
-          }
-          return true;
+          if (!(element instanceof PsiReferenceExpression)) return false;
+          final PsiElement qualifier = ((PsiReferenceExpression)element).getQualifier();
+          return qualifier != null && (!(qualifier instanceof PsiThisExpression) || ((PsiThisExpression)qualifier).getQualifier() != null);
         })) {
           continue;
         }

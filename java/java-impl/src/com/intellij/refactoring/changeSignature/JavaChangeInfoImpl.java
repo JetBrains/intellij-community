@@ -100,7 +100,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
                             @NotNull Set<PsiMethod> propagateParametersMethods,
                             @NotNull Set<PsiMethod> propagateExceptionsMethods,
                             String oldName) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
 
     this.newVisibility = newVisibility;
     this.method = method;
@@ -211,7 +211,7 @@ public class JavaChangeInfoImpl extends UserDataHolderBase implements JavaChange
     oldParameterNames = new String[parameters.length];
     oldParameterTypes = new String[parameters.length];
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       oldParameterNames[i] = parameter.getName();

@@ -416,6 +416,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testChainedBuilderCall() {
+    doTest();
+  }
+
+  public void testMissedQualifierWithSideEffectsOnInliningEmptyMethod() {
+    doTest();
+  }
+
   public void testNotTailCallInsideIf() {
     doTestAssertBadReturn();
   }

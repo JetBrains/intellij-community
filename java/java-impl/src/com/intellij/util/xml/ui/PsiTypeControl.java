@@ -41,7 +41,7 @@ public class PsiTypeControl extends EditorTextFieldControl<PsiTypePanel> {
   protected String getValue() {
     final String rawValue = super.getValue();
     try {
-      final PsiType psiType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(rawValue, null);
+      final PsiType psiType = JavaPsiFacade.getElementFactory(getProject()).createTypeFromText(rawValue, null);
       final String s = JvmPsiTypeConverterImpl.convertToString(psiType);
       if (s != null) {
         return s;

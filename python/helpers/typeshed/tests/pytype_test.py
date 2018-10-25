@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 r"""Test runner for typeshed.
 
-Depends on mypy and pytype being installed.
+Depends on pytype being installed.
 
 If pytype is installed:
     1. For every pyi, do nothing if it is in pytype_blacklist.txt.
@@ -9,7 +9,7 @@ If pytype is installed:
       "pytd <foo.pyi>" in a separate process.
     3. If the file is not in the blacklist run
       "pytype --typeshed-location=typeshed_location --module-name=foo \
-      --convert-to-pickle=tmp_file <foo.pyi>.
+      --parse-pyi <foo.pyi>.
 Option two will parse the file, mostly syntactical correctness. Option three
 will load the file and all the builtins, typeshed dependencies. This will
 also discover incorrect usage of imported modules.
@@ -37,9 +37,10 @@ parser.add_argument('--pytype-bin-dir', type=str, default='',
 # Set to true to print a stack trace every time an exception is thrown.
 parser.add_argument('--print-stderr', type=bool, default=False,
                     help='Print stderr every time an error is encountered.')
-# We need to invoke python3.6. The default here works with our travis tests.
-parser.add_argument('--python36-exe', type=str,
-                    default='/opt/python/3.6/bin/python3.6',
+# We need to invoke python2.7 and 3.6.
+parser.add_argument('--python27-exe', type=str, default='python2.7',
+                    help='Path to a python 2.7 interpreter.')
+parser.add_argument('--python36-exe', type=str, default='python3.6',
                     help='Path to a python 3.6 interpreter.')
 
 Dirs = collections.namedtuple('Dirs', ['pytype', 'typeshed'])
@@ -165,7 +166,7 @@ def pytype_test(args):
     for p in paths:
         if not os.path.isdir(p):
             print('Cannot find typeshed subdir at %s '
-                  '(specify parent dir via --typeshed_location)' % p)
+                  '(specify parent dir via --typeshed-location)' % p)
             return 0, 0
 
     if can_run(dirs.pytype, 'pytd', '-h'):
@@ -176,16 +177,25 @@ def pytype_test(args):
         print('Cannot run pytd. Did you install pytype?')
         return 0, 0
 
-    if not can_run('', args.python36_exe, '--version'):
-        print('Cannot run python3.6 from %s. (point to a valid executable via '
-              '--python36-exe)' % args.python36_exe)
-        return 0, 0
+    for python_version_str in ('27', '36'):
+        dest = 'python%s_exe' % python_version_str
+        version = '.'.join(list(python_version_str))
+        arg = '--python%s-exe' % python_version_str
+        if not can_run('', getattr(args, dest), '--version'):
+            print('Cannot run Python {version}. (point to a valid executable '
+                  'via {arg})'.format(version=version, arg=arg))
+            return 0, 0
 
-    stdlib = 'stdlib/'
-    six = 'third_party/.*/six/'
-    mypy_extensions = 'third_party/.*/mypy_extensions'
-    wanted = re.compile(
-        r'(?:%s).*\.pyi$' % '|'.join([stdlib, six, mypy_extensions]))
+    # TODO(rchen152): Keep expanding our third_party/ coverage so we can move
+    # to a small blacklist rather than an ever-growing whitelist.
+    wanted = [
+        'stdlib/',
+        'third_party/.*/mypy_extensions',
+        'third_party/.*/pkg_resources',
+        'third_party/.*/six/',
+        'third_party/.*/yaml/',
+    ]
+    wanted_re = re.compile(r'(?:%s).*\.pyi$' % '|'.join(wanted))
     skip, parse_only = load_blacklist(dirs)
     skipped = PathMatcher(skip)
     parse_only = PathMatcher(parse_only)
@@ -195,16 +205,19 @@ def pytype_test(args):
     bad = []
 
     def _make_test(filename, major_version):
+        if major_version == 3:
+            version = '3.6'
+            exe = args.python36_exe
+        else:
+            version = '2.7'
+            exe = args.python27_exe
         run_cmd = [
             pytype_exe,
             '--module-name=%s' % _get_module_name(filename),
             '--parse-pyi',
+            '-V %s' % version,
+            '--python_exe=%s' % exe,
         ]
-        if major_version == 3:
-            run_cmd += [
-                '-V 3.6',
-                '--python_exe=%s' % args.python36_exe,
-            ]
         return BinaryRun(run_cmd + [filename],
                          dry_run=args.dry_run,
                          env={"TYPESHED_HOME": dirs.typeshed})
@@ -214,7 +227,7 @@ def pytype_test(args):
         for f in sorted(filenames):
             f = os.path.join(root, f)
             rel = _get_relative(f)
-            if wanted.search(rel):
+            if wanted_re.search(rel):
                 if parse_only.search(rel):
                     pytd_run.append(f)
                 elif not skipped.search(rel):

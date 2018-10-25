@@ -67,7 +67,6 @@ class CompactCollectionBinding extends NotNullDeserializeBinding {
       }
       if (value != null) {
         for (Element item : value.getChildren("item")) {
-          //noinspection SpellCheckingInspection
           ContainerUtil.addIfNotNull(list, item.getAttributeValue("itemvalue"));
         }
       }

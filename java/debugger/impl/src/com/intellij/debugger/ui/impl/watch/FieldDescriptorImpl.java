@@ -162,7 +162,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     String fieldName;
     if(isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');

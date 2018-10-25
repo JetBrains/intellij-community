@@ -92,7 +92,6 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       String description = String.format("<html>You have to resolve all merge conflicts before %s.<br/>%s</html>",
                                          operationName, rollbackProposal);
       // suppressing: this message looks ugly if capitalized by words
-      //noinspection DialogTitleCapitalization
       ok.set(YES == DialogManager.showOkCancelDialog(myProject, description, unmergedFilesErrorTitle(operationName),
                                                      "Rollback", "Don't rollback", Messages.getErrorIcon()));
     });

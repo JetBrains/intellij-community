@@ -75,7 +75,6 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
         }
       }
       if (candidate != null) {
-        //noinspection ConstantConditions
         return "{\"" + candidate.getName() + "\": " + candidate.getValue().getText() + "...}";
       }
       return "{...}";

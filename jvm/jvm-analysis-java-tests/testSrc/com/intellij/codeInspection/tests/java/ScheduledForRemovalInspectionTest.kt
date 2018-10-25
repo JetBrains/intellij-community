@@ -6,7 +6,9 @@ import com.intellij.testFramework.TestDataPath
 
 @TestDataPath("/testData/codeInspection/scheduledForRemoval")
 class ScheduledForRemovalInspectionTest: ScheduledForRemovalInspectionTestBase() {
-  override fun getBasePath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/scheduledForRemoval"
+  override fun getBasePath() = ""
+
+  override fun getTestDataPath() = "${TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/scheduledForRemoval"
 
   fun testInspection() {
     getInspection().myIgnoreInsideImports = false

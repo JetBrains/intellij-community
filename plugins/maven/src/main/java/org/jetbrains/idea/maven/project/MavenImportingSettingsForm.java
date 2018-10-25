@@ -38,6 +38,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
+  private JCheckBox myDownloadAnnotationsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
   private JComboBox myGeneratedSourcesComboBox;
@@ -114,6 +115,7 @@ public class MavenImportingSettingsForm {
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
+    data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
 
     data.setDependencyTypes(myDependencyTypes.getText());
   }
@@ -145,6 +147,7 @@ public class MavenImportingSettingsForm {
 
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
+    myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
 
     myDependencyTypes.setText(data.getDependencyTypes());
 

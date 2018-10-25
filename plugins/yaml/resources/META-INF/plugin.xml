@@ -12,6 +12,8 @@
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/YAMLDarcula.xml"/>
 
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
+    <stubElementTypeHolder class="org.jetbrains.yaml.YAMLElementTypes" />
+    <stubIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysStubIndex"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.formatter.YAMLEnterAtIndentHandler" order="first"/>
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.formatter.YAMLCopyPasteProcessor"/>

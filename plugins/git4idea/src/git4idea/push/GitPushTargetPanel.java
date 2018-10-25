@@ -356,7 +356,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setFireOnChangeAction(@NotNull Runnable action) {
     myFireOnChangeAction = action;

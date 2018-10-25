@@ -20,7 +20,7 @@ import static com.intellij.util.xmlb.Constants.*;
 
 class MapBinding extends Binding implements MultiNodeBinding {
   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
-    @SuppressWarnings({"unchecked", "NullableProblems"})
+    @SuppressWarnings({"unchecked"})
     @Override
     public int compare(Object o1, Object o2) {
       if (o1 instanceof Comparable && o2 instanceof Comparable) {

@@ -44,7 +44,6 @@ public class XDebuggerFramesList extends DebuggerFramesList {
 
   private void copyStack() {
     List items = getModel().getItems();
-    //noinspection unchecked
     if (!items.isEmpty()) {
       StringBuilder plainBuf = new StringBuilder();
       TextTransferable.ColoredStringBuilder coloredTextContainer = new TextTransferable.ColoredStringBuilder();

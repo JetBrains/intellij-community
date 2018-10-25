@@ -142,7 +142,7 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
       }
       if (!alreadyImported) {
         PsiImportStaticStatement importStaticStatement =
-          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createImportStaticStatement(aClass, "*");
+          JavaPsiFacade.getElementFactory(file.getProject()).createImportStaticStatement(aClass, "*");
         importList.add(importStaticStatement);
       }
     }

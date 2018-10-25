@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -124,6 +125,16 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (subExpression == null) return;
     CommentTracker ct = new CommentTracker();
     if (shouldExtractSideEffect()) {
+      if (!mySubExpressionValue) {
+        // Prevent extracting while condition to internal 'if'
+        PsiWhileStatement whileStatement = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(subExpression.getParent()), PsiWhileStatement.class);
+        if (whileStatement != null && whileStatement.getCondition() != null) {
+          PsiStatement replacement = JavaPsiFacade.getElementFactory(project)
+            .createStatementFromText("if(" + whileStatement.getCondition().getText() + ");", whileStatement);
+          PsiIfStatement ifStatement = (PsiIfStatement)whileStatement.replace(replacement);
+          subExpression = Objects.requireNonNull(ifStatement.getCondition());
+        }
+      }
       subExpression = RefactoringUtil.ensureCodeBlock(subExpression);
       if (subExpression == null) {
         LOG.error("ensureCodeBlock returned null", new Attachment("subExpression.txt", getSubExpression().getText()));
@@ -381,7 +392,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
     private static PsiExpression createExpression(final PsiManager psiManager, @NonNls String text) {
       try {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createExpressionFromText(text, null);
+        return JavaPsiFacade.getElementFactory(psiManager.getProject()).createExpressionFromText(text, null);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

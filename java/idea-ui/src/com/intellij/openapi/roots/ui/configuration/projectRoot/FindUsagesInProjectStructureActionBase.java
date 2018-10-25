@@ -99,6 +99,11 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
         public Icon getIconFor(ProjectStructureElementUsage selection) {
           return selection.getIcon();
         }
+
+        @Override
+        public boolean isSpeedSearchEnabled() {
+          return true;
+        }
       };
     new ListPopupImpl(step) {
       @Override

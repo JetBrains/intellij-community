@@ -34,7 +34,6 @@ import java.util.Set;
 
 public class ConstantMathCallInspection extends BaseInspection {
 
-  @SuppressWarnings("StaticCollection")
   @NonNls static final Set<String> constantMathCall =
     new HashSet<>(23);
 

@@ -136,7 +136,7 @@ public class AnalysisScope {
     myVFiles = null;
   }
 
-  public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
+  public AnalysisScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> virtualFiles) {
     myProject = project;
     myElement = null;
     myModule = null;

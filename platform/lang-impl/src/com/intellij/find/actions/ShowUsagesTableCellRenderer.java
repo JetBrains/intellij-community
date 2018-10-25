@@ -16,7 +16,6 @@
 
 package com.intellij.find.actions;
 
-import com.intellij.ide.actions.Switcher;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,17 +95,20 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       return textComponentSpanningWholeRow(textChunks, rowBackground, rowForeground, column, list);
     }
 
-    JPanel panel = new JPanel(new FlowLayout(column == LINE_NUMBER_COL ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0) {
+    // want to be able to right-align the "current" word
+    LayoutManager layout = column == USAGE_TEXT_COL
+                           ? new BorderLayout() : new FlowLayout(column == LINE_NUMBER_COL ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0) {
       @Override
       public void layoutContainer(Container container) {
         super.layoutContainer(container);
-        for (Component component: container.getComponents()) { // align inner components
+        for (Component component : container.getComponents()) { // align inner components
           Rectangle b = component.getBounds();
           Insets insets = container.getInsets();
           component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
         }
       }
-    });
+    };
+    JPanel panel = new JPanel(layout);
     panel.setFont(null);
 
     // greying the current usage the "find usages" was originated from
@@ -127,12 +129,12 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
     switch(column) {
       case CURRENT_ASTERISK_COL:
-        if (isOriginUsage) panel.add(Switcher.createPaleLabel(" *"));
+        if (isOriginUsage) panel.add(new JLabel(" *"));
         break;
       case FILE_GROUP_COL:
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
         break;
-      case LINE_NUMBER_COL: {
+      case LINE_NUMBER_COL:
         if (text.length != 0) {
           TextChunk chunk = text[0];
           textChunks.append(chunk.getText(), getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, chunk));
@@ -141,9 +143,8 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
         panel.add(textChunks);
         break;
-      }
 
-      case USAGE_TEXT_COL: {
+      case USAGE_TEXT_COL:
         Icon icon = presentation.getIcon();
         textChunks.setIcon(icon == null ? EmptyIcon.ICON_16 : icon);
         textChunks.append("").appendTextPadding(JBUI.scale(16 + 5));
@@ -154,8 +155,20 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
         SpeedSearchUtil.applySpeedSearchHighlighting(list, textChunks, false, isSelected);
 
         panel.add(textChunks);
+
+        if (isOriginUsage) {
+          SimpleColoredComponent origin = new SimpleColoredComponent();
+          origin.setIconTextGap(JBUI.scale(5)); // for this particular icon it looks better
+
+          // use attributes of "line number" to show "Current" word
+          SimpleTextAttributes attributes =
+            text.length == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(-1, new Color(0x808080), null, null) :
+            getAttributes(isSelected, fileBgColor, selectionBg, selectionFg, text[0]);
+          origin.append("| Current", attributes);
+          origin.appendTextPadding(JBUI.scale(45));
+          panel.add(origin, BorderLayout.EAST);
+        }
         break;
-      }
 
       default:
         throw new IllegalStateException("unknown column: " + column);
@@ -170,11 +183,6 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
            ColorUtil.brighter(back, 3) : // dunno, under the dark theme the "brighter,1" doesn't look bright enough so we use 3
            ColorUtil.hackBrightness(back, 1, 1/1.05f); // Olga insisted on very-pale almost invisible gray. oh well
   }
-
-  //@NotNull
-  //private static Icon slightlyDifferentColor(@NotNull Icon icon) {
-  //  return EditorColorsManager.getInstance().isDarkEditor() ? IconUtil.brighter(icon, 3) : IconUtil.darker(icon, 8);
-  //}
 
   @NotNull
   private static SimpleTextAttributes getAttributes(boolean isSelected, Color fileBgColor, Color selectionBg, Color selectionFg, @NotNull TextChunk chunk) {

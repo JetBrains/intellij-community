@@ -36,7 +36,7 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public void fixUsage() throws IncorrectOperationException {
     final PsiElement referenceExpression = getElement();
     if (referenceExpression != null) {
-      final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getProject());
       referenceExpression.replace(referenceExpression instanceof PsiReferenceExpression ? elementFactory.createReferenceExpression(myTargetClass) : elementFactory.createClassReferenceElement(myTargetClass));
     }
   }

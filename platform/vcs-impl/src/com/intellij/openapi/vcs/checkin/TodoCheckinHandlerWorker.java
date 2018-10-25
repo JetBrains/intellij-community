@@ -51,14 +51,14 @@ public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");
 
   private final Project myProject;
-  private final Collection<Change> myChanges;
+  private final Collection<? extends Change> myChanges;
   private final TodoFilter myTodoFilter;
 
   private final Set<TodoItem> myAddedOrEditedTodos = new HashSet<>();
   private final Set<TodoItem> myInChangedTodos = new HashSet<>();
   private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
-  public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<Change> changes, @Nullable TodoFilter todoFilter) {
+  public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<? extends Change> changes, @Nullable TodoFilter todoFilter) {
     myProject = project;
     myChanges = changes;
     myTodoFilter = todoFilter;

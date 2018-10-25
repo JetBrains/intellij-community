@@ -354,7 +354,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
             });
           }
           catch (InvalidMirrorException e) {
-            //noinspection ThrowableResultOfMethodCallIgnored
             LOG.error(file.getUrl(), internalDecompiler ? e : wrapException(e, file));
           }
 
@@ -517,7 +516,6 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       StubTree stubTree = SoftReference.dereference(myStub);
       myStub = null;
       if (stubTree != null) {
-        //noinspection unchecked
         ((PsiFileStubImpl)stubTree.getRoot()).clearPsi("cls onContentReload");
       }
     }

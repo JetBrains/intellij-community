@@ -686,7 +686,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
+  @SuppressWarnings({"unchecked"})
   protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
     return new DefaultColumnInfoBasedRowSorter(model);
   }

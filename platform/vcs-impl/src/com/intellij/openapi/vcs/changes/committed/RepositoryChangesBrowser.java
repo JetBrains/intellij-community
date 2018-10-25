@@ -41,7 +41,7 @@ import java.util.Set;
  */
 @Deprecated
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
-  public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
+  public RepositoryChangesBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
     this(project, changeLists, null, null);
   }
 

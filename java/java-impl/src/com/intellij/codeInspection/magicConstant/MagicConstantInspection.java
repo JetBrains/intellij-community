@@ -7,6 +7,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -765,7 +767,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
 
     SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), LanguageSlicing.getProvider(argument).createRootUsage(argument, params));
 
-    Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
+    Collection<? extends AbstractTreeNode> children = ProgressManager.getInstance().runProcess(() -> rootNode.getChildren().iterator().next().getChildren(), new ProgressIndicatorBase());
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
       PsiElement element = usage != null ? usage.getElement() : null;

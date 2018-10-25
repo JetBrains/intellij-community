@@ -13,8 +13,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -27,7 +26,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -107,7 +105,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @NotNull
   private PsiFile getFile() {
-    //noinspection ConstantConditions
     return myFile;
   }
 
@@ -163,13 +160,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void addDescriptorsFromInjectedResults(@NotNull InspectionManager iManager, @NotNull GlobalInspectionContextImpl context) {
-    InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-
     for (Map.Entry<PsiFile, List<InspectionResult>> entry : result.entrySet()) {
       PsiFile file = entry.getKey();
       if (file == getFile()) continue; // not injected
-      DocumentWindow documentRange = (DocumentWindow)documentManager.getDocument(file);
       List<InspectionResult> resultList = entry.getValue();
       for (InspectionResult inspectionResult : resultList) {
         LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
@@ -177,22 +170,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
           if (SuppressionUtil.inspectionResultSuppressed(psiElement, toolWrapper.getTool())) continue;
-          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorBase)descriptor).getTextRange());
-          for (TextRange editable : editables) {
-            TextRange hostRange = documentRange.injectedToHost(editable);
-            QuickFix[] fixes = descriptor.getFixes();
-            LocalQuickFix[] localFixes = null;
-            if (fixes != null) {
-              localFixes = new LocalQuickFix[fixes.length];
-              for (int k = 0; k < fixes.length; k++) {
-                QuickFix fix = fixes[k];
-                localFixes[k] = (LocalQuickFix)fix;
-              }
-            }
-            ProblemDescriptor patchedDescriptor = iManager.createProblemDescriptor(getFile(), hostRange, descriptor.getDescriptionTemplate(),
-                                                                                   descriptor.getHighlightType(), true, localFixes);
-            addDescriptors(toolWrapper, patchedDescriptor, context);
-          }
+
+          addDescriptors(toolWrapper, descriptor, context);
         }
       }
     }
@@ -238,6 +217,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       InspectionToolWrapper toolWrapper = inspectionProfile.getToolById(RedundantSuppressInspection.SHORT_NAME, getFile());
       InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
       if (suppressor instanceof RedundantSuppressionDetector) {
+        if (toolWrappers.stream().anyMatch(LocalInspectionToolWrapper::runForWholeFile)) {
+          return;
+        }
         Set<String> activeTools = toolWrappers.stream().filter(tool -> !tool.isUnfair()).map(tool -> tool.getID()).collect(Collectors.toSet());
         LocalInspectionTool
           localTool = ((RedundantSuppressInspection)toolWrapper.getTool()).createLocalTool((RedundantSuppressionDetector)suppressor, mySuppressedElements, activeTools);
@@ -545,23 +527,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     PsiFile context = getTopLevelFileInBaseLanguage(element);
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
     if (context != getFile()) {
-      ClassLoader toolClassLoader = tool.getClass().getClassLoader();
-      PluginId pluginId = null;
-      if (toolClassLoader instanceof PluginClassLoader) {
-        pluginId = ((PluginClassLoader)toolClassLoader).getPluginId();
-      }
       String errorMessage = "Reported element " + element +
                        " is not from the file '" + file +
                        "' the inspection '" + toolWrapper +
                        "' (" + tool.getClass() +
                        ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
                        context + "\nInspection invoked for file: " + myContext + "\n";
-      if (pluginId == null) {
-        LOG.error(errorMessage);
-      }
-      else {
-        LOG.error(new PluginException(errorMessage, pluginId));
-      }
+      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, tool.getClass()));
     }
     boolean isInjected = file != getFile();
     if (!isInjected) {

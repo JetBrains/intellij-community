@@ -57,7 +57,6 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
     readHistory(state, FIND_HISTORY, findHistory);
   }
 
-    @SuppressWarnings({"unchecked"})
     private static void readHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
         final Element historyElement = element.getChild(s);
         if (historyElement != null) {

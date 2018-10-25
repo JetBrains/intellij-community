@@ -7,7 +7,7 @@ import com.intellij.testFramework.TestDataPath;
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/toUpperWithoutLocale")
 public class StringToUpperWithoutLocaleInspectionTest extends StringToUpperWithoutLocaleInspectionTestBase {
   @Override
-  protected String getBasePath() {
+  protected String getTestDataPath() {
     return JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/toUpperWithoutLocale";
   }
 

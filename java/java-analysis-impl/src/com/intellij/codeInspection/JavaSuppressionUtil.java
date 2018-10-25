@@ -259,7 +259,7 @@ public class JavaSuppressionUtil {
                                                    PsiAnnotation annotation,
                                                    @NotNull String id) throws IncorrectOperationException {
     if (annotation == null) {
-      return JavaPsiFacade.getInstance(project).getElementFactory()
+      return JavaPsiFacade.getElementFactory(project)
         .createAnnotationFromText("@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + id + "\")", container);
     }
     final String currentSuppressedId = "\"" + id + "\"";
@@ -268,7 +268,7 @@ public class JavaSuppressionUtil {
       if (attributes.length == 1) {
         final String suppressedWarnings = attributes[0].getText();
         if (suppressedWarnings.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
             "@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", " + currentSuppressedId + "})", container);
 
       }
@@ -278,7 +278,7 @@ public class JavaSuppressionUtil {
       if (curlyBraceIndex > 0) {
         final String oldSuppressWarning = annotation.getText().substring(0, curlyBraceIndex);
         if (oldSuppressWarning.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
           oldSuppressWarning + ", " + currentSuppressedId + "})", container);
       }
       else {

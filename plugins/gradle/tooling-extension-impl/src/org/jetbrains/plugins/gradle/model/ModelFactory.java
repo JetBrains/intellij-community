@@ -47,7 +47,7 @@ public class ModelFactory {
   }
 
   @Contract("null -> null")
-  public static Collection<ExternalDependency> createCopy(@Nullable Collection<ExternalDependency> dependencies) {
+  public static Collection<ExternalDependency> createCopy(@Nullable Collection<? extends ExternalDependency> dependencies) {
     if (dependencies == null) return null;
 
     Collection<ExternalDependency> result = new ArrayList<ExternalDependency>(dependencies.size());

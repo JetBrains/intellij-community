@@ -2,6 +2,7 @@
 
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
@@ -16,6 +17,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -100,10 +102,13 @@ public final class PythonImportUtils {
       for (PyImportElement importElement : pyFile.getImportTargets()) {
         existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, importElement, importElement.resolve());
       }
-      for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
-        if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
-          PsiElement source = fromImportStatement.resolveImportSource();
-          existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
+      final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(node.getContainingFile(), PyCodeStyleSettings.class);
+      if (!pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
+        for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+          if (!fromImportStatement.isStarImport() && fromImportStatement.getImportElements().length > 0) {
+            PsiElement source = fromImportStatement.resolveImportSource();
+            existingImportFile = addImportViaElement(refText, fix, seenCandidateNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
+          }
         }
       }
     }

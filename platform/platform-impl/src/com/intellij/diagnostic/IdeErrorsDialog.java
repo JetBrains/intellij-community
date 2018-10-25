@@ -826,7 +826,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
 
     private Pair<String, String> decouple() {
-      @SuppressWarnings("ThrowableNotThrown") String className = first.getThrowable().getClass().getName();
+      String className = first.getThrowable().getClass().getName();
       int p = detailsText.indexOf(className);
       if (p == 0) {
         return pair(null, detailsText);

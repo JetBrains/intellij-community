@@ -6,13 +6,11 @@ import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
 import org.jetbrains.plugins.groovy.lang.psi.util.isClassLiteral
 import org.jetbrains.plugins.groovy.lang.psi.util.isSimpleArrayAccess
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
 class GrIndexPropertyReference(element: GrIndexProperty, val rhs: Boolean) : GroovyReferenceBase<GrIndexProperty>(element) {
@@ -30,14 +28,8 @@ class GrIndexPropertyReference(element: GrIndexProperty, val rhs: Boolean) : Gro
     return TextRange.from(rangeStart, 1)
   }
 
-  override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
-    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, Resolver)
-  }
-
-  private object Resolver : GroovyResolver<GrIndexPropertyReference> {
-    override fun resolve(ref: GrIndexPropertyReference, incomplete: Boolean): Collection<GroovyResolveResult> {
-      return ref.element?.doMultiResolve(ref.rhs, incomplete) ?: emptyList()
-    }
+  override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    return element.doMultiResolve(rhs, incomplete) ?: emptyList()
   }
 }
 

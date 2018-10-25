@@ -173,7 +173,6 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String generateClassInfo(PsiClass aClass) {
     StringBuilder buffer = new StringBuilder();
 
@@ -505,11 +504,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       element = element.getParent();
       originalElement = null;
     }
+    if (element instanceof PsiCallExpression && CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+      PsiMethod method = CompletionMemory.getChosenMethod((PsiCallExpression)element);
+      if (method != null) element = method;
+    }
     if (element instanceof PsiMethodCallExpression) {
-      PsiMethod method = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION
-                         ? CompletionMemory.getChosenMethod((PsiMethodCallExpression)element) : null;
-      if (method == null) return getMethodCandidateInfo((PsiMethodCallExpression)element);
-      else element = method;
+      return getMethodCandidateInfo((PsiMethodCallExpression)element);
     }
 
     // Try hard for documentation of incomplete new Class instantiation

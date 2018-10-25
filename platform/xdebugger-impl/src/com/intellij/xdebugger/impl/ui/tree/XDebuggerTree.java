@@ -83,7 +83,6 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         return null;
       }
       XDebuggerTree tree = (XDebuggerTree)c;
-      //noinspection deprecation
       TreePath[] selectedPaths = tree.getSelectionPaths();
       if (selectedPaths == null || selectedPaths.length == 0) {
         return null;

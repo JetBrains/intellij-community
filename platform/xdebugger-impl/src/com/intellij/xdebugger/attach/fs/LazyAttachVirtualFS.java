@@ -3,7 +3,10 @@ package com.intellij.xdebugger.attach.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import org.jetbrains.annotations.NonNls;
@@ -12,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -129,6 +133,6 @@ public class LazyAttachVirtualFS extends VirtualFileSystem {
       return null;
     }
 
-    return new String(FileUtil.loadBytes(stream), CharsetToolkit.UTF8);
+    return new String(FileUtil.loadBytes(stream), StandardCharsets.UTF_8);
   }
 }

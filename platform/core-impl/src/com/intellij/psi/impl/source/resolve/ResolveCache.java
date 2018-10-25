@@ -266,11 +266,9 @@ public class ResolveCache {
     }
     if (result == null) {
       // no use in creating SoftReference to null
-      //noinspection unchecked
       cached = (TResult)NULL_RESULT;
     }
     else {
-      //noinspection unchecked
       cached = result;
     }
     map.put(ref, cached);

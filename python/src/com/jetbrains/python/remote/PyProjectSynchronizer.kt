@@ -17,6 +17,7 @@ package com.jetbrains.python.remote
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.util.PathMappingSettings
 import java.io.File
 import java.util.function.Consumer
 
@@ -48,11 +49,18 @@ interface PyProjectSynchronizer {
   fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String?
 
   /**
-   * @return if remote box allows user to configure remote path, this method returns default path
+   * if remote box allows user to configure remote path, this method returns default path
    * that should be shown to user.
-   * If returns null, user can't configure remote path and GUI should not provide such ability
+   *
+   * Must return null if [getAutoMappings] are not null.
    */
   fun getDefaultRemotePath(): String?
+
+  /**
+   * If remote box does not allow user to configure path mapping then these mappings could be used to automatically convert
+   * local path to remote path. If set, can't be empty and can't coexist with [getDefaultRemotePath]
+   */
+  fun getAutoMappings(): List<PathMappingSettings.PathMapping>? = null
 
 
   /**

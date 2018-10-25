@@ -477,7 +477,7 @@ public class HighlightClassUtil {
       String message = JavaErrorMessages.message(mustBeInterface ? "interface.expected" : "no.interface.expected");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message).create();
       PsiClassType type =
-        JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(ref);
+        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(ref);
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createChangeExtendsToImplementsFix(aClass, type));
     }
     return errorResult;
@@ -890,7 +890,7 @@ public class HighlightClassUtil {
       if (PsiUtil.isInnerClass(targetClass)) {
         PsiClass outerClass = targetClass.getContainingClass();
         if (outerClass != null) {
-          PsiClassType outerType = JavaPsiFacade.getInstance(project).getElementFactory().createType(outerClass);
+          PsiClassType outerType = JavaPsiFacade.getElementFactory(project).createType(outerClass);
           return HighlightUtil.checkAssignability(outerType, null, qualifier, qualifier);
         }
       } else {

@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -78,6 +79,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
       e.getPresentation().setEnabled(false);
       return;
     }
+    ExternalSystemActionsCollector.trigger(project, null, this, e);
 
     final List<ProjectSystemId> systemIds = getSystemIds(e);
     if (systemIds.isEmpty()) {

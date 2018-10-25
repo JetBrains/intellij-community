@@ -22,7 +22,6 @@ public abstract class JdkVersionDetector {
   /** @deprecated use {@link #detectJdkVersionInfo(String)} (to be removed in IDEA 2019) */
   @Deprecated
   @Nullable
-  @SuppressWarnings("deprecation")
   public String detectJdkVersion(@NotNull String homePath) {
     JdkVersionInfo info = detectJdkVersionInfo(homePath);
     return info != null ? info.getVersion() : null;
@@ -31,7 +30,6 @@ public abstract class JdkVersionDetector {
   /** @deprecated use {@link #detectJdkVersionInfo(String, ActionRunner)} (to be removed in IDEA 2019) */
   @Deprecated
   @Nullable
-  @SuppressWarnings("deprecation")
   public String detectJdkVersion(@NotNull String homePath, @NotNull ActionRunner runner) {
     JdkVersionInfo info = detectJdkVersionInfo(homePath, runner);
     return info != null ? info.getVersion() : null;

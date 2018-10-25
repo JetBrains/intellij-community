@@ -31,12 +31,12 @@ public class JpsModelLoaderImpl implements JpsModelLoader {
   private final String myProjectPath;
   private final String myGlobalOptionsPath;
   private final boolean myLoadUnloadedModules;
-  private final ParameterizedRunnable<JpsModel> myModelInitializer;
+  private final ParameterizedRunnable<? super JpsModel> myModelInitializer;
 
   public JpsModelLoaderImpl(String projectPath,
                             String globalOptionsPath,
                             boolean loadUnloadedModules,
-                            @Nullable ParameterizedRunnable<JpsModel> initializer) {
+                            @Nullable ParameterizedRunnable<? super JpsModel> initializer) {
     myProjectPath = projectPath;
     myGlobalOptionsPath = globalOptionsPath;
     myLoadUnloadedModules = loadUnloadedModules;

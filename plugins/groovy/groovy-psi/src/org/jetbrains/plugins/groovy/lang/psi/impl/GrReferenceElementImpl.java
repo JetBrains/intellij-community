@@ -22,7 +22,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   private static final String DUMMY_FQN = "05ab655a-0e15-4f35-909d-9dff5e757f63";
 
   private volatile String myQualifiedReferenceName = DUMMY_FQN;
-  private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
   public GrReferenceElementImpl(@NotNull ASTNode node) {
     super(node);
@@ -31,7 +30,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   public void subtreeChanged() {
     myQualifiedReferenceName = DUMMY_FQN;
-    myCachedTextSkipWhiteSpaceAndComments = null;
     super.subtreeChanged();
   }
 
@@ -173,14 +171,6 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   @Override
   public void setQualifier(@Nullable Q newQualifier) {
     PsiImplUtil.setQualifier(this, newQualifier);
-  }
-
-  public String getTextSkipWhiteSpaceAndComments() {
-    String whiteSpaceAndComments = myCachedTextSkipWhiteSpaceAndComments;
-    if (whiteSpaceAndComments == null) {
-      myCachedTextSkipWhiteSpaceAndComments = whiteSpaceAndComments = PsiImplUtil.getTextSkipWhiteSpaceAndComments(getNode());
-    }
-    return whiteSpaceAndComments;
   }
 
   @Override

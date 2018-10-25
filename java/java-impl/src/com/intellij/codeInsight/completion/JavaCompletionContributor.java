@@ -98,6 +98,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     psiElement().withText("}").withParent(
       psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
   private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
+  private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
+    psiElement().inside(PsiTypeElement.class).afterLeaf(psiElement().inside(true, psiElement(PsiEnumConstant.class), psiClass()));
 
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
@@ -219,7 +221,9 @@ public class JavaCompletionContributor extends CompletionContributor {
       return;
     }
 
-    if (AFTER_NUMBER_LITERAL.accepts(position) || UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position)) {
+    if (AFTER_NUMBER_LITERAL.accepts(position) ||
+        UNEXPECTED_REFERENCE_AFTER_DOT.accepts(position) ||
+        AFTER_ENUM_CONSTANT.accepts(position)) {
       _result.stopHere();
       return;
     }
@@ -512,7 +516,9 @@ public class JavaCompletionContributor extends CompletionContributor {
     boolean isSecondCompletion = parameters.getInvocationCount() >= 2;
 
     PsiElement position = parameters.getPosition();
-    if (JavaKeywordCompletion.isInstanceofPlace(position) || JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+    if (JavaKeywordCompletion.isInstanceofPlace(position) ||
+        JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position) ||
+        AFTER_ENUM_CONSTANT.accepts(position)) {
       return false;
     }
 

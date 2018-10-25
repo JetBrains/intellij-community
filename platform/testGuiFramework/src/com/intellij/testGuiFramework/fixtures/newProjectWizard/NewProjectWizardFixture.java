@@ -120,7 +120,6 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
   @NotNull
   public File getLocationInFileSystem() {
     String labelText = GuiTestUtil.INSTANCE.adduction(IdeBundle.message("label.project.files.location"));
-    //noinspection ConstantConditions
     final JTextComponentFixture locationTextField = findTextField(labelText);
     return execute(new GuiQuery<File>() {
       @Override

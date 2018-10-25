@@ -98,7 +98,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
    *
    * @param loaders  class loaders which are assumed to be able to build object of the target content class
    */
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
   public void prepareData(@NotNull final ClassLoader ... loaders) {
     if (myData != null) {
       return;

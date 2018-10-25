@@ -522,7 +522,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     //noinspection ConstantConditions
     if (myWarningLabel != null) {
       myWarningLabel.setVisible(false);
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       VcsException updateException = ChangeListManagerImpl.getInstanceImpl(myProject).getUpdateException();
       if (updateException != null) {
         String[] messages = updateException.getMessages();
@@ -1199,7 +1198,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     @Override
     protected void selectChange(@NotNull Wrapper change) {
-      //noinspection unchecked
       myBrowser.selectEntries(singletonList(change.getUserObject()));
     }
 

@@ -7,7 +7,7 @@ import com.intellij.util.messages.Topic
 val STORAGE_TOPIC: Topic<StorageManagerListener> = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
 interface StateStorageManager {
-  val macroSubstitutor: TrackingPathMacroSubstitutor?
+  val macroSubstitutor: PathMacroSubstitutor?
     get() = null
 
   val componentManager: ComponentManager?

@@ -22,7 +22,6 @@ public class ImmutableCDATA extends CDATA {
     CDATA cdata = super.setText(str);
   }
 
-  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public CDATA clone() {
     CDATA text = new CDATA();

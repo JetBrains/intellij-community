@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonPointerReferenceProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +70,9 @@ public class JsonSchemaRefReferenceInspection extends JsonSchemaBasedInspectionB
         if (reference instanceof FileReference) {
           final int hash = text.indexOf('#');
           return JsonBundle.message("json.schema.ref.file.not.found", hash == -1 ? text : text.substring(0, hash));
+        }
+        if (reference instanceof JsonPointerReferenceProvider.JsonSchemaIdReference) {
+          return JsonBundle.message("json.schema.ref.cannot.resolve.id", text);
         }
         final int lastSlash = text.lastIndexOf('/');
         if (lastSlash == -1) {

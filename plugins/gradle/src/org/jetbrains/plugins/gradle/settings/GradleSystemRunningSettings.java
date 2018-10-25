@@ -23,7 +23,6 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
     return ServiceManager.getService(GradleSystemRunningSettings.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public GradleSystemRunningSettings.MyState getState() {

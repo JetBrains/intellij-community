@@ -101,7 +101,6 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     myInnerPanel = new JPanel(new CardLayout());
     myInnerPanel.add(ScrollPaneFactory.createScrollPane(myTable), TREE);
     if (getEmptyPaneText() != null) {
-      //noinspection HardCodedStringLiteral
       myEmptyPane = new EmptyPane(XmlStringUtil.wrapInHtml(getEmptyPaneText()));
       final JComponent emptyPanel = myEmptyPane.getComponent();
       myInnerPanel.add(emptyPanel, EMPTY_PANE);

@@ -73,7 +73,6 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       }
 
       private void registerProblem(PsiLoopStatement statement, PsiJavaToken endToken) {
-        //noinspection DialogTitleCapitalization
         holder.registerProblem(statement, new TextRange(0, endToken.getTextOffset() - statement.getTextOffset() + 1),
                                QuickFixBundle.message("java.8.collection.removeif.inspection.description"),
                                new ReplaceWithRemoveIfQuickFix());

@@ -374,8 +374,6 @@ public class CtrlMouseHandler {
 
     public abstract boolean isNavigatable();
 
-    public abstract void showDocInfo(@NotNull DocumentationManager docManager);
-
     protected boolean rangesAreCorrect(@NotNull Document document) {
       final TextRange docRange = new TextRange(0, document.getTextLength());
       for (TextRange range : getRanges()) {
@@ -422,12 +420,6 @@ public class CtrlMouseHandler {
     public boolean isNavigatable() {
       return myTargetElement != myElementAtPointer && myTargetElement != myElementAtPointer.getParent();
     }
-
-    @Override
-    public void showDocInfo(@NotNull DocumentationManager docManager) {
-      docManager.showJavaDocInfo(myTargetElement, myElementAtPointer, null);
-      docManager.setAllowContentUpdateFromContext(false);
-    }
   }
 
   private static class InfoMultiple extends Info {
@@ -453,11 +445,6 @@ public class CtrlMouseHandler {
     @Override
     public boolean isNavigatable() {
       return true;
-    }
-
-    @Override
-    public void showDocInfo(@NotNull DocumentationManager docManager) {
-      // Do nothing
     }
   }
 
@@ -553,10 +540,6 @@ public class CtrlMouseHandler {
       PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
       if (identifier != null && identifier.isValid()) {
         return new Info(identifier){
-          @Override
-          public void showDocInfo(@NotNull DocumentationManager docManager) {
-          }
-
           @NotNull
           @Override
           public DocInfo getInfo() {
@@ -791,10 +774,6 @@ public class CtrlMouseHandler {
       myHighlighter = installHighlighterSet(info, editor);
 
       if (docInfo.text == null) return;
-
-      if (myDocumentationManager.hasActiveDockedDocWindow()) {
-        info.showDocInfo(myDocumentationManager);
-      }
 
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null

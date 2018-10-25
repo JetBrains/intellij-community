@@ -33,17 +33,13 @@ public class BuildPropertiesImpl extends BuildProperties {
   public BuildPropertiesImpl(Project project, final GenerationOptions genOptions) {
     add(new Property(genOptions.getPropertiesFileName()));
 
-    //noinspection HardCodedStringLiteral
     add(new Comment(CompilerBundle.message("generated.ant.build.disable.tests.property.comment"),
                     new Property(PROPERTY_SKIP_TESTS, "true")));
     final JpsJavaCompilerOptions javacSettings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
     add(new Comment(CompilerBundle.message("generated.ant.build.compiler.options.comment")), 1);
-    //noinspection HardCodedStringLiteral
     add(new Property(PROPERTY_COMPILER_GENERATE_DEBUG_INFO, javacSettings.DEBUGGING_INFO ? "on" : "off"), 1);
-    //noinspection HardCodedStringLiteral
     add(new Property(PROPERTY_COMPILER_GENERATE_NO_WARNINGS, javacSettings.GENERATE_NO_WARNINGS ? "on" : "off"));
     add(new Property(PROPERTY_COMPILER_ADDITIONAL_ARGS, javacSettings.ADDITIONAL_OPTIONS_STRING));
-    //noinspection HardCodedStringLiteral
     final int heapSize = CompilerConfiguration.getInstance(project).getBuildProcessHeapSize(javacSettings.MAXIMUM_HEAP_SIZE);
     add(new Property(PROPERTY_COMPILER_MAX_MEMORY, heapSize + "m"));
 

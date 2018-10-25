@@ -63,49 +63,42 @@ public interface HighlightInfoType {
    * @deprecated For Java use JavaHighlightInfoTypes.LOCAL_VARIABLE or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType LOCAL_VARIABLE = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.LOCAL_VARIABLE_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_FIELD_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FINAL_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_FINAL_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_FINAL_FIELD_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.PARAMETER or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType PARAMETER = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.PARAMETER_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.METHOD_CALL or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType METHOD_CALL = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_CALL_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.METHOD_DECLARATION or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType METHOD_DECLARATION = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.METHOD_DECLARATION_ATTRIBUTES);
   /**
@@ -124,7 +117,6 @@ public interface HighlightInfoType {
    * @deprecated For Java use JavaHighlightInfoTypes.STATIC_METHOD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType STATIC_METHOD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.STATIC_METHOD_ATTRIBUTES);
   /**
@@ -143,7 +135,6 @@ public interface HighlightInfoType {
    * @deprecated For Java use JavaHighlightInfoTypes.CLASS_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType CLASS_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.CLASS_NAME_ATTRIBUTES);
   /**
@@ -156,7 +147,6 @@ public interface HighlightInfoType {
    * @deprecated For Java use JavaHighlightInfoTypes.INTERFACE_NAME or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.
    */
-  @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType INTERFACE_NAME = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
   /**
@@ -218,6 +208,8 @@ public interface HighlightInfoType {
   HighlightSeverity ELEMENT_UNDER_CARET_SEVERITY = new HighlightSeverity("ELEMENT_UNDER_CARET", HighlightSeverity.ERROR.myVal + 1);
   HighlightInfoType ELEMENT_UNDER_CARET_READ = new HighlightInfoType.HighlightInfoTypeImpl(ELEMENT_UNDER_CARET_SEVERITY, EditorColors.IDENTIFIER_UNDER_CARET_ATTRIBUTES);
   HighlightInfoType ELEMENT_UNDER_CARET_WRITE = new HighlightInfoType.HighlightInfoTypeImpl(ELEMENT_UNDER_CARET_SEVERITY, EditorColors.WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES);
+  HighlightInfoType ELEMENT_UNDER_CARET_STRUCTURAL =
+    new HighlightInfoType.HighlightInfoTypeImpl(ELEMENT_UNDER_CARET_SEVERITY, CodeInsightColors.MATCHED_BRACE_ATTRIBUTES);
 
   /**
    * @see com.intellij.openapi.editor.impl.RangeHighlighterImpl#VISIBLE_IF_FOLDED

@@ -73,7 +73,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
   public static MethodSignatureBackedByPsiMethod create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor, boolean isRaw) {
     PsiTypeParameter[] methodTypeParameters = method.getTypeParameters();
     if (isRaw) {
-      substitutor = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(substitutor, methodTypeParameters);
+      substitutor = JavaPsiFacade.getElementFactory(method.getProject()).createRawSubstitutor(substitutor, methodTypeParameters);
       methodTypeParameters = PsiTypeParameter.EMPTY_ARRAY;
     }
     

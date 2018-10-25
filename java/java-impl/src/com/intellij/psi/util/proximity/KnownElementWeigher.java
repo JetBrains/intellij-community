@@ -84,7 +84,11 @@ public class KnownElementWeigher extends ProximityWeigher {
         if (JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
           return 0;
         }
-        return getJdkClassProximity(method.getContainingClass());
+        Integer classProximity = getJdkClassProximity(containingClass);
+        if (classProximity != null && "println".equals(methodName) && method.getParameterList().getParametersCount() > 0) {
+          return 1 + classProximity;
+        }
+        return classProximity;
       }
     }
     if (element instanceof PsiField) {
@@ -116,7 +120,7 @@ public class KnownElementWeigher extends ProximityWeigher {
     return "getClass".equals(method.getName()) && method.getParameterList().getParametersCount() <= 0;
   }
 
-  private static Comparable getJdkClassProximity(@Nullable PsiClass element) {
+  private static Integer getJdkClassProximity(@Nullable PsiClass element) {
     String qname = element == null ? null : element.getQualifiedName();
     if (qname == null) return null;
     

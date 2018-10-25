@@ -21,6 +21,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,7 +52,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   private class MyListCellRenderer extends DefaultListCellRenderer {
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      super.getListCellRendererComponent(list, value, index, isSelected, false);
       Icon icon = null;
       if (value instanceof FileTemplate) {
         FileTemplate template = (FileTemplate) value;
@@ -73,6 +74,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
         }
       }
       setIcon(icon);
+      if (isSelected) setBackground(UIUtil.getListSelectionBackground(cellHasFocus));
       return this;
     }
   }

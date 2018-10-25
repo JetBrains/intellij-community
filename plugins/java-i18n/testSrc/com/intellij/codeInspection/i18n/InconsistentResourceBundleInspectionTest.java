@@ -23,7 +23,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 /**
  * @author Dmitry Batkovich
  */
-@SuppressWarnings("unchecked")
 public class InconsistentResourceBundleInspectionTest extends JavaCodeInsightFixtureTestCase {
   private InconsistentResourceBundleInspection myInspection = new InconsistentResourceBundleInspection();
 

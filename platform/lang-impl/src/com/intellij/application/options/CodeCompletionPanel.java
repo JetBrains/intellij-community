@@ -70,7 +70,7 @@ public class CodeCompletionPanel {
 
   private JPanel myAddonPanel;
 
-  public CodeCompletionPanel(List<JComponent> addons) {
+  public CodeCompletionPanel(List<? extends JComponent> addons) {
     ChangeListener updateCaseCheckboxes = __ -> {
       myFirstLetterOnly.setEnabled(myCbMatchCase.isSelected());
       myAllLetters.setEnabled(myCbMatchCase.isSelected());

@@ -1,18 +1,27 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+
+import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpPut
+import org.apache.http.entity.ContentType
+import org.apache.http.entity.FileEntity
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.impl.client.LaxRedirectStrategy
+import org.apache.http.util.EntityUtils
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 
 @CompileStatic
-class CompilationPartsUploader {
+class CompilationPartsUploader implements Closeable {
   private final String myServerUrl
   private final BuildMessages myMessages
-
-  private static final String UTF_8 = "UTF-8"
-  private static final int MB = 1024 * 1024
+  private final CloseableHttpClient myHttpClient
 
   static class UploadException extends Exception {
     UploadException(String message) {
@@ -27,6 +36,19 @@ class CompilationPartsUploader {
   CompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
     myServerUrl = fixServerUrl(serverUrl)
     myMessages = messages
+    CompilationPartsUtil.initLog4J(messages)
+    myHttpClient = HttpClientBuilder.create()
+      .setUserAgent(this.class.name)
+      .setRedirectStrategy(LaxRedirectStrategy.INSTANCE)
+      .setMaxConnTotal(20)
+      .setMaxConnPerRoute(10)
+      .build()
+  }
+
+  @Override
+  void close() throws IOException {
+    StreamUtil.closeStream(myHttpClient)
+    CompilationPartsUtil.deinitLog4J()
   }
 
   @SuppressWarnings("unused")
@@ -63,7 +85,8 @@ class CompilationPartsUploader {
     final String response = doPut(path, file)
     if (StringUtil.isEmptyOrSpaces(response)) {
       log("Performed '$path' upload.")
-    } else {
+    }
+    else {
       debug("Performed '$path' upload. Server answered: " + response)
     }
     return true
@@ -71,72 +94,45 @@ class CompilationPartsUploader {
 
   @NotNull
   private int doHead(String path) throws UploadException {
+    CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("HEAD " + url)
 
-      HttpURLConnection conn = (HttpURLConnection)new URL(url).openConnection()
-      conn.setDoInput(true)
-      conn.setDoOutput(false)
-      conn.setUseCaches(false)
-      conn.setInstanceFollowRedirects(true)
-      conn.setRequestMethod("HEAD")
-
-      conn.setRequestProperty("User-Agent", "CompilationPartsUploader")
-      conn.setRequestProperty("Connection", "Keep-Alive")
-      conn.setRequestProperty("Accept", "*/*")
-
-      // Get the response
-      final int code = conn.getResponseCode()
-      return code
+      def request = new HttpGet(url)
+      response = myHttpClient.execute(request)
+      return response.getStatusLine().getStatusCode()
     }
     catch (Exception e) {
       throw new UploadException("Failed to HEAD $path: " + e.getMessage(), e)
+    }
+    finally {
+      StreamUtil.closeStream(response)
     }
   }
 
   @NotNull
   private String doPut(String path, File file) throws UploadException {
+    CloseableHttpResponse response = null
     try {
       String url = myServerUrl + StringUtil.trimStart(path, '/')
       debug("PUT " + url)
 
-      HttpURLConnection conn = (HttpURLConnection)new URL(url).openConnection()
-      conn.setDoInput(true)
-      conn.setDoOutput(true)
-      conn.setUseCaches(false)
-      conn.setRequestMethod("PUT")
+      def request = new HttpPut(url)
+      request.setEntity(new FileEntity(file, ContentType.APPLICATION_OCTET_STREAM))
 
-      conn.setRequestProperty("User-Agent", "CompilationPartsUploader")
-      conn.setRequestProperty("Connection", "Keep-Alive")
-      conn.setRequestProperty("Accept-Charset", UTF_8)
-      conn.setRequestProperty("Content-Type", "application/octet-stream")
-      conn.setRequestProperty("Content-Length", String.valueOf(file.length()))
-      conn.setFixedLengthStreamingMode(file.length())
+      response = myHttpClient.execute(request)
 
-      InputStream is = new BufferedInputStream(new FileInputStream(file), 5 * MB)
-      OutputStream output = conn.getOutputStream()
-      transfer(is, output, MB)
-      is.close()
-      output.close()
-
-      // Get the response
-      return readBody(conn)
+      EntityUtils.consume(response.getEntity())
+      return response.getStatusLine().getStatusCode()
     }
     catch (Exception e) {
       throw new UploadException("Failed to PUT file to $path: " + e.getMessage(), e)
     }
+    finally {
+      StreamUtil.closeStream(response)
+    }
   }
-
-  @NotNull
-  private static String readBody(HttpURLConnection conn) throws IOException {
-    final InputStream response = conn.getInputStream()
-    final ByteArrayOutputStream output = new ByteArrayOutputStream()
-    transfer(response, output, 8 * 1024)
-    response.close()
-    return new String(output.toByteArray(), UTF_8)
-  }
-
 
   private static String fixServerUrl(String serverUrl) {
     String url = serverUrl
@@ -145,14 +141,5 @@ class CompilationPartsUploader {
     }
     if (!url.endsWith("/")) url += '/'
     return url
-  }
-
-  private static void transfer(InputStream is, OutputStream output, int bufferSize) throws IOException {
-    byte[] buffer = new byte[bufferSize]
-    int length
-    while ((length = is.read(buffer)) > 0) {
-      output.write(buffer, 0, length)
-    }
-    output.flush()
   }
 }

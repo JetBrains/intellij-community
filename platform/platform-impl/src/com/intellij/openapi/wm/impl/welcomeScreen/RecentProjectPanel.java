@@ -507,7 +507,7 @@ public class RecentProjectPanel extends JPanel {
 
       try {
         FontMetrics fm = pathLabel.getFontMetrics(pathLabel.getFont());
-        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset;
+        int maxWidth = RecentProjectPanel.this.getWidth() - leftOffset - (int)ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth() - JBUI.scale(10);
         if (maxWidth > 0 && fm.stringWidth(fullText) > maxWidth) {
           int left = 1; int right = 1;
           int center = fullText.length() / 2;

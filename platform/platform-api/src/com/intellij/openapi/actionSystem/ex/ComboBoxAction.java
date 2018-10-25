@@ -148,7 +148,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
 
-      //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {

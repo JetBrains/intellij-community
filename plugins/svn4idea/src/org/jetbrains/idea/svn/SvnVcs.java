@@ -82,7 +82,6 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.emptyList;
 import static java.util.function.Function.identity;
 
-@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private static final String DO_NOT_LISTEN_TO_WC_DB = "svn.do.not.listen.to.wc.db";
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");

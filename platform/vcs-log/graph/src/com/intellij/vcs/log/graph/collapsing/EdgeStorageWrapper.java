@@ -33,16 +33,16 @@ import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.intEqual;
 
 public class EdgeStorageWrapper {
   @NotNull private final EdgeStorage myEdgeStorage;
-  @NotNull private final Function<Integer, Integer> myGetNodeIndexById;
-  @NotNull private final Function<Integer, Integer> myGetNodeIdByIndex;
+  @NotNull private final Function<? super Integer, Integer> myGetNodeIndexById;
+  @NotNull private final Function<? super Integer, Integer> myGetNodeIdByIndex;
 
   public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage, @NotNull final LinearGraph graph) {
     this(edgeStorage, nodeId -> graph.getNodeIndex(nodeId), nodeIndex -> graph.getNodeId(nodeIndex));
   }
 
   public EdgeStorageWrapper(@NotNull EdgeStorage edgeStorage,
-                            @NotNull Function<Integer, Integer> getNodeIndexById,
-                            @NotNull Function<Integer, Integer> getNodeIdByIndex) {
+                            @NotNull Function<? super Integer, Integer> getNodeIndexById,
+                            @NotNull Function<? super Integer, Integer> getNodeIdByIndex) {
     myEdgeStorage = edgeStorage;
     myGetNodeIndexById = getNodeIndexById;
     myGetNodeIdByIndex = getNodeIdByIndex;

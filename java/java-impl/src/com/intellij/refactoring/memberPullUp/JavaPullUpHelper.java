@@ -455,7 +455,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
         }
       }
 
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(subConstructor.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(subConstructor.getProject());
       try {
         if (superCall == null) {
             PsiExpressionStatement statement =
@@ -684,7 +684,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     ArrayList<PsiJavaCodeReferenceElement> refs = collector.getReferences();
     ArrayList<PsiElement> members = collector.getReferees();
     ArrayList<PsiClass> classes = collector.getRefereeClasses();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(classMember.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(classMember.getProject());
 
     for (int i = 0; i < refs.size(); i++) {
       PsiJavaCodeReferenceElement ref = refs.get(i);

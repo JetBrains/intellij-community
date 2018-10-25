@@ -68,7 +68,6 @@ public abstract class AbstractBundle {
     return bundle;
   }
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
     ConcurrentFactoryMap.createWeakMap(new Function<ClassLoader, Map<String, ResourceBundle>>() {
       @Override

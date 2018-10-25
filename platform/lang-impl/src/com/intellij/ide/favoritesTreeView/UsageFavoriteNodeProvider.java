@@ -73,7 +73,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, ViewSettings viewSettings) {
+  public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, @NotNull ViewSettings viewSettings) {
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
@@ -132,7 +132,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   @Override
-  public AbstractTreeNode createNode(Project project, Object element, ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(Project project, Object element, @NotNull ViewSettings viewSettings) {
     if (element instanceof UsageInfo) {
       return new UsageProjectTreeNode(project, (UsageInfo)element, viewSettings);
     }

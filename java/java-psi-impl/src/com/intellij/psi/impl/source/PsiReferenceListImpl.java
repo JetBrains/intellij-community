@@ -49,7 +49,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
     }
 
     PsiJavaCodeReferenceElement[] refs = getReferenceElements();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     PsiClassType[] types = new PsiClassType[refs.length];
     for (int i = 0; i < types.length; i++) {
       types[i] = factory.createType(refs[i]);

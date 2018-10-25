@@ -24,7 +24,7 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
   private final InsertHandler<JavaGlobalMemberLookupElement> myQualifiedInsertion;
   private final InsertHandler<JavaGlobalMemberLookupElement> myImportInsertion;
 
-  public JavaGlobalMemberLookupElement(List<PsiMethod> overloads,
+  public JavaGlobalMemberLookupElement(List<? extends PsiMethod> overloads,
                                        PsiClass containingClass,
                                        InsertHandler<JavaGlobalMemberLookupElement> qualifiedInsertion,
                                        InsertHandler<JavaGlobalMemberLookupElement> importInsertion, boolean shouldImport) {

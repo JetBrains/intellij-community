@@ -119,7 +119,7 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
-  public final ActionCallback doWhenRejected(@NotNull final Consumer<String> consumer) {
+  public final ActionCallback doWhenRejected(@NotNull final Consumer<? super String> consumer) {
     myRejected.doWhenExecuted(() -> consumer.consume(myError));
     return this;
   }

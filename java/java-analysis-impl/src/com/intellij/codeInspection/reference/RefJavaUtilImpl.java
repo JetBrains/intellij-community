@@ -5,6 +5,7 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -213,6 +214,9 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          if (psiResolved == null) {
                            psiResolved = tryFindKotlinParameter(node, decl);
+                         }
+                         if (psiResolved instanceof LightElement) {
+                           psiResolved = psiResolved.getNavigationElement();
                          }
                          RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
                          boolean writing = isAccessedForWriting(node);
@@ -428,7 +432,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
           if (containingClass != null) {
             fqName = containingClass.getQualifiedName();
             if (fqName != null) {
-              final PsiClassType methodOwnerType = JavaPsiFacade.getInstance(psiResolved.getProject()).getElementFactory()
+              final PsiClassType methodOwnerType = JavaPsiFacade.getElementFactory(psiResolved.getProject())
                 .createTypeByFQClassName(fqName, GlobalSearchScope.allScope(psiResolved.getProject()));
               if (!usedType.equals(methodOwnerType)) {
                 refMethod.setCalledOnSubClass(true);

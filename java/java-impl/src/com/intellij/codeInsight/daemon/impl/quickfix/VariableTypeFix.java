@@ -100,7 +100,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
         final PsiTypeElement typeElement = myVariable.getTypeElement();
         LOG.assertTrue(typeElement != null, myVariable.getClass());
         final PsiTypeElement newTypeElement =
-          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
+          JavaPsiFacade.getElementFactory(file.getProject()).createTypeElement(getReturnType());
         typeElement.replace(newTypeElement);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
         UndoUtil.markPsiFileForUndo(file);

@@ -46,7 +46,8 @@ public interface EnterHandlerDelegate {
    *
    * @param file            The PSI file associated with the document.
    * @param editor          The editor.
-   * @param caretOffset     A reference to the current caret offset in the document.
+   * @param caretOffset     Indicates a place where line break is to be inserted (it's a caret position initially). Method implementation
+   *                        can change this value to adjust target line break position.
    * @param caretAdvance    A reference to the number of columns by which the caret must be moved forward.
    * @param dataContext     The data context passed to the enter handler.
    * @param originalHandler The original handler.

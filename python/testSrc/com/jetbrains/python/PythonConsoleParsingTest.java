@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 public class PythonConsoleParsingTest extends ParsingTestCase {
   private LanguageLevel myLanguageLevel = LanguageLevel.getDefault();
 
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public PythonConsoleParsingTest() {
     super("psi", "py", new PythonParserDefinition());
   }

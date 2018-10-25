@@ -60,7 +60,7 @@ public class MakeMethodDelegate extends FixableUsageInfo {
         }
         delegation.append(");");
         final PsiManager manager = method.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         final String delegationText = delegation.toString();
         final PsiStatement delegationStatement =
                 factory.createStatementFromText(delegationText, body);

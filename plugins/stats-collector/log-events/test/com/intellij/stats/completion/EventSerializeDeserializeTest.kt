@@ -56,60 +56,63 @@ class EventSerializeDeserializeTest {
     @Test
     fun `completion started event`() {
         val event = CompletionStartedEvent("", "", "", Fixtures.userId,
-                "xx", "Java", true, 1, Fixtures.lookupList,
-                Fixtures.userFactors, 0)
+                                           "xx", "Java", true, 1, Fixtures.lookupList,
+                                           Fixtures.userFactors, 0, 0, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
 
     @Test
     fun `up down pressed event`() {
-        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2)
+        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
 
-        event = DownPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2)
+        event = DownPressedEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 2, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `up down pressed event no additional items`() {
-        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2)
+        var event: LogEvent = UpPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
 
-        event = DownPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2)
+        event = DownPressedEvent(Fixtures.userId, "xx", emptyList(), emptyList(), 2, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `completion cancelled event`() {
-        val event = CompletionCancelledEvent(Fixtures.userId, "xx")
+        val event = CompletionCancelledEvent(Fixtures.userId, "xx", System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `item selected by typing event`() {
-        val event = TypedSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 5, Fixtures.lookupList, Fixtures.history)
+        val event = TypedSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 5, Fixtures.lookupList, Fixtures.history,
+                                     System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `explicit select event`() {
-        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 10, 10, Fixtures.lookupList, Fixtures.history)
+        var event: LogEvent = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 10, 10, Fixtures.lookupList,
+                                                  Fixtures.history, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
-        
-        event = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 2, 2, Fixtures.lookupList, Fixtures.history)
+
+        event = ExplicitSelectEvent(Fixtures.userId, "xx", Fixtures.lookupList.drop(1), 2, 2, Fixtures.lookupList, Fixtures.history,
+                                    System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     @Test
     fun `backspace event`() {
-        val event: LogEvent = BackspaceEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 3)
+        val event: LogEvent = BackspaceEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 3, 1, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
     
     
     @Test
     fun `type event`() {
-        val event = TypeEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 1)
+        val event = TypeEvent(Fixtures.userId, "xx", listOf(1, 2, 3), Fixtures.lookupList, 1, 1, System.currentTimeMillis())
         serializeDeserializeAndCheck(event)
     }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.findUsages;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,11 +45,6 @@ public class DescriptiveNameUtil {
       return ((PsiFile)psiElement).getName();
     }
     
-    Language lang = psiElement.getLanguage();
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-    if (provider == null) {
-      throw new AssertionError(lang);
-    }
-    return provider.getDescriptiveName(psiElement);
+    return LanguageFindUsages.getDescriptiveName(psiElement);
   }
 }

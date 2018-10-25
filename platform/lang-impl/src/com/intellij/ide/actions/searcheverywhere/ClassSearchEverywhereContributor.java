@@ -56,8 +56,9 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor<
     return 100;
   }
 
+  @NotNull
   @Override
-  protected FilteringGotoByModel<Language> createModel(Project project) {
+  protected FilteringGotoByModel<Language> createModel(@NotNull Project project) {
     return new GotoClassModel2(project);
   }
 

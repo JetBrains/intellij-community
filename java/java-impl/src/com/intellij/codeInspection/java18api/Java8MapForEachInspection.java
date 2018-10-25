@@ -70,7 +70,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
-        return ReferencesSearch.search(entry).forEach(entryRef -> {
+        return ReferencesSearch.search(entry).allMatch(entryRef -> {
           PsiMethodCallExpression entryCall =
             ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(entryRef.getElement(), PsiExpression.class));
           return ENTRY_GETTER.test(entryCall);

@@ -97,7 +97,6 @@ public class JavaAnonymousUnwrapper extends JavaUnwrapper {
 
   private static PsiElement findTopmostParentOfType(PsiElement el, Class<? extends PsiElement> clazz) {
     while (true) {
-      @SuppressWarnings({"unchecked"})
       PsiElement temp = PsiTreeUtil.getParentOfType(el, clazz, true, PsiAnonymousClass.class, PsiLambdaExpression.class);
       if (temp == null || temp instanceof PsiFile) return el;
       el = temp;

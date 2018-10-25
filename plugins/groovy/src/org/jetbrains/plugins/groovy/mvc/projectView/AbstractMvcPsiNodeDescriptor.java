@@ -22,7 +22,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
@@ -55,7 +54,7 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
   private final int myWeight;
 
   protected AbstractMvcPsiNodeDescriptor(@NotNull final Module module,
-                                         @Nullable final ViewSettings viewSettings,
+                                         final ViewSettings viewSettings,
                                          @NotNull final PsiElement nodeId, int weight) {
     super(module.getProject(), nodeId, viewSettings);
     myModule = module;

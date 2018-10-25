@@ -6,7 +6,7 @@
 # see: http://nullege.com/codes/search/socket
 # adapted for Python 2.7 by Michal Pokorny
 import sys
-from typing import Any, Iterable, Tuple, List, Optional, Union, overload, TypeVar
+from typing import Any, Iterable, Tuple, List, Optional, Union, overload, TypeVar, Text
 
 _WriteBuffer = Union[bytearray, memoryview]
 
@@ -549,12 +549,12 @@ class socket:
         ...
     def recv(self, bufsize: int, flags: int = ...) -> bytes: ...
 
-    # return type is an address
-    def recvfrom(self, bufsize: int, flags: int = ...) -> Any: ...
+    # Any in return type is an address
+    def recvfrom(self, bufsize: int, flags: int = ...) -> Tuple[bytes, Any]: ...
     def recvfrom_into(self, buffer: _WriteBuffer, nbytes: int,
-                      flags: int = ...) -> Any: ...
+                      flags: int = ...) -> Tuple[int, Any]: ...
     def recv_into(self, buffer: _WriteBuffer, nbytes: int,
-                  flags: int = ...) -> Any: ...
+                  flags: int = ...) -> int: ...
     def send(self, data: bytes, flags: int = ...) -> int: ...
     def sendall(self, data: bytes, flags: int =...) -> None:
         ...  # return type: None on success
@@ -579,13 +579,13 @@ class socket:
 # ----- functions -----
 def create_connection(address: Tuple[Optional[str], int],
                       timeout: float = ...,
-                      source_address: Tuple[str, int] = ...) -> socket: ...
+                      source_address: Tuple[Union[bytearray, bytes, Text], int] = ...) -> socket: ...
 
 # the 5th tuple item is an address
 # TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
 # https://github.com/python/mypy/issues/2509
 def getaddrinfo(
-        host: Optional[str], port: Union[str, int, None], family: int = ...,
+        host: Optional[Union[bytearray, bytes, Text]], port: Union[str, int, None], family: int = ...,
         socktype: int = ..., proto: int = ...,
         flags: int = ...) -> List[Tuple[int, int, int, str, Tuple[Any, ...]]]:
     ...

@@ -18,6 +18,7 @@ Function ${un}OMDeleteRegKey
   hkcr:	
     DeleteRegKey HKCR $1
 done:
+  ${LogText} "  deleted registry key: $0 $1"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -38,6 +39,7 @@ Function ${un}OMDeleteRegKeyIfEmpty
   hkcr:	
     DeleteRegKey /ifempty HKCR $1
 done:
+  ${LogText} "  deleted registry key: $0 $1"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -59,6 +61,7 @@ Function ${un}OMDeleteRegValue
   hkcr:	
     DeleteRegValue HKCR $1 $2
 done:
+  ${LogText} "  deleted registry value: $0 $1 $2"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -81,6 +84,7 @@ Function ${un}OMReadRegStr
   hkcr:	
     ReadRegStr $3 HKCR $1 $2
 done:
+  ${LogText} "  find registry string: $0 $1 $2 $3"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -103,6 +107,7 @@ Function ${un}OMEnumRegKey
   hkcr:  
     EnumRegKey $3 HKCR $1 $4
 done:
+  ${LogText} "  find registry key: $0 $1 $4 $3"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -125,6 +130,7 @@ Function ${un}OMEnumRegValue
   hkcr:
     EnumRegValue $3 HKCR $1 $4
 done:
+  ${LogText} "  find registry value: $0 $1 $4 $3"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------
@@ -147,6 +153,7 @@ Function ${un}OMWriteRegStr
   hkcr:	
     WriteRegStr HKCR $1 $2 $3
 done:
+  ${LogText} "  write registry string: $0 $1 $2 $3"
 FunctionEnd
 
 

@@ -71,7 +71,6 @@ public class AboutHttpService extends RestService {
   @Nullable
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
     getAbout(byteOut, urlDecoder);
     send(byteOut, request, context);

@@ -145,7 +145,7 @@ public class ChainCompletionContext {
 
   public Stream<PsiNamedElement> getQualifiers(@Nullable PsiClass targetClass) {
     if (targetClass == null) return Stream.empty();
-    return getQualifiers(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(targetClass));
+    return getQualifiers(JavaPsiFacade.getElementFactory(myProject).createType(targetClass));
   }
 
   public Stream<PsiNamedElement> getQualifiers(@NotNull PsiType targetType) {

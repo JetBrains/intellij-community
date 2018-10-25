@@ -8,11 +8,11 @@ import com.intellij.openapi.project.DumbAwareAction
 
 class GithubPullRequestRefreshListAction : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
   override fun update(e: AnActionEvent) {
-    val loader = e.getData(GithubPullRequestKeys.PULL_REQUESTS_LOADER)
-    e.presentation.isEnabled = loader != null
+    val component = e.getData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT)
+    e.presentation.isEnabled = component != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(GithubPullRequestKeys.PULL_REQUESTS_LOADER).reset()
+    e.getRequiredData(GithubPullRequestKeys.PULL_REQUESTS_COMPONENT).refreshAllPullRequests()
   }
 }

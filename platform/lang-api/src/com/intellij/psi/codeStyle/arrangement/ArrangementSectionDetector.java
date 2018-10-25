@@ -41,12 +41,12 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Se
 public class ArrangementSectionDetector {
   private final Document myDocument;
   private final ArrangementSettings mySettings;
-  private final Consumer<ArrangementSectionEntryTemplate> mySectionEntryProducer;
+  private final Consumer<? super ArrangementSectionEntryTemplate> mySectionEntryProducer;
   private final Stack<ArrangementSectionRule> myOpenedSections = ContainerUtil.newStack();
 
   public ArrangementSectionDetector(@Nullable Document document,
                                     @NotNull ArrangementSettings settings,
-                                    @NotNull Consumer<ArrangementSectionEntryTemplate> producer) {
+                                    @NotNull Consumer<? super ArrangementSectionEntryTemplate> producer) {
     myDocument = document;
     mySettings = settings;
     mySectionEntryProducer = producer;

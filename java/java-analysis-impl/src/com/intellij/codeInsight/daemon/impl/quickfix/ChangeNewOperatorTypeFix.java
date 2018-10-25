@@ -61,7 +61,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
 
   private static void changeNewOperatorType(PsiNewExpression originalExpression, PsiType toType, final Editor editor) throws IncorrectOperationException {
     PsiNewExpression newExpression;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
     int caretOffset;
     TextRange selection;
     CommentTracker commentTracker = new CommentTracker();
@@ -157,7 +157,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
         if (lClass != null) {
           PsiSubstitutor substitutor = getInheritorSubstitutorForNewExpression(lClass, rClass, lResolveResult.getSubstitutor(), expression);
           if (substitutor != null) {
-            newType = JavaPsiFacade.getInstance(lClass.getProject()).getElementFactory().createType(rClass, substitutor);
+            newType = JavaPsiFacade.getElementFactory(lClass.getProject()).createType(rClass, substitutor);
           }
         }
       }

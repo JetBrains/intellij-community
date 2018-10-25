@@ -48,7 +48,7 @@ import java.util.*;
  * In order to run locally, use "TraverseUi" run configuration (pass corresponding "idea.platform.prefix" property via VM options,
  * and choose correct main module).
  */
-@SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis", "UseOfSystemOutOrSystemErr"})
+@SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class TraverseUIStarter extends ApplicationStarterEx {
   private static final String OPTIONS = "options";
   private static final String CONFIGURABLE = "configurable";

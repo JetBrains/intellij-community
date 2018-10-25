@@ -271,7 +271,6 @@ public final class PreviewFormAction extends AnAction{
       }
     );
     if (rootContainer.getComponentCount() == 1) {
-      //noinspection HardCodedStringLiteral
       ((LwComponent)rootContainer.getComponent(0)).setBinding(PREVIEW_BINDING_FIELD);
     }
   }

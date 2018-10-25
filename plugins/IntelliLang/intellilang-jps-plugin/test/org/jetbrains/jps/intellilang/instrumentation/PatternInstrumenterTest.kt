@@ -7,6 +7,7 @@ import com.intellij.compiler.instrumentation.InstrumenterClassWriter
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ExceptionUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Pattern
@@ -68,6 +69,12 @@ class PatternInstrumenterTest {
     assertEquals("V2", testClass.getField("V2").get(null).toString())
   }
 
+  @Test fun groovyEnumConstructor() {
+    val testClass = loadClass("TestGrEnum")
+    assertEquals("G1", testClass.getField("G1").get(null).toString())
+    assertEquals("G2", testClass.getField("G2").get(null).toString())
+  }
+
   @Test fun staticNestedClass() {
     val testClass = loadClass()
     val method = testClass.getMethod("createNested", String::class.java, String::class.java)
@@ -77,6 +84,12 @@ class PatternInstrumenterTest {
   @Test fun innerClass() {
     val testClass = loadClass()
     val method = testClass.getMethod("createInner", String::class.java, String::class.java)
+    assertFails(method, "0", "-")
+  }
+
+  @Test fun groovyInnerClass() {
+    val testClass = loadClass("TestGrInner")
+    val method = testClass.getConstructor(String::class.java, String::class.java)
     assertFails(method, "0", "-")
   }
 
@@ -123,13 +136,13 @@ class PatternInstrumenterTest {
   private fun loadClass(name: String = "TestClass", type: InstrumentationType = InstrumentationType.EXCEPTION): Class<*> {
     val testDir = File(PluginPathManager.getPluginHomePath("IntelliLang") + "/intellilang-jps-plugin/testData/patternInstrumenter")
 
-    val paths = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
-    val urls = paths.asSequence().map { p -> File(p).toURI().toURL() }.toMutableList()
-    urls += testDir.toURI().toURL()
-    val finder = InstrumentationClassFinder(urls.toTypedArray())
+    val roots = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
+    val paths = listOf(testDir.path) + roots + listOf(PlatformTestUtil.getRtJarPath())
+    val urls = paths.map { p -> File(p).toURI().toURL() }.toTypedArray()
+    val finder = InstrumentationClassFinder(urls)
 
     val loader = MyClassLoader()
-    testDir.listFiles().filter { it.name.endsWith(".class") }.sorted().forEach {
+    testDir.listFiles().filter { it.name.startsWith(name) && it.name.endsWith(".class") }.sorted().forEach {
       val reader = FailSafeClassReader(it.readBytes())
       val writer = InstrumenterClassWriter(reader, ClassWriter.COMPUTE_FRAMES, finder)
       PatternValidatorBuilder.processClassFile(reader, writer, finder, Pattern::class.java.name, type)

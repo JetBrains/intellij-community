@@ -50,7 +50,6 @@ public class ProcessingContext {
     return mySharedContext;
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   public Object get(@NotNull @NonNls final Object key) {
     return myMap == null? null : myMap.get(key);
   }
@@ -65,7 +64,6 @@ public class ProcessingContext {
     myMap.put(key, value);
   }
 
-  @SuppressWarnings({"ConstantConditions"})
   public <T> T get(Key<T> key) {
     return myMap == null ? null : (T)myMap.get(key);
   }

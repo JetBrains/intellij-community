@@ -19,21 +19,191 @@ import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
-import org.fest.swing.hierarchy.ExistingHierarchy
+import org.fest.swing.hierarchy.ComponentHierarchy
 import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
-import java.awt.Component
-import java.awt.MouseInfo
-import java.awt.Point
-import java.awt.Window
+import java.awt.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import javax.swing.JPopupMenu
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
+class SmartWaitRobot : Robot {
+
+  override fun moveMouse(component: Component) {
+    basicRobot.moveMouse(component)
+  }
+
+  override fun moveMouse(component: Component, point: Point) {
+    basicRobot.moveMouse(component, point)
+  }
+
+  override fun moveMouse(point: Point) {
+    basicRobot.moveMouse(point)
+  }
+
+  override fun click(component: Component) {
+    basicRobot.click(component)
+  }
+
+  override fun click(component: Component, mouseButton: MouseButton) {
+    basicRobot.click(component, mouseButton)
+  }
+
+  override fun click(component: Component, mouseButton: MouseButton, counts: Int) {
+    basicRobot.click(component, mouseButton, counts)
+  }
+
+  override fun click(component: Component, point: Point) {
+    basicRobot.click(component, point)
+  }
+
+  override fun showWindow(window: Window) {
+    basicRobot.showWindow(window)
+  }
+
+  override fun showWindow(window: Window, dimension: Dimension) {
+    basicRobot.showWindow(window, dimension)
+  }
+
+  override fun showWindow(window: Window, dimension: Dimension?, p2: Boolean) {
+    basicRobot.showWindow(window, dimension, p2)
+  }
+
+  override fun isActive(): Boolean = basicRobot.isActive
+
+
+  override fun pressAndReleaseKey(p0: Int, vararg p1: Int) {
+    basicRobot.pressAndReleaseKey(p0, *p1)
+  }
+
+  override fun showPopupMenu(component: Component): JPopupMenu = basicRobot.showPopupMenu(component)
+
+  override fun showPopupMenu(component: Component, point: Point): JPopupMenu = basicRobot.showPopupMenu(component, point)
+
+  override fun jitter(component: Component) {
+    basicRobot.jitter(component)
+  }
+
+  override fun jitter(component: Component, point: Point) {
+    basicRobot.jitter(component, point)
+  }
+
+  override fun pressModifiers(p0: Int) {
+    basicRobot.pressModifiers(p0)
+  }
+
+  override fun pressMouse(mouseButton: MouseButton) {
+    basicRobot.pressMouse(mouseButton)
+  }
+
+  override fun pressMouse(component: Component, point: Point) {
+    basicRobot.pressMouse(component, point)
+  }
+
+  override fun pressMouse(component: Component, point: Point, mouseButton: MouseButton) {
+    basicRobot.pressMouse(component, point, mouseButton)
+  }
+
+  override fun pressMouse(point: Point, mouseButton: MouseButton) {
+    basicRobot.pressMouse(point, mouseButton)
+  }
+
+  override fun hierarchy(): ComponentHierarchy =
+    basicRobot.hierarchy()
+
+  override fun releaseKey(p0: Int) {
+    basicRobot.releaseKey(p0)
+  }
+
+  override fun isDragging(): Boolean = basicRobot.isDragging
+
+  override fun printer(): ComponentPrinter = basicRobot.printer()
+
+  override fun type(char: Char) {
+    basicRobot.type(char)
+  }
+
+  override fun type(char: Char, component: Component) {
+    basicRobot.type(char, component)
+  }
+
+  override fun requireNoJOptionPaneIsShowing() {
+    basicRobot.requireNoJOptionPaneIsShowing()
+  }
+
+  override fun cleanUp() {
+    basicRobot.cleanUp()
+  }
+
+  override fun releaseMouse(mouseButton: MouseButton) {
+    basicRobot.releaseMouse(mouseButton)
+  }
+
+  override fun pressKey(p0: Int) {
+    basicRobot.pressKey(p0)
+  }
+
+  override fun settings(): Settings = basicRobot.settings()
+
+  override fun enterText(text: String) {
+    basicRobot.enterText(text)
+  }
+
+  override fun enterText(text: String, component: Component) {
+    basicRobot.enterText(text, component)
+  }
+
+  override fun releaseMouseButtons() {
+    basicRobot.releaseMouseButtons()
+  }
+
+  override fun rightClick(component: Component) {
+    basicRobot.rightClick(component)
+  }
+
+  override fun focus(component: Component) {
+    basicRobot.focus(component)
+  }
+
+  override fun doubleClick(component: Component) {
+    basicRobot.doubleClick(component)
+  }
+
+  override fun cleanUpWithoutDisposingWindows() {
+    basicRobot.cleanUpWithoutDisposingWindows()
+  }
+
+  override fun isReadyForInput(component: Component): Boolean = basicRobot.isReadyForInput(component)
+
+  override fun focusAndWaitForFocusGain(component: Component) {
+    basicRobot.focusAndWaitForFocusGain(component)
+  }
+
+  override fun releaseModifiers(p0: Int) {
+    basicRobot.releaseModifiers(p0)
+  }
+
+  override fun findActivePopupMenu(): JPopupMenu? = basicRobot.findActivePopupMenu()
+
+  override fun rotateMouseWheel(component: Component, p1: Int) {
+    basicRobot.rotateMouseWheel(component, p1)
+  }
+
+  override fun rotateMouseWheel(p0: Int) {
+    basicRobot.rotateMouseWheel(p0)
+  }
+
+  override fun pressAndReleaseKeys(vararg p0: Int) {
+    basicRobot.pressAndReleaseKeys(*p0)
+  }
+
+  override fun finder(): ComponentFinder = basicRobot.finder()
+
+  private val basicRobot: BasicRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock() as BasicRobot
 
   init {
     settings().delayBetweenEvents(10)
@@ -46,16 +216,15 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
   override fun waitForIdle() {
     if (myAwareClick) {
       Thread.sleep(50)
-    }
-    else {
+    } else {
       pause(waitConst)
       if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
     }
   }
 
   override fun close(w: Window) {
-    super.close(w)
-    super.waitForIdle()
+    basicRobot.close(w)
+    basicRobot.waitForIdle()
   }
 
   //smooth mouse move
@@ -68,16 +237,15 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
     for (step in 1..n) {
       try {
         pause(pauseConstMs)
-      }
-      catch (e: InterruptedException) {
+      } catch (e: InterruptedException) {
         e.printStackTrace()
       }
 
-      super.moveMouse(
+      basicRobot.moveMouse(
         (start.x + dx * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt(),
         (start.y + dy * ((Math.log(1.0 * step / n) - Math.log(1.0 / n)) * n / (0 - Math.log(1.0 / n)))).toInt())
     }
-    super.moveMouse(x, y)
+    basicRobot.moveMouse(x, y)
   }
 
   //smooth mouse move to component
@@ -118,16 +286,16 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {
     if (component == null)
-      super.click(point, button, times)
+      basicRobot.click(point, button, times)
     else
-      super.click(component, point, button, times)
+      basicRobot.click(component, point, button, times)
   }
 
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
     val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
-      if(condition()){
+      if (condition()) {
         cdl.countDown()
       }
     }, 0, 100, TimeUnit.MILLISECONDS)
@@ -199,9 +367,10 @@ class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   private fun myEdtAwareClick(button: MouseButton, times: Int, point: Point, component: Component?) {
     awareClick {
-      performOnEdt {
-        myInnerClick(button, times, point, component)
-      }
+      //TODO: remove mouse clicks from EDT
+      //      performOnEdt {
+      myInnerClick(button, times, point, component)
+      //      }
     }
     waitForIdle()
   }

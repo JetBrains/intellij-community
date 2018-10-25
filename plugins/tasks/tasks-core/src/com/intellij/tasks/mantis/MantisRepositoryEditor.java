@@ -45,7 +45,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
 
   private boolean myInitialized = false;
 
-  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<MantisRepository> changeListener) {
+  public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<? super MantisRepository> changeListener) {
     super(project, repository, changeListener);
 
     myTestButton.setText("Login");

@@ -35,9 +35,9 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
   @SuppressWarnings("unchecked")
   public PythonSdkChooserCombo(@Nullable final Project project,
                                @Nullable final Module module,
-                               @NotNull List<Sdk> sdks,
+                               @NotNull List<? extends Sdk> sdks,
                                @Nullable String newProjectPath,
-                               @NotNull final Condition<Sdk> acceptableSdkCondition) {
+                               @NotNull final Condition<? super Sdk> acceptableSdkCondition) {
     super(new ComboBox<>());
     myNewProjectPath = newProjectPath;
     final Sdk initialSelection = ContainerUtil.find(sdks, acceptableSdkCondition);

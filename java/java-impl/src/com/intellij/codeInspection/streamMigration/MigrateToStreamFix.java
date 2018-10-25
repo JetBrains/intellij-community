@@ -45,7 +45,6 @@ class MigrateToStreamFix implements LocalQuickFix {
     return "Replace with "+myMigration.getReplacement();
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   @NotNull
   @Override
   public String getFamilyName() {

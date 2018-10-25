@@ -272,6 +272,11 @@ public class PostprocessReformattingAspect implements PomModelAspect {
     return getContext().myReformatElements.containsKey(fileViewProvider);
   }
 
+  public static void assertDocumentChangeIsAllowed(@NotNull PsiFile file) {
+    PostprocessReformattingAspect reformattingAspect = getInstance(file.getProject());
+    reformattingAspect.assertDocumentChangeIsAllowed(file.getViewProvider());
+  }
+
   /**
    * Checks that view provider doesn't contain any PSI modifications which will be used in postponed formatting and may conflict with
    * changes made to the document.

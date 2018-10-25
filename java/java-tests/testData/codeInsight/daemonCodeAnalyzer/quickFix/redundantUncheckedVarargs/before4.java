@@ -10,6 +10,9 @@ public class Test {
   void foo() {
     //noinspection unche<caret>cked
     List<ArrayList<String>> list = foo(new ArrayList<String>());
+
+    //noinspection unchecked
+    ArrayList<String> list = new ArrayList();
   }
 }
 

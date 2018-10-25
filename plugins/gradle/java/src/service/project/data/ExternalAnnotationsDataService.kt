@@ -16,8 +16,7 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.registry.Registry
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
@@ -29,6 +28,18 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
                                modelsProvider: IdeModelsProvider) {
     if (!Registry.`is`("external.system.import.resolve.annotations")) {
       return
+    }
+
+    projectData?.apply {
+      GradleSettings
+        .getInstance(project)
+        .linkedProjectsSettings
+        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+        ?.let {
+          if (!it.isResolveExternalAnnotations) {
+            return@onSuccessImport
+          }
+        }
     }
 
     val resolver = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList.firstOrNull() ?: return
@@ -47,12 +58,7 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
         if (library != null) {
           indicator.text = "Looking for annotations for '$libraryName'"
           val mavenId = "${libraryData.groupId}:${libraryData.artifactId}:${libraryData.version}"
-          try {
-            resolver.resolveAsync(project, library, mavenId)
-              .blockingGet(1, TimeUnit.MINUTES)
-          } catch (e: TimeoutException) {
-            LOG.warn("Failed to resolve external annotations in time. Maven Id: '$mavenId'")
-          }
+          resolver.resolve(project, library, mavenId)
         }
       }
     }

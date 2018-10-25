@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,8 +18,13 @@ public abstract class SearchQueryParser {
   public String searchQuery;
 
   @NotNull
-  public static List<String> split(@NotNull String name, @NotNull String query) {
+  public static List<String> split(@NotNull String name, @Nullable String query) {
     List<String> result = new ArrayList<>();
+
+    if (query == null) {
+      result.add(name);
+      return result;
+    }
 
     int length = name.length();
     int queryLength = query.length();

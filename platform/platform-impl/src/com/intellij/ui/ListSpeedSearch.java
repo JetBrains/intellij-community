@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
-  @Nullable private final Function<T, String> myToStringConvertor;
+  @Nullable private final Function<? super T, String> myToStringConvertor;
 
   public ListSpeedSearch(JList<T> list) {
     super(list);
@@ -41,7 +41,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public ListSpeedSearch(final JList<T> list, @NotNull Function<T, String> convertor) {
+  public ListSpeedSearch(final JList<T> list, @NotNull Function<? super T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
     registerSelectAll(list);
@@ -52,7 +52,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
    */
   @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<T, String> convertor) {
+  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<? super T, String> convertor) {
     super(list);
     myToStringConvertor = convertor == null ? null : convertor::convert;
     registerSelectAll(list);

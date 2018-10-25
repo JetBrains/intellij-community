@@ -41,10 +41,10 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   private final List<T> myOriginalItems;
   private boolean myShowIcons;
 
-  protected NamedItemsListEditor(Namer<T> namer,
-                                 Factory<T> factory,
+  protected NamedItemsListEditor(Namer<? super T> namer,
+                                 Factory<? extends T> factory,
                                  Cloner<T> cloner,
-                                 Equality<T> comparer,
+                                 Equality<? super T> comparer,
                                  List<T> items) {
     this(namer, factory, cloner, comparer, items, true);
   }

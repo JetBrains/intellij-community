@@ -29,12 +29,30 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ObjectAllocationInLoopInspection extends BaseInspection {
+  enum Kind {
+    NEW_OPERATOR("object.allocation.in.loop.new.descriptor"),
+    METHOD_CALL("object.allocation.in.loop.problem.call.descriptor"),
+    METHOD_REFERENCE("object.allocation.in.loop.problem.methodref.descriptor"),
+    CAPTURING_LAMBDA("object.allocation.in.loop.problem.lambda.descriptor");
+
+    private final String myMessage;
+
+    Kind(@PropertyKey(resourceBundle = InspectionGadgetsBundle.BUNDLE) String message) {
+      myMessage = InspectionGadgetsBundle.message(message);
+    }
+
+    @Override
+    public String toString() {
+      return myMessage;
+    }
+  }
 
   @Override
   @NotNull
@@ -46,10 +64,8 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    boolean direct = (boolean)infos[0];
-    return InspectionGadgetsBundle.message(direct
-                                           ? "object.allocation.in.loop.problem.descriptor"
-                                           : "object.allocation.in.loop.problem.indirect.descriptor");
+    Kind kind = (Kind)infos[0];
+    return kind.toString();
   }
 
   @Override
@@ -66,8 +82,25 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
         List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
         ContractReturnValue value = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
         if (ContractReturnValue.returnNew().equals(value) && isPerformedRepeatedlyInLoop(call)) {
-          registerMethodCallError(call, false);
+          registerMethodCallError(call, Kind.METHOD_CALL);
         }
+      }
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      super.visitMethodReferenceExpression(expression);
+      if (!PsiMethodReferenceUtil.isStaticallyReferenced(expression) &&
+          isPerformedRepeatedlyInLoop(expression)) {
+        registerError(expression, Kind.METHOD_REFERENCE);
+      }
+    }
+
+    @Override
+    public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      super.visitLambdaExpression(lambda);
+      if (isPerformedRepeatedlyInLoop(lambda) && LambdaUtil.isCapturingLambda(lambda)) {
+        registerError(lambda.getParameterList(), Kind.CAPTURING_LAMBDA);
       }
     }
 
@@ -75,7 +108,7 @@ public class ObjectAllocationInLoopInspection extends BaseInspection {
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       if (isPerformedRepeatedlyInLoop(expression)) {
-        registerNewExpressionError(expression, true);
+        registerNewExpressionError(expression, Kind.NEW_OPERATOR);
       }
     }
 

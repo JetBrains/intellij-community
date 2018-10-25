@@ -18,6 +18,7 @@ package com.intellij.stats.completion
 
 import com.intellij.stats.completion.events.*
 
+
 abstract class LogEventVisitor {
     open fun visit(event: CompletionStartedEvent) {}
     open fun visit(event: TypeEvent) {}
@@ -28,4 +29,5 @@ abstract class LogEventVisitor {
     open fun visit(event: ExplicitSelectEvent) {}
     open fun visit(event: TypedSelectEvent) {}
     open fun visit(event: CustomMessageEvent) {}
+    open fun visit(event: PerformanceEvent) {}
 }

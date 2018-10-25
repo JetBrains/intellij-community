@@ -33,7 +33,6 @@ public class ExpandMacroToPathMap extends PathMacroMap {
   @Override
   public String substitute(String text, boolean caseSensitive) {
     if (text == null) {
-      //noinspection ConstantConditions
       return null;
     }
 

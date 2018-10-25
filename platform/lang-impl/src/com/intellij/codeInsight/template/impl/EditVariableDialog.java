@@ -33,9 +33,9 @@ class EditVariableDialog extends DialogWrapper {
   private final ArrayList<Variable> myVariables;
   private JTable myTable;
   private final Editor myEditor;
-  private final List<TemplateContextType> myContextTypes;
+  private final List<? extends TemplateContextType> myContextTypes;
 
-  EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
+  EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<? extends TemplateContextType> contextTypes) {
     super(parent, true);
     myContextTypes = contextTypes;
     myVariables = variables;

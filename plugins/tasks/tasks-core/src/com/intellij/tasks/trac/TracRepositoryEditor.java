@@ -31,7 +31,7 @@ public class TracRepositoryEditor extends BaseRepositoryEditor<TracRepository> {
   private JTextField myDefaultSearch;
   private JBLabel mySearchLabel;
 
-  public TracRepositoryEditor(final Project project, final TracRepository repository, Consumer<TracRepository> changeListener) {
+  public TracRepositoryEditor(final Project project, final TracRepository repository, Consumer<? super TracRepository> changeListener) {
     super(project, repository, changeListener);
     myDefaultSearch.setText(repository.getDefaultSearch());
   }

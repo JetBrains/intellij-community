@@ -42,7 +42,6 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
-      @SuppressWarnings("DialogTitleCapitalization")
       @Override
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);

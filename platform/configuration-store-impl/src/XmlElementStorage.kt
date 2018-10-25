@@ -2,9 +2,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -27,7 +27,7 @@ import java.nio.file.Path
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
-                                                       private val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null,
+                                                       private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
                                                        roamingType: RoamingType? = RoamingType.DEFAULT,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
   val roamingType: RoamingType = roamingType ?: RoamingType.DEFAULT

@@ -574,7 +574,7 @@ public class InferenceSession {
             foundErrorMessage = checkBoundsConsistency(mySiteSubstitutor, inferenceVariable) == PsiType.NULL;
           }
           mySiteSubstitutor = mySiteSubstitutor
-            .put(typeParameter, JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createType(typeParameter));
+            .put(typeParameter, JavaPsiFacade.getElementFactory(myManager.getProject()).createType(typeParameter));
         }
       }
     }

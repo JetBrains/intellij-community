@@ -450,7 +450,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     final PsiClass psiClass = ClassUtil.findPsiClass(manager, className);
     if (psiClass == null) return null;
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       String methodSignature = externalName.substring(spaceIdx + 1);
       PsiMethod patternMethod = factory.createMethodFromText(methodSignature, psiClass);
       return psiClass.findMethodBySignature(patternMethod, false);

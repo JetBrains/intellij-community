@@ -12,7 +12,6 @@ import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 
 import static org.jetbrains.plugins.github.util.GithubAuthData.AuthType;
 
-@SuppressWarnings("MethodMayBeStatic")
 @State(name = "GithubSettings", storages = @Storage("github_settings.xml"))
 public class GithubSettings implements PersistentStateComponent<GithubSettings.State> {
   private State myState = new State();

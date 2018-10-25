@@ -111,7 +111,7 @@ public class PsiScopesUtil {
   public static void processTypeDeclarations(PsiType type, PsiElement place, PsiScopeProcessor processor) {
     if (type instanceof PsiArrayType) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(place);
-      final PsiClass arrayClass = JavaPsiFacade.getInstance(place.getProject()).getElementFactory().getArrayClass(languageLevel);
+      final PsiClass arrayClass = JavaPsiFacade.getElementFactory(place.getProject()).getArrayClass(languageLevel);
       final PsiTypeParameter[] arrayTypeParameters = arrayClass.getTypeParameters();
       PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
       if (arrayTypeParameters.length > 0) {
@@ -454,7 +454,7 @@ public class PsiScopesUtil {
     }
     if (type instanceof PsiArrayType) {
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(call);
-      PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
       JavaResolveResult qualifierResult =
         factory.getArrayClassType(((PsiArrayType)type).getComponentType(), languageLevel).resolveGenerics();
       return processQualifierResult(qualifierResult, processor, call);
@@ -504,7 +504,7 @@ public class PsiScopesUtil {
       if (constructors.length != 0) {
         return;
       }
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       final PsiMethod dummyConstructor = factory.createConstructor();
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier != null) {

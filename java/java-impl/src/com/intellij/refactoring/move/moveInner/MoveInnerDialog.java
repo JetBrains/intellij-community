@@ -334,7 +334,7 @@ public class MoveInnerDialog extends MoveDialogBase {
   private void createUIComponents() {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiManager manager = myInnerClass.getManager();
-      PsiType outerType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(myInnerClass.getContainingClass());
+      PsiType outerType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(myInnerClass.getContainingClass());
       mySuggestedNameInfo =  JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
       String[] variants = mySuggestedNameInfo.names;
       myParameterField = new NameSuggestionsField(variants, myProject);

@@ -1,0 +1,24 @@
+EditorConfig file
+  EditorConfigSectionImpl(SECTION)
+    EditorConfigHeaderImpl(HEADER)
+      PsiElement(EditorConfigTokenType.L_BRACKET)('[')
+      EditorConfigPatternImpl(PATTERN)
+        EditorConfigFlatPatternImpl(FLAT_PATTERN)
+          PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('hello')
+      EditorConfigPatternEnumerationImpl(PATTERN_ENUMERATION)
+        PsiElement(EditorConfigTokenType.L_CURLY)('{')
+        EditorConfigPatternImpl(PATTERN)
+          EditorConfigFlatPatternImpl(FLAT_PATTERN)
+            PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('.kt')
+          PsiWhiteSpace(' ')
+          EditorConfigFlatPatternImpl(FLAT_PATTERN)
+            PsiElement(EditorConfigTokenType.PATTERN_IDENTIFIER)('.kts')
+        PsiElement(EditorConfigTokenType.R_CURLY)('}')
+      PsiElement(EditorConfigTokenType.R_BRACKET)(']')
+    PsiWhiteSpace('\n')
+    key=value
+      key
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('key')
+      PsiElement(EditorConfigTokenType.SEPARATOR)('=')
+      value
+        PsiElement(EditorConfigTokenType.IDENTIFIER)('value')

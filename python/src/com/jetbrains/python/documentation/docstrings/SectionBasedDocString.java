@@ -134,7 +134,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
       }
       lineNum = consumeEmptyLines(lineNum);
     }
-    //noinspection ConstantConditions
     mySummary = summary.isEmpty() ? null : summary.get(0).union(summary.get(summary.size() - 1)).trim();
   }
 

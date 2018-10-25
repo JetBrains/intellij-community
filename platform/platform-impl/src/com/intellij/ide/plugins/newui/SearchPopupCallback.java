@@ -2,10 +2,15 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class SearchPopupCallback implements Consumer<String> {
   public String prefix;
+
+  public SearchPopupCallback(@Nullable String prefix) {
+    this.prefix = prefix;
+  }
 }

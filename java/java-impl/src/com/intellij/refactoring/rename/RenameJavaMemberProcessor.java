@@ -47,7 +47,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
   protected static void qualifyMember(final PsiElement occurence, final String newName, @NotNull final PsiClass containingClass, final boolean isStatic)
       throws IncorrectOperationException {
     PsiManager psiManager = occurence.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
     if (isStatic) {
       PsiReferenceExpression qualified = (PsiReferenceExpression)factory.createExpressionFromText("a." + newName, null);
       qualified = (PsiReferenceExpression)CodeStyleManager.getInstance(psiManager.getProject()).reformat(qualified);
@@ -63,7 +63,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
 
   public static PsiReferenceExpression createMemberReference(PsiMember member, PsiElement context) throws IncorrectOperationException {
     final PsiManager manager = member.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     final String name = member.getName();
     PsiReferenceExpression ref = (PsiReferenceExpression) factory.createExpressionFromText(name, context);
     PsiElement resolved = ref.resolve();
@@ -78,7 +78,7 @@ public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcesso
     final PsiJavaCodeReferenceElement qualifier;
 
     final PsiManager manager = containingClass.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (isStatic) {
       ref = (PsiReferenceExpression)factory.createExpressionFromText("A." + name, context);
       qualifier = (PsiJavaCodeReferenceElement)ref.getQualifierExpression();

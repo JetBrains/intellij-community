@@ -60,6 +60,10 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
   @Override
   public void fetchElements(@NotNull String pattern, boolean everywhere, @Nullable SearchEverywhereContributorFilter<FileType> filter,
                             @NotNull ProgressIndicator progressIndicator, @NotNull Function<Object, Boolean> consumer) {
+    if (myProject == null) {
+      return; //nothing to search
+    }
+
     String searchString = filterControlSymbols(pattern);
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + searchString).build();
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
@@ -77,6 +81,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
         res.addAll(stream.filter(vf -> !opened.contains(vf) && vf.isValid())
                      .distinct()
                      .map(vf -> psiManager.findFile(vf))
+                     .filter(file -> file != null)
                      .collect(Collectors.toList())
         );
       }, progressIndicator);

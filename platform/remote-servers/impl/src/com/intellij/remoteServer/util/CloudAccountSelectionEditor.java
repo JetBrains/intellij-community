@@ -58,11 +58,11 @@ public class CloudAccountSelectionEditor {
   private ComboBox myAccountComboBox;
   private JPanel myMainPanel;
 
-  private final List<ServerType<?>> myCloudTypes;
+  private final List<? extends ServerType<?>> myCloudTypes;
 
   private Runnable myServerSelectionListener;
 
-  public CloudAccountSelectionEditor(List<ServerType<?>> cloudTypes) {
+  public CloudAccountSelectionEditor(List<? extends ServerType<?>> cloudTypes) {
     myCloudTypes = cloudTypes;
 
     for (ServerType<?> cloudType : cloudTypes) {

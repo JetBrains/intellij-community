@@ -19,8 +19,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -267,7 +266,6 @@ public class ExternalJavacProcess {
             new Thread("StopThread") {
               @Override
               public void run() {
-                //noinspection finally
                 ExternalJavacProcess.this.stop();
               }
             }.start();

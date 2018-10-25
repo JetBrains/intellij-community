@@ -90,7 +90,7 @@ public class VariableInlineHandler extends InlineActionHandler {
 
   public static void invoke(@NotNull final XPathVariable variable, Editor editor) {
 
-    final String type = LanguageFindUsages.INSTANCE.forLanguage(variable.getLanguage()).getType(variable);
+    final String type = LanguageFindUsages.getType(variable);
     final Project project = variable.getProject();
 
     final XmlTag tag = ((XsltElement)variable).getTag();

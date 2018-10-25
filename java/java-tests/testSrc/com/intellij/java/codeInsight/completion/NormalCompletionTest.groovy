@@ -1869,4 +1869,6 @@ class Abc {
     myFixture.checkResult 'class Foo<T> { Foo<List<String>><caret> }'
   }
 
+  void testNoSuggestionsAfterEnumConstant() { doAntiTest() }
+
 }

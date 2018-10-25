@@ -419,7 +419,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return -1;
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setListener(@NotNull Listener listener) {
     myListener = listener;

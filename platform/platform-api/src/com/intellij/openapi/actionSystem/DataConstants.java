@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
  * @deprecated {@link DataKeys} and {@link DataKey#getData} should be used instead
  */
 @Deprecated
-@SuppressWarnings({"HardCodedStringLiteral", "JavadocReference"})
+@SuppressWarnings({"JavadocReference"})
 public interface DataConstants {
   /**
    * Returns {@link com.intellij.openapi.project.Project}

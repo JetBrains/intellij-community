@@ -46,7 +46,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
     @Override
     public String getRefactoringName() {

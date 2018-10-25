@@ -37,9 +37,11 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -341,6 +343,24 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       }
 
       return abbrLength;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        accessibleContext = new AccessibleContextDelegate(super.getAccessibleContext()) {
+          @Override
+          protected Container getDelegateParent() {
+            return AbbreviatingRendererComponent.this.getParent();
+          }
+
+          @Override
+          public String getAccessibleName() {
+            return myRawText;
+          }
+        };
+      }
+      return accessibleContext;
     }
   }
 }

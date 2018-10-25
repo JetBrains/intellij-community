@@ -113,7 +113,6 @@ abstract class RefEntityImpl implements RefEntity {
         myUserMap = userMap = new THashMap<>();
       }
       if (value != null){
-        //noinspection unchecked
         userMap.put(key, value);
       }
       else{

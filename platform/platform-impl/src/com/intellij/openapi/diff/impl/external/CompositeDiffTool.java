@@ -22,7 +22,7 @@ class CompositeDiffTool implements DiffTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.CompositeDiffTool");
   private final List<DiffTool> myTools;
 
-  CompositeDiffTool(@NotNull List<DiffTool> tools) {
+  CompositeDiffTool(@NotNull List<? extends DiffTool> tools) {
     myTools = new ArrayList<>(tools);
   }
 

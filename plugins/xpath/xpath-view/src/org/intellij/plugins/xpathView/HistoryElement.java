@@ -36,7 +36,6 @@ public final class HistoryElement implements Copyable<HistoryElement> {
         this.namespaces = Collections.unmodifiableCollection(namespaces);
     }
 
-    @SuppressWarnings({"unchecked"})
     private HistoryElement() {
         expression = null;
         variables = Collections.emptySet();

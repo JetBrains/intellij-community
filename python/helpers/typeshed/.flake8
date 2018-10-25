@@ -20,4 +20,4 @@ ignore = F401, F403, F405, F811, E127, E128, E301, E302, E305, E501, E701, E704,
 # A nice future improvement would be to provide separate .flake8
 # configurations for Python 2 and Python 3 files.
 builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
-exclude = .venv*,@*
+exclude = .venv*,@*,.git

@@ -5,6 +5,8 @@ package com.intellij.codeInspection.offlineViewer;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
 import com.intellij.codeInspection.reference.SmartRefElementPointerImpl;
+import com.intellij.util.containers.StringInterner;
+import com.intellij.util.containers.WeakStringInterner;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
@@ -12,6 +14,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.xmlpull.mxp1.MXParser;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.StringReader;
 import java.util.*;
 
@@ -26,9 +30,10 @@ public class OfflineViewParseUtil {
   }
 
   public static Map<String, Set<OfflineProblemDescriptor>> parse(final String problems) {
-    final TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
-    final Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
-    final XppReader reader = new XppReader(new StringReader(problems), new MXParser());
+    TObjectIntHashMap<String> fqName2IdxMap = new TObjectIntHashMap<>();
+    StringInterner stringInterner = new StringInterner();
+    Map<String, Set<OfflineProblemDescriptor>> package2Result = new HashMap<>();
+    XppReader reader = new XppReader(new StringReader(problems), new MXParser());
     try {
       while(reader.hasMoreChildren()) {
         reader.moveDown(); //problem
@@ -49,13 +54,13 @@ public class OfflineViewParseUtil {
             fqName2IdxMap.put(fqName, idx + 1);
           }
           if (DESCRIPTION.equals(reader.getNodeName())) {
-            descriptor.setDescription(reader.getValue());
+            descriptor.setDescription(stringInterner.intern(reader.getValue()));
           }
           if (LINE.equals(reader.getNodeName())) {
             descriptor.setLine(Integer.parseInt(reader.getValue()));
           }
           if (MODULE.equals(reader.getNodeName())) {
-            descriptor.setModule(reader.getValue());
+            descriptor.setModule(stringInterner.intern(reader.getValue()));
           }
           if (HINTS.equals(reader.getNodeName())) {
             while(reader.hasMoreChildren()) {
@@ -65,7 +70,7 @@ public class OfflineViewParseUtil {
                 hints = new ArrayList<>();
                 descriptor.setHints(hints);
               }
-              hints.add(reader.getAttribute("value"));
+              hints.add(stringInterner.intern(reader.getAttribute("value")));
               reader.moveUp();
             }
           }

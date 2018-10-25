@@ -100,7 +100,6 @@ public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();

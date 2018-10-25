@@ -94,7 +94,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
         if (assignmentExpression == null || !isAddAllReplaceable(expression, assignmentExpression)) return;
         final PsiMethod method = expression.resolveMethod();
         if (method != null) {
-          //noinspection DialogTitleCapitalization
           holder.registerProblem(nameElement, QuickFixBundle.message("collection.addall.can.be.replaced.with.constructor.fix.description"),
                                  new ReplaceAddAllWithConstructorFix(assignmentExpression, expression, methodName));
         }
@@ -250,7 +249,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
             ((PsiDeclarationStatement)variable.getParent()).getDeclaredElements().length == 1) {
           PsiElement scope = PsiTreeUtil.getParentOfType(expressionStatement, PsiMember.class, PsiStatement.class, PsiLambdaExpression.class);
           if (scope != null &&
-              ReferencesSearch.search(variable).forEach((PsiReference ref) -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
+              ReferencesSearch.search(variable).allMatch(ref -> PsiTreeUtil.isAncestor(scope, ref.getElement(), true))) {
             PsiDeclarationStatement newDeclaration =
               JavaPsiFacade.getElementFactory(project).createVariableDeclarationStatement("x", PsiType.INT, null, methodCallExpression);
             PsiVariable newVariable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(variable);

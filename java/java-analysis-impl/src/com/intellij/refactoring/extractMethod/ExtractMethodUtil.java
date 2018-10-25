@@ -112,7 +112,7 @@ public class ExtractMethodUtil {
     throws IncorrectOperationException {
     final PsiMethod newTarget = call.resolveMethod();
     final PsiManager manager = oldTarget.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (!manager.areElementsEquivalent(oldTarget, newTarget)) {
       final PsiParameter[] oldParameters = oldTarget.getParameterList().getParameters();
       if (oldParameters.length > 0) {

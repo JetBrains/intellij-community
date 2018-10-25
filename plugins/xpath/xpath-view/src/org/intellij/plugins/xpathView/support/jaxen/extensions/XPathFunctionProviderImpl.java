@@ -58,8 +58,7 @@ class XPathFunctionProviderImpl extends XPathFunctionProvider {
         if (contextType == XPathSupport.TYPE) {
             return myFunctions;
         } else {
-            //noinspection unchecked
-            return Collections.emptyMap();
+          return Collections.emptyMap();
         }
     }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
@@ -36,6 +35,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -43,15 +43,12 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
-
 /**
  * @author peter
  */
@@ -1519,18 +1516,6 @@ class Foo {
     assert lookup
     type '\b'
     assert !lookup
-  }
-
-  void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
-    myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      type 'System.out.printl\n\n'
-    }
-    type 'System.out.pr'
-    assert lookup.currentItem.lookupString == 'println'
-    type '\n2'
-    assert myFixture.editor.document.text.contains('.println();2')
   }
 
   void testQuickBackspaceEnter() {

@@ -102,8 +102,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     }, progressIndicator);
   }
 
-  //todo param is unnecessary #UX-1
-  protected abstract FilteringGotoByModel<F> createModel(Project project);
+  @NotNull
+  protected abstract FilteringGotoByModel<F> createModel(@NotNull Project project);
 
   @NotNull
   @Override
@@ -170,17 +170,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @NotNull
   @Override
   public ListCellRenderer getElementsRenderer(@NotNull JList<?> list) {
-    return new SearchEverywherePsiRenderer(list) {
-      @Override
-      public String getElementText(PsiElement element) {
-        if (element instanceof NavigationItem) {
-          return Optional.ofNullable(((NavigationItem)element).getPresentation())
-                         .map(presentation -> presentation.getPresentableText())
-                         .orElse(super.getElementText(element));
-        }
-        return super.getElementText(element);
-      }
-    };
+    return new SERenderer(list);
   }
 
   @Override
@@ -234,5 +224,22 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   protected static boolean openInCurrentWindow(int modifiers) {
     return (modifiers & InputEvent.SHIFT_MASK) == 0;
+  }
+
+  protected static class SERenderer extends SearchEverywherePsiRenderer {
+
+    public SERenderer(JList list) {
+      super(list);
+    }
+
+    @Override
+    public String getElementText(PsiElement element) {
+      if (element instanceof NavigationItem) {
+        return Optional.ofNullable(((NavigationItem)element).getPresentation())
+          .map(presentation -> presentation.getPresentableText())
+          .orElse(super.getElementText(element));
+      }
+      return super.getElementText(element);
+    }
   }
 }

@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
  */
 public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
-  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_\\(\\)\\*]*)\"");
+  private static final Pattern PATTERN = Pattern.compile("\"([a-zA-Z1-9_()*]*)\"");
 
   @NotNull
   @Override
@@ -35,7 +35,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public String getDisplayName() {
-    return "dependsOnMethods problem";
+    return "'dependsOnMethods' problem";
   }
 
   @NotNull
@@ -105,7 +105,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
                                                 List<ProblemDescriptor> problemDescriptors,
                                                 boolean onTheFly) {
     LOGGER.debug("Found dependsOnMethods with text: " + methodName);
-    if (methodName.length() > 0 && methodName.charAt(methodName.length() - 1) == ')') {
+    if (!methodName.isEmpty() && methodName.charAt(methodName.length() - 1) == ')') {
 
       LOGGER.debug("dependsOnMethods contains ()" + psiClass.getName());
       // TODO Add quick fix for removing brackets on annotation

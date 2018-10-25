@@ -33,7 +33,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
     new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
 
-    new AttributesDescriptor("String//Text (bytes)", PyHighlighter.PY_BYTE_STRING),
+    new AttributesDescriptor("String//Binary (bytes)", PyHighlighter.PY_BYTE_STRING),
     new AttributesDescriptor("String//Text (unicode)", PyHighlighter.PY_UNICODE_STRING),
     new AttributesDescriptor("String//Escape sequence//Valid", PyHighlighter.PY_VALID_STRING_ESCAPE),
     new AttributesDescriptor("String//Escape sequence//Invalid", PyHighlighter.PY_INVALID_STRING_ESCAPE),

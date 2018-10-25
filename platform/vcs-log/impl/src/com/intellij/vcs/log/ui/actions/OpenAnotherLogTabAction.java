@@ -41,8 +41,8 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     }
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
-    e.getPresentation()
-      .setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
+    // only for main log (it is a question, how and where we want to open tabs for external logs)
+    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager);
   }
 
   @Override

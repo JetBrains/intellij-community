@@ -987,9 +987,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
       PsiLocalVariable lineVar = ExpressionUtils.resolveLocalVariable(assignment.getLExpression());
       if (lineVar == null) return null;
-      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
-        return PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true);
-      })) {
+      if (ReferencesSearch.search(lineVar).anyMatch(ref -> !PsiTreeUtil.isAncestor(loopStatement, ref.getElement(), true))) {
         return null;
       }
       return new BufferedReaderLines(loopStatement, lineVar, reader, false);
@@ -1025,9 +1023,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       if (declarations.length != 1) return null;
       PsiLocalVariable lineVar = tryCast(declarations[0], PsiLocalVariable.class);
       if (lineVar == null) return null;
-      if (!ReferencesSearch.search(lineVar).forEach(ref -> {
-        return PsiTreeUtil.isAncestor(forLoop, ref.getElement(), true);
-      })) {
+      if (ReferencesSearch.search(lineVar).anyMatch(ref -> !PsiTreeUtil.isAncestor(forLoop, ref.getElement(), true))) {
         return null;
       }
       PsiMethodCallExpression maybeReadLines = tryCast(PsiUtil.skipParenthesizedExprDown(lineVar.getInitializer()), PsiMethodCallExpression.class);

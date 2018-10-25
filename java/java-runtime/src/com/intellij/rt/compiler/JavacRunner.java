@@ -39,7 +39,6 @@ public class JavacRunner {
 
     final String versionString = args[0];
     final Class aClass = Class.forName(args[1]);
-    //noinspection HardCodedStringLiteral
     final Method mainMethod = aClass.getMethod("main", new Class[] {String[].class});
     String[] newArgs;
     if (versionString.indexOf("1.1") > -1) {

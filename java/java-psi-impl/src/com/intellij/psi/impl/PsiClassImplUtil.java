@@ -324,7 +324,7 @@ public class PsiClassImplUtil {
     String name = method.getName();
     if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     try {
       MethodSignature main = createSignatureFromText(factory, "void main(String[] args);");
@@ -482,7 +482,7 @@ public class PsiClassImplUtil {
                                                     final GlobalSearchScope resolveScope) {
     Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       @Override
       public PsiSubstitutor fun(PsiMember member) {
         PsiClass containingClass = ObjectUtils.assertNotNull(member.getContainingClass());
@@ -672,7 +672,7 @@ public class PsiClassImplUtil {
       }
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
       PsiSubstitutor baseSubstitutor = state.get(PsiSubstitutor.KEY);
@@ -991,11 +991,11 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiClassType[] getExtendsListTypes(@NotNull PsiClass psiClass) {
     if (psiClass.isEnum()) {
-      PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory());
+      PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()));
       return enumSuperType == null ? PsiClassType.EMPTY_ARRAY : new PsiClassType[]{enumSuperType};
     }
     if (psiClass.isAnnotationType()) {
-      return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
+      return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()))};
     }
     PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {

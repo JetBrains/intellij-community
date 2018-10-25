@@ -62,7 +62,6 @@ public class FileCopyPasteUtil {
     }
     catch (ClassNotFoundException e) {
       LOG.error(e);
-      //noinspection ConstantConditions
       return null;
     }
   }

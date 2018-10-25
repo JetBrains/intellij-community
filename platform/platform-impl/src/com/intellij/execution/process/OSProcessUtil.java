@@ -58,12 +58,16 @@ public class OSProcessUtil {
   public static void killProcess(int pid) {
     if (SystemInfo.isWindows) {
       try {
-        if (Registry.is("disable.winp")) {
-          WinProcessManager.kill(pid, false);
+        if (!Registry.is("disable.winp")) {
+          try {
+            createWinProcess(pid).kill();
+            return;
+          }
+          catch (Error e) {
+            LOG.error("Failed to kill process with winp, fallback to default logic", e);
+          }
         }
-        else {
-          createWinProcess(pid).kill();
-        }
+        WinProcessManager.kill(pid, false);
       }
       catch (Throwable e) {
         LOG.info("Cannot kill process", e);
@@ -80,12 +84,15 @@ public class OSProcessUtil {
         if (process instanceof WinPtyProcess) {
           return ((WinPtyProcess)process).getChildProcessId();
         }
-        if (Registry.is("disable.winp")) {
-          return WinProcessManager.getProcessId(process);
+        if (!Registry.is("disable.winp")) {
+          try {
+            return createWinProcess(process).getPid();
+          }
+          catch (Error e) {
+            LOG.error("Failed to get PID with winp, fallback to default logic", e);
+          }
         }
-        else {
-          return createWinProcess(process).getPid();
-        }
+        return WinProcessManager.getProcessId(process);
       }
       catch (Throwable e) {
         throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()

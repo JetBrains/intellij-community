@@ -30,6 +30,11 @@ public class MockProjectEx  extends MockProject implements ProjectEx {
   }
 
   @Override
+  public void save(boolean isForce) {
+    save();
+  }
+
+  @Override
   public void init() {
   }
 }

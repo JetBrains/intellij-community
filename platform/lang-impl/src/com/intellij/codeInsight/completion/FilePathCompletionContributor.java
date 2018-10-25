@@ -255,9 +255,9 @@ public class FilePathCompletionContributor extends CompletionContributor {
     private final String myInfo;
     private final Icon myIcon;
     private final PsiFile myFile;
-    private final List<FileReferenceHelper> myHelpers;
+    private final List<? extends FileReferenceHelper> myHelpers;
 
-    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final List<FileReferenceHelper> helpers) {
+    public FilePathLookupItem(@NotNull final PsiFile file, @NotNull final List<? extends FileReferenceHelper> helpers) {
       myName = file.getName();
       myPath = file.getVirtualFile().getPath();
 

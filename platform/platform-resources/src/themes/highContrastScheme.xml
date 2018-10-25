@@ -1,0 +1,66 @@
+<scheme name="High Contrast" version="142" parent_scheme="Darcula">
+  <option name="FONT_SCALE" value="1.0" />
+  <metaInfo>
+    <property name="created">2018-09-28T16:17:31</property>
+    <property name="ide">idea</property>
+    <property name="ideVersion">2018.3.0.0</property>
+    <property name="modified">2018-09-28T16:17:33</property>
+    <property name="originalScheme">_@user_High Contrast</property>
+  </metaInfo>
+  <option name="LINE_SPACING" value="1.15" />
+  <option name="EDITOR_FONT_SIZE" value="12" />
+  <option name="EDITOR_FONT_NAME" value="Menlo" />
+  <colors>
+    <option name="CARET_COLOR" value="ffffff" />
+    <option name="CARET_ROW_COLOR" value="80" />
+    <option name="GUTTER_BACKGROUND" value="0" />
+    <option name="INDENT_GUIDE" value="808080" />
+    <option name="LINE_NUMBERS_COLOR" value="cccccc" />
+    <option name="METHOD_SEPARATORS_COLOR" value="808080" />
+    <option name="NOTIFICATION_BACKGROUND" value="80" />
+    <option name="RIGHT_MARGIN_COLOR" value="808080" />
+    <option name="SELECTED_TEARLINE_COLOR" value="ffffff" />
+    <option name="SOFT_WRAP_SIGN_COLOR" value="ffffff" />
+    <option name="TEARLINE_COLOR" value="cccccc" />
+    <option name="WHITESPACES" value="ffffff" />
+  </colors>
+  <attributes>
+    <option name="BOOKMARKS_ATTRIBUTES">
+      <value>
+        <option name="ERROR_STRIPE_COLOR" value="ffffff" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_CURRENT">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+        <option name="BACKGROUND" value="0" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_DEFAULT">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+      </value>
+    </option>
+    <option name="BREADCRUMBS_HOVERED">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+        <option name="BACKGROUND" value="80" />
+      </value>
+    </option>
+    <option name="DELETED_TEXT_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+        <option name="BACKGROUND" value="0" />
+        <option name="EFFECT_COLOR" value="ffffff" />
+        <option name="EFFECT_TYPE" value="3" />
+      </value>
+    </option>
+    <option name="TEXT">
+      <value>
+        <option name="FOREGROUND" value="ffffff" />
+        <option name="BACKGROUND" value="0" />
+        <option name="EFFECT_TYPE" value="5" />
+      </value>
+    </option>
+  </attributes>
+</scheme>

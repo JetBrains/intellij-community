@@ -67,7 +67,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author vlan
  */
 abstract public class IntroduceHandler implements RefactoringActionHandler {
-  protected static PsiElement findAnchor(List<PsiElement> occurrences) {
+  protected static PsiElement findAnchor(List<? extends PsiElement> occurrences) {
     PsiElement anchor = occurrences.get(0);
     final Pair<PsiElement, TextRange> data = anchor.getUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE);
     // Search anchor in the origin file, not in dummy.py, if selection breaks statement and thus element was generated
@@ -104,7 +104,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  protected static PsiElement findOccurrenceUnderCaret(List<PsiElement> occurrences, Editor editor) {
+  protected static PsiElement findOccurrenceUnderCaret(List<? extends PsiElement> occurrences, Editor editor) {
     if (occurrences.isEmpty()) {
       return null;
     }

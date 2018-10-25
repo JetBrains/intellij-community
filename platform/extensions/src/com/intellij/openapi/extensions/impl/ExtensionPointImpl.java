@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author AKireyev
@@ -201,6 +202,12 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     else {
       return myExtensionsCacheAsArray.clone();
     }
+  }
+
+  @NotNull
+  @Override
+  public Stream<T> extensions() {
+    return getExtensionList().stream();
   }
 
   @Override

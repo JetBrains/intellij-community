@@ -108,7 +108,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           final PsiParameter param = myMethod.getParameterList().getParameters()[i];
           final PsiExpression paramRef =
-            JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory().createExpressionFromText(param.getName(), myMethod);
+            JavaPsiFacade.getElementFactory(myMethod.getProject()).createExpressionFromText(param.getName(), myMethod);
           localToParamRef.put((PsiVariable)element, paramRef);
         }
       }
@@ -272,7 +272,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myInitializer = (PsiExpression)RefactoringUtil.replaceElementsWithMap(myInitializer, replacements);
 
     if (myCreateLocal) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
       PsiDeclarationStatement localDeclaration =
         factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), myInitializer);
       final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];

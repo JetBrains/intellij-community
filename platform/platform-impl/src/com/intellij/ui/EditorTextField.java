@@ -35,8 +35,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -98,6 +100,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public EditorTextField(Document document, Project project, FileType fileType) {
     this(document, project, fileType, false, true);
+  }
+
+  public EditorTextField(Project project, FileType fileType) {
+    this(null, project, fileType, false, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
@@ -189,7 +195,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
+  @NotNull
   public Document getDocument() {
+    if (myDocument == null) {
+      myDocument = createDocument();
+    }
     return myDocument;
   }
 
@@ -441,17 +451,21 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setBackgroundColor(getBackgroundColor(isEnabled(), colorsScheme));
   }
 
-
-
   public void setOneLineMode(boolean oneLineMode) {
     myOneLineMode = oneLineMode;
   }
 
-  protected EditorEx createEditor() {
-    LOG.assertTrue(myDocument != null);
+  protected Document createDocument() {
+    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    final long stamp = LocalTimeCounter.currentTime();
+    final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
+    return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+  }
 
+  protected EditorEx createEditor() {
+    Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(myDocument, myProject) : factory.createEditor(myDocument, myProject));
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
 
     final EditorSettings settings = editor.getSettings();
     settings.setAdditionalLinesCount(0);
@@ -484,7 +498,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.getSettings().setCaretRowShown(false);
 
     editor.setOneLineMode(myOneLineMode);
-    editor.getCaretModel().moveToOffset(myDocument.getTextLength());
+    editor.getCaretModel().moveToOffset(document.getTextLength());
 
     if (!shouldHaveBorder()) {
       editor.setBorder(null);
@@ -511,7 +525,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       ((EditorImpl)editor).setPaintSelection(true);
       editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
       editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
-      editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      editor.getSelectionModel().setSelection(0, document.getTextLength());
       editor.setBackgroundColor(myRendererBg);
     }
 
@@ -827,7 +841,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return null;
   }
 
-  public void setFileType(FileType fileType) {
+  public void setFileType(@NotNull FileType fileType) {
     setNewDocumentAndFileType(fileType, getDocument());
   }
 

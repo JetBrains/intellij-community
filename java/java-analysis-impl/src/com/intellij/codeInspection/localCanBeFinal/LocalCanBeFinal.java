@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * @author max
  */
-public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
+public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   public boolean REPORT_VARIABLES = true;
   public boolean REPORT_PARAMETERS = true;
   public boolean REPORT_CATCH_PARAMETERS = true;

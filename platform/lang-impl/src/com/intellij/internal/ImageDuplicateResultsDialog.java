@@ -63,7 +63,6 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("UseOfObsoleteCollectionType")
 public class ImageDuplicateResultsDialog extends DialogWrapper {
   private final Project myProject;
   private final List<VirtualFile> myImages;
@@ -281,7 +280,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private static class MyDuplicatesNode extends DefaultMutableTreeNode {
 
-    MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
+    MyDuplicatesNode(DefaultMutableTreeNode node, Set<? extends VirtualFile> files) {
       super(files);
       setParent(node);
       children = files.stream().map(file -> new MyFileNode(this, file)).collect(Collectors.toCollection(Vector::new));

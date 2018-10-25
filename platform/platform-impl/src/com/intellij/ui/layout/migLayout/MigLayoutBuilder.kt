@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.ui.components.noteComponent
 import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -63,15 +64,23 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
   }
 
   override fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
+    addNoteOrComment(noteComponent(text, linkHandler))
+  }
+
+  override fun commentRow(text: String) {
+    addNoteOrComment(ComponentPanelBuilder.createCommentComponent(text, true))
+  }
+
+  private fun addNoteOrComment(component: JComponent) {
     val cc = CC()
     cc.vertical.gapBefore = gapToBoundSize(if (rootRow.subRows == null) spacing.verticalGap else spacing.largeVerticalGap, false)
     cc.vertical.gapAfter = gapToBoundSize(spacing.verticalGap, false)
 
     val row = rootRow.createChildRow(label = null, noGrid = true)
     row.apply {
-      val noteComponent = noteComponent(text, linkHandler)
-      componentConstraints.put(noteComponent, cc)
-      noteComponent()
+      componentConstraints.put(component, cc)
+      arrayOf<CCFlags>()
+      component()
     }
   }
 

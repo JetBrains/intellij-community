@@ -29,9 +29,9 @@ import java.util.List;
 public class MergeSourceHierarchyBuilder implements ThrowableConsumer<Pair<LogEntry, Integer>, SvnBindException> {
 
   private LogHierarchyNode myCurrentHierarchy;
-  @NotNull private final Consumer<LogHierarchyNode> myConsumer;
+  @NotNull private final Consumer<? super LogHierarchyNode> myConsumer;
 
-  public MergeSourceHierarchyBuilder(@NotNull Consumer<LogHierarchyNode> consumer) {
+  public MergeSourceHierarchyBuilder(@NotNull Consumer<? super LogHierarchyNode> consumer) {
     myConsumer = consumer;
   }
 

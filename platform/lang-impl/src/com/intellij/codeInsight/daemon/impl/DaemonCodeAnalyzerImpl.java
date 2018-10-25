@@ -114,8 +114,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                @NotNull final NamedScopeManager namedScopeManager,
+                                @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;

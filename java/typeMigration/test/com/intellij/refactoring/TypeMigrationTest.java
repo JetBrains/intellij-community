@@ -675,7 +675,7 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   // Checking preserving method parameters alignment
   public void testT127() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTestMethodType("test234",

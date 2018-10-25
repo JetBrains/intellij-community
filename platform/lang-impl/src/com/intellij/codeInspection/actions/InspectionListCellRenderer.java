@@ -40,7 +40,6 @@ import java.util.List;
 /**
 * @author Konstantin Bulenkov
 */
-@SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
 public class InspectionListCellRenderer extends DefaultListCellRenderer {
   private final SimpleTextAttributes mySelected;
   private final SimpleTextAttributes myPlain;

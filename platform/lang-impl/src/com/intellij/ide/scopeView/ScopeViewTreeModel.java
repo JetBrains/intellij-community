@@ -576,9 +576,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         }
       });
       if (provider == null) return children;
-      children.addAll(provider.modify(parent, files.stream()
+      List<AbstractTreeNode> nodes = files
+        .stream()
         .map(file -> new PsiFileNode(getProject(), file, getSettings()))
-        .collect(Collectors.toList()), getSettings()));
+        .collect(Collectors.toList());
+      children.addAll(provider.modify(parent, nodes, getSettings()));
       return children;
     }
 

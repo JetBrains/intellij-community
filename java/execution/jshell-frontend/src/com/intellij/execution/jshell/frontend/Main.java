@@ -104,7 +104,6 @@ public class Main {
         convertEnum(event.previousStatus(), CodeSnippet.Status.class),
         event.value()
       );
-      //noinspection ThrowableNotThrown
       final JShellException exception = event.exception();
       if (exception != null) {
         e.setExceptionText(exception.getMessage());

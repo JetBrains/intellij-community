@@ -97,7 +97,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
   @NotNull
   private PsiFile getFile() {
-    //noinspection ConstantConditions
     return myFile;
   }
 
@@ -377,8 +376,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         if (!myRestrictRange.contains(info)) continue;
         List<? super HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile)
                                      ? insideResult : outsideResult;
-        // have to filter out already obtained highlights
-        if (!result.add(info)) continue;
+        result.add(info);
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;
         if (isError) {
           if (!forceHighlightParents) {
