@@ -55,14 +55,14 @@ public class LookupCellRenderer implements ListCellRenderer {
 
   public static final Color BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.background", new JBColor(new Color(235, 244, 254), JBColor.background()));
   public static final Color FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.foreground", JBColor.foreground());
-  private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.grayedForeground",  new JBColor(Gray._150, Gray._110));
+  private static final Color GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.grayForeground",  new JBColor(Gray._150, Gray._110));
   private static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new Color(0, 82, 164));
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0x6e8ea2, 0x55585a));
-  public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectedForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
-  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectedGrayedForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
+  public static final Color SELECTED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
+  private static final Color SELECTED_GRAYED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionGrayForeground", new JBColor(JBColor.WHITE, JBColor.foreground()));
 
   private static final Color PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", new JBColor(0xb000b0, 0xd17ad6));
-  private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchSelectedForeground", new JBColor(0xf9eccc, 0xd17ad6));
+  private static final Color SELECTED_PREFIX_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchSelectionForeground", new JBColor(0xf9eccc, 0xd17ad6));
 
   private final LookupImpl myLookup;
 

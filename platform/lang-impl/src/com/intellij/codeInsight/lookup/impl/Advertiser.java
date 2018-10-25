@@ -75,7 +75,7 @@ public class Advertiser {
     myNextLabel = new JLabel(">>");
     myNextLabel.setFont(adFont().deriveFont(
       ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
-    myNextLabel.setForeground(JBColor.blue);
+    myNextLabel.setForeground(JBColor.link());
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
