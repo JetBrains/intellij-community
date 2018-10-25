@@ -1165,7 +1165,7 @@ public class UIUtil {
   }
 
   public static Color getInactiveTextColor() {
-    return UIManager.getColor("textInactiveText");
+    return JBColor.namedColor("Component.grayForeground", JBColor.GRAY);
   }
 
   public static Color getSlightlyDarkerColor(Color c) {
