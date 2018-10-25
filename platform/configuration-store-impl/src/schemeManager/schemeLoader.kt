@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
-import com.intellij.configurationStore.LOG
-import com.intellij.configurationStore.LazySchemeProcessor
-import com.intellij.configurationStore.digest
+import com.intellij.configurationStore.*
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.project.ProjectBundle
@@ -21,6 +19,7 @@ import org.xmlpull.v1.XmlPullParser
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Function
@@ -35,6 +34,8 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
   private val newSchemesOffset = schemes.size
 
   private val isApplied = AtomicBoolean()
+
+  private var digest: MessageDigest? = null
 
   private fun isFromFileWithOldExtension(existingScheme: T): Boolean {
     val info = schemeManager.schemeToInfo.get(existingScheme)
@@ -62,6 +63,18 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
         @Suppress("UNCHECKED_CAST")
         schemeManager.processor.onSchemeAdded(newScheme as MUTABLE_SCHEME)
       }
+    }
+    return result
+  }
+
+  private fun getDigest(): MessageDigest {
+    var result = digest
+    if (result == null) {
+      result = createDataDigest()
+      digest = result
+    }
+    else {
+      result.reset()
     }
     return result
   }
@@ -107,8 +120,10 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
 
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
-      element?.let {
-        info.digest = it.digest()
+      if (element != null) {
+        val digest = getDigest()
+        serializeElementToBinary(element, DigestOutputStream(digest))
+        info.digest = digest.digest()
       }
       info.schemeKey = schemeName
       return info
