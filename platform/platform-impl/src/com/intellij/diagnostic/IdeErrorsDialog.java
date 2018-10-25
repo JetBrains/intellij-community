@@ -992,7 +992,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static ErrorReportSubmitter getAndroidErrorReporter() {
     final ErrorReportSubmitter[] reporters;
     try {
-      reporters = Extensions.getExtensions(ExtensionPoints.ERROR_HANDLER_EP);
+      reporters = ExtensionPoints.ERROR_HANDLER_EP.getExtensions();
     }
     catch (Throwable t) {
       return null;
