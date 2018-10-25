@@ -180,7 +180,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       parentSuite.addChild(newSuite);
     }
 
-    initCurrentChildren(newSuite);
+    initCurrentChildren(newSuite, true);
     mySuitesStack.pushSuite(newSuite);
 
     //Progress started
@@ -190,10 +190,10 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     fireOnSuiteStarted(newSuite);
   }
 
-  private void initCurrentChildren(SMTestProxy newSuite) {
+  private void initCurrentChildren(SMTestProxy newSuite, boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
       for (SMTestProxy proxy : newSuite.getChildren()) {
-        if (!proxy.isFinal()) {
+        if (!proxy.isFinal() || preferSuite && proxy.isSuite()) {
           String url = proxy.getLocationUrl();
           if (url != null) {
             myCurrentChildren.computeIfAbsent(url, l -> new ArrayList<>()).add(proxy);
@@ -209,12 +209,12 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       Collection<? extends SMTestProxy> children = myCurrentChildren.get(fullName);
       if (children == null) {
-        initCurrentChildren(parentSuite);
+        initCurrentChildren(parentSuite, preferSuite);
         children = myCurrentChildren.get(fullName);
       }
       if (children != null) { //null if child started second time
         for (SMTestProxy proxy : children) {
-          if (!proxy.isFinal()) {
+          if (!proxy.isFinal() || preferSuite && proxy.isSuite()) {
             acceptedProxies.add(proxy);
           }
         }
