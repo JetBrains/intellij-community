@@ -38,7 +38,7 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.ExpandableEditorSupport;
+import com.intellij.ui.ExtendableEditorSupport;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
@@ -233,7 +233,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
             }
           }).showInBestPositionFor(editor);
         });
-      ExpandableEditorSupport.setupExtension(editor, field.getBackground(), extension);
+      ExtendableEditorSupport.setupExtension(editor, field.getBackground(), extension);
     });
   }
 }
