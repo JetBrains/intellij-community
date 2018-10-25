@@ -45,31 +45,31 @@ public final class GutterTooltipHelper {
   }
 
   /**
-   * @param elements  a collection of elements to create a formatted tooltip text
-   * @param function  a function that returns a text to insert before the current element
-   * @param predicate a function that returns {@code true} to skip a method (or field) name for the current element
-   * @param actionId  an action identifier to generate context help or {@code null} if not applicable
+   * @param elements                 a collection of elements to create a formatted tooltip text
+   * @param elementToPrefix          a function that returns a text to insert before the current element
+   * @param skipFirstMemberOfElement a function that returns {@code true} to skip a method (or field) name for the current element
+   * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
   @NotNull
   public static <E extends PsiElement> String getTooltipText(@NotNull Collection<E> elements,
-                                                             @NotNull Function<E, String> function,
-                                                             @NotNull Predicate<E> predicate,
+                                                             @NotNull Function<E, String> elementToPrefix,
+                                                             @NotNull Predicate<E> skipFirstMemberOfElement,
                                                              @Nullable String actionId) {
-    return getTooltipText(null, elements, function, predicate, actionId);
+    return getTooltipText(null, elements, elementToPrefix, skipFirstMemberOfElement, actionId);
   }
 
   @NotNull
   private static <E extends PsiElement> String getTooltipText(@Nullable String prefix,
                                                               @NotNull Collection<E> elements,
-                                                              @NotNull Function<E, String> function,
-                                                              @NotNull Predicate<E> predicate,
+                                                              @NotNull Function<E, String> elementToPrefix,
+                                                              @NotNull Predicate<E> skipFirstMemberOfElement,
                                                               @Nullable String actionId) {
     StringBuilder sb = new StringBuilder("<html><body>");
     if (prefix != null) sb.append(prefix);
     for (E element : elements) {
-      String elementPrefix = function.apply(element);
+      String elementPrefix = elementToPrefix.apply(element);
       if (elementPrefix != null) sb.append(elementPrefix);
-      appendElement(sb, element, predicate.test(element));
+      appendElement(sb, element, skipFirstMemberOfElement.test(element));
     }
     appendContextHelp(sb, actionId);
     sb.append("</body></html>");
