@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -82,21 +81,9 @@ public abstract class Logger {
 
   public abstract void debug(String message);
 
-  public final void debug(@NotNull Computable<String> messageComputable) {
-    if (isDebugEnabled()) {
-      debug(messageComputable.compute());
-    }
-  }
-
   public abstract void debug(@Nullable Throwable t);
 
   public abstract void debug(String message, @Nullable Throwable t);
-
-  public final void debug(@NotNull Computable<String> messageComputable, @Nullable Throwable t) {
-    if (isDebugEnabled()) {
-      debug(messageComputable.compute(), t);
-    }
-  }
 
   public void debug(@NotNull String message, @NotNull Object... details) {
     if (isDebugEnabled()) {
