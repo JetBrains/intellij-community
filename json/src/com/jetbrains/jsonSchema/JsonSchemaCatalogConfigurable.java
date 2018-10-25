@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,14 +56,6 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
 
   private static void addWithComment(FormBuilder builder, JBCheckBox box, String s) {
     builder.addComponent(new ComponentPanelBuilder(box).withComment(s).createPanel());
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private static JLabel createComment(@NotNull String comment) {
-    JLabel commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true);
-    commentComponent.setBorder(JBUI.Borders.emptyLeft(18));
-    return commentComponent;
   }
 
   private static JPanel wrap(JComponent panel) {
