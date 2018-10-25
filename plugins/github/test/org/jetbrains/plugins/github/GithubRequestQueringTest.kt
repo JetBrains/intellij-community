@@ -20,7 +20,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
-import org.junit.Assume.assumeNotNull
 import java.util.*
 
 /**
@@ -28,14 +27,11 @@ import java.util.*
  */
 class GithubRequestQueringTest : GithubTest() {
 
-  override fun beforeTest() {
-    assumeNotNull(myAccount2)
-  }
-
   @Throws(Throwable::class)
   fun testLinkPagination() {
     val availableRepos = GithubApiPagesLoader
-      .loadAll(myExecutor2, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount2.server, false))
+      .loadAll(secondaryAccount.executor, EmptyProgressIndicator(),
+               GithubApiRequests.CurrentUser.Repos.pages(secondaryAccount.account.server, false))
     val realData = ArrayList<String>()
     for (info in availableRepos) {
       realData.add(info.name)
@@ -46,26 +42,28 @@ class GithubRequestQueringTest : GithubTest() {
       expectedData.add(i.toString())
     }
 
-    UsefulTestCase.assertContainsElements(realData, expectedData)
+    assertContainsElements(realData, expectedData)
   }
 
   @Throws(Throwable::class)
   fun testOwnRepos() {
     val result = GithubApiPagesLoader
-      .loadAll(myExecutor, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.server, false))
+      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
 
-    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
-    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
-    TestCase.assertFalse(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
+    assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
+    assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
+    assertFalse(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
   }
 
   @Throws(Throwable::class)
   fun testAllRepos() {
     val result = GithubApiPagesLoader
-      .loadAll(myExecutor, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.server))
+      .loadAll(mainAccount.executor, EmptyProgressIndicator(),
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
 
-    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
-    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
-    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
+    assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
+    assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
+    assertTrue(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
   }
 }

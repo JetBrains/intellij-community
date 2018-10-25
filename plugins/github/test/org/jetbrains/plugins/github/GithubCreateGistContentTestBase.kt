@@ -29,6 +29,6 @@ abstract class GithubCreateGistContentTestBase : GithubTest() {
   }
 
   protected fun checkEquals(expected: List<FileContent>, actual: List<FileContent>) {
-    TestCase.assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual))
+    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual))
   }
 }

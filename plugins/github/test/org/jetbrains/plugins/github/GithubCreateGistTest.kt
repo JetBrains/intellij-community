@@ -23,35 +23,35 @@ import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
  * @author Aleksey Pivovarov
  */
 class GithubCreateGistTest : GithubCreateGistTestBase() {
-  private val myIndicator = DumbProgressIndicator.INSTANCE
+  private val indicator = DumbProgressIndicator.INSTANCE
 
   fun testSimple() {
-    val expected = GithubCreateGistTestBase.createContent()
+    val expected = createContent()
 
-    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION,
-                                                null)
-    TestCase.assertNotNull(url)
-    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
+    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
+                                                expected, true, gistDescription, null)
+    assertNotNull(url)
+    gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
     checkGistExists()
     checkGistNotAnonymous()
     checkGistSecret()
-    checkGistDescription(GIST_DESCRIPTION)
+    checkGistDescription(gistDescription)
     checkGistContent(expected)
   }
 
   fun testUnusedFilenameField() {
-    val expected = GithubCreateGistTestBase.createContent()
+    val expected = createContent()
 
-    val url = GithubCreateGistAction
-      .createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION, "filename")
-    TestCase.assertNotNull(url)
-    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
+    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
+                                                expected, true, gistDescription, "filename")
+    assertNotNull(url)
+    gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
     checkGistExists()
     checkGistNotAnonymous()
     checkGistSecret()
-    checkGistDescription(GIST_DESCRIPTION)
+    checkGistDescription(gistDescription)
     checkGistContent(expected)
   }
 
@@ -59,39 +59,39 @@ class GithubCreateGistTest : GithubCreateGistTestBase() {
     val content = listOf(FileContent("file.txt", "file.txt content"))
     val expected = listOf(FileContent("filename", "file.txt content"))
 
-    val url = GithubCreateGistAction
-      .createGist(myProject, myExecutor, myIndicator, myAccount.server, content, true, GIST_DESCRIPTION, "filename")
-    TestCase.assertNotNull(url)
-    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
+    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
+                                                content, true, gistDescription, "filename")
+    assertNotNull(url)
+    gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
     checkGistExists()
     checkGistNotAnonymous()
     checkGistSecret()
-    checkGistDescription(GIST_DESCRIPTION)
+    checkGistDescription(gistDescription)
     checkGistContent(expected)
   }
 
   fun testPublic() {
-    val expected = GithubCreateGistTestBase.createContent()
+    val expected = createContent()
 
-    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, false, GIST_DESCRIPTION,
-                                                null)
-    TestCase.assertNotNull(url)
-    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
+    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
+                                                expected, false, gistDescription, null)
+    assertNotNull(url)
+    gistId = url!!.substring(url.lastIndexOf('/') + 1)
 
     checkGistExists()
     checkGistNotAnonymous()
     checkGistPublic()
-    checkGistDescription(GIST_DESCRIPTION)
+    checkGistDescription(gistDescription)
     checkGistContent(expected)
   }
 
   fun testEmpty() {
     val expected = emptyList<FileContent>()
 
-    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION,
-                                                null)
-    TestCase.assertNull("Gist was created", url)
+    val url = GithubCreateGistAction.createGist(myProject, mainAccount.executor, indicator, mainAccount.account.server,
+                                                expected, true, gistDescription, null)
+    assertNull("Gist was created", url)
 
     checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist")
   }

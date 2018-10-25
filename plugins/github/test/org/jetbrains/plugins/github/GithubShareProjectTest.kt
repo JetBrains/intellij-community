@@ -6,8 +6,8 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vcs.Executor.cd
 import git4idea.commands.Git
 import git4idea.test.TestDialogHandler
+import git4idea.test.git
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import java.io.IOException
 
 /**
@@ -25,7 +25,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
-    initGitChecks()
+    findGitRepo()
     checkGitExists()
     checkGithubExists()
     checkRemoteConfigured()
@@ -45,10 +45,10 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
 
     createProjectFiles()
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
-    TestCase.assertFalse(shown.get())
+    assertFalse(shown.get())
 
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
-    TestCase.assertTrue(shown.get())
+    assertTrue(shown.get())
   }
 
   @Throws(Throwable::class)
@@ -67,7 +67,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
-    initGitChecks()
+    findGitRepo()
     checkGitExists()
     checkGithubExists()
     checkRemoteConfigured()
@@ -86,7 +86,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
-    initGitChecks()
+    findGitRepo()
     checkGitExists()
     checkGithubExists()
     checkRemoteConfigured()
@@ -101,15 +101,16 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
 
     checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null)
-    initGitChecks()
+    findGitRepo()
     checkGitExists()
     checkGithubExists()
     checkRemoteConfigured()
   }
 
   @Throws(IOException::class)
-  protected fun checkGithubExists() {
-    val githubInfo = myExecutor.execute<GithubRepoDetailed>(GithubApiRequests.Repos.get(myAccount.server, myUsername, PROJECT_NAME))
-    TestCase.assertNotNull("GitHub repository does not exist", githubInfo)
+  private fun checkGithubExists() {
+    val githubInfo = mainAccount.executor.execute(
+      GithubApiRequests.Repos.get(mainAccount.account.server, mainAccount.username, projectName))
+    assertNotNull("GitHub repository does not exist", githubInfo)
   }
 }

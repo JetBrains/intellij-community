@@ -16,26 +16,14 @@
 package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.vcs.VcsException
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.components.service
 import com.intellij.testFramework.VfsTestUtil
-import git4idea.commands.GitHttpAuthService
-import git4idea.commands.GitHttpAuthenticator
-import git4idea.config.GitConfigUtil
-import git4idea.repo.GitRepository
-import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
-import git4idea.test.git
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.util.GithubGitHelper
-import org.jetbrains.plugins.github.util.GithubUtil
-import org.junit.Assume.assumeNotNull
-import org.junit.Assume.assumeTrue
 
 /**
  *
@@ -55,20 +43,75 @@ import org.junit.Assume.assumeTrue
  */
 abstract class GithubTest : GitPlatformTest() {
 
-  protected var myRepository: GitRepository? = null
+  private lateinit var authenticationManager: GithubAuthenticationManager
 
-  private var myHttpAuthService: GitHttpAuthTestService
-  protected var myAuthenticationManager: GithubAuthenticationManager
+  protected lateinit var mainAccount: AccountData
+  protected lateinit var secondaryAccount: AccountData
 
-  protected var myAccount: GithubAccount
-  protected var myExecutor: GithubApiRequestExecutor
-  protected var myAccount2: GithubAccount
-  protected var myExecutor2: GithubApiRequestExecutor
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
 
-  protected var myUsername: String
-  protected var myUsername2: String
+    val host = System.getenv("idea.test.github.host")
+    val token1 = System.getenv("idea.test.github.token1")
+    val token2 = System.getenv("idea.test.github.token2")
 
-  private var myToken: String? = null
+    assertNotNull(host)
+    assertNotNull(token1)
+    assertNotNull(token2)
+
+    authenticationManager = service()
+
+    mainAccount = createAccountData(host, token1)
+    secondaryAccount = createAccountData(host, token2)
+
+    try {
+      beforeTest()
+      setCurrentAccount(mainAccount)
+    }
+    catch (e: Exception) {
+      try {
+        tearDown()
+      }
+      catch (e2: Exception) {
+        e2.printStackTrace()
+      }
+      throw e
+    }
+  }
+
+  private fun createAccountData(host: String, token: String): AccountData {
+    val executorManager = service<GithubApiRequestExecutorManager>()
+    val account = authenticationManager.registerAccount("token", host, token)
+    val executor = executorManager.getExecutor(account)
+    val username = executor.execute(GithubApiRequests.CurrentUser.get(account.server)).login
+
+    return AccountData(token, account, username, executor)
+  }
+
+  @Throws(Exception::class)
+  override fun tearDown() {
+    try {
+      afterTest()
+      setCurrentAccount(null)
+      authenticationManager.clearAccounts()
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  @Throws(Exception::class)
+  protected open fun beforeTest() {
+  }
+
+  @Throws(Exception::class)
+  protected open fun afterTest() {
+  }
+
+  protected open fun setCurrentAccount(accountData: AccountData?) {
+    authenticationManager.setDefaultAccount(myProject, accountData?.account)
+  }
 
   protected fun createProjectFiles() {
     VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content")
@@ -80,143 +123,25 @@ abstract class GithubTest : GitPlatformTest() {
     VfsTestUtil.createDir(projectRoot, "folder/empty_folder")
   }
 
-  override fun hasRemoteGitOperation(): Boolean {
-    return true
-  }
+  override fun hasRemoteGitOperation() = true
 
   protected fun checkNotification(type: NotificationType, title: String?, content: String?) {
     val actualNotification = vcsNotifier.lastNotification
-    TestCase.assertNotNull("No notification was shown", actualNotification)
+    assertNotNull("No notification was shown", actualNotification)
 
     if (title != null) {
-      TestCase.assertEquals("Notification has wrong title (content: " + actualNotification.content + ")", title, actualNotification.title)
+      assertEquals("Notification has wrong title (content: " + actualNotification.content + ")", title, actualNotification.title)
     }
     if (content != null) {
-      TestCase.assertEquals("Notification has wrong content", content, actualNotification.content)
+      assertEquals("Notification has wrong content", content, actualNotification.content)
     }
-    TestCase.assertEquals("Notification has wrong type", type, actualNotification.type)
+    assertEquals("Notification has wrong type", type, actualNotification.type)
   }
 
-  protected fun registerHttpAuthService() {
-    val myHttpAuthService = ServiceManager.getService(GitHttpAuthService::class.java) as GitHttpAuthTestService
-    myHttpAuthService.register(object : GitHttpAuthenticator {
-      override fun askPassword(url: String): String {
-        return GithubUtil.GIT_AUTH_PASSWORD_SUBSTITUTE
-      }
+  override fun runInDispatchThread() = true
 
-      override fun askUsername(url: String): String {
-        return myToken
-      }
-
-      override fun saveAuthData() {}
-
-      override fun forgetPassword() {}
-
-      override fun wasCancelled(): Boolean {
-        return false
-      }
-    })
-  }
-
-  // workaround: user on test server got "" as username, so git can't generate default identity
-  protected fun setGitIdentity(root: VirtualFile) {
-    try {
-      GitConfigUtil.setValue(myProject, root, "user.name", "Github Test")
-      GitConfigUtil.setValue(myProject, root, "user.email", "githubtest@jetbrains.com")
-    }
-    catch (e: VcsException) {
-      e.printStackTrace()
-    }
-
-  }
-
-  protected fun initGitChecks() {
-    myRepository = repositoryManager.getRepositoryForFile(projectRoot)
-  }
-
-  protected fun checkGitExists() {
-    TestCase.assertNotNull("Git repository does not exist", myRepository)
-  }
-
-  protected fun checkRemoteConfigured() {
-    TestCase.assertNotNull(myRepository)
-
-    TestCase.assertTrue("GitHub remote is not configured", GithubGitHelper.getInstance().hasAccessibleRemotes(myRepository!!))
-  }
-
-  protected fun checkLastCommitPushed() {
-    TestCase.assertNotNull(myRepository)
-
-    val hash = myRepository.git("log -1 --pretty=%h")
-    val ans = myRepository.git("branch --contains $hash -a")
-    TestCase.assertTrue(ans.contains("remotes/origin"))
-  }
-
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-
-    val host = System.getenv("idea.test.github.host")
-    val token1 = System.getenv("idea.test.github.token1")
-    val token2 = System.getenv("idea.test.github.token2")
-
-    // TODO change to assert when a stable Github testing server is ready
-    assumeNotNull(host)
-    assumeTrue(token1 != null && token2 != null)
-    myAuthenticationManager = GithubAuthenticationManager.getInstance()
-    val executorManager = GithubApiRequestExecutorManager.getInstance()
-    myAccount = myAuthenticationManager.registerAccount("account1", host, token1!!)
-    myExecutor = executorManager.getExecutor(myAccount)
-    myAccount2 = myAuthenticationManager.registerAccount("account2", host, token2!!)
-    myExecutor2 = executorManager.getExecutor(myAccount2)
-    myToken = token1
-
-    myUsername = myExecutor.execute<GithubAuthenticatedUser>(GithubApiRequests.CurrentUser.get(myAccount.server)).getLogin()
-    myUsername2 = myExecutor2.execute<GithubAuthenticatedUser>(GithubApiRequests.CurrentUser.get(myAccount2.server)).getLogin()
-
-    myHttpAuthService = ServiceManager.getService(GitHttpAuthService::class.java) as GitHttpAuthTestService
-
-    try {
-      beforeTest()
-    }
-    catch (e: Exception) {
-      try {
-        tearDown()
-      }
-      catch (e2: Exception) {
-        e2.printStackTrace()
-      }
-
-      throw e
-    }
-
-  }
-
-  @Throws(Exception::class)
-  override fun tearDown() {
-    try {
-      afterTest()
-      myAuthenticationManager.setDefaultAccount(myProject, null)
-      myAuthenticationManager.clearAccounts()
-    }
-    finally {
-      if (myHttpAuthService != null) myHttpAuthService.cleanup()
-      super.tearDown()
-    }
-  }
-
-  protected open fun beforeTest() {}
-
-  @Throws(Exception::class)
-  protected open fun afterTest() {
-  }
-
-  override fun runInDispatchThread(): Boolean {
-    return true
-  }
-
-
-  protected fun git(command: String) {
-    this.git(command, false)
-  }
+  protected data class AccountData(val token: String,
+                                   val account: GithubAccount,
+                                   val username: String,
+                                   val executor: GithubApiRequestExecutor)
 }

@@ -40,7 +40,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     expected.add(FileContent("file.txt", "file.txt content"))
 
     val file = projectRoot.findFileByRelativePath("file.txt")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
@@ -54,7 +54,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     expected.add(FileContent("folder_dir_file3", "file3 content"))
 
     val file = projectRoot.findFileByRelativePath("folder")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
@@ -65,7 +65,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     val expected = ArrayList<FileContent>()
 
     val file = projectRoot.findFileByRelativePath("folder/empty_folder")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
@@ -76,7 +76,7 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     val expected = ArrayList<FileContent>()
 
     val file = projectRoot.findFileByRelativePath("folder/empty_file")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
@@ -93,9 +93,9 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     files[0] = projectRoot.findFileByRelativePath("file.txt")
     files[1] = projectRoot.findFileByRelativePath("folder/file2")
     files[2] = projectRoot.findFileByRelativePath("folder/dir/file3")
-    TestCase.assertNotNull(files[0])
-    TestCase.assertNotNull(files[1])
-    TestCase.assertNotNull(files[2])
+    assertNotNull(files[0])
+    assertNotNull(files[1])
+    assertNotNull(files[2])
 
     val actual = GithubCreateGistAction.collectContents(myProject, null, null, files)
 
@@ -114,13 +114,13 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
 
   fun testCreateFromEditor() {
     val file = projectRoot.findFileByRelativePath("file.txt")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val document = FileDocumentManager.getInstance().getDocument(file!!)
-    TestCase.assertNotNull(document)
+    assertNotNull(document)
 
     myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
-    TestCase.assertNotNull(myEditor)
+    assertNotNull(myEditor)
 
     val expected = ArrayList<FileContent>()
     expected.add(FileContent("file.txt", "file.txt content"))
@@ -132,13 +132,13 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
 
   fun testCreateFromEditorWithoutFile() {
     val file = projectRoot.findFileByRelativePath("file.txt")
-    TestCase.assertNotNull(file)
+    assertNotNull(file)
 
     val document = FileDocumentManager.getInstance().getDocument(file!!)
-    TestCase.assertNotNull(document)
+    assertNotNull(document)
 
     myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
-    TestCase.assertNotNull(myEditor)
+    assertNotNull(myEditor)
 
     val expected = ArrayList<FileContent>()
     expected.add(FileContent("", "file.txt content"))

@@ -17,11 +17,12 @@ package org.jetbrains.plugins.github
 
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Clock
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.text.DateFormatUtil
 import git4idea.GitUtil
 import git4idea.test.TestDialogHandler
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.test.GithubTest
+import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubShareDialog
 import java.io.IOException
 import java.util.*
@@ -29,29 +30,30 @@ import java.util.*
 /**
  * @author Aleksey Pivovarov
  */
-abstract class GithubShareProjectTestBase : GithubTest() {
-  protected var PROJECT_NAME: String
+abstract class GithubShareProjectTestBase : GithubGitRepoTest() {
+  protected lateinit var projectName: String
 
   override fun beforeTest() {
+    super.beforeTest()
     val rnd = Random()
     val time = Clock.getTime()
-    PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong()
-    registerHttpAuthService()
+    projectName = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong()
   }
 
   @Throws(Exception::class)
   override fun afterTest() {
     deleteGithubRepo()
+    super.afterTest()
   }
 
   @Throws(IOException::class)
   protected fun deleteGithubRepo() {
-    myExecutor.execute(GithubApiRequests.Repos.delete(myAccount.server, myUsername, PROJECT_NAME))
+    mainAccount.executor.execute(GithubApiRequests.Repos.delete(mainAccount.account.server, mainAccount.username, projectName))
   }
 
   protected fun registerDefaultShareDialogHandler() {
     dialogManager.registerDialogHandler(GithubShareDialog::class.java, TestDialogHandler { dialog ->
-      dialog.testSetRepositoryName(PROJECT_NAME)
+      dialog.testSetRepositoryName(projectName)
       DialogWrapper.OK_EXIT_CODE
     })
   }
@@ -74,7 +76,7 @@ abstract class GithubShareProjectTestBase : GithubTest() {
                                           for (repository in GitUtil.getRepositoryManager(myProject).repositories) {
                                             setGitIdentity(repository.root)
                                           }
-                                          dialog.setSelectedFiles(emptyList<VirtualFile>())
+                                          dialog.selectedFiles = emptyList<VirtualFile>()
                                           DialogWrapper.OK_EXIT_CODE
                                         })
   }

@@ -29,31 +29,18 @@ import java.util.*
  * @author Aleksey Pivovarov
  */
 abstract class GithubCreateGistTestBase : GithubTest() {
-  protected var GIST_ID: String? = null
-  protected var GIST: GithubGist? = null
-  protected var GIST_DESCRIPTION: String
-
-  protected val gist: GithubGist
-    get() {
-      TestCase.assertNotNull(GIST_ID)
-
-      if (GIST == null) {
-        try {
-          GIST = myExecutor.execute<GithubGist>(GithubApiRequests.Gists.get(myAccount.server, GIST_ID!!))
-        }
-        catch (e: IOException) {
-          System.err.println(e.message)
-        }
-
-      }
-
-      TestCase.assertNotNull("Gist does not exist", GIST)
-      return GIST
-    }
+  protected lateinit var gistDescription: String
+  protected var gistId: String? = null
+  private val gist: GithubGist by lazy {
+    assertNotNull(gistId)
+    val loaded = mainAccount.executor.execute(GithubApiRequests.Gists.get(mainAccount.account.server, gistId!!))
+    assertNotNull("Gist does not exist", loaded)
+    loaded!!
+  }
 
   override fun beforeTest() {
     val time = Clock.getTime()
-    GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time)
+    gistDescription = getTestName(false) + "_" + DateFormatUtil.formatDate(time)
   }
 
   @Throws(Exception::class)
@@ -63,10 +50,9 @@ abstract class GithubCreateGistTestBase : GithubTest() {
 
   @Throws(IOException::class)
   protected fun deleteGist() {
-    if (GIST_ID != null) {
-      myExecutor.execute(GithubApiRequests.Gists.delete(myAccount.server, GIST_ID!!))
-      GIST = null
-      GIST_ID = null
+    if (gistId != null) {
+      mainAccount.executor.execute(GithubApiRequests.Gists.delete(mainAccount.account.server, gistId!!))
+      gistId = null
     }
   }
 
@@ -77,25 +63,25 @@ abstract class GithubCreateGistTestBase : GithubTest() {
   protected fun checkGistPublic() {
     val result = gist
 
-    TestCase.assertTrue("Gist is not public", result.isPublic)
+    assertTrue("Gist is not public", result.isPublic)
   }
 
   protected fun checkGistSecret() {
     val result = gist
 
-    TestCase.assertFalse("Gist is not private", result.isPublic)
+    assertFalse("Gist is not private", result.isPublic)
   }
 
   protected fun checkGistNotAnonymous() {
     val result = gist
 
-    TestCase.assertFalse("Gist is not anonymous", result.user == null)
+    assertFalse("Gist is not anonymous", result.user == null)
   }
 
   protected fun checkGistDescription(expected: String) {
     val result = gist
 
-    TestCase.assertEquals("Gist content differs from sample", expected, result.description)
+    assertEquals("Gist content differs from sample", expected, result.description)
   }
 
   protected fun checkGistContent(expected: List<FileContent>) {
@@ -106,12 +92,12 @@ abstract class GithubCreateGistTestBase : GithubTest() {
       files.add(FileContent(file.filename, file.content))
     }
 
-    TestCase.assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected))
+    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected))
   }
 
   companion object {
 
-    protected fun createContent(): List<FileContent> {
+    fun createContent(): List<FileContent> {
       val content = ArrayList<FileContent>()
 
       content.add(FileContent("file1", "file1 content"))

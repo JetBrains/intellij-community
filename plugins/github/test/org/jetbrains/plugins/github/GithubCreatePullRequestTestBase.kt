@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.vcs.Executor.cd
@@ -23,47 +24,50 @@ import com.intellij.util.text.DateFormatUtil
 import git4idea.actions.GitInit
 import git4idea.commands.Git
 import git4idea.test.TestDialogHandler
+import git4idea.test.git
 import org.jetbrains.plugins.github.api.GithubFullPath
-import org.jetbrains.plugins.github.test.GithubTest
+import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog
-import org.jetbrains.plugins.github.util.GithubGitHelper
 import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-abstract class GithubCreatePullRequestTestBase : GithubTest() {
-  protected var BRANCH_NAME: String
+abstract class GithubCreatePullRequestTestBase : GithubGitRepoTest() {
+  private lateinit var branchName: String
 
   override fun beforeTest() {
+    super.beforeTest()
+
     val rnd = Random()
     val time = Clock.getTime()
-    BRANCH_NAME = "branch_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong()
-
-    registerHttpAuthService()
+    branchName = "branch_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong()
 
     cd(projectRoot.path)
     cloneRepo()
     createBranch()
     createChanges()
-    initGitChecks()
-    myRepository!!.update()
+
+    findGitRepo()
+    repository.update()
   }
 
   override fun afterTest() {
-    deleteRemoteBranch()
+    try {
+      deleteRemoteBranch()
+    }
+    finally {
+      super.afterTest()
+    }
   }
 
-  protected fun deleteRemoteBranch() {
-    val repository = GithubGitHelper.findGitRepository(myProject, projectRoot)
-    if (repository != null) {
-      Git.getInstance().push(repository, "origin", PROJECT_URL, ":$BRANCH_NAME", false)
-    }
+  private fun deleteRemoteBranch() {
+    service<Git>().push(repository, "origin", PROJECT_URL, ":$branchName", false)
   }
 
   protected fun registerDefaultCreatePullRequestDialogHandler(branch: String, user: String) {
     dialogManager.registerDialogHandler(GithubCreatePullRequestDialog::class.java, TestDialogHandler { dialog ->
-      dialog.testSetRequestTitle(BRANCH_NAME)
+      dialog.testSetRequestTitle(branchName)
       dialog.testSetFork(GithubFullPath(user, PROJECT_NAME))
       dialog.testSetBranch(branch)
       dialog.testCreatePullRequest()
@@ -71,7 +75,7 @@ abstract class GithubCreatePullRequestTestBase : GithubTest() {
     })
   }
 
-  protected fun cloneRepo() {
+  private fun cloneRepo() {
     // project dir can be not empty
     git("init")
     git("remote add origin $PROJECT_URL")
@@ -82,19 +86,19 @@ abstract class GithubCreatePullRequestTestBase : GithubTest() {
     GitInit.refreshAndConfigureVcsMappings(myProject, projectRoot, projectRoot.path)
   }
 
-  protected fun createBranch() {
-    git("branch $BRANCH_NAME")
-    git("checkout $BRANCH_NAME")
+  private fun createBranch() {
+    git("branch $branchName")
+    git("checkout $branchName")
   }
 
-  protected fun createChanges() {
+  private fun createChanges() {
     VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content")
     git("add file.txt")
     git("commit -m changes")
   }
 
   companion object {
-    protected val PROJECT_URL = "https://github.com/ideatest1/PullRequestTest"
-    protected val PROJECT_NAME = "PullRequestTest"
+    const val PROJECT_URL = "https://github.com/ideatest1/PullRequestTest"
+    const val PROJECT_NAME = "PullRequestTest"
   }
 }

@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Pair
-import com.intellij.util.containers.Convertor
 import junit.framework.TestCase
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.util.GithubUrlUtil.*
@@ -35,9 +34,9 @@ class GithubUrlUtilTest : TestCase() {
 
   }
 
-  private fun <T> runTestCase(tests: TestCase<T>, func: Convertor<String, T>) {
+  private fun <T> runTestCase(tests: TestCase<T>, func: (String) -> T) {
     for (test in tests.tests) {
-      TestCase.assertEquals(test.getFirst(), test.getSecond(), func.convert(test.getFirst()))
+      assertEquals(test.getFirst(), test.getSecond(), func(test.getFirst()))
     }
   }
 
@@ -50,7 +49,7 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("http://github.com/user/repo/", "http://github.com/user/repo")
     tests.add("http://github.com/user/repo", "http://github.com/user/repo")
 
-    runTestCase(tests, { `in` -> removeTrailingSlash(`in`) })
+    runTestCase(tests) { `in` -> removeTrailingSlash(`in`) }
   }
 
   fun testRemoveProtocolPrefix() {
@@ -72,7 +71,7 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com/user/repo/")
     tests.add("HttP://GitHub.com/user/repo/", "GitHub.com/user/repo/")
 
-    runTestCase(tests, { `in` -> removeProtocolPrefix(`in`) })
+    runTestCase(tests) { `in` -> removeProtocolPrefix(`in`) }
   }
 
   fun testRemovePort() {
@@ -87,11 +86,11 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("github.com:80/user", "github.com/user")
     tests.add("github.com:80", "github.com")
 
-    runTestCase(tests, { `in` -> removePort(`in`) })
+    runTestCase(tests) { `in` -> removePort(`in`) }
   }
 
   fun testGetUserAndRepositoryFromRemoteUrl() {
-    val tests = TestCase<GithubFullPath>()
+    val tests = TestCase<GithubFullPath?>()
 
     tests.add("http://github.com/username/reponame/", GithubFullPath("username", "reponame"))
     tests.add("https://github.com/username/reponame/", GithubFullPath("username", "reponame"))
@@ -112,11 +111,11 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("git@github.com:user/", null)
     tests.add("https://user:pass@github.com/", null)
 
-    runTestCase(tests, { `in` -> getUserAndRepositoryFromRemoteUrl(`in`) })
+    runTestCase(tests) { `in` -> getUserAndRepositoryFromRemoteUrl(`in`) }
   }
 
   fun testMakeGithubRepoFromRemoteUrl() {
-    val tests = TestCase<String>()
+    val tests = TestCase<String?>()
 
     tests.add("http://github.com/username/reponame/", "https://github.com/username/reponame")
     tests.add("https://github.com/username/reponame/", "https://github.com/username/reponame")
@@ -138,7 +137,7 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("git@github.com:user/", null)
     tests.add("https://user:pass@github.com/", null)
 
-    runTestCase(tests, { `in` -> makeGithubRepoUrlFromRemoteUrl(`in`, "https://github.com") })
+    runTestCase(tests) { `in` -> makeGithubRepoUrlFromRemoteUrl(`in`, "https://github.com") }
   }
 
   fun testGetHostFromUrl() {
@@ -165,7 +164,7 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com")
     tests.add("HttP://GitHub.com/user/repo/", "GitHub.com")
 
-    runTestCase(tests, { `in` -> getHostFromUrl(`in`) })
+    runTestCase(tests) { `in` -> getHostFromUrl(`in`) }
   }
 
   fun testGetApiUrl() {
@@ -192,6 +191,6 @@ class GithubUrlUtilTest : TestCase() {
     tests.add("https://ghe.com/suffix", "https://ghe.com/suffix/api/v3")
     tests.add("https://ghe.com/suFFix", "https://ghe.com/suFFix/api/v3")
 
-    runTestCase(tests, { `in` -> getApiUrl(`in`) })
+    runTestCase(tests) { `in` -> getApiUrl(`in`) }
   }
 }
