@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentList
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
@@ -31,20 +32,28 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
   private val filesToDelete = THashSet<String>()
 
   private val schemes = oldSchemes.toMutableList()
-  private val newSchemesOffset = schemes.size
+  private var newSchemesOffset = schemes.size
+
+  // scheme could be changed - so, hashcode will be changed - we must use identity hashing strategy
+  private val schemeToInfo = ContainerUtil.newIdentityTroveMap<T, ExternalInfo>()
 
   private val isApplied = AtomicBoolean()
 
   private var digest: MessageDigest? = null
 
+  // or from current session, or from current state
+  private fun getInfoForExistingScheme(existingScheme: T): ExternalInfo? {
+    return schemeToInfo.get(existingScheme) ?: schemeManager.schemeToInfo.get(existingScheme)
+  }
+
   private fun isFromFileWithOldExtension(existingScheme: T): Boolean {
-    val info = schemeManager.schemeToInfo.get(existingScheme)
+    val info = getInfoForExistingScheme(existingScheme)
     // scheme from file with old extension, so, we must ignore it
     return info != null && schemeManager.schemeExtension != info.fileExtension
   }
 
   private fun isFromFileWithNewExtension(existingScheme: T, fileNameWithoutExtension: String): Boolean {
-    return schemeManager.schemeToInfo.get(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension
+    return getInfoForExistingScheme(existingScheme)?.fileNameWithoutExtension == fileNameWithoutExtension
   }
 
   /**
@@ -52,9 +61,10 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
    */
   fun apply(): List<T> {
     LOG.assertTrue(isApplied.compareAndSet(false, true))
-
     schemeManager.filesToDelete.addAll(filesToDelete)
     schemeManager.filesToDelete.addAll(preScheduledFilesToDelete)
+
+    schemeManager.schemeToInfo.putAll(schemeToInfo)
 
     val result = schemes.subList(newSchemesOffset, schemes.size)
     schemeManager.schemeListManager.replaceSchemeList(oldSchemes, schemes)
@@ -79,6 +89,44 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     return result
   }
 
+  private fun checkExisting(schemeKey: String, fileName: String, fileNameWithoutExtension: String, extension: String): Boolean {
+    val processor = schemeManager.processor
+    // schemes load session doesn't care about any scheme that added after session creation,
+    // e.g. for now, on apply, simply current manager list replaced atomically to the new one
+    // if later it will lead to some issues, this check should be done as merge operation (again, currently on apply old list is replaced and not merged)
+    val existingSchemeIndex = schemes.indexOfFirst { processor.getSchemeKey(it) == schemeKey }
+    val existingScheme = (if (existingSchemeIndex == -1) null else schemes.get(existingSchemeIndex)) ?: return true
+    if (schemeManager.schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
+      // so, bundled scheme is shadowed
+      schemes.removeAt(existingSchemeIndex)
+      if (existingSchemeIndex < newSchemesOffset) {
+        newSchemesOffset--
+      }
+      // not added to filesToDelete because it is only shadowed
+      return true
+    }
+    else if (processor.isExternalizable(existingScheme) && isFromFileWithOldExtension(existingScheme)) {
+      schemes.removeAt(existingSchemeIndex)
+      if (existingSchemeIndex < newSchemesOffset) {
+        newSchemesOffset--
+      }
+      filesToDelete.add(fileName)
+    }
+    else {
+      if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
+        // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
+        filesToDelete.add(fileName)
+      }
+      else {
+        // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
+        // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
+        LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeKey\"")
+      }
+      return false
+    }
+    return true
+  }
+
   fun loadScheme(fileName: String, input: InputStream): MUTABLE_SCHEME? {
     val extension = schemeManager.getFileExtension(fileName, isAllowAny = false)
     if (isFileScheduledForDeleteInThisLoadSession(fileName)) {
@@ -87,36 +135,7 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
     }
 
     val processor = schemeManager.processor
-    val schemeListManager = schemeManager.schemeListManager
-
     val fileNameWithoutExtension = fileName.substring(0, fileName.length - extension.length)
-
-    fun checkExisting(schemeName: String): Boolean {
-      schemes.firstOrNull { processor.getSchemeKey(it) == schemeName}?.let { existingScheme ->
-        if (schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(existingScheme)) === existingScheme) {
-          // so, bundled scheme is shadowed
-          schemeListManager.removeFirstScheme(schemes, scheduleDelete = false) { it === existingScheme }
-          return true
-        }
-        else if (processor.isExternalizable(existingScheme) && isFromFileWithOldExtension(existingScheme)) {
-          schemeListManager.removeFirstScheme(schemes) { it === existingScheme }
-        }
-        else {
-          if (schemeManager.schemeExtension != extension && isFromFileWithNewExtension(existingScheme, fileNameWithoutExtension)) {
-            // 1.oldExt is loading after 1.newExt - we should delete 1.oldExt
-            filesToDelete.add(fileName)
-          }
-          else {
-            // We don't load scheme with duplicated name - if we generate unique name for it, it will be saved then with new name.
-            // It is not what all can expect. Such situation in most cases indicates error on previous level, so, we just warn about it.
-            LOG.warn("Scheme file \"$fileName\" is not loaded because defines duplicated name \"$schemeName\"")
-          }
-          return false
-        }
-      }
-
-      return true
-    }
 
     fun createInfo(schemeName: String, element: Element?): ExternalInfo {
       val info = ExternalInfo(fileNameWithoutExtension, extension)
@@ -141,16 +160,16 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
             null
           }
         }
-        val schemeName = name
-                         ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
-                         ?: throw nameIsMissed(bytes)
-        if (!checkExisting(schemeName)) {
+        val schemeKey = name
+                        ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
+                        ?: throw nameIsMissed(bytes)
+        if (!checkExisting(schemeKey, fileName, fileNameWithoutExtension, extension)) {
           return null
         }
 
-        val externalInfo = createInfo(schemeName, null)
-        scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeName, attributeProvider)
-        schemeManager.schemeToInfo.put(scheme, externalInfo)
+        val externalInfo = createInfo(schemeKey, null)
+        scheme = processor.createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider)
+        schemeToInfo.put(scheme, externalInfo)
         retainProbablyScheduledForDeleteFile(fileName)
       }
     }
@@ -158,11 +177,11 @@ internal class SchemeLoader<T : Any, MUTABLE_SCHEME : T>(private val schemeManag
       val element = JDOMUtil.load(input.bufferedReader())
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, isDuringLoad) ?: return null
       val schemeKey = processor.getSchemeKey(scheme!!)
-      if (!checkExisting(schemeKey)) {
+      if (!checkExisting(schemeKey, fileName, fileNameWithoutExtension, extension)) {
         return null
       }
 
-      schemeManager.schemeToInfo.put(scheme, createInfo(schemeKey, element))
+      schemeToInfo.put(scheme, createInfo(schemeKey, element))
       retainProbablyScheduledForDeleteFile(fileName)
     }
 

@@ -132,8 +132,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
         externalInfo.schemeKey = schemeKey
 
-        val scheme = (processor as LazySchemeProcessor).createScheme(
-          SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider, true)
+        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(processor, bytes, externalInfo), schemeKey, attributeProvider, true)
         val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = schemeListManager.readOnlyExternalizableSchemes.put(schemeKey, scheme)
@@ -559,13 +558,36 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String) = schemeListManager.removeFirstScheme(schemes) {processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = removeFirstScheme(schemes, this) {processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T) = schemeListManager.removeFirstScheme(schemes) { it == scheme } != null
+  override fun removeScheme(scheme: T) = removeFirstScheme(schemes, this) { it == scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
   override fun toString() = fileSpec
+}
+
+// static method to ensure that receiver state is not used
+private fun <T : Any> removeFirstScheme(schemes: MutableList<T>, schemeManager: SchemeManagerImpl<T, *>, condition: (T) -> Boolean): T? {
+  val iterator = schemes.iterator()
+  for (scheme in iterator) {
+    if (!condition(scheme)) {
+      continue
+    }
+
+    if (schemeManager.activeScheme === scheme) {
+      schemeManager.activeScheme = null
+    }
+
+    iterator.remove()
+
+    if (schemeManager.processor.isExternalizable(scheme)) {
+      schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
+    }
+    return scheme
+  }
+
+  return null
 }
 
 internal fun nameIsMissed(bytes: ByteArray): RuntimeException {

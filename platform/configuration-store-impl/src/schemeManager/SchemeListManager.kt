@@ -118,26 +118,4 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
     schemes.mapTo(result) { schemeManager.processor.getSchemeKey(it) }
     return result
   }
-
-  fun removeFirstScheme(schemes: MutableList<T>, scheduleDelete: Boolean = true, condition: (T) -> Boolean): T? {
-    val iterator = schemes.iterator()
-    for (scheme in iterator) {
-      if (!condition(scheme)) {
-        continue
-      }
-
-      if (schemeManager.activeScheme === scheme) {
-        schemeManager.activeScheme = null
-      }
-
-      iterator.remove()
-
-      if (scheduleDelete && schemeManager.processor.isExternalizable(scheme)) {
-        schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
-      }
-      return scheme
-    }
-
-    return null
-  }
 }
