@@ -93,10 +93,9 @@ public class JUnit5TestRunnerUtil {
           }
           if (tags != null && !tags.isEmpty()) {
             builder = builder
-              .filters(TagFilter.includeTags(tags.split(" ")))
-              .filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*"));
+              .filters(TagFilter.includeTags(tags.split(" ")));
           }
-          return builder.build();
+          return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
         }
         finally {
           reader.close();
