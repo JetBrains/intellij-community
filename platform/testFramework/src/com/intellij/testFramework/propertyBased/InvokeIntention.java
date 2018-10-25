@@ -86,6 +86,8 @@ public class InvokeIntention extends ActionOnFile {
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
 
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     FileViewProvider viewProvider = getFile().getViewProvider();
     String filesBefore = viewProvider.getAllFiles().toString();
     boolean containsErrorElements = MadTestingUtil.containsErrorElements(viewProvider);
