@@ -32,7 +32,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   private boolean myUseAutoImport;
   private boolean myCreateEmptyContentRootDirectories;
-  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde();
+  private boolean myUseQualifiedModuleNames = true;
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
