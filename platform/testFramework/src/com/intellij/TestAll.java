@@ -71,6 +71,23 @@ public class TestAll implements Test {
     }
   };
 
+  public static final Filter NOT_BOMBED = new Filter() {
+    @Override
+    public boolean shouldRun(Description description) {
+      return !isBombed(description);
+    }
+
+    @Override
+    public String describe() {
+      return "Not @Bombed";
+    }
+
+    private boolean isBombed(Description description) {
+      Bombed bombed = description.getAnnotation(Bombed.class);
+      return bombed != null && !TestFrameworkUtil.bombExplodes(bombed);
+    }
+  };
+
   private final TestCaseLoader myTestCaseLoader;
   private int myRunTests = -1;
   private TestRecorder myTestRecorder;
@@ -295,7 +312,7 @@ public class TestAll implements Test {
 
         JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
-          adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+          adapter.filter(NOT_BOMBED.intersect(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE));
         }
         catch (NoTestsRemainException ignored) {
         }
