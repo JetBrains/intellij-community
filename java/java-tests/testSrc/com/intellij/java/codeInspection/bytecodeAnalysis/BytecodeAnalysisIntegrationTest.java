@@ -57,6 +57,7 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
       super.configureModule(module, model, contentEntry);
 
       PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Velocity"));
+      PsiTestUtil.addProjectLibrary(model, "commons-collections", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-collections"));
 
       VirtualFile annotationsRoot = getAnnotationsRoot();
       for (OrderEntry entry : model.getOrderEntries()) {

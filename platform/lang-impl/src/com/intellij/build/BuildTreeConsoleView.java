@@ -161,8 +161,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         final Component rendererComponent =
           treeCellRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
         if (rendererComponent instanceof SimpleColoredComponent) {
-          final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-          final Color fg = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground();
+          Color bg = UIUtil.getTreeBackground(selected, true);
+          Color fg = UIUtil.getTreeForeground(selected, true);
           if (selected) {
             for (SimpleColoredComponent.ColoredIterator it = ((SimpleColoredComponent)rendererComponent).iterator(); it.hasNext(); ) {
               it.next();

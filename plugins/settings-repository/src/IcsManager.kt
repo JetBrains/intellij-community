@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application

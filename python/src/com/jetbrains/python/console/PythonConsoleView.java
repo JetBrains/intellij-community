@@ -56,6 +56,7 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +99,12 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
-    myPyHighlighter = new PyHighlighter(
-      sdk != null && sdk.getVersionString() != null ? LanguageLevel.fromPythonVersion(sdk.getVersionString()) : LanguageLevel.getDefault());
+    LanguageLevel languageLevel = LanguageLevel.getDefault();
+    final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
+    if (sdkFlavor != null) {
+      languageLevel = sdkFlavor.getLanguageLevel(sdk);
+    }
+    myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();
     PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
     myPromptView = new ConsolePromptDecorator(this.getConsoleEditor(), data);

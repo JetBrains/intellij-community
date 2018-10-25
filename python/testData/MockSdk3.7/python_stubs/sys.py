@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module sys
 # from (built-in)
-# by generator 1.138
+# by generator 1.145
 """
 This module provides access to some objects used or maintained by the
 interpreter and to functions that interact strongly with the interpreter.
@@ -42,12 +42,15 @@ hexversion -- version information encoded as a single integer
 implementation -- Python implementation information.
 int_info -- a struct sequence with information about the int implementation.
 maxsize -- the largest supported length of containers.
-maxunicode -- the value of the largest Unicode codepoint
+maxunicode -- the value of the largest Unicode code point
 platform -- platform identifier
 prefix -- prefix used to find the Python library
 thread_info -- a struct sequence with information about the thread implementation.
 version -- the version of this interpreter as a string
 version_info -- version information as a named tuple
+dllhandle -- [Windows only] integer handle of the Python DLL
+winver -- [Windows only] version number of the Python DLL
+_enablelegacywindowsfsencoding -- [Windows only] 
 __stdin__ -- the original stdin; don't touch!
 __stdout__ -- the original stdout; don't touch!
 __stderr__ -- the original stderr; don't touch!
@@ -76,43 +79,52 @@ settrace() -- set the global debug tracing function
 
 # Variables with simple values
 
-abiflags = 'm'
-
 api_version = 1013
 
-base_exec_prefix = '/Library/Frameworks/Python.framework/Versions/3.4'
+base_exec_prefix = 'C:\\Python37'
 
-base_prefix = '/Library/Frameworks/Python.framework/Versions/3.4'
+base_prefix = 'C:\\Python37'
 
 byteorder = 'little'
 
-copyright = 'Copyright (c) 2001-2014 Python Software Foundation.\nAll Rights Reserved.\n\nCopyright (c) 2000 BeOpen.com.\nAll Rights Reserved.\n\nCopyright (c) 1995-2001 Corporation for National Research Initiatives.\nAll Rights Reserved.\n\nCopyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\nAll Rights Reserved.'
+copyright = 'Copyright (c) 2001-2018 Python Software Foundation.\nAll Rights Reserved.\n\nCopyright (c) 2000 BeOpen.com.\nAll Rights Reserved.\n\nCopyright (c) 1995-2001 Corporation for National Research Initiatives.\nAll Rights Reserved.\n\nCopyright (c) 1991-1995 Stichting Mathematisch Centrum, Amsterdam.\nAll Rights Reserved.'
+
+dllhandle = 140705079492608
 
 dont_write_bytecode = True
 
-executable = '/Users/vlan/.virtualenvs/obraz-py3.4/bin/python'
+executable = 'C:\\Python37\\python.exe'
 
-exec_prefix = '/Users/vlan/.virtualenvs/obraz-py3.4'
+exec_prefix = 'C:\\Python37'
 
 float_repr_style = 'short'
 
-hexversion = 50594544
+hexversion = 50790896
 
 maxsize = 9223372036854775807
 maxunicode = 1114111
 
-platform = 'darwin'
+platform = 'win32'
 
-prefix = '/Users/vlan/.virtualenvs/obraz-py3.4'
+prefix = 'C:\\Python37'
 
-version = '3.4.2 (v3.4.2:ab2c023a9432, Oct  5 2014, 20:42:22) \n[GCC 4.2.1 (Apple Inc. build 5666) (dot 3)]'
+version = '3.7.1 (v3.7.1:260ec2c36a, Oct 20 2018, 14:57:15) [MSC v.1915 64 bit (AMD64)]'
 
-_home = '/Library/Frameworks/Python.framework/Versions/3.4/bin'
+winver = '3.7'
 
-__egginsert = 0
-__plen = 5
+_framework = ''
+
+_home = None
 
 # functions
+
+def breakpointhook(*args, **kws): # real signature unknown; restored from __doc__
+    """
+    breakpointhook(*args, **kws)
+    
+    This hook function is called by built-in breakpoint().
+    """
+    pass
 
 def callstats(): # real signature unknown; restored from __doc__
     """
@@ -208,14 +220,14 @@ def getdefaultencoding(): # real signature unknown; restored from __doc__
     """
     return ""
 
-def getdlopenflags(): # real signature unknown; restored from __doc__
+def getfilesystemencodeerrors(): # real signature unknown; restored from __doc__
     """
-    getdlopenflags() -> int
+    getfilesystemencodeerrors() -> string
     
-    Return the current value of the flags that are used for dlopen calls.
-    The flag constants are defined in the os module.
+    Return the error mode used to convert Unicode filenames in
+    operating system filenames.
     """
-    return 0
+    return ""
 
 def getfilesystemencoding(): # real signature unknown; restored from __doc__
     """
@@ -276,6 +288,42 @@ def gettrace(): # real signature unknown; restored from __doc__
     """
     pass
 
+def getwindowsversion(): # real signature unknown; restored from __doc__
+    """
+    getwindowsversion()
+    
+    Return information about the running version of Windows as a named tuple.
+    The members are named: major, minor, build, platform, service_pack,
+    service_pack_major, service_pack_minor, suite_mask, and product_type. For
+    backward compatibility, only the first 5 items are available by indexing.
+    All elements are numbers, except service_pack and platform_type which are
+    strings, and platform_version which is a 3-tuple. Platform is always 2.
+    Product_type may be 1 for a workstation, 2 for a domain controller, 3 for a
+    server. Platform_version is a 3-tuple containing a version number that is
+    intended for identifying the OS rather than feature detection.
+    """
+    pass
+
+def get_asyncgen_hooks(): # real signature unknown; restored from __doc__
+    """
+    get_asyncgen_hooks()
+    
+    Return a namedtuple of installed asynchronous generators hooks (firstiter, finalizer).
+    """
+    pass
+
+def get_coroutine_origin_tracking_depth(*args, **kwargs): # real signature unknown
+    """ Check status of origin tracking for coroutine objects in this thread. """
+    pass
+
+def get_coroutine_wrapper(): # real signature unknown; restored from __doc__
+    """
+    get_coroutine_wrapper()
+    
+    Return the wrapper for coroutine objects set by sys.set_coroutine_wrapper.
+    """
+    pass
+
 def intern(string): # real signature unknown; restored from __doc__
     """
     intern(string) -> string
@@ -287,25 +335,19 @@ def intern(string): # real signature unknown; restored from __doc__
     """
     return ""
 
+def is_finalizing(): # real signature unknown; restored from __doc__
+    """
+    is_finalizing()
+    Return True if Python is exiting.
+    """
+    pass
+
 def setcheckinterval(n): # real signature unknown; restored from __doc__
     """
     setcheckinterval(n)
     
     Tell the Python interpreter to check for asynchronous events every
     n instructions.  This also affects how often thread switches occur.
-    """
-    pass
-
-def setdlopenflags(n): # real signature unknown; restored from __doc__
-    """
-    setdlopenflags(n) -> None
-    
-    Set the flags used by the interpreter for dlopen calls, such as when the
-    interpreter loads extension modules.  Among other things, this will enable
-    a lazy resolving of symbols when importing a module, if called as
-    sys.setdlopenflags(0).  To share symbols across extension modules, call as
-    sys.setdlopenflags(os.RTLD_GLOBAL).  Symbolic names for the flag modules
-    can be found in the os module (RTLD_xxx constants, e.g. os.RTLD_LAZY).
     """
     pass
 
@@ -352,6 +394,32 @@ def settrace(function): # real signature unknown; restored from __doc__
     """
     pass
 
+def set_asyncgen_hooks(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    """
+    set_asyncgen_hooks(*, firstiter=None, finalizer=None)
+    
+    Set a finalizer for async generators objects.
+    """
+    pass
+
+def set_coroutine_origin_tracking_depth(*args, **kwargs): # real signature unknown
+    """
+    Enable or disable origin tracking for coroutine objects in this thread.
+    
+    Coroutine objects will track 'depth' frames of traceback information about
+    where they came from, available in their cr_origin attribute. Set depth of 0
+    to disable.
+    """
+    pass
+
+def set_coroutine_wrapper(wrapper): # real signature unknown; restored from __doc__
+    """
+    set_coroutine_wrapper(wrapper)
+    
+    Set a wrapper for coroutine objects.
+    """
+    pass
+
 def _clear_type_cache(): # real signature unknown; restored from __doc__
     """
     _clear_type_cache() -> None
@@ -382,6 +450,18 @@ def _debugmallocstats(): # real signature unknown; restored from __doc__
     """
     pass
 
+def _enablelegacywindowsfsencoding(): # real signature unknown; restored from __doc__
+    """
+    _enablelegacywindowsfsencoding()
+    
+    Changes the default filesystem encoding to mbcs:replace for consistency
+    with earlier versions of Python. See PEP 529 for more information.
+    
+    This is equivalent to defining the PYTHONLEGACYWINDOWSFSENCODING 
+    environment variable before launching Python.
+    """
+    pass
+
 def _getframe(depth=None): # real signature unknown; restored from __doc__
     """
     _getframe([depth]) -> frameobject
@@ -393,6 +473,14 @@ def _getframe(depth=None): # real signature unknown; restored from __doc__
     
     This function should be used for internal and specialized
     purposes only.
+    """
+    pass
+
+def __breakpointhook__(*args, **kwargs): # real signature unknown
+    """
+    breakpointhook(*args, **kws)
+    
+    This hook function is called by built-in breakpoint().
     """
     pass
 
@@ -426,6 +514,16 @@ class __loader__(object):
         instantiate the class.
     """
     @classmethod
+    def create_module(cls, *args, **kwargs): # real signature unknown
+        """ Create a built-in module """
+        pass
+
+    @classmethod
+    def exec_module(cls, *args, **kwargs): # real signature unknown
+        """ Exec a built-in module """
+        pass
+
+    @classmethod
     def find_module(cls, *args, **kwargs): # real signature unknown
         """
         Find the built-in module.
@@ -457,7 +555,11 @@ class __loader__(object):
 
     @classmethod
     def load_module(cls, *args, **kwargs): # real signature unknown
-        """ Load a built-in module. """
+        """
+        Load the specified module into sys.modules and return it.
+        
+            This method is deprecated.  Use loader.exec_module instead.
+        """
         pass
 
     def module_repr(module): # reliably restored by inspect
@@ -497,6 +599,8 @@ flags = (
     0,
     0,
     1,
+    0,
+    False,
     0,
 )
 
@@ -542,12 +646,12 @@ meta_path = [
 modules = {} # real value of type <class 'dict'> skipped
 
 path = [
-    '/Users/vlan/src/idea/out/classes/production/python-helpers',
-    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python34.zip',
-    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4',
-    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/plat-darwin',
-    '/Library/Frameworks/Python.framework/Versions/3.4/lib/python3.4/lib-dynload',
-    '/Users/vlan/.virtualenvs/obraz-py3.4/lib/python3.4/site-packages',
+    'C:\\Projects\\IDEA\\out\\classes\\production\\intellij.python.helpers',
+    'C:\\Python37\\python37.zip',
+    'C:\\Python37\\DLLs',
+    'C:\\Python37\\lib',
+    'C:\\Python37',
+    'C:\\Python37\\lib\\site-packages',
 ]
 
 path_hooks = [
@@ -557,39 +661,39 @@ path_hooks = [
 
 path_importer_cache = {} # real value of type <class 'dict'> skipped
 
-stderr = None # (!) forward: __stderr__, real value is ''
+stderr = None # (!) real value is ''
 
 stdin = None # (!) forward: __stdin__, real value is ''
 
 stdout = None # (!) forward: __stdout__, real value is ''
 
 thread_info = (
-    'pthread',
-    'mutex+cond',
+    'nt',
+    None,
     None,
 )
 
 version_info = (
     3,
-    4,
-    2,
+    7,
+    1,
     'final',
     0,
 )
 
 warnoptions = []
 
-_mercurial = (
+_git = (
     'CPython',
-    'v3.4.2',
-    'ab2c023a9432',
+    'v3.7.1',
+    '260ec2c36a',
 )
 
 _xoptions = {}
 
 __spec__ = None # (!) real value is ''
 
-__stderr__ = None # (!) real value is ''
+__stderr__ = stderr
 
 __stdin__ = None # (!) real value is ''
 

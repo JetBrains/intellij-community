@@ -471,7 +471,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
       if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
         String tabName = mySelectedTab.getText();
-        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
         return;
       }

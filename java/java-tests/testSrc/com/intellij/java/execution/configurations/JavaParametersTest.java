@@ -6,9 +6,13 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.roots.ModuleRootManagerTestCase;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 
 /**
@@ -107,20 +111,20 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
     assertRoots(javaParameters.getClassPath(), roots);
   }
 
-  /*public void testPreviewLanguageFeatures() throws CantRunException {
+  public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_11_PREVIEW);
-      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(11)));
+           .setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
+      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(12)));
     });
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertTrue(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
 
     ModuleRootModificationUtil.updateModel(myModule, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
-                                                                     .setLanguageLevel(LanguageLevel.JDK_11));
+                                                                     .setLanguageLevel(LanguageLevel.JDK_12));
     javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertFalse(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
-  }*/
+  }
 }

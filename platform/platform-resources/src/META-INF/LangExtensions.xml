@@ -829,8 +829,10 @@
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
     <documentationProvider implementation="com.intellij.codeInspection.actions.InspectionDescriptionDocumentationProvider"/>
 
+    <projectService serviceInterface="com.intellij.usageView.UsageViewContentManager"
+                    serviceImplementation="com.intellij.usageView.impl.UsageViewContentManagerImpl"/>
     <projectService serviceInterface="com.intellij.usageView.UsageViewManager"
-                    serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
+                    serviceImplementation="com.intellij.usageView.UsageViewManager"/>
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"/>
     <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"

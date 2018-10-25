@@ -88,10 +88,13 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
   override fun toString(): String = "[Digest Output Stream] $digest"
 }
 
-val SHA1Provider = java.security.Security.getProvider("SUN")
+private val sha1Provider = java.security.Security.getProvider("SUN")
+
+// sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
+fun createDataDigest(): MessageDigest = MessageDigest.getInstance("SHA-1", sha1Provider)
+
 fun Element.digest(): ByteArray {
-  // sha-1 is enough, sha-256 is slower, see https://www.nayuki.io/page/native-hash-functions-for-java
-  val digest = MessageDigest.getInstance("SHA-1", SHA1Provider)
+  val digest = createDataDigest()
   serializeElementToBinary(this, DigestOutputStream(digest))
   return digest.digest()
 }

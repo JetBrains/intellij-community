@@ -43,6 +43,9 @@ public abstract class ApplicationCommandLineState<T extends
     T configuration = getConfiguration();
     params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
 
+    params.setMainClass(myConfiguration.getRunClass());
+    setupJavaParameters(params);
+
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
     if (module.getModule() != null) {
@@ -55,10 +58,6 @@ public abstract class ApplicationCommandLineState<T extends
     else {
       JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
     }
-
-    params.setMainClass(myConfiguration.getRunClass());
-
-    setupJavaParameters(params);
 
     setupModulePath(params, module);
 

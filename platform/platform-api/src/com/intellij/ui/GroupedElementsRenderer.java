@@ -145,12 +145,12 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected Color getBackground() {
-      return UIUtil.getTreeTextBackground();
+      return UIUtil.getTreeBackground();
     }
 
     @Override
     protected Color getForeground() {
-      return UIUtil.getTreeTextForeground();
+      return UIUtil.getTreeForeground();
     }
   }
 

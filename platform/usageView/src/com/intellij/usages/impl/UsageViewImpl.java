@@ -37,7 +37,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
@@ -1381,7 +1381,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void close() {
     cancelCurrentSearch();
     if (myContent != null) {
-      UsageViewManager.getInstance(myProject).closeContent(myContent);
+      UsageViewContentManager.getInstance(myProject).closeContent(myContent);
     }
   }
 

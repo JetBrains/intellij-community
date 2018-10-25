@@ -58,7 +58,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
      ModuleRootModificationUtil.updateModel(myModule, 
                                            model -> model.addContentEntry(getTestContentRoot()).addSourceFolder(getTestContentRoot() + "/test1", true));
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2.0"), repoManager);
+    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.3.0"), repoManager);
     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
@@ -229,10 +229,22 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
-    assertEmpty(processOutput.out);
-    assertEmpty(processOutput.err);
-    assertSize(0, processOutput.messages.stream().filter(TestIgnored.class::isInstance).map(TestIgnored.class::cast)
+    assertNoIgnored(processOutput);
+
+    //assuming only suiteTreeNode/start/finish events
+    assertSize(3, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()"))
       .collect(Collectors.toList()));
+  }
+
+  public void testRunSpecificDisabledIfMethod() throws Exception {
+    PsiMethod aMethod = JavaPsiFacade.getInstance(myProject)
+      .findClass("disabled.DisabledMethodIf", GlobalSearchScope.projectScope(myProject))
+      .findMethodsByName("testDisabledMethod", false)[0];
+    RunConfiguration configuration = createConfiguration(aMethod);
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+
+    assertNoIgnored(processOutput);
 
     //assuming only suiteTreeNode/start/finish events
     assertSize(3, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod()"))
@@ -247,13 +259,17 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
     ProcessOutput processOutput = doStartTestsProcess(configuration);
 
-    assertEmpty(processOutput.out);
-    assertEmpty(processOutput.err);
-    assertSize(0, processOutput.messages.stream().filter(TestIgnored.class::isInstance).map(TestIgnored.class::cast)
-      .collect(Collectors.toList()));
+    assertNoIgnored(processOutput);
 
     //assuming only suiteTreeNode/start/failed(no String to inject)/finish events
     assertSize(4, processOutput.messages.stream().filter(m -> m.getAttributes().getOrDefault("name", "").equals("testDisabledMethod(String)"))
+      .collect(Collectors.toList()));
+  }
+
+  private static void assertNoIgnored(ProcessOutput processOutput) {
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(0, processOutput.messages.stream().filter(TestIgnored.class::isInstance).map(TestIgnored.class::cast)
       .collect(Collectors.toList()));
   }
 

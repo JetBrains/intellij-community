@@ -1,7 +1,7 @@
 # encoding: utf-8
 # module _io calls itself io
 # from (built-in)
-# by generator 1.138
+# by generator 1.145
 """
 The io module provides the Python interfaces to stream handling. The
 builtin open function is defined in this module.
@@ -9,7 +9,7 @@ builtin open function is defined in this module.
 At the top of the I/O hierarchy is the abstract base class IOBase. It
 defines the basic interface to a stream. Note, however, that there is no
 separation between reading and writing to streams; implementations are
-allowed to raise an IOError if they do not support a given operation.
+allowed to raise an OSError if they do not support a given operation.
 
 Extending IOBase is RawIOBase which deals simply with the reading and
 writing of raw bytes to a stream. FileIO subclasses RawIOBase to provide
@@ -24,7 +24,7 @@ streams. BytesIO is a simple stream of in-memory bytes.
 Another IOBase subclass, TextIOBase, deals with the encoding and decoding
 of streams into text. TextIOWrapper, which extends it, is a buffered text
 interface to a buffered raw stream (`BufferedIOBase`). Finally, StringIO
-is a in-memory stream for text.
+is an in-memory stream for text.
 
 Argument names are not part of the specification, and only the arguments
 of open() are intended to be used as keyword arguments.
@@ -47,10 +47,7 @@ DEFAULT_BUFFER_SIZE = 8192
 
 def open(name, mode=None, buffering=None): # known case of _io.open
     """
-    open(file, mode='r', buffering=-1, encoding=None,
-         errors=None, newline=None, closefd=True, opener=None) -> file object
-    
-    Open file and return a stream.  Raise IOError upon failure.
+    Open file and return a stream.  Raise OSError upon failure.
     
     file is either a text or byte string giving the name (and the path
     if the file isn't in the current working directory) of the file to
@@ -195,8 +192,9 @@ class _IOBase(object):
     called.
     
     The basic type used for binary data read from or written to a file is
-    bytes. bytearrays are accepted too, and in some cases (such as
-    readinto) needed. Text I/O classes work with str data.
+    bytes. Other bytes-like objects are accepted as method arguments too.
+    In some cases (such as readinto), a writable object is required. Text
+    I/O classes work with str data.
     
     Note that calling any method (except additional calls to close(),
     which are ignored) on a closed stream should raise a ValueError.
@@ -223,7 +221,7 @@ class _IOBase(object):
         """
         Returns underlying file descriptor if one exists.
         
-        An IOError is raised if the IO object does not use a file descriptor.
+        OSError is raised if the IO object does not use a file descriptor.
         """
         pass
 
@@ -247,7 +245,7 @@ class _IOBase(object):
         """
         Return whether object was opened for reading.
         
-        If False, read() will raise UnsupportedOperation.
+        If False, read() will raise OSError.
         """
         pass
 
@@ -255,7 +253,7 @@ class _IOBase(object):
         """
         Read and return a line from the stream.
         
-        If limit is specified, at most limit bytes will be read.
+        If size is specified, at most size bytes will be read.
         
         The line terminator is always b'\n' for binary files; for text
         files, the newlines argument to open can be used to select the line
@@ -293,7 +291,7 @@ class _IOBase(object):
         """
         Return whether object supports random access.
         
-        If False, seek(), tell() and truncate() will raise UnsupportedOperation.
+        If False, seek(), tell() and truncate() will raise OSError.
         This method may need to do a test seek().
         """
         pass
@@ -315,7 +313,7 @@ class _IOBase(object):
         """
         Return whether object was opened for writing.
         
-        If False, write() will raise UnsupportedOperation.
+        If False, write() will raise OSError.
         """
         pass
 
@@ -335,7 +333,6 @@ class _IOBase(object):
         pass
 
     def __del__(self, *args, **kwargs): # real signature unknown
-        """  """
         pass
 
     def __enter__(self, *args, **kwargs): # real signature unknown
@@ -425,12 +422,15 @@ class _BufferedIOBase(_IOBase):
     def readinto(self, *args, **kwargs): # real signature unknown
         pass
 
+    def readinto1(self, *args, **kwargs): # real signature unknown
+        pass
+
     def write(self, *args, **kwargs): # real signature unknown
         """
         Write the given buffer to the IO stream.
         
-        Returns the number of bytes written, which is never less than
-        len(b).
+        Returns the number of bytes written, which is always the length of b
+        in bytes.
         
         Raises BlockingIOError if the buffer is full and the
         underlying raw stream cannot accept more data at the moment.
@@ -477,6 +477,9 @@ class BufferedRandom(_BufferedIOBase):
         pass
 
     def readinto(self, *args, **kwargs): # real signature unknown
+        pass
+
+    def readinto1(self, *args, **kwargs): # real signature unknown
         pass
 
     def readline(self, *args, **kwargs): # real signature unknown
@@ -569,6 +572,9 @@ class BufferedReader(_BufferedIOBase):
     def readinto(self, *args, **kwargs): # real signature unknown
         pass
 
+    def readinto1(self, *args, **kwargs): # real signature unknown
+        pass
+
     def readline(self, *args, **kwargs): # real signature unknown
         pass
 
@@ -582,9 +588,6 @@ class BufferedReader(_BufferedIOBase):
         pass
 
     def truncate(self, *args, **kwargs): # real signature unknown
-        pass
-
-    def writable(self, *args, **kwargs): # real signature unknown
         pass
 
     def _dealloc_warn(self, *args, **kwargs): # real signature unknown
@@ -660,6 +663,9 @@ class BufferedRWPair(_BufferedIOBase):
     def readinto(self, *args, **kwargs): # real signature unknown
         pass
 
+    def readinto1(self, *args, **kwargs): # real signature unknown
+        pass
+
     def writable(self, *args, **kwargs): # real signature unknown
         pass
 
@@ -702,9 +708,6 @@ class BufferedWriter(_BufferedIOBase):
         pass
 
     def isatty(self, *args, **kwargs): # real signature unknown
-        pass
-
-    def readable(self, *args, **kwargs): # real signature unknown
         pass
 
     def seek(self, *args, **kwargs): # real signature unknown
@@ -759,99 +762,85 @@ class BufferedWriter(_BufferedIOBase):
 
 
 class BytesIO(_BufferedIOBase):
-    """
-    BytesIO([buffer]) -> object
-    
-    Create a buffered I/O implementation using an in-memory bytes
-    buffer, ready for reading and writing.
-    """
-    def close(self): # real signature unknown; restored from __doc__
-        """ close() -> None.  Disable all I/O operations. """
+    """ Buffered I/O implementation using an in-memory bytes buffer. """
+    def close(self, *args, **kwargs): # real signature unknown
+        """ Disable all I/O operations. """
         pass
 
-    def flush(self): # real signature unknown; restored from __doc__
-        """ flush() -> None.  Does nothing. """
+    def flush(self, *args, **kwargs): # real signature unknown
+        """ Does nothing. """
         pass
 
-    def getbuffer(self): # real signature unknown; restored from __doc__
+    def getbuffer(self, *args, **kwargs): # real signature unknown
+        """ Get a read-write view over the contents of the BytesIO object. """
+        pass
+
+    def getvalue(self, *args, **kwargs): # real signature unknown
+        """ Retrieve the entire contents of the BytesIO object. """
+        pass
+
+    def isatty(self, *args, **kwargs): # real signature unknown
         """
-        getbuffer() -> bytes.
+        Always returns False.
         
-        Get a read-write view over the contents of the BytesIO object.
+        BytesIO objects are not connected to a TTY-like device.
         """
         pass
 
-    def getvalue(self): # real signature unknown; restored from __doc__
+    def read(self, *args, **kwargs): # real signature unknown
         """
-        getvalue() -> bytes.
-        
-        Retrieve the entire contents of the BytesIO object.
-        """
-        pass
-
-    def isatty(self): # real signature unknown; restored from __doc__
-        """
-        isatty() -> False.
-        
-        Always returns False since BytesIO objects are not connected
-        to a tty-like device.
-        """
-        pass
-
-    def read(self, size=None): # real signature unknown; restored from __doc__
-        """
-        read([size]) -> read at most size bytes, returned as a string.
+        Read at most size bytes, returned as a bytes object.
         
         If the size argument is negative, read until EOF is reached.
-        Return an empty string at EOF.
+        Return an empty bytes object at EOF.
         """
         pass
 
-    def read1(self, size): # real signature unknown; restored from __doc__
+    def read1(self, *args, **kwargs): # real signature unknown
         """
-        read1(size) -> read at most size bytes, returned as a string.
+        Read at most size bytes, returned as a bytes object.
         
         If the size argument is negative or omitted, read until EOF is reached.
-        Return an empty string at EOF.
+        Return an empty bytes object at EOF.
         """
         pass
 
-    def readable(self): # real signature unknown; restored from __doc__
-        """ readable() -> bool. Returns True if the IO object can be read. """
+    def readable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be read. """
         pass
 
-    def readinto(self, bytearray): # real signature unknown; restored from __doc__
+    def readinto(self, *args, **kwargs): # real signature unknown
         """
-        readinto(bytearray) -> int.  Read up to len(b) bytes into b.
+        Read bytes into buffer.
         
         Returns number of bytes read (0 for EOF), or None if the object
-        is set not to block as has no data to read.
+        is set not to block and has no data to read.
         """
         pass
 
-    def readline(self, size=None): # real signature unknown; restored from __doc__
+    def readline(self, *args, **kwargs): # real signature unknown
         """
-        readline([size]) -> next line from the file, as a string.
+        Next line from the file, as a bytes object.
         
         Retain newline.  A non-negative size argument limits the maximum
         number of bytes to return (an incomplete line may be returned then).
-        Return an empty string at EOF.
+        Return an empty bytes object at EOF.
         """
         pass
 
-    def readlines(self, size=None): # real signature unknown; restored from __doc__
+    def readlines(self, *args, **kwargs): # real signature unknown
         """
-        readlines([size]) -> list of strings, each a line from the file.
+        List of bytes objects, each a line from the file.
         
         Call readline() repeatedly and return a list of the lines so read.
         The optional size argument, if given, is an approximate bound on the
         total number of bytes in the lines returned.
         """
-        return []
+        pass
 
-    def seek(self, pos, whence=0): # real signature unknown; restored from __doc__
+    def seek(self, *args, **kwargs): # real signature unknown
         """
-        seek(pos, whence=0) -> int.  Change stream position.
+        Change stream position.
         
         Seek to byte offset pos relative to position indicated by whence:
              0  Start of stream (the default).  pos should be >= 0;
@@ -861,49 +850,49 @@ class BytesIO(_BufferedIOBase):
         """
         pass
 
-    def seekable(self): # real signature unknown; restored from __doc__
-        """ seekable() -> bool. Returns True if the IO object can be seeked. """
+    def seekable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be seeked. """
         pass
 
-    def tell(self): # real signature unknown; restored from __doc__
-        """ tell() -> current file position, an integer """
+    def tell(self, *args, **kwargs): # real signature unknown
+        """ Current file position, an integer. """
         pass
 
-    def truncate(self, size=None): # real signature unknown; restored from __doc__
+    def truncate(self, *args, **kwargs): # real signature unknown
         """
-        truncate([size]) -> int.  Truncate the file to at most size bytes.
+        Truncate the file to at most size bytes.
         
         Size defaults to the current file position, as returned by tell().
         The current file position is unchanged.  Returns the new size.
         """
         pass
 
-    def writable(self): # real signature unknown; restored from __doc__
-        """ writable() -> bool. Returns True if the IO object can be written. """
+    def writable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be written. """
         pass
 
-    def write(self, bytes): # real signature unknown; restored from __doc__
+    def write(self, *args, **kwargs): # real signature unknown
         """
-        write(bytes) -> int.  Write bytes to file.
+        Write bytes to file.
         
         Return the number of bytes written.
         """
         pass
 
-    def writelines(self, sequence_of_strings): # real signature unknown; restored from __doc__
+    def writelines(self, *args, **kwargs): # real signature unknown
         """
-        writelines(sequence_of_strings) -> None.  Write strings to the file.
+        Write lines to the file.
         
-        Note that newlines are not added.  The sequence can be any iterable
-        object producing strings. This is equivalent to calling write() for
-        each string.
+        Note that newlines are not added.  lines can be any iterable object
+        producing bytes-like objects. This is equivalent to calling write() for
+        each element.
         """
         pass
 
     def __getstate__(self, *args, **kwargs): # real signature unknown
         pass
 
-    def __init__(self, buffer=None): # real signature unknown; restored from __doc__
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     def __iter__(self, *args, **kwargs): # real signature unknown
@@ -939,18 +928,24 @@ class _RawIOBase(_IOBase):
         """ Read until EOF, using multiple read() call. """
         pass
 
+    def readinto(self, *args, **kwargs): # real signature unknown
+        pass
+
+    def write(self, *args, **kwargs): # real signature unknown
+        pass
+
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
 
 class FileIO(_RawIOBase):
     """
-    file(name: str[, mode: str][, opener: None]) -> file IO object
+    Open a file.
     
-    Open a file.  The mode can be 'r', 'w', 'x' or 'a' for reading (default),
+    The mode can be 'r' (default), 'w', 'x' or 'a' for reading,
     writing, exclusive creation or appending.  The file will be created if it
     doesn't exist when opened for writing or appending; it will be truncated
-    when opened for writing.  A `FileExistsError` will be raised if it already
+    when opened for writing.  A FileExistsError will be raised if it already
     exists when opened for creating. Opening a file for creating implies
     writing so this mode behaves in a similar way to 'w'.Add a '+' to the mode
     to allow simultaneous reading and writing. A custom opener can be used by
@@ -961,91 +956,94 @@ class FileIO(_RawIOBase):
     """
     def close(self): # real signature unknown; restored from __doc__
         """
-        close() -> None.  Close the file.
+        Close the file.
         
         A closed file cannot be used for further I/O operations.  close() may be
-        called more than once without error.  Changes the fileno to -1.
+        called more than once without error.
         """
         pass
 
-    def fileno(self): # real signature unknown; restored from __doc__
-        """
-        fileno() -> int. "file descriptor".
-        
-        This is needed for lower-level file interfaces, such the fcntl module.
-        """
+    def fileno(self, *args, **kwargs): # real signature unknown
+        """ Return the underlying file descriptor (an integer). """
         pass
 
-    def isatty(self): # real signature unknown; restored from __doc__
-        """ isatty() -> bool.  True if the file is connected to a tty device. """
+    def isatty(self, *args, **kwargs): # real signature unknown
+        """ True if the file is connected to a TTY device. """
         pass
 
     def read(self, size=-1): # known case of _io.FileIO.read
         """
-        read(size: int) -> bytes.  read at most size bytes, returned as bytes.
+        Read at most size bytes, returned as bytes.
         
-        Only makes one system call, so less data may be returned than requested
+        Only makes one system call, so less data may be returned than requested.
         In non-blocking mode, returns None if no data is available.
-        On end-of-file, returns ''.
+        Return an empty bytes object at EOF.
         """
         return ""
 
-    def readable(self): # real signature unknown; restored from __doc__
-        """ readable() -> bool.  True if file was opened in a read mode. """
+    def readable(self, *args, **kwargs): # real signature unknown
+        """ True if file was opened in a read mode. """
         pass
 
-    def readall(self): # real signature unknown; restored from __doc__
+    def readall(self, *args, **kwargs): # real signature unknown
         """
-        readall() -> bytes.  read all data from the file, returned as bytes.
+        Read all data from the file, returned as bytes.
         
         In non-blocking mode, returns as much as is immediately available,
-        or None if no data is available.  On end-of-file, returns ''.
+        or None if no data is available.  Return an empty bytes object at EOF.
         """
         pass
 
     def readinto(self): # real signature unknown; restored from __doc__
-        """ readinto() -> Same as RawIOBase.readinto(). """
+        """ Same as RawIOBase.readinto(). """
         pass
 
-    def seek(self, offset, whence=None): # real signature unknown; restored from __doc__
+    def seek(self, *args, **kwargs): # real signature unknown
         """
-        seek(offset: int[, whence: int]) -> None.  Move to new file position.
+        Move to new file position and return the file position.
         
         Argument offset is a byte count.  Optional argument whence defaults to
-        0 (offset from start of file, offset should be >= 0); other values are 1
-        (move relative to current position, positive or negative), and 2 (move
-        relative to end of file, usually negative, although many platforms allow
-        seeking beyond the end of a file).
+        SEEK_SET or 0 (offset from start of file, offset should be >= 0); other values
+        are SEEK_CUR or 1 (move relative to current position, positive or negative),
+        and SEEK_END or 2 (move relative to end of file, usually negative, although
+        many platforms allow seeking beyond the end of a file).
+        
         Note that not all file objects are seekable.
         """
         pass
 
-    def seekable(self): # real signature unknown; restored from __doc__
-        """ seekable() -> bool.  True if file supports random-access. """
+    def seekable(self, *args, **kwargs): # real signature unknown
+        """ True if file supports random-access. """
         pass
 
-    def tell(self): # real signature unknown; restored from __doc__
-        """ tell() -> int.  Current file position """
-        pass
-
-    def truncate(self, size=None): # real signature unknown; restored from __doc__
+    def tell(self, *args, **kwargs): # real signature unknown
         """
-        truncate([size: int]) -> None.  Truncate the file to at most size bytes.
+        Current file position.
         
-        Size defaults to the current file position, as returned by tell().The current file position is changed to the value of size.
+        Can raise OSError for non seekable files.
         """
         pass
 
-    def writable(self): # real signature unknown; restored from __doc__
-        """ writable() -> bool.  True if file was opened in a write mode. """
+    def truncate(self, *args, **kwargs): # real signature unknown
+        """
+        Truncate the file to at most size bytes and return the truncated size.
+        
+        Size defaults to the current file position, as returned by tell().
+        The current file position is changed to the value of size.
+        """
         pass
 
-    def write(self, b): # real signature unknown; restored from __doc__
+    def writable(self, *args, **kwargs): # real signature unknown
+        """ True if file was opened in a write mode. """
+        pass
+
+    def write(self, *args, **kwargs): # real signature unknown
         """
-        write(b: bytes) -> int.  Write bytes b to file, return number written.
+        Write buffer b to file, return number of bytes written.
         
         Only makes one system call, so not all of the data may be written.
-        The number of bytes actually written is returned.
+        The number of bytes actually written is returned.  In non-blocking mode,
+        returns None if the write would block.
         """
         pass
 
@@ -1075,10 +1073,12 @@ class FileIO(_RawIOBase):
     """True if the file is closed"""
 
     closefd = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
-    """True if the file descriptor will be closed"""
+    """True if the file descriptor will be closed by close()."""
 
     mode = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """String giving the file mode"""
+
+    _blksize = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
     _finalizing = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
@@ -1086,9 +1086,10 @@ class FileIO(_RawIOBase):
 
 class IncrementalNewlineDecoder(object):
     """
-    Codec used when reading a file in universal newlines mode.  It wraps
-    another incremental decoder, translating \r\n and \r into \n.  It also
-    records the types of newlines encountered.  When used with
+    Codec used when reading a file in universal newlines mode.
+    
+    It wraps another incremental decoder, translating \r\n and \r into \n.
+    It also records the types of newlines encountered.  When used with
     translate=False, it ensures that the newline sequence is returned in
     one piece. When used with decoder=None, it expects unicode strings as
     decode input and translates newlines without first invoking an external
@@ -1194,8 +1195,10 @@ class StringIO(_TextIOBase):
     """
     def close(self, *args, **kwargs): # real signature unknown
         """
-        Close the IO object. Attempting any further operation after the
-        object is closed will raise a ValueError.
+        Close the IO object.
+        
+        Attempting any further operation after the object is closed
+        will raise a ValueError.
         
         This method has no effect if the file is already closed.
         """
@@ -1207,15 +1210,15 @@ class StringIO(_TextIOBase):
 
     def read(self, *args, **kwargs): # real signature unknown
         """
-        Read at most n characters, returned as a string.
+        Read at most size characters, returned as a string.
         
         If the argument is negative or omitted, read until EOF
         is reached. Return an empty string at EOF.
         """
         pass
 
-    def readable(self): # real signature unknown; restored from __doc__
-        """ readable() -> bool. Returns True if the IO object can be read. """
+    def readable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be read. """
         pass
 
     def readline(self, *args, **kwargs): # real signature unknown
@@ -1238,8 +1241,8 @@ class StringIO(_TextIOBase):
         """
         pass
 
-    def seekable(self): # real signature unknown; restored from __doc__
-        """ seekable() -> bool. Returns True if the IO object can be seeked. """
+    def seekable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be seeked. """
         pass
 
     def tell(self, *args, **kwargs): # real signature unknown
@@ -1256,8 +1259,8 @@ class StringIO(_TextIOBase):
         """
         pass
 
-    def writable(self): # real signature unknown; restored from __doc__
-        """ writable() -> bool. Returns True if the IO object can be written. """
+    def writable(self, *args, **kwargs): # real signature unknown
+        """ Returns True if the IO object can be written. """
         pass
 
     def write(self, *args, **kwargs): # real signature unknown
@@ -1350,6 +1353,14 @@ class TextIOWrapper(_TextIOBase):
     def readline(self, *args, **kwargs): # real signature unknown
         pass
 
+    def reconfigure(self, *args, **kwargs): # real signature unknown
+        """
+        Reconfigure the text stream with new parameters.
+        
+        This also does an implicit stream flush.
+        """
+        pass
+
     def seek(self, *args, **kwargs): # real signature unknown
         pass
 
@@ -1401,19 +1412,124 @@ class TextIOWrapper(_TextIOBase):
 
     newlines = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
+    write_through = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
     _CHUNK_SIZE = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
     _finalizing = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
 
-class UnsupportedOperation(ValueError, OSError):
+class UnsupportedOperation(OSError, ValueError):
     # no doc
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     __weakref__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """list of weak references to the object (if defined)"""
+
+
+
+class _WindowsConsoleIO(_RawIOBase):
+    """
+    Open a console buffer by file descriptor.
+    
+    The mode can be 'rb' (default), or 'wb' for reading or writing bytes. All
+    other mode characters will be ignored. Mode 'b' will be assumed if it is
+    omitted. The *opener* parameter is always ignored.
+    """
+    def close(self): # real signature unknown; restored from __doc__
+        """
+        Close the handle.
+        
+        A closed handle cannot be used for further I/O operations.  close() may be
+        called more than once without error.
+        """
+        pass
+
+    def fileno(self, *args, **kwargs): # real signature unknown
+        """
+        Return the underlying file descriptor (an integer).
+        
+        fileno is only set when a file descriptor is used to open
+        one of the standard streams.
+        """
+        pass
+
+    def isatty(self, *args, **kwargs): # real signature unknown
+        """ Always True. """
+        pass
+
+    def read(self, *args, **kwargs): # real signature unknown
+        """
+        Read at most size bytes, returned as bytes.
+        
+        Only makes one system call when size is a positive integer,
+        so less data may be returned than requested.
+        Return an empty bytes object at EOF.
+        """
+        pass
+
+    def readable(self, *args, **kwargs): # real signature unknown
+        """ True if console is an input buffer. """
+        pass
+
+    def readall(self, *args, **kwargs): # real signature unknown
+        """
+        Read all data from the console, returned as bytes.
+        
+        Return an empty bytes object at EOF.
+        """
+        pass
+
+    def readinto(self): # real signature unknown; restored from __doc__
+        """ Same as RawIOBase.readinto(). """
+        pass
+
+    def writable(self, *args, **kwargs): # real signature unknown
+        """ True if console is an output buffer. """
+        pass
+
+    def write(self, *args, **kwargs): # real signature unknown
+        """
+        Write buffer b to file, return number of bytes written.
+        
+        Only makes one system call, so not all of the data may be written.
+        The number of bytes actually written is returned.
+        """
+        pass
+
+    def __getattribute__(self, *args, **kwargs): # real signature unknown
+        """ Return getattr(self, name). """
+        pass
+
+    def __getstate__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+    @staticmethod # known case of __new__
+    def __new__(*args, **kwargs): # real signature unknown
+        """ Create and return a new object.  See help(type) for accurate signature. """
+        pass
+
+    def __repr__(self, *args, **kwargs): # real signature unknown
+        """ Return repr(self). """
+        pass
+
+    closed = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """True if the file is closed"""
+
+    closefd = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """True if the file descriptor will be closed by close()."""
+
+    mode = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """String giving the file mode"""
+
+    _blksize = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+
+    _finalizing = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
 
 
@@ -1424,6 +1540,16 @@ class __loader__(object):
         All methods are either class or static methods to avoid the need to
         instantiate the class.
     """
+    @classmethod
+    def create_module(cls, *args, **kwargs): # real signature unknown
+        """ Create a built-in module """
+        pass
+
+    @classmethod
+    def exec_module(cls, *args, **kwargs): # real signature unknown
+        """ Exec a built-in module """
+        pass
+
     @classmethod
     def find_module(cls, *args, **kwargs): # real signature unknown
         """
@@ -1456,7 +1582,11 @@ class __loader__(object):
 
     @classmethod
     def load_module(cls, *args, **kwargs): # real signature unknown
-        """ Load a built-in module. """
+        """
+        Load the specified module into sys.modules and return it.
+        
+            This method is deprecated.  Use loader.exec_module instead.
+        """
         pass
 
     def module_repr(module): # reliably restored by inspect

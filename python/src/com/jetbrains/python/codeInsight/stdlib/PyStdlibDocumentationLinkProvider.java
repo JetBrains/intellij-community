@@ -26,7 +26,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -987,8 +986,12 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
   private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
     String qnameString = moduleName.toString();
+    String moduleNameStr = moduleName.toString();
     if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
       qnameString = "os.path";
+    } else if (qnameString.equals("genericpath")) {
+      qnameString = "os.path";
+      moduleNameStr = qnameString;
     }
     else if (qnameString.equals("nt")) {
       qnameString = "os";
@@ -1012,15 +1015,15 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     final String name2 = "__init__".equals(name) ? "" : name;
     final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
     final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
-    final boolean foundModule = webpageName2 != null;
-    if (foundModule) {
-      urlBuilder.append(webpageName2 + ".html");
+
+    if (webpageName2 != null) {
+      urlBuilder.append(webpageName2).append(".html");
     }
 
-    if (foundModule && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
+    if (webpageName2 != null && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
       urlBuilder.append('#');
       if (!isBuiltin) {
-        urlBuilder.append(moduleName).append(".");
+        urlBuilder.append(moduleNameStr).append(".");
       }
       urlBuilder.append(qName);
     }

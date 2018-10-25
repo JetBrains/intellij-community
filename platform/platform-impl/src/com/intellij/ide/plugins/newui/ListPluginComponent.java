@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.AbstractLayoutManager;
@@ -29,6 +30,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class ListPluginComponent extends CellPluginComponent {
+  public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
+
   private final MyPluginModel myPluginModel;
   private boolean myUninstalled;
 
@@ -233,7 +236,24 @@ public class ListPluginComponent extends CellPluginComponent {
 
   @Override
   protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
-    super.updateColors(grayedFg, background);
+    setBackground(background);
+
+    if (mySelection != EventHandler.SelectionType.NONE) {
+      Color color = UIManager.getColor("Plugins.selectionForeground");
+      if (color != null) {
+        if (myVersion != null) {
+          myVersion.setForeground(color);
+        }
+        if (myLastUpdated != null) {
+          myLastUpdated.setForeground(color);
+        }
+        myName.setForeground(color);
+        if (myDescription != null) {
+          myDescription.setForeground(color);
+        }
+        return;
+      }
+    }
 
     if (myVersion != null) {
       myVersion.setForeground(grayedFg);
@@ -243,10 +263,10 @@ public class ListPluginComponent extends CellPluginComponent {
     }
 
     boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
-    myName.setForeground(enabled ? null : PluginManagerConfigurableNew.DisabledColor);
+    myName.setForeground(enabled ? null : DisabledColor);
 
     if (myDescription != null) {
-      myDescription.setForeground(enabled ? grayedFg : PluginManagerConfigurableNew.DisabledColor);
+      myDescription.setForeground(enabled ? grayedFg : DisabledColor);
     }
   }
 

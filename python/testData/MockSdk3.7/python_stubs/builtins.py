@@ -24,7 +24,7 @@ def abs(*args, **kwargs): # real signature unknown
 def all(*args, **kwargs): # real signature unknown
     """
     Return True if bool(x) is True for all values x in the iterable.
-
+    
     If the iterable is empty, return True.
     """
     pass
@@ -32,7 +32,7 @@ def all(*args, **kwargs): # real signature unknown
 def any(*args, **kwargs): # real signature unknown
     """
     Return True if bool(x) is True for any x in the iterable.
-
+    
     If the iterable is empty, return False.
     """
     pass
@@ -48,7 +48,7 @@ def ascii(*args, **kwargs): # real signature unknown
     """
     pass
 
-def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
     Return the binary representation of an integer.
     
@@ -57,10 +57,21 @@ def bin(*args, **kwargs): # real signature unknown; NOTE: unreliably restored fr
     """
     pass
 
+def breakpoint(*args, **kws): # real signature unknown; restored from __doc__
+    """
+    breakpoint(*args, **kws)
+    
+    Call sys.breakpointhook(*args, **kws).  sys.breakpointhook() must accept
+    whatever arguments are passed.
+    
+    By default, this drops you into the pdb debugger.
+    """
+    pass
+
 def callable(i_e_, some_kind_of_function): # real signature unknown; restored from __doc__
     """
     Return whether the object is callable (i.e., some kind of function).
-
+    
     Note that classes are callable, as are instances of classes with a
     __call__() method.
     """
@@ -133,7 +144,7 @@ def divmod(x, y): # known case of builtins.divmod
 def eval(*args, **kwargs): # real signature unknown
     """
     Evaluate the given source in the context of globals and locals.
-
+    
     The source may be a string representing a Python expression
     or a code object as returned by compile().
     The globals must be a dictionary and locals can be any mapping,
@@ -161,7 +172,9 @@ def format(*args, **kwargs): # real signature unknown
     """
     Return value.__format__(format_spec)
     
-    format_spec defaults to the empty string
+    format_spec defaults to the empty string.
+    See the Format Specification Mini-Language section of help('FORMATTING') for
+    details.
     """
     pass
 
@@ -178,7 +191,7 @@ def getattr(object, name, default=None): # known special case of getattr
 def globals(*args, **kwargs): # real signature unknown
     """
     Return the dictionary containing the current scope's global variables.
-
+    
     NOTE: Updates to this dictionary *will* affect name lookups in the current
     global scope and vice-versa.
     """
@@ -187,7 +200,7 @@ def globals(*args, **kwargs): # real signature unknown
 def hasattr(*args, **kwargs): # real signature unknown
     """
     Return whether the object has an attribute with the given name.
-
+    
     This is done by calling getattr(obj, name) and catching AttributeError.
     """
     pass
@@ -213,7 +226,7 @@ def help(): # real signature unknown; restored from __doc__
     """
     pass
 
-def hex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+def hex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
     Return the hexadecimal representation of an integer.
     
@@ -234,10 +247,10 @@ def id(*args, **kwargs): # real signature unknown
 def input(*args, **kwargs): # real signature unknown
     """
     Read a string from standard input.  The trailing newline is stripped.
-
+    
     The prompt string, if given, is printed to standard output without a
     trailing newline before reading input.
-
+    
     If the user hits EOF (*nix: Ctrl-D, Windows: Ctrl-Z+Return), raise EOFError.
     On *nix systems, readline is used if available.
     """
@@ -246,7 +259,7 @@ def input(*args, **kwargs): # real signature unknown
 def isinstance(x, A_tuple): # real signature unknown; restored from __doc__
     """
     Return whether an object is an instance of a class or of a subclass thereof.
-
+    
     A tuple, as in ``isinstance(x, (A, B, ...))``, may be given as the target to
     check against. This is equivalent to ``isinstance(x, A) or isinstance(x, B)
     or ...`` etc.
@@ -328,7 +341,7 @@ def next(iterator, default=None): # real signature unknown; restored from __doc_
     """
     pass
 
-def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
     """
     Return the octal representation of an integer.
     
@@ -339,7 +352,7 @@ def oct(*args, **kwargs): # real signature unknown; NOTE: unreliably restored fr
 
 def open(file, mode='r', buffering=None, encoding=None, errors=None, newline=None, closefd=True): # known special case of open
     """
-    Open file and return a stream.  Raise IOError upon failure.
+    Open file and return a stream.  Raise OSError upon failure.
     
     file is either a text or byte string giving the name (and the path
     if the file isn't in the current working directory) of the file to
@@ -467,7 +480,7 @@ def ord(*args, **kwargs): # real signature unknown
 def pow(*args, **kwargs): # real signature unknown
     """
     Equivalent to x**y (with two arguments) or x**y % z (with three arguments)
-
+    
     Some types, such as ints, are able to use a more efficient algorithm when
     invoked using the three argument form.
     """
@@ -492,20 +505,19 @@ def quit(*args, **kwargs): # real signature unknown
 def repr(obj): # real signature unknown; restored from __doc__
     """
     Return the canonical string representation of the object.
-
+    
     For many object types, including most builtins, eval(repr(obj)) == obj.
     """
     pass
 
-def round(number, ndigits=None): # real signature unknown; restored from __doc__
+def round(*args, **kwargs): # real signature unknown
     """
-    round(number[, ndigits]) -> number
+    Round a number to a given precision in decimal digits.
     
-    Round a number to a given precision in decimal digits (default 0 digits).
-    This returns an int when called with one argument, otherwise the
-    same type as the number. ndigits may be negative.
+    The return value is an integer if ndigits is omitted or None.  Otherwise
+    the return value has the same type as the number.  ndigits may be negative.
     """
-    return 0
+    pass
 
 def setattr(x, y, v): # real signature unknown; restored from __doc__
     """
@@ -518,8 +530,8 @@ def setattr(x, y, v): # real signature unknown; restored from __doc__
 def sorted(*args, **kwargs): # real signature unknown
     """
     Return a new list containing all items from the iterable in ascending order.
-
-    A custom key function can be supplied to customise the sort order, and the
+    
+    A custom key function can be supplied to customize the sort order, and the
     reverse flag can be set to request the result in descending order.
     """
     pass
@@ -556,7 +568,7 @@ def __import__(name, globals=None, locals=None, fromlist=(), level=0): # real si
     __import__(name, globals=None, locals=None, fromlist=(), level=0) -> module
     
     Import a module. Because this function is meant for use by the Python
-    interpreter and not for general use it is better to use
+    interpreter and not for general use, it is better to use
     importlib.import_module() to programmatically import a module.
     
     The globals argument is only used to determine the context;
@@ -565,8 +577,8 @@ def __import__(name, globals=None, locals=None, fromlist=(), level=0): # real si
     empty list to emulate ``import name''.
     When importing a module from a package, note that __import__('A.B', ...)
     returns package A when fromlist is empty, but its submodule B when
-    fromlist is not empty.  Level is used to determine whether to perform 
-    absolute or relative imports. 0 is absolute while a positive number
+    fromlist is not empty.  The level argument is used to determine whether to
+    perform absolute or relative imports: 0 is absolute, while a positive number
     is the number of parent directories to search relative to the current module.
     """
     pass
@@ -723,19 +735,16 @@ class object:
         """ Implement delattr(self, name). """
         pass
 
-    def __dir__(self): # real signature unknown; restored from __doc__
-        """
-        __dir__() -> list
-        default dir() implementation
-        """
-        return []
+    def __dir__(self, *args, **kwargs): # real signature unknown
+        """ Default dir() implementation. """
+        pass
 
     def __eq__(self, *args, **kwargs): # real signature unknown
         """ Return self==value. """
         pass
 
     def __format__(self, *args, **kwargs): # real signature unknown
-        """ default object formatter """
+        """ Default object formatter. """
         pass
 
     def __getattribute__(self, *args, **kwargs): # real signature unknown
@@ -752,6 +761,15 @@ class object:
 
     def __hash__(self, *args, **kwargs): # real signature unknown
         """ Return hash(self). """
+        pass
+
+    def __init_subclass__(self, *args, **kwargs): # real signature unknown
+        """
+        This method is called when a class is subclassed.
+        
+        The default implementation does nothing. It may be
+        overridden to extend subclasses.
+        """
         pass
 
     def __init__(self): # known special case of object.__init__
@@ -776,11 +794,11 @@ class object:
         pass
 
     def __reduce_ex__(self, *args, **kwargs): # real signature unknown
-        """ helper for pickle """
+        """ Helper for pickle. """
         pass
 
     def __reduce__(self, *args, **kwargs): # real signature unknown
-        """ helper for pickle """
+        """ Helper for pickle. """
         pass
 
     def __repr__(self, *args, **kwargs): # real signature unknown
@@ -791,12 +809,9 @@ class object:
         """ Implement setattr(self, name, value). """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """
-        __sizeof__() -> int
-        size of object in memory, in bytes
-        """
-        return 0
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        """ Size of object in memory, in bytes. """
+        pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
         """ Return str(self). """
@@ -923,7 +938,7 @@ class AttributeError(Exception):
         pass
 
 
-class OSError(Exception):
+class WindowsError(Exception):
     """ Base class for I/O related errors. """
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
@@ -954,12 +969,18 @@ class OSError(Exception):
     strerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
     """exception strerror"""
 
+    winerror = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
+    """Win32 exception code"""
 
 
-IOError = OSError
+
+OSError = WindowsError
 
 
-EnvironmentError = OSError
+IOError = WindowsError
+
+
+EnvironmentError = WindowsError
 
 
 class BlockingIOError(OSError):
@@ -970,7 +991,7 @@ class BlockingIOError(OSError):
 
 class int(object):
     """
-    int(x=0) -> integer
+    int([x]) -> integer
     int(x, base=10) -> integer
     
     Convert a number or string to an integer, or return 0 if no arguments
@@ -987,59 +1008,57 @@ class int(object):
     """
     def bit_length(self): # real signature unknown; restored from __doc__
         """
-        int.bit_length() -> int
-        
         Number of bits necessary to represent self in binary.
+        
         >>> bin(37)
         '0b100101'
         >>> (37).bit_length()
         6
         """
-        return 0
+        pass
 
     def conjugate(self, *args, **kwargs): # real signature unknown
         """ Returns self, the complex conjugate of any int. """
         pass
 
     @classmethod # known case
-    def from_bytes(cls, bytes, byteorder, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def from_bytes(cls, *args, **kwargs): # real signature unknown
         """
-        int.from_bytes(bytes, byteorder, *, signed=False) -> int
-        
         Return the integer represented by the given array of bytes.
         
-        The bytes argument must be a bytes-like object (e.g. bytes or bytearray).
-        
-        The byteorder argument determines the byte order used to represent the
-        integer.  If byteorder is 'big', the most significant byte is at the
-        beginning of the byte array.  If byteorder is 'little', the most
-        significant byte is at the end of the byte array.  To request the native
-        byte order of the host system, use `sys.byteorder' as the byte order value.
-        
-        The signed keyword-only argument indicates whether two's complement is
-        used to represent the integer.
+          bytes
+            Holds the array of bytes to convert.  The argument must either
+            support the buffer protocol or be an iterable object producing bytes.
+            Bytes and bytearray are examples of built-in objects that support the
+            buffer protocol.
+          byteorder
+            The byte order used to represent the integer.  If byteorder is 'big',
+            the most significant byte is at the beginning of the byte array.  If
+            byteorder is 'little', the most significant byte is at the end of the
+            byte array.  To request the native byte order of the host system, use
+            `sys.byteorder' as the byte order value.
+          signed
+            Indicates whether two's complement is used to represent the integer.
         """
         pass
 
-    def to_bytes(self, length, byteorder, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
+    def to_bytes(self, *args, **kwargs): # real signature unknown
         """
-        int.to_bytes(length, byteorder, *, signed=False) -> bytes
-        
         Return an array of bytes representing an integer.
         
-        The integer is represented using length bytes.  An OverflowError is
-        raised if the integer is not representable with the given number of
-        bytes.
-        
-        The byteorder argument determines the byte order used to represent the
-        integer.  If byteorder is 'big', the most significant byte is at the
-        beginning of the byte array.  If byteorder is 'little', the most
-        significant byte is at the end of the byte array.  To request the native
-        byte order of the host system, use `sys.byteorder' as the byte order value.
-        
-        The signed keyword-only argument determines whether two's complement is
-        used to represent the integer.  If signed is False and a negative integer
-        is given, an OverflowError is raised.
+          length
+            Length of bytes object to use.  An OverflowError is raised if the
+            integer is not representable with the given number of bytes.
+          byteorder
+            The byte order used to represent the integer.  If byteorder is 'big',
+            the most significant byte is at the beginning of the byte array.  If
+            byteorder is 'little', the most significant byte is at the end of the
+            byte array.  To request the native byte order of the host system, use
+            `sys.byteorder' as the byte order value.
+          signed
+            Determines whether two's complement is used to represent the integer.
+            If signed is False and a negative integer is given, an OverflowError
+            is raised.
         """
         pass
 
@@ -1111,7 +1130,7 @@ class int(object):
 
     def __init__(self, x, base=10): # known special case of int.__init__
         """
-        int(x=0) -> integer
+        int([x]) -> integer
         int(x, base=10) -> integer
         
         Convert a number or string to an integer, or return 0 if no arguments
@@ -1250,7 +1269,7 @@ class int(object):
         pass
 
     def __sizeof__(self, *args, **kwargs): # real signature unknown
-        """ Returns size in memory, in bytes """
+        """ Returns size in memory, in bytes. """
         pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
@@ -1476,10 +1495,10 @@ class bytearray(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
         Create a bytearray object from a string of hexadecimal numbers.
-
+        
         Spaces between two numbers are accepted.
         Example: bytearray.fromhex('B9 01EF') -> bytearray(b'\\xb9\\x01\\xef')
         """
@@ -1488,7 +1507,7 @@ class bytearray(object):
     def hex(self): # real signature unknown; restored from __doc__
         """
         B.hex() -> string
-
+        
         Create a string of hexadecimal numbers from a bytearray object.
         Example: bytearray([0xb9, 0x01, 0xef]).hex() -> 'b901ef'.
         """
@@ -1498,14 +1517,18 @@ class bytearray(object):
         """
         B.index(sub[, start[, end]]) -> int
         
-        Like B.find() but raise ValueError when the subsection is not found.
+        Return the lowest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raises ValueError when the subsection is not found.
         """
         return 0
 
     def insert(self, *args, **kwargs): # real signature unknown
         """
         Insert a single item into the bytearray before the given index.
-
+        
           index
             The index where the value is to be inserted.
           item
@@ -1528,6 +1551,15 @@ class bytearray(object):
         
         Return True if all characters in B are alphabetic
         and there is at least one character in B, False otherwise.
+        """
+        return False
+
+    def isascii(self): # real signature unknown; restored from __doc__
+        """
+        B.isascii() -> bool
+        
+        Return True if B is empty or all characters in B are ASCII,
+        False otherwise.
         """
         return False
 
@@ -1583,7 +1615,7 @@ class bytearray(object):
         Concatenate any number of bytes/bytearray objects.
         
         The bytearray whose method is called is inserted in between each pair.
-
+        
         The result is returned as a new bytearray object.
         """
         pass
@@ -1620,7 +1652,7 @@ class bytearray(object):
         
         The returned table will be one where each byte in frm is mapped to the byte at
         the same position in to.
-
+        
         The bytes objects frm and to must be of the same length.
         """
         pass
@@ -1631,10 +1663,10 @@ class bytearray(object):
         
         This will search for the separator sep in the bytearray. If the separator is
         found, returns a 3-tuple containing the part before the separator, the
-        separator itself, and the part after it.
-
-        If the separator is not found, returns a 3-tuple containing the original
-        bytearray object and two empty bytearray objects.
+        separator itself, and the part after it as new bytearray objects.
+        
+        If the separator is not found, returns a 3-tuple containing the copy of the
+        original bytearray object and two empty bytearray objects.
         """
         pass
 
@@ -1662,11 +1694,11 @@ class bytearray(object):
     def replace(self, *args, **kwargs): # real signature unknown
         """
         Return a copy with all occurrences of substring old replaced by new.
-
+        
           count
             Maximum number of occurrences to replace.
             -1 (the default value) means replace all occurrences.
-
+        
         If the optional argument count is given, only the first count occurrences are
         replaced.
         """
@@ -1692,7 +1724,11 @@ class bytearray(object):
         """
         B.rindex(sub[, start[, end]]) -> int
         
-        Like B.rfind() but raise ValueError when the subsection is not found.
+        Return the highest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raise ValueError when the subsection is not found.
         """
         return 0
 
@@ -1707,14 +1743,15 @@ class bytearray(object):
 
     def rpartition(self, *args, **kwargs): # real signature unknown
         """
-        Partition the bytes into three parts using the given separator.
+        Partition the bytearray into three parts using the given separator.
         
-        This will search for the separator sep in the bytearray, starting and the end.
+        This will search for the separator sep in the bytearray, starting at the end.
         If the separator is found, returns a 3-tuple containing the part before the
-        separator, the separator itself, and the part after it.
-
+        separator, the separator itself, and the part after it as new bytearray
+        objects.
+        
         If the separator is not found, returns a 3-tuple containing two empty bytearray
-        objects and the original bytearray object.
+        objects and the copy of the original bytearray object.
         """
         pass
 
@@ -1729,7 +1766,7 @@ class bytearray(object):
           maxsplit
             Maximum number of splits to do.
             -1 (the default value) means no limit.
-
+        
         Splitting is done starting at the end of the bytearray and working to the front.
         """
         pass
@@ -1802,15 +1839,14 @@ class bytearray(object):
         """
         pass
 
-    def translate(self, table, deletechars=None): # real signature unknown; restored from __doc__
+    def translate(self, *args, **kwargs): # real signature unknown
         """
-        translate(table, [deletechars])
         Return a copy with each character mapped by the given translation table.
         
           table
             Translation table, which must be a bytes object of length 256.
-
-        All characters occurring in the optional argument deletechars are removed.
+        
+        All characters occurring in the optional argument delete are removed.
         The remaining characters are mapped through the given translation table.
         """
         pass
@@ -1919,7 +1955,7 @@ class bytearray(object):
         pass
 
     def __mul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value.n """
+        """ Return self*value. """
         pass
 
     @staticmethod # known case of __new__
@@ -1948,7 +1984,7 @@ class bytearray(object):
         pass
 
     def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+        """ Return value*self. """
         pass
 
     def __setitem__(self, *args, **kwargs): # real signature unknown
@@ -2002,8 +2038,8 @@ class bytes(object):
         """
         B.count(sub[, start[, end]]) -> int
         
-        Return the number of non-overlapping occurrences of substring sub in
-        string B[start:end].  Optional arguments start and end are interpreted
+        Return the number of non-overlapping occurrences of subsection sub in
+        bytes B[start:end].  Optional arguments start and end are interpreted
         as in slice notation.
         """
         return 0
@@ -2047,8 +2083,8 @@ class bytes(object):
         """
         B.find(sub[, start[, end]]) -> int
         
-        Return the lowest index in B where substring sub is found,
-        such that sub is contained within B[start:end].  Optional
+        Return the lowest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
         arguments start and end are interpreted as in slice notation.
         
         Return -1 on failure.
@@ -2056,10 +2092,10 @@ class bytes(object):
         return 0
 
     @classmethod # known case
-    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+    def fromhex(cls, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
         Create a bytes object from a string of hexadecimal numbers.
-
+        
         Spaces between two numbers are accepted.
         Example: bytes.fromhex('B9 01EF') -> b'\\xb9\\x01\\xef'.
         """
@@ -2068,7 +2104,7 @@ class bytes(object):
     def hex(self): # real signature unknown; restored from __doc__
         """
         B.hex() -> string
-
+        
         Create a string of hexadecimal numbers from a bytes object.
         Example: b'\xb9\x01\xef'.hex() -> 'b901ef'.
         """
@@ -2078,7 +2114,11 @@ class bytes(object):
         """
         B.index(sub[, start[, end]]) -> int
         
-        Like B.find() but raise ValueError when the substring is not found.
+        Return the lowest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raises ValueError when the subsection is not found.
         """
         return 0
 
@@ -2097,6 +2137,15 @@ class bytes(object):
         
         Return True if all characters in B are alphabetic
         and there is at least one character in B, False otherwise.
+        """
+        return False
+
+    def isascii(self): # real signature unknown; restored from __doc__
+        """
+        B.isascii() -> bool
+        
+        Return True if B is empty or all characters in B are ASCII,
+        False otherwise.
         """
         return False
 
@@ -2147,14 +2196,14 @@ class bytes(object):
         """
         return False
 
-    def join(self, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__
+    def join(self, *args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
         Concatenate any number of bytes objects.
         
         The bytes whose method is called is inserted in between each pair.
-
+        
         The result is returned as a new bytes object.
-
+        
         Example: b'.'.join([b'ab', b'pq', b'rs']) -> b'ab.pq.rs'.
         """
         pass
@@ -2179,7 +2228,7 @@ class bytes(object):
     def lstrip(self, *args, **kwargs): # real signature unknown
         """
         Strip leading bytes contained in the argument.
-
+        
         If the argument is omitted or None, strip leading  ASCII whitespace.
         """
         pass
@@ -2191,7 +2240,7 @@ class bytes(object):
         
         The returned table will be one where each byte in frm is mapped to the byte at
         the same position in to.
-
+        
         The bytes objects frm and to must be of the same length.
         """
         pass
@@ -2203,7 +2252,7 @@ class bytes(object):
         This will search for the separator sep in the bytes. If the separator is found,
         returns a 3-tuple containing the part before the separator, the separator
         itself, and the part after it.
-
+        
         If the separator is not found, returns a 3-tuple containing the original bytes
         object and two empty bytes objects.
         """
@@ -2216,7 +2265,7 @@ class bytes(object):
           count
             Maximum number of occurrences to replace.
             -1 (the default value) means replace all occurrences.
-
+        
         If the optional argument count is given, only the first count occurrences are
         replaced.
         """
@@ -2226,8 +2275,8 @@ class bytes(object):
         """
         B.rfind(sub[, start[, end]]) -> int
         
-        Return the highest index in B where substring sub is found,
-        such that sub is contained within B[start:end].  Optional
+        Return the highest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
         arguments start and end are interpreted as in slice notation.
         
         Return -1 on failure.
@@ -2238,7 +2287,11 @@ class bytes(object):
         """
         B.rindex(sub[, start[, end]]) -> int
         
-        Like B.rfind() but raise ValueError when the substring is not found.
+        Return the highest index in B where subsection sub is found,
+        such that sub is contained within B[start,end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raise ValueError when the subsection is not found.
         """
         return 0
 
@@ -2255,10 +2308,10 @@ class bytes(object):
         """
         Partition the bytes into three parts using the given separator.
         
-        This will search for the separator sep in the bytes, starting and the end. If
+        This will search for the separator sep in the bytes, starting at the end. If
         the separator is found, returns a 3-tuple containing the part before the
         separator, the separator itself, and the part after it.
-
+        
         If the separator is not found, returns a 3-tuple containing two empty bytes
         objects and the original bytes object.
         """
@@ -2275,7 +2328,7 @@ class bytes(object):
           maxsplit
             Maximum number of splits to do.
             -1 (the default value) means no limit.
-
+        
         Splitting is done starting at the end of the bytes and working to the front.
         """
         pass
@@ -2283,7 +2336,7 @@ class bytes(object):
     def rstrip(self, *args, **kwargs): # real signature unknown
         """
         Strip trailing bytes contained in the argument.
-
+        
         If the argument is omitted or None, strip trailing ASCII whitespace.
         """
         pass
@@ -2325,7 +2378,7 @@ class bytes(object):
     def strip(self, *args, **kwargs): # real signature unknown
         """
         Strip leading and trailing bytes contained in the argument.
-
+        
         If the argument is omitted or None, strip leading and trailing ASCII whitespace.
         """
         pass
@@ -2348,15 +2401,14 @@ class bytes(object):
         """
         pass
 
-    def translate(self, table, deletechars=None): # real signature unknown; restored from __doc__
+    def translate(self, *args, **kwargs): # real signature unknown
         """
-        translate(table, [deletechars])
         Return a copy with each character mapped by the given translation table.
         
           table
             Translation table, which must be a bytes object of length 256.
-
-        All characters occurring in the optional argument deletechars are removed.
+        
+        All characters occurring in the optional argument delete are removed.
         The remaining characters are mapped through the given translation table.
         """
         pass
@@ -2451,7 +2503,7 @@ class bytes(object):
         pass
 
     def __mul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value.n """
+        """ Return self*value. """
         pass
 
     @staticmethod # known case of __new__
@@ -2472,7 +2524,7 @@ class bytes(object):
         pass
 
     def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+        """ Return value*self. """
         pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
@@ -2522,8 +2574,9 @@ class classmethod(object):
     To declare a class method, use this idiom:
     
       class C:
-          def f(cls, arg1, arg2, ...): ...
-          f = classmethod(f)
+          @classmethod
+          def f(cls, arg1, arg2, ...):
+              ...
     
     It can be called either on the class (e.g. C.f()) or on an instance
     (e.g. C().f()).  The instance is ignored except for its class.
@@ -2555,9 +2608,8 @@ class classmethod(object):
 
 class complex(object):
     """
-    complex(real[, imag]) -> complex number
-    
     Create a complex number from a real part and an optional imaginary part.
+    
     This is equivalent to (real + imag*1j) where imag defaults to 0.
     """
     def conjugate(self): # real signature unknown; restored from __doc__
@@ -2623,7 +2675,7 @@ class complex(object):
         """ Return hash(self). """
         pass
 
-    def __init__(self, real, imag=None): # real signature unknown; restored from __doc__
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     def __int__(self, *args, **kwargs): # real signature unknown
@@ -2780,11 +2832,11 @@ class dict(object):
 
     @staticmethod # known case
     def fromkeys(*args, **kwargs): # real signature unknown
-        """ Returns a new dict with keys from iterable and values equal to value. """
+        """ Create a new dictionary with keys from iterable and values set to value. """
         pass
 
-    def get(self, k, d=None): # real signature unknown; restored from __doc__
-        """ D.get(k[,d]) -> D[k] if k in D, else d.  d defaults to None. """
+    def get(self, *args, **kwargs): # real signature unknown
+        """ Return the value for key if key is in the dictionary, else default. """
         pass
 
     def items(self): # real signature unknown; restored from __doc__
@@ -2809,8 +2861,12 @@ class dict(object):
         """
         pass
 
-    def setdefault(self, k, d=None): # real signature unknown; restored from __doc__
-        """ D.setdefault(k[,d]) -> D.get(k,d), also set D[k]=d if k not in D """
+    def setdefault(self, *args, **kwargs): # real signature unknown
+        """
+        Insert key with a value of default if key is not in the dictionary.
+        
+        Return the value for key if key is in the dictionary, else default.
+        """
         pass
 
     def update(self, E=None, **F): # known special case of dict.update
@@ -2827,7 +2883,7 @@ class dict(object):
         pass
 
     def __contains__(self, *args, **kwargs): # real signature unknown
-        """ True if D has a key k, else False. """
+        """ True if the dictionary has the specified key, else False. """
         pass
 
     def __delitem__(self, *args, **kwargs): # real signature unknown
@@ -2911,11 +2967,14 @@ class dict(object):
 
 class enumerate(object):
     """
-    enumerate(iterable[, start]) -> iterator for index, value of iterable
+    Return an enumerate object.
     
-    Return an enumerate object.  iterable must be another object that supports
-    iteration.  The enumerate object yields pairs containing a count (from
-    start, which defaults to zero) and a value yielded by the iterable argument.
+      iterable
+        an object supporting iteration
+    
+    The enumerate object yields pairs containing a count (from start, which
+    defaults to zero) and a value yielded by the iterable argument.
+    
     enumerate is useful for obtaining an indexed list:
         (0, seq[0]), (1, seq[1]), (2, seq[2]), ...
     """
@@ -3001,17 +3060,14 @@ class filter(object):
 
 
 class float(object):
-    """
-    float(x) -> floating point number
-    
-    Convert a string or number to a floating point number, if possible.
-    """
+    """ Convert a string or number to a floating point number, if possible. """
     def as_integer_ratio(self): # real signature unknown; restored from __doc__
         """
-        float.as_integer_ratio() -> (int, int)
+        Return integer ratio.
         
-        Return a pair of integers, whose ratio is exactly equal to the original
-        float and with a positive denominator.
+        Return a pair of integers, whose ratio is exactly equal to the original float
+        and with a positive denominator.
+        
         Raise OverflowError on infinities and a ValueError on NaNs.
         
         >>> (10.0).as_integer_ratio()
@@ -3028,29 +3084,27 @@ class float(object):
         pass
 
     @staticmethod # known case
-    def fromhex(string): # real signature unknown; restored from __doc__
+    def fromhex(*args, **kwargs): # real signature unknown; NOTE: unreliably restored from __doc__ 
         """
-        float.fromhex(string) -> float
-        
         Create a floating-point number from a hexadecimal string.
+        
         >>> float.fromhex('0x1.ffffp10')
         2047.984375
         >>> float.fromhex('-0x1p-1074')
         -5e-324
         """
-        return 0.0
+        pass
 
     def hex(self): # real signature unknown; restored from __doc__
         """
-        float.hex() -> string
-        
         Return a hexadecimal representation of a floating-point number.
+        
         >>> (-0.1).hex()
         '-0x1.999999999999ap-4'
         >>> 3.14159.hex()
         '0x1.921f9f01b866ep+1'
         """
-        return ""
+        pass
 
     def is_integer(self, *args, **kwargs): # real signature unknown
         """ Return True if the float is an integer. """
@@ -3084,30 +3138,28 @@ class float(object):
         """ Return self//value. """
         pass
 
-    def __format__(self, format_spec): # real signature unknown; restored from __doc__
-        """
-        float.__format__(format_spec) -> string
-        
-        Formats the float according to format_spec.
-        """
-        return ""
+    def __format__(self, *args, **kwargs): # real signature unknown
+        """ Formats the float according to format_spec. """
+        pass
 
     def __getattribute__(self, *args, **kwargs): # real signature unknown
         """ Return getattr(self, name). """
         pass
 
-    def __getformat__(self, typestr): # real signature unknown; restored from __doc__
+    def __getformat__(self, *args, **kwargs): # real signature unknown
         """
-        float.__getformat__(typestr) -> string
+        You probably don't want to use this function.
         
-        You probably don't want to use this function.  It exists mainly to be
-        used in Python's test suite.
+          typestr
+            Must be 'double' or 'float'.
         
-        typestr must be 'double' or 'float'.  This function returns whichever of
-        'unknown', 'IEEE, big-endian' or 'IEEE, little-endian' best describes the
-        format of floating point numbers used by the C type named by typestr.
+        It exists mainly to be used in Python's test suite.
+        
+        This function returns whichever of 'unknown', 'IEEE, big-endian' or 'IEEE,
+        little-endian' best describes the format of floating point numbers used by the
+        C type named by typestr.
         """
-        return ""
+        pass
 
     def __getnewargs__(self, *args, **kwargs): # real signature unknown
         pass
@@ -3124,7 +3176,7 @@ class float(object):
         """ Return hash(self). """
         pass
 
-    def __init__(self, x): # real signature unknown; restored from __doc__
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     def __int__(self, *args, **kwargs): # real signature unknown
@@ -3195,6 +3247,7 @@ class float(object):
     def __round__(self, *args, **kwargs): # real signature unknown
         """
         Return the Integral closest to x, rounding half toward even.
+        
         When an argument is passed, work like built-in round(x, ndigits).
         """
         pass
@@ -3211,16 +3264,18 @@ class float(object):
         """ Return value/self. """
         pass
 
-    def __setformat__(self, typestr, fmt): # real signature unknown; restored from __doc__
+    def __set_format__(self, *args, **kwargs): # real signature unknown
         """
-        float.__setformat__(typestr, fmt) -> None
+        You probably don't want to use this function.
         
-        You probably don't want to use this function.  It exists mainly to be
-        used in Python's test suite.
+          typestr
+            Must be 'double' or 'float'.
+          fmt
+            Must be one of 'unknown', 'IEEE, big-endian' or 'IEEE, little-endian',
+            and in addition can only be one of the latter two if it appears to
+            match the underlying C reality.
         
-        typestr must be 'double' or 'float'.  fmt must be one of 'unknown',
-        'IEEE, big-endian' or 'IEEE, little-endian', and in addition can only be
-        one of the latter two if it appears to match the underlying C reality.
+        It exists mainly to be used in Python's test suite.
         
         Override the automatic determination of C-level floating point type.
         This affects how floats are converted to and from binary strings.
@@ -3445,6 +3500,9 @@ class ImportError(Exception):
     def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
+    def __reduce__(self, *args, **kwargs): # real signature unknown
+        pass
+
     def __str__(self, *args, **kwargs): # real signature unknown
         """ Return str(self). """
         pass
@@ -3563,60 +3621,65 @@ class KeyError(LookupError):
 
 class list(object):
     """
-    list() -> new empty list
-    list(iterable) -> new list initialized from iterable's items
+    Built-in mutable sequence.
+    
+    If no argument is given, the constructor creates a new empty list.
+    The argument must be an iterable if specified.
     """
-    def append(self, p_object): # real signature unknown; restored from __doc__
-        """ L.append(object) -> None -- append object to end """
+    def append(self, *args, **kwargs): # real signature unknown
+        """ Append object to the end of the list. """
         pass
 
-    def clear(self): # real signature unknown; restored from __doc__
-        """ L.clear() -> None -- remove all items from L """
+    def clear(self, *args, **kwargs): # real signature unknown
+        """ Remove all items from list. """
         pass
 
-    def copy(self): # real signature unknown; restored from __doc__
-        """ L.copy() -> list -- a shallow copy of L """
-        return []
-
-    def count(self, value): # real signature unknown; restored from __doc__
-        """ L.count(value) -> integer -- return number of occurrences of value """
-        return 0
-
-    def extend(self, iterable): # real signature unknown; restored from __doc__
-        """ L.extend(iterable) -> None -- extend list by appending elements from the iterable """
+    def copy(self, *args, **kwargs): # real signature unknown
+        """ Return a shallow copy of the list. """
         pass
 
-    def index(self, value, start=None, stop=None): # real signature unknown; restored from __doc__
+    def count(self, *args, **kwargs): # real signature unknown
+        """ Return number of occurrences of value. """
+        pass
+
+    def extend(self, *args, **kwargs): # real signature unknown
+        """ Extend list by appending elements from the iterable. """
+        pass
+
+    def index(self, *args, **kwargs): # real signature unknown
         """
-        L.index(value, [start, [stop]]) -> integer -- return first index of value.
+        Return first index of value.
+        
         Raises ValueError if the value is not present.
         """
-        return 0
-
-    def insert(self, index, p_object): # real signature unknown; restored from __doc__
-        """ L.insert(index, object) -- insert object before index """
         pass
 
-    def pop(self, index=None): # real signature unknown; restored from __doc__
+    def insert(self, *args, **kwargs): # real signature unknown
+        """ Insert object before index. """
+        pass
+
+    def pop(self, *args, **kwargs): # real signature unknown
         """
-        L.pop([index]) -> item -- remove and return item at index (default last).
+        Remove and return item at index (default last).
+        
         Raises IndexError if list is empty or index is out of range.
         """
         pass
 
-    def remove(self, value): # real signature unknown; restored from __doc__
+    def remove(self, *args, **kwargs): # real signature unknown
         """
-        L.remove(value) -> None -- remove first occurrence of value.
+        Remove first occurrence of value.
+        
         Raises ValueError if the value is not present.
         """
         pass
 
-    def reverse(self): # real signature unknown; restored from __doc__
-        """ L.reverse() -- reverse *IN PLACE* """
+    def reverse(self, *args, **kwargs): # real signature unknown
+        """ Reverse *IN PLACE*. """
         pass
 
-    def sort(self, key=None, reverse=False): # real signature unknown; restored from __doc__
-        """ L.sort(key=None, reverse=False) -> None -- stable sort *IN PLACE* """
+    def sort(self, *args, **kwargs): # real signature unknown
+        """ Stable sort *IN PLACE*. """
         pass
 
     def __add__(self, *args, **kwargs): # real signature unknown
@@ -3661,8 +3724,10 @@ class list(object):
 
     def __init__(self, seq=()): # known special case of list.__init__
         """
-        list() -> new empty list
-        list(iterable) -> new list initialized from iterable's items
+        Built-in mutable sequence.
+        
+        If no argument is given, the constructor creates a new empty list.
+        The argument must be an iterable if specified.
         # (copied from class doc)
         """
         pass
@@ -3684,7 +3749,7 @@ class list(object):
         pass
 
     def __mul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value.n """
+        """ Return self*value. """
         pass
 
     @staticmethod # known case of __new__
@@ -3700,20 +3765,20 @@ class list(object):
         """ Return repr(self). """
         pass
 
-    def __reversed__(self): # real signature unknown; restored from __doc__
-        """ L.__reversed__() -- return a reverse iterator over the list """
+    def __reversed__(self, *args, **kwargs): # real signature unknown
+        """ Return a reverse iterator over the list. """
         pass
 
     def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+        """ Return value*self. """
         pass
 
     def __setitem__(self, *args, **kwargs): # real signature unknown
         """ Set self[key] to value. """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """ L.__sizeof__() -- size of L in memory, in bytes """
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        """ Return the size of the list in memory, in bytes. """
         pass
 
     __hash__ = None
@@ -3893,6 +3958,12 @@ class memoryview(object):
 
 
 
+class ModuleNotFoundError(ImportError):
+    """ Module not found. """
+    def __init__(self, *args, **kwargs): # real signature unknown
+        pass
+
+
 class NameError(Exception):
     """ Name not found globally. """
     def __init__(self, *args, **kwargs): # real signature unknown
@@ -3971,11 +4042,18 @@ class ProcessLookupError(OSError):
 
 class property(object):
     """
-    property(fget=None, fset=None, fdel=None, doc=None) -> property attribute
+    Property attribute.
     
-    fget is a function to be used for getting an attribute value, and likewise
-    fset is a function for setting, and fdel a function for del'ing, an
-    attribute.  Typical use is to define a managed attribute x:
+      fget
+        function to be used for getting an attribute value
+      fset
+        function to be used for setting an attribute value
+      fdel
+        function to be used for del'ing an attribute
+      doc
+        docstring
+    
+    Typical use is to define a managed attribute x:
     
     class C(object):
         def getx(self): return self._x
@@ -4023,11 +4101,18 @@ class property(object):
 
     def __init__(self, fget=None, fset=None, fdel=None, doc=None): # known special case of property.__init__
         """
-        property(fget=None, fset=None, fdel=None, doc=None) -> property attribute
+        Property attribute.
         
-        fget is a function to be used for getting an attribute value, and likewise
-        fset is a function for setting, and fdel a function for del'ing, an
-        attribute.  Typical use is to define a managed attribute x:
+          fget
+            function to be used for getting an attribute value
+          fset
+            function to be used for setting an attribute value
+          fdel
+            function to be used for del'ing an attribute
+          doc
+            docstring
+        
+        Typical use is to define a managed attribute x:
         
         class C(object):
             def getx(self): return self._x
@@ -4048,7 +4133,6 @@ class property(object):
             @x.deleter
             def x(self):
                 del self._x
-        
         # (copied from class doc)
         """
         pass
@@ -4093,6 +4177,10 @@ class range(object):
         Raise ValueError if the value is not present.
         """
         return 0
+
+    def __bool__(self, *args, **kwargs): # real signature unknown
+        """ self != 0 """
+        pass
 
     def __contains__(self, *args, **kwargs): # real signature unknown
         """ Return key in self. """
@@ -4203,16 +4291,12 @@ class ResourceWarning(Warning):
 
 
 class reversed(object):
-    """
-    reversed(sequence) -> reverse iterator over values of the sequence
-    
-    Return a reverse iterator
-    """
+    """ Return a reverse iterator over the values of the given sequence. """
     def __getattribute__(self, *args, **kwargs): # real signature unknown
         """ Return getattr(self, name). """
         pass
 
-    def __init__(self, sequence): # real signature unknown; restored from __doc__
+    def __init__(self, *args, **kwargs): # real signature unknown
         pass
 
     def __iter__(self, *args, **kwargs): # real signature unknown
@@ -4561,8 +4645,9 @@ class staticmethod(object):
     To declare a static method, use this idiom:
     
          class C:
-         def f(arg1, arg2, ...): ...
-         f = staticmethod(f)
+             @staticmethod
+             def f(arg1, arg2, ...):
+                 ...
     
     It can be called either on the class (e.g. C.f()) or on an instance
     (e.g. C().f()).  The instance is ignored except for its class.
@@ -4624,31 +4709,26 @@ class str(object):
     encoding defaults to sys.getdefaultencoding().
     errors defaults to 'strict'.
     """
-    def capitalize(self): # real signature unknown; restored from __doc__
+    def capitalize(self, *args, **kwargs): # real signature unknown
         """
-        S.capitalize() -> str
+        Return a capitalized version of the string.
         
-        Return a capitalized version of S, i.e. make the first character
-        have upper case and the rest lower case.
+        More specifically, make the first character have upper case and the rest lower
+        case.
         """
-        return ""
+        pass
 
-    def casefold(self): # real signature unknown; restored from __doc__
-        """
-        S.casefold() -> str
-        
-        Return a version of S suitable for caseless comparisons.
-        """
-        return ""
+    def casefold(self, *args, **kwargs): # real signature unknown
+        """ Return a version of the string suitable for caseless comparisons. """
+        pass
 
-    def center(self, width, fillchar=None): # real signature unknown; restored from __doc__
+    def center(self, *args, **kwargs): # real signature unknown
         """
-        S.center(width[, fillchar]) -> str
+        Return a centered string of length width.
         
-        Return S centered in a string of length width. Padding is
-        done using the specified fill character (default is a space)
+        Padding is done using the specified fill character (default is a space).
         """
-        return ""
+        pass
 
     def count(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -4660,18 +4740,20 @@ class str(object):
         """
         return 0
 
-    def encode(self, encoding='utf-8', errors='strict'): # real signature unknown; restored from __doc__
+    def encode(self, *args, **kwargs): # real signature unknown
         """
-        S.encode(encoding='utf-8', errors='strict') -> bytes
+        Encode the string using the codec registered for encoding.
         
-        Encode S using the codec registered for encoding. Default encoding
-        is 'utf-8'. errors may be given to set a different error
-        handling scheme. Default is 'strict' meaning that encoding errors raise
-        a UnicodeEncodeError. Other possible values are 'ignore', 'replace' and
-        'xmlcharrefreplace' as well as any other name registered with
-        codecs.register_error that can handle UnicodeEncodeErrors.
+          encoding
+            The encoding in which to encode the string.
+          errors
+            The error handling scheme to use for encoding errors.
+            The default is 'strict' meaning that encoding errors raise a
+            UnicodeEncodeError.  Other possible values are 'ignore', 'replace' and
+            'xmlcharrefreplace' as well as any other name registered with
+            codecs.register_error that can handle UnicodeEncodeErrors.
         """
-        return b""
+        pass
 
     def endswith(self, suffix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -4684,14 +4766,13 @@ class str(object):
         """
         return False
 
-    def expandtabs(self, tabsize=8): # real signature unknown; restored from __doc__
+    def expandtabs(self, *args, **kwargs): # real signature unknown
         """
-        S.expandtabs(tabsize=8) -> str
+        Return a copy where all tab characters are expanded using spaces.
         
-        Return a copy of S where all tab characters are expanded using spaces.
         If tabsize is not given, a tab size of 8 characters is assumed.
         """
-        return ""
+        pass
 
     def find(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -4727,148 +4808,152 @@ class str(object):
         """
         S.index(sub[, start[, end]]) -> int
         
-        Like S.find() but raise ValueError when the substring is not found.
+        Return the lowest index in S where substring sub is found, 
+        such that sub is contained within S[start:end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raises ValueError when the substring is not found.
         """
         return 0
 
-    def isalnum(self): # real signature unknown; restored from __doc__
+    def isalnum(self, *args, **kwargs): # real signature unknown
         """
-        S.isalnum() -> bool
+        Return True if the string is an alpha-numeric string, False otherwise.
         
-        Return True if all characters in S are alphanumeric
-        and there is at least one character in S, False otherwise.
+        A string is alpha-numeric if all characters in the string are alpha-numeric and
+        there is at least one character in the string.
         """
-        return False
+        pass
 
-    def isalpha(self): # real signature unknown; restored from __doc__
+    def isalpha(self, *args, **kwargs): # real signature unknown
         """
-        S.isalpha() -> bool
+        Return True if the string is an alphabetic string, False otherwise.
         
-        Return True if all characters in S are alphabetic
-        and there is at least one character in S, False otherwise.
+        A string is alphabetic if all characters in the string are alphabetic and there
+        is at least one character in the string.
         """
-        return False
+        pass
 
-    def isdecimal(self): # real signature unknown; restored from __doc__
+    def isascii(self, *args, **kwargs): # real signature unknown
         """
-        S.isdecimal() -> bool
+        Return True if all characters in the string are ASCII, False otherwise.
         
-        Return True if there are only decimal characters in S,
-        False otherwise.
+        ASCII characters have code points in the range U+0000-U+007F.
+        Empty string is ASCII too.
         """
-        return False
+        pass
 
-    def isdigit(self): # real signature unknown; restored from __doc__
+    def isdecimal(self, *args, **kwargs): # real signature unknown
         """
-        S.isdigit() -> bool
+        Return True if the string is a decimal string, False otherwise.
         
-        Return True if all characters in S are digits
-        and there is at least one character in S, False otherwise.
+        A string is a decimal string if all characters in the string are decimal and
+        there is at least one character in the string.
         """
-        return False
+        pass
 
-    def isidentifier(self): # real signature unknown; restored from __doc__
+    def isdigit(self, *args, **kwargs): # real signature unknown
         """
-        S.isidentifier() -> bool
+        Return True if the string is a digit string, False otherwise.
         
-        Return True if S is a valid identifier according
-        to the language definition.
-        
-        Use keyword.iskeyword() to test for reserved identifiers
-        such as "def" and "class".
+        A string is a digit string if all characters in the string are digits and there
+        is at least one character in the string.
         """
-        return False
+        pass
 
-    def islower(self): # real signature unknown; restored from __doc__
+    def isidentifier(self, *args, **kwargs): # real signature unknown
         """
-        S.islower() -> bool
+        Return True if the string is a valid Python identifier, False otherwise.
         
-        Return True if all cased characters in S are lowercase and there is
-        at least one cased character in S, False otherwise.
+        Use keyword.iskeyword() to test for reserved identifiers such as "def" and
+        "class".
         """
-        return False
+        pass
 
-    def isnumeric(self): # real signature unknown; restored from __doc__
+    def islower(self, *args, **kwargs): # real signature unknown
         """
-        S.isnumeric() -> bool
+        Return True if the string is a lowercase string, False otherwise.
         
-        Return True if there are only numeric characters in S,
-        False otherwise.
+        A string is lowercase if all cased characters in the string are lowercase and
+        there is at least one cased character in the string.
         """
-        return False
+        pass
 
-    def isprintable(self): # real signature unknown; restored from __doc__
+    def isnumeric(self, *args, **kwargs): # real signature unknown
         """
-        S.isprintable() -> bool
+        Return True if the string is a numeric string, False otherwise.
         
-        Return True if all characters in S are considered
-        printable in repr() or S is empty, False otherwise.
+        A string is numeric if all characters in the string are numeric and there is at
+        least one character in the string.
         """
-        return False
+        pass
 
-    def isspace(self): # real signature unknown; restored from __doc__
+    def isprintable(self, *args, **kwargs): # real signature unknown
         """
-        S.isspace() -> bool
+        Return True if the string is printable, False otherwise.
         
-        Return True if all characters in S are whitespace
-        and there is at least one character in S, False otherwise.
+        A string is printable if all of its characters are considered printable in
+        repr() or if it is empty.
         """
-        return False
+        pass
 
-    def istitle(self): # real signature unknown; restored from __doc__
+    def isspace(self, *args, **kwargs): # real signature unknown
         """
-        S.istitle() -> bool
+        Return True if the string is a whitespace string, False otherwise.
         
-        Return True if S is a titlecased string and there is at least one
-        character in S, i.e. upper- and titlecase characters may only
+        A string is whitespace if all characters in the string are whitespace and there
+        is at least one character in the string.
+        """
+        pass
+
+    def istitle(self, *args, **kwargs): # real signature unknown
+        """
+        Return True if the string is a title-cased string, False otherwise.
+        
+        In a title-cased string, upper- and title-case characters may only
         follow uncased characters and lowercase characters only cased ones.
-        Return False otherwise.
         """
-        return False
+        pass
 
-    def isupper(self): # real signature unknown; restored from __doc__
+    def isupper(self, *args, **kwargs): # real signature unknown
         """
-        S.isupper() -> bool
+        Return True if the string is an uppercase string, False otherwise.
         
-        Return True if all cased characters in S are uppercase and there is
-        at least one cased character in S, False otherwise.
+        A string is uppercase if all cased characters in the string are uppercase and
+        there is at least one cased character in the string.
         """
-        return False
+        pass
 
-    def join(self, iterable): # real signature unknown; restored from __doc__
+    def join(self, ab=None, pq=None, rs=None): # real signature unknown; restored from __doc__
         """
-        S.join(iterable) -> str
+        Concatenate any number of strings.
         
-        Return a string which is the concatenation of the strings in the
-        iterable.  The separator between elements is S.
+        The string whose method is called is inserted in between each given string.
+        The result is returned as a new string.
+        
+        Example: '.'.join(['ab', 'pq', 'rs']) -> 'ab.pq.rs'
         """
-        return ""
+        pass
 
-    def ljust(self, width, fillchar=None): # real signature unknown; restored from __doc__
+    def ljust(self, *args, **kwargs): # real signature unknown
         """
-        S.ljust(width[, fillchar]) -> str
+        Return a left-justified string of length width.
         
-        Return S left-justified in a Unicode string of length width. Padding is
-        done using the specified fill character (default is a space).
+        Padding is done using the specified fill character (default is a space).
         """
-        return ""
+        pass
 
-    def lower(self): # real signature unknown; restored from __doc__
-        """
-        S.lower() -> str
-        
-        Return a copy of the string S converted to lowercase.
-        """
-        return ""
+    def lower(self, *args, **kwargs): # real signature unknown
+        """ Return a copy of the string converted to lowercase. """
+        pass
 
-    def lstrip(self, chars=None): # real signature unknown; restored from __doc__
+    def lstrip(self, *args, **kwargs): # real signature unknown
         """
-        S.lstrip([chars]) -> str
+        Return a copy of the string with leading whitespace removed.
         
-        Return a copy of the string S with leading whitespace removed.
         If chars is given and not None, remove characters in chars instead.
         """
-        return ""
+        pass
 
     def maketrans(self, *args, **kwargs): # real signature unknown
         """
@@ -4884,25 +4969,31 @@ class str(object):
         """
         pass
 
-    def partition(self, sep): # real signature unknown; restored from __doc__
+    def partition(self, *args, **kwargs): # real signature unknown
         """
-        S.partition(sep) -> (head, sep, tail)
+        Partition the string into three parts using the given separator.
         
-        Search for the separator sep in S, and return the part before it,
-        the separator itself, and the part after it.  If the separator is not
-        found, return S and two empty strings.
+        This will search for the separator in the string.  If the separator is found,
+        returns a 3-tuple containing the part before the separator, the separator
+        itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing the original string
+        and two empty strings.
         """
         pass
 
-    def replace(self, old, new, count=None): # real signature unknown; restored from __doc__
+    def replace(self, *args, **kwargs): # real signature unknown
         """
-        S.replace(old, new[, count]) -> str
+        Return a copy with all occurrences of substring old replaced by new.
         
-        Return a copy of S with all occurrences of substring
-        old replaced by new.  If the optional argument count is
-        given, only the first count occurrences are replaced.
+          count
+            Maximum number of occurrences to replace.
+            -1 (the default value) means replace all occurrences.
+        
+        If the optional argument count is given, only the first count occurrences are
+        replaced.
         """
-        return ""
+        pass
 
     def rfind(self, sub, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -4920,71 +5011,81 @@ class str(object):
         """
         S.rindex(sub[, start[, end]]) -> int
         
-        Like S.rfind() but raise ValueError when the substring is not found.
+        Return the highest index in S where substring sub is found,
+        such that sub is contained within S[start:end].  Optional
+        arguments start and end are interpreted as in slice notation.
+        
+        Raises ValueError when the substring is not found.
         """
         return 0
 
-    def rjust(self, width, fillchar=None): # real signature unknown; restored from __doc__
+    def rjust(self, *args, **kwargs): # real signature unknown
         """
-        S.rjust(width[, fillchar]) -> str
+        Return a right-justified string of length width.
         
-        Return S right-justified in a string of length width. Padding is
-        done using the specified fill character (default is a space).
-        """
-        return ""
-
-    def rpartition(self, sep): # real signature unknown; restored from __doc__
-        """
-        S.rpartition(sep) -> (head, sep, tail)
-        
-        Search for the separator sep in S, starting at the end of S, and return
-        the part before it, the separator itself, and the part after it.  If the
-        separator is not found, return two empty strings and S.
+        Padding is done using the specified fill character (default is a space).
         """
         pass
 
-    def rsplit(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
+    def rpartition(self, *args, **kwargs): # real signature unknown
         """
-        S.rsplit(sep=None, maxsplit=-1) -> list of strings
+        Partition the string into three parts using the given separator.
         
-        Return a list of the words in S, using sep as the
-        delimiter string, starting at the end of the string and
-        working to the front.  If maxsplit is given, at most maxsplit
-        splits are done. If sep is not specified, any whitespace string
-        is a separator.
+        This will search for the separator in the string, starting at the end. If
+        the separator is found, returns a 3-tuple containing the part before the
+        separator, the separator itself, and the part after it.
+        
+        If the separator is not found, returns a 3-tuple containing two empty strings
+        and the original string.
         """
-        return []
+        pass
 
-    def rstrip(self, chars=None): # real signature unknown; restored from __doc__
+    def rsplit(self, *args, **kwargs): # real signature unknown
         """
-        S.rstrip([chars]) -> str
+        Return a list of the words in the string, using sep as the delimiter string.
         
-        Return a copy of the string S with trailing whitespace removed.
+          sep
+            The delimiter according which to split the string.
+            None (the default value) means split according to any whitespace,
+            and discard empty strings from the result.
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
+        
+        Splits are done starting at the end of the string and working to the front.
+        """
+        pass
+
+    def rstrip(self, *args, **kwargs): # real signature unknown
+        """
+        Return a copy of the string with trailing whitespace removed.
+        
         If chars is given and not None, remove characters in chars instead.
         """
-        return ""
+        pass
 
-    def split(self, sep=None, maxsplit=-1): # real signature unknown; restored from __doc__
+    def split(self, *args, **kwargs): # real signature unknown
         """
-        S.split(sep=None, maxsplit=-1) -> list of strings
+        Return a list of the words in the string, using sep as the delimiter string.
         
-        Return a list of the words in S, using sep as the
-        delimiter string.  If maxsplit is given, at most maxsplit
-        splits are done. If sep is not specified or is None, any
-        whitespace string is a separator and empty strings are
-        removed from the result.
+          sep
+            The delimiter according which to split the string.
+            None (the default value) means split according to any whitespace,
+            and discard empty strings from the result.
+          maxsplit
+            Maximum number of splits to do.
+            -1 (the default value) means no limit.
         """
-        return []
+        pass
 
-    def splitlines(self, keepends=None): # real signature unknown; restored from __doc__
+    def splitlines(self, *args, **kwargs): # real signature unknown
         """
-        S.splitlines([keepends]) -> list of strings
+        Return a list of the lines in the string, breaking at line boundaries.
         
-        Return a list of the lines in S, breaking at line boundaries.
-        Line breaks are not included in the resulting list unless keepends
-        is given and true.
+        Line breaks are not included in the resulting list unless keepends is given and
+        true.
         """
-        return []
+        pass
 
     def startswith(self, prefix, start=None, end=None): # real signature unknown; restored from __doc__
         """
@@ -4997,63 +5098,52 @@ class str(object):
         """
         return False
 
-    def strip(self, chars=None): # real signature unknown; restored from __doc__
+    def strip(self, *args, **kwargs): # real signature unknown
         """
-        S.strip([chars]) -> str
+        Return a copy of the string with leading and trailing whitespace remove.
         
-        Return a copy of the string S with leading and trailing
-        whitespace removed.
         If chars is given and not None, remove characters in chars instead.
         """
-        return ""
+        pass
 
-    def swapcase(self): # real signature unknown; restored from __doc__
-        """
-        S.swapcase() -> str
-        
-        Return a copy of S with uppercase characters converted to lowercase
-        and vice versa.
-        """
-        return ""
+    def swapcase(self, *args, **kwargs): # real signature unknown
+        """ Convert uppercase characters to lowercase and lowercase characters to uppercase. """
+        pass
 
-    def title(self): # real signature unknown; restored from __doc__
+    def title(self, *args, **kwargs): # real signature unknown
         """
-        S.title() -> str
+        Return a version of the string where each word is titlecased.
         
-        Return a titlecased version of S, i.e. words start with title case
-        characters, all remaining cased characters have lower case.
+        More specifically, words start with uppercased characters and all remaining
+        cased characters have lower case.
         """
-        return ""
+        pass
 
-    def translate(self, table): # real signature unknown; restored from __doc__
+    def translate(self, *args, **kwargs): # real signature unknown
         """
-        S.translate(table) -> str
+        Replace each character in the string using the given translation table.
         
-        Return a copy of the string S in which each character has been mapped
-        through the given translation table. The table must implement
-        lookup/indexing via __getitem__, for instance a dictionary or list,
-        mapping Unicode ordinals to Unicode ordinals, strings, or None. If
-        this operation raises LookupError, the character is left untouched.
-        Characters mapped to None are deleted.
+          table
+            Translation table, which must be a mapping of Unicode ordinals to
+            Unicode ordinals, strings, or None.
+        
+        The table must implement lookup/indexing via __getitem__, for instance a
+        dictionary or list.  If this operation raises LookupError, the character is
+        left untouched.  Characters mapped to None are deleted.
         """
-        return ""
+        pass
 
-    def upper(self): # real signature unknown; restored from __doc__
-        """
-        S.upper() -> str
-        
-        Return a copy of S converted to uppercase.
-        """
-        return ""
+    def upper(self, *args, **kwargs): # real signature unknown
+        """ Return a copy of the string converted to uppercase. """
+        pass
 
-    def zfill(self, width): # real signature unknown; restored from __doc__
+    def zfill(self, *args, **kwargs): # real signature unknown
         """
-        S.zfill(width) -> str
+        Pad a numeric string with zeros on the left, to fill a field of the given width.
         
-        Pad a numeric string S with zeros on the left, to fill a field
-        of the specified width. The string S is never truncated.
+        The string is never truncated.
         """
-        return ""
+        pass
 
     def __add__(self, *args, **kwargs): # real signature unknown
         """ Return self+value. """
@@ -5067,13 +5157,9 @@ class str(object):
         """ Return self==value. """
         pass
 
-    def __format__(self, format_spec): # real signature unknown; restored from __doc__
-        """
-        S.__format__(format_spec) -> str
-        
-        Return a formatted version of S as described by format_spec.
-        """
-        return ""
+    def __format__(self, *args, **kwargs): # real signature unknown
+        """ Return a formatted version of the string as described by format_spec. """
+        pass
 
     def __getattribute__(self, *args, **kwargs): # real signature unknown
         """ Return getattr(self, name). """
@@ -5135,7 +5221,7 @@ class str(object):
         pass
 
     def __mul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value.n """
+        """ Return self*value. """
         pass
 
     @staticmethod # known case of __new__
@@ -5156,11 +5242,11 @@ class str(object):
         pass
 
     def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+        """ Return value*self. """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """ S.__sizeof__() -> size of S in memory, in bytes """
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        """ Return the size of the string in memory, in bytes. """
         pass
 
     def __str__(self, *args, **kwargs): # real signature unknown
@@ -5292,21 +5378,24 @@ class TimeoutError(OSError):
 
 class tuple(object):
     """
-    tuple() -> empty tuple
-    tuple(iterable) -> tuple initialized from iterable's items
+    Built-in immutable sequence.
+    
+    If no argument is given, the constructor returns an empty tuple.
+    If iterable is specified the tuple is initialized from iterable's items.
     
     If the argument is a tuple, the return value is the same object.
     """
-    def count(self, value): # real signature unknown; restored from __doc__
-        """ T.count(value) -> integer -- return number of occurrences of value """
-        return 0
+    def count(self, *args, **kwargs): # real signature unknown
+        """ Return number of occurrences of value. """
+        pass
 
-    def index(self, value, start=None, stop=None): # real signature unknown; restored from __doc__
+    def index(self, *args, **kwargs): # real signature unknown
         """
-        T.index(value, [start, [stop]]) -> integer -- return first index of value.
+        Return first index of value.
+        
         Raises ValueError if the value is not present.
         """
-        return 0
+        pass
 
     def __add__(self, *args, **kwargs): # real signature unknown
         """ Return self+value. """
@@ -5345,8 +5434,10 @@ class tuple(object):
 
     def __init__(self, seq=()): # known special case of tuple.__init__
         """
-        tuple() -> empty tuple
-        tuple(iterable) -> tuple initialized from iterable's items
+        Built-in immutable sequence.
+        
+        If no argument is given, the constructor returns an empty tuple.
+        If iterable is specified the tuple is initialized from iterable's items.
         
         If the argument is a tuple, the return value is the same object.
         # (copied from class doc)
@@ -5370,7 +5461,7 @@ class tuple(object):
         pass
 
     def __mul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value.n """
+        """ Return self*value. """
         pass
 
     @staticmethod # known case of __new__
@@ -5387,7 +5478,7 @@ class tuple(object):
         pass
 
     def __rmul__(self, *args, **kwargs): # real signature unknown
-        """ Return self*value. """
+        """ Return value*self. """
         pass
 
 
@@ -5397,12 +5488,9 @@ class type(object):
     type(object) -> the object's type
     type(name, bases, dict) -> a new type
     """
-    def mro(self): # real signature unknown; restored from __doc__
-        """
-        mro() -> list
-        return a type's method resolution order
-        """
-        return []
+    def mro(self, *args, **kwargs): # real signature unknown
+        """ Return a type's method resolution order. """
+        pass
 
     def __call__(self, *args, **kwargs): # real signature unknown
         """ Call self as a function. """
@@ -5412,12 +5500,9 @@ class type(object):
         """ Implement delattr(self, name). """
         pass
 
-    def __dir__(self): # real signature unknown; restored from __doc__
-        """
-        __dir__() -> list
-        specialized __dir__ implementation for types
-        """
-        return []
+    def __dir__(self, *args, **kwargs): # real signature unknown
+        """ Specialized __dir__ implementation for types. """
+        pass
 
     def __getattribute__(self, *args, **kwargs): # real signature unknown
         """ Return getattr(self, name). """
@@ -5432,12 +5517,9 @@ class type(object):
         """
         pass
 
-    def __instancecheck__(self): # real signature unknown; restored from __doc__
-        """
-        __instancecheck__() -> bool
-        check if an object is an instance
-        """
-        return False
+    def __instancecheck__(self, *args, **kwargs): # real signature unknown
+        """ Check if an object is an instance. """
+        pass
 
     @staticmethod # known case of __new__
     def __new__(*args, **kwargs): # real signature unknown
@@ -5459,23 +5541,17 @@ class type(object):
         """ Implement setattr(self, name, value). """
         pass
 
-    def __sizeof__(self): # real signature unknown; restored from __doc__
-        """
-        __sizeof__() -> int
-        return memory consumption of the type object
-        """
-        return 0
+    def __sizeof__(self, *args, **kwargs): # real signature unknown
+        """ Return memory consumption of the type object. """
+        pass
 
-    def __subclasscheck__(self): # real signature unknown; restored from __doc__
-        """
-        __subclasscheck__() -> bool
-        check if a class is a subclass
-        """
-        return False
+    def __subclasscheck__(self, *args, **kwargs): # real signature unknown
+        """ Check if a class is a subclass. """
+        pass
 
-    def __subclasses__(self): # real signature unknown; restored from __doc__
-        """ __subclasses__() -> list of immediate subclasses """
-        return []
+    def __subclasses__(self, *args, **kwargs): # real signature unknown
+        """ Return a list of immediate subclasses. """
+        pass
 
     __abstractmethods__ = property(lambda self: object(), lambda self, v: None, lambda self: None)  # default
 
@@ -5487,7 +5563,7 @@ class type(object):
     __basicsize__ = 864
     __dictoffset__ = 264
     __dict__ = None # (!) real value is ''
-    __flags__ = 2148291584
+    __flags__ = -2146675712
     __itemsize__ = 40
     __mro__ = (
         None, # (!) forward: type, real value is ''
@@ -5749,7 +5825,7 @@ class __loader__(object):
     def load_module(self, *args, **kwargs): # real signature unknown
         """
         Load the specified module into sys.modules and return it.
-
+        
             This method is deprecated.  Use loader.exec_module instead.
         """
         pass

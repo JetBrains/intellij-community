@@ -251,7 +251,7 @@ object GithubApiRequests {
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
 
-  private fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
+  fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
 
   private fun getQuery(vararg queryParts: String): String {
     val builder = StringBuilder()

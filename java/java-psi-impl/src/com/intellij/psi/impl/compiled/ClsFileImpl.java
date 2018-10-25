@@ -310,7 +310,7 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : ClsCustomNavigationPolicy.EP_NAME.getExtensionList()) {
       try {
-        PsiElement navigationElement =
+        @SuppressWarnings({"deprecation", "ScheduledForRemoval"}) PsiElement navigationElement =
           navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
           navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;
@@ -333,9 +333,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
       synchronized (myMirrorLock) {
         mirrorTreeElement = SoftReference.dereference(myMirrorFileElement);
         if (mirrorTreeElement == null) {
-          AstLoadingFilter.assertTreeLoadingAllowed(getVirtualFile());
-
           VirtualFile file = getVirtualFile();
+          AstLoadingFilter.assertTreeLoadingAllowed(file);
+
           PsiClass[] classes = getClasses();
           String fileName = (classes.length > 0 ? classes[0].getName() : file.getNameWithoutExtension()) + JavaFileType.DOT_DEFAULT_EXTENSION;
 

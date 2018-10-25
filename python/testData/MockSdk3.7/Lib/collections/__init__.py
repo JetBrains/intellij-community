@@ -1,13 +1,23 @@
+'''This module implements specialized container datatypes providing
+alternatives to Python's general purpose built-in containers, dict,
+list, set, and tuple.
+
+* namedtuple   factory function for creating tuple subclasses with named fields
+* deque        list-like container with fast appends and pops on either end
+* ChainMap     dict-like class for creating a single view of multiple mappings
+* Counter      dict subclass for counting hashable objects
+* OrderedDict  dict subclass that remembers the order entries were added
+* defaultdict  dict subclass that calls a factory function to supply missing values
+* UserDict     wrapper around dictionary objects for easier dict subclassing
+* UserList     wrapper around list objects for easier list subclassing
+* UserString   wrapper around string objects for easier string subclassing
+
+'''
+
 __all__ = ['deque', 'defaultdict', 'namedtuple', 'UserDict', 'UserList',
             'UserString', 'Counter', 'OrderedDict', 'ChainMap']
 
-# For backwards compatibility, continue to make the collections ABCs
-# available through the collections module.
-from _collections_abc import *
 import _collections_abc
-__all__ += _collections_abc.__all__
-
-from _collections import deque, defaultdict
 from operator import itemgetter as _itemgetter, eq as _eq
 from keyword import iskeyword as _iskeyword
 import sys as _sys
@@ -16,9 +26,54 @@ from _weakref import proxy as _proxy
 from itertools import repeat as _repeat, chain as _chain, starmap as _starmap
 from reprlib import recursive_repr as _recursive_repr
 
+try:
+    from _collections import deque
+except ImportError:
+    pass
+else:
+    _collections_abc.MutableSequence.register(deque)
+
+try:
+    from _collections import defaultdict
+except ImportError:
+    pass
+
+
+def __getattr__(name):
+    # For backwards compatibility, continue to make the collections ABCs
+    # through Python 3.6 available through the collections module.
+    # Note, no new collections ABCs were added in Python 3.7
+    if name in _collections_abc.__all__:
+        obj = getattr(_collections_abc, name)
+        import warnings
+        warnings.warn("Using or importing the ABCs from 'collections' instead "
+                      "of from 'collections.abc' is deprecated, "
+                      "and in 3.8 it will stop working",
+                      DeprecationWarning, stacklevel=2)
+        globals()[name] = obj
+        return obj
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
+
 ################################################################################
 ### OrderedDict
 ################################################################################
+
+class _OrderedDictKeysView(_collections_abc.KeysView):
+
+    def __reversed__(self):
+        yield from reversed(self._mapping)
+
+class _OrderedDictItemsView(_collections_abc.ItemsView):
+
+    def __reversed__(self):
+        for key in reversed(self._mapping):
+            yield (key, self._mapping[key])
+
+class _OrderedDictValuesView(_collections_abc.ValuesView):
+
+    def __reversed__(self):
+        for key in reversed(self._mapping):
+            yield self._mapping[key]
 
 class _Link(object):
     __slots__ = 'prev', 'next', 'key', '__weakref__'
@@ -38,12 +93,14 @@ class OrderedDict(dict):
     # Individual links are kept alive by the hard reference in self.__map.
     # Those hard references disappear when a key is deleted from an OrderedDict.
 
-    def __init__(self, *args, **kwds):
+    def __init__(*args, **kwds):
         '''Initialize an ordered dictionary.  The signature is the same as
-        regular dictionaries, but keyword arguments are not recommended because
-        their insertion order is arbitrary.
-
+        regular dictionaries.  Keyword argument order is preserved.
         '''
+        if not args:
+            raise TypeError("descriptor '__init__' of 'OrderedDict' object "
+                            "needs an argument")
+        self, *args = args
         if len(args) > 1:
             raise TypeError('expected at most 1 arguments, got %d' % len(args))
         try:
@@ -79,6 +136,8 @@ class OrderedDict(dict):
         link_next = link.next
         link_prev.next = link_next
         link_next.prev = link_prev
+        link.prev = None
+        link.next = None
 
     def __iter__(self):
         'od.__iter__() <==> iter(od)'
@@ -106,9 +165,9 @@ class OrderedDict(dict):
         dict.clear(self)
 
     def popitem(self, last=True):
-        '''od.popitem() -> (k, v), return and remove a (key, value) pair.
-        Pairs are returned in LIFO order if last is true or FIFO order if false.
+        '''Remove and return a (key, value) pair from the dictionary.
 
+        Pairs are returned in LIFO order if last is true or FIFO order if false.
         '''
         if not self:
             raise KeyError('dictionary is empty')
@@ -129,15 +188,14 @@ class OrderedDict(dict):
         return key, value
 
     def move_to_end(self, key, last=True):
-        '''Move an existing element to the end (or beginning if last==False).
+        '''Move an existing element to the end (or beginning if last is false).
 
-        Raises KeyError if the element does not exist.
-        When last=True, acts like a fast version of self[key]=self.pop(key).
-
+        Raise KeyError if the element does not exist.
         '''
         link = self.__map[key]
         link_prev = link.prev
         link_next = link.next
+        soft_link = link_next.prev
         link_prev.next = link_next
         link_next.prev = link_prev
         root = self.__root
@@ -145,12 +203,14 @@ class OrderedDict(dict):
             last = root.prev
             link.prev = last
             link.next = root
-            last.next = root.prev = link
+            root.prev = soft_link
+            last.next = link
         else:
             first = root.next
             link.prev = root
             link.next = first
-            root.next = first.prev = link
+            first.prev = soft_link
+            root.next = link
 
     def __sizeof__(self):
         sizeof = _sys.getsizeof
@@ -161,11 +221,21 @@ class OrderedDict(dict):
         size += sizeof(self.__root) * n         # proxy objects
         return size
 
-    update = __update = MutableMapping.update
-    keys = MutableMapping.keys
-    values = MutableMapping.values
-    items = MutableMapping.items
-    __ne__ = MutableMapping.__ne__
+    update = __update = _collections_abc.MutableMapping.update
+
+    def keys(self):
+        "D.keys() -> a set-like object providing a view on D's keys"
+        return _OrderedDictKeysView(self)
+
+    def items(self):
+        "D.items() -> a set-like object providing a view on D's items"
+        return _OrderedDictItemsView(self)
+
+    def values(self):
+        "D.values() -> an object providing a view on D's values"
+        return _OrderedDictValuesView(self)
+
+    __ne__ = _collections_abc.MutableMapping.__ne__
 
     __marker = object()
 
@@ -184,7 +254,10 @@ class OrderedDict(dict):
         return default
 
     def setdefault(self, key, default=None):
-        'od.setdefault(k[,d]) -> od.get(k,d), also set od[k]=d if k not in od'
+        '''Insert key with a value of default if key is not in the dictionary.
+
+        Return the value for key if key is in the dictionary, else default.
+        '''
         if key in self:
             return self[key]
         self[key] = default
@@ -210,9 +283,7 @@ class OrderedDict(dict):
 
     @classmethod
     def fromkeys(cls, iterable, value=None):
-        '''OD.fromkeys(S[, v]) -> New ordered dictionary with keys from S.
-        If not specified, the value defaults to None.
-
+        '''Create a new ordered dictionary with keys from iterable and values set to value.
         '''
         self = cls()
         for key in iterable:
@@ -229,72 +300,20 @@ class OrderedDict(dict):
         return dict.__eq__(self, other)
 
 
+try:
+    from _collections import OrderedDict
+except ImportError:
+    # Leave the pure Python version in place.
+    pass
+
+
 ################################################################################
 ### namedtuple
 ################################################################################
 
-_class_template = """\
-from builtins import property as _property, tuple as _tuple
-from operator import itemgetter as _itemgetter
-from collections import OrderedDict
+_nt_itemgetters = {}
 
-class {typename}(tuple):
-    '{typename}({arg_list})'
-
-    __slots__ = ()
-
-    _fields = {field_names!r}
-
-    def __new__(_cls, {arg_list}):
-        'Create new instance of {typename}({arg_list})'
-        return _tuple.__new__(_cls, ({arg_list}))
-
-    @classmethod
-    def _make(cls, iterable, new=tuple.__new__, len=len):
-        'Make a new {typename} object from a sequence or iterable'
-        result = new(cls, iterable)
-        if len(result) != {num_fields:d}:
-            raise TypeError('Expected {num_fields:d} arguments, got %d' % len(result))
-        return result
-
-    def _replace(_self, **kwds):
-        'Return a new {typename} object replacing specified fields with new values'
-        result = _self._make(map(kwds.pop, {field_names!r}, _self))
-        if kwds:
-            raise ValueError('Got unexpected field names: %r' % list(kwds))
-        return result
-
-    def __repr__(self):
-        'Return a nicely formatted representation string'
-        return self.__class__.__name__ + '({repr_fmt})' % self
-
-    @property
-    def __dict__(self):
-        'A new OrderedDict mapping field names to their values'
-        return OrderedDict(zip(self._fields, self))
-
-    def _asdict(self):
-        'Return a new OrderedDict which maps field names to their values.'
-        return self.__dict__
-
-    def __getnewargs__(self):
-        'Return self as a plain tuple.  Used by copy and pickle.'
-        return tuple(self)
-
-    def __getstate__(self):
-        'Exclude the OrderedDict from pickling'
-        return None
-
-{field_defs}
-"""
-
-_repr_template = '{name}=%r'
-
-_field_template = '''\
-    {name} = _property(_itemgetter({index:d}), doc='Alias for field number {index:d}')
-'''
-
-def namedtuple(typename, field_names, verbose=False, rename=False):
+def namedtuple(typename, field_names, *, rename=False, defaults=None, module=None):
     """Returns a new subclass of tuple with named fields.
 
     >>> Point = namedtuple('Point', ['x', 'y'])
@@ -306,7 +325,7 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
     >>> x, y = p                        # unpack like a regular tuple
     >>> x, y
     (11, 22)
-    >>> p.x + p.y                       # fields also accessable by name
+    >>> p.x + p.y                       # fields also accessible by name
     33
     >>> d = p._asdict()                 # convert to a dictionary
     >>> d['x']
@@ -323,6 +342,8 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
     if isinstance(field_names, str):
         field_names = field_names.replace(',', ' ').split()
     field_names = list(map(str, field_names))
+    typename = _sys.intern(str(typename))
+
     if rename:
         seen = set()
         for index, name in enumerate(field_names):
@@ -330,53 +351,130 @@ def namedtuple(typename, field_names, verbose=False, rename=False):
                 or _iskeyword(name)
                 or name.startswith('_')
                 or name in seen):
-                field_names[index] = '_%d' % index
+                field_names[index] = f'_{index}'
             seen.add(name)
+
     for name in [typename] + field_names:
+        if type(name) is not str:
+            raise TypeError('Type names and field names must be strings')
         if not name.isidentifier():
             raise ValueError('Type names and field names must be valid '
-                             'identifiers: %r' % name)
+                             f'identifiers: {name!r}')
         if _iskeyword(name):
             raise ValueError('Type names and field names cannot be a '
-                             'keyword: %r' % name)
+                             f'keyword: {name!r}')
+
     seen = set()
     for name in field_names:
         if name.startswith('_') and not rename:
             raise ValueError('Field names cannot start with an underscore: '
-                             '%r' % name)
+                             f'{name!r}')
         if name in seen:
-            raise ValueError('Encountered duplicate field name: %r' % name)
+            raise ValueError(f'Encountered duplicate field name: {name!r}')
         seen.add(name)
 
-    # Fill-in the class template
-    class_definition = _class_template.format(
-        typename = typename,
-        field_names = tuple(field_names),
-        num_fields = len(field_names),
-        arg_list = repr(tuple(field_names)).replace("'", "")[1:-1],
-        repr_fmt = ', '.join(_repr_template.format(name=name)
-                             for name in field_names),
-        field_defs = '\n'.join(_field_template.format(index=index, name=name)
-                               for index, name in enumerate(field_names))
-    )
+    field_defaults = {}
+    if defaults is not None:
+        defaults = tuple(defaults)
+        if len(defaults) > len(field_names):
+            raise TypeError('Got more default values than field names')
+        field_defaults = dict(reversed(list(zip(reversed(field_names),
+                                                reversed(defaults)))))
 
-    # Execute the template string in a temporary namespace and support
-    # tracing utilities by setting a value for frame.f_globals['__name__']
-    namespace = dict(__name__='namedtuple_%s' % typename)
-    exec(class_definition, namespace)
-    result = namespace[typename]
-    result._source = class_definition
-    if verbose:
-        print(result._source)
+    # Variables used in the methods and docstrings
+    field_names = tuple(map(_sys.intern, field_names))
+    num_fields = len(field_names)
+    arg_list = repr(field_names).replace("'", "")[1:-1]
+    repr_fmt = '(' + ', '.join(f'{name}=%r' for name in field_names) + ')'
+    tuple_new = tuple.__new__
+    _len = len
+
+    # Create all the named tuple methods to be added to the class namespace
+
+    s = f'def __new__(_cls, {arg_list}): return _tuple_new(_cls, ({arg_list}))'
+    namespace = {'_tuple_new': tuple_new, '__name__': f'namedtuple_{typename}'}
+    # Note: exec() has the side-effect of interning the field names
+    exec(s, namespace)
+    __new__ = namespace['__new__']
+    __new__.__doc__ = f'Create new instance of {typename}({arg_list})'
+    if defaults is not None:
+        __new__.__defaults__ = defaults
+
+    @classmethod
+    def _make(cls, iterable):
+        result = tuple_new(cls, iterable)
+        if _len(result) != num_fields:
+            raise TypeError(f'Expected {num_fields} arguments, got {len(result)}')
+        return result
+
+    _make.__func__.__doc__ = (f'Make a new {typename} object from a sequence '
+                              'or iterable')
+
+    def _replace(_self, **kwds):
+        result = _self._make(map(kwds.pop, field_names, _self))
+        if kwds:
+            raise ValueError(f'Got unexpected field names: {list(kwds)!r}')
+        return result
+
+    _replace.__doc__ = (f'Return a new {typename} object replacing specified '
+                        'fields with new values')
+
+    def __repr__(self):
+        'Return a nicely formatted representation string'
+        return self.__class__.__name__ + repr_fmt % self
+
+    def _asdict(self):
+        'Return a new OrderedDict which maps field names to their values.'
+        return OrderedDict(zip(self._fields, self))
+
+    def __getnewargs__(self):
+        'Return self as a plain tuple.  Used by copy and pickle.'
+        return tuple(self)
+
+    # Modify function metadata to help with introspection and debugging
+
+    for method in (__new__, _make.__func__, _replace,
+                   __repr__, _asdict, __getnewargs__):
+        method.__qualname__ = f'{typename}.{method.__name__}'
+
+    # Build-up the class namespace dictionary
+    # and use type() to build the result class
+    class_namespace = {
+        '__doc__': f'{typename}({arg_list})',
+        '__slots__': (),
+        '_fields': field_names,
+        '_fields_defaults': field_defaults,
+        '__new__': __new__,
+        '_make': _make,
+        '_replace': _replace,
+        '__repr__': __repr__,
+        '_asdict': _asdict,
+        '__getnewargs__': __getnewargs__,
+    }
+    cache = _nt_itemgetters
+    for index, name in enumerate(field_names):
+        try:
+            itemgetter_object, doc = cache[index]
+        except KeyError:
+            itemgetter_object = _itemgetter(index)
+            doc = f'Alias for field number {index}'
+            cache[index] = itemgetter_object, doc
+        class_namespace[name] = property(itemgetter_object, doc=doc)
+
+    result = type(typename, (tuple,), class_namespace)
 
     # For pickling to work, the __module__ variable needs to be set to the frame
     # where the named tuple is created.  Bypass this step in environments where
     # sys._getframe is not defined (Jython for example) or sys._getframe is not
-    # defined for arguments greater than 0 (IronPython).
-    try:
-        result.__module__ = _sys._getframe(1).f_globals.get('__name__', '__main__')
-    except (AttributeError, ValueError):
-        pass
+    # defined for arguments greater than 0 (IronPython), or where the user has
+    # specified a particular module.
+    if module is None:
+        try:
+            module = _sys._getframe(1).f_globals.get('__name__', '__main__')
+        except (AttributeError, ValueError):
+            pass
+    if module is not None:
+        result.__module__ = module
 
     return result
 
@@ -447,7 +545,7 @@ class Counter(dict):
     #   http://code.activestate.com/recipes/259174/
     #   Knuth, TAOCP Vol. II section 4.6.3
 
-    def __init__(self, iterable=None, **kwds):
+    def __init__(*args, **kwds):
         '''Create a new, empty Counter object.  And if given, count elements
         from an input iterable.  Or, initialize the count from another mapping
         of elements to their counts.
@@ -458,8 +556,14 @@ class Counter(dict):
         >>> c = Counter(a=4, b=2)                   # a new counter from keyword args
 
         '''
-        super().__init__()
-        self.update(iterable, **kwds)
+        if not args:
+            raise TypeError("descriptor '__init__' of 'Counter' object "
+                            "needs an argument")
+        self, *args = args
+        if len(args) > 1:
+            raise TypeError('expected at most 1 arguments, got %d' % len(args))
+        super(Counter, self).__init__()
+        self.update(*args, **kwds)
 
     def __missing__(self, key):
         'The count of elements not in the Counter is zero.'
@@ -510,7 +614,7 @@ class Counter(dict):
         raise NotImplementedError(
             'Counter.fromkeys() is undefined.  Use Counter(iterable) instead.')
 
-    def update(self, iterable=None, **kwds):
+    def update(*args, **kwds):
         '''Like dict.update() but add counts instead of replacing them.
 
         Source can be an iterable, a dictionary, or another Counter instance.
@@ -530,20 +634,27 @@ class Counter(dict):
         # contexts.  Instead, we implement straight-addition.  Both the inputs
         # and outputs are allowed to contain zero and negative counts.
 
+        if not args:
+            raise TypeError("descriptor 'update' of 'Counter' object "
+                            "needs an argument")
+        self, *args = args
+        if len(args) > 1:
+            raise TypeError('expected at most 1 arguments, got %d' % len(args))
+        iterable = args[0] if args else None
         if iterable is not None:
-            if isinstance(iterable, Mapping):
+            if isinstance(iterable, _collections_abc.Mapping):
                 if self:
                     self_get = self.get
                     for elem, count in iterable.items():
                         self[elem] = count + self_get(elem, 0)
                 else:
-                    super().update(iterable) # fast path when counter is empty
+                    super(Counter, self).update(iterable) # fast path when counter is empty
             else:
                 _count_elements(self, iterable)
         if kwds:
             self.update(kwds)
 
-    def subtract(self, iterable=None, **kwds):
+    def subtract(*args, **kwds):
         '''Like dict.update() but subtracts counts instead of replacing them.
         Counts can be reduced below zero.  Both the inputs and outputs are
         allowed to contain zero and negative counts.
@@ -559,9 +670,16 @@ class Counter(dict):
         -1
 
         '''
+        if not args:
+            raise TypeError("descriptor 'subtract' of 'Counter' object "
+                            "needs an argument")
+        self, *args = args
+        if len(args) > 1:
+            raise TypeError('expected at most 1 arguments, got %d' % len(args))
+        iterable = args[0] if args else None
         if iterable is not None:
             self_get = self.get
-            if isinstance(iterable, Mapping):
+            if isinstance(iterable, _collections_abc.Mapping):
                 for elem, count in iterable.items():
                     self[elem] = self_get(elem, 0) - count
             else:
@@ -678,14 +796,22 @@ class Counter(dict):
 
     def __pos__(self):
         'Adds an empty counter, effectively stripping negative and zero counts'
-        return self + Counter()
+        result = Counter()
+        for elem, count in self.items():
+            if count > 0:
+                result[elem] = count
+        return result
 
     def __neg__(self):
         '''Subtracts from an empty counter.  Strips positive and zero counts,
         and flips the sign on negative counts.
 
         '''
-        return Counter() - self
+        result = Counter()
+        for elem, count in self.items():
+            if count < 0:
+                result[elem] = 0 - count
+        return result
 
     def _keep_positive(self):
         '''Internal method to strip elements with a negative or zero count'''
@@ -752,15 +878,16 @@ class Counter(dict):
 
 
 ########################################################################
-###  ChainMap (helper for configparser and string.Template)
+###  ChainMap
 ########################################################################
 
-class ChainMap(MutableMapping):
+class ChainMap(_collections_abc.MutableMapping):
     ''' A ChainMap groups multiple dicts (or other mappings) together
     to create a single, updateable view.
 
     The underlying mappings are stored in a list.  That list is public and can
-    accessed or updated using the *maps* attribute.  There is no other state.
+    be accessed or updated using the *maps* attribute.  There is no other
+    state.
 
     Lookups search the underlying mappings successively until a key is found.
     In contrast, writes, updates, and deletions only operate on the first
@@ -793,7 +920,10 @@ class ChainMap(MutableMapping):
         return len(set().union(*self.maps))     # reuses stored hash values if possible
 
     def __iter__(self):
-        return iter(set().union(*self.maps))
+        d = {}
+        for mapping in reversed(self.maps):
+            d.update(mapping)                   # reuses stored hash values if possible
+        return iter(d)
 
     def __contains__(self, key):
         return any(key in m for m in self.maps)
@@ -818,9 +948,8 @@ class ChainMap(MutableMapping):
     __copy__ = copy
 
     def new_child(self, m=None):                # like Django's Context.push()
-        '''
-        New ChainMap with a new map followed by all previous maps. If no
-        map is provided, an empty dict is used.
+        '''New ChainMap with a new map followed by all previous maps.
+        If no map is provided, an empty dict is used.
         '''
         if m is None:
             m = {}
@@ -863,10 +992,25 @@ class ChainMap(MutableMapping):
 ### UserDict
 ################################################################################
 
-class UserDict(MutableMapping):
+class UserDict(_collections_abc.MutableMapping):
 
     # Start by filling-out the abstract methods
-    def __init__(self, dict=None, **kwargs):
+    def __init__(*args, **kwargs):
+        if not args:
+            raise TypeError("descriptor '__init__' of 'UserDict' object "
+                            "needs an argument")
+        self, *args = args
+        if len(args) > 1:
+            raise TypeError('expected at most 1 arguments, got %d' % len(args))
+        if args:
+            dict = args[0]
+        elif 'dict' in kwargs:
+            dict = kwargs.pop('dict')
+            import warnings
+            warnings.warn("Passing 'dict' as keyword argument is deprecated",
+                          DeprecationWarning, stacklevel=2)
+        else:
+            dict = None
         self.data = {}
         if dict is not None:
             self.update(dict)
@@ -915,7 +1059,7 @@ class UserDict(MutableMapping):
 ### UserList
 ################################################################################
 
-class UserList(MutableSequence):
+class UserList(_collections_abc.MutableSequence):
     """A more or less complete user-defined wrapper around list objects."""
     def __init__(self, initlist=None):
         self.data = []
@@ -931,7 +1075,6 @@ class UserList(MutableSequence):
     def __lt__(self, other): return self.data <  self.__cast(other)
     def __le__(self, other): return self.data <= self.__cast(other)
     def __eq__(self, other): return self.data == self.__cast(other)
-    def __ne__(self, other): return self.data != self.__cast(other)
     def __gt__(self, other): return self.data >  self.__cast(other)
     def __ge__(self, other): return self.data >= self.__cast(other)
     def __cast(self, other):
@@ -989,7 +1132,7 @@ class UserList(MutableSequence):
 ### UserString
 ################################################################################
 
-class UserString(Sequence):
+class UserString(_collections_abc.Sequence):
     def __init__(self, seq):
         if isinstance(seq, str):
             self.data = seq
@@ -1003,15 +1146,13 @@ class UserString(Sequence):
     def __float__(self): return float(self.data)
     def __complex__(self): return complex(self.data)
     def __hash__(self): return hash(self.data)
+    def __getnewargs__(self):
+        return (self.data[:],)
 
     def __eq__(self, string):
         if isinstance(string, UserString):
             return self.data == string.data
         return self.data == string
-    def __ne__(self, string):
-        if isinstance(string, UserString):
-            return self.data != string.data
-        return self.data != string
     def __lt__(self, string):
         if isinstance(string, UserString):
             return self.data < string.data
@@ -1051,9 +1192,13 @@ class UserString(Sequence):
     __rmul__ = __mul__
     def __mod__(self, args):
         return self.__class__(self.data % args)
+    def __rmod__(self, format):
+        return self.__class__(format % args)
 
     # the following methods are defined in alphabetical order:
     def capitalize(self): return self.__class__(self.data.capitalize())
+    def casefold(self):
+        return self.__class__(self.data.casefold())
     def center(self, width, *args):
         return self.__class__(self.data.center(width, *args))
     def count(self, sub, start=0, end=_sys.maxsize):
@@ -1076,15 +1221,19 @@ class UserString(Sequence):
         return self.data.find(sub, start, end)
     def format(self, *args, **kwds):
         return self.data.format(*args, **kwds)
+    def format_map(self, mapping):
+        return self.data.format_map(mapping)
     def index(self, sub, start=0, end=_sys.maxsize):
         return self.data.index(sub, start, end)
     def isalpha(self): return self.data.isalpha()
     def isalnum(self): return self.data.isalnum()
+    def isascii(self): return self.data.isascii()
     def isdecimal(self): return self.data.isdecimal()
     def isdigit(self): return self.data.isdigit()
     def isidentifier(self): return self.data.isidentifier()
     def islower(self): return self.data.islower()
     def isnumeric(self): return self.data.isnumeric()
+    def isprintable(self): return self.data.isprintable()
     def isspace(self): return self.data.isspace()
     def istitle(self): return self.data.istitle()
     def isupper(self): return self.data.isupper()
@@ -1093,6 +1242,7 @@ class UserString(Sequence):
         return self.__class__(self.data.ljust(width, *args))
     def lower(self): return self.__class__(self.data.lower())
     def lstrip(self, chars=None): return self.__class__(self.data.lstrip(chars))
+    maketrans = str.maketrans
     def partition(self, sep):
         return self.data.partition(sep)
     def replace(self, old, new, maxsplit=-1):

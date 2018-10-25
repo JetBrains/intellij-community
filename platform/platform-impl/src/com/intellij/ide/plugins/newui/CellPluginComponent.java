@@ -32,8 +32,8 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public abstract class CellPluginComponent extends JPanel {
-  public static final Color GRAY_COLOR = new JBColor(Gray._120, Gray._135);
-  private static final Color HOVER_COLOR = new JBColor(0xF5F9FF, 0x36393B);
+  public static final Color GRAY_COLOR = JBColor.namedColor("Label.grayForeground", new JBColor(Gray._120, Gray._135));
+  private static final Color HOVER_COLOR = JBColor.namedColor("Plugins.selectionBackground", new JBColor(0xF5F9FF, 0x36393B));
 
   public final IdeaPluginDescriptor myPlugin;
 
