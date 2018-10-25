@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,13 +98,8 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
           ex[0] = e;
         }
       };
-      if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-        runnable.run();
-      }
-      else {
-        //noinspection StatementWithEmptyBody
-        while (!runSmartModeReadActionWithWritePriority(runnable, new SensitiveProgressWrapper(indicator)));
-      }
+      //noinspection StatementWithEmptyBody
+      while (!runSmartModeReadActionWithWritePriority(runnable, new SensitiveProgressWrapper(indicator)));
       if (ex[0] != null) {
         logCantRunException(ex[0]);
       }
@@ -170,12 +164,7 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
       finish();
     };
-    if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
-      runnable.run();
-    }
-    else {
-      DumbService.getInstance(getProject()).runWhenSmart(runnable);
-    }
+    DumbService.getInstance(getProject()).runWhenSmart(runnable);
   }
 
   public void finish() {
