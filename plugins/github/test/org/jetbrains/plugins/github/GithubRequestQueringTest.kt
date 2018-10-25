@@ -13,61 +13,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.github.api.GithubApiRequests;
-import org.jetbrains.plugins.github.api.data.GithubRepo;
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader;
-import org.jetbrains.plugins.github.test.GithubTest;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.Assume.assumeNotNull;
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.test.GithubTest
+import org.junit.Assume.assumeNotNull
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubRequestQueringTest extends GithubTest {
+class GithubRequestQueringTest : GithubTest() {
 
-  @Override
-  protected void beforeTest() {
-    assumeNotNull(myAccount2);
+  override fun beforeTest() {
+    assumeNotNull(myAccount2)
   }
 
-  public void testLinkPagination() throws Throwable {
-    List<GithubRepo> availableRepos = GithubApiPagesLoader
-      .loadAll(myExecutor2, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount2.getServer(), false));
-    List<String> realData = new ArrayList<>();
-    for (GithubRepo info : availableRepos) {
-      realData.add(info.getName());
+  @Throws(Throwable::class)
+  fun testLinkPagination() {
+    val availableRepos = GithubApiPagesLoader
+      .loadAll(myExecutor2, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount2.server, false))
+    val realData = ArrayList<String>()
+    for (info in availableRepos) {
+      realData.add(info.name)
     }
 
-    List<String> expectedData = new ArrayList<>();
-    for (int i = 1; i <= 251; i++) {
-      expectedData.add(String.valueOf(i));
+    val expectedData = ArrayList<String>()
+    for (i in 1..251) {
+      expectedData.add(i.toString())
     }
 
-    assertContainsElements(realData, expectedData);
+    UsefulTestCase.assertContainsElements(realData, expectedData)
   }
 
-  public void testOwnRepos() throws Throwable {
-    List<GithubRepo> result = GithubApiPagesLoader
-      .loadAll(myExecutor, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.getServer(), false));
+  @Throws(Throwable::class)
+  fun testOwnRepos() {
+    val result = GithubApiPagesLoader
+      .loadAll(myExecutor, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.server, false))
 
-    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
-    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
-    assertFalse(ContainerUtil.exists(result, (it) -> it.getName().equals("org_repo")));
+    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
+    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
+    TestCase.assertFalse(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
   }
 
-  public void testAllRepos() throws Throwable {
-    List<GithubRepo> result = GithubApiPagesLoader
-      .loadAll(myExecutor, new EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.getServer()));
+  @Throws(Throwable::class)
+  fun testAllRepos() {
+    val result = GithubApiPagesLoader
+      .loadAll(myExecutor, EmptyProgressIndicator(), GithubApiRequests.CurrentUser.Repos.pages(myAccount.server))
 
-    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
-    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
-    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("org_repo")));
+    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "example" })
+    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "PullRequestTest" })
+    TestCase.assertTrue(ContainerUtil.exists(result) { it -> it.name == "org_repo" })
   }
 }

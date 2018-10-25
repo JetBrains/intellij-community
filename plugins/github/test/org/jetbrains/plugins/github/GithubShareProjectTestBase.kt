@@ -13,82 +13,69 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Clock;
-import com.intellij.util.text.DateFormatUtil;
-import git4idea.GitUtil;
-import git4idea.repo.GitRepository;
-import git4idea.test.TestDialogHandler;
-import org.jetbrains.plugins.github.api.GithubApiRequests;
-import org.jetbrains.plugins.github.test.GithubTest;
-import org.jetbrains.plugins.github.ui.GithubShareDialog;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Random;
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Clock
+import com.intellij.util.text.DateFormatUtil
+import git4idea.GitUtil
+import git4idea.test.TestDialogHandler
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.test.GithubTest
+import org.jetbrains.plugins.github.ui.GithubShareDialog
+import java.io.IOException
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public abstract class GithubShareProjectTestBase extends GithubTest {
-  protected String PROJECT_NAME;
+abstract class GithubShareProjectTestBase : GithubTest() {
+  protected var PROJECT_NAME: String
 
-  @Override
-  protected void beforeTest() {
-    Random rnd = new Random();
-    long time = Clock.getTime();
-    PROJECT_NAME =
-      "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong();
-    registerHttpAuthService();
+  override fun beforeTest() {
+    val rnd = Random()
+    val time = Clock.getTime()
+    PROJECT_NAME = "new_project_from_" + getTestName(false) + "_" + DateFormatUtil.formatDate(time).replace('/', '-') + "_" + rnd.nextLong()
+    registerHttpAuthService()
   }
 
-  @Override
-  protected void afterTest() throws Exception {
-    deleteGithubRepo();
+  @Throws(Exception::class)
+  override fun afterTest() {
+    deleteGithubRepo()
   }
 
-  protected void deleteGithubRepo() throws IOException {
-    myExecutor.execute(GithubApiRequests.Repos.delete(myAccount.getServer(), myUsername, PROJECT_NAME));
+  @Throws(IOException::class)
+  protected fun deleteGithubRepo() {
+    myExecutor.execute(GithubApiRequests.Repos.delete(myAccount.server, myUsername, PROJECT_NAME))
   }
 
-  protected void registerDefaultShareDialogHandler() {
-    dialogManager.registerDialogHandler(GithubShareDialog.class, new TestDialogHandler<GithubShareDialog>() {
-      @Override
-      public int handleDialog(GithubShareDialog dialog) {
-        dialog.testSetRepositoryName(PROJECT_NAME);
-        return DialogWrapper.OK_EXIT_CODE;
-      }
-    });
+  protected fun registerDefaultShareDialogHandler() {
+    dialogManager.registerDialogHandler(GithubShareDialog::class.java, TestDialogHandler { dialog ->
+      dialog.testSetRepositoryName(PROJECT_NAME)
+      DialogWrapper.OK_EXIT_CODE
+    })
   }
 
-  protected void registerDefaultUntrackedFilesDialogHandler() {
-    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
-                                        new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
-                                          @Override
-                                          public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
-                                            // actually we should ask user for name/email ourselves (like in CommitDialog)
-                                            for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
-                                              setGitIdentity(repository.getRoot());
-                                            }
-                                            return DialogWrapper.OK_EXIT_CODE;
+  protected fun registerDefaultUntrackedFilesDialogHandler() {
+    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog::class.java,
+                                        TestDialogHandler {
+                                          // actually we should ask user for name/email ourselves (like in CommitDialog)
+                                          for (repository in GitUtil.getRepositoryManager(myProject).repositories) {
+                                            setGitIdentity(repository.root)
                                           }
-                                        });
+                                          DialogWrapper.OK_EXIT_CODE
+                                        })
   }
 
-  protected void registerSelectNoneUntrackedFilesDialogHandler() {
-    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog.class,
-                                        new TestDialogHandler<GithubShareAction.GithubUntrackedFilesDialog>() {
-                                          @Override
-                                          public int handleDialog(GithubShareAction.GithubUntrackedFilesDialog dialog) {
-                                            // actually we should ask user for name/email ourselves (like in CommitDialog)
-                                            for (GitRepository repository : GitUtil.getRepositoryManager(myProject).getRepositories()) {
-                                              setGitIdentity(repository.getRoot());
-                                            }
-                                            dialog.setSelectedFiles(Collections.emptyList());
-                                            return DialogWrapper.OK_EXIT_CODE;
+  protected fun registerSelectNoneUntrackedFilesDialogHandler() {
+    dialogManager.registerDialogHandler(GithubShareAction.GithubUntrackedFilesDialog::class.java,
+                                        TestDialogHandler { dialog ->
+                                          // actually we should ask user for name/email ourselves (like in CommitDialog)
+                                          for (repository in GitUtil.getRepositoryManager(myProject).repositories) {
+                                            setGitIdentity(repository.root)
                                           }
-                                        });
+                                          dialog.setSelectedFiles(emptyList<VirtualFile>())
+                                          DialogWrapper.OK_EXIT_CODE
+                                        })
   }
 }

@@ -13,48 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.util.Couple;
-import org.junit.Test;
+import org.jetbrains.plugins.github.util.GithubUtil.getGithubLikeFormattedDescriptionMessage
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
-import static org.jetbrains.plugins.github.util.GithubUtil.getGithubLikeFormattedDescriptionMessage;
-import static org.junit.Assert.assertEquals;
-
-public class GithubUtilTest {
+class GithubUtilTest {
   @Test
-  public void splitCommitMessageToSubjectAndDescriptionInGithubStyle() {
-    assertCommitMessage("Subject", "Message", "Subject\n\nMessage");
-    assertCommitMessage("Subject", "Message", "Subject\n\r\n\rMessage");
-    assertCommitMessage("Subject", "", "Subject");
-    assertCommitMessage("Subject", "", "\n\n\nSubject\n\n\n");
-    assertCommitMessage("Subject", "Message\n\n\nText", "\n\n\nSubject\n\n\nMessage\n\n\nText");
-    assertCommitMessage("Subject", "Message\nText", "Subject\nMessage\nText");
-    assertCommitMessage("Subject", "Message Text", "Subject\nMessage Text");
-    assertCommitMessage("Subject", "Multiline\nMessage", "Subject\n\nMultiline\nMessage");
-    assertCommitMessage("", "", null);
+  fun splitCommitMessageToSubjectAndDescriptionInGithubStyle() {
+    assertCommitMessage("Subject", "Message", "Subject\n\nMessage")
+    assertCommitMessage("Subject", "Message", "Subject\n\r\n\rMessage")
+    assertCommitMessage("Subject", "", "Subject")
+    assertCommitMessage("Subject", "", "\n\n\nSubject\n\n\n")
+    assertCommitMessage("Subject", "Message\n\n\nText", "\n\n\nSubject\n\n\nMessage\n\n\nText")
+    assertCommitMessage("Subject", "Message\nText", "Subject\nMessage\nText")
+    assertCommitMessage("Subject", "Message Text", "Subject\nMessage Text")
+    assertCommitMessage("Subject", "Multiline\nMessage", "Subject\n\nMultiline\nMessage")
+    assertCommitMessage("", "", null)
     //No crop for long messages without line separators
     assertCommitMessage(
       "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message",
       "",
-      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message");
+      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message")
     //Yes, we don't crop subject even if subject is long and description is short,
     //we use this behaviour for better consistency and to avoid unelected cases, when you long title is long by design
     //Actually, it's the same behaviour that used in GitHub CLI (https://github.com/github/hub)
     assertCommitMessage(
       "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message",
       "Appendix",
-      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message\nAppendix");
+      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message\nAppendix")
     assertCommitMessage(
       "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message",
       "Appendix",
-      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message\n\nAppendix");
+      "Very long subject string 123 Very long subject string Very long subject string Very long subject string Message\n\nAppendix")
 
   }
 
-  private static void assertCommitMessage(String expectedSubject, String expectedDescription, String fullMessage) {
-    Couple<String> message = getGithubLikeFormattedDescriptionMessage(fullMessage);
-    assertEquals(expectedSubject, message.first);
-    assertEquals(expectedDescription, message.second);
+  private fun assertCommitMessage(expectedSubject: String, expectedDescription: String, fullMessage: String?) {
+    val message = getGithubLikeFormattedDescriptionMessage(fullMessage)
+    assertEquals(expectedSubject, message.first)
+    assertEquals(expectedDescription, message.second)
   }
 }

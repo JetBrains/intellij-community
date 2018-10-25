@@ -13,48 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.notification.NotificationType;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.github.util.GitRemoteUrlCoordinates;
-import org.jetbrains.plugins.github.util.GithubGitHelper;
-
-import java.util.Set;
+import com.intellij.notification.NotificationType
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.github.util.GithubGitHelper
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase {
-  public void testSimple() {
-    registerDefaultCreatePullRequestDialogHandler("master", myUsername);
-    myAuthenticationManager.setDefaultAccount(myProject, myAccount);
+class GithubCreatePullRequestTest : GithubCreatePullRequestTestBase() {
+  fun testSimple() {
+    registerDefaultCreatePullRequestDialogHandler("master", myUsername)
+    myAuthenticationManager.setDefaultAccount(myProject, myAccount)
 
-    Set<GitRemoteUrlCoordinates> coordinatesSet = GithubGitHelper.getInstance().getPossibleRemoteUrlCoordinates(myProject);
-    assertSize(1, coordinatesSet);
-    GitRemoteUrlCoordinates coordinates = coordinatesSet.iterator().next();
+    val coordinatesSet = GithubGitHelper.getInstance().getPossibleRemoteUrlCoordinates(myProject)
+    UsefulTestCase.assertSize(1, coordinatesSet)
+    val coordinates = coordinatesSet.iterator().next()
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository, coordinates.getRemote(), coordinates.getUrl(), myAccount);
+    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository!!, coordinates.remote, coordinates.url, myAccount)
 
-    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    checkRemoteConfigured();
-    checkLastCommitPushed();
+    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null)
+    checkRemoteConfigured()
+    checkLastCommitPushed()
   }
 
-  public void testParent() {
-    registerDefaultCreatePullRequestDialogHandler("file2", myUsername2);
-    git("remote add somename " + GithubGitHelper.getInstance().getRemoteUrl(myAccount2.getServer(), myUsername2, PROJECT_NAME));
-    myAuthenticationManager.setDefaultAccount(myProject, myAccount);
-    myRepository.update();
+  fun testParent() {
+    registerDefaultCreatePullRequestDialogHandler("file2", myUsername2)
+    git("remote add somename " + GithubGitHelper.getInstance().getRemoteUrl(myAccount2.server, myUsername2,
+                                                                            GithubCreatePullRequestTestBase.PROJECT_NAME))
+    myAuthenticationManager.setDefaultAccount(myProject, myAccount)
+    myRepository!!.update()
 
-    Set<GitRemoteUrlCoordinates> coordinatesSet = GithubGitHelper.getInstance().getPossibleRemoteUrlCoordinates(myProject);
-    assertSize(2, coordinatesSet);
-    GitRemoteUrlCoordinates coordinates = ContainerUtil.find(coordinatesSet, c -> !c.getRemote().getName().equals("somename"));
+    val coordinatesSet = GithubGitHelper.getInstance().getPossibleRemoteUrlCoordinates(myProject)
+    UsefulTestCase.assertSize(2, coordinatesSet)
+    val coordinates = ContainerUtil.find(coordinatesSet) { c -> c.remote.name != "somename" }
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository, coordinates.getRemote(), coordinates.getUrl(), myAccount);
+    GithubCreatePullRequestAction.createPullRequest(myProject, myRepository!!, coordinates!!.remote, coordinates.url, myAccount)
 
-    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    checkRemoteConfigured();
-    checkLastCommitPushed();
+    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null)
+    checkRemoteConfigured()
+    checkLastCommitPushed()
   }
 }

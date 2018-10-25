@@ -13,190 +13,185 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.Convertor;
-import junit.framework.TestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.GithubFullPath;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.jetbrains.plugins.github.util.GithubUrlUtil.*;
+import com.intellij.openapi.util.Pair
+import com.intellij.util.containers.Convertor
+import junit.framework.TestCase
+import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.util.GithubUrlUtil.*
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubUrlUtilTest extends TestCase {
-  private static class TestCase<T> {
-    @NotNull final public List<Pair<String, T>> tests = new ArrayList<>();
+class GithubUrlUtilTest : TestCase() {
+  private class TestCase<T> {
+    val tests: MutableList<Pair<String, T>> = ArrayList()
 
-    public void add(@NotNull String in, @Nullable T out) {
-      tests.add(Pair.create(in, out));
+    fun add(`in`: String, out: T?) {
+      tests.add(Pair.create(`in`, out))
     }
 
   }
 
-  private static <T> void runTestCase(@NotNull TestCase<T> tests, @NotNull Convertor<String, T> func) {
-    for (Pair<String, T> test : tests.tests) {
-      assertEquals(test.getFirst(), test.getSecond(), func.convert(test.getFirst()));
+  private fun <T> runTestCase(tests: TestCase<T>, func: Convertor<String, T>) {
+    for (test in tests.tests) {
+      TestCase.assertEquals(test.getFirst(), test.getSecond(), func.convert(test.getFirst()))
     }
   }
 
-  public void testRemoveTrailingSlash() {
-    TestCase<String> tests = new TestCase<>();
+  fun testRemoveTrailingSlash() {
+    val tests = TestCase<String>()
 
-    tests.add("http://github.com/", "http://github.com");
-    tests.add("http://github.com", "http://github.com");
+    tests.add("http://github.com/", "http://github.com")
+    tests.add("http://github.com", "http://github.com")
 
-    tests.add("http://github.com/user/repo/", "http://github.com/user/repo");
-    tests.add("http://github.com/user/repo", "http://github.com/user/repo");
+    tests.add("http://github.com/user/repo/", "http://github.com/user/repo")
+    tests.add("http://github.com/user/repo", "http://github.com/user/repo")
 
-    runTestCase(tests, in -> removeTrailingSlash(in));
+    runTestCase(tests, { `in` -> removeTrailingSlash(`in`) })
   }
 
-  public void testRemoveProtocolPrefix() {
-    TestCase<String> tests = new TestCase<>();
+  fun testRemoveProtocolPrefix() {
+    val tests = TestCase<String>()
 
-    tests.add("github.com/user/repo/", "github.com/user/repo/");
-    tests.add("api.github.com/user/repo/", "api.github.com/user/repo/");
+    tests.add("github.com/user/repo/", "github.com/user/repo/")
+    tests.add("api.github.com/user/repo/", "api.github.com/user/repo/")
 
-    tests.add("http://github.com/user/repo/", "github.com/user/repo/");
-    tests.add("https://github.com/user/repo/", "github.com/user/repo/");
-    tests.add("git://github.com/user/repo/", "github.com/user/repo/");
-    tests.add("git@github.com:user/repo/", "github.com/user/repo/");
+    tests.add("http://github.com/user/repo/", "github.com/user/repo/")
+    tests.add("https://github.com/user/repo/", "github.com/user/repo/")
+    tests.add("git://github.com/user/repo/", "github.com/user/repo/")
+    tests.add("git@github.com:user/repo/", "github.com/user/repo/")
 
-    tests.add("git@github.com:username/repo/", "github.com/username/repo/");
-    tests.add("https://username:password@github.com/user/repo/", "github.com/user/repo/");
-    tests.add("https://username@github.com/user/repo/", "github.com/user/repo/");
-    tests.add("https://github.com:2233/user/repo/", "github.com:2233/user/repo/");
+    tests.add("git@github.com:username/repo/", "github.com/username/repo/")
+    tests.add("https://username:password@github.com/user/repo/", "github.com/user/repo/")
+    tests.add("https://username@github.com/user/repo/", "github.com/user/repo/")
+    tests.add("https://github.com:2233/user/repo/", "github.com:2233/user/repo/")
 
-    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com/user/repo/");
-    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com/user/repo/");
+    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com/user/repo/")
+    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com/user/repo/")
 
-    runTestCase(tests, in -> removeProtocolPrefix(in));
+    runTestCase(tests, { `in` -> removeProtocolPrefix(`in`) })
   }
 
-  public void testRemovePort() {
-    TestCase<String> tests = new TestCase<>();
+  fun testRemovePort() {
+    val tests = TestCase<String>()
 
-    tests.add("github.com/user/repo/", "github.com/user/repo/");
-    tests.add("github.com", "github.com");
-    tests.add("github.com/", "github.com/");
+    tests.add("github.com/user/repo/", "github.com/user/repo/")
+    tests.add("github.com", "github.com")
+    tests.add("github.com/", "github.com/")
 
-    tests.add("github.com:80/user/repo/", "github.com/user/repo/");
-    tests.add("github.com:80/user/repo", "github.com/user/repo");
-    tests.add("github.com:80/user", "github.com/user");
-    tests.add("github.com:80", "github.com");
+    tests.add("github.com:80/user/repo/", "github.com/user/repo/")
+    tests.add("github.com:80/user/repo", "github.com/user/repo")
+    tests.add("github.com:80/user", "github.com/user")
+    tests.add("github.com:80", "github.com")
 
-    runTestCase(tests, in -> removePort(in));
+    runTestCase(tests, { `in` -> removePort(`in`) })
   }
 
-  public void testGetUserAndRepositoryFromRemoteUrl() {
-    TestCase<GithubFullPath> tests = new TestCase<>();
+  fun testGetUserAndRepositoryFromRemoteUrl() {
+    val tests = TestCase<GithubFullPath>()
 
-    tests.add("http://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
-    tests.add("https://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
-    tests.add("git://github.com/username/reponame/", new GithubFullPath("username", "reponame"));
-    tests.add("git@github.com:username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("http://github.com/username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("git://github.com/username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("git@github.com:username/reponame/", GithubFullPath("username", "reponame"))
 
-    tests.add("https://github.com/username/reponame", new GithubFullPath("username", "reponame"));
-    tests.add("https://github.com/username/reponame.git", new GithubFullPath("username", "reponame"));
-    tests.add("https://github.com/username/reponame.git/", new GithubFullPath("username", "reponame"));
-    tests.add("git@github.com:username/reponame.git/", new GithubFullPath("username", "reponame"));
+    tests.add("https://github.com/username/reponame", GithubFullPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame.git", GithubFullPath("username", "reponame"))
+    tests.add("https://github.com/username/reponame.git/", GithubFullPath("username", "reponame"))
+    tests.add("git@github.com:username/reponame.git/", GithubFullPath("username", "reponame"))
 
-    tests.add("http://login:passsword@github.com/username/reponame/", new GithubFullPath("username", "reponame"));
+    tests.add("http://login:passsword@github.com/username/reponame/", GithubFullPath("username", "reponame"))
 
-    tests.add("HTTPS://GitHub.com/username/reponame/", new GithubFullPath("username", "reponame"));
-    tests.add("https://github.com/UserName/RepoName/", new GithubFullPath("UserName", "RepoName"));
+    tests.add("HTTPS://GitHub.com/username/reponame/", GithubFullPath("username", "reponame"))
+    tests.add("https://github.com/UserName/RepoName/", GithubFullPath("UserName", "RepoName"))
 
-    tests.add("https://github.com/RepoName/", null);
-    tests.add("git@github.com:user/", null);
-    tests.add("https://user:pass@github.com/", null);
+    tests.add("https://github.com/RepoName/", null)
+    tests.add("git@github.com:user/", null)
+    tests.add("https://user:pass@github.com/", null)
 
-    runTestCase(tests, in -> getUserAndRepositoryFromRemoteUrl(in));
+    runTestCase(tests, { `in` -> getUserAndRepositoryFromRemoteUrl(`in`) })
   }
 
-  public void testMakeGithubRepoFromRemoteUrl() {
-    TestCase<String> tests = new TestCase<>();
+  fun testMakeGithubRepoFromRemoteUrl() {
+    val tests = TestCase<String>()
 
-    tests.add("http://github.com/username/reponame/", "https://github.com/username/reponame");
-    tests.add("https://github.com/username/reponame/", "https://github.com/username/reponame");
-    tests.add("git://github.com/username/reponame/", "https://github.com/username/reponame");
-    tests.add("git@github.com:username/reponame/", "https://github.com/username/reponame");
+    tests.add("http://github.com/username/reponame/", "https://github.com/username/reponame")
+    tests.add("https://github.com/username/reponame/", "https://github.com/username/reponame")
+    tests.add("git://github.com/username/reponame/", "https://github.com/username/reponame")
+    tests.add("git@github.com:username/reponame/", "https://github.com/username/reponame")
 
-    tests.add("https://github.com/username/reponame", "https://github.com/username/reponame");
-    tests.add("https://github.com/username/reponame.git", "https://github.com/username/reponame");
-    tests.add("https://github.com/username/reponame.git/", "https://github.com/username/reponame");
-    tests.add("git@github.com:username/reponame.git/", "https://github.com/username/reponame");
+    tests.add("https://github.com/username/reponame", "https://github.com/username/reponame")
+    tests.add("https://github.com/username/reponame.git", "https://github.com/username/reponame")
+    tests.add("https://github.com/username/reponame.git/", "https://github.com/username/reponame")
+    tests.add("git@github.com:username/reponame.git/", "https://github.com/username/reponame")
 
-    tests.add("git@github.com:username/reponame/", "https://github.com/username/reponame");
-    tests.add("http://login:passsword@github.com/username/reponame/", "https://github.com/username/reponame");
+    tests.add("git@github.com:username/reponame/", "https://github.com/username/reponame")
+    tests.add("http://login:passsword@github.com/username/reponame/", "https://github.com/username/reponame")
 
-    tests.add("HTTPS://GitHub.com/username/reponame/", "https://github.com/username/reponame");
-    tests.add("https://github.com/UserName/RepoName/", "https://github.com/UserName/RepoName");
+    tests.add("HTTPS://GitHub.com/username/reponame/", "https://github.com/username/reponame")
+    tests.add("https://github.com/UserName/RepoName/", "https://github.com/UserName/RepoName")
 
-    tests.add("https://github.com/RepoName/", null);
-    tests.add("git@github.com:user/", null);
-    tests.add("https://user:pass@github.com/", null);
+    tests.add("https://github.com/RepoName/", null)
+    tests.add("git@github.com:user/", null)
+    tests.add("https://user:pass@github.com/", null)
 
-    runTestCase(tests, in -> makeGithubRepoUrlFromRemoteUrl(in, "https://github.com"));
+    runTestCase(tests, { `in` -> makeGithubRepoUrlFromRemoteUrl(`in`, "https://github.com") })
   }
 
-  public void testGetHostFromUrl() {
-    TestCase<String> tests = new TestCase<>();
+  fun testGetHostFromUrl() {
+    val tests = TestCase<String>()
 
-    tests.add("github.com", "github.com");
-    tests.add("api.github.com", "api.github.com");
-    tests.add("github.com/", "github.com");
-    tests.add("api.github.com/", "api.github.com");
+    tests.add("github.com", "github.com")
+    tests.add("api.github.com", "api.github.com")
+    tests.add("github.com/", "github.com")
+    tests.add("api.github.com/", "api.github.com")
 
-    tests.add("github.com/user/repo/", "github.com");
-    tests.add("api.github.com/user/repo/", "api.github.com");
+    tests.add("github.com/user/repo/", "github.com")
+    tests.add("api.github.com/user/repo/", "api.github.com")
 
-    tests.add("http://github.com/user/repo/", "github.com");
-    tests.add("https://github.com/user/repo/", "github.com");
-    tests.add("git://github.com/user/repo/", "github.com");
-    tests.add("git@github.com:user/repo/", "github.com");
+    tests.add("http://github.com/user/repo/", "github.com")
+    tests.add("https://github.com/user/repo/", "github.com")
+    tests.add("git://github.com/user/repo/", "github.com")
+    tests.add("git@github.com:user/repo/", "github.com")
 
-    tests.add("git@github.com:username/repo/", "github.com");
-    tests.add("https://username:password@github.com/user/repo/", "github.com");
-    tests.add("https://username@github.com/user/repo/", "github.com");
-    tests.add("https://github.com:2233/user/repo/", "github.com");
+    tests.add("git@github.com:username/repo/", "github.com")
+    tests.add("https://username:password@github.com/user/repo/", "github.com")
+    tests.add("https://username@github.com/user/repo/", "github.com")
+    tests.add("https://github.com:2233/user/repo/", "github.com")
 
-    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com");
-    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com");
+    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com")
+    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com")
 
-    runTestCase(tests, in -> getHostFromUrl(in));
+    runTestCase(tests, { `in` -> getHostFromUrl(`in`) })
   }
 
-  public void testGetApiUrl() {
-    TestCase<String> tests = new TestCase<>();
+  fun testGetApiUrl() {
+    val tests = TestCase<String>()
 
-    tests.add("github.com", "https://api.github.com");
-    tests.add("https://github.com/", "https://api.github.com");
+    tests.add("github.com", "https://api.github.com")
+    tests.add("https://github.com/", "https://api.github.com")
 
-    tests.add("https://my.site.com/", "https://my.site.com/api/v3");
-    tests.add("https://api.site.com/", "https://api.site.com/api/v3");
-    tests.add("https://url.github.com/", "https://url.github.com/api/v3");
+    tests.add("https://my.site.com/", "https://my.site.com/api/v3")
+    tests.add("https://api.site.com/", "https://api.site.com/api/v3")
+    tests.add("https://url.github.com/", "https://url.github.com/api/v3")
 
-    tests.add("my.site.com/", "https://my.site.com/api/v3");
-    tests.add("api.site.com/", "https://api.site.com/api/v3");
-    tests.add("url.github.com/", "https://url.github.com/api/v3");
+    tests.add("my.site.com/", "https://my.site.com/api/v3")
+    tests.add("api.site.com/", "https://api.site.com/api/v3")
+    tests.add("url.github.com/", "https://url.github.com/api/v3")
 
-    tests.add("http://my.site.com/", "http://my.site.com/api/v3");
-    tests.add("http://api.site.com/", "http://api.site.com/api/v3");
-    tests.add("http://url.github.com/", "http://url.github.com/api/v3");
+    tests.add("http://my.site.com/", "http://my.site.com/api/v3")
+    tests.add("http://api.site.com/", "http://api.site.com/api/v3")
+    tests.add("http://url.github.com/", "http://url.github.com/api/v3")
 
-    tests.add("HTTP://GITHUB.com", "http://api.github.com");
-    tests.add("HttP://GitHub.com/", "http://api.github.com");
+    tests.add("HTTP://GITHUB.com", "http://api.github.com")
+    tests.add("HttP://GitHub.com/", "http://api.github.com")
 
-    tests.add("https://ghe.com/suffix", "https://ghe.com/suffix/api/v3");
-    tests.add("https://ghe.com/suFFix", "https://ghe.com/suFFix/api/v3");
+    tests.add("https://ghe.com/suffix", "https://ghe.com/suffix/api/v3")
+    tests.add("https://ghe.com/suFFix", "https://ghe.com/suFFix/api/v3")
 
-    runTestCase(tests, in -> getApiUrl(in));
+    runTestCase(tests, { `in` -> getApiUrl(`in`) })
   }
 }

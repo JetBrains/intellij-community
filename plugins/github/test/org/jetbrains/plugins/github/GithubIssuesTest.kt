@@ -13,112 +13,120 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.plugins.github.api.data.GithubIssue;
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue;
-import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
-import org.jetbrains.plugins.github.test.GithubTest;
-
-import java.util.Arrays;
-import java.util.List;
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.util.Comparing
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper
+import org.jetbrains.plugins.github.test.GithubTest
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubIssuesTest extends GithubTest {
-  private static final String REPO_NAME = "IssuesTest";
+class GithubIssuesTest : GithubTest() {
 
-  public void testAssigneeIssues1() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, false, 100, myUsername);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues1() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, false, 100, myUsername)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(6L, 7L, 8L);
+    val expected = Arrays.asList(6L, 7L, 8L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testAssigneeIssues2() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, false, 100, myUsername2);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues2() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, false, 100, myUsername2)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(1L, 2L);
+    val expected = Arrays.asList(1L, 2L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testAssigneeIssues3() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, false, 100);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues3() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, false, 100)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 13L, 14L);
+    val expected = Arrays.asList(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 13L, 14L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testAssigneeIssues4() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, true, 100, myUsername);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues4() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, true, 100, myUsername)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(3L, 6L, 7L, 8L);
+    val expected = Arrays.asList(3L, 6L, 7L, 8L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testAssigneeIssues5() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, true, 100, myUsername2);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues5() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, true, 100, myUsername2)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(1L, 2L);
+    val expected = Arrays.asList(1L, 2L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testAssigneeIssues6() throws Exception {
-    List<GithubIssue> result = GithubIssuesLoadingHelper.load(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                              myUsername2, REPO_NAME, true, 100);
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testAssigneeIssues6() {
+    val result = GithubIssuesLoadingHelper.load(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                myUsername2, REPO_NAME, true, 100)
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L);
+    val expected = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testQueriedIssues1() throws Exception {
-    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                        myUsername2, REPO_NAME, true, null, "abracadabra");
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testQueriedIssues1() {
+    val result = GithubIssuesLoadingHelper.search(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                  myUsername2, REPO_NAME, true, null, "abracadabra")
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(10L, 12L);
+    val expected = Arrays.asList(10L, 12L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testQueriedIssues2() throws Exception {
-    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                        myUsername2, REPO_NAME, true, null, "commentary");
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testQueriedIssues2() {
+    val result = GithubIssuesLoadingHelper.search(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                  myUsername2, REPO_NAME, true, null, "commentary")
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(11L);
+    val expected = Arrays.asList(11L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
   }
 
-  public void testQueriedIssues3() throws Exception {
-    List<GithubSearchedIssue> result = GithubIssuesLoadingHelper.search(myExecutor, new EmptyProgressIndicator(), myAccount.getServer(),
-                                                                        myUsername2, REPO_NAME, false, null, "abracadabra");
-    List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
+  @Throws(Exception::class)
+  fun testQueriedIssues3() {
+    val result = GithubIssuesLoadingHelper.search(myExecutor, EmptyProgressIndicator(), myAccount.server,
+                                                  myUsername2, REPO_NAME, false, null, "abracadabra")
+    val issues = ContainerUtil.map(result) { githubIssue -> githubIssue.number }
 
-    List<Long> expected = Arrays.asList(10L);
+    val expected = Arrays.asList(10L)
 
-    assertTrue(Comparing.haveEqualElements(issues, expected));
+    TestCase.assertTrue(Comparing.haveEqualElements(issues, expected))
+  }
+
+  companion object {
+    private val REPO_NAME = "IssuesTest"
   }
 }

@@ -13,92 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.progress.DumbProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
-
-import java.util.Collections;
-import java.util.List;
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.progress.DumbProgressIndicator
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreateGistTest extends GithubCreateGistTestBase {
-  private final ProgressIndicator myIndicator = DumbProgressIndicator.INSTANCE;
+class GithubCreateGistTest : GithubCreateGistTestBase() {
+  private val myIndicator = DumbProgressIndicator.INSTANCE
 
-  public void testSimple() {
-    List<FileContent> expected = createContent();
+  fun testSimple() {
+    val expected = GithubCreateGistTestBase.createContent()
 
-    String url =
-      GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.getServer(), expected, true, GIST_DESCRIPTION, null);
-    assertNotNull(url);
-    GIST_ID = url.substring(url.lastIndexOf('/') + 1);
+    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION,
+                                                null)
+    TestCase.assertNotNull(url)
+    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
 
-    checkGistExists();
-    checkGistNotAnonymous();
-    checkGistSecret();
-    checkGistDescription(GIST_DESCRIPTION);
-    checkGistContent(expected);
+    checkGistExists()
+    checkGistNotAnonymous()
+    checkGistSecret()
+    checkGistDescription(GIST_DESCRIPTION)
+    checkGistContent(expected)
   }
 
-  public void testUnusedFilenameField() {
-    List<FileContent> expected = createContent();
+  fun testUnusedFilenameField() {
+    val expected = GithubCreateGistTestBase.createContent()
 
-    String url =
-      GithubCreateGistAction
-        .createGist(myProject, myExecutor, myIndicator, myAccount.getServer(), expected, true, GIST_DESCRIPTION, "filename");
-    assertNotNull(url);
-    GIST_ID = url.substring(url.lastIndexOf('/') + 1);
+    val url = GithubCreateGistAction
+      .createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION, "filename")
+    TestCase.assertNotNull(url)
+    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
 
-    checkGistExists();
-    checkGistNotAnonymous();
-    checkGistSecret();
-    checkGistDescription(GIST_DESCRIPTION);
-    checkGistContent(expected);
+    checkGistExists()
+    checkGistNotAnonymous()
+    checkGistSecret()
+    checkGistDescription(GIST_DESCRIPTION)
+    checkGistContent(expected)
   }
 
-  public void testUsedFilenameField() {
-    List<FileContent> content = Collections.singletonList(new FileContent("file.txt", "file.txt content"));
-    List<FileContent> expected = Collections.singletonList(new FileContent("filename", "file.txt content"));
+  fun testUsedFilenameField() {
+    val content = listOf(FileContent("file.txt", "file.txt content"))
+    val expected = listOf(FileContent("filename", "file.txt content"))
 
-    String url =
-      GithubCreateGistAction
-        .createGist(myProject, myExecutor, myIndicator, myAccount.getServer(), content, true, GIST_DESCRIPTION, "filename");
-    assertNotNull(url);
-    GIST_ID = url.substring(url.lastIndexOf('/') + 1);
+    val url = GithubCreateGistAction
+      .createGist(myProject, myExecutor, myIndicator, myAccount.server, content, true, GIST_DESCRIPTION, "filename")
+    TestCase.assertNotNull(url)
+    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
 
-    checkGistExists();
-    checkGistNotAnonymous();
-    checkGistSecret();
-    checkGistDescription(GIST_DESCRIPTION);
-    checkGistContent(expected);
+    checkGistExists()
+    checkGistNotAnonymous()
+    checkGistSecret()
+    checkGistDescription(GIST_DESCRIPTION)
+    checkGistContent(expected)
   }
 
-  public void testPublic() {
-    List<FileContent> expected = createContent();
+  fun testPublic() {
+    val expected = GithubCreateGistTestBase.createContent()
 
-    String url =
-      GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.getServer(), expected, false, GIST_DESCRIPTION, null);
-    assertNotNull(url);
-    GIST_ID = url.substring(url.lastIndexOf('/') + 1);
+    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, false, GIST_DESCRIPTION,
+                                                null)
+    TestCase.assertNotNull(url)
+    GIST_ID = url!!.substring(url.lastIndexOf('/') + 1)
 
-    checkGistExists();
-    checkGistNotAnonymous();
-    checkGistPublic();
-    checkGistDescription(GIST_DESCRIPTION);
-    checkGistContent(expected);
+    checkGistExists()
+    checkGistNotAnonymous()
+    checkGistPublic()
+    checkGistDescription(GIST_DESCRIPTION)
+    checkGistContent(expected)
   }
 
-  public void testEmpty() {
-    List<FileContent> expected = Collections.emptyList();
+  fun testEmpty() {
+    val expected = emptyList<FileContent>()
 
-    String url =
-      GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.getServer(), expected, true, GIST_DESCRIPTION, null);
-    assertNull("Gist was created", url);
+    val url = GithubCreateGistAction.createGist(myProject, myExecutor, myIndicator, myAccount.server, expected, true, GIST_DESCRIPTION,
+                                                null)
+    TestCase.assertNull("Gist was created", url)
 
-    checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist");
+    checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist")
   }
 }

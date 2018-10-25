@@ -13,112 +13,112 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.api.GithubApiRequests;
-import org.jetbrains.plugins.github.api.data.GithubGist;
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
-import org.jetbrains.plugins.github.test.GithubTest;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.openapi.util.Clock
+import com.intellij.openapi.util.Comparing
+import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GithubGist
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
+import org.jetbrains.plugins.github.test.GithubTest
+import java.io.IOException
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public abstract class GithubCreateGistTestBase extends GithubTest {
-  protected String GIST_ID = null;
-  protected GithubGist GIST = null;
-  protected String GIST_DESCRIPTION;
+abstract class GithubCreateGistTestBase : GithubTest() {
+  protected var GIST_ID: String? = null
+  protected var GIST: GithubGist? = null
+  protected var GIST_DESCRIPTION: String
 
-  @Override
-  protected void beforeTest() {
-    long time = Clock.getTime();
-    GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time);
+  protected val gist: GithubGist
+    get() {
+      TestCase.assertNotNull(GIST_ID)
+
+      if (GIST == null) {
+        try {
+          GIST = myExecutor.execute<GithubGist>(GithubApiRequests.Gists.get(myAccount.server, GIST_ID!!))
+        }
+        catch (e: IOException) {
+          System.err.println(e.message)
+        }
+
+      }
+
+      TestCase.assertNotNull("Gist does not exist", GIST)
+      return GIST
+    }
+
+  override fun beforeTest() {
+    val time = Clock.getTime()
+    GIST_DESCRIPTION = getTestName(false) + "_" + DateFormatUtil.formatDate(time)
   }
 
-  @Override
-  protected void afterTest() throws Exception {
-    deleteGist();
+  @Throws(Exception::class)
+  override fun afterTest() {
+    deleteGist()
   }
 
-  protected void deleteGist() throws IOException {
+  @Throws(IOException::class)
+  protected fun deleteGist() {
     if (GIST_ID != null) {
-      myExecutor.execute(GithubApiRequests.Gists.delete(myAccount.getServer(), GIST_ID));
-      GIST = null;
-      GIST_ID = null;
+      myExecutor.execute(GithubApiRequests.Gists.delete(myAccount.server, GIST_ID!!))
+      GIST = null
+      GIST_ID = null
     }
   }
 
-  @NotNull
-  protected static List<FileContent> createContent() {
-    List<FileContent> content = new ArrayList<>();
-
-    content.add(new FileContent("file1", "file1 content"));
-    content.add(new FileContent("file2", "file2 content"));
-    content.add(new FileContent("dir_file3", "file3 content"));
-
-    return content;
+  protected fun checkGistExists() {
+    gist
   }
 
-  @NotNull
-  protected GithubGist getGist() {
-    assertNotNull(GIST_ID);
+  protected fun checkGistPublic() {
+    val result = gist
 
-    if (GIST == null) {
-      try {
-        GIST = myExecutor.execute(GithubApiRequests.Gists.get(myAccount.getServer(), GIST_ID));
-      }
-      catch (IOException e) {
-        System.err.println(e.getMessage());
-      }
+    TestCase.assertTrue("Gist is not public", result.isPublic)
+  }
+
+  protected fun checkGistSecret() {
+    val result = gist
+
+    TestCase.assertFalse("Gist is not private", result.isPublic)
+  }
+
+  protected fun checkGistNotAnonymous() {
+    val result = gist
+
+    TestCase.assertFalse("Gist is not anonymous", result.user == null)
+  }
+
+  protected fun checkGistDescription(expected: String) {
+    val result = gist
+
+    TestCase.assertEquals("Gist content differs from sample", expected, result.description)
+  }
+
+  protected fun checkGistContent(expected: List<FileContent>) {
+    val result = gist
+
+    val files = ArrayList<FileContent>()
+    for (file in result.files) {
+      files.add(FileContent(file.filename, file.content))
     }
 
-    assertNotNull("Gist does not exist", GIST);
-    return GIST;
+    TestCase.assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected))
   }
 
-  protected void checkGistExists() {
-    getGist();
-  }
+  companion object {
 
-  protected void checkGistPublic() {
-    GithubGist result = getGist();
+    protected fun createContent(): List<FileContent> {
+      val content = ArrayList<FileContent>()
 
-    assertTrue("Gist is not public", result.isPublic());
-  }
+      content.add(FileContent("file1", "file1 content"))
+      content.add(FileContent("file2", "file2 content"))
+      content.add(FileContent("dir_file3", "file3 content"))
 
-  protected void checkGistSecret() {
-    GithubGist result = getGist();
-
-    assertFalse("Gist is not private", result.isPublic());
-  }
-
-  protected void checkGistNotAnonymous() {
-    GithubGist result = getGist();
-
-    assertFalse("Gist is not anonymous", result.getUser() == null);
-  }
-
-  protected void checkGistDescription(@NotNull String expected) {
-    GithubGist result = getGist();
-
-    assertEquals("Gist content differs from sample", expected, result.getDescription());
-  }
-
-  protected void checkGistContent(@NotNull List<FileContent> expected) {
-    GithubGist result = getGist();
-
-    List<FileContent> files = new ArrayList<>();
-    for (GithubGist.GistFile file : result.getFiles()) {
-      files.add(new FileContent(file.getFilename(), file.getContent()));
+      return content
     }
-
-    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected));
   }
 }

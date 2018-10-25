@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
-import org.jetbrains.plugins.github.test.GithubTest;
-
-import java.util.List;
+import com.intellij.openapi.util.Comparing
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
+import org.jetbrains.plugins.github.test.GithubTest
 
 /**
  * @author Aleksey Pivovarov
  */
-public abstract class GithubCreateGistContentTestBase extends GithubTest {
+abstract class GithubCreateGistContentTestBase : GithubTest() {
 
-  @Override
-  protected void beforeTest() {
-    createProjectFiles();
+  override fun beforeTest() {
+    createProjectFiles()
   }
 
-  protected void checkEquals(@NotNull List<FileContent> expected, @NotNull List<FileContent> actual) {
-    assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual));
+  protected fun checkEquals(expected: List<FileContent>, actual: List<FileContent>) {
+    TestCase.assertTrue("Gist content differs from sample", Comparing.haveEqualElements(expected, actual))
   }
 }

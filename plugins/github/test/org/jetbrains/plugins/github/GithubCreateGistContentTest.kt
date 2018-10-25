@@ -13,142 +13,138 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.github;
+package org.jetbrains.plugins.github
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
+import java.util.*
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase {
-  protected Editor myEditor;
+class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
+  protected var myEditor: Editor? = null
 
-  @Override
-  protected void afterTest() {
+  override fun afterTest() {
     if (myEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-      myEditor = null;
+      EditorFactory.getInstance().releaseEditor(myEditor!!)
+      myEditor = null
     }
   }
 
-  public void testCreateFromFile() {
-    List<FileContent> expected = new ArrayList<>();
-    expected.add(new FileContent("file.txt", "file.txt content"));
+  fun testCreateFromFile() {
+    val expected = ArrayList<FileContent>()
+    expected.add(FileContent("file.txt", "file.txt content"))
 
-    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
-    assertNotNull(file);
+    val file = projectRoot.findFileByRelativePath("file.txt")
+    TestCase.assertNotNull(file)
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromDirectory() {
-    List<FileContent> expected = new ArrayList<>();
-    expected.add(new FileContent("folder_file1", "file1 content"));
-    expected.add(new FileContent("folder_file2", "file2 content"));
-    expected.add(new FileContent("folder_dir_file3", "file3 content"));
+  fun testCreateFromDirectory() {
+    val expected = ArrayList<FileContent>()
+    expected.add(FileContent("folder_file1", "file1 content"))
+    expected.add(FileContent("folder_file2", "file2 content"))
+    expected.add(FileContent("folder_dir_file3", "file3 content"))
 
-    VirtualFile file = projectRoot.findFileByRelativePath("folder");
-    assertNotNull(file);
+    val file = projectRoot.findFileByRelativePath("folder")
+    TestCase.assertNotNull(file)
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromEmptyDirectory() {
-    List<FileContent> expected = new ArrayList<>();
+  fun testCreateFromEmptyDirectory() {
+    val expected = ArrayList<FileContent>()
 
-    VirtualFile file = projectRoot.findFileByRelativePath("folder/empty_folder");
-    assertNotNull(file);
+    val file = projectRoot.findFileByRelativePath("folder/empty_folder")
+    TestCase.assertNotNull(file)
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromEmptyFile() {
-    List<FileContent> expected = new ArrayList<>();
+  fun testCreateFromEmptyFile() {
+    val expected = ArrayList<FileContent>()
 
-    VirtualFile file = projectRoot.findFileByRelativePath("folder/empty_file");
-    assertNotNull(file);
+    val file = projectRoot.findFileByRelativePath("folder/empty_file")
+    TestCase.assertNotNull(file)
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, file, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromFiles() {
-    List<FileContent> expected = new ArrayList<>();
-    expected.add(new FileContent("file.txt", "file.txt content"));
-    expected.add(new FileContent("file2", "file2 content"));
-    expected.add(new FileContent("file3", "file3 content"));
+  fun testCreateFromFiles() {
+    val expected = ArrayList<FileContent>()
+    expected.add(FileContent("file.txt", "file.txt content"))
+    expected.add(FileContent("file2", "file2 content"))
+    expected.add(FileContent("file3", "file3 content"))
 
-    VirtualFile[] files = new VirtualFile[3];
-    files[0] = projectRoot.findFileByRelativePath("file.txt");
-    files[1] = projectRoot.findFileByRelativePath("folder/file2");
-    files[2] = projectRoot.findFileByRelativePath("folder/dir/file3");
-    assertNotNull(files[0]);
-    assertNotNull(files[1]);
-    assertNotNull(files[2]);
+    val files = arrayOfNulls<VirtualFile>(3)
+    files[0] = projectRoot.findFileByRelativePath("file.txt")
+    files[1] = projectRoot.findFileByRelativePath("folder/file2")
+    files[2] = projectRoot.findFileByRelativePath("folder/dir/file3")
+    TestCase.assertNotNull(files[0])
+    TestCase.assertNotNull(files[1])
+    TestCase.assertNotNull(files[2])
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, null, files)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromEmptyFiles() {
-    List<FileContent> expected = new ArrayList<>();
+  fun testCreateFromEmptyFiles() {
+    val expected = ArrayList<FileContent>()
 
-    VirtualFile[] files = VirtualFile.EMPTY_ARRAY;
+    val files = VirtualFile.EMPTY_ARRAY
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, null, files);
+    val actual = GithubCreateGistAction.collectContents(myProject, null, null, files)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromEditor() {
-    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
-    assertNotNull(file);
+  fun testCreateFromEditor() {
+    val file = projectRoot.findFileByRelativePath("file.txt")
+    TestCase.assertNotNull(file)
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    assertNotNull(document);
+    val document = FileDocumentManager.getInstance().getDocument(file!!)
+    TestCase.assertNotNull(document)
 
-    myEditor = EditorFactory.getInstance().createEditor(document, myProject);
-    assertNotNull(myEditor);
+    myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
+    TestCase.assertNotNull(myEditor)
 
-    List<FileContent> expected = new ArrayList<>();
-    expected.add(new FileContent("file.txt", "file.txt content"));
+    val expected = ArrayList<FileContent>()
+    expected.add(FileContent("file.txt", "file.txt content"))
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, file, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, myEditor, file, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 
-  public void testCreateFromEditorWithoutFile() {
-    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
-    assertNotNull(file);
+  fun testCreateFromEditorWithoutFile() {
+    val file = projectRoot.findFileByRelativePath("file.txt")
+    TestCase.assertNotNull(file)
 
-    Document document = FileDocumentManager.getInstance().getDocument(file);
-    assertNotNull(document);
+    val document = FileDocumentManager.getInstance().getDocument(file!!)
+    TestCase.assertNotNull(document)
 
-    myEditor = EditorFactory.getInstance().createEditor(document, myProject);
-    assertNotNull(myEditor);
+    myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
+    TestCase.assertNotNull(myEditor)
 
-    List<FileContent> expected = new ArrayList<>();
-    expected.add(new FileContent("", "file.txt content"));
+    val expected = ArrayList<FileContent>()
+    expected.add(FileContent("", "file.txt content"))
 
-    List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, myEditor, null, null);
+    val actual = GithubCreateGistAction.collectContents(myProject, myEditor, null, null)
 
-    checkEquals(expected, actual);
+    checkEquals(expected, actual)
   }
 }
