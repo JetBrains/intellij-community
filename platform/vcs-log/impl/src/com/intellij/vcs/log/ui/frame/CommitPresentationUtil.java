@@ -50,12 +50,19 @@ public class CommitPresentationUtil {
     return getShortSummary(details, true, 50);
   }
 
+  @NotNull
   public static String getShortSummary(@NotNull VcsShortCommitDetails details, boolean useHtml, int maxMessageLength) {
     return (useHtml ? "<b>" : "") + "\"" +
            StringUtil.shortenTextWithEllipsis(details.getSubject(), maxMessageLength, 0, "...") +
            "\"" + (useHtml ? "</b>" : "") + " by " +
-           VcsUserUtil.getShortPresentation(details.getAuthor()) +
+           getAuthorPresentation(details) +
            formatDateTime(details.getAuthorTime());
+  }
+
+  @NotNull
+  public static String getAuthorPresentation(@NotNull VcsShortCommitDetails details) {
+    String authorString = VcsUserUtil.getShortPresentation(details.getAuthor());
+    return authorString + (VcsUserUtil.isSamePerson(details.getAuthor(), details.getCommitter()) ? "" : "*");
   }
 
   @NotNull
