@@ -69,7 +69,7 @@ def install_breakpointhook():
             kwargs.setdefault('stop_at_frame', sys._getframe().f_back)
             pydevd.settrace(*args, **kwargs)
 
-    if sys.version_info[0:2] >= (3, 7):
+    if sys.version_info >= (3, 7):
         # There are some choices on how to provide the breakpoint hook. Namely, we can provide a 
         # PYTHONBREAKPOINT which provides the import path for a method to be executed or we
         # can override sys.breakpointhook.
