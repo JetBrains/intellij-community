@@ -60,7 +60,7 @@ def install_breakpointhook(pydevd_breakpointhook=None):
     if pydevd_breakpointhook is None:
         from _pydevd_bundle.pydevd_breakpointhook import breakpointhook
         pydevd_breakpointhook = breakpointhook
-    if sys.version_info[0:2] >= (3, 7):
+    if sys.version_info >= (3, 7):
         # There are some choices on how to provide the breakpoint hook. Namely, we can provide a
         # PYTHONBREAKPOINT which provides the import path for a method to be executed or we
         # can override sys.breakpointhook.
