@@ -34,7 +34,7 @@ public interface HotSwapVetoableListener {
    * @deprecated use {@link #shouldHotSwap(ProjectTaskContext, ProjectTaskResult)}
    */
   @Deprecated
-  boolean shouldHotSwap(CompileContext finishedCompilationContext);
+  default boolean shouldHotSwap(CompileContext finishedCompilationContext) { return true; }
 
   /**
    * Returns {@code false} if Hot Swap shouldn't be invoked after the given compilation session.
