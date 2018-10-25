@@ -87,7 +87,7 @@ public class PluginManagerConfigurableNew
   public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
 
-  private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SectionHeader.background", MAIN_BG_COLOR);
+  private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
 
   private static final Color SEARCH_FIELD_BORDER_COLOR =
     JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
