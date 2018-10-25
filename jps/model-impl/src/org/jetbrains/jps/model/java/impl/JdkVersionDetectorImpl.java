@@ -93,7 +93,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
         }
 
         List<String> lines = reader.myLines;
-        while (!lines.isEmpty() && (lines.get(0).startsWith("Picked up _JAVA_OPTIONS:") || lines.get(0).startsWith("Picked up JAVA_TOOL_OPTIONS:"))) {
+        while (!lines.isEmpty() && (lines.get(0).startsWith("Picked up "))) {
           lines.remove(0);
         }
         if (!lines.isEmpty()) {
