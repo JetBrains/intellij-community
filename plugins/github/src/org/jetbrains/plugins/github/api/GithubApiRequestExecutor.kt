@@ -67,7 +67,10 @@ sealed class GithubApiRequestExecutor {
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
       indicator.checkCanceled()
       return createRequestBuilder(request)
-        .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token") }
+        .tuner { connection ->
+          request.additionalHeaders.forEach(connection::addRequestProperty)
+          connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token")
+        }
         .useProxy(useProxy)
         .execute(request, indicator)
     }
@@ -91,6 +94,7 @@ sealed class GithubApiRequestExecutor {
       return try {
         createRequestBuilder(request)
           .tuner { connection ->
+            request.additionalHeaders.forEach(connection::addRequestProperty)
             connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $header")
             twoFactorCode?.let { connection.addRequestProperty(OTP_HEADER_NAME, it) }
           }
@@ -112,7 +116,7 @@ sealed class GithubApiRequestExecutor {
           val connection = it.connection as HttpURLConnection
           if (request is GithubApiRequest.WithBody) {
             LOG.debug("Request: ${connection.requestMethod} ${connection.url} with body:\n${request.body} : Connected")
-            it.write(request.body)
+            request.body?.let { body -> it.write(body) }
           }
           else {
             LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")

@@ -3,15 +3,20 @@ package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.DumbProgressIndicator
+import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.text.DateFormatUtil
 import git4idea.test.GitPlatformTest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  *
@@ -67,10 +72,24 @@ abstract class GithubTest : GitPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable { deleteAllRepos() })
       .append(ThrowableRunnable { setCurrentAccount(null) })
       .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
+  }
+
+  private fun deleteAllRepos() {
+    deleteAllRepos(mainAccount)
+    deleteAllRepos(secondaryAccount)
+  }
+
+  private fun deleteAllRepos(accountData: AccountData) {
+    setCurrentAccount(accountData)
+    for (repo in GithubApiPagesLoader.loadAll(accountData.executor, DumbProgressIndicator.INSTANCE,
+                                              GithubApiRequests.CurrentUser.Repos.pages(accountData.account.server, false))) {
+      accountData.executor.execute(GithubApiRequests.Repos.delete(repo.url))
+    }
   }
 
   protected open fun setCurrentAccount(accountData: AccountData?) {
@@ -108,4 +127,14 @@ abstract class GithubTest : GitPlatformTest() {
                                    val account: GithubAccount,
                                    val username: String,
                                    val executor: GithubApiRequestExecutor)
+
+  companion object {
+    fun createRepoName(): String {
+      val rnd = ThreadLocalRandom.current()
+      val time = Clock.getTime()
+      return getTestName(null, false) +
+             "_" + DateFormatUtil.formatDate(time).replace('/', '-') +
+             "_" + rnd.nextLong()
+    }
+  }
 }

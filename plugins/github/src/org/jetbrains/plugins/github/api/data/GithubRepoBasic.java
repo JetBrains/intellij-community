@@ -24,7 +24,7 @@ public class GithubRepoBasic {
   @SerializedName("fork")
   @Mandatory private Boolean isFork;
 
-  private String url;
+  @Mandatory private String url;
   //urls
 
   @NotNull
@@ -43,6 +43,11 @@ public class GithubRepoBasic {
 
   public boolean isFork() {
     return isFork;
+  }
+
+  @NotNull
+  public String getUrl() {
+    return url;
   }
 
   @NotNull
