@@ -92,6 +92,7 @@ public class TypeFilter extends FilterAction {
       @Override
       protected void loadValues() {
         myTextField.setText((myConstraint.isInvertExprType() ? "!" : "") + myConstraint.getNameOfExprType());
+        myHierarchyCheckBox.setSelected(myConstraint.isExprTypeWithinHierarchy());
       }
 
       @Override
