@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -594,6 +595,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     @Override
     public String getToolTipText() {
       return myTextRenderer.getToolTipText();
+    }
+
+    public AccessibleContext getAccessibleContext() {
+      if(accessibleContext == null) {
+        myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
+        return myCheckBox.getAccessibleContext();
+      }
+      return accessibleContext;
     }
   }
 
