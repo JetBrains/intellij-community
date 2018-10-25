@@ -422,12 +422,11 @@ public class GradleExecutionHelper {
   }
 
   public static File writeToFileGradleInitScript(@NotNull String content, @NotNull String filePrefix) throws IOException {
-    File tempFile = new File(FileUtil.getTempDirectory(), filePrefix + '.' + GradleConstants.EXTENSION);
-    if (tempFile.exists() && StringUtil.equals(content, FileUtil.loadFile(tempFile))) {
-      return tempFile;
+    File tempFile =
+      FileUtil.findFileOrGetSequentNonexistentFile(new File(FileUtil.getTempDirectory()), filePrefix, GradleConstants.EXTENSION, content);
+    if (!tempFile.exists()) {
+      FileUtil.writeToFile(tempFile, content);
     }
-    tempFile = FileUtil.findSequentNonexistentFile(tempFile.getParentFile(), filePrefix, GradleConstants.EXTENSION);
-    FileUtil.writeToFile(tempFile, content);
     tempFile.deleteOnExit();
     return tempFile;
   }

@@ -596,10 +596,32 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
+    return findFileOrGetSequentNonexistentFile(parentFolder, filePrefix, extension, null);
+  }
+
+  /**
+   * Checks sequentially files with names filePrefix.extension, filePrefix1.extension, e.t.c
+   * and returns the first file which does not exist or has the same content as provided.
+   * @param parentFolder the parent folder of the file to be returned
+   * @param filePrefix the prefix of the file to be returned
+   * @param extension the extension of the file to be returned
+   * @param content the expected content of the file. If null is provided the first nonexistent file in the sequence will be returned.
+   */
+  @NotNull
+  public static File findFileOrGetSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension, @Nullable String content) {
     int postfix = 0;
     String ext = extension.isEmpty() ? "" : '.' + extension;
     File candidate = new File(parentFolder, filePrefix + ext);
     while (candidate.exists()) {
+      if (content != null && content.length() == candidate.length()) {
+        try {
+           if (content.equals(loadFile(candidate))) {
+             return candidate;
+           }
+        } catch (IOException e) {
+          // Ignore file with access issues. Will attempt to check the next file
+        }
+      }
       postfix++;
       candidate = new File(parentFolder, filePrefix + postfix + ext);
     }
