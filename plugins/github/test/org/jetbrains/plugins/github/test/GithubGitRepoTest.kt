@@ -16,22 +16,18 @@ import org.jetbrains.plugins.github.util.GithubUtil
 abstract class GithubGitRepoTest : GithubTest() {
 
   protected lateinit var gitHelper: GithubGitHelper
-  private lateinit var gitHttpAuthService: GitHttpAuthTestService
   protected lateinit var repository: GitRepository
 
   @Throws(Exception::class)
-  override fun beforeTest() {
-    gitHelper = service()
-    gitHttpAuthService = service<GitHttpAuthService>() as GitHttpAuthTestService
-  }
+  override fun setUp() {
+    super.setUp()
 
-  @Throws(Exception::class)
-  override fun afterTest() {
-    gitHttpAuthService.cleanup()
+    gitHelper = service()
   }
 
   override fun setCurrentAccount(accountData: AccountData?) {
     super.setCurrentAccount(accountData)
+    val gitHttpAuthService = service<GitHttpAuthService>() as GitHttpAuthTestService
     if (accountData == null) {
       gitHttpAuthService.cleanup()
       return

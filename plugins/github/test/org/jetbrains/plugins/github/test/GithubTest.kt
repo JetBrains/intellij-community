@@ -17,7 +17,9 @@ package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.util.ThrowableRunnable
 import git4idea.test.GitPlatformTest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -64,20 +66,7 @@ abstract class GithubTest : GitPlatformTest() {
 
     mainAccount = createAccountData(host, token1)
     secondaryAccount = createAccountData(host, token2)
-
-    try {
-      beforeTest()
-      setCurrentAccount(mainAccount)
-    }
-    catch (e: Exception) {
-      try {
-        tearDown()
-      }
-      catch (e2: Exception) {
-        e2.printStackTrace()
-      }
-      throw e
-    }
+    setCurrentAccount(mainAccount)
   }
 
   private fun createAccountData(host: String, token: String): AccountData {
@@ -91,22 +80,11 @@ abstract class GithubTest : GitPlatformTest() {
 
   @Throws(Exception::class)
   override fun tearDown() {
-    try {
-      afterTest()
-      setCurrentAccount(null)
-      authenticationManager.clearAccounts()
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
-  @Throws(Exception::class)
-  protected open fun beforeTest() {
-  }
-
-  @Throws(Exception::class)
-  protected open fun afterTest() {
+    RunAll()
+      .append(ThrowableRunnable { setCurrentAccount(null) })
+      .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   protected open fun setCurrentAccount(accountData: AccountData?) {

@@ -17,6 +17,8 @@ package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Comparing
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubGist
@@ -38,18 +40,22 @@ abstract class GithubCreateGistTestBase : GithubTest() {
     loaded!!
   }
 
-  override fun beforeTest() {
+  override fun setUp() {
+    super.setUp()
+
     val time = Clock.getTime()
     gistDescription = getTestName(false) + "_" + DateFormatUtil.formatDate(time)
   }
 
-  @Throws(Exception::class)
-  override fun afterTest() {
-    deleteGist()
+  override fun tearDown() {
+    RunAll()
+      .append(ThrowableRunnable { deleteGist() })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   @Throws(IOException::class)
-  protected fun deleteGist() {
+  private fun deleteGist() {
     if (gistId != null) {
       mainAccount.executor.execute(GithubApiRequests.Gists.delete(mainAccount.account.server, gistId!!))
       gistId = null

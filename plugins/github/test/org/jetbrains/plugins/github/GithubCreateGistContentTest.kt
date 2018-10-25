@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.RunAll
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent
 import java.util.*
 
@@ -26,13 +28,13 @@ import java.util.*
  * @author Aleksey Pivovarov
  */
 class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
-  protected var myEditor: Editor? = null
+  private lateinit var editor: Editor
 
-  override fun afterTest() {
-    if (myEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myEditor!!)
-      myEditor = null
-    }
+  override fun tearDown() {
+    RunAll()
+      .append(ThrowableRunnable { if (wasInit { editor }) EditorFactory.getInstance().releaseEditor(editor) })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   fun testCreateFromFile() {
@@ -119,13 +121,13 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     val document = FileDocumentManager.getInstance().getDocument(file!!)
     assertNotNull(document)
 
-    myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
-    assertNotNull(myEditor)
+    editor = EditorFactory.getInstance().createEditor(document!!, myProject)
+    assertNotNull(editor)
 
     val expected = ArrayList<FileContent>()
     expected.add(FileContent("file.txt", "file.txt content"))
 
-    val actual = GithubCreateGistAction.collectContents(myProject, myEditor, file, null)
+    val actual = GithubCreateGistAction.collectContents(myProject, editor, file, null)
 
     checkEquals(expected, actual)
   }
@@ -137,13 +139,13 @@ class GithubCreateGistContentTest : GithubCreateGistContentTestBase() {
     val document = FileDocumentManager.getInstance().getDocument(file!!)
     assertNotNull(document)
 
-    myEditor = EditorFactory.getInstance().createEditor(document!!, myProject)
-    assertNotNull(myEditor)
+    editor = EditorFactory.getInstance().createEditor(document!!, myProject)
+    assertNotNull(editor)
 
     val expected = ArrayList<FileContent>()
     expected.add(FileContent("", "file.txt content"))
 
-    val actual = GithubCreateGistAction.collectContents(myProject, myEditor, null, null)
+    val actual = GithubCreateGistAction.collectContents(myProject, editor, null, null)
 
     checkEquals(expected, actual)
   }

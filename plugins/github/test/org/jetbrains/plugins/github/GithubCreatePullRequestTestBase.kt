@@ -19,7 +19,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.DateFormatUtil
 import git4idea.actions.GitInit
 import git4idea.commands.Git
@@ -36,8 +38,8 @@ import java.util.*
 abstract class GithubCreatePullRequestTestBase : GithubGitRepoTest() {
   private lateinit var branchName: String
 
-  override fun beforeTest() {
-    super.beforeTest()
+  override fun setUp() {
+    super.setUp()
 
     val rnd = Random()
     val time = Clock.getTime()
@@ -52,13 +54,11 @@ abstract class GithubCreatePullRequestTestBase : GithubGitRepoTest() {
     repository.update()
   }
 
-  override fun afterTest() {
-    try {
-      deleteRemoteBranch()
-    }
-    finally {
-      super.afterTest()
-    }
+  override fun tearDown() {
+    RunAll()
+      .append(ThrowableRunnable { deleteRemoteBranch() })
+      .append(ThrowableRunnable { super.tearDown() })
+      .run()
   }
 
   private fun deleteRemoteBranch() {

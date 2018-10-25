@@ -24,7 +24,8 @@ import org.jetbrains.plugins.github.test.GithubTest
  */
 abstract class GithubCreateGistContentTestBase : GithubTest() {
 
-  override fun beforeTest() {
+  override fun setUp() {
+    super.setUp()
     createProjectFiles()
   }
 
