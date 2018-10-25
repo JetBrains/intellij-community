@@ -9,10 +9,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -38,7 +40,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
-    myState = new MyState(() -> getProvidersFromFactories());
+    myState = new MyState(() -> getProvidersFromFactories(), myProject);
     myBuiltInSchemaIds = new ClearableLazyValue<Set<String>>() {
       @NotNull
       @Override
@@ -235,7 +237,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     // this hack is needed to handle user-defined mappings via urls
     // we cannot perform that inside corresponding provider, because it leads to recursive component dependency
     // this way we're preventing http files when a built-in schema exists
-    if (schemaFile instanceof HttpVirtualFile) {
+    if (!JsonSchemaCatalogProjectConfiguration.getInstance(myProject).isPreferRemoteSchemas()
+        && schemaFile instanceof HttpVirtualFile) {
       String url = schemaFile.getUrl();
       VirtualFile first1 = getLocalSchemaByUrl(url);
       return first1 != null ? first1 : schemaFile;
@@ -380,15 +383,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   private static class MyState {
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
+    @NotNull private final Project myProject;
     @NotNull private final AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
 
-    private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory) {
+    private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
+      myProject = project;
       myData = new AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>>() {
         @NotNull
         @Override
         public Map<VirtualFile, JsonSchemaFileProvider> compute() {
-          return Collections.unmodifiableMap(createFileProviderMap(myFactory.create()));
+          return Collections.unmodifiableMap(createFileProviderMap(myFactory.create(), myProject));
         }
       };
     }
@@ -413,12 +418,22 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     @NotNull
-    private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
+    private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list,
+                                                                                  @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
       final Map<VirtualFile, JsonSchemaFileProvider> map = new THashMap<>();
       for (JsonSchemaFileProvider provider : list) {
-        VirtualFile schemaFile = provider.getSchemaFile();
+        VirtualFile schemaFile = null;
+        if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isPreferRemoteSchemas()) {
+          final String source = provider.getRemoteSource();
+          if (source != null && !source.endsWith("!")) {
+            schemaFile = VirtualFileManager.getInstance().findFileByUrl(source);
+          }
+        }
+        if (schemaFile == null) {
+          schemaFile = provider.getSchemaFile();
+        }
         if (schemaFile != null) {
           map.put(schemaFile, provider);
         }
