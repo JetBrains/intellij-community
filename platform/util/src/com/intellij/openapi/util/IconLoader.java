@@ -78,7 +78,7 @@ public final class IconLoader {
 
   private IconLoader() { }
 
-  public static <T> T performStrictly(ThrowableComputable<T, ? extends RuntimeException> computable) {
+  public static <T, E extends Throwable> T performStrictly(ThrowableComputable<T, E> computable) throws E {
     STRICT_LOCAL.set(true);
     try {
       return computable.compute();
