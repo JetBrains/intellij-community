@@ -113,12 +113,13 @@ public abstract class ProgressStripeIcon implements Icon {
   }
 
   // this icon is not used under darcula
-  @SuppressWarnings("UseJBColor")
   private static class GradientIcon extends ProgressStripeIcon {
-    private static final Color DARK_BLUE = new Color(0x4d9ff8);
-    private static final Color DARK_GRAY = Gray._165;
-    private static final Color LIGHT_BLUE = new Color(0x90c2f8);
-    private static final Color LIGHT_GRAY = new Color(0xdbdbdb);
+    @SuppressWarnings("UseJBColor")
+    private static final Color DARK = new ProgressStripeColor(new JBColor(Gray._165, new Color(0x6a6a6a)),
+                                                              new Color(0x4d9ff8));
+    @SuppressWarnings("UseJBColor")
+    private static final Color LIGHT = new ProgressStripeColor(new JBColor(new Color(0xdbdbdb), new Color(0x838383)),
+                                                               new Color(0x90c2f8));
     private static final int GRADIENT = 128;
     private static final int GRADIENT_HEIGHT = 2;
 
@@ -133,16 +134,8 @@ public abstract class ProgressStripeIcon implements Icon {
 
     @Override
     public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
-      Color dark;
-      Color light;
-      if (UIUtil.isGraphite()) {
-        dark = DARK_GRAY;
-        light = LIGHT_GRAY;
-      }
-      else {
-        dark = DARK_BLUE;
-        light = LIGHT_BLUE;
-      }
+      Color dark = DARK;
+      Color light = LIGHT;
       g2.setPaint(new GradientPaint(x + shift, y, dark, x + shift + JBUI.scale(GRADIENT), y, light));
       g2.fill(new Rectangle(x + shift, y, JBUI.scale(GRADIENT), getIconHeight()));
       g2.setPaint(new GradientPaint(x + shift + JBUI.scale(GRADIENT), y, light, x + shift + 2 * JBUI.scale(GRADIENT), y, dark));
@@ -152,6 +145,17 @@ public abstract class ProgressStripeIcon implements Icon {
     @Override
     public int getIconHeight() {
       return JBUI.scale(GRADIENT_HEIGHT);
+    }
+
+    private static class ProgressStripeColor extends JBColor {
+      private ProgressStripeColor(@NotNull JBColor defaultColor, @NotNull Color blueColor) {
+        super(() -> {
+          if (UIUtil.isUnderAquaBasedLookAndFeel() && !UIUtil.isUnderDarcula() && !UIUtil.isGraphite()) {
+            return blueColor;
+          }
+          return defaultColor;
+        });
+      }
     }
   }
 
