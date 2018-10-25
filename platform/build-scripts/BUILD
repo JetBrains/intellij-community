@@ -32,7 +32,6 @@ iml_module(
         "//tools/idea/.idea/libraries:cli-parser",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:protobuf",
-        "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/.idea/libraries:jna",
         "//tools/idea/.idea/libraries:Trove4j",
         "//tools/idea/plugins/ui-designer/jps-plugin:intellij.java.guiForms.jps",
@@ -47,6 +46,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Groovy",
         "//tools/idea/.idea/libraries:Ant",
+        "//tools/idea/.idea/libraries:Log4J",
         "//tools/idea/jps/antLayout:intellij.tools.jps.antTasks[module]",
         "//tools/idea/jps/model-api:intellij.platform.jps.model[module]",
         "//tools/idea/jps/standalone-builder:intellij.tools.jps.build.standalone[module]",
@@ -55,6 +55,7 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/.idea/libraries:maven-model",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:http-client",
         "//tools/idea/.idea/libraries:commons-compress",
     ],
 )

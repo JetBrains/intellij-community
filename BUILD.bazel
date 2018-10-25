@@ -682,6 +682,7 @@ iml_module(
         "//tools/idea/platform/configuration-store-impl:intellij.platform.configurationStore.impl[module, test]",
         "//tools/idea/aether-dependency-resolver:intellij.java.aetherDependencyResolver[module, test]",
         "//tools/idea/plugins/copyright:intellij.copyright[module, test]",
+        "//tools/idea/jvm/jvm-analysis-java-tests:intellij.jvm.analysis.java.tests[module, test]",
     ],
 )
 
@@ -791,6 +792,7 @@ iml_module(
         "//tools/idea/plugins/stream-debugger:intellij.java.debugger.streams",
         "//tools/idea/.idea/libraries:jgoodies-common",
         "//tools/idea/.idea/libraries:commons-net",
+        "//tools/idea/plugins/editorconfig:intellij.editorconfig",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",

@@ -8,7 +8,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
-        "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/platform/platform-main:intellij.platform.main",
         "//tools/idea/plugins/cvs/cvs-plugin:intellij.vcs.cvs",
@@ -21,6 +20,7 @@ iml_module(
         "//tools/idea/jps/javac-ref-scanner-8:intellij.java.jps.javacRefScanner8",
         "//tools/idea/plugins/stats-collector:intellij.statsCollector",
         "//tools/idea/plugins/stream-debugger:intellij.java.debugger.streams",
+        "//tools/idea/plugins/editorconfig:intellij.editorconfig",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
