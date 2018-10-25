@@ -39,19 +39,7 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   protected void initFieldEditor(@NotNull EditorEx editor, Color background) {
     editor.getContentComponent().putClientProperty(Expandable.class, this);
     ExtendableTextComponent.Extension extension = createExpandExtension();
-    setupExtension(editor, background, extension);
-  }
-
-  public static void setupExtension(@NotNull EditorEx editor,
-                                     Color background,
-                                     ExtendableTextComponent.Extension extension) {
-    JLabel label = ExpandableSupport.createLabel(extension);
-    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
-    editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-    editor.getScrollPane().getVerticalScrollBar().setBackground(background);
-    editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
-    editor.getScrollPane().getVerticalScrollBar().setOpaque(true);
+    ExtendableEditorSupport.setupExtension(editor, background, extension);
   }
 
   protected void updateFieldFolding(@NotNull EditorEx editor) {
