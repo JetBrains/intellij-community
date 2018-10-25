@@ -85,7 +85,7 @@ public interface PsiFile extends PsiFileSystemItem {
   PsiFile[] getPsiRoots();
 
   @NotNull
-  FileViewProvider getViewProvider();
+  FileViewProvider  getViewProvider();
 
   @Override
   FileASTNode getNode();
