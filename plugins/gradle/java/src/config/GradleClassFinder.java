@@ -43,7 +43,16 @@ import java.util.Map;
 public class GradleClassFinder extends NonClasspathClassFinder {
 
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
-  private final Map<String, PackageDirectoryCache> myCaches;
+
+  // Bug: IDEA-200807
+  // The parent class can publish a reference to this object before the constructor has returned.
+  // Thus, it's possible that not all fields of this object are initialized by the time they
+  // are accessed in clearCache(). Workaround is to mark this field as volatile and do a
+  // null check in clearCache().
+  //
+  // It is unknown if different threads can read stale or uninitialized values for the
+  // myBuildClasspathManager instance variable at this moment.
+  private volatile Map<String, PackageDirectoryCache> myCaches;
 
   public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
@@ -68,7 +77,9 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public void clearCache() {
     super.clearCache();
-    myCaches.clear();
+    if(myCaches != null) {
+      myCaches.clear();
+    }
   }
 
   @Override
