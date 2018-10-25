@@ -44,37 +44,38 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
   }
 
   public void clearBuffer() {
-    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBuffer.clear();
     cancelScheduledFlush();
   }
 
   @Override
   public void elementsAdded(@NotNull List<SESearcher.ElementInfo> list) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBuffer.addEvent(new Event(Event.ADD, list));
     scheduleFlushBuffer();
   }
 
   @Override
   public void elementsRemoved(@NotNull List<SESearcher.ElementInfo> list) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBuffer.addEvent(new Event(Event.REMOVE, list));
     scheduleFlushBuffer();
   }
 
   @Override
   public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myBuffer.flush(myFlushConsumer);
     myDelegateExecutor.execute(() -> myDelegateListener.searchFinished(hasMoreContributors));
     cancelScheduledFlush();
   }
 
-  //always notified in EDT!!!
   private void scheduleFlushBuffer() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     Runnable flushTask = () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread(); //should be notified only in EDT
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (!flushScheduled) return;
       flushScheduled = false;
       myBuffer.flush(myFlushConsumer);
@@ -86,8 +87,8 @@ class ThrottlingListenerWrapper implements MultithreadSearcher.Listener {
     }
   }
 
-  //always notified in EDT!!!
   private void cancelScheduledFlush() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     flushAlarm.cancelAllRequests();
     flushScheduled = false;
   }

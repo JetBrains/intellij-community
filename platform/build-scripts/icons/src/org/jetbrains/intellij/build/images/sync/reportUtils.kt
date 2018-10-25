@@ -61,7 +61,7 @@ private fun sendNotification(isSuccess: Boolean, investigator: Investigator?) {
   }
 }
 
-private class Investigator(val email: String, val commits: Collection<String>)
+private class Investigator(val email: String, val commits: Collection<String>, var assigned: Boolean)
 
 private fun assignInvestigation(root: File,
                                 addedByDev: Collection<String>,
@@ -81,25 +81,31 @@ private fun assignInvestigation(root: File,
         .filterNotNull()
         .groupBy({ it.committerEmail }, { it.hash })
         .maxBy { it.value.size }
-        ?.let { Investigator(it.key, it.value) }
+        ?.let { Investigator(it.key, it.value, false) }
       if (investigator != null) {
-        val id = teamCityGet("users/email:${investigator.email}/id")
-        teamCityPost("investigations", """
-          |<investigation state="TAKEN">
-          |    <assignee id="$id"/>
-          |    <assignment>
-          |        <text>$text</text>
-          |    </assignment>
-          |    <scope>
-          |        <buildTypes count="1">
-          |            <buildType id="$BUILD_CONF"/>
-          |        </buildTypes>
-          |    </scope>
-          |    <target anyProblem="true"/>
-          |    <resolution type="whenFixed"/>
-          |</investigation>
-        """.trimMargin())
-        log("Investigation is assigned to ${investigator.email}, see ${investigator.commits}")
+        try {
+          val id = teamCityGet("users/email:${investigator.email}/id")
+          teamCityPost("investigations", """
+            |<investigation state="TAKEN">
+            |    <assignee id="$id"/>
+            |    <assignment>
+            |        <text>$text</text>
+            |    </assignment>
+            |    <scope>
+            |        <buildTypes count="1">
+            |            <buildType id="$BUILD_CONF"/>
+            |        </buildTypes>
+            |    </scope>
+            |    <target anyProblem="true"/>
+            |    <resolution type="whenFixed"/>
+            |</investigation>
+          """.trimMargin())
+          investigator.assigned = true
+          log("Investigation is assigned to ${investigator.email}, see ${investigator.commits}")
+        }
+        catch (e: Exception) {
+          log("Unable to assign investigation to ${investigator.email}, ${e.message}")
+        }
       }
       else {
         log("Unable to determine committer email for investigation assignment")
@@ -147,9 +153,13 @@ private val BUILD_ID = System.getProperty("teamcity.build.id")
 private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
 private fun notifySlackChannel(isSuccess: Boolean, investigator: Investigator?) {
+  val investigation = if (investigator != null) {
+    val assignment = if (investigator.assigned) "Investigation is assigned" else "Unable to assign investigation"
+    "$assignment to ${investigator.email}, see ${investigator.commits.joinToString { it.substring(0, 4) }}\n"
+  }
+  else ""
   val text = "*${System.getProperty("teamcity.buildConfName")}* " +
-             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
-             (if (investigator != null) "Investigation is assigned to ${investigator.email}, see ${investigator.commits.joinToString { it.substring(0, 4) }}" else "") + "\n" +
+             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" + investigation +
              (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
              "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")

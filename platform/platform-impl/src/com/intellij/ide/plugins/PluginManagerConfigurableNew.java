@@ -51,9 +51,7 @@ import org.jetbrains.io.JsonReaderEx;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
@@ -464,6 +462,39 @@ public class PluginManagerConfigurableNew
     myTabHeaderComponent.setSelection(selectionTab);
     myCardPanel.select(selectionTab, true);
     updateSearchForSelectedTab(selectionTab);
+
+    panel.addComponentListener(new ComponentAdapter() {
+      boolean myStoreHosts;
+      List<String> myHosts;
+
+      @Override
+      public void componentShown(ComponentEvent e) {
+        myStoreHosts = true;
+        if (myHosts != null) {
+          List<String> oldHosts = myHosts;
+          List<String> newHosts = UpdateSettings.getInstance().getPluginHosts();
+          myHosts = null;
+
+          if (oldHosts.size() != newHosts.size()) {
+            resetTrendingAndUpdatesPanels();
+            return;
+          }
+          for (String host : oldHosts) {
+            if (!newHosts.contains(host)) {
+              resetTrendingAndUpdatesPanels();
+              return;
+            }
+          }
+        }
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        if (myStoreHosts) {
+          myHosts = UpdateSettings.getInstance().getPluginHosts();
+        }
+      }
+    });
 
     return panel;
   }
