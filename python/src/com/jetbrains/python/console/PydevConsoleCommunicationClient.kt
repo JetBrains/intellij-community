@@ -12,6 +12,7 @@ import com.jetbrains.python.console.transport.client.TNettyClientTransport
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
 import org.apache.thrift.protocol.TBinaryProtocol
+import java.net.SocketException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -62,8 +63,17 @@ class PydevConsoleCommunicationClient(project: Project,
    */
   fun connect() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      // TODO handle exception scenario
-      clientTransport.open()
+      try {
+        clientTransport.open()
+      }
+      catch (e: SocketException) {
+        stateLock.withLock {
+          isClosed = true
+
+          stateChanged.signalAll()
+        }
+        return@executeOnPooledThread
+      }
 
       val clientProtocol = TBinaryProtocol(clientTransport)
       val client = PythonConsoleBackendService.Client(clientProtocol)
