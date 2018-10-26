@@ -21,13 +21,6 @@ java_import(
 
 # managed by go/iml_to_build
 java_import(
-    name = "asm-all",
-    jars = ["asm-all.jar"],
-    visibility = ["//visibility:public"],
-)
-
-# managed by go/iml_to_build
-java_import(
     name = "eawtstub",
     jars = ["eawtstub.jar"],
     visibility = ["//visibility:public"],

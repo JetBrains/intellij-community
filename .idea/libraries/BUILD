@@ -258,8 +258,8 @@ java_library(
 java_library(
     name = "ASM",
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:asm-all"],
-    runtime_deps = ["//tools/idea/lib:asm-all"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/6.2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/6.2.1:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1390,8 +1390,8 @@ java_library(
 java_library(
     name = "jetCheck",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.2:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.2:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.2.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/jetbrains/jetCheck/0.2.1:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1434,4 +1434,10 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/codehaus/plexus/plexus-utils/3.0.22:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "KotlinPlugin",
+    visibility = ["//visibility:public"],
 )
