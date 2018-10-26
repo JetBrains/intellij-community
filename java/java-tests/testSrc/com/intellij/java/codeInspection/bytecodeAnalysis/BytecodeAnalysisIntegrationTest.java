@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
+import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -16,6 +18,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -30,10 +34,12 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.security.MessageDigest;
@@ -56,8 +62,12 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
 
-      PsiTestUtil.addProjectLibrary(model, "velocity", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("Velocity"));
-      PsiTestUtil.addProjectLibrary(model, "commons-collections", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("commons-collections"));
+      List<RemoteRepositoryDescription> remoteRepositoryDescriptions =
+        ContainerUtil.map(IntelliJProjectConfiguration.getRemoteRepositoryDescriptions(), repository ->
+          new RemoteRepositoryDescription(repository.getId(), repository.getName(), repository.getUrl()));
+
+      addFromMaven(module, model, "org.apache.velocity:velocity:1.7", remoteRepositoryDescriptions);
+      addFromMaven(module, model, "commons-collections:commons-collections:3.2.1", remoteRepositoryDescriptions);
 
       VirtualFile annotationsRoot = getAnnotationsRoot();
       for (OrderEntry entry : model.getOrderEntries()) {
@@ -74,6 +84,21 @@ public class BytecodeAnalysisIntegrationTest extends LightCodeInsightFixtureTest
       }
 
       Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
+    }
+
+    public void addFromMaven(@NotNull Module module,
+                             @NotNull ModifiableRootModel model,
+                             String mavenCoordinates, List<RemoteRepositoryDescription> remoteRepositoryDescriptions) {
+      RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(mavenCoordinates, true);
+      Collection<OrderRoot> roots = JarRepositoryManager
+        .loadDependenciesModal(module.getProject(), libraryProperties, false, false, null, remoteRepositoryDescriptions);
+      LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
+      Library.ModifiableModel libraryModel = tableModel.createLibrary(mavenCoordinates).getModifiableModel();
+      for (OrderRoot root : roots) {
+        libraryModel.addRoot(root.getFile(), root.getType());
+      }
+      libraryModel.commit();
+      tableModel.commit();
     }
   };
 
