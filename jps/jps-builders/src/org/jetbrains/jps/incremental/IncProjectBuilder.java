@@ -520,6 +520,18 @@ public class IncProjectBuilder {
           }
         }
       }
+      else {
+        try {
+          for (BuildTarget<?> target : getTargetsWithClearedOutput(context)) {
+            // this will clean timestamps for the corresponding targets so that
+            // if this build failes or is cancelled, all such targets will still be marked as needing recompilation
+            BuildOperations.ensureFSStateInitialized(context, target);
+          }
+        }
+        catch (IOException e) {
+          throw new ProjectBuildException(e);
+        }
+      }
     }
   }
 
@@ -598,6 +610,13 @@ public class IncProjectBuilder {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
       return data != null && data.contains(target);
+    }
+  }
+
+  private static Set<BuildTarget<?>> getTargetsWithClearedOutput(CompileContext context) {
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      return data != null? Collections.unmodifiableSet(new HashSet<>(data)) : Collections.emptySet();
     }
   }
 
