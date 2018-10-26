@@ -8,6 +8,7 @@ import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
+import io.netty.channel.ChannelFuture
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
 import io.netty.channel.nio.NioEventLoopGroup
@@ -21,10 +22,14 @@ import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.net.SocketException
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TNettyClientTransport(private val host: String,
                             private val port: Int) : TTransport() {
+  /**
+   * Guarded by [lock].
+   */
   private var channel: Channel? = null
 
   private var messageHandler: DirectedMessageHandler? = null
@@ -37,6 +42,18 @@ class TNettyClientTransport(private val host: String,
    * "Client as server" accepted transport.
    */
   private val serverAcceptedTransport = TNettyTransport()
+
+  private val lock: Any = Object()
+
+  /**
+   * Guarded by [lock].
+   */
+  private var isClosed: Boolean = false
+
+  /**
+   * Guarded by [lock].
+   */
+  private var connectFuture: ChannelFuture? = null
 
   val serverTransport: TServerTransport = object : TServerTransport() {
     private val acceptedOnce = AtomicBoolean(false)
@@ -61,10 +78,9 @@ class TNettyClientTransport(private val host: String,
     override fun close() {}
   }
 
-  private fun assureChannelPresent(): Channel = channel ?: throw IllegalStateException("`channel` is `null`")
-
   private val messageBuffer: ByteBuf = Unpooled.buffer()
 
+  @Throws(InterruptedException::class, SocketException::class)
   override fun open() {
     val workerGroup = NioEventLoopGroup()
 
@@ -85,11 +101,27 @@ class TNettyClientTransport(private val host: String,
     })
 
     // Start the client.
-    val f = b.connect(host, port).sync() // (5)
+    val future: ChannelFuture = synchronized(lock) {
+      // TODO add ClosedByUserException?
+      if (isClosed) throw RuntimeException()
 
-    channel = f.channel()
+      b.connect(host, port).also { connectFuture = it }
+    }
 
-    messageHandler = f.channel().pipeline().get(DirectedMessageHandler::class.java)
+    // waits for the client to connect
+    val f = future.sync() // (5)
+
+    synchronized(lock) {
+      // TODO add ClosedByUserException?
+      if (isClosed) throw RuntimeException()
+
+      connectFuture = null
+
+      f.channel().let {
+        channel = it
+        messageHandler = it.pipeline().get(DirectedMessageHandler::class.java)
+      }
+    }
   }
 
   override fun write(buf: ByteArray, off: Int, len: Int) {
@@ -114,8 +146,17 @@ class TNettyClientTransport(private val host: String,
   override fun isOpen(): Boolean = channel?.isOpen == true
 
   override fun close() {
+    val closeFuture = synchronized(lock) {
+      if (isClosed) {
+        return
+      }
+      isClosed = true
+      connectFuture?.cancel(true)
+
+      channel?.close()
+    }
     // Wait until the connection is closed.
-    assureChannelPresent().closeFuture().sync()
+    closeFuture?.sync()
   }
 
   override fun read(buf: ByteArray, off: Int, len: Int): Int = responseInputStream.read(buf, off, len)
