@@ -6,7 +6,10 @@ import com.intellij.json.JsonUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -25,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -403,18 +407,30 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static class MyState {
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
     @NotNull private final Project myProject;
-    @NotNull private final AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
-    private boolean myIsComputed = false;
+    @NotNull private final ClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
+    private final AtomicBoolean myIsComputed = new AtomicBoolean(false);
 
     private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
       myProject = project;
-      myData = new AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>>() {
+      myData = new ClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>>() {
         @NotNull
         @Override
         public Map<VirtualFile, JsonSchemaFileProvider> compute() {
-          myIsComputed = true;
+          myIsComputed.set(true);
           return Collections.unmodifiableMap(createFileProviderMap(myFactory.create(), myProject));
+        }
+
+        @NotNull
+        @Override
+        public final synchronized Map<VirtualFile, JsonSchemaFileProvider> getValue() {
+          return super.getValue();
+        }
+
+        @Override
+        public final synchronized void drop() {
+          myIsComputed.set(false);
+          super.drop();
         }
       };
     }
@@ -439,7 +455,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     public boolean isComputed() {
-      return myIsComputed;
+      return myIsComputed.get();
     }
 
     @NotNull
