@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -216,6 +217,16 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
       assertNull(lookup);
     }
   }
+
+  public void testOptionallyShowingSuitableLiveTemplatesBeforeOtherCompletionSuggestions() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable());
+    Registry.get("ide.completion.show.live.templates.on.top").setValue(true, myFixture.getTestRootDisposable());
+
+    myFixture.configureByText("a.java", "class Foo { ps<caret> } class psvClass {}");
+    type("v");
+    myFixture.assertPreferredCompletionItems(0, "psvm", "psvClass");
+  }
+
 
   private void configureByFile() {
     EdtTestUtil.runInEdtAndWait(() -> myFixture.configureByFile(getTestName(true) + ".java"));
