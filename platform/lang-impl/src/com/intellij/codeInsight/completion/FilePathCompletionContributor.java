@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -89,6 +90,19 @@ public class FilePathCompletionContributor extends CompletionContributor {
           String pathString = set.getPathString();
           if (pathString.length() < end) return;
 
+          final PsiFile originalFile = parameters.getOriginalFile();
+          final VirtualFile contextFile = originalFile.getVirtualFile();
+
+          String relativePrefix = getRelativePathPrefix(pathString);
+          VirtualFile parent = null;
+          if (relativePrefix != null && relativePrefix.length() <= end) {
+            parent = VfsUtilCore.findRelativeFile(relativePrefix, contextFile.getParent());
+            if (parent != null) {
+              pathString = pathString.substring(relativePrefix.length());
+              end -= relativePrefix.length();
+            }
+          }
+
           String prefix = pathString.substring(0, end);
 
           List<String> pathPrefixParts = null;
@@ -100,8 +114,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
           final CompletionResultSet __result = result.withPrefixMatcher(prefix).caseInsensitive();
 
-          final PsiFile originalFile = parameters.getOriginalFile();
-          final VirtualFile contextFile = originalFile.getVirtualFile();
+          
           if (contextFile != null) {
             final String[] fileNames = getAllNames(project);
             final Set<String> resultNames = new TreeSet<>();
@@ -130,7 +143,10 @@ public class FilePathCompletionContributor extends CompletionContributor {
                   ProgressManager.checkCanceled();
 
                   final VirtualFile virtualFile = file.getVirtualFile();
-                  if (virtualFile == null || !virtualFile.isValid() || Comparing.equal(virtualFile, contextFile)) {
+                  if (virtualFile == null || 
+                      !virtualFile.isValid() || 
+                      Comparing.equal(virtualFile, contextFile) || 
+                      parent != null && !VfsUtilCore.isAncestor(parent, virtualFile, true)) {
                     continue;
                   }
                   List<FileReferenceHelper> helperList = new ArrayList<>();
@@ -139,7 +155,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
                     if (contextHelper.isMine(project, virtualFile)) {
                       if (pathPrefixParts == null ||
-                          fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), pathPrefixParts)) {
+                          fileMatchesPathPrefix(contextHelper.getPsiFileSystemItem(project, virtualFile), parent, pathPrefixParts)) {
                         helperList.add(contextHelper);
                       }
                     }
@@ -181,14 +197,32 @@ public class FilePathCompletionContributor extends CompletionContributor {
 
     return false;
   }
+  
+  private static String getRelativePathPrefix(@NotNull String path) {
+    if (!path.startsWith("./") && !path.startsWith("../")) return null;
+    
+    int index = 0;
+    char currentChar = path.charAt(index);
+    
+    while (currentChar == '.' || currentChar == '/') {
+      index++;
+      if (index >= path.length()) break;
+      currentChar = path.charAt(index);
+    }
+    
+    return path.substring(0, index);
+  }
 
-  private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file, @NotNull final List<String> pathPrefix) {
+  private static boolean fileMatchesPathPrefix(@Nullable final PsiFileSystemItem file,
+                                               @Nullable VirtualFile stopParent, 
+                                               @NotNull final List<String> pathPrefix) {
     if (file == null) return false;
 
     final List<String> contextParts = new ArrayList<>();
     PsiFileSystemItem parentFile = file;
     PsiFileSystemItem parent;
-    while ((parent = parentFile.getParent()) != null) {
+    while ((parent = parentFile.getParent()) != null && 
+           (stopParent == null || !Objects.equals(parent.getVirtualFile(), stopParent))) {
       if (parent.getName().length() > 0) contextParts.add(0, parent.getName().toLowerCase());
       parentFile = parent;
     }
