@@ -66,15 +66,7 @@ private val DEFAULT_INVESTIGATOR by lazy {
 }
 
 private class Investigator(val email: String, val commits: Collection<String>, var isAssigned: Boolean = false) {
-  fun description(short: Boolean = false): String {
-    val commits = when {
-      short -> ""
-      commits.isNotEmpty() -> "see ${commits.joinToString()}"
-      else -> "no commits found"
-    }
-    val assignment = if (isAssigned) "Investigation is assigned" else "Unable to assign investigation"
-    return "$assignment to $email${if (short) "" else ", ${commits}\n"}"
-  }
+  fun commitsToInvestigate() = if (commits.isNotEmpty()) "see ${commits.joinToString()}" else ""
 }
 
 private fun assignInvestigation(root: File,
@@ -114,7 +106,7 @@ private fun assignInvestigation(root: File,
 private fun assignInvestigation(investigator: Investigator) {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
-    val text = "${investigator.description()}. See https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    val text = "${investigator.commitsToInvestigate()}.\nhttps://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
             |<investigation state="TAKEN">
             |    <assignee id="$id"/>
@@ -177,9 +169,13 @@ private val BUILD_ID = System.getProperty("teamcity.build.id")
 private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
 private fun notifySlackChannel(isSuccess: Boolean, investigator: Investigator?) {
+  val investigation = when {
+    investigator == null -> ""
+    investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
+    else -> "Unable to assign investigation to ${investigator.email}\n"
+  }
   val text = "*${System.getProperty("teamcity.buildConfName")}* " +
-             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
-             (investigator?.description(short = true) ?: "") +
+             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" + investigation +
              (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
              "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
