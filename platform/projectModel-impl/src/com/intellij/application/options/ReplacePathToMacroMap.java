@@ -114,24 +114,23 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   @NotNull
   @Override
   public String substituteRecursively(@NotNull String text, final boolean caseSensitive) {
+    CharSequence result = text;
     for (final String path : getPathIndex()) {
-      text = replacePathMacroRecursively(text, path, caseSensitive);
+      result = replacePathMacroRecursively(result, path, caseSensitive);
     }
-    return text;
+    return result.toString();
   }
 
-  private String replacePathMacroRecursively(@NotNull final String text, @NotNull final String path, boolean caseSensitive) {
-    if (text.length() < path.length()) {
+  private CharSequence replacePathMacroRecursively(@NotNull final CharSequence text, @NotNull final String path, boolean caseSensitive) {
+    if ((text.length() < path.length()) || path.isEmpty()) {
       return text;
     }
-
-    if (path.isEmpty()) return text;
 
     final StringBuilder newText = new StringBuilder();
     final boolean isWindowsRoot = path.endsWith(":/");
     int i = 0;
     while (i < text.length()) {
-      int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
+      int occurrenceOfPath = caseSensitive ? StringUtil.indexOf(text, path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
       if (occurrenceOfPath >= 0) {
         int endOfOccurrence = occurrenceOfPath + path.length();
         if (!isWindowsRoot &&
@@ -139,7 +138,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
             text.charAt(endOfOccurrence) != '/' &&
             text.charAt(endOfOccurrence) != '\"' &&
             text.charAt(endOfOccurrence) != ' ' &&
-            !text.substring(endOfOccurrence).startsWith("!/")) {
+            !StringUtil.startsWith(text, endOfOccurrence, "!/")) {
           newText.append(text, i, endOfOccurrence);
           i = endOfOccurrence;
           continue;
@@ -157,7 +156,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         if (newText.length() == 0) {
           return text;
         }
-        newText.append(text.substring(i));
+        newText.append(text, i, text.length());
         break;
       }
       else {
@@ -166,7 +165,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
         i = occurrenceOfPath + path.length();
       }
     }
-    return newText.toString();
+    return newText;
   }
 
   private static int getIndex(@NotNull String replacement) {
