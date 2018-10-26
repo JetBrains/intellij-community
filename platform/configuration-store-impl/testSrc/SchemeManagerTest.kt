@@ -38,11 +38,13 @@ internal const val FILE_SPEC = "REMOTE"
 internal class SchemeManagerTest {
   companion object {
     @JvmField
-    @ClassRule val projectRule = ProjectRule()
+    @ClassRule
+    val projectRule = ProjectRule()
   }
 
-  private val tempDirManager = TemporaryDirectory()
-  @Rule fun getTemporaryFolder() = tempDirManager
+  @Rule
+  @JvmField
+  val tempDirManager = TemporaryDirectory()
 
   private var localBaseDir: Path? = null
   private var remoteBaseDir: Path? = null
@@ -69,7 +71,7 @@ internal class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val scheme = manager.findSchemeByName("first")
-    assertThat(scheme).isNotNull()
+    assertThat(scheme).isNotNull
     scheme!!.name = "Grünwald"
     manager.save()
 
@@ -80,11 +82,11 @@ internal class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val first = manager.findSchemeByName("first")
-    assertThat(first).isNotNull()
+    assertThat(first).isNotNull
     assert(first != null)
     first!!.name = "2"
     val second = manager.findSchemeByName("second")
-    assertThat(second).isNotNull()
+    assertThat(second).isNotNull
     assert(second != null)
     second!!.name = "1"
     manager.save()
@@ -96,7 +98,7 @@ internal class SchemeManagerTest {
     val manager = createAndLoad("options1")
 
     val firstScheme = manager.findSchemeByName("first")
-    assertThat(firstScheme).isNotNull()
+    assertThat(firstScheme).isNotNull
     assert(firstScheme != null)
     firstScheme!!.name = "first_renamed"
     manager.save()
@@ -115,7 +117,7 @@ internal class SchemeManagerTest {
   @Test fun testDeleteAndCreateSchemeWithTheSameName() {
     val manager = createAndLoad("options1")
     val firstScheme = manager.findSchemeByName("first")
-    assertThat(firstScheme).isNotNull()
+    assertThat(firstScheme).isNotNull
 
     manager.removeScheme(firstScheme!!)
     manager.addScheme(TestScheme("first"))
@@ -321,7 +323,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `VFS - rename A to B and B to A`() {
-    val dir = tempDirManager.newPath()
+    val dir = tempDirManager.newPath(refreshVfs = true)
     val schemeManager = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir, fileChangeSubscriber = { schemeManager ->
       @Suppress("UNCHECKED_CAST")
       ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(
@@ -346,11 +348,11 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must not contains ROOT_CONFIG macro`() {
-    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }).hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
+    assertThatThrownBy { SchemeManagerFactory.getInstance().create("\$ROOT_CONFIG$/foo", TestSchemesProcessor()) }.hasMessage("Path must not contains ROOT_CONFIG macro, corrected: foo")
   }
 
   @Test fun `path must be system-independent`() {
-    assertThatThrownBy({ SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}).hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemesProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 
   private fun createSchemeManager(dir: Path) = SchemeManagerImpl(FILE_SPEC, TestSchemesProcessor(), null, dir)
