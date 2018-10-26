@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
@@ -60,7 +59,7 @@ public final class OutputFileObject extends JpsFileObject {
                           @NotNull Kind kind,
                           @Nullable String className,
                           @Nullable final URI srcUri,
-                          @Nullable final String encodingName, 
+                          @Nullable final String encodingName,
                           @Nullable BinaryContent content) {
     super(PathUtils.toURI(file.getPath()), kind);
     myContext = context;
@@ -141,11 +140,11 @@ public final class OutputFileObject extends JpsFileObject {
     final BinaryContent content = myContent;
     final String encoding = myEncodingName;
     if (content != null) {
-      return encoding == null? 
-             new String(content.getBuffer(), content.getOffset(), content.getLength()) : 
+      return encoding == null ?
+             new String(content.getBuffer(), content.getOffset(), content.getLength()) :
              new String(content.getBuffer(), content.getOffset(), content.getLength(), encoding);
     }
-    return FileUtilRt.loadFile(myFile, encoding, false);
+    return loadCharContent(myFile, encoding);
   }
 
   @Override

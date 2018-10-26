@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.PathUtils;
-import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
 import javax.tools.JavaFileObject;
 import java.io.*;
@@ -155,18 +153,6 @@ public class InputFileObject extends JpsFileObject {
   public CharSequence getCharContent(boolean ignoreEncodingErrors) throws IOException {
     // todo: consider adding content caching if needed
     // todo: currently ignoreEncodingErrors is not honored. Do we actually need to support it?
-    final InputStream in = openInputStream();
-    try {
-      final InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in);
-      try {
-        return new CharArrayCharSequence(FileUtilRt.loadText(reader, (int)myFile.length()));
-      }
-      finally {
-        reader.close();
-      }          
-    }
-    finally {
-      in.close();
-    }
+    return loadCharContent(myFile, myEncoding);
   }
 }
