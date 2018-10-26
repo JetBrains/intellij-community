@@ -1831,6 +1831,7 @@ public class AllIcons {
     public static final Icon HomeFolder = IconLoader.getIcon("/nodes/homeFolder.svg"); // 16x16
     public static final Icon IdeaModule = IconLoader.getIcon("/nodes/ideaModule.svg"); // 16x16
     public static final Icon IdeaProject = IconLoader.getIcon("/nodes/ideaProject.svg"); // 16x16
+    public static final Icon Include = IconLoader.getIcon("/nodes/include.svg"); // 16x16
     public static final Icon InspectionResults = IconLoader.getIcon("/nodes/inspectionResults.svg"); // 16x16
     public static final Icon Interface = IconLoader.getIcon("/nodes/interface.svg"); // 16x16
     public static final Icon J2eeParameter = IconLoader.getIcon("/nodes/j2eeParameter.svg"); // 16x16
