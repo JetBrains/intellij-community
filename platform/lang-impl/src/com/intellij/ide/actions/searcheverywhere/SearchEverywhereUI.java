@@ -14,6 +14,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
@@ -505,12 +506,35 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void initSearchActions() {
-    myResultsList.addMouseListener(new MouseAdapter() {
+    MouseAdapter listMouseListener = new MouseAdapter() {
+      private int currentDescriptionIndex = -1;
+
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
       }
-    });
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        int index = myResultsList.locationToIndex(e.getPoint());
+        indexChanged(index);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        int index = myResultsList.getSelectedIndex();
+        indexChanged(index);
+      }
+
+      private void indexChanged(int index) {
+        if (index != currentDescriptionIndex) {
+          currentDescriptionIndex = index;
+          showDescriptionForIndex(index);
+        }
+      }
+    };
+    myResultsList.addMouseMotionListener(listMouseListener);
+    myResultsList.addMouseListener(listMouseListener);
 
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
@@ -550,10 +574,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     });
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(__ -> {
-      stopSearching();
-      searchFinishedHandler.run();
-    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
+    DumbAwareAction.create(__ -> closePopup())
+      .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -575,6 +597,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       if (selectedValue != null && myHint != null && myHint.isVisible()) {
         updateHint(selectedValue);
       }
+
+      showDescriptionForIndex(myResultsList.getSelectedIndex());
     });
 
     myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -593,11 +617,18 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       @Override
       public void focusLost(FocusEvent e) {
         if (!isHintComponent(e.getOppositeComponent())) {
-          stopSearching();
-          searchFinishedHandler.run();
+          closePopup();
         }
       }
     });
+  }
+
+  private void showDescriptionForIndex(int index) {
+    if (index >= 0) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
+      String description = (String) contributor.getDataForItem(myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, description);
+    }
   }
 
   private void registerAction(String actionID, Consumer<AnActionEvent> action) {
@@ -699,8 +730,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
 
     if (closePopup) {
-      stopSearching();
-      searchFinishedHandler.run();
+      closePopup();
     } else {
       myResultsList.repaint();
     }
@@ -722,6 +752,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (myBufferedListener != null) {
       myBufferedListener.clearBuffer();
     }
+  }
+
+  private void closePopup() {
+    ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
+    stopSearching();
+    searchFinishedHandler.run();
   }
 
   @NotNull
@@ -1035,7 +1071,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
       contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
 
-      searchFinishedHandler.run();
+      closePopup();
       if (!contributorsForAdditionalSearch.isEmpty()) {
         ProgressManager.getInstance().run(new Task.Modal(myProject, tabCaptionText, true) {
           private final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
