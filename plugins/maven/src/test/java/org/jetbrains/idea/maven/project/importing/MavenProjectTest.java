@@ -528,6 +528,33 @@ public class MavenProjectTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_7, LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel());
   }
 
+  public void testCompilerPluginConfigurationCompilerArguments() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <compilerArguments>" +
+                  "          <Averbose>true</Averbose>" +
+                  "          <parameters></parameters>" +
+                  "          <bootclasspath>rt.jar_path_here</bootclasspath>" +
+                  "        </compilerArguments>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),
+                                    "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here");
+  }
+
   // commenting the test as the errorProne module is not available to IJ community project
   // TODO move the test to the errorProne module
   //public void testCompilerPluginErrorProneConfiguration() {
