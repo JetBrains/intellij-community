@@ -81,7 +81,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   protected void execute() {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
-    branchWillChange();
+    notifyBranchWillChange();
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();

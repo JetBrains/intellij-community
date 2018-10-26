@@ -270,7 +270,7 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void branchWillChange() {
+  protected void notifyBranchWillChange() {
     String currentBranch = myCurrentHeads.values().iterator().next();
     if (currentBranch != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
