@@ -38,6 +38,7 @@ abstract class GithubTest : GitPlatformTest() {
 
   private lateinit var authenticationManager: GithubAuthenticationManager
 
+  protected lateinit var organisation: String
   protected lateinit var mainAccount: AccountData
   protected lateinit var secondaryAccount: AccountData
 
@@ -55,6 +56,8 @@ abstract class GithubTest : GitPlatformTest() {
 
     authenticationManager = service()
 
+    organisation = System.getenv("idea.test.github.org")
+    assertNotNull(organisation)
     mainAccount = createAccountData(host, token1)
     secondaryAccount = createAccountData(host, token2)
     setCurrentAccount(mainAccount)
@@ -72,22 +75,27 @@ abstract class GithubTest : GitPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { deleteAllRepos() })
+      .append(ThrowableRunnable { deleteAllRepos(mainAccount, organisation) })
+      .append(ThrowableRunnable { deleteAllRepos(mainAccount) })
+      .append(ThrowableRunnable { deleteAllRepos(secondaryAccount) })
       .append(ThrowableRunnable { setCurrentAccount(null) })
       .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }
 
-  private fun deleteAllRepos() {
-    deleteAllRepos(mainAccount)
-    deleteAllRepos(secondaryAccount)
-  }
-
   private fun deleteAllRepos(accountData: AccountData) {
     setCurrentAccount(accountData)
     for (repo in GithubApiPagesLoader.loadAll(accountData.executor, DumbProgressIndicator.INSTANCE,
                                               GithubApiRequests.CurrentUser.Repos.pages(accountData.account.server, false))) {
+      accountData.executor.execute(GithubApiRequests.Repos.delete(repo.url))
+    }
+  }
+
+  private fun deleteAllRepos(accountData: AccountData, organisation: String) {
+    setCurrentAccount(accountData)
+    for (repo in GithubApiPagesLoader.loadAll(accountData.executor, DumbProgressIndicator.INSTANCE,
+                                              GithubApiRequests.Organisations.Repos.pages(accountData.account.server, organisation))) {
       accountData.executor.execute(GithubApiRequests.Repos.delete(repo.url))
     }
   }

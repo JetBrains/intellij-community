@@ -34,7 +34,8 @@ object GithubApiRequests {
     object Repos : Entity("/repos") {
       @JvmOverloads
       @JvmStatic
-      fun pages(server: GithubServerPath, allAssociated: Boolean = true) = GithubApiPagesLoader.Request(get(server, allAssociated), ::get)
+      fun pages(server: GithubServerPath, allAssociated: Boolean = true, pagination: GithubRequestPagination? = null) =
+        GithubApiPagesLoader.Request(get(server, allAssociated, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
@@ -63,6 +64,28 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get repository subscriptions")
+    }
+  }
+
+  object Organisations : Entity("/orgs") {
+
+    object Repos : Entity("/repos") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, organisation: String) = GithubApiPagesLoader.Request(get(server, organisation), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, organisation: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix, pagination?.toString().orEmpty()))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get organisation repositories")
+
+      @JvmStatic
+      fun create(server: GithubServerPath, organisation: String, name: String, description: String, private: Boolean) =
+        Post.json<GithubRepo>(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix),
+                              GithubRepoRequest(name, description, private))
+          .withOperationName("create organisation repository")
     }
   }
 
