@@ -70,7 +70,8 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
 
     if (!fatalErrorHappened) {
       notifySuccess();
-      updateRecentBranch(myNewBranchName);
+      notifyBranchHasChanged(myNewBranchName);
+      updateRecentBranch();
     }
   }
 

@@ -245,13 +245,7 @@ abstract class GitBranchOperation {
    * This is to be performed after successful checkout operation.
    * @param branchName
    */
-  protected void updateRecentBranch(@Nullable String branchName) {
-    if (branchName != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        if (myProject.isDisposed()) return;
-        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
-      });
-    }
+  protected void updateRecentBranch() {
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
       String currentHead = myCurrentHeads.get(repository);
@@ -276,6 +270,15 @@ abstract class GitBranchOperation {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (myProject.isDisposed()) return;
         myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(currentBranch);
+      });
+    }
+  }
+
+  protected void notifyBranchHasChanged(@Nullable String branchName) {
+    if (branchName != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
       });
     }
   }

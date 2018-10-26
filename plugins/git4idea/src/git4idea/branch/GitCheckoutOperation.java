@@ -141,7 +141,8 @@ class GitCheckoutOperation extends GitBranchOperation {
                                                            "<br><a href='rollback'>Rollback</a>",
                                                            new RollbackOperationNotificationListener());
         }
-        updateRecentBranch(myStartPointReference);
+        notifyBranchHasChanged(myStartPointReference);
+        updateRecentBranch();
       }
       else {
         LOG.assertTrue(!myRefShouldBeValid);
