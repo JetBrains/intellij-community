@@ -22,6 +22,7 @@ import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Key;
@@ -85,18 +86,23 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
                                            @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
     Collection<? extends ProjectTask> buildTasks = tasksMap.get(ModuleBuildTask.class);
     if (ContainerUtil.isEmpty(buildTasks)) return;
-    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
 
+    ModulesBuildSettings modulesBuildSettings = assembleModulesBuildSettings(buildTasks);
     CompilerManager compilerManager = CompilerManager.getInstance(project);
-    CompileScope scope = createScope(compilerManager, context,
-                                     modulesBuildSettings.modules,
-                                     modulesBuildSettings.includeDependentModules,
-                                     modulesBuildSettings.includeRuntimeDependencies);
-    if (modulesBuildSettings.isIncrementalBuild) {
-      compilerManager.make(scope, compileNotification);
+    
+    if (modulesBuildSettings.isRebuild()){
+      compilerManager.rebuild(compileNotification);
     }
     else {
-      compilerManager.compile(scope, compileNotification);
+      CompileScope scope = createScope(
+        compilerManager, context, modulesBuildSettings.modules, modulesBuildSettings.includeDependentModules, modulesBuildSettings.includeRuntimeDependencies
+      );
+      if (modulesBuildSettings.isIncrementalBuild) {
+        compilerManager.make(scope, compileNotification);
+      }
+      else {
+        compilerManager.compile(scope, compileNotification);
+      }
     }
   }
 
@@ -114,6 +120,15 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
       this.includeDependentModules = includeDependentModules;
       this.includeRuntimeDependencies = includeRuntimeDependencies;
       this.modules = modules;
+    }
+
+    boolean isRebuild() {
+      if (!isIncrementalBuild && !modules.isEmpty()) {
+        final Module someModule = modules.iterator().next();
+        final Module[] projectModules = ModuleManager.getInstance(someModule.getProject()).getModules();
+        return projectModules.length == modules.size();
+      }
+      return false;
     }
   }
 
