@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MarkerType {
   private final GutterIconNavigationHandler<PsiElement> handler;
@@ -110,10 +110,11 @@ public class MarkerType {
     PsiMethod[] superMethods = composeSuperMethods(method, acceptSelf);
     if (superMethods.length == 0) return null;
 
-    AtomicBoolean first = new AtomicBoolean(true);
+    String divider = GutterTooltipHelper.getElementDivider(false, false, superMethods.length);
+    AtomicReference<String> reference = new AtomicReference<>(""); // optimization: calculate next divider only once
     return GutterTooltipHelper.getTooltipText(
       Arrays.asList(superMethods),
-      superMethod -> getTooltipPrefix(method, superMethod, first.getAndSet(false)),
+      superMethod -> getTooltipPrefix(method, superMethod, reference.getAndSet(divider)),
       superMethod -> isSameSignature(method, superMethod),
       IdeActions.ACTION_GOTO_SUPER);
   }
@@ -125,15 +126,14 @@ public class MarkerType {
 
     return GutterTooltipHelper.getTooltipText(
       Arrays.asList(pair.superMethod, pair.subClass),
-      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, true) : " via sub-class ",
+      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, "") : " via sub-class ",
       element -> element instanceof PsiMethod && isSameSignature(method, (PsiMethod)element),
       IdeActions.ACTION_GOTO_SUPER);
   }
 
   @NotNull
-  private static String getTooltipPrefix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod, boolean first) {
-    StringBuilder sb = new StringBuilder();
-    if (!first) sb.append("<br>");
+  private static String getTooltipPrefix(@NotNull PsiMethod method, @NotNull PsiMethod superMethod, @NotNull String prefix) {
+    StringBuilder sb = new StringBuilder(prefix);
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     boolean isSuperAbstract = superMethod.hasModifierProperty(PsiModifier.ABSTRACT);
     sb.append(isSuperAbstract && !isAbstract ? "Implements method " : "Overrides method ");
