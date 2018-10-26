@@ -127,6 +127,19 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-29767
+  public void testContinueInPositiveIterationWithExitPoint() {
+    doTestByText(
+      "import sys\n" +
+      "\n" +
+      "for s in \"abc\":\n" +
+      "    if len(s) == 1:\n" +
+      "        continue\n" +
+      "    sys.exit(0)\n" +
+      "raise Exception(\"the end\")"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
