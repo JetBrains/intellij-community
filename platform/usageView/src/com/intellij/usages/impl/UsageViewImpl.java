@@ -517,9 +517,6 @@ public class UsageViewImpl implements UsageViewEx {
   private void setupCentralPanel() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myCentralPanel.removeAll();
-    disposeUsageContextPanels();
-
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
     // add reaction to scrolling:
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
@@ -530,6 +527,14 @@ public class UsageViewImpl implements UsageViewEx {
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
+    updateUsagesContextPanels();
+
+    myCentralPanel.add(myAdditionalComponent, BorderLayout.SOUTH);
+    myAdditionalComponent.add(myButtonPanel, BorderLayout.SOUTH);
+  }
+
+  private void updateUsagesContextPanels() {
+    disposeUsageContextPanels();
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
@@ -579,16 +584,13 @@ public class UsageViewImpl implements UsageViewEx {
       myPreviewSplitter.setProportion(1);
     }
 
-    myCentralPanel.add(myAdditionalComponent, BorderLayout.SOUTH);
-    myAdditionalComponent.add(myButtonPanel, BorderLayout.SOUTH);
-
     myRootPanel.revalidate();
     myRootPanel.repaint();
   }
 
   private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
     myCurrentUsageContextProvider = provider;
-    setupCentralPanel();
+    updateUsagesContextPanels();
     updateOnSelectionChanged();
   }
 
@@ -944,7 +946,7 @@ public class UsageViewImpl implements UsageViewEx {
         updateImmediately();
       }}));
     if (myCentralPanel != null) {
-      setupCentralPanel();
+      updateUsagesContextPanels();
     }
   }
 
