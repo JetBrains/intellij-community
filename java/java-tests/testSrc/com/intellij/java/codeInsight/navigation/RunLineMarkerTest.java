@@ -98,6 +98,17 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals(1, marks.size());
   }
 
+  public void testTestAnnotationInSuperMethodOnly() {
+    myFixture.addClass("package org.junit; public @interface Test {}");
+    myFixture.addClass("class Foo { @Test public void testFoo() {}}");
+    myFixture.configureByText("MyTest.java", "public class MyTest extends Foo {\n" +
+                                               "    public void test<caret>Foo() {\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+  }
+
   public void testNestedTestClass() {
     TestStateStorage stateStorage = TestStateStorage.getInstance(getProject());
     String testUrl = "java:suite://Main$MainTest";
