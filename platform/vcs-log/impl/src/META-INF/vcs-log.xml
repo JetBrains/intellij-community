@@ -142,6 +142,7 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
     </group>

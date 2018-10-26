@@ -125,7 +125,7 @@
       <separator/>
       <reference id="Git.Revert.In.Log" />
       <separator/>
-      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
     <group id="Git.Log.ContextMenu">

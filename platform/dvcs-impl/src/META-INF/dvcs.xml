@@ -21,14 +21,12 @@
     </group>
 
     <group id="Dvcs.Log.ContextMenu">
-      <separator/>
       <reference id="Vcs.CherryPick"/>
-      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
     <group id="Dvcs.FileHistory.ContextMenu">
-      <separator/>
       <reference id="Vcs.CherryPick"/>
-      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
 
     <group id="Dvcs.Log.Toolbar">
