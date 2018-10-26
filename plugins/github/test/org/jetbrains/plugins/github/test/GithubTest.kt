@@ -3,7 +3,6 @@ package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
@@ -13,7 +12,8 @@ import git4idea.test.GitPlatformTest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
-import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
+import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
@@ -38,9 +38,12 @@ abstract class GithubTest : GitPlatformTest() {
 
   private lateinit var authenticationManager: GithubAuthenticationManager
 
-  protected lateinit var organisation: String
+  private lateinit var organisation: String
   protected lateinit var mainAccount: AccountData
   protected lateinit var secondaryAccount: AccountData
+
+  private val mainRepos = mutableSetOf<GithubRepo>()
+  private val secondaryRepos = mutableSetOf<GithubRepo>()
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -75,33 +78,77 @@ abstract class GithubTest : GitPlatformTest() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
-      .append(ThrowableRunnable { deleteAllRepos(mainAccount, organisation) })
-      .append(ThrowableRunnable { deleteAllRepos(secondaryAccount) })
-      .append(ThrowableRunnable { deleteAllRepos(mainAccount) })
+      .append(ThrowableRunnable { deleteRepos(secondaryAccount, secondaryRepos) })
+      .append(ThrowableRunnable { deleteRepos(mainAccount, mainRepos) })
       .append(ThrowableRunnable { setCurrentAccount(null) })
       .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
       .append(ThrowableRunnable { super.tearDown() })
       .run()
   }
 
-  private fun deleteAllRepos(accountData: AccountData) {
-    setCurrentAccount(accountData)
-    for (repo in GithubApiPagesLoader.loadAll(accountData.executor, DumbProgressIndicator.INSTANCE,
-                                              GithubApiRequests.CurrentUser.Repos.pages(accountData.account.server, false))) {
-      accountData.executor.execute(GithubApiRequests.Repos.delete(repo.url))
-    }
-  }
-
-  private fun deleteAllRepos(accountData: AccountData, organisation: String) {
-    setCurrentAccount(accountData)
-    for (repo in GithubApiPagesLoader.loadAll(accountData.executor, DumbProgressIndicator.INSTANCE,
-                                              GithubApiRequests.Organisations.Repos.pages(accountData.account.server, organisation))) {
-      accountData.executor.execute(GithubApiRequests.Repos.delete(repo.url))
-    }
-  }
-
   protected open fun setCurrentAccount(accountData: AccountData?) {
     authenticationManager.setDefaultAccount(myProject, accountData?.account)
+  }
+
+  protected fun createUserRepo(account: AccountData, autoInit: Boolean = false): GithubRepo {
+    setCurrentAccount(account)
+    val repo = account.executor.execute(
+      GithubApiRequests.CurrentUser.Repos.create(account.account.server, createRepoName(), "", false, autoInit))
+    if (account === mainAccount) {
+      mainRepos.add(repo)
+    }
+    else {
+      secondaryRepos.add(repo)
+    }
+    return repo
+  }
+
+  protected fun forkRepo(account: AccountData, upstream: GithubRepo): GithubRepo {
+    setCurrentAccount(account)
+    val repo = account.executor.execute(
+      GithubApiRequests.Repos.Forks.create(account.account.server, upstream.userName, upstream.name))
+    if (account === mainAccount) {
+      mainRepos.add(repo)
+    }
+    else {
+      secondaryRepos.add(repo)
+    }
+    return repo
+  }
+
+  protected fun createOrgRepo(): GithubRepo {
+    setCurrentAccount(mainAccount)
+    val repo = mainAccount.executor.execute(
+      GithubApiRequests.Organisations.Repos.create(mainAccount.account.server, organisation, createRepoName(), "", false))
+    mainRepos.add(repo)
+    return repo
+  }
+
+  fun createRepoName(): String {
+    val rnd = ThreadLocalRandom.current()
+    val time = Clock.getTime()
+    return getTestName(false) +
+           "_" + DateFormatUtil.formatDate(time).replace('/', '-') +
+           "_" + rnd.nextLong()
+  }
+
+  protected fun checkRepoExists(account: AccountData, repoPath: GithubFullPath) {
+    val repo = account.executor.execute(
+      GithubApiRequests.Repos.get(account.account.server, repoPath.user, repoPath.repository))
+    assertNotNull("GitHub repository does not exist", repo)
+    if (account === mainAccount) {
+      mainRepos.add(repo!!)
+    }
+    else {
+      secondaryRepos.add(repo!!)
+    }
+  }
+
+  private fun deleteRepos(account: AccountData, repos: Collection<GithubRepo>) {
+    setCurrentAccount(account)
+    for (repo in repos) {
+      account.executor.execute(GithubApiRequests.Repos.delete(repo.url))
+    }
   }
 
   protected fun createProjectFiles() {
@@ -136,13 +183,4 @@ abstract class GithubTest : GitPlatformTest() {
                                    val username: String,
                                    val executor: GithubApiRequestExecutor)
 
-  companion object {
-    fun createRepoName(): String {
-      val rnd = ThreadLocalRandom.current()
-      val time = Clock.getTime()
-      return getTestName(null, false) +
-             "_" + DateFormatUtil.formatDate(time).replace('/', '-') +
-             "_" + rnd.nextLong()
-    }
-  }
 }

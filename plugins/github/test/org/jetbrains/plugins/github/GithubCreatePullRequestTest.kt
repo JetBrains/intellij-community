@@ -10,7 +10,6 @@ import com.intellij.util.ThreeState
 import git4idea.actions.GitInit
 import git4idea.test.TestDialogHandler
 import git4idea.test.git
-import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.test.GithubGitRepoTest
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog
@@ -22,8 +21,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
   override fun setUp() {
     super.setUp()
 
-    mainRepo = mainAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_repo", "", false, true))
+    mainRepo = createUserRepo(mainAccount, true)
     registerDefaultCreatePullRequestDialogHandler()
   }
 
@@ -60,9 +58,7 @@ class GithubCreatePullRequestTest : GithubGitRepoTest() {
   }
 
   fun testFork() {
-    setCurrentAccount(secondaryAccount)
-    val fork = secondaryAccount.executor.execute(
-      GithubApiRequests.Repos.Forks.create(secondaryAccount.account.server, mainRepo.userName, mainRepo.name))
+    val fork = forkRepo(secondaryAccount, mainRepo)
 
     cloneRepo(fork)
     createChanges()

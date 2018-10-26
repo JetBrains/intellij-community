@@ -8,8 +8,7 @@ import com.intellij.openapi.vcs.Executor.cd
 import git4idea.commands.Git
 import git4idea.test.TestDialogHandler
 import git4idea.test.git
-import org.jetbrains.plugins.github.api.GithubApiRequests
-import java.io.IOException
+import org.jetbrains.plugins.github.api.GithubFullPath
 
 class GithubShareProjectTest : GithubShareProjectTestBase() {
 
@@ -25,7 +24,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
     checkGitExists()
-    checkGithubExists()
+    checkRepoExists(mainAccount, GithubFullPath(mainAccount.username, projectName))
     checkRemoteConfigured()
     checkLastCommitPushed()
   }
@@ -67,7 +66,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
     checkGitExists()
-    checkGithubExists()
+    checkRepoExists(mainAccount, GithubFullPath(mainAccount.username, projectName))
     checkRemoteConfigured()
     checkLastCommitPushed()
   }
@@ -86,7 +85,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     checkNotification(NotificationType.INFORMATION, "Successfully shared project on GitHub", null)
     findGitRepo()
     checkGitExists()
-    checkGithubExists()
+    checkRepoExists(mainAccount, GithubFullPath(mainAccount.username, projectName))
     checkRemoteConfigured()
     checkLastCommitPushed()
   }
@@ -101,14 +100,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     checkNotification(NotificationType.INFORMATION, "Successfully created empty repository on GitHub", null)
     findGitRepo()
     checkGitExists()
-    checkGithubExists()
+    checkRepoExists(mainAccount, GithubFullPath(mainAccount.username, projectName))
     checkRemoteConfigured()
-  }
-
-  @Throws(IOException::class)
-  private fun checkGithubExists() {
-    val githubInfo = mainAccount.executor.execute(
-      GithubApiRequests.Repos.get(mainAccount.account.server, mainAccount.username, projectName))
-    assertNotNull("GitHub repository does not exist", githubInfo)
   }
 }

@@ -3,30 +3,31 @@ package org.jetbrains.plugins.github
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.test.GithubTest
 
 class GithubRequestQueryingTest : GithubTest() {
 
+  private lateinit var orgRepo: GithubRepo
+  private lateinit var mainRepos: Set<GithubRepo>
+  private lateinit var secondaryRepos: Set<GithubRepo>
+
   override fun setUp() {
     super.setUp()
 
-    mainAccount.executor.execute(
-      GithubApiRequests.Organisations.Repos.create(mainAccount.account.server, organisation, "org_repo", "", false))
+    orgRepo = createOrgRepo()
 
-    mainAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_user_repo1", "", false))
-    mainAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_user_repo2", "", false))
-    mainAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_user_repo3", "", false))
-    mainAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_user_repo4", "", false))
+    mainRepos = setOf(
+      createUserRepo(mainAccount),
+      createUserRepo(mainAccount),
+      createUserRepo(mainAccount),
+      createUserRepo(mainAccount)
+    )
 
     setCurrentAccount(secondaryAccount)
-    secondaryAccount.executor.execute(
-      GithubApiRequests.CurrentUser.Repos.create(secondaryAccount.account.server, "sec_user_repo1", "", false))
+    secondaryRepos = setOf(createUserRepo(secondaryAccount))
 
     setCurrentAccount(mainAccount)
   }
@@ -35,32 +36,31 @@ class GithubRequestQueryingTest : GithubTest() {
   fun testLinkPagination() {
     val result = GithubApiPagesLoader
       .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false, GithubRequestPagination(pageSize = 2))).map {
-        it.name
-      }
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false, GithubRequestPagination(pageSize = 2)))
 
-    assertSameElements(result, listOf("main_user_repo1", "main_user_repo2", "main_user_repo3", "main_user_repo4"))
+    assertContainsElements(result, mainRepos)
+    assertDoesntContain(result, secondaryRepos)
   }
 
   @Throws(Throwable::class)
   fun testOwnRepos() {
     val result = GithubApiPagesLoader
       .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false)).map {
-        it.name
-      }
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server, false))
 
-    assertSameElements(result, "main_user_repo1", "main_user_repo2", "main_user_repo3", "main_user_repo4")
+    assertContainsElements(result, mainRepos)
+    assertDoesntContain(result, orgRepo)
+    assertDoesntContain(result, secondaryRepos)
   }
 
   @Throws(Throwable::class)
   fun testAllRepos() {
     val result = GithubApiPagesLoader
       .loadAll(mainAccount.executor, EmptyProgressIndicator(),
-               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server)).map {
-        it.name
-      }
+               GithubApiRequests.CurrentUser.Repos.pages(mainAccount.account.server))
 
-    assertSameElements(result, "org_repo", "main_user_repo1", "main_user_repo2", "main_user_repo3", "main_user_repo4")
+    assertContainsElements(result, mainRepos)
+    assertContainsElements(result, orgRepo)
+    assertDoesntContain(result, secondaryRepos)
   }
 }

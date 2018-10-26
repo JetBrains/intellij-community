@@ -20,7 +20,7 @@ class GithubIssuesTest : GithubTest() {
     val server = secondaryAccount.account.server
     val username = secondaryAccount.username
 
-    val repo = executor.execute(GithubApiRequests.CurrentUser.Repos.create(server, createRepoName(), "", false))
+    val repo = createUserRepo(secondaryAccount)
     repoName = repo.name
 
     // should probably accept an invitation https://developer.github.com/v3/repos/invitations/#accept-a-repository-invitation
