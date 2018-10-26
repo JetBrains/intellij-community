@@ -34,8 +34,8 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     List<String> protocols = new ArrayList<>();
     protocols.add("file");
     protocols.add("jar");
-    if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME.getName())) {
-      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getExtensions()) {
+    if (Extensions.getRootArea().hasExtensionPoint(PathMacroExpandableProtocolBean.EP_NAME)) {
+      for (PathMacroExpandableProtocolBean bean : PathMacroExpandableProtocolBean.EP_NAME.getExtensionList()) {
         protocols.add(bean.protocol);
       }
     }
@@ -47,9 +47,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
   @SuppressWarnings("CopyConstructorMissesField")
   public ReplacePathToMacroMap(@NotNull ReplacePathToMacroMap map) {
-    for (Map.Entry<String, String> entry : map.myMacroMap.entrySet()) {
-      myMacroMap.put(entry.getKey(), entry.getValue());
-    }
+    myMacroMap.putAll(map.myMacroMap);
   }
 
   public void addMacroReplacement(String path, String macroName) {
