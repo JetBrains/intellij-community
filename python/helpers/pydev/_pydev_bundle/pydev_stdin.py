@@ -1,5 +1,7 @@
 import sys
 
+from pydev_console.protocol import KeyboardInterruptException
+
 
 # =======================================================================================================================
 # BaseStdIn
@@ -64,6 +66,8 @@ class StdIn(BaseStdIn):
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
         except KeyboardInterrupt:
+            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
+        except KeyboardInterruptException:
             raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
         except:
             return '\n'
