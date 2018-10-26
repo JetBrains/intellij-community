@@ -964,10 +964,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     private void init() {
       getTemplatePresentation().setText(myReplace ? "Switch to Search" : "Switch to Replace");
       final ActionManager actionManager = ActionManager.getInstance();
-      registerCustomShortcutSet(myReplace
-                                ? actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet()
-                                : actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet(),
-                                getRootPane());
+      final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
+      final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
+      final ShortcutSet shortcutSet = myReplace
+                                      ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
+                                      : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
+      registerCustomShortcutSet(shortcutSet, getRootPane());
     }
   }
 }
