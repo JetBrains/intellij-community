@@ -345,7 +345,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
         }
         else {
           ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(process, "button.text.clear.authentication.cache", false, configuration.project)
+            .runProcessWithProgressSynchronously(process, message("button.text.clear.authentication.cache"), false, configuration.project)
         }
       }
     }
