@@ -158,7 +158,7 @@ public class UserDefinedJsonSchemaConfiguration {
             final VirtualFile relativeFile = getRelativeFile(project, patternText);
             if (relativeFile == null || !VfsUtilCore.isAncestor(relativeFile, vfile, true)) return false;
             JsonSchemaService service = JsonSchemaService.Impl.get(project);
-            return service.isApplicableToFile(vfile) && !service.isSchemaFile(vfile);
+            return service.isApplicableToFile(vfile);
           });
           break;
       }
