@@ -55,7 +55,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

@@ -321,20 +321,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     myScopePanel = new ScopePanel(getProject());
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeConsumer(scope -> {
-        if (scope == null) {
-          getOKAction().setEnabled(false);
-        }
-        else {
-          initiateValidation();
-        }
-      });
+      myScopePanel.setScopeConsumer(scope -> initiateValidation());
     }
     else {
       myScopePanel.setEnabled(false);
     }
 
     myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
+    myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
 
     final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));

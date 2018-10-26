@@ -45,7 +45,7 @@ public class ScriptFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel("script=");
       private final EditorTextField myTextField = UIUtil.createScriptComponent("", myTable.getProject());
