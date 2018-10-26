@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
+import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
@@ -102,9 +103,21 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
     if (compilerArguments != null) {
-      for (compilerArgument in compilerArguments.children) {
-        options.add("-" + compilerArgument.name)
-        addIfNotNull(options, nullize(compilerArgument.textTrim))
+
+      val effectiveArguments = compilerArguments.children.map {
+        val key = it.name.run { if (startsWith("-")) this else "-$this" }
+        val value = it.textTrim.nullize()
+        key to value
+      }.toMap()
+
+      effectiveArguments.forEach { key, value ->
+        if (key.startsWith("-A") && value != null) {
+          options.add("$key=$value")
+        }
+        else {
+          options.add(key)
+          addIfNotNull(options, value)
+        }
       }
     }
 
