@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl
 
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.impl.AsyncExecution.*
 import com.intellij.openapi.diagnostic.Logger
@@ -81,13 +82,13 @@ internal abstract class AsyncExecutionSupport<E : AsyncExecution<E>> : AsyncExec
 
   // MUST NOT throw. See https://github.com/Kotlin/kotlinx.coroutines/issues/562
   // #562 "Exceptions thrown by CoroutineExceptionHandler must be caught by handleCoroutineException()"
-  protected open fun handleUncaughtException(coroutineContext: CoroutineContext, throwable: Throwable) {
+  protected open fun handleUncaughtException(context: CoroutineContext, throwable: Throwable) {
     try {
-      LOG.error("Uncaught exception from $coroutineContext", throwable)  // throws AssertionError in unit testing mode
+      PluginManager.processException(throwable)  // throws AssertionError in unit testing mode
     }
     catch (e: Throwable) {
       // rethrow on EDT outside the Coroutines machinery
-      dispatcher.fallbackDispatch(coroutineContext, Runnable { throw e })
+      dispatcher.fallbackDispatch(context, Runnable { throw e })
     }
   }
 
