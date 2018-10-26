@@ -82,6 +82,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
   public static final String PYDEVD_FILTERS = "PYDEVD_FILTERS";
   public static final String PYDEVD_FILTER_LIBRARIES = "PYDEVD_FILTER_LIBRARIES";
+  public static final String PYDEVD_USE_CYTHON = "PYDEVD_USE_CYTHON";
   public static final String CYTHON_EXTENSIONS_DIR = new File(PathManager.getSystemPath(), "cythonExtensions").toString();
 
   @Override
@@ -347,6 +348,18 @@ public class PyDebugRunner extends GenericProgramRunner {
     final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?
                                                             (AbstractPythonRunConfiguration)runProfile : null;
     if (runConfiguration != null) {
+      final Sdk sdk = runConfiguration.getSdk();
+      if (sdk != null) {
+        final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+        if (flavor != null) {
+          final LanguageLevel langLevel = flavor.getLanguageLevel(sdk);
+          // PY-28457 Disable Cython extensions in Python 3.4 and Python 3.5 because of crash in generated C code
+          if (langLevel == LanguageLevel.PYTHON34 || langLevel == LanguageLevel.PYTHON35) {
+            environment.put(PYDEVD_USE_CYTHON, "NO");
+          }
+        }
+      }
+
       addSdkRootsToEnv(environment, runConfiguration);
       PythonEnvUtil.addToPythonPath(environment, runConfiguration.getWorkingDirectorySafe());
     }
