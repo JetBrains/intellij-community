@@ -328,6 +328,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null && !policy.canRun(getClass())) {
+      return false;
+    }
     return TestFrameworkUtil.canRunTest(getClass());
   }
 

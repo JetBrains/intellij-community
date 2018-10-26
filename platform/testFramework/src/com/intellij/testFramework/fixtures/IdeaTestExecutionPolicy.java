@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,4 +64,19 @@ public abstract class IdeaTestExecutionPolicy {
     }
     return PathManager.getHomePath();
   }
+
+  public boolean canRun(Class<? extends UsefulTestCase> testCaseClass) {
+    IdeaTestExecutionPolicy current = current();
+    if (current == null) return true;
+
+    for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
+      SkipWithExecutionPolicy annotation = clazz.getAnnotation(SkipWithExecutionPolicy.class);
+      if (annotation != null) {
+        return !annotation.value().equals(current.getName());
+      }
+    }
+    return true;
+  }
+
+  protected abstract String getName();
 }
