@@ -2,7 +2,6 @@
 package com.intellij.psi.availability;
 
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +65,7 @@ public class PsiAvailabilityServiceImpl extends PsiAvailabilityService {
       if (baseFile != null) {
         for (PsiFile file : baseFile.getViewProvider().getAllFiles()) {
           ProgressManager.checkCanceled();
-          ObjectUtils.doIfNotNull(file.getNode(), FileASTNode::getFirstChildNode);
+          file.getNode().getFirstChildNode();
         }
         return true;
       }
@@ -164,6 +162,7 @@ public class PsiAvailabilityServiceImpl extends PsiAvailabilityService {
           }
         });
       }));
+
     }
 
     ParsedState getParsedState(@NotNull ProgressIndicator indicator) {

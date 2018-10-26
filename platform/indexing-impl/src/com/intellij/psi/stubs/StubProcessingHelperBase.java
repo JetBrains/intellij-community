@@ -77,14 +77,13 @@ public abstract class StubProcessingHelperBase {
     if (!(psiFile instanceof PsiFileImpl) && psiFile instanceof PsiFileWithStubSupport) {
       return Collections.singletonList(((PsiFileWithStubSupport)psiFile).getStubbedSpine());
     }
-
-    return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider(), true),
-                             t -> ((PsiFileWithStubSupport)t.second).getStubbedSpine());
+    
+    return ContainerUtil.map(StubTreeBuilder.getStubbedRoots(psiFile.getViewProvider()), t -> ((PsiFileImpl)t.second).getStubbedSpine());
   }
 
   private <Psi extends PsiElement> boolean checkType(@NotNull Class<Psi> requiredClass, PsiFile psiFile, PsiElement psiElement) {
     if (requiredClass.isInstance(psiElement)) return true;
-
+    
     StubTree stubTree = ((PsiFileWithStubSupport)psiFile).getStubTree();
     if (stubTree == null && psiFile instanceof PsiFileImpl) stubTree = ((PsiFileImpl)psiFile).calcStubTree();
     inconsistencyDetected(stubTree, (PsiFileWithStubSupport)psiFile);
@@ -120,7 +119,7 @@ public abstract class StubProcessingHelperBase {
       // a file can be indexed as containing stubs, 
       // but then in a specific project FileViewProviderFactory can decide not to create stub-aware PSI 
       // because the file isn't in expected location
-      return true;
+      return true; 
     }
 
     ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
@@ -153,4 +152,6 @@ public abstract class StubProcessingHelperBase {
   }
 
   protected abstract void onInternalError(VirtualFile file);
+
+
 }

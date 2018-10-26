@@ -385,8 +385,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new IllegalArgumentException("Can't commit ClsFile: "+file);
     }
 
-    return ContainerUtil.mapNotNull(file.getViewProvider().getAllFiles(),
-                                    root -> root instanceof PsiFileImpl ? Pair.create((PsiFileImpl)root, root.getNode()) : null);
+    return ContainerUtil.map(file.getViewProvider().getAllFiles(), root -> Pair.create((PsiFileImpl)root, root.getNode()));
   }
 
   @NotNull
