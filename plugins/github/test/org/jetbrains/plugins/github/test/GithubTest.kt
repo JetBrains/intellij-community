@@ -86,6 +86,10 @@ abstract class GithubTest : GitPlatformTest() {
       .run()
   }
 
+  override fun getDebugLogCategories(): Collection<String> {
+    return super.getDebugLogCategories() + "#org.jetbrains.plugins.github.api.GithubApiRequestExecutor"
+  }
+
   protected open fun setCurrentAccount(accountData: AccountData?) {
     authenticationManager.setDefaultAccount(myProject, accountData?.account)
   }
