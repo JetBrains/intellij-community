@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
@@ -28,8 +29,10 @@ import java.util.List;
 
 
 public abstract class OutputLineSplitter {
+  private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
   private static final String TEAMCITY_SERVICE_MESSAGE_PREFIX = ServiceMessage.SERVICE_MESSAGE_START;
   private static final char NEW_LINE = '\n';
+  public static final int CYCLE_BUFFER_SIZE = ConsoleBuffer.getCycleBufferSize();
 
   private final boolean myStdinSupportEnabled;
 
@@ -137,7 +140,14 @@ public abstract class OutputLineSplitter {
     synchronized (myStdOutChunks) {
       for (OutputChunk chunk : myStdOutChunks) {
         if (lastChunk != null && chunk.getKey() == lastChunk.getKey()) {
-          lastChunk.append(chunk.getText());
+          String chunkText = chunk.getText();
+          if (USE_CYCLE_BUFFER) {
+            StringBuilder builder = lastChunk.myBuilder;
+            if (builder != null && builder.length() + chunkText.length() > CYCLE_BUFFER_SIZE) {
+              builder.delete(105, CYCLE_BUFFER_SIZE - 105);
+            }
+          }
+          lastChunk.append(chunkText);
         }
         else {
           lastChunk = chunk;
