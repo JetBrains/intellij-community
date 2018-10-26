@@ -21,25 +21,15 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
                 systemId: ProjectSystemId?,
                 action: AnAction,
                 event: AnActionEvent?) {
-      trigger(project, systemId, action, event, emptyMap())
-    }
-
-    @JvmStatic
-    fun trigger(project: Project?,
-                systemId: ProjectSystemId?,
-                action: AnAction,
-                event: AnActionEvent?,
-                data: Map<String, String> = emptyMap()) {
       if (project == null) return
-      val context = FUSUsageContext.create()
-      if (systemId != null) {
-        context.data["system"] = escapeSystemId(systemId)
-      }
-      if (event != null) {
-        context.data["place"] = event.place
-        context.data["isFromContextMenu"] = event.isFromContextMenu.toString()
-      }
-      context.data.putAll(data)
+
+      // preserve context data ordering
+      val context = FUSUsageContext.create(
+        "from.${event?.place ?: "undefined.place"}",
+        "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}",
+        systemId?.let { escapeSystemId(it) } ?: "undefined.system"
+      )
+
       FUSProjectUsageTrigger.getInstance(project).trigger(
         ExternalSystemActionsCollector::class.java,
         UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName), context)

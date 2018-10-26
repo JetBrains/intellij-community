@@ -6188,7 +6188,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // 'synchronized' '(' expression ')' lazy_block
+  // 'synchronized' '(' expression ')' mb_nl lazy_block
   public static boolean synchronized_statement(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "synchronized_statement")) return false;
     if (!nextTokenIs(b, KW_SYNCHRONIZED)) return false;
@@ -6198,6 +6198,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     p = r; // pin = 2
     r = r && report_error_(b, expression(b, l + 1, -1));
     r = p && report_error_(b, consumeToken(b, T_RPAREN)) && r;
+    r = p && report_error_(b, mb_nl(b, l + 1)) && r;
     r = p && lazy_block(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;

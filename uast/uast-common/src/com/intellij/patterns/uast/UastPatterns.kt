@@ -82,11 +82,14 @@ private fun isCallExpressionParameter(argumentExpression: UElement,
 
 private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPattern<out PsiMethod>): Boolean {
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
+  if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
+
   val leftOperand = uBinaryExpression.leftOperand
 
   val uastReference = when (leftOperand) {
     is UQualifiedReferenceExpression -> leftOperand.selector
-    else -> leftOperand
+    is UReferenceExpression -> leftOperand
+    else -> return false
   }
   val references = uastReference.sourcePsi?.references ?: return false // via `sourcePsi` because of KT-27385
   return references.any { methodPattern.accepts(it.resolve()) }

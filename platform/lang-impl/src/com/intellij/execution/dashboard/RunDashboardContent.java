@@ -384,6 +384,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void setupBuilder() {
     RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
+      // unique class to simplify search through the logs
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
         return super.isAutoExpandNode(nodeDescriptor) ||

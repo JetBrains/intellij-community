@@ -77,7 +77,7 @@ public class CommonDataflow {
         if (!DfaNullability.isNotNull(newMap) && memState.isNotNull(value)) {
           newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         }
-        myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
+        myFacts.put(expression, existing == null ? newMap : existing.unite(newMap));
 
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         if (parent instanceof PsiConditionalExpression &&

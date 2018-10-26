@@ -196,6 +196,11 @@ public class AbstractTreeUi {
   private UiActivityMonitor myActivityMonitor;
   @NonNls private UiActivity myActivityId;
 
+  @Override
+  public String toString() {
+    return "AbstractTreeUi: builder = " + myBuilder;
+  }
+
   protected void init(@NotNull AbstractTreeBuilder builder,
                       @NotNull JTree tree,
                       @NotNull DefaultTreeModel treeModel,
@@ -3554,7 +3559,7 @@ public class AbstractTreeUi {
         getBuilder().sortChildren(myNodeComparator, node, children);
       }
       catch (IllegalArgumentException exception) {
-        StringBuilder sb = new StringBuilder("cannot sort children");
+        StringBuilder sb = new StringBuilder("cannot sort children in ").append(toString());
         children.forEach(child -> sb.append('\n').append(child));
         throw new IllegalArgumentException(sb.toString(), exception);
       }

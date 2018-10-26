@@ -174,6 +174,9 @@ internal class GitFetchSupportImpl(git: Git,
   private fun doFetch(repository: GitRepository, remote: GitRemote, authenticationGate: GitAuthenticationGate? = null): SingleRemoteResult {
     val result = git.fetch(repository, remote, emptyList(), authenticationGate)
     val pruned = result.output.mapNotNull { getPrunedRef(it) }
+    if (result.success()) {
+      repository.update()
+    }
     val error = if (result.success()) null else result.errorOutputAsJoinedString
     return SingleRemoteResult(error, pruned)
   }

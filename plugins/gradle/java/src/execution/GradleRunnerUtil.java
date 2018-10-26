@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -94,11 +93,11 @@ public class GradleRunnerUtil {
   }
 
   public static boolean isFromGroovyGradleScript(@NotNull PsiElement element) {
-    PsiFile file = element.getContainingFile();
-    if (!(file instanceof GroovyFile)) {
-      return false;
-    }
-    return GradleConstants.EXTENSION.equals(file.getVirtualFile().getExtension());
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return false;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) return false;
+    return GradleConstants.EXTENSION.equals(virtualFile.getExtension());
   }
 
   @NotNull

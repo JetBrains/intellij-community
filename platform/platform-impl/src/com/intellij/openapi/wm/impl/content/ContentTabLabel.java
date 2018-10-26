@@ -1,10 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
@@ -136,6 +139,17 @@ class ContentTabLabel extends BaseLabel {
       }
 
       selectContent();
+
+      if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.myDoubleClickActions.isEmpty()) {
+        DataContext dataContext = DataManager.getInstance().getDataContext(ContentTabLabel.this);
+        for (AnAction action : myLayout.myDoubleClickActions) {
+          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
+          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+            ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(action, dataContext, event);
+            ActionUtil.performActionDumbAware(action, event);
+          }
+        }
+      }
     }
   };
 

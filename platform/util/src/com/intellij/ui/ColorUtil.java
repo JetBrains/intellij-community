@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -277,7 +263,20 @@ public class ColorUtil {
    * @return dark or not
    */
   public static boolean isDark(@NotNull Color c) {
-    return c.getRed()*0.299 + c.getGreen()*0.587 + c.getBlue()*0.114 < 186;
+    return ((getLuminance(c) + 0.05) / 0.05) < 4.5;
+  }
+
+  public static double getLuminance(@NotNull Color color) {
+    return getLinearRGBComponentValue(color.getRed() / 255.0) * 0.2126 +
+           getLinearRGBComponentValue(color.getGreen() / 255.0) * 0.7152 +
+           getLinearRGBComponentValue(color.getBlue() / 255.0) * 0.0722;
+  }
+
+  public static double getLinearRGBComponentValue(double colorValue) {
+    if (colorValue <= 0.03928) {
+      return colorValue / 12.92;
+    }
+    return Math.pow(((colorValue + 0.055) / 1.055), 2.4);
   }
 
   @NotNull

@@ -24,10 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -71,7 +69,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
-    return skipSiblingsBackward(node, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsBackward(node, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -126,7 +124,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
-    return skipSiblingsForward(after, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsForward(after, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -592,6 +590,25 @@ public class PyPsiUtils {
       return FileUtil.toSystemDependentName(file.getPath());
     }
     return null;
+  }
+
+  /**
+   * Checks if specified file contains passed source in top-level import in stub-safe way.
+   * Does not process scopes inside the file.
+   *
+   * @param file   file whose imports should be visited
+   * @param source qualified name separated by dots that is looking for in imports
+   * @return true if specified file contains passed source in top-level import.
+   */
+  public static boolean containsImport(@NotNull PyFile file, @NotNull String source) {
+    final QualifiedName sourceQName = QualifiedName.fromDottedString(source);
+
+    return Stream.concat(
+      file.getFromImports().stream().map(PyFromImportStatement::getImportSourceQName),
+      file.getImportTargets().stream().map(PyImportElement::getImportedQName)
+    )
+      .filter(Objects::nonNull)
+      .anyMatch(name -> name.matchesPrefix(sourceQName));
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

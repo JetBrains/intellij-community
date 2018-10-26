@@ -126,7 +126,7 @@ final class SafeStAXStreamBuilder {
     return rootElement;
   }
 
-  private static Element processElementFragment(final XMLStreamReader reader, boolean isIgnoreBoundaryWhitespace) throws XMLStreamException, JDOMException {
+  private static Element processElementFragment(@NotNull XMLStreamReader reader, boolean isIgnoreBoundaryWhitespace) throws XMLStreamException, JDOMException {
     if (reader.getEventType() != START_ELEMENT) {
       throw new JDOMException("JDOM requires that the XMLStreamReader is at the START_ELEMENT state when retrieving an Element Fragment.");
     }
@@ -177,9 +177,9 @@ final class SafeStAXStreamBuilder {
     return fragment;
   }
 
-  private static Element processElement(XMLStreamReader reader) {
-    String name = reader.getLocalName();
-    final Element element = factory.element(name, Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI()));
+  @NotNull
+  private static Element processElement(@NotNull XMLStreamReader reader) {
+    final Element element = factory.element(reader.getLocalName(), Namespace.getNamespace(reader.getPrefix(), reader.getNamespaceURI()));
 
     // Handle attributes
     for (int i = 0, len = reader.getAttributeCount(); i < len; i++) {
@@ -187,8 +187,7 @@ final class SafeStAXStreamBuilder {
         reader.getAttributeLocalName(i),
         reader.getAttributeValue(i),
         AttributeType.getAttributeType(reader.getAttributeType(i)),
-        Namespace.getNamespace(reader.getAttributePrefix(i),
-                               reader.getAttributeNamespace(i))));
+        Namespace.getNamespace(reader.getAttributePrefix(i), reader.getAttributeNamespace(i))));
     }
 
     // Handle Namespaces

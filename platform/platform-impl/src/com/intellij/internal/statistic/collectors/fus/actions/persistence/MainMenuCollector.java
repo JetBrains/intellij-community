@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.components.*;
@@ -65,7 +66,7 @@ public class MainMenuCollector extends BaseUICollector implements PersistentStat
 
       if (!StringUtil.isEmpty(path)) {
         String key = ConvertUsagesUtil.escapeDescriptorName(path);
-        FeatureUsageLogger.INSTANCE.log(MainMenuUsagesCollector.GROUP_ID, key);
+        FeatureUsageLogger.INSTANCE.log(MainMenuUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
 
         final Integer count = myState.myValues.get(key);
         int value = count == null ? 1 : count + 1;

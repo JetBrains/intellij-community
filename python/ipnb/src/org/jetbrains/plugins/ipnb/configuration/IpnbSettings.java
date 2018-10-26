@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.ipnb.configuration;
 
 import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -13,6 +14,8 @@ import com.intellij.util.xmlb.annotations.Transient;
 import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.CredentialAttributes;
 
 @State(name = "IpnbSettings")
 public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
@@ -64,7 +67,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
     final String username = getUsername();
     final String url = "";
     final String accountName = createAccountName(username, url, projectPathHash);
-    PasswordSafe.getInstance().setPassword(IpnbSettings.class, accountName, password);
+    PasswordSafe.getInstance().set(CredentialAttributes(IpnbSettings.class, accountName), password == null ? null : new Credentials(accountName, password));
   }
 
   private static String createAccountName(@NotNull String username, @NotNull String url, @NotNull String projectPath) {

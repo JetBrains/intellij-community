@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import org.hamcrest.core.IsNull;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
@@ -24,7 +23,7 @@ import java.util.Map;
 import static com.intellij.testFramework.PlatformTestUtil.assertTiming;
 import static org.junit.Assume.assumeThat;
 
-public class GradleImportPerformanceTest extends GradleImportingTestCase {
+public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase {
 
   public static final String TEST_DATA_PATH = System.getenv("gradle.performance.test.data.path");
 
@@ -119,16 +118,5 @@ public class GradleImportPerformanceTest extends GradleImportingTestCase {
                 .filter(entry -> entry.getKey().startsWith(prefix))
                 .mapToLong(Map.Entry::getValue)
                 .sum();
-  }
-
-
-  private static void assertTracedTimePercentAtLeast(@NotNull final Map<String, Long> trace, long time, int threshold) {
-    final long tracedTime = trace.get("Gradle data obtained")
-                            + trace.get("Gradle project data processed")
-                            + trace.get("Data import total");
-
-    double percent = (double)tracedTime / time * 100;
-    assertTrue(String.format("Test time [%d] traced time [%d], percentage [%.2f]", time, tracedTime, percent),
-               percent > threshold && percent < 100);
   }
 }

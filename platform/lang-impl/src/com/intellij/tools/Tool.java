@@ -4,6 +4,7 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -305,7 +307,9 @@ public class Tool implements SchemeElement {
       setWorkingDirectory("$ProjectFileDir$");
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = Registry.is("use.tty.for.external.tools", false)
+                                     ? new PtyCommandLine().withConsoleMode(true)
+                                     : new GeneralCommandLine();
     try {
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);

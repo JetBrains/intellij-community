@@ -308,8 +308,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       myDialog.show();
       JRootPane rootPane = getRootPane();
-      if (rootPane != null && myHelper.isReplaceState()) {
-        rootPane.setDefaultButton(myReplaceSelectedButton);
+      if (rootPane != null) {
+        if (myHelper.isReplaceState()) {
+          rootPane.setDefaultButton(myReplaceSelectedButton);
+        }
         rootPane.getInputMap(WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ctrl pressed ENTER"), "openInFindWindow");
         rootPane.getActionMap().put("openInFindWindow", new AbstractAction() {
           @Override
@@ -598,6 +600,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (SwingUtilities.isDescendingFrom(e.getData(PlatformDataKeys.CONTEXT_COMPONENT), myFileMaskField) && myFileMaskField.isPopupVisible()) {
           myFileMaskField.hidePopup();
+          return;
+        }
+        if (myScopeUI.hideAllPopups()) {
           return;
         }
         if (enterAsOK) {

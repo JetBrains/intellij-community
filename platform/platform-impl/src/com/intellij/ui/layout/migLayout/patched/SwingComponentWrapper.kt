@@ -145,7 +145,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     try {
       return c.toolkit.screenResolution
     }
-    catch (ex: HeadlessException) {
+    catch (e: HeadlessException) {
       return PlatformDefaults.getDefaultDPI()
     }
   }
@@ -154,7 +154,7 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     try {
       return c.toolkit.screenResolution
     }
-    catch (ex: HeadlessException) {
+    catch (e: HeadlessException) {
       return PlatformDefaults.getDefaultDPI()
     }
   }
@@ -166,7 +166,6 @@ internal open class SwingComponentWrapper(private val c: JComponent) : Component
     catch (ignore: HeadlessException) {
       return 1024
     }
-
   }
 
   override fun getScreenHeight(): Int {

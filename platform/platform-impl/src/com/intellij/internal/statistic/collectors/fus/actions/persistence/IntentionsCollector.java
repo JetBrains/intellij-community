@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +49,7 @@ public class IntentionsCollector extends BaseUICollector implements PersistentSt
     String id = getIntentionId(action);
 
     String key = language.getID() + " " + id;
-    FeatureUsageLogger.INSTANCE.log(IntentionUsagesCollector.GROUP_ID, key);
+    FeatureUsageLogger.INSTANCE.log(IntentionUsagesCollector.GROUP_ID, key, FUSUsageContext.OS_CONTEXT.getData());
 
     final Integer count = state.myIntentions.get(key);
     int value = count == null ? 1 : count + 1;

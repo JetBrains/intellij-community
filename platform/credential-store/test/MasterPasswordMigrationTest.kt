@@ -2,6 +2,7 @@
 package com.intellij.credentialStore
 
 import com.intellij.configurationStore.deserializeInto
+import com.intellij.credentialStore.keePass.KeePassCredentialStore
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafeTest
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.runInEdtAndWait

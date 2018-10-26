@@ -1371,6 +1371,17 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
   }
 
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                              "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                              "    pass\n" +
+                                              "c1 = Cat1(\"name\", 5)\n" +
+                                              "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "_make", "_asdict", "_replace", "_fields");
+  }
+
   private void assertNoVariantsInExtendedCompletion() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");

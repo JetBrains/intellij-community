@@ -61,7 +61,7 @@ componentConstrains:
   'Spinner:': {}
   'JBIntSpinner #15': {spanX: 2097051, wrap: true}
   'Text with browse:': {}
-  'TextFieldWithHistoryWithBrowseButton #17':
+  'TextFieldWithBrowseButton #17':
     horizontal:
       grow: 100.0
       size:
@@ -135,7 +135,7 @@ componentBounds:
   'Spinner:': [0, 209, 50, 15]
   'JBIntSpinner #15': [128, 203, 81, 27]
   'Text with browse:': [0, 240, 110, 15]
-  'TextFieldWithHistoryWithBrowseButton #17': [128, 234, 574, 27]
+  'TextFieldWithBrowseButton #17': [128, 234, 574, 27]
   'All:': [0, 271, 20, 15]
   'JTextField #19': [128, 265, 64, 27]
   'JPasswordField #20': [194, 265, 256, 27]

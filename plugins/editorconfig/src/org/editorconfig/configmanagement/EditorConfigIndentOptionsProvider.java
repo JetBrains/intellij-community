@@ -20,8 +20,8 @@ import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.util.containers.ContainerUtil;
 import org.editorconfig.Utils;
 import org.editorconfig.core.EditorConfig;
+import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
-import org.editorconfig.settings.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,6 +69,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
     final IndentOptions indentOptions = (IndentOptions)settings.getIndentOptions(file.getFileType()).clone();
     if (applyIndentOptions(project, indentOptions, indentSize, continuationIndentSize, tabWidth, indentStyle, file.getCanonicalPath())) {
+      // Start retrieving parent files here
+      EditorConfigNavigationActionsFactory.getParentFiles(file, project);
       indentOptions.setOverrideLanguageOptions(true);
       return indentOptions;
     }
@@ -184,6 +186,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final Project project = file.getProject();
     if (isEditorConfigOptions(indentOptions)) {
       List<AnAction> actions = ContainerUtil.newArrayList();
+      actions.addAll(EditorConfigNavigationActionsFactory.getNavigationActions(file));
       actions.add(
         DumbAwareAction.create(
           EditorConfigBundle.message("action.disable"),

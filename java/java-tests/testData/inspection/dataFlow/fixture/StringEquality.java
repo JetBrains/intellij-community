@@ -90,4 +90,10 @@ class StringEquality {
       }
     }
   }
+
+  void testObject() {
+    Object x = " foo ".trim();
+    Object y = " foo ".trim();
+    if (x == y) {}
+  }
 }

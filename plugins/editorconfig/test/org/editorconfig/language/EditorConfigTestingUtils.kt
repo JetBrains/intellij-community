@@ -3,10 +3,7 @@ package org.editorconfig.language
 
 import junit.framework.TestCase.assertTrue
 
-val Boolean.assert
-  get() = assertTrue(this)
-
-fun <T> assertIterableEquals(first: Iterable<T>, second: Iterable<T>) {
-  first.all(second::contains).assert
-  second.all(first::contains).assert
+internal fun <T> assertIterableEquals(first: Iterable<T>, second: Iterable<T>) {
+  assertTrue(first.all(second::contains))
+  assertTrue(second.all(first::contains))
 }

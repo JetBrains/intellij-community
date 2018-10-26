@@ -44,6 +44,11 @@
                      bundle="i18n.GradleInspectionBundle"
                      key="multiple.repository.urls" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.MultipleRepositoryUrlsInspection"/>
+
+    <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
+                              order="last"/>
+    <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"
+                              implementationClass="org.jetbrains.plugins.gradle.execution.GradleGroovyRunLineMarkerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

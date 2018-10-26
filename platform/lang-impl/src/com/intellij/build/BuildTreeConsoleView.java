@@ -190,7 +190,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     TreeUtil.installActions(tree);
     myTreeStructure = new SimpleTreeStructure.Impl(rootNode);
 
-    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null);
+    myBuilder = new SimpleTreeBuilder(tree, model, myTreeStructure, null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(this, myBuilder);
     myBuilder.initRootNode();
     myBuilder.updateFromRoot();

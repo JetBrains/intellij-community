@@ -5,6 +5,14 @@ class B {
 }
 
 public class Cce {
+
+  void testNumbers(Object obj) {
+    if (obj instanceof Character) {
+      obj = Integer.valueOf((char)obj);
+    }
+    System.out.println(((Number)obj).longValue());
+  }
+
    public void a() {
       Object o = getObject();
 

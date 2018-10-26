@@ -17,35 +17,36 @@ class MethodResolveResult(
   state: ResolveState
 ) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
 
-  private val methodCandidate by lazy {
-    val siteSubstitutor = state[PsiSubstitutor.KEY].putAll(method.typeParameters, ref.typeArguments)
-    val qualifierConstraint = buildQualifier(ref, state)
-    val argumentConstraints = buildArguments(ref)
+  private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    super.getSubstitutor().putAll(method.typeParameters, ref.typeArguments)
+  }
 
+  private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    val argumentConstraints = buildArguments(ref)
     if (method is GrGdkMethod) {
       val arguments = mutableListOf<Argument>().apply {
-        add(0, qualifierConstraint)
+        add(0, buildQualifier(ref, state))
         addAll(argumentConstraints)
       }
-      MethodCandidate(method.staticMethod, siteSubstitutor, null, arguments, ref)
+      MethodCandidate(method.staticMethod, siteSubstitutor, arguments, ref)
     }
     else {
-      MethodCandidate(method, siteSubstitutor, qualifierConstraint, argumentConstraints, ref)
+      MethodCandidate(method, siteSubstitutor, argumentConstraints, ref)
     }
   }
 
-  private val applicabilitySubstitutor by lazy {
+  private val applicabilitySubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (ref.typeArguments.isNotEmpty()) {
-      methodCandidate.siteSubstitutor
+      siteSubstitutor
     }
     else {
       GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
     }
   }
 
-  private val fullSubstitutor by lazy {
+  private val fullSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (ref.typeArguments.isNotEmpty()) {
-      methodCandidate.siteSubstitutor
+      siteSubstitutor
     }
     else {
       GroovyInferenceSessionBuilder(ref, methodCandidate)

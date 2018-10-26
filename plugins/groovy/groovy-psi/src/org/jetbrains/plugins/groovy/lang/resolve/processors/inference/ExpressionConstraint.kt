@@ -10,15 +10,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class ExpressionConstraint(val expression: GrExpression, val leftType: PsiType?) : ConstraintFormula {
+class ExpressionConstraint(private val expression: GrExpression, private val leftType: PsiType?) : ConstraintFormula {
+
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     when (expression) {
       is GrMethodCall -> {
-        val invokedExpression = expression.invokedExpression
-        when (invokedExpression) {
-          is GrReferenceExpression -> constraints.add(ReferenceExpressionConstraint(invokedExpression, leftType))
-          else -> return true
-        }
+        val invokedExpression = expression.invokedExpression as? GrReferenceExpression ?: return true
+        constraints.add(ReferenceExpressionConstraint(invokedExpression, leftType))
       }
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))

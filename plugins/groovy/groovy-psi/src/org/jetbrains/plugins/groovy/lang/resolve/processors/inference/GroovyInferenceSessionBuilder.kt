@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidate: MethodCandidate) {
+class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, private val candidate: MethodCandidate) {
 
   private var closureSkipList = mutableListOf<GrMethodCall>()
 
@@ -126,7 +126,7 @@ class GroovyInferenceSessionBuilder(val ref: GrReferenceExpression, val candidat
       with(gparent) {
         val resolveResult = advancedResolve()
         if (resolveResult is GroovyMethodResult) {
-          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getPartialSubstitutor(), null,
+          val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.getPartialSubstitutor(), 
                                                 buildArguments(referenceElement!!), call)
           return methodCandidate.argumentMapping[Argument(null, call)]?.second
         }

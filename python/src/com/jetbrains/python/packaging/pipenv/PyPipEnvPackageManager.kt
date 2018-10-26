@@ -91,6 +91,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
         throw e
       }
       packages = parsePipEnvGraph(output)
+      ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }
     return packages ?: emptyList()
   }

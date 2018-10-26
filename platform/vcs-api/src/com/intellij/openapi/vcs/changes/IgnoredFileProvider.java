@@ -18,23 +18,10 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
-/**
- * Provides content, masks for VCS native ignore files (e.g. .gitignore, .hgignore).
- * Every plugin which have ignore files should implement it to contribute own ignores to VCS.
- */
 public interface IgnoredFileProvider {
   ExtensionPointName<IgnoredFileProvider> IGNORE_FILE = ExtensionPointName.create("com.intellij.ignoredFileProvider");
 
   boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath);
-
-  @NotNull
-  Set<String> getIgnoredFilesMasks(@NotNull Project project, @NotNull VirtualFile ignoreFileRoot);
-
-  @NotNull
-  String getMasksGroupDescription();
 }

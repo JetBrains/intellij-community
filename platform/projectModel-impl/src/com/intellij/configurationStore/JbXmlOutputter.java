@@ -70,7 +70,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.List;
 
-public final class JbXmlOutputter {
+// expandEmptyElements is ignored
+@SuppressWarnings("Duplicates")
+public class JbXmlOutputter {
   private static final Format DEFAULT_FORMAT = JDOMUtil.createFormat("\n");
 
   // For normal output
@@ -173,22 +175,6 @@ public final class JbXmlOutputter {
   public void output(@NotNull Element element, @NotNull Writer out) throws IOException {
     printElement(out, element, 0);
   }
-
-  /**
-   * This will handle printing out a list of nodes.
-   * This can be useful for printing the content of an element that
-   * contains HTML, like "&lt;description&gt;JDOM is
-   * &lt;b&gt;fun&gt;!&lt;/description&gt;".
-   *
-   * @param list <code>List</code> of nodes.
-   * @param out  <code>Writer</code> to use.
-   */
-  public void output(List<Content> list, Writer out) throws IOException {
-    printContentRange(out, list, 0, list.size(), 0);
-    out.flush();
-  }
-
-  // * * * * * * * * * * Internal printing methods * * * * * * * * * *
 
   /**
    * This will handle printing of the declaration.
@@ -340,7 +326,7 @@ public final class JbXmlOutputter {
    * This will handle printing a string.  Escapes the element entities,
    * trims interior whitespace, etc. if necessary.
    */
-  private void printString(@NotNull Writer out, String str) throws IOException {
+  private void printString(@NotNull Element parentElement, @NotNull Writer out, String str) throws IOException {
     if (format.getTextMode() == Format.TextMode.NORMALIZE) {
       str = Text.normalizeString(str);
     }
@@ -351,7 +337,6 @@ public final class JbXmlOutputter {
     if (macroMap != null) {
       str = macroMap.substitute(str, SystemInfoRt.isFileSystemCaseSensitive);
     }
-
     out.write(escapeElementEntities(str));
   }
 
@@ -378,42 +363,42 @@ public final class JbXmlOutputter {
       printAttributes(out, element.getAttributes());
     }
 
-    // Depending on the settings (newlines, textNormalize, etc), we may
-    // or may not want to print all of the content, so determine the
-    // index of the start of the content we're interested in based on the current settings.
+    // depending on the settings (newlines, textNormalize, etc), we may or may not want to print all of the content,
+    // so determine the index of the start of the content we're interested in based on the current settings.
+    if (!writeContent(out, element, level)) {
+      return;
+    }
+
+    out.write("</");
+    printQualifiedName(out, element);
+    out.write('>');
+  }
+
+  protected boolean writeContent(@NotNull Writer out, @NotNull Element element, int level) throws IOException {
     List<Content> content = element.getContent();
     int start = skipLeadingWhite(content, 0);
     int size = content.size();
     if (start >= size) {
-      // Case content is empty or all insignificant whitespace
-      if (format.getExpandEmptyElements()) {
-        out.write("></");
-        printQualifiedName(out, element);
-        out.write('>');
-      }
-      else {
-        out.write(" />");
-      }
+      // content is empty or all insignificant whitespace
+      out.write(" />");
+      return false;
+    }
+
+    out.write('>');
+
+    // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
+    if (nextNonText(content, start) < size) {
+      // case Mixed Content - normal indentation
+      newline(out);
+      printContentRange(element, out, content, start, size, level + 1);
+      newline(out);
+      indent(out, level);
     }
     else {
-      out.write('>');
-
-      // for a special case where the content is only CDATA or Text we don't want to indent after the start or before the end tag
-      if (nextNonText(content, start) < size) {
-        // case Mixed Content - normal indentation
-        newline(out);
-        printContentRange(out, content, start, size, level + 1);
-        newline(out);
-        indent(out, level);
-      }
-      else {
-        // case all CDATA or Text - no indentation
-        printTextRange(out, content, start, size);
-      }
-      out.write("</");
-      printQualifiedName(out, element);
-      out.write('>');
+      // case all CDATA or Text - no indentation
+      printTextRange(element, out, content, start, size);
     }
+    return true;
   }
 
   /**
@@ -428,7 +413,7 @@ public final class JbXmlOutputter {
    * @param out     <code>Writer</code> to use.
    * @param level   <code>int</code> level of indentation.
    */
-  private void printContentRange(Writer out, List<Content> content, int start, int end, int level) throws IOException {
+  private void printContentRange(@NotNull Element parentElement, @NotNull Writer out, @NotNull List<Content> content, int start, int end, int level) throws IOException {
     boolean firstNode; // Flag for 1st node in content
     Content next;       // Node we're about to print
     int first, index;  // Indexes into the list of content
@@ -450,7 +435,7 @@ public final class JbXmlOutputter {
             newline(out);
           }
           indent(out, level);
-          printTextRange(out, content, first, index);
+          printTextRange(parentElement, out, content, first, index);
         }
         continue;
       }
@@ -489,7 +474,7 @@ public final class JbXmlOutputter {
    * @param end     index of last content node (exclusive).
    * @param out     <code>Writer</code> to use.
    */
-  private void printTextRange(@NotNull Writer out, List<Content> content, int start, int end) throws IOException {
+  private void printTextRange(@NotNull Element parentElement, @NotNull Writer out, @NotNull List<Content> content, int start, int end) throws IOException {
     // remove leading whitespace-only nodes
     start = skipLeadingWhite(content, start);
     if (start >= content.size()) {
@@ -515,7 +500,6 @@ public final class JbXmlOutputter {
         throw new IllegalStateException("Should see only CDATA, Text, or EntityRef");
       }
 
-      // this may save a little time
       if (next == null || next.isEmpty()) {
         continue;
       }
@@ -535,7 +519,7 @@ public final class JbXmlOutputter {
         printEntityRef(out, (EntityRef)node);
       }
       else {
-        printString(out, next);
+        printString(parentElement, out, next);
       }
 
       previous = next;
@@ -695,13 +679,11 @@ public final class JbXmlOutputter {
     return JDOMUtil.escapeText(str, false, true);
   }
 
-  private static String escapeElementEntities(String str) {
+  protected static String escapeElementEntities(String str) {
     return JDOMUtil.escapeText(str, false, false);
   }
 
-  // Support method to print a name without using elt.getQualifiedName()
-  // and thus avoiding a StringBuffer creation and memory churn
-  private static void printQualifiedName(Writer out, Element e) throws IOException {
+  private static void printQualifiedName(@NotNull Writer out, @NotNull Element e) throws IOException {
     if (!e.getNamespace().getPrefix().isEmpty()) {
       out.write(e.getNamespace().getPrefix());
       out.write(':');

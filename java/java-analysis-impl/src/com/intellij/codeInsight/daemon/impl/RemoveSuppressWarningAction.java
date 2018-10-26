@@ -113,14 +113,25 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
   }
 
   private void removeFromComment(final PsiComment comment) throws IncorrectOperationException {
+    String commentText = comment.getText();
+    int secondCommentIdx = commentText.indexOf("//", 2);
+    String suffix = "";
+    if (secondCommentIdx > 0) {
+      suffix = commentText.substring(secondCommentIdx);
+    }
     String newText = removeFromElementText(comment);
     if (newText != null) {
       if (newText.isEmpty()) {
-        comment.delete();
+        if (suffix.isEmpty()) {
+          comment.delete();
+        }
+        else {
+          comment.replace(JavaPsiFacade.getElementFactory(comment.getProject()).createCommentFromText(suffix, comment));
+        }
       }
       else {
         PsiComment newComment = JavaPsiFacade.getElementFactory(comment.getProject())
-          .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText, comment);
+          .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText + suffix, comment);
         comment.replace(newComment);
       }
     }
@@ -147,6 +158,10 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       text += StringUtil.trimStart(element.getText(), "//").trim();
     }
     text = StringUtil.trimStart(text, "@").trim();
+    int secondCommentIdx = text.indexOf("//");
+    if (secondCommentIdx > 0) {
+      text = text.substring(0, secondCommentIdx);
+    }
     text = StringUtil.trimStart(text, SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);

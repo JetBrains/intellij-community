@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.tabs.JBTabs;
@@ -172,8 +173,11 @@ public class IdeBackgroundUtil {
 
   @NotNull
   public static Color getIdeBackgroundColor() {
-    Color result = UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
-    return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(result));
+    return new JBColor(() -> {
+      Color light = UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground())));
+      //noinspection UseJBColor
+      return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : light;
+    });
   }
 
   public static void createTemporaryBackgroundTransform(JPanel root, String tmp, Disposable disposable) {

@@ -1417,14 +1417,14 @@ public class AllIcons {
   public final static class Gutter {
     public static final Icon Colors = IconLoader.getIcon("/gutter/colors.svg"); // 12x12
     public static final Icon ExtAnnotation = IconLoader.getIcon("/gutter/extAnnotation.svg"); // 12x12
-    public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.png"); // 12x12
-    public static final Icon ImplementingFunctionalInterface = IconLoader.getIcon("/gutter/implementingFunctionalInterface.png"); // 12x12
-    public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.png"); // 12x12
+    public static final Icon ImplementedMethod = IconLoader.getIcon("/gutter/implementedMethod.svg"); // 12x12
+    public static final Icon ImplementingFunctionalInterface = IconLoader.getIcon("/gutter/implementingFunctionalInterface.svg"); // 12x12
+    public static final Icon ImplementingMethod = IconLoader.getIcon("/gutter/implementingMethod.svg"); // 12x12
     public static final Icon Java9Service = IconLoader.getIcon("/gutter/java9Service.svg"); // 12x12
-    public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.png"); // 12x12
-    public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.png"); // 12x12
+    public static final Icon OverridenMethod = IconLoader.getIcon("/gutter/overridenMethod.svg"); // 12x12
+    public static final Icon OverridingMethod = IconLoader.getIcon("/gutter/overridingMethod.svg"); // 12x12
     public static final Icon RecursiveMethod = IconLoader.getIcon("/gutter/recursiveMethod.svg"); // 12x12
-    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/gutter/siblingInheritedMethod.png"); // 12x12
+    public static final Icon SiblingInheritedMethod = IconLoader.getIcon("/gutter/siblingInheritedMethod.svg"); // 12x12
     public static final Icon Unique = IconLoader.getIcon("/gutter/unique.svg"); // 8x8
 
   }

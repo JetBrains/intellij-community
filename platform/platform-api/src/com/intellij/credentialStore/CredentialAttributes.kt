@@ -2,19 +2,14 @@
 package com.intellij.credentialStore
 
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
-import com.intellij.util.ExceptionUtil
-import com.intellij.util.io.toByteArray
-import com.intellij.util.text.CharArrayCharSequence
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Contract
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
-import java.util.concurrent.atomic.AtomicReference
 
-const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
+const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
 
 fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
@@ -35,28 +30,31 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
 
   val userName: String? = user.nullize()
 
-  fun getPasswordAsString(): String? = password?.toString()
+  fun getPasswordAsString() = password?.toString()
 
   override fun equals(other: Any?): Boolean {
     if (other !is Credentials) return false
     return userName == other.userName && password == other.password
   }
 
-  override fun hashCode(): Int = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
+  override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
+
+  override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
 }
 
-@Suppress("FunctionName")
-  /**
+@Suppress("FunctionName", "DeprecatedCallableAddReplaceWith")
+/**
  * DEPRECATED. Never use it in a new code.
  */
+@Deprecated("Never use it in a new code.")
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 @Contract("null -> false")
-fun Credentials?.isFulfilled(): Boolean = this != null && userName != null && !password.isNullOrEmpty()
+fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
 
-fun Credentials?.hasOnlyUserName(): Boolean = this != null && userName != null && password.isNullOrEmpty()
+fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
-fun Credentials?.isEmpty(): Boolean = this == null || (userName == null && password.isNullOrEmpty())
+fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
 
 /**
  * Tries to get credentials both by `newAttributes` and `oldAttributes`, and if they are available by `oldAttributes` migrates old to new,
@@ -98,87 +96,4 @@ fun OneTimeString(value: ByteArray, offset: Int = 0, length: Int = value.size - 
 
   value.fill(0, offset, offset + length)
   return OneTimeString(charArray, 0, charBuffer.position(), clearable = clearable)
-}
-
-/**
- * clearable only if specified explicitly.
- *
- * Case
- * 1) you create OneTimeString manually on user input.
- * 2) you store it in CredentialStore
- * 3) you consume it... BUT native credentials store do not store credentials immediately - write is postponed, so, will be an critical error.
- *
- * so, currently - only credentials store implementations should set this flag on get.
- */
-@Suppress("EqualsOrHashCode")
-class OneTimeString @JvmOverloads constructor(value: CharArray, offset: Int = 0, length: Int = value.size, private var clearable: Boolean = false) : CharArrayCharSequence(value, offset, offset + length) {
-  private val consumed = AtomicReference<String?>()
-
-  constructor(value: String): this(value.toCharArray())
-
-  private fun consume(willBeCleared: Boolean) {
-    if (!clearable) {
-      return
-    }
-
-    if (!willBeCleared) {
-      consumed.get()?.let { throw IllegalStateException("Already consumed: $it\n---\n") }
-    }
-    else if (!consumed.compareAndSet(null, ExceptionUtil.currentStackTrace())) {
-      throw IllegalStateException("Already consumed at ${consumed.get()}")
-    }
-  }
-
-  fun toString(clear: Boolean = false): String {
-    consume(clear)
-    val result = super.toString()
-    clear()
-    return result
-  }
-
-  // string will be cleared and not valid after
-  @JvmOverloads
-  fun toByteArray(clear: Boolean = true): ByteArray {
-    consume(clear)
-
-    val result = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
-    if (clear) {
-      clear()
-    }
-    return result.toByteArray()
-  }
-
-  private fun clear() {
-    if (clearable) {
-      myChars.fill('\u0000', myStart, myEnd)
-    }
-  }
-
-  @JvmOverloads
-  fun toCharArray(clear: Boolean = true): CharArray {
-    consume(clear)
-    if (clear) {
-      val result = CharArray(length)
-      getChars(result, 0)
-      clear()
-      return result
-    }
-    else {
-      return chars
-    }
-  }
-
-  fun clone(clear: Boolean, clearable: Boolean): OneTimeString = OneTimeString(toCharArray(clear), clearable = clearable)
-
-  override fun equals(other: Any?): Boolean {
-    if (other is CharSequence) {
-      return StringUtil.equals(this, other)
-    }
-    return super.equals(other)
-  }
-
-  fun appendTo(builder: StringBuilder) {
-    consume(false)
-    builder.append(myChars, myStart, length)
-  }
 }

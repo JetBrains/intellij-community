@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.editorconfig.language.EditorConfigLanguage
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.editorconfig.language.filetype.EditorConfigFileType
+import org.editorconfig.language.util.matches
 
 class EditorConfigPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, EditorConfigLanguage) {
   override fun getFileType() = EditorConfigFileType
@@ -19,4 +20,11 @@ class EditorConfigPsiFile(viewProvider: FileViewProvider) : PsiFileBase(viewProv
 
   val sections: List<EditorConfigSection>
     get() = PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigSection::class.java)
+
+  fun findRelevantNavigatable() =
+    sections.lastOrNull { section ->
+      val header = section.header
+      if (header.isValidGlob) header matches virtualFile
+      else false
+    } ?: this
 }

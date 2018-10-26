@@ -55,7 +55,9 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
 
   public SourceItemsTree(ArtifactEditorContext editorContext, ArtifactEditorImpl artifactsEditor) {
     myArtifactsEditor = artifactsEditor;
-    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true));
+    myBuilder = new SimpleTreeBuilder(this, this.getBuilderModel(), new SourceItemsTreeStructure(editorContext, artifactsEditor), new WeightBasedComparator(true)) {
+      // unique class to simplify search through the logs
+    };
     setRootVisible(false);
     setShowsRootHandles(true);
     Disposer.register(this, myBuilder);

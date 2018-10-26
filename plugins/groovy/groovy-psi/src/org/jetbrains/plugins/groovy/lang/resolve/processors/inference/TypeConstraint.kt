@@ -13,7 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
-class TypeConstraint(val leftType: PsiType, private val rightType: PsiType?, val context: PsiElement) : ConstraintFormula {
+class TypeConstraint(private val leftType: PsiType, private val rightType: PsiType?, private val context: PsiElement) : ConstraintFormula {
+
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     if (session !is GroovyInferenceSession) return true
     var argType = rightType ?: PsiType.NULL

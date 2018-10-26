@@ -60,11 +60,16 @@ internal class GithubPullRequestSearchComponent(project: Project,
     }
     addToLeft(icon)
     addToCenter(searchField)
-    UIUtil.setBackgroundRecursively(this, UIUtil.getTextFieldBackground())
+    UIUtil.setNotOpaqueRecursively(searchField)
   }
 
   private fun updateQuery() {
     model.query = GithubPullRequestSearchQuery.parseFromString(searchField.text)
+  }
+
+  override fun updateUI() {
+    super.updateUI()
+    background = UIUtil.getListBackground()
   }
 
   private inner class SearchCompletionProvider : TextFieldCompletionProviderDumbAware(true) {

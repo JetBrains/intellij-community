@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -231,26 +232,23 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       PsiExpression initializer = DeclarationJoinLinesHandler.getInitializerExpression(context.myVariable, context.myAssignment);
       PsiElement elementToReplace = context.myAssignment.getParent();
       if (initializer != null && elementToReplace != null) {
-        CommentTracker declTracker = new CommentTracker();
-        declTracker.markUnchanged(initializer);
-        String declText = context.getDeclarationText(initializer);
-        PsiElement declaration = declTracker.replaceAndRestoreComments(elementToReplace, declText);
+        // Don't normalize the original declaration: it may declare many variables
+        PsiElement declCopy = context.myVariable.getParent().copy();
+        PsiLocalVariable varCopy = (PsiLocalVariable)ContainerUtil.find(
+          declCopy.getChildren(), e -> e instanceof PsiLocalVariable && context.myName.equals(((PsiLocalVariable)e).getName()));
 
-        CommentTracker varTracker = new CommentTracker();
-        varTracker.delete(context.myVariable);
-        PsiElement anchor = findCommentAnchor(declaration);
-        varTracker.insertCommentsBefore(anchor);
-      }
-    }
+        if (varCopy != null) {
+          varCopy.setInitializer(initializer);
+          varCopy.normalizeDeclaration();
+          String text = varCopy.getText();
 
-    @NotNull
-    public static PsiElement findCommentAnchor(@NotNull PsiElement anchor) {
-      for (PsiElement element = skipWhitespacesBackward(anchor);
-           element instanceof PsiComment;
-           element = skipWhitespacesBackward(element)) {
-        anchor = element;
+          CommentTracker tracker = new CommentTracker();
+          tracker.markUnchanged(initializer);
+          tracker.markUnchanged(context.myVariable);
+          tracker.delete(context.myVariable);
+          tracker.replaceAndRestoreComments(elementToReplace, text);
+        }
       }
-      return anchor;
     }
   }
 
@@ -266,19 +264,6 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
       myName = name;
       myIsUpdate = !JavaTokenType.EQ.equals(myAssignment.getOperationTokenType()) ||
                    findNextAssignment(myAssignment.getParent(), myVariable) != null;
-    }
-
-    @NotNull
-    private String getDeclarationText(@NotNull PsiExpression initializer) {
-      StringJoiner joiner = new StringJoiner(" ");
-      if (myVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        joiner.add(PsiKeyword.FINAL + ' ');
-      }
-      for (PsiAnnotation annotation : myVariable.getAnnotations()) {
-        joiner.add(annotation.getText() + ' ');
-      }
-      joiner.add(myVariable.getTypeElement().getText() + ' ' + myName + '=' + initializer.getText() + ';');
-      return joiner.toString();
     }
   }
 }

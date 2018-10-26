@@ -71,7 +71,7 @@ public class DfaConstValue extends DfaValue {
         Boolean boo = computeJavaLangBooleanFieldReference(variable);
         if (boo != null) {
           DfaConstValue unboxed = createFromValue(boo, PsiType.BOOLEAN);
-          return myFactory.getBoxedFactory().createBoxed(unboxed);
+          return myFactory.getBoxedFactory().createBoxed(unboxed, PsiType.BOOLEAN.getBoxedType(variable));
         }
         PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
         if (initializer instanceof PsiLiteralExpression && initializer.textMatches(PsiKeyword.NULL)) {

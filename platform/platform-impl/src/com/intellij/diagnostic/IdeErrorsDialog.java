@@ -113,7 +113,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myAcceptedNotices = ContainerUtil.newLinkedHashSet(StringUtil.split(rawValue, ACCEPTED_NOTICES_SEPARATOR));
 
     updateMessages();
-    selectMessage(defaultMessage);
+    myIndex = selectMessage(defaultMessage);
     updateControls();
 
     messagePool.addListener(this);
@@ -145,15 +145,26 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void selectMessage(@Nullable LogMessage defaultMessage) {
-    for (int i = 0; i < myMessageClusters.size(); i++) {
-      for (AbstractMessage message : myMessageClusters.get(i).messages) {
-        if (defaultMessage != null && message == defaultMessage || defaultMessage == null && !message.isRead()) {
-          myIndex = i;
-          return;
-        }
+  private int selectMessage(@Nullable LogMessage defaultMessage) {
+    if (defaultMessage != null) {
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (myMessageClusters.get(i).messages.contains(defaultMessage)) return i;
       }
     }
+    else {
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (!myMessageClusters.get(i).messages.get(0).isRead()) return i;
+      }
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        for (AbstractMessage message : myMessageClusters.get(i).messages) {
+          if (!message.isRead()) return i;
+        }
+      }
+      for (int i = 0; i < myMessageClusters.size(); i++) {
+        if (!myMessageClusters.get(i).messages.get(0).isSubmitted()) return i;
+      }
+    }
+    return 0;
   }
 
   @Nullable

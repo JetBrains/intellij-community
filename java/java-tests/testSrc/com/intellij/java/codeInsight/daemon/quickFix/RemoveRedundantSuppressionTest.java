@@ -21,6 +21,7 @@ import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
 
 
 public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTestCase {
@@ -28,6 +29,7 @@ public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    new MyTestInjector(getPsiManager()).injectAll(getTestRootDisposable());
     enableInspectionTools(new RedundantSuppressInspection(), 
                           new PossibleHeapPollutionVarargsInspection(),
                           new UncheckedWarningLocalInspection(),

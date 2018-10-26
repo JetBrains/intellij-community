@@ -92,7 +92,6 @@ public class SuspiciousPackagePrivateAccessInspectionTest extends LightInspectio
     public void cleanUpSources() throws IOException {
       if (mySourceRoot != null) {
         WriteAction.run(() -> mySourceRoot.delete(this));
-        ;
       }
     }
 

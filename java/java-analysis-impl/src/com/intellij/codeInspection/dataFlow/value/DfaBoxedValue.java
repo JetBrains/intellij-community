@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +28,12 @@ import java.util.Map;
 
 public class DfaBoxedValue extends DfaValue {
   private final DfaValue myWrappedValue;
+  private final @Nullable PsiType myType;
 
-  private DfaBoxedValue(DfaValue valueToWrap, DfaValueFactory factory) {
+  private DfaBoxedValue(DfaValue valueToWrap, DfaValueFactory factory, @Nullable PsiType type) {
     super(factory);
     myWrappedValue = valueToWrap;
+    myType = type;
   }
 
   @NonNls
@@ -40,6 +43,12 @@ public class DfaBoxedValue extends DfaValue {
 
   public DfaValue getWrappedValue() {
     return myWrappedValue;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    return myType;
   }
 
   public static class Factory {
@@ -56,7 +65,7 @@ public class DfaBoxedValue extends DfaValue {
     }
 
     @Nullable
-    public DfaValue createBoxed(DfaValue valueToWrap) {
+    public DfaValue createBoxed(DfaValue valueToWrap, @Nullable PsiType type) {
       if (valueToWrap instanceof DfaVariableValue && ((DfaVariableValue)valueToWrap).getSource() == SpecialField.UNBOX) {
         return ((DfaVariableValue)valueToWrap).getQualifier();
       }
@@ -66,7 +75,7 @@ public class DfaBoxedValue extends DfaValue {
       if (o == null) return null;
       DfaBoxedValue boxedValue = cachedValues.get(o);
       if (boxedValue == null) {
-        cachedValues.put(o, boxedValue = new DfaBoxedValue(valueToWrap, myFactory));
+        cachedValues.put(o, boxedValue = new DfaBoxedValue(valueToWrap, myFactory, type));
       }
       return boxedValue;
     }

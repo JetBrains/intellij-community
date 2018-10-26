@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -370,6 +371,17 @@ public class Py3CompletionTest extends PyTestCase {
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots2() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                                "    pass\n" +
+                                                "c1 = Cat1(\"name\", 5)\n" +
+                                                "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
 
 

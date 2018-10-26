@@ -63,6 +63,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
@@ -86,6 +87,11 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.awt.image.RenderedImage;
+import java.awt.image.renderable.RenderContext;
+import java.awt.image.renderable.RenderableImage;
+import java.awt.image.renderable.RenderableImageProducer;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -1072,8 +1078,52 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         LOG.warn(e);
       }
     }
-    Image image = ImageLoader.loadFromUrl(url);
-    return image != null ? ImageUtil.toBufferedImage(image) : Toolkit.getDefaultToolkit().createImage(url);
+    URL imageUrl = url;
+    return Toolkit.getDefaultToolkit().createImage(new RenderableImageProducer(new RenderableImage() {
+      private Image myImage;
+      private boolean myImageLoaded;
+      @Override
+      public Vector<RenderableImage> getSources() { return null; }
+
+      @Override
+      public Object getProperty(String name) { return null; }
+
+      @Override
+      public String[] getPropertyNames() { return ArrayUtil.EMPTY_STRING_ARRAY; }
+
+      @Override
+      public boolean isDynamic() { return false; }
+
+      @Override
+      public float getWidth() { return getImage().getWidth(null); }
+
+      @Override
+      public float getHeight() { return getImage().getHeight(null); }
+
+      @Override
+      public float getMinX() { return 0; }
+
+      @Override
+      public float getMinY() { return 0; }
+
+      @Override
+      public RenderedImage createScaledRendering(int w, int h, RenderingHints hints) { return createDefaultRendering(); }
+
+      @Override
+      public RenderedImage createDefaultRendering() { return (RenderedImage)getImage(); }
+
+      @Override
+      public RenderedImage createRendering(RenderContext renderContext) { return createDefaultRendering(); }
+
+      private Image getImage() {
+        if (!myImageLoaded) {
+          Image image = ImageLoader.loadFromUrl(imageUrl);
+          myImage = image != null ? ImageUtil.toBufferedImage(image) : null;
+          myImageLoaded = true;
+        }
+        return myImage;
+      }
+    }, null));
   }
 
   private void goBack() {
@@ -1448,17 +1498,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (myManager == null) {
-        StringBuilder uiPath = new StringBuilder();
-        Component component = myToolBar.getComponent();
-        while (component != null) {
-          uiPath.append(component.getClass().getName()).append("\n");
-          component = component.getParent();
-        }
-        LOG.error("Updating on a disposed component at \n" + uiPath.toString());
-        return;
-      }
-      if (myOnToolbar && myManager.myToolWindow != null) {
+      if (myManager == null || myOnToolbar && myManager.myToolWindow != null) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }
@@ -1562,7 +1602,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      if (myManager.myToolWindow != null) {
+      if (myManager == null || myManager.myToolWindow != null) {
         e.getPresentation().setEnabledAndVisible(false);
       }
     }

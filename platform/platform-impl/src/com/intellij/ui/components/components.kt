@@ -8,12 +8,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComponentWithBrowseButton
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
-import com.intellij.openapi.ui.TextComponentAccessor
-import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -232,12 +229,30 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
     addHistoryOnExpansion(textFieldWithHistory, historyProvider)
   }
   installFileCompletionAndBrowseDialog(
-    project,
-    component,
-    component.childComponent.textEditor,
-    browseDialogTitle,
-    fileChooserDescriptor,
-    TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    project = project,
+    component = component,
+    textField = component.childComponent.textEditor,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
+    fileChosen = fileChosen
+  )
+  return component
+}
+
+@JvmOverloads
+fun textFieldWithBrowseButton(project: Project?,
+                              browseDialogTitle: String,
+                              fileChooserDescriptor: FileChooserDescriptor,
+                              fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithBrowseButton {
+  val component = TextFieldWithBrowseButton()
+  installFileCompletionAndBrowseDialog(
+    project = project,
+    component = component,
+    textField = component.textField,
+    browseDialogTitle = browseDialogTitle,
+    fileChooserDescriptor = fileChooserDescriptor,
+    textComponentAccessor = TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
     fileChosen = fileChosen
   )
   return component

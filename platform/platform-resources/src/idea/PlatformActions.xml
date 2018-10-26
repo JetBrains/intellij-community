@@ -948,5 +948,6 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+    <group id="ToolWindowContextMenu"/>
   </actions>
 </idea-plugin>

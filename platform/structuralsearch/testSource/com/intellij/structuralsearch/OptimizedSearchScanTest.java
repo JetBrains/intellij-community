@@ -22,6 +22,11 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
     return IdeaTestUtil.getMockJdk17();
   }
 
+  private String findWordsToBeUsedWhenSearchingFor(final String s) {
+    findMatchesCount("{}", s);
+    return PatternCompiler.getLastFindPlan();
+  }
+
   public void testClassByQName() {
     final String plan = findWordsToBeUsedWhenSearchingFor("A.f");
     assertEquals("[in code:f][in code:A]", plan);
@@ -95,8 +100,11 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
     assertEquals("non-existing class name should be added to plan", "[in code:enum][in code:Zyxwvuts]", plan2);
   }
 
-  private String findWordsToBeUsedWhenSearchingFor(final String s) {
-    findMatchesCount("{}", s);
-    return PatternCompiler.getLastFindPlan();
-  }
+ public void testQualifiedReference() {
+   final String plan = findWordsToBeUsedWhenSearchingFor("new java.lang.RuntimeException('_x)");
+   assertEquals("[in code:new][in code:RuntimeException]", plan);
+
+   final String plan2 = findWordsToBeUsedWhenSearchingFor("new java.lang.reflect.InvocationTargetException('_x)");
+   assertEquals("[in code:new][in code:InvocationTargetException][in code:reflect][in code:lang][in code:java]", plan2);
+ }
 }

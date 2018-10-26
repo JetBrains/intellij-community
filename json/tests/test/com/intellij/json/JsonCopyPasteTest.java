@@ -45,4 +45,40 @@ public class JsonCopyPasteTest extends CodeInsightFixtureTestCase {
   public void testEscapeInPropNames() {
     doTestFromTextToJson("<selection>lorem ipsum\tdolor sit amet</selection>", "{\"<caret>\": \"foo\"}", "{\"lorem ipsum\\tdolor sit amet\": \"foo\"}");
   }
+
+  public void testAddTrailingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{\"q\": \"foo\"<caret>}", "{\"q\": \"foo\",\"x\": 5}");
+  }
+
+  public void testAddRemoveTrailingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5,</selection>", "{\"q\": \"foo\"<caret>}", "{\"q\": \"foo\",\"x\": 5}");
+  }
+
+  public void testAddLeadingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{<caret>\"q\": \"foo\"}", "{\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testDoNothingLeadingComma() {
+    doTestFromTextToJson("<selection>\"x\": 5,</selection>", "{<caret>\"q\": \"foo\"}", "{\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testCommasMidPropList() {
+    doTestFromTextToJson("<selection>\"x\": 5</selection>", "{\"s\": \"foo\",<caret>\"q\": \"foo\"}", "{\"s\": \"foo\",\"x\": 5,\"q\": \"foo\"}");
+  }
+
+  public void testAddTrailingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[4<caret>]", "[4,\"a\"]");
+  }
+
+  public void testAddRemoveTrailingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\",</selection>", "[4<caret>]", "[4,\"a\"]");
+  }
+
+  public void testAddLeadingCommaArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[<caret>4]", "[\"a\",4]");
+  }
+
+  public void testCommasMidPropListArray() {
+    doTestFromTextToJson("<selection>\"a\"</selection>", "[3,<caret>4]", "[3,\"a\",4]");
+  }
 }

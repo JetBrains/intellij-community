@@ -53,7 +53,7 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanelOnlyTextField()
 //          val panel = visualPaddingsPanelOnlyLabeledScrollPane()
     //      val panel = labelRowShouldNotGrow()
-          val panel = jbTextField()
+          val panel = titledRows()
 //          val panel = alignFieldsInTheNestedGrid()
 //          val panel = visualPaddingsPanel()
 //          val panel = withVerticalButtons()

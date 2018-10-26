@@ -4,6 +4,8 @@ package com.intellij.codeInspection.dataFlow.inliner;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +27,10 @@ public class BoxingInliner implements CallInliner {
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     if (BOXING_CALL.test(call)) {
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      PsiType type = PsiPrimitiveType.getUnboxedType(call.getType());
       builder.pushExpression(arg)
-        .boxUnbox(call, arg.getType(), call.getType());
+        .boxUnbox(arg, arg.getType(), type)
+        .boxUnbox(call, type, call.getType());
       return true;
     }
     return false;

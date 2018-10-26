@@ -1,118 +1,117 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
+import com.intellij.credentialStore.LOG
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.Stack
-import com.intellij.util.get
 import com.intellij.util.getOrCreate
-import com.intellij.util.remove
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 
-internal class KdbxGroup(private val element: Element, private val database: KeePassDatabase, @Volatile private var parent: KdbxGroup?) {
-  @Volatile var name: String = element.getChildText(NAME_ELEMENT_NAME) ?: "Unnamed"
+internal class KdbxGroup(internal val element: Element, private val database: KeePassDatabase, @Volatile private var parent: KdbxGroup?) {
+  var name: String
+    @Synchronized
+    get() = element.getChildText(KdbxDbElementNames.name) ?: "Unnamed"
+    @Synchronized
     set(value) {
-      if (field != value) {
-        field = value
-        database.isDirty = true
+      val nameElement = element.getOrCreate(KdbxDbElementNames.name)
+      if (nameElement.text == value) {
+        return
       }
-    }
 
-  private val groups: MutableList<KdbxGroup>
-  val entries: MutableList<KdbxEntry>
-
-  @Volatile
-  private var locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
-
-  init {
-    locationChanged = element.get("Times")?.get("LocationChanged")?.text?.let(::parseTime) ?: 0
-
-    groups = ContainerUtil.createLockFreeCopyOnWriteList(element.remove(GROUP_ELEMENT_NAME) { KdbxGroup(it, database, this) })
-    entries = ContainerUtil.createLockFreeCopyOnWriteList(element.remove(ENTRY_ELEMENT_NAME) { KdbxEntry(it, database, this) })
-  }
-
-  fun toXml(): Element {
-    val element = element.clone()
-    element.getOrCreate(NAME_ELEMENT_NAME).text = name
-
-    val locationChangedElement = element.getOrCreate("Times").getOrCreate("LocationChanged")
-    if (locationChanged == 0L) {
-      element.get("Times")?.get("CreationTime")?.text?.let {
-        locationChangedElement.text = it
-      }
-    }
-    else {
-      locationChangedElement.text = Instant.ofEpochMilli(locationChanged).atZone(ZoneOffset.UTC).format(dateFormatter)
-    }
-
-    for (group in groups) {
-      element.addContent(group.toXml())
-    }
-    for (entry in entries) {
-      element.addContent(entry.toXml())
-    }
-    return element
-  }
-
-  fun addGroup(group: KdbxGroup): KdbxGroup {
-    if (group == database.rootGroup) {
-      throw IllegalStateException("Cannot set root group as child of another group")
-    }
-
-    group.parent?.removeGroup(group)
-    groups.add(group)
-    group.parent = this
-    group.locationChanged = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
-
-    database.isDirty = true
-    return group
-  }
-
-  fun removeGroup(group: KdbxGroup): KdbxGroup {
-    if (groups.remove(group)) {
-      group.parent = null
+      nameElement.text = value
       database.isDirty = true
     }
-    return group
+
+  private val groups: MutableMap<String, KdbxGroup> = THashMap()
+  private val entries: MutableList<KdbxEntry> by lazy {
+    ContainerUtil.createLockFreeCopyOnWriteList(element.getChildren(KdbxDbElementNames.entry).map { KdbxEntry(it, database, this) })
   }
 
+  private var locationChanged: Long
+    get() = element.getChild("Times")?.getChild("LocationChanged")?.text?.let(::parseTime) ?: 0
+    set(value) {
+      element.getOrCreate("Times").getOrCreate("LocationChanged").text = Instant.ofEpochMilli(value).atZone(ZoneOffset.UTC).format(dateFormatter)
+    }
+
+  @Synchronized
+  fun getGroup(name: String): KdbxGroup? {
+    var result = groups.get(name)
+    if (result != null) {
+      return result
+    }
+
+    val groupElement = element.content.firstOrNull { it is Element && it.getChildText(KdbxDbElementNames.name) == name } ?: return null
+    result = KdbxGroup(groupElement as Element, database, this)
+    groups.put(name, result)
+    return result
+  }
+
+  @Synchronized
+  private fun removeGroup(group: KdbxGroup) {
+    val removedGroup = groups.remove(group.name)
+    LOG.assertTrue(group === removedGroup)
+    element.content.remove(group.element)
+    group.parent = null
+    database.isDirty = true
+  }
+
+  @Synchronized
   fun removeGroup(name: String) {
     getGroup(name)?.let { removeGroup(it) }
   }
 
-  fun getGroup(name: String): KdbxGroup? = groups.firstOrNull { it.name == name }
-
-  fun getOrCreateGroup(name: String): KdbxGroup = getGroup(name) ?: createGroup(name)
+  @Synchronized
+  fun getOrCreateGroup(name: String) = getGroup(name) ?: createGroup(name)
 
   private fun createGroup(name: String): KdbxGroup {
     val result = createGroup(database, this)
     result.name = name
-    addGroup(result)
+    if (result == database.rootGroup) {
+      throw IllegalStateException("Cannot set root group as child of another group")
+    }
+    groups.put(result.name, result)
+    result.parent = this
+    result.locationChanged = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+    element.addContent(result.element)
+    database.isDirty = true
     return result
   }
 
-  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean): KdbxEntry? = entries.firstOrNull(matcher)
+  @Synchronized
+  fun getEntry(matcher: (entry: KdbxEntry) -> Boolean) = entries.firstOrNull(matcher)
 
+  @Synchronized
   fun addEntry(entry: KdbxEntry): KdbxEntry {
     entry.group?.removeEntry(entry)
     entries.add(entry)
     entry.group = this
     database.isDirty = true
+    element.addContent(entry.entryElement)
     return entry
   }
 
   private fun removeEntry(entry: KdbxEntry): KdbxEntry {
     if (entries.remove(entry)) {
       entry.group = null
+      element.content.remove(entry.entryElement)
       database.isDirty = true
     }
     return entry
   }
 
-  fun getEntry(title: String, userName: String?): KdbxEntry? = getEntry { it.title == title && (it.userName == userName || userName == null) }
+  @Synchronized
+  fun getEntry(title: String, userName: String?): KdbxEntry? {
+    return getEntry {
+      it.title == title && (it.userName == userName || userName == null)
+    }
+  }
 
+  @Synchronized
   fun getOrCreateEntry(title: String, userName: String?): KdbxEntry {
     var entry = getEntry(title, userName)
     if (entry == null) {
@@ -123,42 +122,38 @@ internal class KdbxGroup(private val element: Element, private val database: Kee
     return entry
   }
 
-  fun removeEntry(title: String, userName: String?): KdbxEntry? = getEntry(title, userName)?.let { removeEntry(it) }
-
-  val path: String
-    get() {
-      val parents = Stack<KdbxGroup>()
-      var parent: KdbxGroup = this
-      parents.push(this)
-      while (true) {
-        parent = parent.parent ?: break
-        parents.push(parent)
-      }
-      val result = StringBuilder("/")
-      while (parents.size > 0) {
-        result.append(parents.pop().name).append('/')
-      }
-      return result.toString()
+  @Synchronized
+  fun removeEntry(title: String, userName: String?): KdbxEntry? {
+    return getEntry(title, userName)?.let {
+      removeEntry(it)
     }
-
-  override fun toString(): String = path
+  }
 }
 
 internal fun createGroup(db: KeePassDatabase, parent: KdbxGroup?): KdbxGroup {
-  val element = Element(GROUP_ELEMENT_NAME)
+  val element = Element(KdbxDbElementNames.group)
   ensureElements(element, mandatoryGroupElements)
   return KdbxGroup(element, db, parent)
 }
 
 private val mandatoryGroupElements: Map<Array<String>, ValueCreator> = linkedMapOf(
-    UUID_ELEMENT_NAME to UuidValueCreator(),
-    arrayOf("Notes") to ConstantValueCreator(""),
-    ICON_ELEMENT_NAME to ConstantValueCreator("0"),
-    CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
-    LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
-    EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
-    USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
-    LOCATION_CHANGED to DateValueCreator()
+  UUID_ELEMENT_NAME to UuidValueCreator(),
+  arrayOf("Notes") to ConstantValueCreator(""),
+  ICON_ELEMENT_NAME to ConstantValueCreator("0"),
+  CREATION_TIME_ELEMENT_NAME to DateValueCreator(),
+  LAST_MODIFICATION_TIME_ELEMENT_NAME to DateValueCreator(),
+  LAST_ACCESS_TIME_ELEMENT_NAME to DateValueCreator(),
+  EXPIRY_TIME_ELEMENT_NAME to DateValueCreator(),
+  EXPIRES_ELEMENT_NAME to ConstantValueCreator("False"),
+  USAGE_COUNT_ELEMENT_NAME to ConstantValueCreator("0"),
+  LOCATION_CHANGED to DateValueCreator()
 )
+
+private fun parseTime(value: String): Long {
+  return try {
+    ZonedDateTime.parse(value).toEpochSecond()
+  }
+  catch (e: DateTimeParseException) {
+    0
+  }
+}

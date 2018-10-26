@@ -37,12 +37,15 @@ extern "C"{
 
 // runs main loop of glib (which is needed to communicate with dbus)
 // must be called from java thread (to avoid detach, so jna-callbacks will be invoked from same thread)
-void runDbusServer(jlogger jlogger);
+void runDbusServer(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
 void stopDbusServer();
 void execOnMainLoop(jrunnable run);
 
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid
 void releaseWindowOnMainLoop(WndInfo* wi);
+
+void bindNewWindow(WndInfo * wi, long windowXid);
+void unbindWindow(WndInfo * wi, long windowXid);
 
 void createMenuRootForWnd(WndInfo *wi);
 void clearRootMenu(WndInfo* wi);

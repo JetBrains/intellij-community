@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -662,6 +663,11 @@ public class PyUtil {
       }
     }
     return guessLanguageLevelWithCaching(project);
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevelForModule(@NotNull Module module) {
+    return FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).getImmediateValue(module);
   }
 
   public static void invalidateLanguageLevelCache(@NotNull Project project) {

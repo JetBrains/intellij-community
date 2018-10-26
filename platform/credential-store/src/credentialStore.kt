@@ -89,16 +89,24 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
 @Suppress("FunctionName")
-internal fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+internal fun SecureString(value: CharSequence): SecureString = SecureStringImpl(value)
 
-internal class SecureString(value: ByteArray) {
+interface SecureString {
+  fun get(clearable: Boolean = true): OneTimeString
+}
+
+internal class SecureStringImpl(value: ByteArray) : SecureString {
+  constructor(value: CharSequence) : this(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
+
   companion object {
     private val encryptionSupport = EncryptionSupport(SecretKeySpec(generateAesKey(), "AES"))
   }
 
   private val data = encryptionSupport.encrypt(value)
 
-  fun get(clearable: Boolean = true) = OneTimeString(encryptionSupport.decrypt(data), clearable = clearable)
+  override fun get(clearable: Boolean) = OneTimeString(getAsByteArray(), clearable = clearable)
+
+  fun getAsByteArray() = encryptionSupport.decrypt(data)
 }
 
 internal val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)

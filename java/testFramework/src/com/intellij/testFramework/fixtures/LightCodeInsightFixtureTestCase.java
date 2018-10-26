@@ -82,8 +82,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
 

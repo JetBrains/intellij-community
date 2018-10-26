@@ -30,6 +30,9 @@ public class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     TerminalView terminalView = TerminalView.getInstance(project);
-    terminalView.initTerminal(toolWindow);
+    TerminalArrangementManager arrangementManager = TerminalArrangementManager.getInstance(project);
+    terminalView.initTerminal(toolWindow, arrangementManager.getArrangementState());
+    // allow to save tabs after the tabs are restored
+    arrangementManager.setToolWindow(toolWindow);
   }
 }

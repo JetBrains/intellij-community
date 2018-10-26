@@ -246,6 +246,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
     @Override
     public Configurable[] getConfigurables() {
       if (!isInitialized) {
+        long time = System.currentTimeMillis();
         ArrayList<Configurable> list = new ArrayList<>();
         if (super.myEp.dynamic) {
           Composite composite = cast(Composite.class, this);
@@ -289,6 +290,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted {
         }
         myKids = ArrayUtil.toObjectArray(list, Configurable.class);
         isInitialized = true;
+        ConfigurableCardPanel.warn(this, "children", time);
       }
       return myKids;
     }

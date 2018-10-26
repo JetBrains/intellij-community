@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
@@ -33,10 +31,15 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
 
-    myFixture.setUp();
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    TempDirTestFixture tempDirFixture = policy != null
+        ? policy.createTempDirTestFixture()
+        : new LightTempDirTestFixtureImpl(true);
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
+
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
   }

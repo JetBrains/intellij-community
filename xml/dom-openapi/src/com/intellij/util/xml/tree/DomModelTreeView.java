@@ -72,7 +72,9 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE, false);
+    myBuilder = new AbstractTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure, WeightBasedComparator.INSTANCE, false) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(this, myBuilder);
 
     myBuilder.setNodeDescriptorComparator(null);

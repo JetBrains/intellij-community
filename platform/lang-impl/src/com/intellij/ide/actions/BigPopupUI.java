@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Optional;
 
 public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable {
+  private static final int MINIMAL_SUGGESTIONS_LIST_HEIGHT= 100;
+
   protected final Project myProject;
   protected JBTextField mySearchField;
   protected JPanel suggestionsPanel;
@@ -226,7 +228,11 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
   @Override
   public Dimension getMinimumSize() {
-    return calcPrefSize(ViewType.SHORT);
+    Dimension size = calcPrefSize(ViewType.SHORT);
+    if (getViewType() == ViewType.FULL) {
+      size.height += MINIMAL_SUGGESTIONS_LIST_HEIGHT;
+    }
+    return size;
   }
 
   @Override

@@ -347,7 +347,7 @@ public class DfaUtil {
     if (TypeConversionUtil.isPrimitiveWrapper(type)) {
       if (value instanceof DfaConstValue ||
           (value instanceof DfaVariableValue && TypeConversionUtil.isPrimitiveAndNotNull(value.getType()))) {
-        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value);
+        DfaValue boxed = value.getFactory().getBoxedFactory().createBoxed(value, type);
         return boxed == null ? DfaUnknownValue.getInstance() : boxed;
       }
     }

@@ -48,7 +48,9 @@ public abstract class Invoker implements Disposable {
   @Override
   public void dispose() {
     disposed = true;
-    indicators.keySet().forEach(AsyncPromise::cancel);
+    while (!indicators.isEmpty()) {
+      indicators.keySet().forEach(AsyncPromise::cancel);
+    }
   }
 
   /**
@@ -229,7 +231,8 @@ public abstract class Invoker implements Disposable {
     ProgressIndicatorBase indicator = indicators.get(promise);
     if (indicator == null) {
       indicator = new ProgressIndicatorBase(true);
-      indicators.put(promise, indicator);
+      ProgressIndicatorBase old = indicators.put(promise, indicator);
+      if (old != null) LOG.error("the same task is running in parallel");
       promise.onProcessed(done -> indicators.remove(promise).cancel());
     }
     return indicator;

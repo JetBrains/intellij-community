@@ -42,7 +42,7 @@
     <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(129,-1)" stroke="rgb(242,242,242)">
       <rect x="0" width="141" height="18" y="0" clip-path="url(#4)" stroke="none"/>
       <rect x="0" width="141" height="18" y="0" clip-path="url(#4)" stroke="none"/>
-      <image x="1" y="3" clip-path="url(#4)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBox.png" height="13" preserveAspectRatio="none"/>
+      <image x="1" y="3" clip-path="url(#4)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBox.svg" height="13" preserveAspectRatio="none"/>
       <text fill="black" x="18" xml:space="preserve" y="14" clip-path="url(#4)" stroke="none">Android module name:</text>
     </g>
     <g font-family="'Segoe UI'">

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
@@ -33,6 +31,7 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testAnnotatedEnumConstructor() { doTest(); }
   public void testInterfaceMethodParameters() { doTest(); }
   public void testEnumMethodParameters() { doTest(); }
+  public void testGroovyStuff() { doTest(); }
 
   public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
   public void testModuleInfo() { doTest("module-info"); }

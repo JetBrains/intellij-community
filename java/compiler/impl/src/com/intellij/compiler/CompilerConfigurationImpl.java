@@ -62,7 +62,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
-import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
@@ -213,7 +212,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     List<String> moduleNames = getFilteredModuleNameList(myProject, myModuleBytecodeTarget, false);
     if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !moduleNames.isEmpty()) {
-      final Element bytecodeTarget = element(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      final Element bytecodeTarget = new Element(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+      state.addContent(bytecodeTarget);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }

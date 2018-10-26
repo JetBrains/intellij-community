@@ -81,15 +81,13 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true);
     if (position == null) return null;
     if (forcedPropName != null) {
-      if (position.isEmpty()) {
-        if (isWhitespaceOrComment(element)) {
-          position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
-        }
-        else {
-          return null;
-        }
+      if (isWhitespaceOrComment(element)) {
+        position.add(JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));
       }
       else {
+        if (position.isEmpty()) {
+          return null;
+        }
         final JsonSchemaVariantsTreeBuilder.Step lastStep = position.get(position.size() - 1);
         if (lastStep.getName() == null) return null;
         position.set(position.size() - 1, JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(forcedPropName));

@@ -432,7 +432,11 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           return
         }
 
-        selectedConfigurationId = value?.uniqueID
+        val id = value?.uniqueID
+        if (id != null && !idToSettings.containsKey(id)) {
+          LOG.error("$id must be added before selecting")
+        }
+        selectedConfigurationId = id
       }
 
       eventPublisher.runConfigurationSelected()
@@ -488,7 +492,8 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
         val recent = Element(RECENT)
         element.addContent(recent)
 
-        val listElement = recent.element("list")
+        val listElement = Element("list")
+        recent.addContent(listElement)
         for (id in recentList) {
           listElement.addContent(Element("item").setAttribute("itemvalue", id))
         }

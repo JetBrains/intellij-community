@@ -15,32 +15,21 @@ class MavenActionsUsagesCollector : ProjectUsageTriggerCollector() {
   companion object {
     @JvmStatic
     fun trigger(project: Project?, action: AnAction, event: AnActionEvent?) {
-      trigger(project, action, event, emptyMap())
-    }
-
-    @JvmStatic
-    fun trigger(project: Project?, action: AnAction, event: AnActionEvent?, data: Map<String, String> = emptyMap()) {
       if (project == null) return
-      val context = FUSUsageContext.create()
-      if (event != null) {
-        context.data["place"] = event.place
-        context.data["isFromContextMenu"] = event.isFromContextMenu.toString()
-      }
-      context.data.putAll(data)
+
+      // preserve context data ordering
+      val context = FUSUsageContext.create(
+        "from.${event?.place ?: "undefined.place"}",
+        "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}"
+      )
       val actionClassName = UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName)
       FUSProjectUsageTrigger.getInstance(project).trigger(MavenActionsUsagesCollector::class.java, actionClassName, context)
     }
 
     @JvmStatic
     fun trigger(project: Project?, feature: String) {
-      trigger(project, feature, emptyMap())
-    }
-
-    @JvmStatic
-    fun trigger(project: Project?, feature: String, data: Map<String, String> = emptyMap()) {
       if (project == null) return
       val context = FUSUsageContext.create()
-      context.data.putAll(data)
       FUSProjectUsageTrigger.getInstance(project).trigger(MavenActionsUsagesCollector::class.java, feature, context)
     }
   }

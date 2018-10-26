@@ -15,7 +15,10 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -357,7 +360,7 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
   }
-  
+
   // PY-20864
   public void testTopLevelVariableAnnotationFromTyping() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyElement.class, "List"));
@@ -653,5 +656,175 @@ public class Py3ResolveTest extends PyResolveTestCase {
   // PY-21493
   public void testRegexpAndFStringCombined() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyTargetExpression.class, "foo"));
+  }
+
+  // PY-30942
+  public void testUserPyiInsteadUserPy() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    myFixture.configureByFile("main.py");
+
+    final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+    assertInstanceOf(element, PyFunction.class);
+    assertEquals("foo.pyi", element.getContainingFile().getName());
+  }
+
+  // PY-30942
+  public void testUserPyInsteadStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.copyDirectoryToProject(path + "/pkg", "pkg");
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+
+            final PsiFile file = element.getContainingFile();
+            assertEquals("foo.py", file.getName());
+            assertEquals("src", file.getParent().getParent().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testStubPackageInsteadInlinePackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+
+            final PsiFile file = element.getContainingFile();
+            assertEquals("foo.pyi", file.getName());
+            assertEquals("pkg-stubs", file.getParent().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testStubPackageInsteadInlinePackageFullyQName() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+
+            final PsiFile file = element.getContainingFile();
+            assertEquals("foo.pyi", file.getName());
+            assertEquals("pkg-stubs", file.getParent().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testInlinePackageInsteadTypeShed() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("process.py", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testTypeShedInsteadPy() {
+    assertResolvesTo(PyTargetExpression.class, "MINYEAR", "datetime.pyi");
+  }
+
+  // PY-30942
+  public void testInlinePackageInsteadPartialStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> {
+            final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+            assertInstanceOf(element, PyFunction.class);
+            assertEquals("foo.py", element.getContainingFile().getName());
+          }
+        )
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackage() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+        )
+    );
+  }
+
+  // PY-30942
+  public void testNoInlinePackageInsteadStubPackageAnotherImport() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + path + "/lib");
+    assertNotNull(libDir);
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () ->
+        runWithAdditionalClassEntryInSdkRoots(
+          libDir,
+          () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+        )
+    );
   }
 }

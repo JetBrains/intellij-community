@@ -444,6 +444,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
+    public void setTabActions(AnAction... actions) {
+    }
+
+    @Override
     public void setUseLastFocusedOnActivation(boolean focus) {
     }
 

@@ -356,7 +356,8 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
-  private void updateErrorInfo(@NotNull List<ValidationInfo> info) {
+  @SuppressWarnings("WeakerAccess")
+  protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
     boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
                            !myInfo.equals(info) : !myErrorText.getValue().isTextSet(info) /* do not check isComputed, inplace validation by default now */;
 
@@ -1951,7 +1952,7 @@ public abstract class DialogWrapper {
                  Collections.singletonList(new ValidationInfo(text, component)));
   }
 
-  protected final void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
+  protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
     Application application = ApplicationManager.getApplication();

@@ -31,7 +31,6 @@ import java.awt.Container
 import java.awt.GraphicsEnvironment
 import java.awt.image.BufferedImage
 import java.io.File
-import java.lang.AssertionError
 import java.nio.file.Path
 import javax.swing.AbstractButton
 import javax.swing.JLabel
@@ -207,7 +206,7 @@ internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
 }
 
 internal fun getComponentKey(c: Component, index: Int): String {
-  if (c is JLabel && c.text.isNotEmpty()) {
+  if (c is JLabel && !c.text.isNullOrEmpty()) {
     return StringUtil.removeHtmlTags(c.text)
   }
   if (c is AbstractButton && c.text.isNotEmpty()) {

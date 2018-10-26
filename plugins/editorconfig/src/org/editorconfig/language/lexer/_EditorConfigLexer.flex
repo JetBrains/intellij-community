@@ -15,10 +15,6 @@ import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
   public _EditorConfigLexer() {
     this(null);
   }
-
-  private static String sanitizeInput(String input) {
-    throw new NotImplementedError();
-  }
 %}
 
 %public

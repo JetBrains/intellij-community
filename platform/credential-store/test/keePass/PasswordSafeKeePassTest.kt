@@ -3,7 +3,7 @@ package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
+import com.intellij.ide.passwordSafe.impl.BasePasswordSafe
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -26,21 +26,21 @@ class PasswordSafeKeePassTest {
   fun `erase password - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    doErasePassword(PasswordSafeImpl(settings, createKeePassStore()))
+    doErasePassword(BasePasswordSafe(settings, createKeePassStore()))
   }
 
   @Test
   fun `null username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    doNullUsername(PasswordSafeImpl(settings, createKeePassStore()))
+    doNullUsername(BasePasswordSafe(settings, createKeePassStore()))
   }
 
   @Test
   fun `overwrite credentials - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, createKeePassStore())
+    val ps = BasePasswordSafe(settings, createKeePassStore())
 
     val booleans = booleanArrayOf(true, false)
     for (old in booleans) {
@@ -99,7 +99,7 @@ class PasswordSafeKeePassTest {
   fun `credentials with empty username - KeePass`() {
     val settings = PasswordSafeSettings()
     settings.providerType = ProviderType.KEEPASS
-    val ps = PasswordSafeImpl(settings, createKeePassStore())
+    val ps = BasePasswordSafe(settings, createKeePassStore())
 
     val id = "test PasswordSafeTest.credentials with empty username"
     val attributes = CredentialAttributes(id, isPasswordMemoryOnly = true)

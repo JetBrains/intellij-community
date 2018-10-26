@@ -1093,7 +1093,7 @@ public class ExpectedTypesProvider {
     @Nullable
     private static PsiCall getCompletedOuterCall(@NotNull PsiExpression argument) {
       PsiElement expressionList = argument.getParent();
-      if (expressionList != null) {
+      if (expressionList instanceof PsiExpressionList) {
         PsiElement call = expressionList.getParent();
         if (call instanceof PsiCall) {
           PsiCall originalCall = CompletionUtil.getOriginalElement((PsiCall)call);
@@ -1346,7 +1346,7 @@ public class ExpectedTypesProvider {
       int result = TailType.COMMA.processTail(editor, tailOffset);
       if (myOriginalCall.isValid()) {
         PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
-        ParameterHintsPass.syncUpdate(myOriginalCall, editor);
+        if (myOriginalCall.isValid()) ParameterHintsPass.syncUpdate(myOriginalCall, editor);
       }
       return result;
     }

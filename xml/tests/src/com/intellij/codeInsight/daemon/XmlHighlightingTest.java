@@ -2113,6 +2113,13 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testImportedAttr() {
+    configureByFiles(null, BASE_PATH + "ImportedAttr/main.xml",
+                     BASE_PATH + "ImportedAttr/main.xsd",
+                     BASE_PATH + "ImportedAttr/include.xsd");
+    doHighlighting();
+  }
+
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{

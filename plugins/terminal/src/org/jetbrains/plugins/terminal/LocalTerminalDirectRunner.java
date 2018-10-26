@@ -163,7 +163,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
-    return new PtyProcessTtyConnector(process, myDefaultCharset);
+    return new TerminalPtyProcessTtyConnector(process, myDefaultCharset);
   }
 
   @Override

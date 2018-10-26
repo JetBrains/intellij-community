@@ -16,6 +16,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.containers.ContainerUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
   private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
+  private final int myToolbarAnchor;
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
 
@@ -52,6 +54,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
     myToolbar.setTargetComponent(this);
+    myToolbarAnchor = getToolbarAnchor();
+    myToolbar.setOrientation(isVerticalToolbar() ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
 
     myViewer.installPopupHandler(myPopupMenuGroup);
 
@@ -72,11 +76,27 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     JPanel topPanel = new JPanel(new BorderLayout());
 
-    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
-    topPanel.add(toolbarPanel, BorderLayout.CENTER);
+    Component toolbarComponent = isVerticalToolbar()
+                                 ? createToolbarComponent()
+                                 : new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
+
+    switch (myToolbarAnchor) {
+      case SwingConstants.TOP:
+        topPanel.add(toolbarComponent, BorderLayout.CENTER);
+        break;
+      case SwingConstants.BOTTOM:
+        add(toolbarComponent, BorderLayout.SOUTH);
+        break;
+      case SwingConstants.LEFT:
+        add(toolbarComponent, BorderLayout.WEST);
+        break;
+      case SwingConstants.RIGHT:
+        add(toolbarComponent, BorderLayout.EAST);
+        break;
+    }
 
     add(topPanel, BorderLayout.NORTH);
     add(createCenterPanel(), BorderLayout.CENTER);
@@ -90,12 +110,31 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
       myToolBarGroup.add(groupByAction);
     }
 
+    if (isVerticalToolbar()) {
+      List<AnAction> treeActions = TreeActionsToolbarPanel.createTreeActions(myViewer);
+      boolean hasTreeActions = ContainerUtil.exists(treeActions,
+                                                    action -> ActionUtil.recursiveContainsAction(myToolBarGroup, action));
+      if (!hasTreeActions) {
+        myToolBarGroup.addSeparator();
+        myToolBarGroup.addAll(treeActions);
+      }
+    }
+
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }
 
   @NotNull
   protected Border createViewerBorder() {
     return IdeBorderFactory.createBorder(SideBorder.ALL);
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.LEFT, SwingConstants.RIGHT})
+  protected int getToolbarAnchor() {
+    return SwingConstants.TOP;
+  }
+
+  private boolean isVerticalToolbar() {
+    return myToolbarAnchor == SwingConstants.LEFT || myToolbarAnchor == SwingConstants.RIGHT;
   }
 
   @NotNull

@@ -64,7 +64,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   ShowContentAction myShowContent;
 
-  ContentLayout myTabsLayout = new TabContentLayout(this);
+  TabContentLayout myTabsLayout = new TabContentLayout(this);
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
@@ -266,13 +266,16 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   @Override
   public Dimension getPreferredSize() {
-    Dimension size = super.getPreferredSize();
+    Dimension size = new Dimension();
     size.height = 0;
+    size.width = TabContentLayout.TAB_LAYOUT_START + getInsets().left + getInsets().right;
     for (int i = 0; i < getComponentCount(); i++) {
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
+      size.width += each.getPreferredSize().width;
     }
-    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
+
+    size.width = Math.max(size.width, getMinimumSize().width);
     return size;
   }
 
@@ -334,6 +337,10 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   @Override
   public String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
+  }
+
+  public void setTabDoubleClickActions(@NotNull AnAction... actions) {
+    myTabsLayout.setTabDoubleClickActions(actions);
   }
 
   public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
@@ -504,7 +511,9 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     if (selectedContent == null && toolWindowGroup == null) {
       return;
     }
+    DefaultActionGroup configuredGroup = (DefaultActionGroup)ActionManager.getInstance().getAction("ToolWindowContextMenu");
     DefaultActionGroup group = new DefaultActionGroup();
+    group.copyFromGroup(configuredGroup);
     if (selectedContent != null) {
       initActionGroup(group, selectedContent);
     }

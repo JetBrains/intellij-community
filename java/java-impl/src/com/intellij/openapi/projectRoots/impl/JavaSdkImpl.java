@@ -116,8 +116,11 @@ public class JavaSdkImpl extends JavaSdk {
       if (version == JavaSdkVersion.JDK_1_5) {
         return "https://docs.oracle.com/javase/1.5.0/docs/api/";
       }
-      if (version == JavaSdkVersion.JDK_11) {
-        return "https://download.java.net/java/early_access/jdk11/docs/api/";
+      if (version == JavaSdkVersion.JDK_12) {
+        return "https://download.java.net/java/early_access/jdk12/docs/api/";
+      }
+      if (version.compareTo(JavaSdkVersion.JDK_11) >= 0) {
+        return "https://docs.oracle.com/en/java/javase/" + version.ordinal() + "/docs/api/";
       }
       if (version.compareTo(JavaSdkVersion.JDK_1_6) >= 0) {
         return "https://docs.oracle.com/javase/" + version.ordinal() + "/docs/api/";
@@ -495,7 +498,14 @@ public class JavaSdkImpl extends JavaSdk {
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
     if (apiDocs != null) {
-      sdkModificator.addRoot(apiDocs, docRootType);
+      if (apiDocs.findChild("java.base") != null) {
+        Stream.of(apiDocs.getChildren())
+          .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
+          .forEach(root -> sdkModificator.addRoot(root, docRootType));
+      }
+      else {
+        sdkModificator.addRoot(apiDocs, docRootType);
+      }
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");

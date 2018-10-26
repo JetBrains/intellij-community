@@ -137,22 +137,22 @@ public final class DfaFactMap {
    * @return a new fact map. May return itself if it's known that new fact does not actually change this map.
    */
   @NotNull
-  public <T> DfaFactMap union(@NotNull DfaFactType<T> type, @Nullable T value) {
+  public <T> DfaFactMap unite(@NotNull DfaFactType<T> type, @Nullable T value) {
     if (value == null) return with(type, null);
     T curFact = get(type);
     if (curFact == null) return this;
-    T newFact = type.unionFacts(curFact, value);
+    T newFact = type.uniteFacts(curFact, value);
     return with(type, newFact);
   }
 
   @NotNull
-  private <TT> DfaFactMap union(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
-    return union(type, otherMap.get(type));
+  private <TT> DfaFactMap unite(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return unite(type, otherMap.get(type));
   }
 
   @NotNull
-  public DfaFactMap union(@NotNull DfaFactMap other) {
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, (map, type) -> map.union(other, type));
+  public DfaFactMap unite(@NotNull DfaFactMap other) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, (map, type) -> map.unite(other, type));
   }
 
   @Override

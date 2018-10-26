@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
@@ -35,13 +36,12 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiPredicate;
 
 /**
@@ -268,8 +268,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (empty1 != empty2) return false;
 
       if (empty1) {
-        final List<String> comments1 = collectCommentTexts(s1.myCodeBlock);
-        final List<String> comments2 = collectCommentTexts(s2.myCodeBlock);
+        final List<String> comments1 = collectCommentTexts(s1.myCatchSection);
+        final List<String> comments2 = collectCommentTexts(s2.myCatchSection);
         return comments1.equals(comments2);
       }
 
@@ -291,29 +291,6 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {
       return myFinder.isDuplicate(section.myCodeBlock, true);
-    }
-
-    @NotNull
-    private static List<String> collectCommentTexts(@NotNull PsiElement element) {
-      final List<String> result = new ArrayList<>();
-      for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-        if (child instanceof PsiComment) {
-          final IElementType type = ((PsiComment)child).getTokenType();
-          if (type == JavaTokenType.END_OF_LINE_COMMENT) {
-            final String text = StringUtil.trimStart(child.getText(), "//").trim();
-            if (!text.isEmpty()) {
-              result.add(text);
-            }
-          }
-          else if (type == JavaTokenType.C_STYLE_COMMENT) {
-            final String text = StringUtil.trimStart(StringUtil.trimEnd(child.getText(), "*/"), "/*").trim();
-            if (!text.isEmpty()) {
-              result.add(text);
-            }
-          }
-        }
-      }
-      return result;
     }
 
     boolean canSwapWith(@Nullable CatchSectionWrapper section) {
@@ -384,6 +361,33 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
+  @NotNull
+  private static List<String> collectCommentTexts(@NotNull PsiElement element) {
+    final List<String> result = new ArrayList<>();
+    PsiTreeUtil.processElements(element, child -> {
+      if (child instanceof PsiComment) {
+        String text = getCommentText((PsiComment)child);
+        if (!text.isEmpty()) {
+          result.add(text);
+        }
+      }
+      return true;
+    });
+    return result;
+  }
+
+  @NotNull
+  private static String getCommentText(@NotNull PsiComment comment) {
+    final IElementType type = comment.getTokenType();
+    if (type == JavaTokenType.END_OF_LINE_COMMENT) {
+      return StringUtil.trimStart(comment.getText(), "//").trim();
+    }
+    if (type == JavaTokenType.C_STYLE_COMMENT) {
+      return StringUtil.trimStart(StringUtil.trimEnd(comment.getText(), "*/"), "/*").trim();
+    }
+    return "";
+  }
+
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new CollapseCatchSectionsFix((Boolean)infos[1]);
@@ -432,6 +436,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       final PsiTypeElement collapseIntoTypeElement = collapseIntoSection.myParameter.getTypeElement();
       if (collapseIntoTypeElement == null) return;
 
+      final Set<String> survivingCommentTexts = new HashSet<>(collectCommentTexts(collapseIntoSection.myCatchSection));
       final List<PsiType> parameterTypes = new ArrayList<>(collapseIntoSection.myTypes);
       parameterTypes.addAll(duplicateSection.myTypes);
 
@@ -451,7 +456,17 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
         }
       }
 
-      duplicateSection.myCatchSection.delete();
+      final CommentTracker tracker = new CommentTracker();
+      PsiTreeUtil.processElements(duplicateSection.myCatchSection, element -> {
+        if (element instanceof PsiComment) {
+          final String text = getCommentText((PsiComment)element);
+          if (text.isEmpty() || survivingCommentTexts.contains(text)) {
+            tracker.markUnchanged(element);
+          }
+        }
+        return true;
+      });
+      tracker.deleteAndRestoreComments(duplicateSection.myCatchSection);
     }
 
     private static int getSectionIndex(@NotNull CatchSectionWrapper[] sections, @NotNull PsiElement catchSection) {

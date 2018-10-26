@@ -2893,6 +2893,7 @@ public class UIUtil {
         public void hyperlinkUpdate(HyperlinkEvent e) {
           Element element = e.getSourceElement();
           if (element == null) return;
+          if (element.getName().equals("img")) return;
 
           if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
             setUnderlined(true, element);

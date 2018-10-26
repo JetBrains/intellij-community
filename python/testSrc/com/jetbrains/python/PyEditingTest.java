@@ -308,7 +308,7 @@ public class PyEditingTest extends PyTestCase {
   public void testEnterNoDocstringStubWhenCodeExampleInDocstring() {
     doDocStringTypingTest("\n", DocStringFormat.GOOGLE);
   }
-  
+
   // PY-15332
   public void testEnterDocstringStubNoReturnTagForInit() {
     doDocStringTypingTest("\n", DocStringFormat.REST);
@@ -490,6 +490,33 @@ public class PyEditingTest extends PyTestCase {
     getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_ARGUMENTS = true;
     doTestEnter("func(<caret>)",
                 "func(\n" +
+                "        <caret>\n" +
+                ")");
+  }
+
+  // PY-20909
+  public void testContinuationIndentInEmptyListLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("[<caret>]",
+                "[\n" +
+                "        <caret>\n" +
+                "]");
+  }
+
+  // PY-20909
+  public void testContinuationIndentInEmptyDictLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("{<caret>}",
+                "{\n" +
+                "        <caret>\n" +
+                "}");
+  }
+
+  // PY-20909
+  public void testContinuationIndentInEmptyTupleLiteral() {
+    getPythonCodeStyleSettings().USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS = true;
+    doTestEnter("(<caret>)",
+                "(\n" +
                 "        <caret>\n" +
                 ")");
   }
