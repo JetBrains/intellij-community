@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
@@ -18,6 +19,13 @@ import java.util.List;
 public class YAMLBlockMappingImpl extends YAMLMappingImpl {
   public YAMLBlockMappingImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  public YAMLKeyValue getFirstKeyValue() {
+    YAMLKeyValue firstKeyValue = findChildByType(YAMLElementTypes.KEY_VALUE_PAIR);
+    assert firstKeyValue != null : "magic YAML map without any key-value";
+    return firstKeyValue;
   }
 
   @Override
