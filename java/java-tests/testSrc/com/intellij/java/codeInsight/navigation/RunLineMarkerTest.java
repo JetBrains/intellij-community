@@ -78,6 +78,16 @@ public class RunLineMarkerTest extends LightCodeInsightFixtureTestCase {
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
   }
 
+  public void testAbstractTestClassMethods() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    myFixture.configureByText("MyTest.java", "public abstract class MyTest extends junit.framework.TestCase {\n" +
+                                               "    public void test<caret>Foo() {\n" +
+                                               "    }\n" +
+                                               "}");
+    List<GutterMark> marks = myFixture.findGuttersAtCaret();
+    assertEquals(1, marks.size());
+  }
+
   public void testMarkersBeforeRunning() {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "public class MainTest extends junit.framework.TestCase {\n" +
