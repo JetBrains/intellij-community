@@ -556,8 +556,9 @@ public class ExpectedHighlightingData {
       .map(info -> pair(findTag(types, info), info))
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
-    boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+    boolean forceShowAttributesKeys = types.values().stream()
+      .flatMap(set -> set.infos.stream())
+      .anyMatch(i -> !isPurelyHighlightingInfo(i) && i.forcedTextAttributesKey != null);
 
     // sort filtered highlighting data by end offset in descending order
     Collections.sort(list, (o1, o2) -> {
@@ -584,7 +585,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messageBundles);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, forceShowAttributesKeys, messageBundles);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -608,7 +609,7 @@ public class ExpectedHighlightingData {
   private static int[] composeText(StringBuilder sb,
                                    List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
-                                   boolean showAttributesKeys,
+                                   boolean forceShowAttributesKeys,
                                    ResourceBundle... messageBundles) {
     int i = index;
     while (i < list.size()) {
@@ -625,7 +626,7 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messageBundles);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, forceShowAttributesKeys, messageBundles);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
@@ -640,7 +641,7 @@ public class ExpectedHighlightingData {
       else {
         str += "descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
       }
-      if (showAttributesKeys) {
+      if (forceShowAttributesKeys || isPurelyHighlightingInfo(info)) {
         str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
       }
       str += '>';
@@ -721,8 +722,8 @@ public class ExpectedHighlightingData {
     boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && expectedInfo.type == WHATEVER;
     boolean textAttributesMatches = Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
                                     !strictMatch && expectedInfo.forcedTextAttributes == null;
-    boolean attributesKeyMatches = !strictMatch && expectedInfo.forcedTextAttributesKey == null ||
-                                   Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
+    boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null && !isPurelyHighlightingInfo(info) ||
+                                                    Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey));
     return
       haveSamePresentation(info, expectedInfo, strictMatch) &&
       info.getSeverity() == expectedInfo.getSeverity() &&
@@ -752,6 +753,10 @@ public class ExpectedHighlightingData {
     else {
       return String.format("(%d:%d..%d:%d)", start.line + 1, end.line + 1, start.column + 1, end.column + 1);
     }
+  }
+
+  private static boolean isPurelyHighlightingInfo(HighlightInfo info) {
+    return info.type == HighlightInfoType.INFORMATION && info.getDescription() == null;
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
