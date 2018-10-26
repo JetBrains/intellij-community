@@ -127,6 +127,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @NotNull
   public Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
+    String schemaUrl = null;
+    if (!onlyUserSchemas) {
+      // prefer schema-schema if it is specified in "$schema" property
+      schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
+      if (isSchemaUrl(schemaUrl)) {
+        final VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
+        if (virtualFile != null) return Collections.singletonList(virtualFile);
+      }
+    }
+
+
     List<JsonSchemaFileProvider> providers = getProvidersForFile(file);
 
     // proper priority:
@@ -137,8 +148,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
     boolean checkSchemaProperty = true;
     if (!onlyUserSchemas && providers.stream().noneMatch(p -> p.getSchemaType() == SchemaType.userSchema)) {
-      VirtualFile virtualFile = resolveFromSchemaProperty(file);
-      if (virtualFile != null) return ContainerUtil.createMaybeSingletonList(virtualFile);
+      if (schemaUrl == null) schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
+      VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
+      if (virtualFile != null) return Collections.singletonList(virtualFile);
       checkSchemaProperty = false;
     }
 
@@ -172,8 +184,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     if (checkSchemaProperty) {
-      VirtualFile virtualFile = resolveFromSchemaProperty(file);
-      if (virtualFile != null) return ContainerUtil.createMaybeSingletonList(virtualFile);
+      if (schemaUrl == null) schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
+      VirtualFile virtualFile = resolveFromSchemaProperty(schemaUrl, file);
+      if (virtualFile != null) return Collections.singletonList(virtualFile);
     }
 
     return ContainerUtil.createMaybeSingletonList(resolveSchemaFromOtherSources(file));
@@ -185,9 +198,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   @Nullable
-  private VirtualFile resolveFromSchemaProperty(@NotNull VirtualFile file) {
-    String schemaUrl = JsonCachedValues.getSchemaUrlFromSchemaProperty(file, myProject);
-
+  private VirtualFile resolveFromSchemaProperty(@Nullable String schemaUrl, @NotNull VirtualFile file) {
     if (schemaUrl != null) {
       VirtualFile virtualFile = findSchemaFileByReference(schemaUrl, file);
       if (virtualFile != null) return virtualFile;
@@ -289,7 +300,11 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     VirtualFile schemaFile = provider.getSchemaFile();
     if (!(schemaFile instanceof HttpVirtualFile)) return false;
     String url = schemaFile.getUrl();
-    return url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
+    return isSchemaUrl(url);
+  }
+
+  private static boolean isSchemaUrl(@Nullable String url) {
+    return url != null && url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
   }
 
   @Override
