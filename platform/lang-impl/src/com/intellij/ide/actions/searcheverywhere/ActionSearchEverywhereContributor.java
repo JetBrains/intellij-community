@@ -100,14 +100,12 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
-      Object value = ((GotoActionModel.MatchedValue)element).value;
-      if (value instanceof GotoActionModel.ActionWrapper) {
-        value = ((GotoActionModel.ActionWrapper)value).getAction();
-      }
+      return getAction((GotoActionModel.MatchedValue)element);
+    }
 
-      if (value instanceof AnAction) {
-        return value;
-      }
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
+      AnAction action = getAction((GotoActionModel.MatchedValue)element);
+      return action == null ? null : action.getTemplatePresentation().getDescription();
     }
 
     return null;
@@ -127,6 +125,15 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     boolean inplaceChange = selected instanceof GotoActionModel.ActionWrapper
                             && ((GotoActionModel.ActionWrapper) selected).getAction() instanceof ToggleAction;
     return !inplaceChange;
+  }
+
+  @Nullable
+  private static AnAction getAction(@NotNull GotoActionModel.MatchedValue element) {
+    Object value = element.value;
+    if (value instanceof GotoActionModel.ActionWrapper) {
+      value = ((GotoActionModel.ActionWrapper)value).getAction();
+    }
+    return value instanceof AnAction ? (AnAction) value : null;
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Void> {
