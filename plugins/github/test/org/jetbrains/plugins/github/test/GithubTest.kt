@@ -76,8 +76,8 @@ abstract class GithubTest : GitPlatformTest() {
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { deleteAllRepos(mainAccount, organisation) })
-      .append(ThrowableRunnable { deleteAllRepos(mainAccount) })
       .append(ThrowableRunnable { deleteAllRepos(secondaryAccount) })
+      .append(ThrowableRunnable { deleteAllRepos(mainAccount) })
       .append(ThrowableRunnable { setCurrentAccount(null) })
       .append(ThrowableRunnable { if (wasInit { authenticationManager }) authenticationManager.clearAccounts() })
       .append(ThrowableRunnable { super.tearDown() })

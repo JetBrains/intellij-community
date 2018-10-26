@@ -47,9 +47,9 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get user repositories")
 
       @JvmStatic
-      fun create(server: GithubServerPath, name: String, description: String, private: Boolean) =
+      fun create(server: GithubServerPath, name: String, description: String, private: Boolean, autoInit: Boolean? = null) =
         Post.json<GithubRepo>(getUrl(server, CurrentUser.urlSuffix, urlSuffix),
-                              GithubRepoRequest(name, description, private))
+                              GithubRepoRequest(name, description, private, autoInit))
           .withOperationName("create user repository")
     }
 
@@ -84,7 +84,7 @@ object GithubApiRequests {
       @JvmStatic
       fun create(server: GithubServerPath, organisation: String, name: String, description: String, private: Boolean) =
         Post.json<GithubRepo>(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix),
-                              GithubRepoRequest(name, description, private))
+                              GithubRepoRequest(name, description, private, null))
           .withOperationName("create organisation repository")
     }
   }
@@ -117,6 +117,12 @@ object GithubApiRequests {
     }
 
     object Forks : Entity("/forks") {
+
+      @JvmStatic
+      fun create(server: GithubServerPath, username: String, repoName: String) =
+        Post.json<GithubRepo>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix), Any())
+          .withOperationName("fork repository $username/$repoName for cuurent user")
+
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String) =
         GithubApiPagesLoader.Request(get(server, username, repoName), ::get)

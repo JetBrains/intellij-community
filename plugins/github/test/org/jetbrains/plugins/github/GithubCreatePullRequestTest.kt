@@ -2,16 +2,50 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.notification.NotificationType
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.components.service
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.vcs.Executor.cd
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.util.ThreeState
+import git4idea.actions.GitInit
+import git4idea.test.TestDialogHandler
 import git4idea.test.git
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.data.GithubRepo
+import org.jetbrains.plugins.github.test.GithubGitRepoTest
+import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog
+import org.jetbrains.plugins.github.util.GithubSettings
 
-class GithubCreatePullRequestTest : GithubCreatePullRequestTestBase() {
-  fun testSimple() {
-    registerDefaultCreatePullRequestDialogHandler("master", mainAccount.username)
+class GithubCreatePullRequestTest : GithubGitRepoTest() {
+  private lateinit var mainRepo: GithubRepo
+
+  override fun setUp() {
+    super.setUp()
+
+    mainRepo = mainAccount.executor.execute(
+      GithubApiRequests.CurrentUser.Repos.create(mainAccount.account.server, "main_repo", "", false, true))
+    registerDefaultCreatePullRequestDialogHandler()
+  }
+
+  private fun registerDefaultCreatePullRequestDialogHandler() {
+    dialogManager.registerDialogHandler(GithubCreatePullRequestDialog::class.java, TestDialogHandler { dialog ->
+      dialog.testSetRequestTitle("TestPR")
+      dialog.testSetFork(mainRepo.fullPath)
+      dialog.testSetBranch("master")
+      dialog.testCreatePullRequest()
+      DialogWrapper.OK_EXIT_CODE
+    })
+  }
+
+  fun testBranch() {
+    cloneRepo(mainRepo)
+    createBranch()
+    createChanges()
+    repository.update()
 
     val coordinatesSet = gitHelper.getPossibleRemoteUrlCoordinates(myProject)
     assertSize(1, coordinatesSet)
-    val coordinates = coordinatesSet.iterator().next()
+    val coordinates = coordinatesSet.first()
 
     GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, mainAccount.account)
 
@@ -20,20 +54,61 @@ class GithubCreatePullRequestTest : GithubCreatePullRequestTestBase() {
     checkLastCommitPushed()
   }
 
-  fun testParent() {
-    registerDefaultCreatePullRequestDialogHandler("file2", secondaryAccount.username)
-    repository.git(
-      "remote add somename " + gitHelper.getRemoteUrl(secondaryAccount.account.server, secondaryAccount.username, PROJECT_NAME))
-    repository.update()
+  private fun createBranch() {
+    git("branch prBranch")
+    git("checkout prBranch")
+  }
+
+  fun testFork() {
+    setCurrentAccount(secondaryAccount)
+    val fork = secondaryAccount.executor.execute(
+      GithubApiRequests.Repos.Forks.create(secondaryAccount.account.server, mainRepo.userName, mainRepo.name))
+
+    cloneRepo(fork)
+    createChanges()
 
     val coordinatesSet = gitHelper.getPossibleRemoteUrlCoordinates(myProject)
-    assertSize(2, coordinatesSet)
-    val coordinates = ContainerUtil.find(coordinatesSet) { c -> c.remote.name != "somename" }
+    assertSize(1, coordinatesSet)
+    val coordinates = coordinatesSet.first()
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates!!.remote, coordinates.url, mainAccount.account)
+    service<GithubSettings>().createPullRequestCreateRemote = ThreeState.YES
+    GithubCreatePullRequestAction.createPullRequest(myProject, repository, coordinates.remote, coordinates.url, secondaryAccount.account)
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null)
     checkRemoteConfigured()
     checkLastCommitPushed()
+  }
+
+  private fun cloneRepo(repo: GithubRepo) {
+    cd(projectRoot)
+    git("init")
+    setGitIdentity(projectRoot)
+    GitInit.refreshAndConfigureVcsMappings(myProject, projectRoot, projectRoot.path)
+    findGitRepo()
+
+    repository.apply {
+      git("remote add origin ${repo.cloneUrl}")
+      // fork is initialized in background and there's nothing to poll
+      for (i in 1..5) {
+        try {
+          git("fetch")
+          break
+        }
+        catch (ise: IllegalStateException) {
+          if (i == 5) throw ise
+          Thread.sleep(50L)
+        }
+      }
+      git("checkout -t origin/master")
+      update()
+    }
+  }
+
+  private fun createChanges() {
+    VfsTestUtil.createFile(projectRoot, "file.txt", "file.txt content")
+    repository.apply {
+      git("add file.txt")
+      git("commit -m changes")
+    }
   }
 }
