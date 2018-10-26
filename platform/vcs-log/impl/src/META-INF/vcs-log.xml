@@ -165,12 +165,11 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <separator/>
+      <reference id="Vcs.Log.GetVersion"/>
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <separator/>
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>

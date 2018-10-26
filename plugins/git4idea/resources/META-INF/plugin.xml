@@ -121,8 +121,10 @@
     </group>
 
     <group id="Git.FileHistory.ContextMenu">
-      <reference id="Git.Revert.In.Log" />
       <reference id="Git.SelectInGitLog"/>
+      <separator/>
+      <reference id="Git.Revert.In.Log" />
+      <separator/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
     </group>
 
