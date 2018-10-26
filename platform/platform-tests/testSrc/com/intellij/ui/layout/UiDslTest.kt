@@ -2,7 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
@@ -47,7 +47,7 @@ class UiDslTest {
   fun beforeMethod() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
       // let's for now to see how it is going on macOS
-      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac /* || SystemInfo.isWin10OrNewer */)
+      assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSHighSierra /* || SystemInfo.isWin10OrNewer */)
     }
 
     System.setProperty("idea.ui.comment.copyable", "false")
@@ -96,6 +96,12 @@ class UiDslTest {
 
   @Test
   fun `titled rows`() {
+    // failed on TC but for now no 10.14 agents to test
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      // let's for now to see how it is going on macOS
+      assumeTrue("macOS 10.14 or Windows 10 are required", SystemInfo.isMacOSMojave /* || SystemInfo.isWin10OrNewer */)
+    }
+
     doTest { titledRows() }
   }
 
