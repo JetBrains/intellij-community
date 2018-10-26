@@ -6,12 +6,14 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.Collection;
@@ -158,6 +160,18 @@ public class ColorSelectionComponent extends JPanel {
       }
       setSelected(myColor != null);
       stateChanged();
+    }
+
+    @Override
+    protected ButtonUI createUI() {
+      return new ColorButtonUI() {
+        @Nullable
+        @Override
+        protected Color getUnfocusedBorderColor(@NotNull ColorButtonBase button) {
+          if (UIUtil.isUnderDarcula()) return JBColor.GRAY;
+          return super.getUnfocusedBorderColor(button);
+        }
+      };
     }
 
     @Override

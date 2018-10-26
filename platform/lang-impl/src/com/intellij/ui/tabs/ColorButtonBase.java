@@ -4,6 +4,7 @@ package com.intellij.ui.tabs;
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,8 @@ public abstract class ColorButtonBase extends StickyButton {
 
   protected ColorButtonBase(@NotNull final String text, @NotNull final Color color) {
     super(FileColorManagerImpl.getAlias(text));
-    setUI(createUI());
     myColor = color;
+    setUI(createUI());
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -29,6 +30,12 @@ public abstract class ColorButtonBase extends StickyButton {
 
     setOpaque(false);
     setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+  }
+
+  @Override
+  public void setUI(ButtonUI ui) {
+    if (myColor == null) return; // we call setUI manually after parent constructor invocation
+    super.setUI(ui);
   }
 
   protected abstract void doPerformAction(ActionEvent e);
@@ -71,7 +78,7 @@ public abstract class ColorButtonBase extends StickyButton {
 
     @Override
     protected Color getFocusColor(@NotNull ColorButtonBase button) {
-      return button.getColor().darker();
+      return UIUtil.isUnderDarcula() ? button.getColor().brighter() : button.getColor().darker();
     }
 
     @Override
