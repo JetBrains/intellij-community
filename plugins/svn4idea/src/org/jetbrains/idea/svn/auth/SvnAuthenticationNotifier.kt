@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NamedRunnable
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
@@ -25,6 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ThreeState
+import com.intellij.util.io.delete
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
 import org.jetbrains.idea.svn.SvnBundle.message
@@ -40,11 +42,11 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException
 import org.jetbrains.idea.svn.info.InfoClient
 import java.awt.Component
 import java.awt.Point
-import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.Paths
 import java.util.Collections.synchronizedMap
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -324,17 +326,18 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
 
     @JvmStatic
     fun clearAuthenticationDirectory(configuration: SvnConfiguration) {
-      val authDir = File(configuration.configurationDirectory, "auth")
+      val authDir = Paths.get(configuration.configurationDirectory, "auth")
       if (authDir.exists()) {
-        val process = {
+        val process: () -> Unit = {
           val ind = ProgressManager.getInstance().progressIndicator
           ind?.isIndeterminate = true
-          ind?.text = "Clearing stored credentials in ${authDir.absolutePath}"
-          val files = authDir.listFiles { _, name -> AUTH_KINDS.contains(name) }
+          ind?.text = "Clearing stored credentials in $authDir"
 
-          for (dir in files!!) {
-            ind?.text = "Deleting ${dir.absolutePath}"
-            FileUtil.delete(dir)
+          authDir.directoryStreamIfExists({ it.fileName.toString() in AUTH_KINDS }) {
+            for (dir in it) {
+              ind?.text = "Deleting $dir"
+              dir.delete()
+            }
           }
         }
         if (getApplication().isUnitTestMode || !getApplication().isDispatchThread) {
