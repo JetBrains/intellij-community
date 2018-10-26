@@ -25,6 +25,7 @@ import java.util.zip.GZIPOutputStream;
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
   private static final EventLogSettingsService mySettingsService = EventLogExternalSettingsService.getInstance();
+  private static final int MAX_FILES_TO_SEND = 20;
 
   @Override
   public StatisticsResult send() {
@@ -54,7 +55,9 @@ public class EventLogStatisticsService implements StatisticsService {
     final LogEventFilter filter = settings.getEventFilter();
     try {
       final List<File> toRemove = new ArrayList<>(logs.size());
-      for (File file : logs) {
+      int size = Math.min(MAX_FILES_TO_SEND, logs.size());
+      for (int i = 0; i < size; i++) {
+        final File file = logs.get(i);
         final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
