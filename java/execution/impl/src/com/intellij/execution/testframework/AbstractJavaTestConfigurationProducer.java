@@ -103,8 +103,9 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
-      if (Comparing.equal(location.getModule(), configurationModule)) return true;
-      if (Comparing.equal(predefinedModule, configurationModule)) return true;
+      final Module locationModule = location.getModule();
+      if (Comparing.equal(locationModule, configurationModule)) return true;
+      if ((predefinedModule != null || locationModule == null) && Comparing.equal(predefinedModule, configurationModule)) return true;
     }
 
     return false;
