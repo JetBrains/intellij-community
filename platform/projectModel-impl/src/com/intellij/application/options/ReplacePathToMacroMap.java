@@ -222,4 +222,8 @@ public class ReplacePathToMacroMap extends PathMacroMap {
     myMacroMap.put(path, replacement);
   }
 
+  @Override
+  public String toString() {
+    return "macroMap: " + myMacroMap + "\n\npathsIndex: " + StringUtil.join(myPathsIndex, "\n");
+  }
 }

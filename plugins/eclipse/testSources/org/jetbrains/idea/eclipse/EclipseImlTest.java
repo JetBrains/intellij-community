@@ -84,7 +84,11 @@ public class EclipseImlTest extends IdeaTestCase {
     StringWriter writer = new StringWriter();
     JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroMap, null);
     xmlWriter.output(actualImlElement, writer);
-    assertThat(writer.toString()).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
+    String actual = writer.toString();
+    if (actual.contains("jar://$MAVEN_REPOSITORY$/junit")) {
+      fail(actual + "\n\n" + macroMap.toString());
+    }
+    assertThat(actual).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {
