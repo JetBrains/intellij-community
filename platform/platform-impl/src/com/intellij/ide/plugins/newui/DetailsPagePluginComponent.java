@@ -478,7 +478,7 @@ public class DetailsPagePluginComponent extends OpaquePanel {
         HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
         StyleSheet sheet = kit.getStyleSheet();
         sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
-        sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBColor.link()) + "}");
+        sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
         descriptionComponent.setEditable(false);
         descriptionComponent.setOpaque(false);
         descriptionComponent.setBorder(null);

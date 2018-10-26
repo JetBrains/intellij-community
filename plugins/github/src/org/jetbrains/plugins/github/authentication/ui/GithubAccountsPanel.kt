@@ -359,8 +359,8 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
         if (value.showLoginLink) append("Log In",
-                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBColor.link())
-                                        else SimpleTextAttributes(STYLE_PLAIN, JBColor.link()),
+                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor())
+                                        else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
                                         LINK_TAG)
       }
     }

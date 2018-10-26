@@ -212,7 +212,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     init {
       contextHelp.apply {
         editorKit = UIUtil.getHTMLEditorKit()
-        val linkColor = JBColor.link()
+        val linkColor = JBUI.CurrentTheme.Link.linkColor()
         //language=CSS
         (editorKit as HTMLEditorKit).styleSheet.addRule("a {color: rgb(${linkColor.red}, ${linkColor.green}, ${linkColor.blue})}")
         //language=HTML

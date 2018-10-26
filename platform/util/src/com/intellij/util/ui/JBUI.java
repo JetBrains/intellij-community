@@ -1930,6 +1930,25 @@ public class JBUI {
         return JBColor.namedColor("ValidationTooltip.warningBackgroundColor", 0xF5F0E6);
       }
     }
+
+    public static class Link {
+      public static Color linkColor() {
+        return JBColor.namedColor("link.foreground", 0x589df6);
+      }
+
+      public static Color linkHoverColor() {
+        return JBColor.namedColor("link.hover.foreground", linkColor());
+      }
+
+      public static Color linkPressedColor() {
+        return JBColor.namedColor("link.pressed.foreground", new JBColor(0xf00000, 0xba6f25));
+      }
+
+      public static Color linkVisitedColor() {
+        return JBColor.namedColor("link.visited.foreground", new JBColor(0x800080, 0x9776a9));
+      }
+
+    }
   }
 
 

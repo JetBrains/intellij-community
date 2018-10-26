@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
@@ -104,7 +103,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
 
   @Override
   public void setForeground(Color fg) {
-    super.setForeground(isEnabled() ? JBColor.link() : fg);
+    super.setForeground(isEnabled() ? JBUI.CurrentTheme.Link.linkColor() : fg);
   }
 
   @Override

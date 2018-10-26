@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
@@ -20,6 +19,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -114,7 +114,7 @@ public class VcsLogUiUtil {
 
   @NotNull
   public static SimpleTextAttributes getLinkAttributes() {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.link());
+    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor());
   }
 
   public static void showTooltip(@NotNull JComponent component,

@@ -719,7 +719,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBUI.CurrentTheme.Link.linkColor() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);
