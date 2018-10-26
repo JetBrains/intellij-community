@@ -280,8 +280,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
                                          || hasSchemaSchema(file));
   }
 
-  public boolean isMappedSchema(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file);
+  private boolean isMappedSchema(@NotNull VirtualFile file) {
+    return isMappedSchema(file, true);
+  }
+
+  public boolean isMappedSchema(@NotNull VirtualFile file, boolean canRecompute) {
+    return (canRecompute || myState.isComputed()) && myState.getFiles().contains(file);
   }
 
   private boolean isSchemaByProvider(@NotNull VirtualFile file) {
@@ -399,6 +403,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
     @NotNull private final Project myProject;
     @NotNull private final AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
+    private boolean myIsComputed = false;
 
     private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
@@ -407,6 +412,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         @NotNull
         @Override
         public Map<VirtualFile, JsonSchemaFileProvider> compute() {
+          myIsComputed = true;
           return Collections.unmodifiableMap(createFileProviderMap(myFactory.create(), myProject));
         }
       };
@@ -429,6 +435,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     @Nullable
     public JsonSchemaFileProvider getProvider(@NotNull final VirtualFile file) {
       return myData.getValue().get(file);
+    }
+
+    public boolean isComputed() {
+      return myIsComputed;
     }
 
     @NotNull
