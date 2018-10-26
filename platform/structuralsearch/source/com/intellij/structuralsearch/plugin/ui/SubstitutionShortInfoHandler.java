@@ -18,8 +18,8 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
-import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,7 +139,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     final StringBuilder buf = new StringBuilder();
 
     final String inactiveTextColor = ColorUtil.toHtmlColor(UIUtil.getInactiveTextColor());
-    final String linkColor = ColorUtil.toHtmlColor(JBColor.link());
+    final String linkColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor());
     if (namedScriptableDefinition instanceof MatchVariableConstraint) {
       final MatchVariableConstraint constraint = (MatchVariableConstraint)namedScriptableDefinition;
       if (constraint.isPartOfSearchResults() && !newDialog) {
