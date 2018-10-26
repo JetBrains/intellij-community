@@ -38,6 +38,10 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("next.subKey");
   }
 
+  public void testPasteKeysInMiddleWithAnchor() {
+    doTest("next.subKey");
+  }
+
   public void testPasteKeysInEnd() {
     doTest("next.subKey");
   }
