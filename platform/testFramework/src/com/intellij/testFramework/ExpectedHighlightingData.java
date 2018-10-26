@@ -494,8 +494,9 @@ public class ExpectedHighlightingData {
       .map(info -> pair(findTag(types, info), info))
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
-    boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+    boolean forceShowAttributesKeys = types.values().stream()
+      .flatMap(set -> set.infos.stream())
+      .anyMatch(i -> !isPurelyHighlightingInfo(i) && i.forcedTextAttributesKey != null);
 
     // sort filtered highlighting data by end offset in descending order
     Collections.sort(list, (o1, o2) -> {
@@ -522,7 +523,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, forceShowAttributesKeys);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -530,7 +531,7 @@ public class ExpectedHighlightingData {
   private static int[] composeText(StringBuilder sb,
                                    List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
-                                   boolean showAttributesKeys) {
+                                   boolean forceShowAttributesKeys) {
     int i = index;
     while (i < list.size()) {
       Pair<String, HighlightInfo> pair = list.get(i);
@@ -546,14 +547,14 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, forceShowAttributesKeys);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
       String str = '<' + severity + " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
-      if (showAttributesKeys) {
+      if (forceShowAttributesKeys || isPurelyHighlightingInfo(info)) {
         str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
       }
       str += '>';
@@ -603,7 +604,8 @@ public class ExpectedHighlightingData {
        Comparing.strEqual(info.getDescription(), expectedInfo.getDescription())) &&
       (expectedInfo.forcedTextAttributes == null ||
        Comparing.equal(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null))) &&
-      (expectedInfo.forcedTextAttributesKey == null || expectedInfo.forcedTextAttributesKey.equals(info.forcedTextAttributesKey));
+      (expectedInfo.forcedTextAttributesKey == null && !isPurelyHighlightingInfo(info) ||
+       Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey));
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
@@ -619,6 +621,10 @@ public class ExpectedHighlightingData {
     else {
       return String.format("(%d:%d..%d:%d)", start.line + 1, end.line + 1, start.column + 1, end.column + 1);
     }
+  }
+
+  private static boolean isPurelyHighlightingInfo(HighlightInfo info) {
+    return info.type == HighlightInfoType.INFORMATION && info.getDescription() == null;
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
