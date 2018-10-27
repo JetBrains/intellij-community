@@ -162,7 +162,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs<*>) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
-    retrieveDirtyScopes() // ignore the dirty event after adding the mapping
+    dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
   }
 
   private fun createFile(parentDir: FilePath, name: String): FilePath {
