@@ -171,7 +171,7 @@ public class StringSearcher {
     }
     else {
       int start = 1;
-      int end = _end + 1;
+      int end = _end;
       while (start <= end - myPatternLength + 1) {
         int i = myPatternLength - 1;
         char lastChar = normalizedCharAt(text, textArray, end - (start + i));
