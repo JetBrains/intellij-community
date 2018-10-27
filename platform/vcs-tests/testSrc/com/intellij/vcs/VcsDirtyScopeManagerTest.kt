@@ -43,6 +43,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     disableChangeListManager()
 
     vcsManager.registerVcs(vcs)
+    vcsManager.waitForInitialized()
     registerRootMapping(projectRoot)
   }
 
