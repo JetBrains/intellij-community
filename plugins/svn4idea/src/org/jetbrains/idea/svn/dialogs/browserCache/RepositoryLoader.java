@@ -13,7 +13,6 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationProvider;
 import org.jetbrains.idea.svn.browse.DirectoryEntry;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 
@@ -100,7 +99,6 @@ class RepositoryLoader extends Loader {
       List<DirectoryEntry> entries = newArrayList();
       final RepositoryTreeNode node = myData.first;
       final SvnVcs vcs = node.getVcs();
-      SvnAuthenticationProvider.forceInteractive();
 
       try {
         Target target = Target.on(node.getURL());
@@ -112,8 +110,6 @@ class RepositoryLoader extends Loader {
           startNext();
         });
         return;
-      } finally {
-        SvnAuthenticationProvider.clearInteractive();
       }
 
       SwingUtilities.invokeLater(() -> {
