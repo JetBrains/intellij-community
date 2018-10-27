@@ -43,6 +43,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
     disableChangeListManager()
 
     vcsManager.registerVcs(vcs)
+    vcsManager.waitForInitialized()
     registerRootMapping(projectRoot)
   }
 
@@ -147,7 +148,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   private fun disableChangeListManager() {
-    (ChangeListManager.getInstance(project) as ChangeListManagerImpl).freeze("For tests")
+    (ChangeListManager.getInstance(project) as ChangeListManagerImpl).forceStopInTestMode()
   }
 
   private fun createSubRoot(parent: VirtualFile, name: String): FilePath {
@@ -162,7 +163,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   private fun registerRootMapping(root: VirtualFile, vcs: AbstractVcs<*>) {
     vcsManager.setDirectoryMapping(root.path, vcs.name)
-    retrieveDirtyScopes() // ignore the dirty event after adding the mapping
+    dirtyScopeManager.retrieveScopes() // ignore the dirty event after adding the mapping
   }
 
   private fun createFile(parentDir: FilePath, name: String): FilePath {

@@ -108,3 +108,4 @@ com.codeOrchestra.colt.js.webStormPlugin 1.1.15 1.1.14 1.1.13 1.1.12 1.1.11 1.1.
 org.amdatu.idea 1.0.1 1.0.2
 manifold.ij 0.24-alpha 0.25.2-alpha
 org.jetbrains.settingsRepositoryPlus 0.1.0
+com.alicannklc.codeigniter.snippets 1.0 1.1

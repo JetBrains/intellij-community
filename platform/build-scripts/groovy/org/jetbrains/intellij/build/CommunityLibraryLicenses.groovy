@@ -180,7 +180,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Groovy", version: "2.4.6", license: "Apache 2.0", url: "http://groovy-lang.org/"),
     new LibraryLicense(name: "Gson", version: "2.8.4", libraryName: "gson", license: "Apache 2.0",
                        url: "http://code.google.com/p/google-gson/"),
-    new LibraryLicense(name: "Guava", version: "23.6", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/",
+    new LibraryLicense(name: "Guava", version: "26.0", license: "Apache 2.0", url: "http://code.google.com/p/guava-libraries/",
                        licenseUrl: "http://ant.apache.org/license.html"),
     new LibraryLicense(name: "hamcrest", version: "1.3", license: "BSD", url: "http://hamcrest.org/",
                        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),

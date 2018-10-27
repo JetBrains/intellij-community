@@ -411,6 +411,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void freeze(@NotNull String reason) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore();
     sem.down();
@@ -1628,6 +1630,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void waitEverythingDoneInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myScheduler.awaitAll();
+  }
+
+  @TestOnly
+  public void forceStopInTestMode() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myUpdater.stop();
   }
 
   @TestOnly

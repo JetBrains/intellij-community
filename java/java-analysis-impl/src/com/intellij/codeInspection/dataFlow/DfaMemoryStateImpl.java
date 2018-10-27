@@ -1502,7 +1502,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           DfaVariableValue var = ObjectUtils.tryCast(value, DfaVariableValue.class);
           if (var == null || var.getQualifier() != from) continue;
           DfaVariableValue target = var.withQualifier(to);
-          assert uniteClasses(var, target);
+          boolean united = uniteClasses(var, target);
+          assert united;
           otherClassChanged = true;
         }
       }

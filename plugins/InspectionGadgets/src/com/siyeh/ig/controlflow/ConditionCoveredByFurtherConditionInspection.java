@@ -98,7 +98,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         List<PsiExpression> dependencies = operands.subList(index + 1, operands.size());
         PsiExpression operand = operands.get(index);
         dependencies = minimizeDependencies(context, operand, and, dependencies);
-        if (dependencies.isEmpty()) return;
+        if (dependencies.isEmpty()) continue;
         String operandText = PsiExpressionTrimRenderer.render(operand);
         String description = "Condition '" + operandText + "' covered by subsequent " +
                              (dependencies.size() == 1
