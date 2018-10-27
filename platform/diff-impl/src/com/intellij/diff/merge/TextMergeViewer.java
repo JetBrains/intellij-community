@@ -1363,10 +1363,28 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<AnAction> actions = new ArrayList<>();
         actions.add(new ShowPrevChangeMarkerAction(editor, range));
         actions.add(new ShowNextChangeMarkerAction(editor, range));
+        actions.add(new MyRollbackLineStatusRangeAction(editor, range));
         actions.add(new ShowLineStatusRangeDiffAction(editor, range));
         actions.add(new CopyLineStatusRangeAction(editor, range));
         actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
         return actions;
+      }
+
+      private class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
+        private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
+          super(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
+        }
+
+        @Override
+        protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
+          return true;
+        }
+
+        @Override
+        protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
+          DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
+          myTracker.rollbackChanges(range);
+        }
       }
     }
 
