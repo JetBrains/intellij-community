@@ -222,7 +222,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
                                interactive: Boolean): Boolean {
       // we should also NOT show proxy credentials dialog if at least fixed proxy was used, so
       var proxyToRelease: Proxy? = null
-      if (!interactive && configuration.isIsUseDefaultProxy) {
+      if (!interactive && configuration.isUseDefaultProxy) {
         val instance = HttpConfigurable.getInstance()
         if (instance.USE_HTTP_PROXY && instance.PROXY_AUTHENTICATION && (isEmptyOrSpaces(instance.proxyLogin) || isEmptyOrSpaces(
             instance.plainProxyPassword))) {
@@ -269,7 +269,7 @@ class SvnAuthenticationNotifier(private val myVcs: SvnVcs) : GenericNotifierImpl
         return false
       }
       finally {
-        if (!interactive && configuration.isIsUseDefaultProxy && proxyToRelease != null) {
+        if (!interactive && configuration.isUseDefaultProxy && proxyToRelease != null) {
           val address = proxyToRelease.address() as InetSocketAddress
           CommonProxy.getInstance().noAuthentication("http", address.hostName, address.port)
         }
