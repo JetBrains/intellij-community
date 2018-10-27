@@ -57,4 +57,14 @@ public class StringSearcherTest extends TestCase {
     assertEquals(secondPos, index);
     assertEquals(firstPos, searcher.scan(text, 0, index - 1));
   }
+
+  public void testSearchBackwardLastOne() {
+    final String pattern = "c";
+    final String text = "aabc";
+    final int pos = text.lastIndexOf(pattern);
+    final StringSearcher searcher = new StringSearcher(pattern, true, false);
+    final int index = searcher.scan(text);
+
+    assertEquals(pos, index);
+  }
 }
