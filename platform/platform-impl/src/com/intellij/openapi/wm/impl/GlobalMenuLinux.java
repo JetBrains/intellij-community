@@ -483,6 +483,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   public static boolean isAvailable() { return ourLib != null; }
 
   private static GlobalMenuLib _loadLibrary() {
+    if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
     if (!SystemInfo.isLinux)
       return null;
 
