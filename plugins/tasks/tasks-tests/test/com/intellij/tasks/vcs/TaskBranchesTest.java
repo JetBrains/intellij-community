@@ -45,7 +45,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     new RunAll()
-      .append(() -> ChangeListManagerImpl.getInstanceImpl(myProject).freeze("For Tests"))
+      .append(() -> ChangeListManagerImpl.getInstanceImpl(myProject).forceStopInTestMode())
       .append(() -> ChangeListManagerImpl.getInstanceImpl(myProject).waitEverythingDoneInTestMode())
       .append(() -> myTaskManager = null)
       .append(() -> super.tearDown())

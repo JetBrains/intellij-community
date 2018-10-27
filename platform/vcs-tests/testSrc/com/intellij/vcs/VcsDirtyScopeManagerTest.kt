@@ -147,7 +147,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   private fun disableChangeListManager() {
-    (ChangeListManager.getInstance(project) as ChangeListManagerImpl).freeze("For tests")
+    (ChangeListManager.getInstance(project) as ChangeListManagerImpl).forceStopInTestMode()
   }
 
   private fun createSubRoot(parent: VirtualFile, name: String): FilePath {
