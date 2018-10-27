@@ -237,8 +237,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     }
     else if (e.getDocument() == myOrigDocument) {
       if (myCommittingToOriginal) return;
-      if (!myEditChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getNewLength()))) return;
-
+      if (!myEditChangesHandler.handlesRange(TextRange.from(e.getOffset(), e.getOldLength()))) return;
       ApplicationManager.getApplication().invokeLater(() -> {
         Component owner = FocusManager.getCurrentManager().getFocusOwner();
         closeEditor();
