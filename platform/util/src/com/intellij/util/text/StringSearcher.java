@@ -171,19 +171,18 @@ public class StringSearcher {
     }
     else {
       int start = 1;
-      int end = _end;
-      while (start <= end - myPatternLength + 1) {
+      while (start <= _end - myPatternLength + 1) {
         int i = myPatternLength - 1;
-        char lastChar = normalizedCharAt(text, textArray, end - (start + i));
+        char lastChar = normalizedCharAt(text, textArray, _end - (start + i));
 
         if (isSameChar(myPatternArray[myPatternLength - 1 - i], lastChar)) {
           i--;
           while (i >= 0) {
-            char c = textArray != null ? textArray[end - (start + i)] : text.charAt(end - (start + i));
+            char c = textArray != null ? textArray[_end - (start + i)] : text.charAt(_end - (start + i));
             if (!isSameChar(myPatternArray[myPatternLength - 1 - i], c)) break;
             i--;
           }
-          if (i < 0) return end - start - myPatternLength + 1;
+          if (i < 0) return _end - start - myPatternLength + 1;
         }
 
         int step = lastChar < 128 ? mySearchTable[lastChar] : 1;
