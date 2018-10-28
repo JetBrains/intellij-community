@@ -382,7 +382,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * The method will return an offset of the first {@code for} on line 1.
    * @return
    */
-  private int getFirstUppermostControlStructureKeywordOffset(SemanticEditorPosition position) {
+  private int getFirstUppermostControlStructureKeywordOffset(@NotNull SemanticEditorPosition position) {
     SemanticEditorPosition curr = position.copy();
     while (!curr.isAtEnd()) {
       if (isStartOfStatementWithOptionalBlock(curr)) {
