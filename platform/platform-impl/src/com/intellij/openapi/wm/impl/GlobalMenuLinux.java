@@ -35,7 +35,9 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
+/* Android Studio: b/67589184
 import com.sun.javafx.application.PlatformImpl;
+Android Studio: b/67589184 */
 
 interface GlobalMenuLib extends Library {
   void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
@@ -163,10 +165,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         }
       };
 
+/* Android Studio: b/67589184
       // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
       PlatformImpl.startup(()-> {
         ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
       });
+Android Studio: b/67589184 */
     } else {
       ourGLogger = null;
       ourProcessQueue = null;
