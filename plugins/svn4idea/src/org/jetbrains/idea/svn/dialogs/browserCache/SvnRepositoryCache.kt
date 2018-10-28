@@ -1,47 +1,36 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.dialogs.browserCache;
+package org.jetbrains.idea.svn.dialogs.browserCache
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.browse.DirectoryEntry;
+import com.intellij.openapi.components.service
+import com.intellij.util.containers.ContainerUtil.createSoftMap
+import org.jetbrains.idea.svn.browse.DirectoryEntry
 
-import java.util.List;
-import java.util.Map;
+class SvnRepositoryCache private constructor() {
+  private val myMap = createSoftMap<String, List<DirectoryEntry>>()
+  private val myErrorsMap = createSoftMap<String, String>()
 
-public class SvnRepositoryCache {
-  private final Map<String, List<DirectoryEntry>> myMap = ContainerUtil.createSoftMap();
-  private final Map<String, String> myErrorsMap = ContainerUtil.createSoftMap();
+  fun getChildren(parent: String) = myMap[parent]
 
-  public static SvnRepositoryCache getInstance() {
-    return ServiceManager.getService(SvnRepositoryCache.class);
-  }
-  
-  private SvnRepositoryCache() {
+  fun getError(parent: String) = myErrorsMap[parent]
+
+  fun put(parent: String, error: String) {
+    myMap.remove(parent)
+    myErrorsMap[parent] = error
   }
 
-  @Nullable
-  public List<DirectoryEntry> getChildren(final String parent) {
-    return myMap.get(parent);
+  fun put(parent: String, children: List<DirectoryEntry>) {
+    myErrorsMap.remove(parent)
+    myMap[parent] = children
   }
 
-  @Nullable
-  public String getError(final String parent) {
-    return myErrorsMap.get(parent);
+  fun remove(parent: String) {
+    myErrorsMap.remove(parent)
+    myMap.remove(parent)
   }
 
-  public void put(final String parent, final String error) {
-    myMap.remove(parent);
-    myErrorsMap.put(parent, error);
-  }
-
-  public void put(final String parent, List<DirectoryEntry> children) {
-    myErrorsMap.remove(parent);
-    myMap.put(parent, children);
-  }
-
-  public void remove(final String parent) {
-    myErrorsMap.remove(parent);
-    myMap.remove(parent);
+  companion object {
+    @JvmStatic
+    val instance: SvnRepositoryCache
+      get() = service()
   }
 }
