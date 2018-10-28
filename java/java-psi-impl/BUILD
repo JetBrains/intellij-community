@@ -19,7 +19,6 @@ iml_module(
     deps = [
         "//tools/idea/java/java-psi-api:intellij.java.psi[module]",
         "//tools/idea/platform/core-impl:intellij.platform.core.impl[module]",
-        "//tools/idea/resources-en:intellij.java.resources.en[module]",
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/.idea/libraries:Guava",
         "//tools/idea/.idea/libraries:StreamEx",

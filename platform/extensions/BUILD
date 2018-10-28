@@ -9,7 +9,6 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [
-        "//tools/idea/.idea/libraries:XStream",
         "//tools/idea/.idea/libraries:JDOM",
         "//tools/idea/.idea/libraries:picocontainer",
         "//tools/idea/platform/util:intellij.platform.util[module]",

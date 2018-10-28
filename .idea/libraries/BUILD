@@ -258,8 +258,8 @@ java_library(
 java_library(
     name = "ASM",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/6.2.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/6.2.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0-beta:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0-beta:jar"],
 )
 
 # managed by go/iml_to_build
@@ -308,8 +308,8 @@ java_library(
 java_library(
     name = "intellij-coverage",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.493:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.493:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.494:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.494:jar"],
 )
 
 # managed by go/iml_to_build
@@ -482,12 +482,12 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.5:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.4:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/pty4j/0.8.5:jar",
         "//prebuilts/tools/common/m2/repository/org/jetbrains/pty4j/purejavacomm/0.0.11.1:jar",
     ],
 )
@@ -984,8 +984,8 @@ java_library(
 java_library(
     name = "jediterm-pty",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.12:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.12:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.13:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/jediterm/jediterm-pty/2.13:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1246,8 +1246,8 @@ java_library(
 java_library(
     name = "intellij-test-discovery",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.493:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.493:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.494:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.494:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1424,8 +1424,8 @@ java_library(
 java_library(
     name = "sa-jdwp",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.7:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.7:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.8:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.8:jar"],
 )
 
 # managed by go/iml_to_build
