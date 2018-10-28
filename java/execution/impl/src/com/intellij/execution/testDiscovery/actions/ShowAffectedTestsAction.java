@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,6 +61,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -127,10 +129,12 @@ public class ShowAffectedTestsAction extends AnAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      String relativeFilePath = VcsFileUtil.getRelativeFilePath(file, projectBasePath);
-      if (relativeFilePath != null) {
-        List<String> filePaths = Collections.singletonList("/" + relativeFilePath);
-        processMethodsAsync(project, PsiMethod.EMPTY_ARRAY, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+      JBIterable<String> paths = JBIterable
+        .from(VfsUtil.collectChildrenRecursively(file))
+        .transform(f -> VcsFileUtil.getRelativeFilePath(f, projectBasePath))
+        .filter(Objects::nonNull).map(p -> "/" + p);
+      if (paths.isNotEmpty()) {
+        processMethodsAsync(project, PsiMethod.EMPTY_ARRAY, paths.toList(), createTreeProcessor(tree), () -> tree.setPaintBusy(false));
       }
     });
   }
