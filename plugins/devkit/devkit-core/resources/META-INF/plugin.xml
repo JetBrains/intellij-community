@@ -317,7 +317,7 @@
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
