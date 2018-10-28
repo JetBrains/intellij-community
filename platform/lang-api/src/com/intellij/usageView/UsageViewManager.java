@@ -9,23 +9,18 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
- * @deprecated use UsageViewContentManager instead
+ * @deprecated use {@link UsageViewContentManager} instead
  */
 @Deprecated
 public class UsageViewManager {
   private final UsageViewContentManager myUsageViewContentManager;
 
-  public UsageViewManager(Project project) {
-    myUsageViewContentManager = UsageViewContentManager.getInstance(project);
+  public UsageViewManager(UsageViewContentManager usageViewContentManager) {
+    myUsageViewContentManager = usageViewContentManager;
   }
 
   public static UsageViewManager getInstance(Project project) {
     return ServiceManager.getService(project, UsageViewManager.class);
-  }
-
-  @NotNull
-  public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
-    return myUsageViewContentManager.addContent(contentName, reusable, component, toOpenInNewTab, isLockable);
   }
 
   @NotNull
