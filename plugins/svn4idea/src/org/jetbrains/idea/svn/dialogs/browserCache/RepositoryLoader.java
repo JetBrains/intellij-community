@@ -50,12 +50,12 @@ class RepositoryLoader extends Loader {
   }
 
   private void setResults(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull List<DirectoryEntry> children) {
-    myCache.put(data.first.getURL().toString(), children);
+    myCache.put(data.first.getURL(), children);
     refreshNode(data.first, children, data.second);
   }
 
   private void setError(@NotNull Pair<RepositoryTreeNode, Expander> data, @NotNull String message) {
-    myCache.put(data.first.getURL().toString(), message);
+    myCache.put(data.first.getURL(), message);
     refreshNodeError(data.first, message);
   }
 

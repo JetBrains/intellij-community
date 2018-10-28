@@ -3,27 +3,28 @@ package org.jetbrains.idea.svn.dialogs.browserCache
 
 import com.intellij.openapi.components.service
 import com.intellij.util.containers.ContainerUtil.createSoftMap
+import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.browse.DirectoryEntry
 
 class SvnRepositoryCache private constructor() {
-  private val myMap = createSoftMap<String, List<DirectoryEntry>>()
-  private val myErrorsMap = createSoftMap<String, String>()
+  private val myMap = createSoftMap<Url, List<DirectoryEntry>>()
+  private val myErrorsMap = createSoftMap<Url, String>()
 
-  fun getChildren(parent: String) = myMap[parent]
+  fun getChildren(parent: Url) = myMap[parent]
 
-  fun getError(parent: String) = myErrorsMap[parent]
+  fun getError(parent: Url) = myErrorsMap[parent]
 
-  fun put(parent: String, error: String) {
+  fun put(parent: Url, error: String) {
     myMap.remove(parent)
     myErrorsMap[parent] = error
   }
 
-  fun put(parent: String, children: List<DirectoryEntry>) {
+  fun put(parent: Url, children: List<DirectoryEntry>) {
     myErrorsMap.remove(parent)
     myMap[parent] = children
   }
 
-  fun remove(parent: String) {
+  fun remove(parent: Url) {
     myErrorsMap.remove(parent)
     myMap.remove(parent)
   }
