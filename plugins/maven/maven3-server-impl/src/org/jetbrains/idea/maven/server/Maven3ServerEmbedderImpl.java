@@ -1236,12 +1236,22 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       final org.eclipse.aether.impl.ArtifactResolver artifactResolver = getComponent(org.eclipse.aether.impl.ArtifactResolver.class);
       final MyLoggerFactory loggerFactory = new MyLoggerFactory();
       if (artifactResolver instanceof DefaultArtifactResolver) {
-        ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
+        try {
+          ((DefaultArtifactResolver)artifactResolver).setLoggerFactory(loggerFactory);
+        } catch (NoSuchMethodError ignore) {
+          // ignore maven 3.6.0+ as maven-resolver 1.3.0 internally migrated to slf4j
+          myConsoleWrapper.warn("Skip setting LoggerFactory use default slf4j logger");
+        }
       }
 
       final org.eclipse.aether.RepositorySystem repositorySystem = getComponent(org.eclipse.aether.RepositorySystem.class);
       if (repositorySystem instanceof DefaultRepositorySystem) {
-        ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
+        try {
+          ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
+        } catch (NoSuchMethodError ignore) {
+          // ignore maven 3.6.0+ as maven-resolver 1.3.0 internally migrated to slf4j
+          myConsoleWrapper.warn("Skip setting LoggerFactory use default slf4j logger");
+        }
       }
 
       // do not use request.getRemoteRepositories() here,
