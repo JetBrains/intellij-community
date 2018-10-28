@@ -43,13 +43,13 @@ public class UsageViewContentManagerImpl extends UsageViewContentManager {
 
   @NotNull
   @Override
-  public Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
+  public Content addContent(@NotNull String contentName, boolean reusable, @NotNull final JComponent component, boolean toOpenInNewTab, boolean isLockable) {
     return addContent(contentName, null, null, reusable, component, toOpenInNewTab, isLockable);
   }
 
   @NotNull
   @Override
-  public Content addContent(String contentName, String tabName, String toolwindowTitle, boolean reusable, final JComponent component,
+  public Content addContent(@NotNull String contentName, String tabName, String toolwindowTitle, boolean reusable, @NotNull final JComponent component,
                             boolean toOpenInNewTab, boolean isLockable) {
     Key<Boolean> contentKey = reusable ? REUSABLE_CONTENT_KEY : NOT_REUSABLE_CONTENT_KEY;
 
