@@ -31,7 +31,7 @@ public class LombokConfigIndex extends FileBasedIndexExtension<ConfigIndexKey, S
   @NonNls
   public static final ID<ConfigIndexKey, String> NAME = ID.create("LombokConfigIndex");
 
-  private static final int INDEX_FORMAT_VERSION = 5;
+  private static final int INDEX_FORMAT_VERSION = 6;
 
   @NotNull
   @Override
