@@ -18,7 +18,6 @@
 #define  MENUITEM_JHANDLER_PROPERTY "com.intellij.idea.globalmenu.jhandler"
 #define  MENUITEM_UID_PROPERTY "com.intellij.idea.globalmenu.uid"
 
-static GMainLoop *_ourMainLoop = NULL;
 static jlogger _ourLogger = NULL;
 static jrunnable _ourOnServiceAppearedCallback = NULL;
 static jrunnable _ourOnServiceVanishedCallback = NULL;
@@ -79,19 +78,17 @@ static void _onNameVanished(GDBusConnection *connection, const gchar *name, gpoi
     (*((jrunnable) _ourOnServiceVanishedCallback))();
 }
 
-void runDbusServer(jlogger jlog, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
+void startWatchDbus(jlogger jlog, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished) {
   // NOTE: main-loop is necessary for communication with dbus (via glib and it's signals)
+  // It is started in java (see invocation com.sun.javafx.application.PlatformImpl.startup())
   _ourLogger = jlog;
-  _ourMainLoop = g_main_loop_new(NULL/*will be used g_main_context_default()*/, FALSE);
   _ourOnServiceAppearedCallback = onAppmenuServiceAppeared;
   _ourOnServiceVanishedCallback = onAppmenuServiceVanished;
   _ourServiceNameWatcher = g_bus_watch_name(G_BUS_TYPE_SESSION, DBUS_NAME, G_BUS_NAME_WATCHER_FLAGS_NONE, _onNameAppeared, _onNameVanished, NULL, NULL);
-  _info("glib main loop is running");
-  g_main_loop_run(_ourMainLoop);
+  // _info("start watching for dbus name 'com.canonical.AppMenu.Registrar'");
 }
 
-void stopDbusServer() {
-  g_main_loop_quit(_ourMainLoop);
+void stopWatchDbus() {
   g_bus_unwatch_name(_ourServiceNameWatcher);
   // _info("glib main loop is stopped");
 }
@@ -317,21 +314,19 @@ void bindNewWindow(WndInfo * wi, long windowXid) {
     return;
   }
 
-  if (wi->linkedXids == NULL) {
-    wi->linkedXids = g_list_alloc();
-    wi->linkedXids->data = windowXid;
-  } else
-    g_list_append(wi->linkedXids, windowXid);
+  // _logmsg(LOG_LEVEL_INFO, "bind new window 0x%lx", windowXid);
+  wi->linkedXids = g_list_append(wi->linkedXids, windowXid);
 }
 
 void unbindWindow(WndInfo * wi, long windowXid) {
   if (wi == NULL || wi->server == NULL || wi->menuPath == NULL)
     return;
 
+  // _logmsg(LOG_LEVEL_INFO, "unbind window 0x%lx", windowXid);
   _unregisterWindow(windowXid, wi->registrar);
 
   if (wi->linkedXids != NULL)
-    g_list_remove(wi->linkedXids, windowXid);
+    wi->linkedXids = g_list_remove(wi->linkedXids, windowXid);
 }
 
 static gboolean _execReleaseWindow(gpointer user_data) {
@@ -534,6 +529,16 @@ void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode) {
 
   GVariant *outsideArr = g_variant_builder_end(&builder);
   dbusmenu_menuitem_property_set_variant(item, DBUSMENU_MENUITEM_PROP_SHORTCUT, outsideArr);
+}
+
+void toggleItemStateChecked(DbusmenuMenuitem *item, bool isChecked) {
+  const int nOn = DBUSMENU_MENUITEM_TOGGLE_STATE_CHECKED;
+  const int nOff = DBUSMENU_MENUITEM_TOGGLE_STATE_UNCHECKED;
+  const int ncheck = isChecked ? nOn : nOff;
+  if (dbusmenu_menuitem_property_get_int(item, DBUSMENU_MENUITEM_PROP_TOGGLE_STATE) != ncheck) {
+    // _logmsg(LOG_LEVEL_INFO, "item %s changes checked-state: %d -> %d", _getItemLabel(item), dbusmenu_menuitem_property_get_int(item, DBUSMENU_MENUITEM_PROP_TOGGLE_STATE), ncheck);
+    dbusmenu_menuitem_property_set_int(item, DBUSMENU_MENUITEM_PROP_TOGGLE_STATE, ncheck);
+  }
 }
 
 static gboolean _execJRunnable(gpointer user_data) {

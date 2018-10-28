@@ -26,10 +26,13 @@ import java.util.Objects;
  * @author Eugene Zhuravlev
  */
 public class JpsMavenRepositoryLibraryDescriptor {
+  public static final String DEFAULT_PACKAGING = "jar";
+  
   private final String myMavenId;
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;
+  private final String myPackaging;
   private final boolean myIncludeTransitiveDependencies;
   private final List<String> myExcludedDependencies;
 
@@ -39,9 +42,15 @@ public class JpsMavenRepositoryLibraryDescriptor {
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
                                              boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
+    this(groupId, artifactId, version, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies);
+  }
+  
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             @NotNull final String packaging, boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
+    myPackaging = packaging;
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = excludedDependencies;
     myMavenId = groupId + ":" + artifactId + ":" + version;
@@ -56,10 +65,15 @@ public class JpsMavenRepositoryLibraryDescriptor {
     this(groupId, artifactId, version, includeTransitiveDependencies, Collections.emptyList());
   }
 
-  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId,
-                                             boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(mavenId, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies);
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId, @NotNull String packaging, boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     myMavenId = mavenId;
     myIncludeTransitiveDependencies = includeTransitiveDependencies;
+    myExcludedDependencies = excludedDependencies;
+    myPackaging = packaging;
     if (mavenId == null) {
       myGroupId = myArtifactId = myVersion = null;
     }
@@ -69,9 +83,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
       myArtifactId = parts.length > 1 ? parts[1] : null;
       myVersion = parts.length > 2 ? parts[2] : null;
     }
-    myExcludedDependencies = excludedDependencies;
   }
-
 
   public String getMavenId() {
     return myMavenId;
@@ -100,19 +112,26 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myVersion;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    JpsMavenRepositoryLibraryDescriptor that = (JpsMavenRepositoryLibraryDescriptor)o;
-    return Objects.equals(myMavenId, that.myMavenId) && myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies
-           && myExcludedDependencies.equals(that.myExcludedDependencies);
+  public String getPackaging() {
+    return myPackaging;
   }
 
-  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    final JpsMavenRepositoryLibraryDescriptor that = (JpsMavenRepositoryLibraryDescriptor)o;
+    return myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies &&
+      myMavenId.equals(that.myMavenId) &&
+      myPackaging.equals(that.myPackaging) &&
+      myExcludedDependencies.equals(that.myExcludedDependencies);
+  }
+
   public int hashCode() {
-    return myExcludedDependencies.hashCode() * 31 * 31 + Objects.hashCode(myMavenId) * 31 + (myIncludeTransitiveDependencies ? 1 : 0);
+    return Objects.hash(myMavenId, myPackaging, myIncludeTransitiveDependencies, myExcludedDependencies);
   }
 
   @Override

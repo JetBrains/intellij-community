@@ -20,26 +20,28 @@ import groovy.transform.Immutable
 
 
 /**
- * The purpose of using Mac host is preparation and signing OS X specific artifacts.
+ * The purpose of using Mac host is preparation and signing OS X specific artifacts.<br>
  * The necessary software for Mac host:
- *    OS X 10.9
- *    FTP server (it is part of OS X installation).
- *    Perl 5.16 (it is part of OS X installation).
- *    DSStore perl module
- *    Private key and digital certificate for signing apps.
- *
- *  How to setup Mac host:
- *  1. Install OS X 10.9.
- *  2. Import private key and signing certificate
- *     https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html
- *  3. Enable FTP Server. Run the command in terminal:
- *     sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist
- *  5. Create user which will be used for ftp connection
- *  6. Install DSStore perl module. Run the command in terminal:
- *     sudo cpan Mac::Finder::DSStore
- *     During the cpan and the module installation process will be need to allow install the command line pkg which is part of cpan installation and required for successful result.
- *  7. Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true"
- *     http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules
+ * <ul>
+ * <li>OS X 10.9</li>
+ * <li>FTP server (it is part of OS X installation).</li>
+ * <li>Perl 5.16 (it is part of OS X installation).</li>
+ * <li>DSStore perl module</li>
+ * <li>Private key and digital certificate for signing apps.</li>
+ *</ul>
+ * <br>
+ *How to setup Mac host:<br>
+ *<ol>
+ *  <li>Install OS X 10.9.</li>
+ *  <li>Import private key and signing certificate <a href=https://developer.apple.com/library/mac/documentation/Security/Conceptual/CodeSigningGuide/Procedures/Procedures.html">(CodeSigningGuide)</a></li>
+ *  <li>Enable FTP Server. Run the command in terminal:<br>
+ *     sudo -s launchctl load -w /System/Library/LaunchDaemons/ftp.plist</li>
+ *  <li>Create user which will be used for ftp connection</li>
+ *  <li>Install DSStore perl module. Run the command in terminal:<br>
+ *     sudo cpan Mac::Finder::DSStore<br>
+ *     During the cpan and the module installation process will be need to allow install the command line pkg which is part of cpan installation and required for successful result.</li>
+ *  <li>Set environment variable VERSIONER_PERL_PREFER_32_BIT to "true". <a href=http://apple.stackexchange.com/questions/83109/macosx-10-8-and-32-bit-perl-modules">More information about it.</a></li>
+ * </ol>
  */
 @CompileStatic
 @Immutable
@@ -50,9 +52,13 @@ class MacHostProperties {
   final String host
 
   /**
-   * userName and password for access to Mac host via FTP
+   * userName for access to Mac host via FTP
    */
   final String userName
+
+  /**
+   * password for access to Mac host via FTP
+   */
   final String password
 
   /**

@@ -1,5 +1,5 @@
 {
-  "name": "High Contrast",
+  "name": "High сontrast",
   "dark": true,
   "author": "JetBrains",
 
@@ -60,6 +60,16 @@
       "editable.arrowButtonBackground": "#000000",
       "arrowButtonForeground": "#FFFFFF",
       "arrowButtonDisabledForeground": "#AA6E28"
+    },
+
+    "ComboPopup.border": "1,1,1,1,E6E6E6",
+
+    "DebuggerTabs.active.background": "#000080",
+
+    "Editor": {
+      "background": "#1f1f1f",
+      "foreground": "#CCCCCC",
+      "shortcutForeground": "#D2F53C"
     },
 
     "EditorPane.inactiveBackground": "#000000",
@@ -151,10 +161,14 @@
       "Border.color": "#e6e6e6",
       "Toolbar.Border.color": "#b3b3b3",
       "separatorColor": "#b3b3b3",
-      "separator.foreground": "#FFFFFF",
+      "Separator.foreground": "#FFFFFF",
       "Header.activeBackground": "#000080",
       "Header.inactiveBackground": "#000080",
-      "Advertiser.background": "000080"
+      "Advertiser": {
+        "background": "#000080",
+        "borderColor": "#000080",
+        "borderInsets": "3,8,5,0"
+      }
     },
 
     "PopupMenu": {
@@ -197,10 +211,20 @@
 
     "TabbedPane": {
       "selectedColor": "#1AEBFF",
-      "selectedDisabledColor": "#AA6E28"
+      "selectedDisabledColor": "#AA6E28",
+      "contentAreaColor": "#b3b3b3"
     },
 
     "TableHeader.cellBorder": "8,0,8,0",
+
+    "ToggleButton": {
+      "on.background":  "#000080",
+      "off.background": "#000000",
+      "on.foreground":  "#FFFFFF",
+      "off.foreground": "#FFFFFF",
+      "buttonColor":  "#FFFFFF",
+      "borderColor": "#FFFFFF"
+    },
 
     "ToolTip.background": "#450073",
 
@@ -210,6 +234,10 @@
         "background": "#281A33",
         "border.background": "#e6e6e6",
         "tab.selected": {
+          "active.background": "#9C23D9FF",
+          "background": "#4D0080FF"
+        },
+        "tab.hovered": {
           "active.background": "#9C23D9FF",
           "background": "#4D0080FF"
         }
@@ -229,7 +257,7 @@
       "separatorColor": "#e6e6e6"
     },
 
-    "Window.border" : "0,1,1,1,E6E6E6"
+    "Window.border" : "1,1,1,1,E6E6E6"
   },
 
   "icons": {

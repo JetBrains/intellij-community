@@ -81,4 +81,20 @@ public class JsonCopyPasteTest extends CodeInsightFixtureTestCase {
   public void testCommasMidPropListArray() {
     doTestFromTextToJson("<selection>\"a\"</selection>", "[3,<caret>4]", "[3,\"a\",4]");
   }
+
+  public void testWithLeadingAndTrailingWhitespaces() {
+    doTestFromTextToJson("<selection>  \t     \"a\": true   \t     </selection>", "{\"q\": 5<caret>}", "{\"q\": 5,  \t     \"a\": true   \t     }");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesArray() {
+    doTestFromTextToJson("<selection>  \t     \"a\"   \t     </selection>", "[\"q\"<caret>]", "[\"q\",  \t     \"a\"   \t     ]");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesBefore() {
+    doTestFromTextToJson("<selection>  \t     \"a\": true   \t     </selection>", "{<caret>\"q\": 5}", "{  \t     \"a\": true,   \t     \"q\": 5}");
+  }
+
+  public void testWithLeadingAndTrailingWhitespacesArrayBefore() {
+    doTestFromTextToJson("<selection>  \t     \"a\"   \t     </selection>", "[<caret>\"q\"]", "[  \t     \"a\",   \t     \"q\"]");
+  }
 }

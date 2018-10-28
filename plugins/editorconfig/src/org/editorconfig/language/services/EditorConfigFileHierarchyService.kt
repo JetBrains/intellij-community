@@ -10,10 +10,11 @@ sealed class EditorConfigServiceResult
 data class EditorConfigServiceLoaded(val list: List<EditorConfigPsiFile>) : EditorConfigServiceResult()
 object EditorConfigServiceLoading : EditorConfigServiceResult()
 
-interface EditorConfigFileHierarchyService {
-  fun getParentEditorConfigFiles(virtualFile: VirtualFile): EditorConfigServiceResult
+abstract class EditorConfigFileHierarchyService {
+  abstract fun getParentEditorConfigFiles(virtualFile: VirtualFile): EditorConfigServiceResult
 
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): EditorConfigFileHierarchyService {
       return ServiceManager.getService(project, EditorConfigFileHierarchyService::class.java)
     }

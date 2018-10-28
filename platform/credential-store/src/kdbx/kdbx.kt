@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
-import com.google.common.io.LittleEndianDataInputStream
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.io.inputStream
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.Salsa20Engine
@@ -22,12 +22,10 @@ internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatab
 }
 
 private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: InputStream): KeePassDatabase {
-  val kdbxHeader = KdbxHeader()
-  kdbxHeader.readKdbxHeader(inputStream)
+  val kdbxHeader = KdbxHeader(inputStream)
   val decryptedInputStream = kdbxHeader.createDecryptedStream(credentials.key, inputStream)
 
-  val startBytes = ByteArray(32)
-  LittleEndianDataInputStream(decryptedInputStream).readFully(startBytes)
+  val startBytes = FileUtilRt.loadBytes(decryptedInputStream, 32)
   if (!Arrays.equals(startBytes, kdbxHeader.streamStartBytes)) {
     throw IncorrectMasterPasswordException()
   }
@@ -44,6 +42,15 @@ private fun readKeePassDatabase(credentials: KeePassCredentials, inputStream: In
 }
 
 internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
+  companion object {
+    // KdbxPassword hashes value, so, it can be cleared before file write (to reduce time when master password exposed in memory)
+    fun createAndClear(value: ByteArray): KeePassCredentials {
+      val result = KdbxPassword(value)
+      value.fill(0)
+      return result
+    }
+  }
+
   override val key: ByteArray
 
   init {
@@ -52,7 +59,7 @@ internal class KdbxPassword(password: ByteArray) : KeePassCredentials {
   }
 }
 
-internal fun sha256MessageDigest() = MessageDigest.getInstance("SHA-256")
+internal fun sha256MessageDigest(): MessageDigest = MessageDigest.getInstance("SHA-256")
 
 // 0xE830094B97205D2A
 private val SALSA20_IV = byteArrayOf(-24, 48, 9, 75, -105, 32, 93, 42)

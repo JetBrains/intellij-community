@@ -152,7 +152,8 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         PropertyChangeListener focusListener = it -> myUpdateHeadersAlarm.request();
         KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
         keyboardFocusManager.addPropertyChangeListener("focusOwner", focusListener);
-        Disposer.register(ToolWindowManagerImpl.this, () -> keyboardFocusManager.removePropertyChangeListener(focusListener));
+        Disposer.register(ToolWindowManagerImpl.this,
+                          () -> keyboardFocusManager.removePropertyChangeListener("focusOwner", focusListener));
       }
 
       @Override
@@ -1961,6 +1962,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
    */
   private final class AddWindowedDecoratorCmd extends FinalizableCommand {
     private final WindowedDecorator myWindowedDecorator;
+    private final boolean myShouldBeMaximized;
 
     /**
      * Creates windowed decorator for specified internal decorator.
@@ -1968,6 +1970,7 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     private AddWindowedDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info) {
       super(myCommandProcessor);
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
+      myShouldBeMaximized = info.isMaximized();
       Window window = myWindowedDecorator.getFrame();
       final Rectangle bounds = info.getFloatingBounds();
       if (bounds != null &&
@@ -2008,6 +2011,9 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
         //windowLocation.translate(windowLocation.x - point.x, windowLocation.y - point.y);
         window.setLocation(2 * windowBounds.x - point.x,  2 * windowBounds.y - point.y);
         window.setSize(2 * windowBounds.width - rootPaneBounds.width, 2 * windowBounds.height - rootPaneBounds.height);
+        if (myShouldBeMaximized && window instanceof Frame) {
+          ((Frame)window).setExtendedState(Frame.MAXIMIZED_BOTH);
+        }
         window.toFront();
       }
       finally {
@@ -2030,8 +2036,15 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
 
       Window frame = myWindowedDecorator.getFrame();
       if (!frame.isShowing()) return;
+      boolean maximized = ((JFrame)frame).getExtendedState() == Frame.MAXIMIZED_BOTH;
+      if (maximized) {
+        ((JFrame)frame).setExtendedState(Frame.NORMAL);
+        frame.invalidate();
+        frame.revalidate();
+      }
       Rectangle bounds = getRootBounds((JFrame)frame);
       info.setFloatingBounds(bounds);
+      info.setMaximized(maximized);
     }
 
     @Override

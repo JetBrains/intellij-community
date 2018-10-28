@@ -33,12 +33,12 @@ public class EditorConfigNavigationActionsFactory {
   }
 
   private static String getActionName(@NotNull EditorConfigPsiFile file, boolean withFolder) {
-    return EditorConfigBundle.message("action.open.file", EditorConfigPresentationUtil.INSTANCE.getFileName(file, withFolder));
+    return EditorConfigBundle.message("action.open.file", EditorConfigPresentationUtil.getFileName(file, withFolder));
   }
 
   @NotNull
   static List<EditorConfigPsiFile> getParentFiles(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
-    final EditorConfigFileHierarchyService hierarchyService = EditorConfigFileHierarchyService.Companion.getInstance(project);
+    final EditorConfigFileHierarchyService hierarchyService = EditorConfigFileHierarchyService.getInstance(project);
     final EditorConfigServiceResult serviceResult = hierarchyService.getParentEditorConfigFiles(virtualFile);
     return serviceResult instanceof EditorConfigServiceLoaded ?
            ((EditorConfigServiceLoaded)serviceResult).getList() : Collections.emptyList();

@@ -393,8 +393,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           //myCalcThread = null;
         }
         myAlarm.cancelAllRequests();
-        if (myBalloon != null && !myBalloon.isDisposed() && myPopup != null && !myPopup.isDisposed()) {
+        if (myBalloon != null && !myBalloon.isDisposed()) {
           myBalloon.cancel();
+        }
+
+        if (myPopup != null && !myPopup.isDisposed()) {
           myPopup.cancel();
         }
 
@@ -564,10 +567,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
-      //todo[mikhail.sokolov] show new UI
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
       FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());

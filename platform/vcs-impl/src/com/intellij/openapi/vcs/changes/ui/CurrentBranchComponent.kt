@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
@@ -8,12 +9,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPO
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
-import com.intellij.ui.TextIcon
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ui.JBUI.Borders.customLine
 import com.intellij.util.ui.JBUI.emptySize
-import com.intellij.util.ui.JBUI.insets
-import com.intellij.util.ui.UIUtil.*
+import com.intellij.util.ui.UIUtil.rightArrow
 import com.intellij.vcs.branch.BranchData
 import com.intellij.vcs.branch.BranchStateProvider
 import com.intellij.vcs.branch.LinkedBranchData
@@ -24,15 +22,9 @@ import javax.swing.JTree.TREE_MODEL_PROPERTY
 
 private const val BALANCE = 0.08
 private val BACKGROUND = JBColor(Color.BLACK, Color.WHITE)
-private val TEXT_INSETS = insets(5, 3, 4, 2)
 
 class CurrentBranchComponent(val project: Project, val browser: CommitDialogChangesBrowser) : JBLabel() {
   private var branches = setOf<BranchData>()
-
-  private val textIcon = TextIcon(null, TEXT_COLOR, getBranchPresentationBackground(getTreeBackground()), 0).apply {
-    setInsets(TEXT_INSETS)
-    setFont(getLabelFont())
-  }
 
   private val isGroupedByRepository: Boolean
     get() {
@@ -41,9 +33,8 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
     }
 
   init {
-    border = customLine(getTreeBackground())
-    isOpaque = false
-    icon = textIcon
+    icon = AllIcons.Vcs.Branch
+    foreground = TEXT_COLOR
 
     browser.viewer.addPropertyChangeListener { e ->
       if (e.propertyName == TREE_MODEL_PROPERTY) {
@@ -66,7 +57,7 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
     val fromUnversioned = unversioned.mapNotNull { getCurrentBranch(project, it) }.toSet()
 
     branches = fromChanges + fromUnversioned
-    textIcon.setText(getText(branches))
+    text = getText(branches)
     toolTipText = getTooltip(branches)
   }
 

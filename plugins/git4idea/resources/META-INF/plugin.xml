@@ -77,7 +77,7 @@
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch">
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="AllIcons.Vcs.Branch">
         <keyboard-shortcut first-keystroke="control shift BACK_QUOTE" keymap="$default" />
         <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+" replace-all="true"/>
       </action>

@@ -3,7 +3,7 @@
 var logFile
 
 !macro INST_UNINST_LOGGING_SWITCH un
-  Function ${un}CreateLog
+  Function ${un}createLog
     Push $R0
     Push $R1
     Push $R2
@@ -18,12 +18,15 @@ var logFile
     ClearErrors
     ${GetOptions} $R0 /LOG= $R1
     StrCpy $logFile $R1
-    IfErrors done
+    IfErrors no_log
     FileOpen $R2 $logFile w
    ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
-    FileWrite $R2 "--- $0/$1/$2($3) $4:$5:$6 --- $\r"
-    FileWrite $R2 "Install Dir: $INSTDIR $\r"
+    FileWrite $R2 "--- $0.$1.$2($3) $4:$5:$6 --- $\r"
     FileClose $R2
+    Goto done
+no_log:
+    StrCpy $logFile ""
+    ClearErrors
 done:
     Pop $6
     Pop $5
@@ -43,11 +46,14 @@ done:
 
 !define LogText "!insertmacro LogTextMacro"
 !macro LogTextMacro INPUT_TEXT
-  Push $R2
-  FileOpen $R2 $logFile a
-  FileSeek $R2 0 END
-;  FileWrite $R2 "$\r$\n" ;a new line
-  FileWrite $R2 "${INPUT_TEXT} $\r"
-  FileClose $R2
-  Pop $R2
+  !define UniqueID ${__LINE__}
+    StrCmp $logFile "" no_log_${UniqueID} 0
+      Push $R2
+      FileOpen $R2 $logFile a
+      FileSeek $R2 0 END
+      FileWrite $R2 "${INPUT_TEXT} $\r"
+      FileClose $R2
+      Pop $R2
+no_log_${UniqueID}:
+  !undef UniqueID
 !macroend

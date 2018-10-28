@@ -43,6 +43,10 @@ public class EditorHintFixture implements EditorHintListener {
   
   @Nullable
   public String getCurrentHintText() {
-    return myCurrentHint == null ? null : myCurrentHint.getComponent().toString();
+    return myCurrentHint == null ? null : removeCurrentParameterColor(myCurrentHint.getComponent().toString());
+  }
+
+  public static String removeCurrentParameterColor(String text) {
+    return text == null ? null : text.replace("<b color=1d1d1d>", "<b>");
   }
 }

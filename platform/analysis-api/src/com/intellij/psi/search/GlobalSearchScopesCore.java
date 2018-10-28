@@ -113,6 +113,27 @@ public class GlobalSearchScopesCore {
     public boolean isSearchInLibraries() {
       return true; //TODO (optimization?)
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FilterScopeAdapter adapter = (FilterScopeAdapter)o;
+
+      if (!mySet.equals(adapter.mySet)) return false;
+      if (!myManager.equals(adapter.myManager)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + mySet.hashCode();
+      result = 31 * result + myManager.hashCode();
+      return result;
+    }
   }
 
   private static class ProductionScopeFilter extends GlobalSearchScope {

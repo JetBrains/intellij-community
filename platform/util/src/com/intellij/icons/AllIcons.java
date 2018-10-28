@@ -1513,6 +1513,7 @@ public class AllIcons {
       public static final Icon Recording_stop = AllIcons.Actions.Suspend;
 
     }
+    public static final Icon NavBarSeparator = IconLoader.getIcon("/ide/NavBarSeparator.svg"); // 5x15
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
 
     public final static class Notification {
@@ -2191,6 +2192,7 @@ public class AllIcons {
     public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.png"); // 16x16
     public static final Icon Azure = IconLoader.getIcon("/providers/azure.png"); // 16x16
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
+    public static final Icon Cassandra = IconLoader.getIcon("/providers/cassandra.svg"); // 16x16
     public static final Icon ClickHouse = IconLoader.getIcon("/providers/clickHouse.svg"); // 16x16
     public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.png"); // 16x16
@@ -2524,6 +2526,7 @@ public class AllIcons {
   public final static class Vcs {
     public static final Icon Arrow_left = IconLoader.getIcon("/vcs/arrow_left.png"); // 16x16
     public static final Icon Arrow_right = IconLoader.getIcon("/vcs/arrow_right.png"); // 16x16
+    public static final Icon Branch = IconLoader.getIcon("/vcs/branch.svg"); // 16x16
     public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16

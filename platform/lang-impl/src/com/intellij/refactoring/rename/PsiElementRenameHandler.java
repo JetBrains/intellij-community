@@ -61,7 +61,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
-    invoke(element, project, nameSuggestionContext, editor);
+    invoke(element, project, nameSuggestionContext, editor, shouldCheckInProject());
   }
 
   @Override
@@ -76,18 +76,26 @@ public class PsiElementRenameHandler implements RenameHandler {
       rename(element, project, element, editor, newName);
     }
     else {
-      invoke(element, project, element, editor);
+      invoke(element, project, element, editor, shouldCheckInProject());
     }
   }
 
+  protected boolean shouldCheckInProject() {
+    return true;
+  }
+
   public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor) {
+    invoke(element, project, nameSuggestionContext, editor, true);
+  }
+
+  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor, boolean checkInProject) {
     if (element != null && !canRename(project, editor, element)) {
       return;
     }
 
     VirtualFile contextFile = PsiUtilCore.getVirtualFile(nameSuggestionContext);
 
-    if (nameSuggestionContext != null &&
+    if (checkInProject && nameSuggestionContext != null &&
         nameSuggestionContext.isPhysical() &&
         (contextFile == null || contextFile.getFileType() != ScratchFileType.INSTANCE) &&
         !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {

@@ -93,7 +93,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       return null;
     }
 
-    final int id = Math.abs(FileBasedIndex.getFileId(vFile));
+    final int id = SingleEntryFileBasedIndexExtension.getFileKey(vFile);
     if (id <= 0) {
       return null;
     }

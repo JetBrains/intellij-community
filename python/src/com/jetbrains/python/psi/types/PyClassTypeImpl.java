@@ -614,7 +614,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
     }
-    return containingClass == PyiUtil.stubToOriginal(cls, PyClass.class) || isInSuperCall(location);
+    return containingClass == PyiUtil.getOriginalElementOrLeaveAsIs(cls, PyClass.class) || isInSuperCall(location);
   }
 
   @Override

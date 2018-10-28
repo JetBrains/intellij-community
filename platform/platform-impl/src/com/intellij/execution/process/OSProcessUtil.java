@@ -63,7 +63,7 @@ public class OSProcessUtil {
             createWinProcess(pid).kill();
             return;
           }
-          catch (Error e) {
+          catch (Throwable e) {
             LOG.error("Failed to kill process with winp, fallback to default logic", e);
           }
         }
@@ -88,7 +88,7 @@ public class OSProcessUtil {
           try {
             return createWinProcess(process).getPid();
           }
-          catch (Error e) {
+          catch (Throwable e) {
             LOG.error("Failed to get PID with winp, fallback to default logic", e);
           }
         }

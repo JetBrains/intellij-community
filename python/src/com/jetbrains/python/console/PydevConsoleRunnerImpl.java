@@ -110,11 +110,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @SuppressWarnings("SpellCheckingInspection")
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
+  public static final String PYTON_INTERPRETER_NULL = "Python interpreter is not selected. Please setup Python interpreter first.";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
   private final Consumer<? super String> myRerunAction;
-  @NotNull private final Sdk mySdk;
+  @Nullable private final Sdk mySdk;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
   protected PythonConsoleExecuteActionHandler myConsoleExecuteActionHandler;
@@ -130,7 +131,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private PythonConsoleView myConsoleView;
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
-                                @NotNull Sdk sdk,
+                                @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @NotNull final String title,
                                 @Nullable final String workingDir,
@@ -149,7 +150,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
-                                @NotNull Sdk sdk,
+                                @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
@@ -226,8 +227,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Override
   public void runSync(boolean requestEditorFocus) {
     try {
-      initAndRun();
-
+      if (mySdk == null) {
+        throw new ExecutionException(PYTON_INTERPRETER_NULL);
+      }
+      initAndRun(mySdk);
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
@@ -256,7 +259,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
           try {
-            initAndRun();
+            if (mySdk == null) {
+              throw new ExecutionException(PYTON_INTERPRETER_NULL);
+            }
+            initAndRun(mySdk);
             connect(myStatementsToExecute);
             if (requestEditorFocus) {
               myConsoleView.requestFocus();
@@ -362,21 +368,21 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return cmd;
   }
 
-  private PythonConsoleView createConsoleView() {
-    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, mySdk, false);
+  private PythonConsoleView createConsoleView(@NotNull Sdk sdk) {
+    PythonConsoleView consoleView = new PythonConsoleView(myProject, myTitle, sdk, false);
     myPydevConsoleCommunication.setConsoleFile(consoleView.getVirtualFile());
     consoleView.addMessageFilter(new PythonTracebackFilter(myProject));
     return consoleView;
   }
 
   @NotNull
-  private CommandLineProcess createProcess() throws ExecutionException {
-    if (PySdkUtil.isRemote(mySdk)) {
-      GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, 0);
+  private CommandLineProcess createProcess(@NotNull Sdk sdk) throws ExecutionException {
+    if (PySdkUtil.isRemote(sdk)) {
+      GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, 0);
 
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
+      PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
+      final PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, sdk, myConsoleSettings);
       if (manager != null && data != null && pathMapper != null) {
         RemoteConsoleProcessData remoteConsoleProcessData =
           PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
@@ -392,7 +398,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     else {
       int port = findAvailablePort(myProject, myConsoleType);
 
-      GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, port);
+      GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, port);
 
       Map<String, String> envs = generalCommandLine.getEnvironment();
       EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
@@ -465,11 +471,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     throw new ExecutionException("Couldn't read integer value from stream");
   }
 
-  private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine) {
-    if (PySdkUtil.isRemote(mySdk)) {
+  private PyConsoleProcessHandler createProcessHandler(final Process process, String commandLine, @NotNull Sdk sdk) {
+    if (PySdkUtil.isRemote(sdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
-        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
+        PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)sdk.getSdkAdditionalData();
         assert data != null;
         myProcessHandler =
           manager.createConsoleProcessHandler(process, myConsoleView, myPydevConsoleCommunication,
@@ -489,18 +495,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-  private void initAndRun() throws ExecutionException {
+  private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
-    CommandLineProcess commandLineProcess = createProcess();
+    CommandLineProcess commandLineProcess = createProcess(sdk);
     final Process process = commandLineProcess.getProcess();
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       // Init console view
-      myConsoleView = createConsoleView();
+      myConsoleView = createConsoleView(sdk);
       if (myConsoleView != null) {
         myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
       }
       myPydevConsoleCommunication.setConsoleView(myConsoleView);
-      myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine());
+      myProcessHandler = createProcessHandler(process, commandLineProcess.getCommandLine(), sdk);
 
       myConsoleExecuteActionHandler = createExecuteActionHandler();
 

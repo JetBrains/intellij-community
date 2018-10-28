@@ -8,6 +8,7 @@ import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -220,7 +221,9 @@ public class Restarter {
   }
 
   private static void runRestarter(File restarterFile, List<String> restarterArgs) throws IOException {
-    restarterArgs.add(0, createTempExecutable(restarterFile).getPath());
+    boolean isUpdate = restarterArgs.contains(UpdateInstaller.UPDATER_MAIN_CLASS);
+    File restarter = isUpdate ? createTempExecutable(restarterFile) : restarterFile;
+    restarterArgs.add(0, restarter.getPath());
     Runtime.getRuntime().exec(ArrayUtil.toStringArray(restarterArgs));
   }
 

@@ -44,18 +44,24 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   @Override
   public PsiElement findTargetMember(@Nullable PsiElement element) {
+    if (element == null) return null;
+    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(element.getProject());
+
     final PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
     if (callExpression != null) {
-      final PyCallable resolved = ContainerUtil.getFirstItem(callExpression.multiResolveCalleeFunction(PyResolveContext.defaultContext()));
-      if (resolved instanceof PyFunction && PyiUtil.isOverload(resolved, TypeEvalContext.codeInsightFallback(callExpression.getProject()))) {
-        return PyiUtil.getImplementation((PyFunction)resolved);
-      }
-      return resolved;
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+      final PyCallable resolved = ContainerUtil.getFirstItem(callExpression.multiResolveCalleeFunction(resolveContext));
+
+      return resolved instanceof PyFunction && PyiUtil.isOverload(resolved, context)
+             ? PyiUtil.getImplementation((PyFunction)resolved, context)
+             : resolved;
     }
+
     final PyFunction parent = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    if (parent != null && PyiUtil.isOverload(parent, TypeEvalContext.codeInsightFallback(parent.getProject()))) {
+    if (parent != null && PyiUtil.isOverload(parent, context)) {
       return null;
     }
+
     return parent;
   }
 

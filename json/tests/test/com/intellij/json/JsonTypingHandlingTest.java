@@ -89,4 +89,13 @@ public class JsonTypingHandlingTest extends JsonTestCase {
                 " \"q\": 8\n" +
                 "}");
   }
+
+  public void testAutoWhitespaceErasure() {
+    myFixture.configureByText("test.json", "{a<caret>}");
+    myFixture.type(":");
+    myFixture.type(" ");
+    myFixture.checkResult("{\n" +
+                          "  \"a\": <caret>\n" +
+                          "}");
+  }
 }

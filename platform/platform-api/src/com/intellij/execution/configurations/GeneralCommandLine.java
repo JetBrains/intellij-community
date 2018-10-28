@@ -3,6 +3,7 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.IllegalEnvVarException;
 import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
@@ -383,6 +384,12 @@ public class GeneralCommandLine implements UserDataHolder {
       throw e;
     }
 
+    for (Map.Entry<String, String> entry : myEnvParams.entrySet()) {
+      String name = entry.getKey(), value = entry.getValue();
+      if (!EnvironmentUtil.isValidName(name)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.name", name));
+      if (!EnvironmentUtil.isValidValue(value)) throw new IllegalEnvVarException(IdeBundle.message("run.configuration.invalid.env.value", name, value));
+    }
+
     String exePath = myExePath;
     if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
       String systemPath = System.getenv("PATH");
@@ -504,12 +511,6 @@ public class GeneralCommandLine implements UserDataHolder {
   private static class MyTHashMap extends THashMap<String, String> {
     private MyTHashMap() {
       super(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE : ContainerUtil.canonicalStrategy());
-    }
-
-    @Override
-    public String put(String key, String value) {
-      EnvironmentUtil.validate(key, value);
-      return super.put(key, value);
     }
 
     @Override

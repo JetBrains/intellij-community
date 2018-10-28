@@ -3,6 +3,8 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -235,17 +237,36 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    doMultiFileTest();
-  }
+    final String testName = getTestName(true);
 
-  // PY-11208
-  public void testMockPatchObject3() {
-    doMultiFileTest();
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-21060

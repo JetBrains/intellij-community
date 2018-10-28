@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.CONTINUE;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_CHILDREN;
 
 public class VcsRootDetectorImpl implements VcsRootDetector {
   private static final Logger LOG = Logger.getInstance(VcsRootDetectorImpl.class);
@@ -103,6 +105,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile root) {
     Set<VcsRoot> roots = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(myProject, myProjectManager, root, dir -> {
+      if (Registry.is("vcs.root.detector.skip.vendor") && dir.getName().equalsIgnoreCase("vendor")) return SKIP_CHILDREN;
       AbstractVcs vcs = getVcsFor(dir);
       if (vcs != null) {
         LOG.debug("Found VCS " + vcs + " in " + dir);

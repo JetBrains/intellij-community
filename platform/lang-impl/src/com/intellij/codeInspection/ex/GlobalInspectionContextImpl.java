@@ -44,7 +44,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,21 +63,20 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
@@ -241,70 +239,80 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         BufferedWriter[] writers = new BufferedWriter[inspections.size()];
         XMLStreamWriter[] xmlWriters = new XMLStreamWriter[inspections.size()];
 
-        int i = 0;
-        for (Tools inspection : inspections) {
-          inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
-          try {
-            BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
-            writers[i] = writer;
-            XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(writer);
-            xmlWriters[i++] = xmlWriter;
-            xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
-            xmlWriter.writeCharacters("\n");
-            xmlWriter.flush();
-          }
-          catch (FileNotFoundException | XMLStreamException e) {
-            LOG.error(e);
-          }
-        }
 
-        getRefManager().iterate(new RefVisitor() {
-          @Override
-          public void visitElement(@NotNull final RefEntity refEntity) {
-            int i = 0;
-            for (Tools tools: inspections) {
-              for (ScopeToolState state : tools.getTools()) {
-                try {
-                  InspectionToolWrapper toolWrapper = state.getTool();
-                  InspectionToolPresentation presentation = getPresentation(toolWrapper);
-                  BufferedWriter writer = writers[i];
-                  presentation.exportResults(e -> {
-                    try {
-                      JbXmlOutputter.collapseMacrosAndWrite(e, myView.getProject(), writer);
-                      writer.flush();
-                    }
-                    catch (IOException e1) {
-                      throw new RuntimeException(e1);
-                    }
-                  }, refEntity, d -> false);
-                }
-                catch (Throwable e) {
-                  LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
-                }
-              }
-              i++;
+        try {
+          int i = 0;
+          for (Tools inspection : inspections) {
+            inspectionsResults.add(ExportHTMLAction.getInspectionResultFile(outputPath, inspection.getShortName()));
+            try {
+              BufferedWriter writer = ExportHTMLAction.getWriter(outputPath, inspection.getShortName());
+              writers[i] = writer;
+              XMLStreamWriter xmlWriter = xmlOutputFactory.createXMLStreamWriter(writer);
+              xmlWriters[i++] = xmlWriter;
+              xmlWriter.writeStartElement(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
+              xmlWriter.writeCharacters("\n");
+              xmlWriter.flush();
+            }
+            catch (FileNotFoundException | XMLStreamException e) {
+              LOG.error(e);
             }
           }
-        });
 
-        for (XMLStreamWriter xmlWriter : xmlWriters) {
-          try {
-            xmlWriter.writeEndElement();
-            xmlWriter.flush();
+          getRefManager().iterate(new RefVisitor() {
+            @Override
+            public void visitElement(@NotNull final RefEntity refEntity) {
+              int i = 0;
+              for (Tools tools : inspections) {
+                for (ScopeToolState state : tools.getTools()) {
+                  try {
+                    InspectionToolWrapper toolWrapper = state.getTool();
+                    InspectionToolPresentation presentation = getPresentation(toolWrapper);
+                    BufferedWriter writer = writers[i];
+                    if (writer != null) {
+                      presentation.exportResults(e -> {
+                        try {
+                          JbXmlOutputter.collapseMacrosAndWrite(e, getProject(), writer);
+                          writer.flush();
+                        }
+                        catch (IOException e1) {
+                          throw new RuntimeException(e1);
+                        }
+                      }, refEntity, d -> false);
+                    }
+                  }
+                  catch (Throwable e) {
+                    LOG.error("Problem when exporting: " + refEntity.getExternalName(), e);
+                  }
+                }
+                i++;
+              }
+            }
+          });
+
+          for (XMLStreamWriter xmlWriter : xmlWriters) {
+            if (xmlWriter != null) {
+              try {
+                xmlWriter.writeEndElement();
+                xmlWriter.flush();
+              }
+              catch (XMLStreamException e) {
+                LOG.error(e);
+              }
+            }
           }
-          catch (XMLStreamException e) {
-            LOG.error(e);
+        } finally {
+          for (BufferedWriter writer : writers) {
+            if (writer != null) {
+              try {
+                writer.close();
+              }
+              catch (IOException e) {
+                LOG.error(e);
+              }
+            }
           }
         }
 
-        for (BufferedWriter writer : writers) {
-          try {
-            writer.close();
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
       });
     }
   }
@@ -508,12 +516,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(filesToInspect, filesFailedToInspect, wrapper, TOMBSTONE, processor);
           break;
         }
-        catch (ProcessCanceledException ignored) {
+        catch (ProcessCanceledException e) {
           progressIndicator.checkCanceled();
           // PCE may be thrown from inside wrapper when write action started
           // go on with the write and then resume processing the rest of the queue
-          assert !ApplicationManager.getApplication().isReadAccessAllowed();
-          assert !ApplicationManager.getApplication().isDispatchThread();
+          assert isOfflineInspections || !ApplicationManager.getApplication().isReadAccessAllowed()
+            : "Must be outside read action. PCE=\n" + ExceptionUtil.getThrowableText(e);
+          assert isOfflineInspections || !ApplicationManager.getApplication().isDispatchThread()
+            : "Must be outside EDT. PCE=\n" + ExceptionUtil.getThrowableText(e);
 
           // wait for write action to complete
           ApplicationManager.getApplication().runReadAction(EmptyRunnable.getInstance());
@@ -955,9 +965,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private final ConcurrentMap<InspectionToolWrapper, InspectionToolPresentation> myPresentationMap = ContainerUtil.newConcurrentMap();
 
   @Nullable
-  public InspectionToolPresentation getPresentationOrNull(@NotNull InspectionToolWrapper toolWrapper) {
+  private InspectionToolPresentation getPresentationOrNull(@NotNull InspectionToolWrapper toolWrapper) {
     return myPresentationMap.get(toolWrapper);
   }
+
   @NotNull
   public InspectionToolPresentation getPresentation(@NotNull InspectionToolWrapper toolWrapper) {
     InspectionToolPresentation presentation = myPresentationMap.get(toolWrapper);

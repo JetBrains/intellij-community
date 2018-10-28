@@ -2,10 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -46,6 +43,16 @@ class AccessibleGutterLine extends JPanel {
   private final int myVisualLineNum;
 
   private static boolean actionHandlerInstalled;
+
+  private static class MyShortcuts {
+    static final CustomShortcutSet MOVE_RIGHT = new CustomShortcutSet(
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), null),
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null));
+
+    static final CustomShortcutSet MOVE_LEFT = new CustomShortcutSet(
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), null),
+      new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), null));
+  }
 
   public static AccessibleGutterLine createAndActivate(@NotNull EditorGutterComponentImpl gutter) {
     return new AccessibleGutterLine(gutter);
@@ -231,11 +238,9 @@ class AccessibleGutterLine extends JPanel {
     }
 
     installActionHandler(CommonShortcuts.ESCAPE, () -> escape(true));
-    installActionHandler(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this::moveRight);
-    installActionHandler(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), this::moveLeft);
-    installActionHandler(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), this::moveRight);
-    installActionHandler(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)), this::moveLeft);
     installActionHandler(CommonShortcuts.ENTER, () -> {}); // [tav] todo: it can do something useful, e.g. forcing Screen Reader to voice
+    installActionHandler(MyShortcuts.MOVE_RIGHT, this::moveRight);
+    installActionHandler(MyShortcuts.MOVE_LEFT, this::moveLeft);
 
     IdeFocusManager.getGlobalInstance().requestFocus(mySelectedElement, true);
   }

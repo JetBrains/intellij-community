@@ -1042,4 +1042,10 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/complicatedConditions.json"));
     doTest(schemaText, inputText);
   }
+
+  public void testExoticProps() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticPropsSchema.json"));
+    String inputText = FileUtil.loadFile(new File(getTestDataPath() + "/exoticProps.json"));
+    doTest(schemaText, inputText);
+  }
 }

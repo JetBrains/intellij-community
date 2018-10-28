@@ -14,7 +14,10 @@ public final class VcsLogIcons {
     return IconLoader.getIcon(path, VcsLogIcons.class);
   }
 
-  public static final Icon Branch = load("/icons/branch.svg"); // 16x16
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
   public static final Icon IntelliSort = load("/icons/IntelliSort.svg"); // 16x16
 
   public final static class Process {
@@ -26,8 +29,8 @@ public final class VcsLogIcons {
 
   }
 
-  /** @deprecated to be removed in IDEA 2020 - use VcsLogIcons.Branch */
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Branch */
   @SuppressWarnings("unused")
   @Deprecated
-  public static final Icon ShowOtherBranches = VcsLogIcons.Branch;
+  public static final Icon ShowOtherBranches = load("/vcs/branch.svg", com.intellij.icons.AllIcons.class);
 }

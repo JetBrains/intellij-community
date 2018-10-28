@@ -18,7 +18,7 @@ import java.util.List;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider {
+public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider, CompositeIcon {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -98,6 +98,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconP
     return obj instanceof RowIcon && Arrays.equals(((RowIcon)obj).myIcons, myIcons);
   }
 
+  @Override
   public int getIconCount() {
     return myIcons.length;
   }
@@ -108,6 +109,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconP
     updateSize();
   }
 
+  @Override
   public Icon getIcon(int index) {
     return myIcons[index];
   }

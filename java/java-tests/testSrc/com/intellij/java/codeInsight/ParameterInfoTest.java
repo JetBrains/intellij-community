@@ -25,6 +25,8 @@ import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoCon
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
+
 public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   @Override
   protected String getBasePath() {
@@ -188,7 +190,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     parameterContext.setUIComponentEnabled(true);
     PsiSubstitutor substitutor = ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor();
     String presentation = MethodParameterInfoHandler.updateMethodPresentation(method, substitutor, parameterContext);
-    assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", presentation);
+    assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>", removeCurrentParameterColor(presentation));
   }
 
   public void testNoParams() { doTestPresentation("<html>&lt;no parameters&gt;</html>", -1); }
@@ -199,7 +201,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   private void doTestPresentation(String expectedString, int parameterIndex) {
     myFixture.configureByFile(getTestName(false) + ".java");
     String presentation = parameterPresentation(parameterIndex);
-    assertEquals(expectedString, presentation);
+    assertEquals(expectedString, removeCurrentParameterColor(presentation));
   }
 
   private String parameterPresentation(int parameterIndex) {
@@ -234,7 +236,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testAnnotationWithGenerics() {
     myFixture.configureByFile(getTestName(false) + ".java");
     String text = annoParameterPresentation();
-    assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", text);
+    assertEquals("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>", removeCurrentParameterColor(text));
   }
 
   private String annoParameterPresentation() {
@@ -392,7 +394,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
                       "<html><b>int a</b>, int b, int c</html>");
     type("1, ");
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>\n" +
+    checkHintContents("<html><font color=a8a8a8>&lt;no parameters&gt;</font></html>\n" +
                       "-\n" +
                       "<html>int a, <b>int b</b>, int c</html>");
   }

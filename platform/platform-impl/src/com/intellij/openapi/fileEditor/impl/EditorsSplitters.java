@@ -50,6 +50,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ContainerEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
@@ -76,12 +77,15 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     super(new BorderLayout());
 
     setBackground(JBColor.namedColor("Editor.background", IdeBackgroundUtil.getIdeBackgroundColor()));
-    UIManager.getDefaults().addPropertyChangeListener(e -> {
+    PropertyChangeListener l = e -> {
       String propName = e.getPropertyName();
       if ("Editor.background".equals(propName) || "Editor.foreground".equals(propName) || "Editor.shortcutForeground".equals(propName)) {
         repaint();
       }
-    });
+    };
+
+    UIManager.getDefaults().addPropertyChangeListener(l);
+    Disposer.register(manager.getProject(), () -> UIManager.getDefaults().removePropertyChangeListener(l));
 
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();

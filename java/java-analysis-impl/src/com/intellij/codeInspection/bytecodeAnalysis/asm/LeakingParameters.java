@@ -110,7 +110,8 @@ final class IParamsValue implements Value {
 
   @Override
   public int getSize() {
-    return size;
+    // size == -1 means bottom (uninitialized) value
+    return size == -1 ? 1 : size;
   }
 
   @Override
@@ -281,6 +282,7 @@ class ParametersUsage extends Interpreter<ParamsValue> {
 class IParametersUsage extends Interpreter<IParamsValue> {
   static final IParamsValue val1 = new IParamsValue(0, 1);
   static final IParamsValue val2 = new IParamsValue(0, 2);
+  static final IParamsValue none = new IParamsValue(0, -1);
 
   private int param = -1;
   final int arity;
@@ -304,7 +306,7 @@ class IParametersUsage extends Interpreter<IParamsValue> {
 
   @Override
   public IParamsValue newValue(Type type) {
-    if (type == null) return val1;
+    if (type == null) return none;
     if (type == Type.VOID_TYPE) return null;
     return type.getSize() == 1 ? val1 : val2;
   }

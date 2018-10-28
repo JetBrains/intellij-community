@@ -17,7 +17,6 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -56,12 +55,10 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
-import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NonNls;
@@ -154,9 +151,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getSelectionModel().addListSelectionListener(e -> mySelection = null);
     getColumnModel().setColumnSelectionAllowed(false);
 
-    VcsLogUiUtil.installScrollingActions(this,
-                                         ActionManager.getInstance().getKeyboardShortcut(VcsLogActionPlaces.VCS_LOG_GO_TO_CHILD_ACTION),
-                                         ActionManager.getInstance().getKeyboardShortcut(VcsLogActionPlaces.VCS_LOG_GO_TO_PARENT_ACTION));
+    ScrollingUtil.installActions(this, false);
     new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), this) {
       @Override
       protected boolean isSpeedSearchEnabled() {

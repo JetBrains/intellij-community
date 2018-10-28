@@ -89,8 +89,9 @@ public class FileHistoryUtil {
     }
 
     List<Hash> parentHashes = map(parentCommits, c -> logData.getCommitId(c).getHash());
-    List<Change> parentChanges = map2List(toCollection(zip(parentCommits, parentHashes)), parent -> {
+    List<Change> parentChanges = mapNotNull(toCollection(zip(parentCommits, parentHashes)), parent -> {
       ContentRevision beforeRevision = createContentRevision(parent.second, parent.first, visiblePack, diffHandler);
+      if (afterRevision == null && beforeRevision == null) return null;
       return new Change(beforeRevision, afterRevision);
     });
     if (parentChanges.size() <= 1) {

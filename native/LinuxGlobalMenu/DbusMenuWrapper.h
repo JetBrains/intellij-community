@@ -37,8 +37,8 @@ extern "C"{
 
 // runs main loop of glib (which is needed to communicate with dbus)
 // must be called from java thread (to avoid detach, so jna-callbacks will be invoked from same thread)
-void runDbusServer(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
-void stopDbusServer();
+void startWatchDbus(jlogger jlogger, jrunnable onAppmenuServiceAppeared, jrunnable onAppmenuServiceVanished);
+void stopWatchDbus();
 void execOnMainLoop(jrunnable run);
 
 WndInfo* registerWindow(long windowXid, jeventcallback handler); // creates menu-server and binds to xid
@@ -61,6 +61,8 @@ void setItemLabel(DbusmenuMenuitem* item, const char * label);
 void setItemEnabled(DbusmenuMenuitem* item, bool isEnabled);
 void setItemIcon(DbusmenuMenuitem* item, const char * iconBytesPng, int iconBytesCount);
 void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode);
+
+void toggleItemStateChecked(DbusmenuMenuitem *item, bool isChecked);
 
 #ifdef __cplusplus
 }

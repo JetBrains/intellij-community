@@ -7,21 +7,19 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.*;
+import com.intellij.ui.HintHint;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.Functions;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
@@ -35,11 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.openapi.actionSystem.AnAction.ACTIONS_KEY;
 
 public class VcsLogUiUtil {
   @NotNull
@@ -130,26 +125,6 @@ public class VcsLogUiUtil {
     IdeTooltip tooltip = new IdeTooltip(component, point, new Wrapper(tipComponent)).setPreferredPosition(position).setToCenter(false)
       .setToCenterIfSmall(false);
     IdeTooltipManager.getInstance().show(tooltip, false);
-  }
-
-  public static void installScrollingActions(@NotNull JTable component, @NotNull KeyboardShortcut... conflictingShortcuts) {
-    ScrollingUtil.installActions(component, false);
-
-    // remove shortcuts that conflict with go to child/parent
-    List<KeyboardShortcut> shortcuts = ContainerUtil.mapNotNull(conflictingShortcuts, Functions.id());
-    List<KeyStroke> strokes = ContainerUtil.mapNotNull(shortcuts, shortcut -> shortcut.getFirstKeyStroke());
-
-    strokes.forEach(stroke -> component.getInputMap(JComponent.WHEN_FOCUSED).remove(stroke));
-    for (AnAction action : ContainerUtil.newArrayList(UIUtil.getClientProperty(component, ACTIONS_KEY))) {
-      if (!getMatchingShortcut(action, shortcuts).isEmpty()) {
-        action.unregisterCustomShortcutSet(component);
-      }
-    }
-  }
-
-  @NotNull
-  private static Collection<Shortcut> getMatchingShortcut(@NotNull AnAction action, @NotNull List<KeyboardShortcut> shortcuts) {
-    return ContainerUtil.intersection(Arrays.asList(action.getShortcutSet().getShortcuts()), shortcuts);
   }
 
   @NotNull

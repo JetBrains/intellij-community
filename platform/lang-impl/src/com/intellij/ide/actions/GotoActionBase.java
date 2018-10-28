@@ -322,7 +322,6 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());

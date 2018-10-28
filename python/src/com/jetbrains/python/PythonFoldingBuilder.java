@@ -138,6 +138,10 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
+    if (node.getTextRange().isEmpty()) {
+      return;
+    }
+    
     IElementType elType = node.getTreeParent().getElementType();
     if (elType == PyElementTypes.FUNCTION_DECLARATION
         || elType == PyElementTypes.CLASS_DECLARATION

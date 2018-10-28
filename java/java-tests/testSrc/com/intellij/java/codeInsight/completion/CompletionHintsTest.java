@@ -609,7 +609,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
-    checkHintContents("<html><font color=gray>@NotNull String key</font color=gray></html>\n" +
+    checkHintContents("<html><font color=a8a8a8>@NotNull String key</font></html>\n" +
                       "-\n" +
                       "[<html>@NotNull String key, <b>String def</b></html>]");
   }

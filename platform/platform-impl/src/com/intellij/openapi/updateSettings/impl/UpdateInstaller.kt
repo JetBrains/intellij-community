@@ -24,6 +24,8 @@ import java.nio.file.Paths
 import javax.swing.UIManager
 
 object UpdateInstaller {
+  const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
   private val patchesUrl: URL
     get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
 
@@ -156,7 +158,7 @@ object UpdateInstaller {
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
 
-    args += "com.intellij.updater.Runner"
+    args += UPDATER_MAIN_CLASS
     args += if (patchFiles.size == 1) "install" else "batch-install"
     args += PathManager.getHomePath()
     if (patchFiles.size > 1) {

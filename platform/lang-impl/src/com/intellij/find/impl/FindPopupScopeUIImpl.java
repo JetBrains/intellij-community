@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.ComboboxSpeedSearch;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.SwingHelper;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +83,10 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
     myScopeCombo = new ScopeChooserCombo();
-    myScopeCombo.init(myProject, true, true, FindSettings.getInstance().getDefaultScopeName(), new Condition<ScopeDescriptor>() {
+    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScope(),
+                                            myHelper.getModel().getCustomScopeName(),
+                                            FindSettings.getInstance().getDefaultScopeName());
+    myScopeCombo.init(myProject, true, true, selection, new Condition<ScopeDescriptor>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
 

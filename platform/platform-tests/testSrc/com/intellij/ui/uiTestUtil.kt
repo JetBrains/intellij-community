@@ -148,7 +148,7 @@ internal fun compareSvgSnapshot(snapshotFile: Path, newData: String, isUpdateSna
 
   val new = newData.byteInputStream().use { SVGLoader.load(uri, it, 1.0) } as BufferedImage
   val imageMismatchError = StringBuilder("images mismatch: ")
-  if (ImageComparator(ImageComparator.AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
+  if (ImageComparator(ImageComparator.AASmootherComparator(0.5, 0.2, Color(0, 0, 0, 0))).compare(old, new, imageMismatchError)) {
     return
   }
 

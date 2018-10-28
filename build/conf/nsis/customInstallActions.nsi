@@ -1,4 +1,4 @@
-!define INSTALL_OPTION_ELEMENTS 7
+!define INSTALL_OPTION_ELEMENTS 9
 !define CUSTOM_SILENT_CONFIG 0
 
 Function customPreInstallActions

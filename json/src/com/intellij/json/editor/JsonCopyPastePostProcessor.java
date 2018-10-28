@@ -3,15 +3,18 @@ package com.intellij.json.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
+import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,8 +81,7 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   private static void fixCommasOnPaste(@NotNull Project project, @NotNull Editor editor, @NotNull RangeMarker bounds) {
     if (!JsonEditorOptions.getInstance().COMMA_ON_PASTE) return;
 
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    if (file == null || !(file.getFileType() instanceof JsonFileType)) return;
+    if (!isJsonEditor(project, editor)) return;
 
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     manager.commitDocument(editor.getDocument());
@@ -89,9 +91,19 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
     fixLeadingComma(bounds, psiFile, manager);
   }
 
+  private static boolean isJsonEditor(@NotNull Project project,
+                                      @NotNull Editor editor) {
+    final VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (file == null) return false;
+    final FileType fileType = file.getFileType();
+    if (fileType instanceof JsonFileType) return true;
+    if (!(fileType instanceof ScratchFileType)) return false;
+    return PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) instanceof JsonFile;
+  }
+
   private static void fixLeadingComma(@NotNull RangeMarker bounds, @NotNull PsiFile psiFile, @NotNull PsiDocumentManager manager) {
     final PsiElement startElement = skipWhitespaces(psiFile.findElementAt(bounds.getStartOffset()));
-    PsiElement propertyOrArrayItem = getParentPropertyOrArrayItem(startElement);
+    PsiElement propertyOrArrayItem = startElement instanceof JsonProperty ? startElement : getParentPropertyOrArrayItem(startElement);
 
     if (propertyOrArrayItem == null) return;
 
@@ -118,19 +130,25 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
   }
 
   private static void fixTrailingComma(@NotNull RangeMarker bounds, @NotNull PsiFile psiFile, @NotNull PsiDocumentManager manager) {
-    final PsiElement endElement = skipWhitespaces(psiFile.findElementAt(bounds.getEndOffset() - 1));
+    PsiElement endElement = skipWhitespaces(psiFile.findElementAt(bounds.getEndOffset() - 1));
+    if (endElement != null && endElement.getTextOffset() >= bounds.getEndOffset()) {
+      endElement = PsiTreeUtil.skipWhitespacesBackward(endElement);
+    }
 
     if (endElement instanceof LeafPsiElement && ((LeafPsiElement)endElement).getElementType() == JsonElementTypes.COMMA) {
       final PsiElement nextNext = skipWhitespaces(endElement.getNextSibling());
       if (nextNext instanceof LeafPsiElement && (((LeafPsiElement)nextNext).getElementType() == JsonElementTypes.R_CURLY ||
                                                   ((LeafPsiElement)nextNext).getElementType() == JsonElementTypes.R_BRACKET)) {
-        ApplicationManager.getApplication().runWriteAction(() -> endElement.delete());
+        PsiElement finalEndElement = endElement;
+        ApplicationManager.getApplication().runWriteAction(() -> finalEndElement.delete());
       }
     }
     else {
       final PsiElement property = getParentPropertyOrArrayItem(endElement);
-      if (property != null && skipWhitespaces(property.getNextSibling()) instanceof PsiErrorElement) {
-        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(property.getTextRange().getEndOffset(), ","));
+      if (endElement instanceof PsiErrorElement || property != null && skipWhitespaces(property.getNextSibling()) instanceof PsiErrorElement) {
+        PsiElement finalEndElement1 = endElement;
+        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(property != null ? property.getTextRange().getEndOffset()
+                                                                                                                    : finalEndElement1.getTextOffset(), ","));
         manager.commitDocument(bounds.getDocument());
       }
     }

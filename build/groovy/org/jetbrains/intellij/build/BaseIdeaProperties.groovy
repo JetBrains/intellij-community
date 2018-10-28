@@ -142,12 +142,15 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.changesManager",
       "intellij.chronon.me",
       "intellij.cidr.externalSystem",
+      "intellij.chronon",
       "intellij.flex.uiDesigner.tests",
       "intellij.griffon",
       "intellij.php.workshop",
       "intellij.html.quirksmode",
       "intellij.shortcutPromoter",
-      "intellij.flex.profiler"
+      "intellij.flex.profiler",
+      "intellij.kotlinNative.platformDeps",
+      "intellij.idea-clion"
     ]
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)

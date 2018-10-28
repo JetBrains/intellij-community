@@ -69,8 +69,6 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     final String indentStyle = Utils.configValueForKey(outPairs, indentStyleKey);
     final IndentOptions indentOptions = (IndentOptions)settings.getIndentOptions(file.getFileType()).clone();
     if (applyIndentOptions(project, indentOptions, indentSize, continuationIndentSize, tabWidth, indentStyle, file.getCanonicalPath())) {
-      // Start retrieving parent files here
-      EditorConfigNavigationActionsFactory.getParentFiles(file, project);
       indentOptions.setOverrideLanguageOptions(true);
       return indentOptions;
     }

@@ -169,7 +169,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     @Nullable
     private PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
       final PyClass owner = getClassOwner(element);
-      return owner == null ? null : PyiUtil.stubToOriginal(owner, PyClass.class);
+      return owner == null ? null : PyiUtil.getOriginalElementOrLeaveAsIs(owner, PyClass.class);
     }
 
     @Nullable

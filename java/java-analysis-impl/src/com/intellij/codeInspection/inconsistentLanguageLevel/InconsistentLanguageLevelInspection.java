@@ -23,8 +23,11 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -47,19 +50,12 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     if (refEntity instanceof RefModule) {
       Module module = ((RefModule)refEntity).getModule();
       if (module.isDisposed() || !scope.containsModule(module)) return null;
-      LanguageLevel projectLanguageLevel = LanguageLevelProjectExtension.getInstance(manager.getProject()).getLanguageLevel();
-      LanguageLevel languageLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
-      if (languageLevel == null) {
-        languageLevel = projectLanguageLevel;
-      }
+      LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (!(entry instanceof ModuleOrderEntry)) continue;
         final Module dependantModule = ((ModuleOrderEntry)entry).getModule();
         if (dependantModule == null) continue;
-        LanguageLevel dependantLanguageLevel = LanguageLevelModuleExtensionImpl.getInstance(dependantModule).getLanguageLevel();
-        if (dependantLanguageLevel == null) {
-          dependantLanguageLevel = projectLanguageLevel;
-        }
+        LanguageLevel dependantLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
             "Module " + module.getName() + " with language level " + languageLevel +

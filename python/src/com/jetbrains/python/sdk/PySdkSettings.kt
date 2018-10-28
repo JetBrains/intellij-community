@@ -14,7 +14,10 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
 /**
  * @author vlan
  */
-@State(name = "PySdkSettings", storages = [(Storage(value = "py_sdk_settings.xml", roamingType = RoamingType.DISABLED))])
+@State(name = "PySdkSettings", storages = [
+  Storage(value = "pySdk.xml", roamingType = RoamingType.DISABLED),
+  Storage(value = "py_sdk_settings.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+])
 class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
   companion object {
     @JvmStatic

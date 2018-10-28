@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -142,22 +143,27 @@ public class EnvironmentUtil {
   }
 
   /**
-   * Validates environment variable's names and values in accordance to
-   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows)
-   * and {@code ProcessEnvironment#validateValue} methods.
+   * Validates environment variable name in accordance to
+   * {@code ProcessEnvironment#validateVariable} ({@code ProcessEnvironment#validateName} on Windows).
    *
+   * @see #isValidValue(String)
    * @see <a href="http://pubs.opengroup.org/onlinepubs/000095399/basedefs/xbd_chap08.html">Environment Variables in Unix</a>
    * @see <a href="https://docs.microsoft.com/en-us/windows/desktop/ProcThread/environment-variables">Environment Variables in Windows</a>
    */
-  public static void validate(String name, String value) throws IllegalArgumentException {
-    if (name == null || name.isEmpty() || name.indexOf('\0') != -1 || name.indexOf('=', SystemInfo.isWindows ? 1 : 0) != -1) {
-      throw new IllegalArgumentException("Illegal environment variable name: " + name);
-    }
-    if (value == null || value.indexOf('\0') != -1) {
-      throw new IllegalArgumentException("Illegal environment variable value: " + value);
-    }
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidName(@Nullable String name) {
+    return name != null && !name.isEmpty() && name.indexOf('\0') == -1 && name.indexOf('=', SystemInfo.isWindows ? 1 : 0) == -1;
   }
 
+  /**
+   * Validates environment variable value in accordance to {@code ProcessEnvironment#validateValue}.
+   *
+   * @see #isValidName(String)
+   */
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isValidValue(@Nullable String value) {
+    return value != null && value.indexOf('\0') == -1;
+  }
 
   private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";

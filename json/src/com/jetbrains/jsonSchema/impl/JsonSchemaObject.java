@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.jetbrains.jsonSchema.JsonPointerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
@@ -30,6 +29,8 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
 
 /**
  * @author Irina.Chernushina on 8/28/2015.
@@ -783,14 +784,14 @@ public class JsonSchemaObject {
 
   @Nullable
   public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
-    if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
+    if (isSelfReference(ref)) {
       return this;
     }
     if (!ref.startsWith("#/")) {
       return null;
     }
     ref = ref.substring(2);
-    final List<String> parts = StringUtil.split(ref, "/");
+    final List<String> parts = split(ref);
     JsonSchemaObject current = this;
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
@@ -799,13 +800,13 @@ public class JsonSchemaObject {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         final String nextPart = parts.get(++i);
-        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(JsonPointerUtil.unescapeJsonPointerPart(nextPart));
+        current = current.getDefinitionsMap() == null ? null : current.getDefinitionsMap().get(unescapeJsonPointerPart(nextPart));
         continue;
       }
       if (PROPERTIES.equals(part)) {
         if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
-        current = current.getProperties().get(JsonPointerUtil.unescapeJsonPointerPart(parts.get(++i)));
+        current = current.getProperties().get(unescapeJsonPointerPart(parts.get(++i)));
         continue;
       }
       if (ITEMS.equals(part)) {
@@ -1073,6 +1074,9 @@ public class JsonSchemaObject {
     final String path = splitter.getRelativePath();
     if (StringUtil.isEmptyOrSpaces(path)) {
       final String id = splitter.getSchemaId();
+      if (isSelfReference(id)) {
+        return schema;
+      }
       if (id != null && id.startsWith("#")) {
         final String resolvedId = JsonCachedValues.resolveId(schema.getJsonObject().getContainingFile(), id);
         if (resolvedId == null || id.equals("#" + resolvedId)) return null;

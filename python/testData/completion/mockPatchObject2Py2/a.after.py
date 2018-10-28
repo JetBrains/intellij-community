@@ -1,3 +1,3 @@
 import mock
 
-mock.patch.object
+mock.patch.object()

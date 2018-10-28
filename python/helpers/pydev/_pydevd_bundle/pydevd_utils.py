@@ -51,15 +51,18 @@ def to_number(x):
                 pass
     return None
 
+
 def compare_object_attrs_key(x):
     if '__len__' == x:
-        as_number = to_number(x)
-        if as_number is None:
-            as_number = 99999999
         # __len__ should appear after other attributes in a list.
-        return (1, as_number)
+        num = 99999999
     else:
-        return (-1, to_string(x))
+        num = to_number(x)
+    if num is not None:
+        return 1, num
+    else:
+        return -1, to_string(x)
+
 
 if IS_PY3K:
     def is_string(x):

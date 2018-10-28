@@ -1,15 +1,11 @@
-<scheme name="High Contrast" version="142" parent_scheme="Darcula">
-  <option name="FONT_SCALE" value="1.0" />
+<scheme name="High сontrast" version="142" parent_scheme="Darcula">
   <metaInfo>
-    <property name="created">2018-10-15T16:44:32</property>
+    <property name="created">2018-10-23T12:21:16</property>
     <property name="ide">idea</property>
     <property name="ideVersion">2019.1.0.0</property>
-    <property name="modified">2018-10-15T16:44:39</property>
-    <property name="originalScheme">High Contrast</property>
+    <property name="modified">2018-10-23T12:21:18</property>
+    <property name="originalScheme">High сontrast</property>
   </metaInfo>
-  <option name="LINE_SPACING" value="1.2" />
-  <option name="EDITOR_FONT_SIZE" value="12" />
-  <option name="EDITOR_FONT_NAME" value="Menlo" />
   <colors>
     <option name="ADDED_LINES_COLOR" value="9924" />
     <option name="ANNOTATIONS_COLOR" value="ffffff" />
@@ -19,9 +15,26 @@
     <option name="DELETED_LINES_COLOR" value="ffa14f" />
     <option name="DOCUMENTATION_COLOR" value="40174d" />
     <option name="ERROR_HINT" value="800002" />
+    <option name="FILESTATUS_ADDED" value="62cc47" />
+    <option name="FILESTATUS_COPIED" value="62cc47" />
+    <option name="FILESTATUS_DELETED" value="ed864a" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_DELETED_FROM_FILE_SYSTEM" value="ed864a" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_IGNORED" value="a9b837" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_BOTH_CONFLICTS" value="ff6666" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_CONFLICTS" value="ff6666" />
+    <option name="FILESTATUS_IDEA_FILESTATUS_MERGED_WITH_PROPERTY_CONFLICTS" value="ff6666" />
+    <option name="FILESTATUS_MERGED" value="ed94ff" />
+    <option name="FILESTATUS_MODIFIED" value="4ff0ff" />
+    <option name="FILESTATUS_NOT_CHANGED_IMMEDIATE" value="4ff0ff" />
+    <option name="FILESTATUS_NOT_CHANGED_RECURSIVE" value="4ff0ff" />
+    <option name="FILESTATUS_RENAMED" value="4ff0ff" />
+    <option name="FILESTATUS_addedOutside" value="62cc47" />
+    <option name="FILESTATUS_changelistConflict" value="ff6666" />
+    <option name="FILESTATUS_modifiedOutside" value="4ff0ff" />
     <option name="FOLDED_TEXT_BORDER_COLOR" value="b3b3b3" />
     <option name="GUTTER_BACKGROUND" value="131314" />
     <option name="INDENT_GUIDE" value="666666" />
+    <option name="INFORMATION_HINT" value="450073" />
     <option name="LINE_NUMBERS_COLOR" value="999999" />
     <option name="LINE_NUMBER_ON_CARET_ROW_COLOR" value="ffffff" />
     <option name="METHOD_SEPARATORS_COLOR" value="cccccc" />

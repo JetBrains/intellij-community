@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -74,6 +75,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
   public static final int THROTTLING_TIMEOUT = 200;
+
+  private static final String CONTRIBUTOR_ITEM_SELECTED = "ContributorItemChosen";
+  private static final String MORE_ITEM_SELECTED = "MoreItemChosen";
+  private static final String COMMAND_USED = "CommandUsed";
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -639,11 +644,20 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                     .filter(i -> !myListModel.isMoreElement(i))
                     .toArray();
 
+    String searchText = getSearchPattern();
+    if (searchText.startsWith(SearchTopHitProvider.getTopHitAccelerator()) && searchText.contains(" ")) {
+      featureUsed(COMMAND_USED);
+    }
+
     boolean closePopup = false;
+    boolean isAllTab = isAllTabSelected();
     for (int i: indexes) {
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(i);
       Object value = myListModel.getElementAt(i);
-      closePopup |= contributor.processSelectedItem(value, modifiers, getSearchPattern());
+      if (isAllTab) {
+        featureUsed(CONTRIBUTOR_ITEM_SELECTED, contributor.getSearchProviderId());
+      }
+      closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
     if (closePopup) {
@@ -655,6 +669,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void showMoreElements(SearchEverywhereContributor contributor) {
+    featureUsed(MORE_ITEM_SELECTED);
     Map<SearchEverywhereContributor<?>, Collection<SESearcher.ElementInfo>> found = myListModel.getFoundElementsMap();
     int limit = myListModel.getItemsForContributor(contributor)
                 + (mySelectedTab.getContributor().isPresent() ? SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT : MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT);
@@ -1132,6 +1147,11 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     return mySelectedTab.getContributor()
                         .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere", c.getGroupName()))
                         .orElse(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere"));
+  }
+
+  private static void featureUsed(String... identifiers) {
+    String feature = String.join(".", identifiers);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + feature);
   }
 
   private final SESearcher.Listener mySearchListener = new SESearcher.Listener() {

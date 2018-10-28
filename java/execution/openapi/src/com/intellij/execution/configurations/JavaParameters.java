@@ -5,6 +5,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -22,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class JavaParameters extends SimpleJavaParameters {
   private static final Logger LOG = Logger.getInstance(JavaParameters.class);
@@ -79,13 +82,10 @@ public class JavaParameters extends SimpleJavaParameters {
       return;
     }
     orderEnumerator.forEachModule(module -> {
-      LanguageLevelModuleExtension moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
-      if (moduleExtension != null) {
-        LanguageLevel languageLevel = moduleExtension.getLanguageLevel();
-        if (languageLevel != null && languageLevel.isPreview()) {
-          vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
-          return false;
-        }
+      LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      if (languageLevel.isPreview()) {
+        vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
+        return false;
       }
       return true;
     });

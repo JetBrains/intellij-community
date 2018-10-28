@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Tests parameter info available via ^P at call sites.
@@ -105,11 +105,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     PsiElement arg1 = marks.get("<arg1>");
     feignCtrlP(arg1.getTextOffset()).check("a, b, *c", new String[]{"a, "});
     feignCtrlP(arg1.getTextOffset()+1).check("a, b, *c", new String[]{"a, "});
-    
+
     PsiElement arg2 = marks.get("<arg2>");
     feignCtrlP(arg2.getTextOffset()).check("a, b, *c", new String[]{"b, "});
     feignCtrlP(arg2.getTextOffset()+1).check("a, b, *c", new String[]{"b, "});
-    
+
     PsiElement arg3 = marks.get("<arg3>");
     feignCtrlP(arg3.getTextOffset()).check("a, b, *c", new String[]{"*c"});
     feignCtrlP(arg3.getTextOffset()+1).check("a, b, *c", new String[]{"*c"});
@@ -692,11 +692,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-27148
   public void testCollectionsNamedTupleReplace() {
-    final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(4);
 
-    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+    for (int offset : StreamEx.of("<arg1>", "<arg2>").map(test::get).map(PsiElement::getTextOffset)) {
       feignCtrlP(offset).check("*, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
     }
+
+    feignCtrlP(test.get("<arg3>").getTextOffset()).check("self: MyTup1, *, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
+    feignCtrlP(test.get("<arg4>").getTextOffset()).check("self: MyTup2, *, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   // PY-27148
@@ -704,11 +707,14 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
       () -> {
-        final Map<String, PsiElement> test = loadTest(2);
+        final Map<String, PsiElement> test = loadTest(4);
 
-        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+        for (int offset : StreamEx.of("<arg1>", "<arg2>").map(test::get).map(PsiElement::getTextOffset)) {
           feignCtrlP(offset).check("*, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         }
+
+        feignCtrlP(test.get("<arg3>").getTextOffset()).check("self: MyTup1, *, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg4>").getTextOffset()).check("self: MyTup2, *, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }

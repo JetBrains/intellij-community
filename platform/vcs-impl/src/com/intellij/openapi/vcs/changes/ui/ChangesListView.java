@@ -88,7 +88,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     ChangesBrowserNode oldRoot = getRoot();
     setModel(newModel);
     ChangesBrowserNode newRoot = getRoot();
-    expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
     expandDefaultChangeList(oldRoot, newRoot);
   }
@@ -100,7 +99,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
     if (oldRoot.getFileCount() != 0) return;
-    if (TreeUtil.collectExpandedPaths(this).size() != 1) return;
+    if (TreeUtil.collectExpandedPaths(this).size() != 0) return;
 
     //noinspection unchecked
     Iterator<ChangesBrowserNode> nodes = ContainerUtil.<ChangesBrowserNode>iterate(root.children());

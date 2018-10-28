@@ -253,6 +253,24 @@ public class GeneratedParserUtilBase {
     return false;
   }
 
+  public static boolean consumeToken(PsiBuilder builder, TokenSet tokens) {
+    addVariantSmart(builder, tokens.getTypes(), true);
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenSmart(PsiBuilder builder, TokenSet tokens) {
+    addCompletionVariantSmart(builder, tokens.getTypes());
+    return consumeTokenFast(builder, tokens);
+  }
+
+  public static boolean consumeTokenFast(PsiBuilder builder, TokenSet tokens) {
+    if (nextTokenIsFast(builder, tokens)) {
+      builder.advanceLexer();
+      return true;
+    }
+    return false;
+  }
+
   public static boolean nextTokenIsFast(PsiBuilder builder, IElementType token) {
     return builder.getTokenType() == token;
   }
@@ -263,6 +281,10 @@ public class GeneratedParserUtilBase {
       if (token == tokenType) return true;
     }
     return false;
+  }
+
+  public static boolean nextTokenIsFast(PsiBuilder builder, TokenSet tokens) {
+    return tokens.contains(builder.getTokenType());
   }
 
   public static boolean nextTokenIsSmart(PsiBuilder builder, IElementType token) {

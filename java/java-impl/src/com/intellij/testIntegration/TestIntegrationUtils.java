@@ -111,7 +111,14 @@ public class TestIntegrationUtils {
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
     List<MemberInfo> result = new ArrayList<>();
-    Set<PsiClass> classes = includeInherited ? InheritanceUtil.getSuperClasses(clazz) : Collections.singleton(clazz);
+    Set<PsiClass> classes;
+    if (includeInherited) {
+      classes = InheritanceUtil.getSuperClasses(clazz);
+      classes.add(clazz);
+    }
+    else {
+      classes = Collections.singleton(clazz);
+    }
     for (PsiClass aClass : classes) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
       MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<PsiMember>() {
