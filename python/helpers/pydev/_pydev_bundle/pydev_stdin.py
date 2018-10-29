@@ -68,7 +68,9 @@ class StdIn(BaseStdIn):
         except KeyboardInterrupt:
             raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
         except KeyboardInterruptException:
-            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
+            # this exception is explicitly declared in `requestInput()` method of `PythonConsoleFrontendService` Thrift service
+            # it is thrown on the IDE side and transferred by Thrift library as the response to `requestInput()` method
+            raise
         except:
             return '\n'
 
