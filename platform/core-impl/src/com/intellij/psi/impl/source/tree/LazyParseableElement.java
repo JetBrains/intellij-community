@@ -55,16 +55,16 @@ public class LazyParseableElement extends CompositeElement {
   private final ChameleonLock lock = new ChameleonLock();
   /**
    * Cached or non-parsed text of this element. Must be non-null if {@link #myParsed} is false.
-   * Guarded by {@link #lock}
+   * Coordinated writes to (myParsed, myText) are guarded by {@link #lock}
    * */
-  @NotNull private Getter<CharSequence> myText;
+  @NotNull private volatile Getter<CharSequence> myText;
   private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
     synchronized (lock) {
-      myParsed = text == null;
       if (text == null) {
+        myParsed = true;
         myText = NO_TEXT;
       }
       else {
@@ -95,9 +95,7 @@ public class LazyParseableElement extends CompositeElement {
       return text.toString();
     }
     String s = super.getText();
-    synchronized (lock) {
-      myText = new SoftReference<>(s);
-    }
+    myText = new SoftReference<>(s);
     return s;
   }
 
@@ -105,7 +103,13 @@ public class LazyParseableElement extends CompositeElement {
   @NotNull
   public CharSequence getChars() {
     CharSequence text = myText();
-    return text != null ? text : getText();
+    if (text != null) {
+      return text;
+    }
+    // use super.getText() instead of super.getChars() to avoid extra myText() call
+    CharSequence s = super.getText();
+    myText = new SoftReference<>(s);
+    return s;
   }
 
   @Override
@@ -146,9 +150,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private CharSequence myText() {
-    synchronized (lock) {
-      return myText.get();
-    }
+    return myText.get();
   }
 
   @Override
