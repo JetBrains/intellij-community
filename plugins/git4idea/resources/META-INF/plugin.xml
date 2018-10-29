@@ -280,6 +280,18 @@
     <ignoredFileContentProvider implementation="git4idea.ignore.GitIgnoredFileContentProvider"/>
     <openapi.vcs.changes.vcsPreservingExecutor implementation="git4idea.util.GitPreservingExecutor"/>
     <actionPromoter implementation="git4idea.actions.GitActionPromoter"/>
+
+    <!-- Git ignore lang -->
+    <fileTypeFactory
+        implementation="git4idea.ignore.GitIgnoreFileTypeFactory"/>
+    <lang.parserDefinition language="GitIgnore"
+                           implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreParserDefinition"/>
+    <codeInsight.lineMarkerProvider language="GitIgnore"
+                                    implementationClass="com.intellij.openapi.vcs.changes.ignore.codeInsight.IgnoreDirectoryMarkerProvider"/>
+    <lang.braceMatcher language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreBraceMatcher"/>
+    <lang.commenter language="GitIgnore" implementationClass="com.intellij.openapi.vcs.changes.ignore.lang.IgnoreCommenter"/>
+     <!--END Git ignore lang-->
+
   </extensions>
 
   <extensionPoints>

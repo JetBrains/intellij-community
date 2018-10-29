@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.CommonBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.lang.ref.Reference;
@@ -41,6 +42,11 @@ public class VcsBundle {
 
   public static String getString(@PropertyKey(resourceBundle = PATH_TO_BUNDLE) final String key) {
     return getBundle().getString(key);
+  }
+
+  @NotNull
+  public static String messageOrDefault(@NotNull String key, @Nullable String defaultValue, @NotNull Object... params) {
+    return CommonBundle.messageOrDefault(getBundle(), key, defaultValue, params);
   }
 
   private static ResourceBundle getBundle() {

@@ -35,6 +35,8 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.PatternCache"/>
+    <projectService serviceImplementation="com.intellij.openapi.vcs.changes.ignore.cache.IgnorePatternsMatchedFilesCache"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
                     serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
