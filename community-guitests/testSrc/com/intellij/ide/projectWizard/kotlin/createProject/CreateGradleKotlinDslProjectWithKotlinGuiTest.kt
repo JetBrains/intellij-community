@@ -2,64 +2,70 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.impl.gradleReimport
-import com.intellij.testGuiFramework.impl.waitAMoment
-import com.intellij.testGuiFramework.impl.waitForGradleReimport
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
-import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.Serializable
 
-class CreateGradleKotlinDslProjectWithKotlinGuiTest : KotlinGuiTestCase() {
-  @Test
-  @JvmName("gradle_k_with_jvm")
-  fun createGradleWithKotlinJvm() {
-    createGradleWith(
-      projectName = testMethod.methodName,
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
-      expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!)
+@RunWith(GuiTestSuiteParam::class)
+class CreateGradleKotlinDslProjectWithKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
+
+  data class TestParameters(
+    val projectName: String,
+    val project: ProjectProperties,
+    val gradleModuleGroup: NewProjectDialogModel.GradleGroupModules,
+    val expectedFacet: FacetStructure) : Serializable {
+    override fun toString() = projectName
   }
 
   @Test
-  @JvmName("gradle_k_with_js")
-  fun createGradleWithKotlinJs() {
-    createGradleWith(
-      projectName = testMethod.methodName,
+  fun createKotlinDslGradleWithKotlin() {
+    testGradleProjectWithKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleKProjectJs),
-      expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!)
-  }
-
-   private fun createGradleWith(
-     projectName: String,
-     kotlinVersion: String,
-     project: ProjectProperties,
-     expectedFacet: FacetStructure) {
-    val groupName = "group_gradle"
-    createGradleProject(
-      projectPath = projectFolder,
+      project = testParameters.project,
+      expectedFacet = testParameters.expectedFacet,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
-        group = groupName,
-        artifact = projectName,
-        useKotlinDsl = true,
-        framework = project.frameworkName
+        artifact = testParameters.projectName,
+        framework = testParameters.project.frameworkName,
+        useKotlinDsl = testParameters.project.isKotlinDsl,
+        groupModules = testParameters.gradleModuleGroup
       )
     )
-    waitAMoment()
-    waitForGradleReimport(projectName)
-    editSettingsGradle()
-    editBuildGradle(
-      kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = project.isKotlinDsl
-    )
-     waitAMoment()
-    gradleReimport()
-     assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
-     waitAMoment()
-
-     projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
-       project, kotlinVersion, projectName, expectedFacet
-     )
-     waitAMoment()
   }
+
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "gradle_k_with_jvm_explicit",
+          project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
+        ),
+        TestParameters(
+          projectName = "gradle_k_with_jvm_qualified",
+          project = kotlinProjects.getValue(Projects.GradleKProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
+        ),
+        TestParameters(
+          projectName = "gradle_k_with_js_explicit",
+          project = kotlinProjects.getValue(Projects.GradleKProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
+        ),
+        TestParameters(
+          projectName = "gradle_k_with_js_qualified",
+          project = kotlinProjects.getValue(Projects.GradleKProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
+        )
+      )
+    }
+  }
+
 }
