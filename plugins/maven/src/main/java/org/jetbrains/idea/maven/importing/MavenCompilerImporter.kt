@@ -6,16 +6,17 @@ import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
-import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
-import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
 /**
@@ -30,6 +31,29 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
   override fun processChangedModulesOnly(): Boolean {
     return false
+  }
+
+  @Throws(MavenProcessCanceledException::class)
+  override fun resolve(project: Project,
+                       mavenProject: MavenProject,
+                       nativeMavenProject: NativeMavenProjectHolder,
+                       embedder: MavenEmbedderWrapper,
+                       context: ResolveContext) {
+    val compilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
+      it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
+    }
+
+    val backendCompiler = compilerExtension?.getCompiler(project) ?: return
+    val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    if (ideCompilerConfiguration.defaultCompiler != backendCompiler) {
+      if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
+        ideCompilerConfiguration.defaultCompiler = backendCompiler
+        project.putUserData(DEFAULT_COMPILER_IS_RESOLVED, true)
+      }
+      else {
+        LOG.error(backendCompiler.toString() + " is not registered.")
+      }
+    }
   }
 
   override fun preProcess(module: Module,
@@ -54,13 +78,14 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
                        changes: MavenProjectChanges,
                        mavenProjectToModuleName: Map<MavenProject, String>,
                        postTasks: List<MavenProjectsProcessorTask>) {
+    val project = module.project
     val compilers = modifiableModelsProvider.getUserData(COMPILERS)
     val defaultCompilerId = if (compilers != null && compilers.size == 1) compilers.first() else JAVAC_ID
 
     val mavenConfiguration: Lazy<Element?> = lazy { getConfig(mavenProject) }
     val compilerId = if (mavenProject.packaging != "pom") mavenConfiguration.value?.let { getCompilerId(it) } else null
 
-    val ideCompilerConfiguration = CompilerConfiguration.getInstance(module.project) as CompilerConfigurationImpl
+    val ideCompilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
 
     for (compilerExtension in MavenCompilerExtension.EP_NAME.extensions) {
       if (mavenConfiguration.value != null && compilerId == compilerExtension.mavenCompilerId) {
@@ -68,13 +93,15 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       }
       else {
         // cleanup obsolete options
-        (compilerExtension.getCompiler(module.project)?.options as? JpsJavaCompilerOptions)?.let {
+        (compilerExtension.getCompiler(project)?.options as? JpsJavaCompilerOptions)?.let {
           ideCompilerConfiguration.setAdditionalOptions(it, module, emptyList())
         }
       }
 
-      if (modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null && defaultCompilerId == compilerExtension.mavenCompilerId) {
-        val backendCompiler = compilerExtension.getCompiler(module.project)
+      if (project.getUserData(DEFAULT_COMPILER_IS_RESOLVED) != true &&
+          modifiableModelsProvider.getUserData(DEFAULT_COMPILER_IS_SET) == null &&
+          defaultCompilerId == compilerExtension.mavenCompilerId) {
+        val backendCompiler = compilerExtension.getCompiler(project)
         if (backendCompiler != null && ideCompilerConfiguration.defaultCompiler != backendCompiler) {
           if (ideCompilerConfiguration.registeredJavaCompilers.contains(backendCompiler)) {
             ideCompilerConfiguration.defaultCompiler = backendCompiler
@@ -87,6 +114,13 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
         modifiableModelsProvider.putUserData(DEFAULT_COMPILER_IS_SET, true)
       }
     }
+  }
+
+  override fun postProcess(module: Module?,
+                           mavenProject: MavenProject?,
+                           changes: MavenProjectChanges?,
+                           modifiableModelsProvider: IdeModifiableModelsProvider?) {
+    module?.project?.putUserData(DEFAULT_COMPILER_IS_RESOLVED, null)
   }
 
   private fun importCompilerConfiguration(module: Module,
@@ -139,6 +173,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
   companion object {
     private val COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
+    private val DEFAULT_COMPILER_IS_RESOLVED = Key.create<Boolean>("default.compiler.resolved")
     private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
     private const val JAVAC_ID = "javac"
 
