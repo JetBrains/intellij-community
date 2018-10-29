@@ -192,6 +192,7 @@ public class UIUtil {
   public static JComponent installCompleteMatchInfo(JLabel completeMatchInfo,
                                                     Supplier<? extends Configuration> configurationProducer,
                                                     Consumer<String> linkConsumer) {
+    completeMatchInfo.putClientProperty(IdeTooltip.TOOLTIP_DISMISS_DELAY_KEY, 20000);
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent ignore) {
