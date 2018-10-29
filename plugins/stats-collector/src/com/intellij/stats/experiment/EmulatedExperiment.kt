@@ -3,11 +3,13 @@ package com.intellij.stats.experiment
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.util.registry.Registry
 
 class EmulatedExperiment {
     fun emulate(experimentVersion: Int, performExperiment: Boolean, salt: String): Pair<Int, Boolean>? {
         val application = ApplicationManager.getApplication()
-        if (!application.isEAP || application.isUnitTestMode || experimentVersion != 2 || performExperiment) {
+        if (!application.isEAP || application.isUnitTestMode || experimentVersion != 2 ||
+            performExperiment || Registry.`is`("java.completion.ml.exit.experiment")) {
             return null
         }
 
