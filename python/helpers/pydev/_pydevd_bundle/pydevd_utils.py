@@ -19,6 +19,7 @@ def save_main_module(file, module_name):
     # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
     # pretend pydevd is not the main module, and
     # convince the file to be debugged that it was loaded as main
+    sys.modules['_original_' + module_name] = sys.modules[module_name]
     sys.modules[module_name] = sys.modules['__main__']
     sys.modules[module_name].__name__ = module_name
     from imp import new_module
