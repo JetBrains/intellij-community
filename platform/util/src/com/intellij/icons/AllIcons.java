@@ -2219,14 +2219,14 @@ public class AllIcons {
   }
 
   public final static class RunConfigurations {
-    public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.png"); // 16x16
-    public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.png"); // 16x16
+    public static final Icon Applet = IconLoader.getIcon("/runConfigurations/applet.svg"); // 16x16
+    public static final Icon Application = IconLoader.getIcon("/runConfigurations/application.svg"); // 16x16
     public static final Icon HidePassed = IconLoader.getIcon("/runConfigurations/hidePassed.png"); // 16x16
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
-    public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.png"); // 16x16
-    public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.png"); // 16x16
+    public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.svg"); // 16x16
+    public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.svg"); // 16x16
     public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
-    public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.png"); // 16x16
+    public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.svg"); // 16x16
     public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.svg"); // 16x16
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.svg"); // 16x16
     public static final Icon ScrollToStackTrace = IconLoader.getIcon("/runConfigurations/scrollToStackTrace.png"); // 16x16
@@ -2235,11 +2235,11 @@ public class AllIcons {
     public static final Icon ShowPassed = IconLoader.getIcon("/runConfigurations/showPassed.svg"); // 16x16
     public static final Icon SortbyDuration = IconLoader.getIcon("/runConfigurations/sortbyDuration.svg"); // 16x16
     public static final Icon SourceAtException = IconLoader.getIcon("/runConfigurations/sourceAtException.png"); // 16x16
-    public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.png"); // 16x16
+    public static final Icon TestCustom = IconLoader.getIcon("/runConfigurations/testCustom.svg"); // 16x16
     public static final Icon TestError = IconLoader.getIcon("/runConfigurations/testError.svg"); // 16x16
     public static final Icon TestFailed = IconLoader.getIcon("/runConfigurations/testFailed.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/runConfigurations/testIgnored.svg"); // 16x16
-    public static final Icon TestMark = IconLoader.getIcon("/runConfigurations/testMark.png"); // 16x16
+    public static final Icon TestMark = IconLoader.getIcon("/runConfigurations/testMark.svg"); // 16x16
     public static final Icon TestNotRan = IconLoader.getIcon("/runConfigurations/testNotRan.svg"); // 16x16
     public static final Icon TestPassed = IconLoader.getIcon("/runConfigurations/testPassed.svg"); // 16x16
     public static final Icon TestPaused = IconLoader.getIcon("/runConfigurations/testPaused.svg"); // 16x16
@@ -2255,15 +2255,15 @@ public class AllIcons {
     }
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.svg"); // 16x16
     public static final Icon TestUnknown = IconLoader.getIcon("/runConfigurations/testUnknown.svg"); // 16x16
-    public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.png"); // 16x16
+    public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.svg"); // 16x16
     public static final Icon ToolbarError = IconLoader.getIcon("/runConfigurations/toolbarError.svg"); // 16x16
     public static final Icon ToolbarFailed = IconLoader.getIcon("/runConfigurations/toolbarFailed.svg"); // 16x16
     public static final Icon ToolbarPassed = IconLoader.getIcon("/runConfigurations/toolbarPassed.svg"); // 16x16
     public static final Icon ToolbarSkipped = IconLoader.getIcon("/runConfigurations/toolbarSkipped.svg"); // 16x16
     public static final Icon ToolbarTerminated = IconLoader.getIcon("/runConfigurations/toolbarTerminated.svg"); // 16x16
-    public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16
+    public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.svg"); // 16x16
     public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16
-    public static final Icon Web_app = IconLoader.getIcon("/runConfigurations/web_app.png"); // 16x16
+    public static final Icon Web_app = IconLoader.getIcon("/runConfigurations/web_app.svg"); // 16x16
     public static final Icon WithCoverageLayer = IconLoader.getIcon("/runConfigurations/withCoverageLayer.png"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
