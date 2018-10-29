@@ -222,6 +222,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "    pass");
   }
 
+  // PY-31147
+  public void testGenericCompletenessPartiallySpecialized() {
+    doTestByText("from typing import TypeVar, Generic, Dict\n" +
+                 "\n" +
+                 "T = TypeVar(\"T\")\n" +
+                 "\n" +
+                 "class C(Generic[T], Dict[int, T]):\n" +
+                 "    pass");
+  }
+
   // PY-28249
   public void testInstanceAndClassChecksOnAny() {
     doTestByText("from typing import Any\n" +
