@@ -93,7 +93,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
 
   override fun getUsers(): Set<VcsUser> {
     return try {
-      persistentEnumerator?.let { ContainerUtil.newHashSet(it.getAllDataObjects { _ -> true }) } ?: emptySet()
+      persistentEnumerator?.let { ContainerUtil.newHashSet(it.getAllDataObjects { true }) } ?: emptySet()
     }
     catch (e: IOException) {
       LOG.warn(e)
