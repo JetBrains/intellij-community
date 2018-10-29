@@ -20,9 +20,9 @@ import io.netty.handler.logging.LogLevel
 import io.netty.handler.logging.LoggingHandler
 import org.apache.thrift.transport.TServerTransport
 import org.apache.thrift.transport.TTransport
+import org.apache.thrift.transport.TTransportException
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
-import java.net.SocketException
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TNettyClientTransport(private val host: String,
@@ -80,7 +80,7 @@ class TNettyClientTransport(private val host: String,
 
   private val messageBuffer: ByteBuf = Unpooled.buffer()
 
-  @Throws(InterruptedException::class, SocketException::class)
+  @Throws(TTransportException::class)
   override fun open() {
     val workerGroup = NioEventLoopGroup()
 
@@ -102,22 +102,25 @@ class TNettyClientTransport(private val host: String,
 
     // Start the client.
     val future: ChannelFuture = synchronized(lock) {
-      // TODO add ClosedByUserException?
-      if (isClosed) throw RuntimeException()
+      if (isClosed) throw TTransportException("The connection to $host:$port closed during open()")
 
       b.connect(host, port).also { connectFuture = it }
     }
 
-    // waits for the client to connect
-    val f = future.sync() // (5)
+    try {
+      // waits for the client to connect
+      future.sync()
+    }
+    catch (e: Exception) {
+      throw TTransportException(e)
+    }
 
     synchronized(lock) {
-      // TODO add ClosedByUserException?
-      if (isClosed) throw RuntimeException()
+      if (isClosed) throw TTransportException("The connection to $host:$port closed during open()")
 
       connectFuture = null
 
-      f.channel().let {
+      future.channel().let {
         channel = it
         messageHandler = it.pipeline().get(DirectedMessageHandler::class.java)
       }
