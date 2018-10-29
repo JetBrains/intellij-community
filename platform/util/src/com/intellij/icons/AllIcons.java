@@ -1782,6 +1782,7 @@ public class AllIcons {
     public static final Icon AbstractException = IconLoader.getIcon("/nodes/abstractException.svg"); // 16x16
     public static final Icon AbstractMethod = IconLoader.getIcon("/nodes/abstractMethod.svg"); // 16x16
     public static final Icon Advice = IconLoader.getIcon("/nodes/advice.svg"); // 16x16
+    public static final Icon Alias = IconLoader.getIcon("/nodes/alias.svg"); // 16x16
     public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.svg"); // 16x16
     public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.svg"); // 16x16
     public static final Icon Artifact = IconLoader.getIcon("/nodes/artifact.svg"); // 16x16
