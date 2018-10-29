@@ -52,6 +52,65 @@ public class PyTodoTest extends TodoItemsTestCase {
     testTodos("s = ''' TODO: return dead parrot '''");
   }
 
+  // PY-6027
+  @Override
+  public void testSuccessiveLineComments() {
+    testTodos("# [TODO first line]\n" +
+              "#  [second line]");
+  }
+
+  // PY-6027
+  @Override
+  public void testSuccessiveLineCommentsAfterEditing() {
+    testTodos("# [TODO first line]\n" +
+              "# <caret>second line");
+    type("     ");
+    checkTodos("# [TODO first line]\n" +
+               "#      [second line]");
+  }
+
+  // PY-6027
+  @Override
+  public void testAllLinesLoseHighlightingWithFirstLine() {
+    testTodos("# [TO<caret>DO first line]\n" +
+              "#  [second line]");
+    delete();
+    checkTodos("# TOO first line\n" +
+               "#  second line");
+  }
+
+  // PY-6027
+  @Override
+  public void testContinuationIsNotOverlappedWithFollowingTodo() {
+    testTodos("# [TODO first line]\n" +
+              "#  [TODO second line]");
+  }
+
+  // PY-6027
+  @Override
+  public void testContinuationInBlockCommentWithStars() {
+    testTodos("'''\n" +
+              "[TODO first line]\n" +
+              " [second line]\n" +
+              "'''");
+  }
+
+  // PY-6027
+  public void testNoContinuationWithoutProperIndent() {
+    testTodos("class C: pass # [TODO todo]\n" +
+              "#  unrelated comment line");
+  }
+
+  // PY-6027
+  public void testNewLineBetweenCommentLines() {
+    testTodos("# [TODO first line]<caret>\n" +
+              "#  [second line]");
+    type('\n');
+    checkTodos("# [TODO first line]\n" +
+               "\n" +
+               "#  second line");
+  }
+
   @Override
   protected String getFileExtension() {
     return PythonFileType.INSTANCE.getDefaultExtension();
