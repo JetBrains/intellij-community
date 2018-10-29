@@ -3,23 +3,22 @@ package com.intellij.stats.experiment
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.util.registry.Registry
 
 class EmulatedExperiment {
     fun emulate(experimentVersion: Int, performExperiment: Boolean, salt: String): Pair<Int, Boolean>? {
         val application = ApplicationManager.getApplication()
-        if (!application.isEAP || application.isUnitTestMode || experimentVersion != 2 ||
-            performExperiment || Registry.`is`("java.completion.ml.exit.experiment")) {
+        if (!application.isEAP || application.isUnitTestMode || experimentVersion != 2 || performExperiment) {
             return null
         }
 
         val userId = PermanentInstallationID.get()
         val hash = (userId + salt).hashCode() % 10
         val version = when (hash) {
-            3, 4 -> 4
+            3 -> 5
+            4 -> 6
             else -> 3
         }
-        val perform = hash == 4
+        val perform = hash == 6
         return Pair(version, perform)
     }
 }

@@ -97,7 +97,7 @@ class MLSorter : CompletionFinalSorter() {
     if (application.isUnitTestMode) return false
 
     if (buildNumber.contains("-183.") && application.isEAP) {
-      return webServiceStatus.isExperimentGoingOnNow()
+      return webServiceStatus.isExperimentOnCurrentIDE()
     }
 
     if (buildNumber.contains("-191.") || buildNumber.contains("__BUILD__") && application.isEAP) {
