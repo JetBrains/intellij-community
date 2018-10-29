@@ -749,3 +749,30 @@ fun KotlinGuiTestCase.createKotlinMPProject(
     templateName = templateName
   )
 }
+
+fun KotlinGuiTestCase.testGradleProjectWithKotlin(
+  kotlinVersion: String,
+  project: ProjectProperties,
+  expectedFacet: FacetStructure,
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
+  createGradleProject(
+    projectPath = projectFolder,
+    gradleOptions = gradleOptions
+  )
+  val projectName = testMethod.methodName
+  waitAMoment()
+  waitForGradleReimport(projectName)
+  editSettingsGradle()
+  editBuildGradle(
+    kotlinVersion = kotlinVersion,
+    isKotlinDslUsed = gradleOptions.useKotlinDsl
+  )
+  gradleReimport()
+  assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
+  waitAMoment()
+
+  projectStructureDialogScenarios.checkGradleFacets(
+    project, kotlinVersion, expectedFacet, gradleOptions
+  )
+  waitAMoment()
+}
