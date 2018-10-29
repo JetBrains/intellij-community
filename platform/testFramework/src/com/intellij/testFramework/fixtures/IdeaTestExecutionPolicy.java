@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
+import com.intellij.TestCaseLoader;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
@@ -69,13 +70,8 @@ public abstract class IdeaTestExecutionPolicy {
     IdeaTestExecutionPolicy current = current();
     if (current == null) return true;
 
-    for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      SkipWithExecutionPolicy annotation = clazz.getAnnotation(SkipWithExecutionPolicy.class);
-      if (annotation != null) {
-        return !annotation.value().equals(current.getName());
-      }
-    }
-    return true;
+    SkipWithExecutionPolicy annotation = TestCaseLoader.getAnnotationInHierarchy(testCaseClass, SkipWithExecutionPolicy.class);
+    return annotation == null || !annotation.value().equals(current.getName());
   }
 
   protected abstract String getName();
