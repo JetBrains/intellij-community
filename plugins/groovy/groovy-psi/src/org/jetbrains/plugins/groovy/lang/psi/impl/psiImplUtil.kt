@@ -11,6 +11,8 @@ import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement
@@ -80,4 +82,9 @@ fun getQualifiedReferenceName(reference: GrReferenceElement<*>): String? {
     current = qualifier
   }
   return parts.reversed().joinToString(separator = ".")
+}
+
+fun GrMethodCall.isImplicitCall(): Boolean {
+  val expression = invokedExpression
+  return expression !is GrReferenceExpression || expression.isImplicitCallReceiver
 }

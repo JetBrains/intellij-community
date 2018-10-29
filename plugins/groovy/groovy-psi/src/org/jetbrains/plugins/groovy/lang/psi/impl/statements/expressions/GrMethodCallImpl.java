@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
@@ -28,12 +31,14 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     super(node);
   }
 
-  private final GroovyMethodCallReference myCallReference = new GrImplicitCallReference(this);
+  private final NullableLazyValue<GroovyMethodCallReference> myImplicitCallReference = AtomicNullableLazyValue.createValue(
+    () -> PsiImplUtilKt.isImplicitCall(this) ? new GrImplicitCallReference(this) : null
+  );
 
-  @NotNull
+  @Nullable
   @Override
-  public GroovyMethodCallReference getCallReference() {
-    return myCallReference;
+  public GroovyMethodCallReference getImplicitCallReference() {
+    return myImplicitCallReference.getValue();
   }
 
   @Override
@@ -66,7 +71,11 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return myCallReference.multiResolve(incompleteCode);
+    final GroovyMethodCallReference implicitCallReference = myImplicitCallReference.getValue();
+    if (implicitCallReference != null) {
+      return implicitCallReference.multiResolve(incompleteCode);
+    }
+    return ((GrReferenceExpression)getInvokedExpression()).multiResolve(incompleteCode);
   }
 
   @Override

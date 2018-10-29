@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import com.intellij.navigation.NavigationItem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
@@ -12,8 +13,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
  */
 public interface GrMethodCall extends GrCallExpression, NavigationItem {
 
-  @NotNull
-  GroovyMethodCallReference getCallReference();
+  @Nullable
+  GroovyMethodCallReference getImplicitCallReference();
 
   @NotNull
   GrExpression getInvokedExpression();

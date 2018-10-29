@@ -509,11 +509,13 @@ public class PsiUtil {
     if (element == null) return false;
     if (element instanceof PsiMethod) {
       final GrExpression expression = call.getInvokedExpression();
-      final GroovyMethodCallReference reference = call.getCallReference();
-      if (expression instanceof GrReferenceExpression && reference.isRealReference()) {
-        PsiType receiver = reference.getReceiver();
-        if (receiver instanceof GrClosureType) {
-          return isRawClosureCall(call, result, (GrClosureType)receiver);
+      if (expression instanceof GrReferenceExpression) {
+        final GroovyMethodCallReference reference = call.getImplicitCallReference();
+        if (reference != null) {
+          PsiType receiver = reference.getReceiver();
+          if (receiver instanceof GrClosureType) {
+            return isRawClosureCall(call, result, (GrClosureType)receiver);
+          }
         }
       }
       PsiType returnType = getSmartReturnType((PsiMethod)element);
