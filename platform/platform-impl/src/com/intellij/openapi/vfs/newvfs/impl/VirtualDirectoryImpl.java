@@ -371,8 +371,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
 
       if (getId() > 0) {
-        setChildrenLoaded();
+        myData.clearAdoptedNames();
         myData.myChildrenIds = result;
+        setChildrenLoaded();
         if (CHECK) {
           assertConsistency(caseSensitive, Arrays.asList(childrenIds));
         }
@@ -615,7 +616,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
   private void setChildrenLoaded() {
     setFlagInt(CHILDREN_CACHED, true);
-    myData.clearAdoptedNames();
   }
 
   @NotNull
