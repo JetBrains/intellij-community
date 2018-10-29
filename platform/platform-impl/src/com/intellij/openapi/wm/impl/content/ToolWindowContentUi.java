@@ -428,6 +428,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
 
       @Override
+      public void mouseExited(MouseEvent e) {
+        c.setCursor(null);
+      }
+
+      @Override
       public void mouseDragged(MouseEvent e) {
         if (myLastPoint.isNull() || myPressPoint.isNull()) return;
 
