@@ -2100,6 +2100,7 @@ public class UIUtil {
    * @param type the type of the image
    *
    * @return a HiDPI-aware BufferedImage in device scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
@@ -2119,6 +2120,7 @@ public class UIUtil {
    * @param type the type of the image
    *
    * @return a HiDPI-aware BufferedImage in the graphics scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
@@ -2139,6 +2141,7 @@ public class UIUtil {
    * @param rm the rounding mode to apply to width/height (for a HiDPI-aware image, the rounding is applied in the device space)
    *
    * @return a HiDPI-aware BufferedImage in the graphics scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, RoundingMode rm) {
@@ -2151,6 +2154,7 @@ public class UIUtil {
 
   /**
    * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(ScaleContext ctx, double width, double height, int type, RoundingMode rm) {
@@ -2170,6 +2174,7 @@ public class UIUtil {
    * @param type the type of the image
    *
    * @return a HiDPI-aware BufferedImage in the graphics scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
@@ -2178,6 +2183,7 @@ public class UIUtil {
 
   /**
    * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
@@ -2201,6 +2207,7 @@ public class UIUtil {
    * @param type the type of the image
    *
    * @return a HiDPI-aware BufferedImage in the component scale
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
