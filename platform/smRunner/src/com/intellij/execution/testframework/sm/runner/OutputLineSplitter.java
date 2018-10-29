@@ -148,7 +148,7 @@ public abstract class OutputLineSplitter {
             if (builder != null && 
                 builder.length() + chunkText.length() > myCurrentCyclicBufferSize && 
                 myCurrentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
-              builder.delete(SM_MESSAGE_PREFIX, myCurrentCyclicBufferSize - SM_MESSAGE_PREFIX);
+              builder.delete(SM_MESSAGE_PREFIX, Math.min(builder.length(), myCurrentCyclicBufferSize - SM_MESSAGE_PREFIX));
             }
           }
           lastChunk.append(chunkText);
