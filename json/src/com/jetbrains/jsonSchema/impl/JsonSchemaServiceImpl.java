@@ -161,7 +161,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     if (!single) {
       List<VirtualFile> files = ContainerUtil.newArrayList();
       for (JsonSchemaFileProvider provider : providers) {
-        VirtualFile schemaFile = provider.getSchemaFile();
+        VirtualFile schemaFile = getSchemaForProvider(myProject, provider);
         if (schemaFile != null) {
           files.add(schemaFile);
         }
@@ -179,7 +179,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
         if (!userSchema.isPresent()) return ContainerUtil.emptyList();
         selected = userSchema.get();
       } else selected = providers.get(0);
-      VirtualFile schemaFile = selected.getSchemaFile();
+      VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
     }
 
@@ -465,21 +465,23 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
       final Map<VirtualFile, JsonSchemaFileProvider> map = new THashMap<>();
       for (JsonSchemaFileProvider provider : list) {
-        VirtualFile schemaFile = null;
-        if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isPreferRemoteSchemas()) {
-          final String source = provider.getRemoteSource();
-          if (source != null && !source.endsWith("!")) {
-            schemaFile = VirtualFileManager.getInstance().findFileByUrl(source);
-          }
-        }
-        if (schemaFile == null) {
-          schemaFile = provider.getSchemaFile();
-        }
+        VirtualFile schemaFile = getSchemaForProvider(project, provider);
         if (schemaFile != null) {
           map.put(schemaFile, provider);
         }
       }
       return map;
     }
+  }
+
+  @Nullable
+  private static VirtualFile getSchemaForProvider(@NotNull Project project, @NotNull JsonSchemaFileProvider provider) {
+    if (JsonSchemaCatalogProjectConfiguration.getInstance(project).isPreferRemoteSchemas()) {
+      final String source = provider.getRemoteSource();
+      if (source != null && !source.endsWith("!")) {
+        return VirtualFileManager.getInstance().findFileByUrl(source);
+      }
+    }
+    return provider.getSchemaFile();
   }
 }
