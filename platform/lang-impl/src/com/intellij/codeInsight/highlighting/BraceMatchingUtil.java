@@ -342,6 +342,7 @@ public class BraceMatchingUtil {
 
   private static class BraceMatcherHolder {
     private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
+    private static final BraceMatcher nullBraceMatcher = new DefaultBraceMatcher();
   }
 
   @NotNull
@@ -397,6 +398,7 @@ public class BraceMatchingUtil {
   @Nullable
   private static BraceMatcher getBraceMatcherByFileType(@NotNull FileType fileType) {
     BraceMatcher braceMatcher = BRACE_MATCHERS.get(fileType);
+    if (braceMatcher == BraceMatcherHolder.nullBraceMatcher) return null;
     if (braceMatcher != null) return braceMatcher;
 
     for (FileTypeExtensionPoint<BraceMatcher> ext : BraceMatcher.EP_NAME.getExtensionList()) {
@@ -406,6 +408,7 @@ public class BraceMatchingUtil {
         return braceMatcher;
       }
     }
+    BRACE_MATCHERS.put(fileType, BraceMatcherHolder.nullBraceMatcher);
     return null;
   }
 
