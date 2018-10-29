@@ -116,9 +116,7 @@ class ModelMetadataTest {
 
         for (feature in manager.categoricalFactors) {
             feature.categories.forEach {
-                val index = feature.indexByCategory(it)
-                println("$index -> ${it}")
-                revertedFeatureOrder.checkAndPut(index, feature)
+                revertedFeatureOrder.checkAndPut(feature.indexByCategory(it), feature)
             }
         }
 
