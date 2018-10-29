@@ -148,7 +148,26 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.shortcutPromoter",
       "intellij.flex.profiler",
       "intellij.kotlinNative.platformDeps",
-      "intellij.clion.plugin"
+      "intellij.clion.plugin",
+
+      /* PHPStorm related plugins */
+      "intellij.apacheConfig",
+      "intellij.behat",
+      "intellij.blade",
+      "intellij.codeception",
+      "intellij.drupal",
+      "intellij.hunspell",
+      "intellij.ini",
+      "intellij.joomla",
+      "intellij.performanceTesting",
+      "intellij.phing",
+      "intellij.phpspec",
+      "intellij.php.commandLineTool",
+      "intellij.php.docker",
+      "intellij.php.impl",
+      "intellij.php.remoteInterpreter",
+      "intellij.twig",
+      "intellij.wordPress",
     ]
 
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
