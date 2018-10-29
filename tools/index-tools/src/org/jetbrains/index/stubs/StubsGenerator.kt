@@ -232,7 +232,9 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
             }
             catch (e: AssertionError) {
               val msg = "Stubs are different for ${content.file.path} between Python versions $prevLanguageLevel and $languageLevel.\n"
-              TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
+              // Debug info
+              // TestCase.assertEquals(msg, DebugUtil.stubTreeToString(stub), DebugUtil.stubTreeToString(prevStub))
+              TestCase.assertTrue(msg, DebugUtil.stubTreeToString(stub)==DebugUtil.stubTreeToString(prevStub))
               TestCase.fail(msg + "But DebugUtil.stubTreeToString values of stubs are unfortunately equal.")
             }
           }
@@ -251,7 +253,8 @@ abstract class LanguageLevelAwareStubsGenerator<T>(stubsVersion: String, stubsSt
         throw e
       }
       println("Can't generate universal stub for ${fileContent.file.path}")
-      e.printStackTrace()
+      // Debug info
+      // e.printStackTrace()
       return null
     }
   }
