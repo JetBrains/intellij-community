@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
@@ -14,22 +16,25 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressio
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.BINARY_OPERATORS;
+import static org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference.hasOperatorReference;
 
 /**
  * @author ilyas
  */
 public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl implements GrBinaryExpression {
 
-  private final GroovyReference myReference = new GrOperatorReference(this);
+  private final NullableLazyValue<GroovyReference> myReference = AtomicNullableLazyValue.createValue(
+    () -> hasOperatorReference(this) ? new GrOperatorReference(this) : null
+  );
 
   public GrBinaryExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
-  @NotNull
+  @Nullable
   @Override
   public GroovyReference getReference() {
-    return myReference;
+    return myReference.getValue();
   }
 
   @Override

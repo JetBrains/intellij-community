@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 public class GrBinaryExprInfo implements CallInfo<GrBinaryExpression> {
   private final GrBinaryExpression myExpr;
@@ -61,7 +62,7 @@ public class GrBinaryExprInfo implements CallInfo<GrBinaryExpression> {
   @NotNull
   @Override
   public GroovyResolveResult[] multiResolve() {
-    return myExpr.getReference().multiResolve(false);
+    return PsiUtilKt.multiResolve(myExpr);
   }
 
   @NotNull

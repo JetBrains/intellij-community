@@ -4,10 +4,12 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
@@ -40,4 +42,8 @@ fun GrExpression?.isSuperExpression(): Boolean {
 
 fun GrExpression?.isThisExpression(): Boolean {
   return this is GrReferenceExpression && referenceNameElement?.node?.elementType === GroovyTokenTypes.kTHIS
+}
+
+fun GrOperatorExpression.multiResolve(): Array<out GroovyResolveResult> {
+  return reference?.multiResolve(false) ?: GroovyResolveResult.EMPTY_ARRAY
 }

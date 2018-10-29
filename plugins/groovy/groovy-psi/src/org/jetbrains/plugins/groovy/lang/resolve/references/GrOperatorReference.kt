@@ -22,11 +22,11 @@ class GrOperatorReference(
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val isRealReference: Boolean get() = element.operator in binaryOperatorMethodNames
+  override val isRealReference: Boolean get() = true
 
   override val receiver: PsiType? get() = element.leftType
 
-  override val methodName: String get() = binaryOperatorMethodNames[element.operator] ?: error(element.text)
+  override val methodName: String = binaryOperatorMethodNames[element.operator] ?: error(element.text)
 
   override val arguments: Arguments? get() = listOf(element.rightType)
 
@@ -54,6 +54,10 @@ class GrOperatorReference(
   }
 
   companion object {
+
+    @JvmStatic
+    fun hasOperatorReference(expression: GrOperatorExpression): Boolean = expression.operator in binaryOperatorMethodNames
+
     private val binaryOperatorMethodNames = mapOf(
       T_PLUS to PLUS,
       T_MINUS to MINUS,
