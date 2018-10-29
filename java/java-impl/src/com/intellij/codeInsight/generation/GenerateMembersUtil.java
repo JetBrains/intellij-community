@@ -34,6 +34,7 @@ import org.jetbrains.java.generate.exception.GenerateCodeException;
 import org.jetbrains.java.generate.template.TemplatesManager;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GenerateMembersUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersUtil");
@@ -535,6 +536,9 @@ public class GenerateMembersUtil {
     }
   }
 
+  /**
+   * May add @Override, body according to the override template and align throws list according to the super method
+   */
   public static void setupGeneratedMethod(PsiMethod method) {
     PsiClass containingClass = method.getContainingClass();
     PsiClass base = containingClass == null ? null : containingClass.getSuperClass();
@@ -555,6 +559,21 @@ public class GenerateMembersUtil {
         CreateFromUsageUtils.setupMethodBody(method, containingClass);
       }
       return;
+    }
+
+    PsiSubstitutor classSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(base, containingClass, PsiSubstitutor.EMPTY);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+    String throwsList =
+      Arrays.stream(overridden.getThrowsList().getReferencedTypes())
+        .map(classSubstitutor::substitute)
+        .filter(Objects::nonNull)
+        .map(type -> type.getCanonicalText())
+        .collect(Collectors.joining(", "));
+    if (throwsList.isEmpty()) {
+      method.getThrowsList().delete();
+    }
+    else {
+      method.getThrowsList().replace(factory.createMethodFromText("void m() throws " + throwsList + ";", method).getThrowsList());
     }
 
     if (emptyTemplate) {
