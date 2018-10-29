@@ -400,6 +400,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
     assertNotNull(file);
     file.refresh(false, true);
+
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null) {
+      PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(getProject()).findDirectory(file));
+      assertNotNull(directory);
+      policy.testDirectoryConfigured(directory);
+    }
+
     return file;
   }
 

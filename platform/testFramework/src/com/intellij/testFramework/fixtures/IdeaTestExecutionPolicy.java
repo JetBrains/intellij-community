@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,9 @@ public abstract class IdeaTestExecutionPolicy {
   public abstract TempDirTestFixture createTempDirTestFixture();
   public abstract boolean runInDispatchThread();
   public void testFileConfigured(@NotNull PsiFile file) {
+  }
+
+  public void testDirectoryConfigured(@NotNull PsiDirectory directory) {
   }
 
   public void beforeCheckResult(@NotNull PsiFile file) {
