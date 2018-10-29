@@ -35,7 +35,10 @@ public class PyRequirementParser {
   // common regular expressions
 
   @NotNull
-  private static final String LINE_WS_REGEXP = "[ \t]";
+  private static final String WS = " \t";
+
+  @NotNull
+  private static final String LINE_WS_REGEXP = "[" + WS + "]";
 
   @NotNull
   private static final String COMMENT_GROUP = "comment";
@@ -188,7 +191,7 @@ public class PyRequirementParser {
 
   @NotNull
   private static final String REQUIREMENT_OPTIONS_REGEXP =
-    "(?<" + REQUIREMENT_OPTIONS_GROUP + ">(" + LINE_WS_REGEXP + "+(--global-option|--install-option)=\"[^\"]*\")+)?";
+    "(?<" + REQUIREMENT_OPTIONS_GROUP + ">(" + LINE_WS_REGEXP + "+(--global-option=\"[^\"]*\"|--install-option=\"[^\"]*\"|--hash=[a-zA-Z0-9:]+))+)?";
 
   @NotNull
   private static final String REQUIREMENT_GROUP = "requirement";
@@ -420,14 +423,31 @@ public class PyRequirementParser {
 
     final String requirementOptions = matcher.group(REQUIREMENT_OPTIONS_GROUP);
     if (requirementOptions != null) {
-      boolean isKey = true;
-      for (String token : StringUtil.tokenize(requirementOptions, "\"")) {
-        result.add(isKey ? token.substring(findFirstNotWhiteSpaceAfter(token, 0), token.length() - 1) : token);
-        isKey = !isKey;
+      final LinkedList<String> buffer = new LinkedList<>();
+
+      for (String token : StringUtil.tokenize(new StringTokenizer(requirementOptions, WS, true))) {
+        if (token.startsWith("--hash") || token.startsWith("--global-option") || token.startsWith("--install-option")) {
+          flushInstallOptionBuffer(result, buffer);
+        }
+
+        buffer.add(token);
       }
+
+      flushInstallOptionBuffer(result, buffer);
     }
 
     return result;
+  }
+
+  private static void flushInstallOptionBuffer(@NotNull List<String> options, @NotNull LinkedList<String> option) {
+    while (!option.isEmpty() && WS.contains(option.getLast())) {
+      option.removeLast();
+    }
+
+    if (!option.isEmpty()) {
+      options.add(StringUtil.join(option, ""));
+      option.clear();
+    }
   }
 
   @NotNull

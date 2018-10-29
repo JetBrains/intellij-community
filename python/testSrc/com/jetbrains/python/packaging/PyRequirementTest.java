@@ -2216,18 +2216,64 @@ public class PyRequirementTest extends PyTestCase {
     final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(GTE, release(version)));
 
     final List<String> installOptions1 = Arrays.asList(linePrefix,
-                                                       "--global-option", "--no-user-cfg",
-                                                       "--install-option", "--prefix='/usr/local'",
-                                                       "--install-option", "--no-compile");
+                                                       "--global-option=\"--no-user-cfg\"",
+                                                       "--install-option=\"--prefix='/usr/local'\"",
+                                                       "--install-option=\"--no-compile\"");
     final String line1 = linePrefix + " " +
                          "--global-option=\"--no-user-cfg\" " +
                          "--install-option=\"--prefix='/usr/local'\" " +
                          "--install-option=\"--no-compile\"";
     assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions1, ""), fromLine(line1));
 
-    final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option", "--install-scripts=/usr/local/bin");
+    final List<String> installOptions2 = Arrays.asList(linePrefix, "--install-option=\"--install-scripts=/usr/local/bin\"");
     final String line2 = linePrefix + " --install-option=\"--install-scripts=/usr/local/bin\"";
     assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions2, ""), fromLine(line2));
+
+    final List<String> installOptions3 = Arrays.asList(linePrefix, "--install-option=\" a b  c\tde   f\"");
+    final String line3 = linePrefix + " --install-option=\" a b  c\tde   f\"";
+    assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions3, ""), fromLine(line3));
+  }
+
+  // PY-27874
+  public void testRequirementHashes() {
+    final String name = "MyProject1";
+    final String version = "1.2";
+    final String linePrefix = name + " == " + version;
+
+    final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(EQ, release(version)));
+
+    final List<String> options = Arrays.asList(linePrefix,
+                                               "--hash=sha256:8c7309c718f94b3a625cb648ace320157ad16ff131ae0af362c9f21b80ef6ec4",
+                                               "--hash=sha256:2c6a5de3089009e3da7c5dde64a141dbc8551d5b7f6cf4ed7c2568d0cc520a8f");
+    final String line = linePrefix + " " +
+                        "--hash=sha256:8c7309c718f94b3a625cb648ace320157ad16ff131ae0af362c9f21b80ef6ec4 " +
+                        "--hash=sha256:2c6a5de3089009e3da7c5dde64a141dbc8551d5b7f6cf4ed7c2568d0cc520a8f";
+    assertEquals(new PyRequirementImpl(name, versionSpecs, options, ""), fromLine(line));
+  }
+
+  // PY-27874
+  public void testRequirementMixedOptions() {
+    final String name = "MyProject1";
+    final String version = "1.2";
+    final String linePrefix = name + " == " + version;
+
+    final List<PyRequirementVersionSpec> versionSpecs = singletonList(pyRequirementVersionSpec(EQ, release(version)));
+
+    final List<String> installOptions = Arrays.asList(linePrefix,
+                                                      "--global-option=\"--no-user-cfg\"",
+                                                      "--hash=sha256:1234",
+                                                      "--install-option=\"--prefix='/usr/local'\"",
+                                                      "--hash=sha256:5678",
+                                                      "--install-option=\"--no-compile\"",
+                                                      "--hash=sha256:1357");
+    final String line = linePrefix + " " +
+                        "--global-option=\"--no-user-cfg\" " +
+                        "--hash=sha256:1234 " +
+                        "--install-option=\"--prefix='/usr/local'\" " +
+                        "--hash=sha256:5678 " +
+                        "--install-option=\"--no-compile\" " +
+                        "--hash=sha256:1357";
+    assertEquals(new PyRequirementImpl(name, versionSpecs, installOptions, ""), fromLine(line));
   }
 
   public void testMultilineRequirement() {
@@ -2243,9 +2289,9 @@ public class PyRequirementTest extends PyTestCase {
                         "--install-option=\"--no-compile\"";
 
     final List<String> installOptions = Arrays.asList(textPrefix,
-                                                      "--global-option", "--no-user-cfg",
-                                                      "--install-option", "--prefix='/usr/local'",
-                                                      "--install-option", "--no-compile");
+                                                      "--global-option=\"--no-user-cfg\"",
+                                                      "--install-option=\"--prefix='/usr/local'\"",
+                                                      "--install-option=\"--no-compile\"");
 
     assertEquals(singletonList(new PyRequirementImpl(name, versionSpecs, installOptions, "")), PyRequirementParser.fromText(text));
   }
@@ -2435,7 +2481,7 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(new PyRequirementImpl(name, emptyList(), singletonList(name + "[PDF]"), "[PDF]"),
                  fromLine(name + "[PDF] # comment"));
 
-    final PyRequirement requirement = new PyRequirementImpl(name, emptyList(), Arrays.asList(name, "--install-option", "option"), "");
+    final PyRequirement requirement = new PyRequirementImpl(name, emptyList(), Arrays.asList(name, "--install-option=\"option\""), "");
 
     assertEquals(requirement, fromLine(name + " --install-option=\"option\" # comment"));
     assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));
