@@ -22,10 +22,6 @@ public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
     public enum Compression { GZIP, BZIP2, NONE }
 
-    public Tar(@NotNull File file) throws IOException {
-      this(new FileOutputStream(file), Compression.GZIP);
-    }
-
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
       this(new FileOutputStream(file), compression);
     }
