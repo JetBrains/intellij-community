@@ -159,7 +159,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     val isJavaShouldNotBeChecked: Boolean = false,
     val useAutoImport: Boolean = false,
     val useSeparateModules: Boolean = true,
-    val groupModules: GradleGroupModules = GradleGroupModules.ExplicitModuleGroups)
+    val groupModules: GradleGroupModules = GradleGroupModules.QualifiedNames)
 
   data class MavenProjectOptions(
     val group: String = "mavenGroup",
@@ -304,26 +304,22 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       textfield(textArtifactId).click()
       typeText(gradleOptions.artifact)
       button(buttonNext).click()
-      println(gradleOptions)
+      waitForPageTransitionFinished {
+        checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target().locationOnScreen
+      }
       val useAutoImport = checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title)
       if (useAutoImport.isSelected != gradleOptions.useAutoImport) {
         logUIStep("Change `${NewProjectDialogModel.GradleOptions.UseAutoImport.title}` option")
         useAutoImport.click()
       }
-      //      val explicitGroup = radioButton(GradleGroupModules.ExplicitModuleGroups.title)
-      //      logUIStep("explicit group found")
-      //      val qualifiedNames = radioButton(GradleGroupModules.QualifiedNames.title)
-      //      logUIStep("qualified names found")
-      //      when(gradleOptions.groupModules){
-      //        GradleGroupModules.ExplicitModuleGroups -> {
-      //          logUIStep("Choose '${GradleGroupModules.ExplicitModuleGroups.title}' option")
-      //          explicitGroup.click()
-      //        }
-      //        GradleGroupModules.QualifiedNames -> {
-      //          logUIStep("Choose '${GradleGroupModules.QualifiedNames.title}' option")
-      //          qualifiedNames.click()
-      //        }
-      //      }
+      val gradleModuleGroup = radioButton(gradleOptions.groupModules.title)
+      if (gradleModuleGroup.isSelected().not()) {
+        logUIStep("Going to click ${gradleModuleGroup.text()}")
+        gradleModuleGroup.click()
+        robot().waitForIdle()
+        val groupAgain = radioButton(gradleOptions.groupModules.title)
+        assert(groupAgain.isSelected()) { "'${groupAgain.text()}' is not selected"}
+      }
       val useSeparateModules = checkbox(NewProjectDialogModel.GradleOptions.SeparateModules.title)
       if (useSeparateModules.isSelected != gradleOptions.useSeparateModules) {
         logUIStep("Change `${NewProjectDialogModel.GradleOptions.SeparateModules.title}` option")
