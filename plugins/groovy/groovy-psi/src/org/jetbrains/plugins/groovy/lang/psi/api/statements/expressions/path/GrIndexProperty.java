@@ -8,20 +8,47 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
+/**
+ * Index access expression: {@code foo[bar]} or {@code foo[bar] = baz}.
+ */
 public interface GrIndexProperty extends GrExpression {
 
+  /**
+   * @return expression on which index access is performed,
+   * e.g. {@code foo} in {@code foo[bar]}
+   */
   @NotNull
   GrExpression getInvokedExpression();
 
+  /**
+   * @return safe access token element, e.g. {@code ?} in {@code foo?[bar]}, or {@code null} if this expression is not safe
+   */
   @Nullable
   PsiElement getSafeAccessToken();
 
+  /**
+   * @return argument list element, e.g. {@code [bar]} in {@code foo[bar]}
+   */
   @NotNull
   GrArgumentList getArgumentList();
 
-  @Nullable
-  GroovyReference getLValueReference();
-
+  /**
+   * @return reference to a {@code getAt} method if this expression is an r-value, e.g. {@code foo[bar]},
+   * or {@code null} if this expression is an l-value only, e.g. {@code foo[bar] = baz}. <br/>
+   * This method may return non-null reference even if the expression is an l-value too,
+   * e.g. {@code foo[bar] += baz} has both r-value and l-value references.
+   * @see #getLValueReference()
+   */
   @Nullable
   GroovyReference getRValueReference();
+
+  /**
+   * @return reference to a {@code putAt} method if this expression is an l-value, e.g. {@code foo[bar] = baz},
+   * or {@code null} if this expression is an r-value only, e.g. {@code foo[bar]}. <br/>
+   * This method may return non-null reference even if the expression is an r-value too,
+   * e.g. {@code foo[bar] += baz} has both r-value and l-value references.
+   * @see #getRValueReference()
+   */
+  @Nullable
+  GroovyReference getLValueReference();
 }

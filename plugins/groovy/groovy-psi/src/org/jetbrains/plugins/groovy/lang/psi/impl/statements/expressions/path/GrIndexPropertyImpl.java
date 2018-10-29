@@ -45,14 +45,14 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Nullable
   @Override
-  public GroovyReference getLValueReference() {
-    return myLValueReference.getValue();
+  public GroovyReference getRValueReference() {
+    return myRValueReference.getValue();
   }
 
   @Nullable
   @Override
-  public GroovyReference getRValueReference() {
-    return myRValueReference.getValue();
+  public GroovyReference getLValueReference() {
+    return myLValueReference.getValue();
   }
 
   @NotNull
