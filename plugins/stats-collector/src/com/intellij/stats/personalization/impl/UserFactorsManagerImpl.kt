@@ -82,7 +82,6 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
 
     private fun registerCategoricalFeatureDerivedFactors(feature: CategoricalFeature) {
         feature.categories.forEach { register(CategoryRatio(feature, it)) }
-        register(CategoryRatio(feature, FeatureUtils.OTHER))
         register(MostFrequentCategory(feature))
     }
 
