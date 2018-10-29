@@ -56,6 +56,15 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
       })
       return EditorFixture(myRobot,editor.editor)
     }
+
+    fun findEditorContainingText(text: String): EditorFixture {
+      val editor = GuiTestUtil.waitUntilFound(myRobot, myContent.component, object : GenericTypeMatcher<EditorComponentImpl>(EditorComponentImpl::class.java, true){
+        override fun isMatching(component: EditorComponentImpl): Boolean {
+          return EditorFixture(myRobot, component.editor).getCurrentFileContents(false)?.contains(text) ?: false
+        }
+      })
+      return EditorFixture(myRobot,editor.editor)
+    }
   }
 
   private fun selectedContent() : ContentFixture {

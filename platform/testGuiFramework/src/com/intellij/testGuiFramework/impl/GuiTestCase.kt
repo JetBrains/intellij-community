@@ -276,6 +276,10 @@ open class GuiTestCase {
     func(this.editor())
   }
 
+  fun CustomToolWindowFixture.ContentFixture.editorContainingText(text: String, func: EditorFixture.() -> Unit) {
+    func(findEditorContainingText(text))
+  }
+
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.
