@@ -7,6 +7,7 @@ import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -96,6 +97,7 @@ public class YAMLUsageViewTreeTest extends LightPlatformCodeInsightFixtureTestCa
                                                                         handler,
                                                                         handler.getFindUsagesOptions(),
                                                                         false);
+    Disposer.register(getTestRootDisposable(), usageView);
     usageView.expandAll();
     return TreeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
   }
