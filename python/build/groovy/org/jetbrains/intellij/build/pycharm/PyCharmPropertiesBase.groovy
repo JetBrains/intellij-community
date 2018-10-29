@@ -45,10 +45,8 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
 
     new PyPrebuiltIndicesGenerator().generateResources(context)
 
-    def underTeamCity = System.getProperty("teamcity.buildType.id") != null
-
-    context.ant.copy(todir: "$targetDirectory/index", failonerror: underTeamCity) {
-      fileset(dir: "$context.paths.temp/index", erroronmissingdir: underTeamCity) {
+    context.ant.copy(todir: "$targetDirectory/index", failonerror: !context.options.isInDevelopmentMode) {
+      fileset(dir: "$context.paths.temp/index", erroronmissingdir: !context.options.isInDevelopmentMode) {
         include(name: "**")
       }
     }
@@ -68,13 +66,11 @@ class PyPrebuiltIndicesGenerator implements ResourcesGenerator {
 
     def zipPath = "$context.paths.temp/zips"
 
-    def underTeamCity = System.getProperty("teamcity.buildType.id") != null
-
-    context.ant.copy(todir: "$zipPath", failonerror: underTeamCity) {
-      fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: underTeamCity) {
+    context.ant.copy(todir: "$zipPath", failonerror: !context.options.isInDevelopmentMode) {
+      fileset(dir: "$context.paths.projectHome/python-distributions", erroronmissingdir: !context.options.isInDevelopmentMode) {
         include(name: "*.zip")
       }
-      fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: underTeamCity) {
+      fileset(dir: "$context.paths.projectHome/skeletons", erroronmissingdir: !context.options.isInDevelopmentMode) {
         include(name: "*.zip")
       }
     }
