@@ -2,6 +2,7 @@
 package com.jetbrains.python.console
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicatorProvider
@@ -12,7 +13,6 @@ import com.jetbrains.python.console.transport.client.TNettyClientTransport
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
 import org.apache.thrift.protocol.TBinaryProtocol
-import java.net.SocketException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -66,7 +66,9 @@ class PydevConsoleCommunicationClient(project: Project,
       try {
         clientTransport.open()
       }
-      catch (e: SocketException) {
+      catch (e: Exception) {
+        LOG.debug(e)
+
         stateLock.withLock {
           isClosed = true
 
@@ -180,4 +182,8 @@ class PydevConsoleCommunicationClient(project: Project,
   }
 
   override fun isCommunicationClosed(): Boolean = stateLock.withLock { isClosed }
+
+  companion object {
+    private val LOG: Logger = Logger.getInstance(Logger::class.java)
+  }
 }
