@@ -29,16 +29,18 @@ import java.util.List;
 
 
 public abstract class OutputLineSplitter {
+  public static final int SM_MESSAGE_PREFIX = 105;
+
   private static final boolean USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer();
   private static final String TEAMCITY_SERVICE_MESSAGE_PREFIX = ServiceMessage.SERVICE_MESSAGE_START;
   private static final char NEW_LINE = '\n';
-  public static final int CYCLE_BUFFER_SIZE = ConsoleBuffer.getCycleBufferSize();
 
   private final boolean myStdinSupportEnabled;
 
   private final List<OutputChunk> myStdOutChunks = new ArrayList<>();
   private final List<OutputChunk> myStdErrChunks = new ArrayList<>();
   private final List<OutputChunk> mySystemChunks = new ArrayList<>();
+  private final int myCurrentCyclicBufferSize = ConsoleBuffer.getCycleBufferSize();
 
   public OutputLineSplitter(boolean stdinEnabled) {
     myStdinSupportEnabled = stdinEnabled;
@@ -143,8 +145,10 @@ public abstract class OutputLineSplitter {
           String chunkText = chunk.getText();
           if (USE_CYCLE_BUFFER) {
             StringBuilder builder = lastChunk.myBuilder;
-            if (builder != null && builder.length() + chunkText.length() > CYCLE_BUFFER_SIZE) {
-              builder.delete(105, CYCLE_BUFFER_SIZE - 105);
+            if (builder != null && 
+                builder.length() + chunkText.length() > myCurrentCyclicBufferSize && 
+                myCurrentCyclicBufferSize > 2 * SM_MESSAGE_PREFIX) {
+              builder.delete(SM_MESSAGE_PREFIX, myCurrentCyclicBufferSize - SM_MESSAGE_PREFIX);
             }
           }
           lastChunk.append(chunkText);
