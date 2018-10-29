@@ -238,11 +238,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String,
         }
       }
       button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectName).click()
-      shortcut(Key.TAB)
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
       if (template.isNotEmpty() && basePackage.isNotEmpty()) {
         // base package is set only for Command Line app template
         logUIStep("Set Base package to `$basePackage`")
@@ -326,14 +322,27 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
         useSeparateModules.click()
       }
       button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      // Field "Project location" is located under additional panel and has location [0,0], that's why we usually click into field "Project name"
-      textfield(textProjectName).click()
-      shortcut(Key.TAB)
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
+    }
+  }
+}
+
+fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String){
+  with(guiTestCase){
+    with(connectDialog()){
+      logUIStep("Fill Project location with `$projectPath`")
+      textfield(textProjectLocation).click()
+      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+      typeText(projectPath)
+      val projectName = projectPath.split(slash).last()
+      if (projectName != textfield(textProjectName).text()) {
+        logUIStep("Fill Project name with `$projectName`")
+        textfield(textProjectName).click()
+        shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
+        typeText(projectName)
+      }
     }
   }
 }
@@ -463,10 +472,7 @@ fun NewProjectDialogModel.createKotlinMPProject(
       jList(templateName).clickItem(templateName)
       button(buttonNext).click()
       button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
     }
@@ -523,10 +529,7 @@ fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Grou
       selectProjectGroup(group)
       if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
-      logUIStep("Fill Project location with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
       logUIStep("Wait when downloading dialog disappears")
