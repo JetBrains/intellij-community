@@ -12,4 +12,9 @@ deprecated: testInProgress7.png -> /process/step_7.svg; to be removed in IDEA 20
 deprecated: testInProgress8.png -> /process/step_8.svg; to be removed in IDEA 2020 - use AllIcons.Process.Step_8
 deprecated: includeNonStartedTests_Rerun.png; to be removed in IDEA 2020
 deprecated: hideIgnored.png; to be removed in IDEA 2020
+deprecated: hidePassed.png; to be removed in IDEA 2020
 deprecated: loadingTree.png; to be removed in IDEA 2020
+deprecated: scrollToStackTrace.png; to be removed in IDEA 2020
+deprecated: selectFirstDefect.png; to be removed in IDEA 2020
+deprecated: sourceAtException.png; to be removed in IDEA 2020
+deprecated: withCoverageLayer.png; to be removed in IDEA 2020
