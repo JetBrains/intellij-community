@@ -411,19 +411,21 @@ class PyTypeHintsInspection : PyInspection() {
         .asSequence()
         .filterIsInstance<PySubscriptionExpression>()
         .filter { myTypeEvalContext.maySwitchToAST(it) }
-        .forEach {
-          val operand = it.operand
+        .forEach { superSubscription ->
+          val operand = superSubscription.operand
           val generic =
             operand is PyReferenceExpression &&
             genericQName in PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
-          val index = it.indexExpression
+          val index = superSubscription.indexExpression
           val parameters = (index as? PyTupleExpression)?.elements ?: arrayOf(index)
           val superClassTypeVars = parameters
             .asSequence()
             .filterIsInstance<PyReferenceExpression>()
-            .map { parameter -> multiFollowAssignmentsChain(parameter, this::followNotTypeVar).toSet() }
-            .fold(emptySet<PsiElement>()) { acc, typeVars -> acc.union(typeVars) }
+            .flatMap { multiFollowAssignmentsChain(it, this::followNotTypeVar).asSequence() }
+            .filterIsInstance<PyTargetExpression>()
+            .filter { myTypeEvalContext.getType(it) is PyGenericType }
+            .toSet()
 
           if (generic) genericTypeVars.addAll(superClassTypeVars) else nonGenericTypeVars.addAll(superClassTypeVars)
           seenGeneric = seenGeneric || generic
