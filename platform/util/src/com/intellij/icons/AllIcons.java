@@ -2224,7 +2224,6 @@ public class AllIcons {
     public static final Icon IgnoredTest = IconLoader.getIcon("/runConfigurations/ignoredTest.svg"); // 16x16
     public static final Icon InvalidConfigurationLayer = IconLoader.getIcon("/runConfigurations/invalidConfigurationLayer.svg"); // 16x16
     public static final Icon Junit = IconLoader.getIcon("/runConfigurations/junit.svg"); // 16x16
-    public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png"); // 16x16
     public static final Icon Remote = IconLoader.getIcon("/runConfigurations/remote.svg"); // 16x16
     public static final Icon RerunFailedTests = IconLoader.getIcon("/runConfigurations/rerunFailedTests.svg"); // 16x16
     public static final Icon Scroll_down = IconLoader.getIcon("/runConfigurations/scroll_down.svg"); // 16x16
@@ -2284,6 +2283,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon LoadingTree = IconLoader.getIcon("/runConfigurations/loadingTree.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use DatabaseIcons.ConsoleRun */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Ql_console = IconLoader.getIcon("/runConfigurations/ql_console.png");
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall */
     @SuppressWarnings("unused")

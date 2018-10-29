@@ -15,6 +15,7 @@ deprecated: includeNonStartedTests_Rerun.png; to be removed in IDEA 2020
 deprecated: hideIgnored.png; to be removed in IDEA 2020
 deprecated: hidePassed.png; to be removed in IDEA 2020
 deprecated: loadingTree.png; to be removed in IDEA 2020
+deprecated: ql_console.png; to be removed in IDEA 2020 - use DatabaseIcons.ConsoleRun
 deprecated: scrollToStackTrace.png; to be removed in IDEA 2020
 deprecated: selectFirstDefect.png; to be removed in IDEA 2020
 deprecated: sourceAtException.png; to be removed in IDEA 2020
