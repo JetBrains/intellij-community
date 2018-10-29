@@ -90,7 +90,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     }
   }
 
-  private fun JTree.getToggleClickCount(path: TreePath): Int = if (isInnerExpandControl()) {
+  private fun JTree.refineToggleClickCount(): Int = if (isInnerExpandControl()) {
     // expand/collapse symbol is located inside path bounds
     // so the way how to expand/collapse node is controlled by the tree
     toggleClickCount
@@ -102,7 +102,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   // to be overridden by CheckboxTree to take into account size of the checkbox control
-  protected fun getLabelCoord(jTree: JTree, path: TreePath): Int = jTree.getPathBounds(path).x + 1
+  protected open fun getLabelXCoord(jTree: JTree, path: TreePath): Int = jTree.getPathBounds(path).x + 1
 
   private fun JTree.getScrollBounds(path: TreePath): Rectangle {
     val bounds = this.getPathBounds(path)
@@ -120,8 +120,8 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     val clickY = bounds.y + bounds.height / 2
     return PathInfo(
       expandPoint = Point(getExpandCoord(path), clickY),
-      clickPoint = Point(getLabelCoord(this, path), clickY),
-      toggleClickCount = getToggleClickCount(path),
+      clickPoint = Point(getLabelXCoord(this, path), clickY),
+      toggleClickCount = refineToggleClickCount(),
       bounds = getScrollBounds(path)
     )
   }
