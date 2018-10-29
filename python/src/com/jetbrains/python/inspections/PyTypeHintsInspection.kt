@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyGenericType
 import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyTypeChecker
@@ -219,7 +220,9 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkInstanceAndClassChecksOnTypeVar(base: PyExpression) {
-      if (myTypeEvalContext.getType(base) is PyGenericType) {
+      val type = myTypeEvalContext.getType(base)
+      if (type is PyGenericType && !type.isDefinition ||
+          type is PyCollectionType && type.elementTypes.any { it is PyGenericType } && !type.isDefinition) {
         registerProblem(base,
                         "Type variables cannot be used with instance and class checks",
                         ProblemHighlightType.GENERIC_ERROR)
