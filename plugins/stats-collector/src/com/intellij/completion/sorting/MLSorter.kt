@@ -86,25 +86,25 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
-    return parameters.language().isJava() && isSuitableBuildOrInUnitTestMode(PluginManager.BUILD_NUMBER)
+    return parameters.language().isJava() && isSuitableBuild(PluginManager.BUILD_NUMBER)
   }
 
   private fun Language?.isJava() = this != null && "Java".equals(displayName, ignoreCase = true)
 
-  private fun isSuitableBuildOrInUnitTestMode(buildNumber: String): Boolean {
+  private fun isSuitableBuild(buildNumber: String): Boolean {
     val application = ApplicationManager.getApplication()
 
-    if (application.isUnitTestMode) return true
+    if (application.isUnitTestMode) return false
 
     if (buildNumber.contains("-183.") && application.isEAP) {
       return webServiceStatus.isExperimentGoingOnNow()
     }
 
-    if (buildNumber.contains("-191.") && application.isEAP) {
+    if (buildNumber.contains("-191.") || buildNumber.contains("__BUILD__") && application.isEAP) {
       return Registry.`is`("java.completion.enable.ml.ranking")
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -132,14 +132,6 @@ class MLSorter : CompletionFinalSorter() {
   private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>): Iterable<LookupElement> {
     if (Registry.`is`("java.completion.show.ml.ranking.diff")) {
       return this.mapIndexed { position, element -> MyMovedLookupElement(element, positionsBefore.getValue(element), position) }
-    }
-
-    return this
-  }
-
-  private fun LookupElement.transformIfNeeded(positionBefore: Int, positionAfter: Int): LookupElement {
-    if (Registry.`is`("java.completion.show.ml.ranking.diff")) {
-      return MyMovedLookupElement(this, positionBefore, positionAfter)
     }
 
     return this
