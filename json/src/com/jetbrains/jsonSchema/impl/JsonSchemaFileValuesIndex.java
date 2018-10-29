@@ -54,7 +54,9 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
 
         // We only care about properties at the root level having the form of "property" : "value".
         int nesting = 0;
-        while (lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
+        boolean idFound = false;
+        boolean schemaFound = false;
+        while (!(idFound && schemaFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
           IElementType token = lexer.getTokenType();
           // Nesting level can only change at curly braces.
           if (token == JsonElementTypes.L_CURLY) {
@@ -63,16 +65,21 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
           else if (token == JsonElementTypes.R_CURLY) {
             nesting--;
           }
-          else if (nesting == 1 && (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.IDENTIFIER)) {
+          else if (nesting == 1 &&
+                   (token == JsonElementTypes.DOUBLE_QUOTED_STRING
+                    || token == JsonElementTypes.SINGLE_QUOTED_STRING
+                    || token == JsonElementTypes.IDENTIFIER)) {
             // We are looking for two special properties at the root level.
             switch (lexer.getTokenText()) {
-              case "\"$id\"":
               case "$id":
-                captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
+              case "\"$id\"":
+              case "'$id'":
+                idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
                 break;
-              case "\"$schema\"":
               case "$schema":
-                captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
+              case "\"$schema\"":
+              case "'$schema'":
+                schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
                 break;
             }
           }
@@ -81,7 +88,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
         return map;
       }
 
-      private void captureValueIfString(Lexer lexer, HashMap<String, String> destMap, String key) {
+      private boolean captureValueIfString(Lexer lexer, HashMap<String, String> destMap, String key) {
         IElementType token;
         lexer.advance();
         token = skipWhitespacesAndGetTokenType(lexer);
@@ -90,8 +97,10 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
           token = skipWhitespacesAndGetTokenType(lexer);
           if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
             destMap.put(key, lexer.getTokenText().substring(1, lexer.getTokenText().length() - 1));
+            return true;
           }
         }
+        return false;
       }
 
       private IElementType skipWhitespacesAndGetTokenType(Lexer lexer) {

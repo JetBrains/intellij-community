@@ -1,0 +1,6 @@
+{
+  '$schema': 'the-schema',
+  $id: "the-id",
+  "$id": "not-id",
+  "$schema": "something"
+}
