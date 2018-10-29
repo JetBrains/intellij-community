@@ -1146,6 +1146,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
+    if (findModel.getStringToFind().contains("\n") && Registry.is("ide.find.ignores.leading.whitespace.in.multiline.search")) {
+      findModel.setMultiline(true);
+    }
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
     myComponentValidator.updateInfo(result);

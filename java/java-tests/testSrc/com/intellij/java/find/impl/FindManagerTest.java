@@ -983,6 +983,17 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(usages.get(0).isValid());
   }
 
+  public void testFindMultilineWithLeadingSpaces() {
+    FindModel findModel = FindManagerTestUtils.configureFindModel("System.currentTimeMillis();\n   System.currentTimeMillis();");
+    findModel.setMultiline(true);
+    String fileContent = "System.currentTimeMillis();\n   System.currentTimeMillis();\n\n" +
+                  "        System.currentTimeMillis();\n       System.currentTimeMillis();";
+    FindResult findResult = myFindManager.findString(fileContent, 0, findModel, null);
+    assertTrue(findResult.isStringFound());
+    findResult = myFindManager.findString(fileContent, findResult.getEndOffset(), findModel, null);
+    assertTrue(findResult.isStringFound());
+  }
+
   public void testRegExpMatchReplacement() throws FindManager.MalformedReplacementStringException {
     String text = "final override val\n" +
                   "      d1PrimitiveType by lazyThreadSafeIdempotentGenerator { D1PrimitiveType( typeManager = this ) }";
