@@ -4,6 +4,7 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.PositionTrackingListener
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -87,7 +88,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus) : Disposa
     if (!application.isEAP) return LogNothing
 
     val experimentVersion = experimentHelper.experimentVersion()
-    if (experimentVersion == 5 || experimentVersion == 6) return LogAllSessions
+    if (PluginManager.BUILD_NUMBER.contains("-183") && experimentVersion == 5 || experimentVersion == 6) return LogAllSessions
 
     return LogEachN(SKIP_SESSIONS_BEFORE_LOG_IN_EAP)
   }
