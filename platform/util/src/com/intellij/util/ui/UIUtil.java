@@ -4114,7 +4114,7 @@ public class UIUtil {
   private static final Color DECORATED_ROW_BG_COLOR = new JBColor(new Color(242, 245, 249), new Color(65, 69, 71));
 
   public static Color getDecoratedRowColor() {
-    return DECORATED_ROW_BG_COLOR;
+    return JBColor.namedColor("Table.stripeColor", DECORATED_ROW_BG_COLOR);
   }
 
   @NotNull
