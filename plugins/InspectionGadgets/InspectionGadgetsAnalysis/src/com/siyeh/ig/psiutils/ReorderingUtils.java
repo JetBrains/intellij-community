@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -133,15 +134,190 @@ public class ReorderingUtils {
     return ThreeState.UNSURE;
   }
 
+  private enum ExceptionKind {
+    NullDereference {
+      @Override
+      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
+        if (condition instanceof PsiBinaryExpression) {
+          IElementType tokenType = ((PsiBinaryExpression)condition).getOperationTokenType();
+          if (tokenType.equals(negated ? JavaTokenType.EQEQ : JavaTokenType.NE)) {
+            PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
+            PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
+            if (ExpressionUtils.isNullLiteral(left)) {
+              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, operand);
+            }
+            if (ExpressionUtils.isNullLiteral(right)) {
+              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, operand);
+            }
+          }
+        }
+        return false;
+      }
+
+      @Override
+      PsiExpression extractOperand(PsiExpression expression) {
+        if (expression instanceof PsiLiteralExpression ||
+            expression instanceof PsiParenthesizedExpression ||
+            expression instanceof PsiTypeCastExpression ||
+            expression instanceof PsiConditionalExpression ||
+            NullabilityUtil.getExpressionNullability(expression) == Nullability.NOT_NULL) {
+          return null;
+        }
+        PsiExpression realExpression = expression;
+        while (realExpression.getParent() instanceof PsiParenthesizedExpression ||
+               realExpression.getParent() instanceof PsiTypeCastExpression ||
+               (realExpression.getParent() instanceof PsiConditionalExpression &&
+                realExpression != ((PsiConditionalExpression)realExpression.getParent()).getCondition())) {
+          realExpression = (PsiExpression)realExpression.getParent();
+        }
+        PsiElement parent = realExpression.getParent();
+        if (parent instanceof PsiReferenceExpression || parent instanceof PsiArrayAccessExpression) {
+          return expression;
+        }
+        if (parent instanceof PsiPolyadicExpression) {
+          IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+          if (tokenType.equals(JavaTokenType.PLUS)) {
+            if (TypeUtils.isJavaLangString(((PsiPolyadicExpression)parent).getType())) {
+              return null;
+            }
+          }
+          return expression;
+        }
+        PsiParameter parameter = MethodCallUtils.getParameterForArgument(realExpression);
+        if (parameter != null && NullableNotNullManager.isNotNull(parameter)) {
+          return expression;
+        }
+        return null;
+      }
+    },
+    ClassCast {
+      @Override
+      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
+        if (negated) return false;
+        if (condition instanceof PsiInstanceOfExpression) {
+          PsiExpression op = ((PsiInstanceOfExpression)condition).getOperand();
+          return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(op, operand);
+        }
+        return false;
+      }
+
+      @Override
+      PsiExpression extractOperand(PsiExpression expression) {
+        if (expression instanceof PsiTypeCastExpression) {
+          return ((PsiTypeCastExpression)expression).getOperand();
+        }
+        return null;
+      }
+    },
+    ArrayIndex {
+      @Override
+      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
+        if (condition instanceof PsiBinaryExpression) {
+          IElementType token = ((PsiBinaryExpression)condition).getOperationTokenType();
+          if (ComparisonUtils.isComparisonOperation(token) && !token.equals(JavaTokenType.EQEQ) && !token.equals(JavaTokenType.NE)) {
+            PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
+            PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
+            return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, operand) ||
+                   EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, operand);
+          }
+        }
+        return false;
+      }
+
+      @Override
+      PsiExpression extractOperand(PsiExpression expression) {
+        if (expression instanceof PsiArrayAccessExpression) {
+          return ((PsiArrayAccessExpression)expression).getIndexExpression();
+        }
+        return null;
+      }
+    };
+
+    abstract boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated);
+
+    abstract PsiExpression extractOperand(PsiExpression expression);
+  }
+
+  private static class Problem {
+    private final ExceptionKind myKind;
+    private final PsiExpression myOperand;
+
+    private Problem(ExceptionKind kind, PsiExpression operand) {
+      myKind = kind;
+      myOperand = operand;
+    }
+
+    @NotNull
+    static List<Problem> fromExpression(PsiExpression expression) {
+      List<Problem> problems = new ArrayList<>();
+      for (ExceptionKind kind : ExceptionKind.values()) {
+        PsiExpression operand = kind.extractOperand(expression);
+        if (operand != null) {
+          problems.add(new Problem(kind, operand));
+        }
+      }
+      return problems;
+    }
+    
+    boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
+      return myKind.isNecessaryCheck(myOperand, condition, negated);
+    }
+  }
+
+  private static boolean areConditionsNecessaryFor(PsiExpression[] conditions, PsiExpression operand, boolean negated) {
+    List<Problem> problems = SyntaxTraverser.psiTraverser(operand)
+      .traverse().filter(PsiExpression.class).flatMap(Problem::fromExpression).filter(Objects::nonNull)
+      .toList();
+    if (problems.isEmpty()) return false;
+    for (PsiExpression condition : conditions) {
+      if (isConditionNecessary(condition, problems, negated)) return true;
+    }
+    return false;
+  }
+
+  private static boolean isConditionNecessary(PsiExpression condition, List<Problem> problems, boolean negated) {
+    condition = PsiUtil.skipParenthesizedExprDown(condition);
+    if (condition == null) return false;
+    if (BoolUtils.isNegation(condition)) {
+      return isConditionNecessary(BoolUtils.getNegated(condition), problems, !negated);
+    }
+    if (condition instanceof PsiPolyadicExpression) {
+      IElementType type = ((PsiPolyadicExpression)condition).getOperationTokenType();
+      if((type.equals(JavaTokenType.ANDAND) && !negated) || (type.equals(JavaTokenType.OROR) && negated)) {
+        for (PsiExpression operand : ((PsiPolyadicExpression)condition).getOperands()) {
+          if (isConditionNecessary(operand, problems, negated)) {
+            return true;
+          }
+        }
+        return false;
+      }
+      if((type.equals(JavaTokenType.ANDAND) && negated) || (type.equals(JavaTokenType.OROR) && !negated)) {
+        for (PsiExpression operand : ((PsiPolyadicExpression)condition).getOperands()) {
+          if (!isConditionNecessary(operand, problems, negated)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+    for (Problem problem : problems) {
+      if (problem.isNecessaryCheck(condition, negated)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static boolean lastOperandImpliesPrevious(PsiPolyadicExpression expression, PsiExpression[] operands) {
     assert operands.length > 1;
     boolean and = expression.getOperationTokenType() == JavaTokenType.ANDAND;
-    PsiFile file = expression.getContainingFile();
     if (Arrays.stream(operands).anyMatch(e -> !PsiTreeUtil.processElements(e, element -> !isErroneous(element)))) return false;
-    String expressionText = StreamEx.of(operands, 0, operands.length - 1).prepend(operands[operands.length - 1])
+    PsiExpression lastOperand = operands[operands.length - 1];
+    if (areConditionsNecessaryFor(Arrays.copyOf(operands, operands.length - 1), lastOperand, !and)) return true;
+    String expressionText = StreamEx.of(operands, 0, operands.length - 1).prepend(lastOperand)
       .map(PsiExpression::getText).joining(and ? " && " : " || ");
-    PsiPolyadicExpression expressionToAnalyze =
-      (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(file.getProject()).createExpressionFromText(expressionText, expression);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+    PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)factory.createExpressionFromText(expressionText, expression);
     PsiExpression[] newOperands = expressionToAnalyze.getOperands();
     Map<PsiExpression, ThreeState> map = computeOperandValues(expressionToAnalyze, false);
     ThreeState state = ThreeState.fromBoolean(and);
@@ -151,8 +327,7 @@ public class ReorderingUtils {
       return !Boolean.valueOf(and).equals(DfaUtil.computeValue(operands[0]));
     }
     expressionText = StreamEx.of(operands, 0, operands.length - 1).map(PsiExpression::getText).joining(and ? " && " : " || ");
-    expressionToAnalyze =
-      (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(file.getProject()).createExpressionFromText(expressionText, expression);
+    expressionToAnalyze = (PsiPolyadicExpression)factory.createExpressionFromText(expressionText, expression);
     return !computeOperandValues(expressionToAnalyze, false).values().contains(state);
   }
 
