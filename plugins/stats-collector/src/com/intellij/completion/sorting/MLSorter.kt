@@ -161,7 +161,6 @@ class MLSorter : CompletionFinalSorter() {
 
     val unknownFactors = FeatureManagerImpl.getInstance().completionFactors.unknownFactors(relevanceMap.keys)
     val mlRank: Double? = if (unknownFactors.isEmpty()) ranker.rank(relevanceMap, userFactors) else null
-    println("${element.lookupString} -> $mlRank")
     val info = ItemRankInfo(position, mlRank, prefixLength)
     cachedScore[element] = info
 
