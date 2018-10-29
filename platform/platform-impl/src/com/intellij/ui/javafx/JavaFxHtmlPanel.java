@@ -2,10 +2,14 @@
 package com.intellij.ui.javafx;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
+import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.sun.javafx.application.PlatformImpl;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
@@ -17,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,6 +63,9 @@ public class JavaFxHtmlPanel implements Disposable {
         myPanelWrapper.repaint();
       }));
     })));
+
+    LafManager.getInstance().addLafManagerListener(new JavaFXLafManagerListener());
+    runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
   }
 
   protected void registerListeners(@NotNull WebEngine engine) {
@@ -97,6 +105,32 @@ public class JavaFxHtmlPanel implements Disposable {
       getWebViewGuaranteed().getEngine().reload();
       ApplicationManager.getApplication().invokeLater(myPanelWrapper::repaint);
     });
+  }
+
+  @Nullable
+  protected URL getStyle(boolean isDarcula) {
+    return null;
+  }
+
+  private class JavaFXLafManagerListener implements LafManagerListener {
+    @Override
+    public void lookAndFeelChanged(@NotNull LafManager manager) {
+      updateLaf(manager.getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo);
+    }
+  }
+
+  private void updateLaf(boolean isDarcula) {
+    URL styleUrl = getStyle(isDarcula);
+    if (styleUrl == null) {
+      return;
+    }
+    ApplicationManager.getApplication().invokeLater(
+      () -> runInPlatformWhenAvailable(
+        () -> {
+          final WebView webView = getWebViewGuaranteed();
+          webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
+        }
+      ));
   }
 
   @Override
