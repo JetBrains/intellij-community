@@ -18,8 +18,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBa
  */
 class GrImplicitCallReference(element: GrMethodCall) : GroovyMethodCallReferenceBase<GrMethodCall>(element) {
 
-  override val isRealReference: Boolean get() = true
-
   override val receiver: PsiType? get() = element.invokedExpression.type
 
   override val methodName: String get() = "call"

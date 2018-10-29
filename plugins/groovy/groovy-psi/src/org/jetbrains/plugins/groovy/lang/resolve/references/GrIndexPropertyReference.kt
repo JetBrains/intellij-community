@@ -19,8 +19,6 @@ abstract class GrIndexPropertyReference(element: GrIndexProperty) : GroovyMethod
    */
   abstract override fun getRangeInElement(): TextRange
 
-  final override val isRealReference: Boolean get() = true
-
   final override val receiver: PsiType? get() = element.invokedExpression.type
 }
 

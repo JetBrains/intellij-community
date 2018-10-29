@@ -22,8 +22,6 @@ class GrOperatorReference(
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val isRealReference: Boolean get() = true
-
   override val receiver: PsiType? get() = element.leftType
 
   override val methodName: String = binaryOperatorMethodNames[element.operator] ?: error(element.text)
