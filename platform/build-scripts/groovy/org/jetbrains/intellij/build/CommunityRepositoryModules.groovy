@@ -240,6 +240,7 @@ class CommunityRepositoryModules {
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.features", "features.jar")
       withModule("intellij.statsCollector.logEvents")
+      withModule("intellij.statsCollector.completionRanker")
       withResource("features/resources", "lib")
     },
     plugin("intellij.griffon") {
