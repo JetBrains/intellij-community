@@ -11,6 +11,8 @@ import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.QualifiedNames
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Timeout
 import java.io.File
@@ -689,35 +691,49 @@ fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   waitAMoment()
 
-  projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
+  projectStructureDialogScenarios.checkGradleFacets(
     project = project,
     kotlinVersion = kotlinVersion,
-    projectName = gradleOptions.artifact,
-    expectedFacet = expectedFacet
+    expectedFacet = expectedFacet,
+    gradleOptions = gradleOptions
   )
   waitAMoment()
 }
 
-fun ProjectStructureDialogScenarios.checkGradleExplicitModuleGroups(
+fun ProjectStructureDialogScenarios.checkGradleFacets(
   project: ProjectProperties,
   kotlinVersion: String,
-  projectName: String,
-  expectedFacet: FacetStructure
+  expectedFacet: FacetStructure,
+  gradleOptions: NewProjectDialogModel.GradleProjectOptions
 ) {
   openProjectStructureAndCheck {
     projectStructureDialogModel.checkLibrariesFromMavenGradle(
-      buildSystem = BuildSystem.Gradle,
+      buildSystem = project.buildSystem,
       kotlinVersion = kotlinVersion,
       expectedJars = project.jars.getJars(kotlinVersion)
     )
-    projectStructureDialogModel.checkFacetInOneModule(
-      expectedFacet,
-      path = *arrayOf(projectName, "${projectName}_main", "Kotlin")
-    )
-    projectStructureDialogModel.checkFacetInOneModule(
-      expectedFacet,
-      path = *arrayOf(projectName, "${projectName}_test", "Kotlin")
-    )
+    val expectedFacets = when (gradleOptions.groupModules) {
+      ExplicitModuleGroups -> {
+        val explicitProjectName = gradleOptions.artifact
+        mapOf(
+          listOf(explicitProjectName, "${explicitProjectName}_main", "Kotlin") to expectedFacet,
+          listOf(explicitProjectName, "${explicitProjectName}_test", "Kotlin") to expectedFacet
+        )
+      }
+      QualifiedNames -> {
+        val qualifiedProjectName = "${gradleOptions.group}.${gradleOptions.artifact}"
+        mapOf(
+          listOf(qualifiedProjectName, "main", "Kotlin") to expectedFacet,
+          listOf(qualifiedProjectName, "test", "Kotlin") to expectedFacet
+        )
+      }
+    }
+    for ((path, facet) in expectedFacets) {
+      projectStructureDialogModel.checkFacetInOneModule(
+        facet,
+        path = *path.toTypedArray()
+      )
+    }
   }
 }
 
