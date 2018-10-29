@@ -135,22 +135,18 @@ class PyTypeHintsInspection : PyInspection() {
       val instructions = ControlFlowCache.getControlFlow(scopeOwner).instructions
       val startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, target)
 
-      ControlFlowUtil.iteratePrev(
-        startInstruction,
-        instructions,
-        { instruction ->
-          if (instruction is ReadWriteInstruction &&
-              instruction.num() != startInstruction &&
-              name == instruction.name &&
-              instruction.access.isWriteAccess) {
-            registerProblem(target, "Type variables must not be redefined")
-            ControlFlowUtil.Operation.BREAK
-          }
-          else {
-            ControlFlowUtil.Operation.NEXT
-          }
+      ControlFlowUtil.iteratePrev(startInstruction, instructions) { instruction ->
+        if (instruction is ReadWriteInstruction &&
+            instruction.num() != startInstruction &&
+            name == instruction.name &&
+            instruction.access.isWriteAccess) {
+          registerProblem(target, "Type variables must not be redefined")
+          ControlFlowUtil.Operation.BREAK
         }
-      )
+        else {
+          ControlFlowUtil.Operation.NEXT
+        }
+      }
     }
 
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
@@ -160,31 +156,34 @@ class PyTypeHintsInspection : PyInspection() {
       var bound: PyExpression? = null
       val constraints = mutableListOf<PyExpression?>()
 
-      call.multiMapArguments(resolveContext).firstOrNull { it.unmappedArguments.isEmpty() && it.unmappedParameters.isEmpty() }?.let {
-        it.mappedParameters.entries.forEach {
-          val name = it.value.name
-          val argument = PyUtil.peelArgument(it.key)
+      call
+        .multiMapArguments(resolveContext)
+        .firstOrNull { it.unmappedArguments.isEmpty() && it.unmappedParameters.isEmpty() }
+        ?.let { mapping ->
+          mapping.mappedParameters.entries.forEach {
+            val name = it.value.name
+            val argument = PyUtil.peelArgument(it.key)
 
-          when (name) {
-            "name" ->
-              if (argument !is PyStringLiteralExpression) {
-                registerProblem(argument, "'TypeVar()' expects a string literal as first argument")
-              }
-              else {
-                val targetName = target?.name
-                if (targetName != null && targetName != argument.stringValue) {
-                  registerProblem(argument,
-                                  "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
-                                  ReplaceWithTargetNameQuickFix(targetName))
+            when (name) {
+              "name" ->
+                if (argument !is PyStringLiteralExpression) {
+                  registerProblem(argument, "'TypeVar()' expects a string literal as first argument")
                 }
-              }
-            "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
-            "contravariant" -> contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
-            "bound" -> bound = argument
-            "constraints" -> constraints.add(argument)
+                else {
+                  val targetName = target?.name
+                  if (targetName != null && targetName != argument.stringValue) {
+                    registerProblem(argument,
+                                    "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
+                                    ReplaceWithTargetNameQuickFix(targetName))
+                  }
+                }
+              "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
+              "contravariant" -> contravariant = PyEvaluator.evaluateAsBoolean(argument, false)
+              "bound" -> bound = argument
+              "constraints" -> constraints.add(argument)
+            }
           }
         }
-      }
 
       if (covariant && contravariant) {
         registerProblem(call, "Bivariant type variables are not supported", ProblemHighlightType.GENERIC_ERROR)
@@ -350,8 +349,8 @@ class PyTypeHintsInspection : PyInspection() {
     private fun checkGenericDuplication(superClassExpressions: List<PyExpression>) {
       superClassExpressions
         .asSequence()
-        .filter {
-          val resolved = if (it is PyReferenceExpression) multiFollowAssignmentsChain(it) else listOf(it)
+        .filter { superClass ->
+          val resolved = if (superClass is PyReferenceExpression) multiFollowAssignmentsChain(superClass) else listOf(superClass)
 
           resolved
             .asSequence()
@@ -369,8 +368,8 @@ class PyTypeHintsInspection : PyInspection() {
       val genericTypeVars = linkedSetOf<PsiElement>()
       val nonGenericTypeVars = linkedSetOf<PsiElement>()
 
-      cls.superClassExpressions.forEach {
-        val generics = collectGenerics(it)
+      cls.superClassExpressions.forEach { superClass ->
+        val generics = collectGenerics(superClass)
 
         generics.first?.let {
           genericTypeVars.addAll(it)
@@ -423,8 +422,8 @@ class PyTypeHintsInspection : PyInspection() {
           val superClassTypeVars = parameters
             .asSequence()
             .filterIsInstance<PyReferenceExpression>()
-            .map { multiFollowAssignmentsChain(it, this::followNotTypeVar).toSet() }
-            .fold(emptySet<PsiElement>(), { acc, typeVars -> acc.union(typeVars) })
+            .map { parameter -> multiFollowAssignmentsChain(parameter, this::followNotTypeVar).toSet() }
+            .fold(emptySet<PsiElement>()) { acc, typeVars -> acc.union(typeVars) }
 
           if (generic) genericTypeVars.addAll(superClassTypeVars) else nonGenericTypeVars.addAll(superClassTypeVars)
           seenGeneric = seenGeneric || generic
@@ -534,7 +533,7 @@ class PyTypeHintsInspection : PyInspection() {
                             null,
                             RemoveSquareBracketsQuickFix())
           }
-          else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { it is PyListLiteralExpression }) {
+          else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { resolved -> resolved is PyListLiteralExpression }) {
             registerProblem(it, "Parameters to generic types must be types", ProblemHighlightType.GENERIC_ERROR)
           }
         }
