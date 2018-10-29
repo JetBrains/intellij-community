@@ -55,15 +55,15 @@ class WindowsJavaFinder extends JavaHomeFinder {
     File[] fsRoots = File.listRoots();
     for (File root : fsRoots) {
       if (root.exists()) {
-        File[] children = root.listFiles();
+        File[] children = root.listFiles((dir, name) -> name.contains("Program Files"));
         if (children != null) {
           for (File child : children) {
-            if (child.isDirectory() && child.getName().contains("Program Files")) {
+            if (child.isDirectory()) {
               roots.add(child);
-              File[] subFolders = child.listFiles();
+              File[] subFolders = child.listFiles((dir, name) -> name.equals("Java"));
               if (subFolders != null) {
                 for (File subFolder : subFolders) {
-                  if (subFolder.isDirectory() && subFolder.getName().equals("Java")) {
+                  if (subFolder.isDirectory()) {
                     roots.add(subFolder);
                   }
                 }
