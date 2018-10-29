@@ -1364,7 +1364,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
 
         try {
-          Pattern.compile(getStringToReplace());
+          String stringToReplace = getStringToReplace();
+          stringToReplace = stringToReplace.replaceAll("(\\\\U|\\\\L|\\\\u|\\\\l|\\\\E)", "\\\\$1");
+          Pattern.compile(stringToReplace);
         }
         catch (PatternSyntaxException e) {
           return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
