@@ -9,7 +9,15 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
 
-class GrMethodCallReference(element: GrMethodCall) : GroovyMethodCallReferenceBase<GrMethodCall>(element) {
+/**
+ * Reference to an implicit `.call`.
+ *
+ * Appears in when method call expression has non-[reference][GrReferenceExpression] invoked expression,
+ * such as `(a + b)()` is actually `(a + b).call()`,
+ * or when invoked expression is a [reference][GrReferenceExpression]
+ * which is an [implicit receiver][GrReferenceExpression.isImplicitCallReceiver].
+ */
+class GrImplicitCallReference(element: GrMethodCall) : GroovyMethodCallReferenceBase<GrMethodCall>(element) {
 
   override val isRealReference: Boolean get() = element.invokedExpression.let { it !is GrReferenceExpression || it.isImplicitCallReceiver }
 

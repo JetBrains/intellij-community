@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
-import org.jetbrains.plugins.groovy.lang.resolve.impl.GrMethodCallReference;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
 
 /**
  * @author Maxim.Medvedev
@@ -28,7 +28,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
     super(node);
   }
 
-  private final GroovyMethodCallReference myCallReference = new GrMethodCallReference(this);
+  private final GroovyMethodCallReference myCallReference = new GrImplicitCallReference(this);
 
   @NotNull
   @Override
