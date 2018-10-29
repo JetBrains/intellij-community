@@ -229,33 +229,33 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.complete(CompletionType.SMART)
     assertSameElements(myFixture.lookupElementStrings, ['foo.bar.BarAction', 'foo.goo.GooAction'])
     assertNull(toString(myFixture.lookup.advertisements),
-                  myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
+               myFixture.lookup.advertisements.find { it.contains('to see inheritors of com.intellij.openapi.actionSystem.AnAction') })
   }
 
   void testExtensionsSpecifyDefaultExtensionNs() {
-    myFixture.testHighlighting("extensionsSpecifyDefaultExtensionNs.xml")
+    doHighlightingTest("extensionsSpecifyDefaultExtensionNs.xml")
   }
 
   void testDeprecatedExtensionAttribute() {
     myFixture.enableInspections(DeprecatedClassUsageInspection.class)
-    myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java")
+    doHighlightingTest("deprecatedExtensionAttribute.xml", "MyExtBean.java")
   }
 
   void testDeprecatedAttributes() {
-    myFixture.testHighlighting("deprecatedAttributes.xml")
+    doHighlightingTest("deprecatedAttributes.xml")
   }
 
   void testExtensionAttributeDeclaredUsingAccessors() {
-    myFixture.testHighlighting("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java")
+    doHighlightingTest("extensionAttributeWithAccessors.xml", "ExtBeanWithAccessors.java")
   }
 
   void testExtensionWithInnerTags() {
-    myFixture.testHighlighting("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java")
+    doHighlightingTest("extensionWithInnerTags.xml", "ExtBeanWithInnerTags.java")
   }
 
   void testLanguageAttributeHighlighting() {
     configureLanguageAttributeTest()
-    myFixture.testHighlighting("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
+    doHighlightingTest("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
 
   void testLanguageAttributeCompletion() {
@@ -292,36 +292,36 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +
                        "}")
-    myFixture.testHighlighting("iconAttribute.xml",
-                               "MyIconAttributeEPBean.java")
+    doHighlightingTest("iconAttribute.xml",
+                       "MyIconAttributeEPBean.java")
   }
 
   void testPluginWithModules() {
-    myFixture.testHighlighting("pluginWithModules.xml")
+    doHighlightingTest("pluginWithModules.xml")
   }
 
   void testPluginWith99InUntilBuild() {
-    myFixture.testHighlighting("pluginWith99InUntilBuild.xml")
+    doHighlightingTest("pluginWith99InUntilBuild.xml")
   }
 
   void testPluginWith9999InUntilBuild() {
-    myFixture.testHighlighting("pluginWith9999InUntilBuild.xml")
+    doHighlightingTest("pluginWith9999InUntilBuild.xml")
   }
 
   void testPluginForOldIdeWith9999InUntilBuild() {
-    myFixture.testHighlighting("pluginForOldIdeWith9999InUntilBuild.xml")
+    doHighlightingTest("pluginForOldIdeWith9999InUntilBuild.xml")
   }
 
   void testPluginWith10000InUntilBuild() {
-    myFixture.testHighlighting("pluginWith10000InUntilBuild.xml")
+    doHighlightingTest("pluginWith10000InUntilBuild.xml")
   }
 
   void testPluginWithStarInUntilBuild() {
-    myFixture.testHighlighting("pluginWithStarInUntilBuild.xml")
+    doHighlightingTest("pluginWithStarInUntilBuild.xml")
   }
 
   void testPluginWithBranchNumberInUntilBuild() {
-    myFixture.testHighlighting("pluginWithBranchNumberInUntilBuild.xml")
+    doHighlightingTest("pluginWithBranchNumberInUntilBuild.xml")
   }
 
   void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
@@ -331,7 +331,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testPluginWithXInclude() {
-    myFixture.testHighlighting("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml")
+    doHighlightingTest("pluginWithXInclude.xml", "pluginWithXInclude-extensionPoints.xml")
   }
 
   void testPluginXmlInIdeaProjectWithoutVendor() {
@@ -364,7 +364,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testOrderAttributeHighlighting() {
-    myFixture.testHighlighting("orderAttributeHighlighting.xml")
+    doHighlightingTest("orderAttributeHighlighting.xml")
   }
 
   // separate tests for 'order' attribute completion because cannot test all cases with completeBasicAllCarets
@@ -409,7 +409,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   private void testHighlightingInIdeaProject(String path) {
     PsiUtil.markAsIdeaProject(project, true)
     try {
-      myFixture.testHighlighting(path)
+      doHighlightingTest(path)
     }
     finally {
       PsiUtil.markAsIdeaProject(project, false)
@@ -421,7 +421,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 public class MyErrorHandler extends ErrorReportSubmitter {}
 """)
-    myFixture.testHighlighting("errorHandlerExtensionInJetBrainsPlugin.xml")
+    doHighlightingTest("errorHandlerExtensionInJetBrainsPlugin.xml")
   }
 
   void testErrorHandlerExtensionInNonJetBrainsPlugin() {
@@ -429,7 +429,7 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 public class MyErrorHandler extends ErrorReportSubmitter {}
 """)
-    myFixture.testHighlighting("errorHandlerExtensionInNonJetBrainsPlugin.xml")
+    doHighlightingTest("errorHandlerExtensionInNonJetBrainsPlugin.xml")
   }
 
   void testExtensionPointPresentation() {
@@ -471,11 +471,11 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testExtensionPointNameValidity() {
-    myFixture.testHighlighting(getTestName(true) + ".xml")
+    doHighlightingTest(getTestName(true) + ".xml")
   }
 
   void testExtensionPointValidity() {
-    myFixture.testHighlighting(getTestName(true) + ".xml")
+    doHighlightingTest(getTestName(true) + ".xml")
   }
 
   void testRegistrationCheck() {
@@ -522,26 +522,39 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   }
 
   void testValuesMaxLengths() {
-    myFixture.testHighlighting("ValuesMaxLengths.xml")
+    doHighlightingTest("ValuesMaxLengths.xml")
   }
 
   void testValuesRequired() {
-    myFixture.testHighlighting("ValuesRequired.xml")
+    doHighlightingTest("ValuesRequired.xml")
   }
 
   void testValuesTemplateTexts() {
-    myFixture.testHighlighting("ValuesTemplateTexts.xml")
+    doHighlightingTest("ValuesTemplateTexts.xml")
   }
 
   void testPluginWithSinceBuildGreaterThanUntilBuild() {
-    myFixture.testHighlighting("pluginWithSinceBuildGreaterThanUntilBuild.xml")
+    doHighlightingTest("pluginWithSinceBuildGreaterThanUntilBuild.xml")
+  }
+
+  private void doHighlightingTest(String... filePaths) {
+    myFixture.testHighlighting(true, false, false, filePaths)
   }
 
   void testProductDescriptor() {
-    myFixture.testHighlighting("productDescriptorInvalid.xml")
+    doHighlightingTest("productDescriptorInvalid.xml")
   }
 
   void testProductDescriptorInvalid() {
-    myFixture.testHighlighting("productDescriptorInvalid.xml")
+    doHighlightingTest("productDescriptorInvalid.xml")
+  }
+
+  void testPluginIconFound() {
+    myFixture.addFileToProject("pluginIcon.svg", "fake SVG")
+    myFixture.testHighlighting(true, true, true, "pluginIconFound.xml")
+  }
+
+  void testPluginIconNotFound() {
+    myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml")
   }
 }
