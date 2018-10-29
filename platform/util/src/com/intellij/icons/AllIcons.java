@@ -2258,7 +2258,6 @@ public class AllIcons {
     public static final Icon ToolbarSkipped = IconLoader.getIcon("/runConfigurations/toolbarSkipped.svg"); // 16x16
     public static final Icon ToolbarTerminated = IconLoader.getIcon("/runConfigurations/toolbarTerminated.svg"); // 16x16
     public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.svg"); // 16x16
-    public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16
     public static final Icon Web_app = IconLoader.getIcon("/runConfigurations/web_app.svg"); // 16x16
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.BalloonError */
@@ -2345,6 +2344,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon TestInProgress8 = AllIcons.Process.Step_8;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Jsf.Renderer */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon TrackTests = AllIcons.Nodes.Jsf.Renderer;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Help */
     @SuppressWarnings("unused")
