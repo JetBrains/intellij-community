@@ -1212,15 +1212,15 @@ public class UIUtil {
   }
 
   public static Color getToolTipBackground() {
-    return UIManager.getColor("ToolTip.background");
+    return JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
   }
 
   public static Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.Actions.background", new JBColor(0xebebeb, 0x43474a));
+    return JBColor.namedColor("ToolTip.Actions.background", new JBColor(Gray.xEB, new Color(0x43474a)));
   }
 
   public static Color getToolTipForeground() {
-    return UIManager.getColor("ToolTip.foreground");
+    return JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBB));
   }
 
   public static Color getComboBoxDisabledForeground() {
