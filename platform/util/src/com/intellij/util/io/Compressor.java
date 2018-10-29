@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,17 +20,29 @@ import java.util.zip.ZipOutputStream;
 
 public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
+    public enum Compression { GZIP, BZIP2, NONE }
+
     public Tar(@NotNull File file) throws IOException {
-      myStream = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(file)));
-      myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+      this(new FileOutputStream(file), Compression.GZIP);
     }
 
-    public Tar(@NotNull TarArchiveOutputStream stream) {
-      myStream = stream;
+    public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
+      this(new FileOutputStream(file), compression);
     }
 
     //<editor-fold desc="Implementation">
     private final TarArchiveOutputStream myStream;
+
+    private Tar(OutputStream stream, Compression compression) throws IOException {
+      myStream = new TarArchiveOutputStream(compressedStream(stream, compression));
+      myStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+    }
+
+    private static OutputStream compressedStream(OutputStream stream, Compression compression) throws IOException {
+      if (compression == Compression.GZIP) return new GzipCompressorOutputStream(stream);
+      if (compression == Compression.BZIP2) return new BZip2CompressorOutputStream(stream);
+      return stream;
+    }
 
     @Override
     protected void writeDirectoryEntry(String name, long timestamp) throws IOException {
@@ -58,15 +71,24 @@ public abstract class Compressor implements Closeable {
 
   public static class Zip extends Compressor {
     public Zip(@NotNull File file) throws FileNotFoundException {
-      myStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
+      this(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
     }
 
-    public Zip(@NotNull ZipOutputStream stream) {
-      myStream = stream;
+    public Zip(@NotNull OutputStream stream) {
+      this(new ZipOutputStream(stream));
+    }
+
+    public Zip withLevel(int compressionLevel) {
+      myStream.setLevel(compressionLevel);
+      return this;
     }
 
     //<editor-fold desc="Implementation">
     private final ZipOutputStream myStream;
+
+    protected Zip(ZipOutputStream stream) {
+      myStream = stream;
+    }
 
     @Override
     protected void writeDirectoryEntry(String name, long timestamp) throws IOException {
