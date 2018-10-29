@@ -37,7 +37,7 @@ private fun listGitTree(
     File(it).relativeTo(repo).path
   } ?: ""
   log("Inspecting $repo")
-  if (BUILD_SERVER == null) try {
+  if (!isUnderTeamCity()) try {
     execute(repo, GIT, "pull", "--rebase")
   }
   catch (e: Exception) {

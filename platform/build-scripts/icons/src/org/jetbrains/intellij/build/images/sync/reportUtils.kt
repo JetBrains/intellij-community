@@ -16,7 +16,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Consumer
 
-internal val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
+internal fun isUnderTeamCity() = BUILD_SERVER != null
+private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 
 internal fun report(
@@ -42,7 +43,7 @@ internal fun report(
   log(report)
   if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    if (BUILD_SERVER == null) {
+    if (!isUnderTeamCity()) {
       log("TeamCity url is unknown: unable to query last build status for sending notifications and assigning investigations")
     }
     else {
@@ -174,10 +175,11 @@ private fun notifySlackChannel(isSuccess: Boolean, investigator: Investigator?) 
     investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
+  val buildServerUrlForReport = System.getProperty("intellij.icons.report.buildserver")
   val text = "*${System.getProperty("teamcity.buildConfName")}* " +
              (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" + investigation +
              (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
-             "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
+             "<$buildServerUrlForReport/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }
