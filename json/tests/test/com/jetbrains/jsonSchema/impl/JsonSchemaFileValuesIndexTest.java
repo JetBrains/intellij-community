@@ -56,4 +56,11 @@ public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
     assertTrue(map.isEmpty());
   }
+
+  public void testStopsOnAllFound() {
+    final VirtualFile file = myFixture.configureByFile("indexing/duplicates.json5").getVirtualFile();
+    Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
+    assertEquals("the-schema", map.get(URL_CACHE_KEY));
+    assertEquals("the-id", map.get(ID_CACHE_KEY));
+  }
 }
