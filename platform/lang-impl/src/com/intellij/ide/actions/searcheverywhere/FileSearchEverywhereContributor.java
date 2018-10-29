@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -100,6 +101,18 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor<F
   public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
     if (CommonDataKeys.PSI_FILE.is(dataId) && element instanceof PsiFile) {
       return element;
+    }
+
+    if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId) && element instanceof PsiFile) {
+      String path = ((PsiFile)element).getVirtualFile().getPath();
+      path = FileUtil.toSystemIndependentName(path);
+      if (myProject != null) {
+        String basePath = myProject.getBasePath();
+        if (basePath != null) {
+          path = FileUtil.getRelativePath(basePath, path, '/');
+        }
+      }
+      return path;
     }
 
     return super.getDataForItem(element, dataId);
