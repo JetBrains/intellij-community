@@ -41,18 +41,8 @@ import java.util.Map;
  * @author peter
  */
 public class GradleClassFinder extends NonClasspathClassFinder {
-
   @NotNull private final GradleBuildClasspathManager myBuildClasspathManager;
-
-  // Bug: IDEA-200807
-  // The parent class can publish a reference to this object before the constructor has returned.
-  // Thus, it's possible that not all fields of this object are initialized by the time they
-  // are accessed in clearCache(). Workaround is to mark this field as volatile and do a
-  // null check in clearCache().
-  //
-  // It is unknown if different threads can read stale or uninitialized values for the
-  // myBuildClasspathManager instance variable at this moment.
-  private volatile Map<String, PackageDirectoryCache> myCaches;
+  private final Map<String, PackageDirectoryCache> myCaches;
 
   public GradleClassFinder(@NotNull Project project, @NotNull GradleBuildClasspathManager buildClasspathManager) {
     super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
@@ -77,7 +67,10 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public void clearCache() {
     super.clearCache();
-    if(myCaches != null) {
+    // The parent class can publish a reference to this object before the constructor has returned.
+    // Thus, it's possible that not all fields of this object are initialized by the time they
+    // are accessed in clearCache(). Workaround is to null check.
+    if (myCaches != null) {
       myCaches.clear();
     }
   }
@@ -91,20 +84,15 @@ public class GradleClassFinder extends NonClasspathClassFinder {
 
     PsiFile containingFile = aClass.getContainingFile();
     VirtualFile file = containingFile != null ? containingFile.getVirtualFile() : null;
-    return (file != null &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
-            !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file)) ? aClass : null;
+    return file != null &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInContent(file) &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibraryClasses(file) &&
+           !ProjectFileIndex.SERVICE.getInstance(myProject).isInLibrarySource(file) ? aClass : null;
   }
 
   @NotNull
   @Override
   public PsiPackage[] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    if (scope instanceof ExternalModuleBuildGlobalSearchScope) {
-      return super.getSubPackages(psiPackage, scope);
-    }
-    else {
-      return PsiPackage.EMPTY_ARRAY;
-    }
+    return scope instanceof ExternalModuleBuildGlobalSearchScope ? super.getSubPackages(psiPackage, scope) : PsiPackage.EMPTY_ARRAY;
   }
 }
