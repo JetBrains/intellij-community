@@ -124,6 +124,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "classworlds", libraryName: "Maven", version: "1.1", license: "codehaus",
                        url: "https://github.com/codehaus/classworlds",
                        licenseUrl: "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+    new LibraryLicense(name: "completion-ranking-java", attachedTo: "intellij.statsCollector.completionRanker", version: "0.0.3",
+                       license: "Apache 2.0"),
     new LibraryLicense(name: "coverage.py", attachedTo: "intellij.python.helpers", version: "3.7.1", license: "Apache 2.0",
                        url: "http://coverage.readthedocs.org/"),
     new LibraryLicense(name: "Cucumber-Core", libraryName: "cucumber-core", version: "1.2.4", license: "MIT License",
