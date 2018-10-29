@@ -449,8 +449,14 @@ public class MethodCallUtils {
     }
   }
 
+  /**
+   * Returns a method/constructor parameter which corresponds to given argument
+   * @param argument an argument to find the corresponding parameter
+   * @return a parameter or null if supplied expression is not a call argument, call is not resolved or expression is a var-arg
+   * argument.
+   */
   @Nullable
-  public static PsiParameter getParameterForArgument(PsiExpression argument) {
+  public static PsiParameter getParameterForArgument(@NotNull PsiExpression argument) {
     PsiExpressionList argList = tryCast(argument.getParent(), PsiExpressionList.class);
     if (argList == null) return null;
     PsiCallExpression call = tryCast(argList.getParent(), PsiCallExpression.class);
