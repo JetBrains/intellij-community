@@ -3,7 +3,7 @@ package com.jetbrains.completion.ranker
 
 import com.completion.ranker.model.MLWhiteBox
 
-class CompletionRanker {
+class JavaCompletionRanker {
 
     fun rank(features: DoubleArray): Double {
         return MLWhiteBox.makePredict(features)
