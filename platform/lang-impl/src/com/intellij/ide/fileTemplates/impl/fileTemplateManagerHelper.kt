@@ -5,6 +5,6 @@ import com.intellij.util.containers.MultiMap
 import java.net.URL
 
 internal data class FileTemplateLoadResult @JvmOverloads constructor(
-  val result: MultiMap<FTManager, DefaultTemplate>,
+  val result: MultiMap<String, DefaultTemplate>,
   var defaultTemplateDescription: URL? = null,
   var defaultIncludeDescription: URL? = null)
