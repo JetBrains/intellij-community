@@ -71,6 +71,22 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     new ConfigurationTarget("foo.bar", PyRunTargetVariant.PYTHON).checkValid();
   }
 
+  ///PY-31827
+  @Test
+  public void testNameChanged() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nameChanged", "test_name_changed.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      final int exitCode) {
+        assertEquals("Test should not lead to errors, but:" + stderr, 0, exitCode);
+      }
+    });
+  }
+
   /**
    * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI
    * from that moment
@@ -845,13 +861,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   private abstract class PyUnitTestProcessWithConsoleTestTask extends PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
     PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName) {
+                                         @NotNull String scriptName) {
       super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner);
     }
 
     PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName,
-                                                int rerunFailedTests) {
+                                         @NotNull String scriptName,
+                                         int rerunFailedTests) {
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
     }
 
