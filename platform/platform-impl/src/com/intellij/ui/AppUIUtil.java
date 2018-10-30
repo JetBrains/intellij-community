@@ -311,12 +311,15 @@ public class AppUIUtil {
    */
   public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
     DialogWrapper dialog = new DialogWrapper(true) {
+
+      private JEditorPane myViewer;
+
       @Override
       protected JComponent createCenterPanel() {
         JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
-        JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
-        viewer.setFocusable(true);
-        viewer.addHyperlinkListener(new HyperlinkAdapter() {
+        myViewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        myViewer.setFocusable(true);
+        myViewer.addHyperlinkListener(new HyperlinkAdapter() {
           @Override
           protected void hyperlinkActivated(HyperlinkEvent e) {
             URL url = e.getURL();
@@ -324,12 +327,12 @@ public class AppUIUtil {
               BrowserUtil.browse(url);
             }
             else {
-              SwingHelper.scrollToReference(viewer, e.getDescription());
+              SwingHelper.scrollToReference(myViewer, e.getDescription());
             }
           }
         });
-        viewer.setText(htmlText);
-        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        myViewer.setText(htmlText);
+        StyleSheet styleSheet = ((HTMLDocument)myViewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
         styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
@@ -338,23 +341,29 @@ public class AppUIUtil {
         styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
         styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
         styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
-        viewer.setCaretPosition(0);
-        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
+        myViewer.setCaretPosition(0);
+        myViewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
-        JBScrollPane scrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         final JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.addAdjustmentListener(new AdjustmentListener() {
           boolean wasScrolledToTheBottom = false;
           @Override
           public void adjustmentValueChanged(AdjustmentEvent e) {
             if (!wasScrolledToTheBottom) {
-              wasScrolledToTheBottom = UIUtil.isScrolledToTheBottom(viewer);
+              wasScrolledToTheBottom = UIUtil.isScrolledToTheBottom(myViewer);
             }
             setOKActionEnabled(wasScrolledToTheBottom);
           }
         });
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         return centerPanel;
+      }
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myViewer;
       }
 
       @Override
