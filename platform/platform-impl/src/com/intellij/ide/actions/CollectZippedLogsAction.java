@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -30,17 +16,15 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.settingsSummary.ProblemType;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.zip.ZipOutputStream;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
@@ -64,13 +48,12 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           }
         );
       }
-      final File settingsTempFile = project != null ? dumpSettingsToFile(project) : null;
       final File zippedLogsFile =
         ProgressManager.getInstance().run(new Task.WithResult<File, IOException>(project, "Collecting Log Files", false) {
           @Override
           protected File compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
-            return createZip(settingsTempFile);
+            return createZip(project);
           }
         });
       if (ShowFilePathAction.isSupported()) {
@@ -86,44 +69,35 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(@Nullable File settingsTempFile) throws IOException {
-    final File zippedLogsFile = FileUtil.createTempFile("logs-" + getDate(), ".zip");
-    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zippedLogsFile)))) {
-      ZipUtil.addFileOrDirRecursively(zipOutputStream, null, new File(PathManager.getLogPath()), "", null, null);
-      if (settingsTempFile != null) {
-        ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
+  private static File createZip(@Nullable Project project) throws IOException {
+    File zippedLogsFile = FileUtil.createTempFile("logs-" + getDate(), ".zip");
+
+    try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
+      zip.addDirectory(new File(PathManager.getLogPath()));
+
+      if (project != null) {
+        StringBuilder settings = new StringBuilder();
+        for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
+          settings.append(problemType.collectInfo(project)).append('\n');
+        }
+        zip.addFile("settings.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
       }
+
       for (File javaErrorLog : getJavaErrorLogs()) {
-        ZipUtil.addFileToZip(zipOutputStream, javaErrorLog, javaErrorLog.getName(), null, null);
+        zip.addFile(javaErrorLog.getName(), javaErrorLog);
       }
     }
-    catch (final IOException exception) {
-      //noinspection ResultOfMethodCallIgnored
-      zippedLogsFile.delete();
+    catch (IOException exception) {
+      FileUtil.delete(zippedLogsFile);
       throw exception;
     }
-    finally {
-      if (settingsTempFile != null) {
-        //noinspection ResultOfMethodCallIgnored
-        settingsTempFile.delete();
-      }
-    }
+
     return zippedLogsFile;
   }
 
   private static File[] getJavaErrorLogs() {
     return new File(SystemProperties.getUserHome())
       .listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof"));
-  }
-
-  @NotNull
-  private static File dumpSettingsToFile(@NotNull final Project project) throws IOException {
-    final File settingsTempFile = FileUtil.createTempFile("settings" + getDate(), ".txt");
-    for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
-      String settingString = problemType.collectInfo(project);
-      FileUtil.appendToFile(settingsTempFile, settingString + '\n');
-    }
-    return settingsTempFile;
   }
 
   @NotNull
