@@ -20,6 +20,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -49,7 +52,6 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
     try {
-      final File zippedLogsFile = createZip(project);
       if (!doNotShowDialog) {
         Messages.showIdeaMessageDialog(
           project, "Included logs and settings may contain sensitive data.", "Sensitive Data",
@@ -62,6 +64,15 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           }
         );
       }
+      final File settingsTempFile = project != null ? dumpSettingsToFile(project) : null;
+      final File zippedLogsFile =
+        ProgressManager.getInstance().run(new Task.WithResult<File, IOException>(project, "Collecting Log Files", false) {
+          @Override
+          protected File compute(@NotNull ProgressIndicator indicator) throws IOException {
+            indicator.setIndeterminate(true);
+            return createZip(settingsTempFile);
+          }
+        });
       if (ShowFilePathAction.isSupported()) {
         ShowFilePathAction.openFile(zippedLogsFile);
       }
@@ -75,13 +86,11 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(@Nullable final Project project) throws IOException {
-    File settingsTempFile = null;
+  private static File createZip(@Nullable File settingsTempFile) throws IOException {
     final File zippedLogsFile = FileUtil.createTempFile("logs-" + getDate(), ".zip");
     try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zippedLogsFile)))) {
       ZipUtil.addFileOrDirRecursively(zipOutputStream, null, new File(PathManager.getLogPath()), "", null, null);
-      if (project != null) {
-        settingsTempFile = dumpSettingsToFile(project);
+      if (settingsTempFile != null) {
         ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
       }
       for (File javaErrorLog : getJavaErrorLogs()) {
