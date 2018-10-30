@@ -24,7 +24,6 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionOpenUsageTriggerCollector.class, file.getExtension() != null ? file.getExtension() : file.getName());
         FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeOpenUsageTriggerCollector.class, file.getFileType().getName());
       }
 
@@ -50,8 +49,6 @@ public class FileTypeExtensionUsagesCollectorStartupActivity implements StartupA
         if (editor == null || editor.getProject() != project) return;
         VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
         if (file != null) {
-          FUSProjectUsageTrigger.getInstance(project).trigger(FileExtensionEditUsageTriggerCollector.class,
-                                                                file.getExtension() != null ? file.getExtension() : file.getName());
           FUSProjectUsageTrigger.getInstance(project).trigger(FileTypeEditUsageTriggerCollector.class, file.getFileType().getName());
         }
       }
