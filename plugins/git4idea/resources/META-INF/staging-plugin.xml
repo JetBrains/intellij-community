@@ -1,0 +1,23 @@
+<idea-plugin url="https://www.jetbrains.com/idea">
+  <extensions defaultExtensionNs="com.intellij">
+    <changesViewContent tabName="Index" className="git4idea.staging.GitIndexViewManager"
+                        predicateClassName="git4idea.staging.GitIndexViewManager$VisibilityPredicate"/>
+  </extensions>
+
+  <actions>
+    <action id="Git.IndexTextAction" class="git4idea.staging.GitIndexTestAction"
+            text="Test: Create Git Index File..." internal="true"/>
+  </actions>
+
+  <project-components>
+    <component>
+      <implementation-class>git4idea.staging.GitIndexManager</implementation-class>
+    </component>
+  </project-components>
+
+  <application-components>
+    <component>
+      <implementation-class>git4idea.staging.GitIndexFileSystem</implementation-class>
+    </component>
+  </application-components>
+</idea-plugin>
