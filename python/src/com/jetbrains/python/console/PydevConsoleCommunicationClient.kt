@@ -150,7 +150,6 @@ class PydevConsoleCommunicationClient(project: Project,
       client?.apply {
         progressIndicator?.text2 = "Sending close message to Python Console..."
 
-        interrupt()
         close()
         dispose()
       }

@@ -190,7 +190,6 @@ class PydevConsoleCommunicationServer(project: Project, port: Int) : PydevConsol
       client?.apply {
         progressIndicator?.text2 = "Sending close message to Python Console..."
 
-        interrupt()
         close()
         dispose()
       }
