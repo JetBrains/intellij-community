@@ -377,10 +377,8 @@ class BaseInterpreterInterface(BaseCodeExecutor):
             # Register to process commands when idle
             self.debugrunning = False
             try:
-                import pydevconsole as pydev_console
-                if pydev_console.__name__ == "__main__":
-                    import _original_pydevconsole as pydev_console  # name was changed when saving "__main__"
-                pydev_console.set_debug_hook(self.debugger.process_internal_commands)
+                import pydevconsole
+                pydevconsole.set_debug_hook(self.debugger.process_internal_commands)
             except:
                 traceback.print_exc()
                 sys.stderr.write('Version of Python does not support debuggable Interactive Console.\n')

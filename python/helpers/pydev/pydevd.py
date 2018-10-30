@@ -1013,7 +1013,7 @@ class PyDB:
                 file = new_target
 
         if globals is None:
-            m = save_main_module(file, 'pydevd')
+            m = save_main_module(file)
             globals = m.__dict__
             try:
                 globals['__builtins__'] = __builtins__
