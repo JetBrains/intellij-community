@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -597,12 +598,32 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       return myTextRenderer.getToolTipText();
     }
 
+    @Override
     public AccessibleContext getAccessibleContext() {
       if(accessibleContext == null) {
-        myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
-        return myCheckBox.getAccessibleContext();
+        return new AccessibleChangesTreeRenderer();
       }
       return accessibleContext;
+    }
+
+    // this is, in effect, a ThreeStateCheckboxRenderer, since another renderer is returned when the checkbox is not enabled
+    // Therefore, it has to behave like a checkbox, in almost every way
+    protected class AccessibleChangesTreeRenderer extends AccessibleJTree{
+
+      @Override
+      public String getAccessibleName() {
+        // AccessibleThreeStateCheckbox returns standard accessible name, plus checked, unchecked, partially checked information
+        // therefore, all we need to do is add the file name as the standard accessibleName, and let the AccessibleThreeStateCheckBox do the rest
+        myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
+        return myCheckBox.getAccessibleContext().getAccessibleName();
+      }
+
+      @Override
+      public AccessibleRole getAccessibleRole() {
+        // Because of a problem with NVDA, we have to make this an AccessibleLabel
+        // if we don't do this, NVDA will read out the entire tree path, causing confusion
+        return AccessibleRole.LABEL;
+      }
     }
   }
 

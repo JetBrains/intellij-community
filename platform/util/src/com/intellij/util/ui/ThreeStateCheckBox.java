@@ -185,7 +185,7 @@ public class ThreeStateCheckBox extends JCheckBox {
    * Emulate accessibility behavior of tri-state checkboxes, as tri-state checkboxes
    * are not part of the JAB specification.
    */
-  protected class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
+  public class AccessibleThreeStateCheckBox extends AccessibleJCheckBox {
     @Override
     public AccessibleRole getAccessibleRole() {
       if (myThirdStateEnabled) {
