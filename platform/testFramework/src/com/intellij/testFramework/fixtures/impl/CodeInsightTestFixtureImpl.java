@@ -801,7 +801,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void performEditorAction(@NotNull final String actionId) {
     assertInitialized();
-    myEditorTestFixture.performEditorAction(actionId);
+    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(actionId));
   }
 
   @NotNull
@@ -1611,8 +1611,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
     final Editor topEditor = getHostEditor();
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
-    return getFoldingData(topEditor, withCollapseStatus);
+    return EdtTestUtil.runInEdtAndGet(() -> {
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      if (policy != null) {
+        policy.waitForHighlighting(getProject(), topEditor);
+      }
+      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+      return getFoldingData(topEditor, withCollapseStatus);
+    });
   }
 
   @NotNull
@@ -1674,7 +1680,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String cleanContent = removeFoldingMarkers(expectedContent);
     if (destinationFileName == null) {
       final String fileName = PathUtil.getFileName(verificationFileName);
-      configureByText(FileTypeManager.getInstance().getFileTypeByFileName(fileName), cleanContent);
+      configureByText(fileName, cleanContent);
     }
     else {
       try {
