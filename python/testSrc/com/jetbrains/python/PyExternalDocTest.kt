@@ -65,7 +65,7 @@ abstract class PyExternalDocTest : PyTestCase() {
   override fun getProjectDescriptor() = ourPy3Descriptor
 }
 
-class PyExterminalDocTestPy3: PyExternalDocTest() {
+class PyExterminalDocTestPy3 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
   fun testBuiltins() { // PY-9061
@@ -102,6 +102,12 @@ class PyExternalDocTestPy2 : PyExternalDocTest() {
 
   fun testCPickle() {
     doTest("import cPick<caret>le", "$pythonDocsLibrary/pickle.html")
+  }
+
+  fun testCPickleDump() {
+    doTest("import cPickle\n" +
+           "cPickle.du<caret>mp()", "$pythonDocsLibrary/pickle.html#pickle.dump")
+
   }
 
   override fun getProjectDescriptor() = ourPyDescriptor
