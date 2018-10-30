@@ -397,7 +397,6 @@ public class UIUtil {
 
   private static final Color ACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.active", 0xa0bad5);
   private static final Color INACTIVE_HEADER_COLOR = JBColor.namedColor("HeaderColor.inactive", Gray._128);
-  private static final Color BORDER_COLOR = JBColor.namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
 
   public static final Color CONTRAST_BORDER_COLOR = JBColor.namedColor("Borders.ContrastBorderColor", new JBColor(Gray.x9B, Gray.x4B));
 
@@ -2717,7 +2716,7 @@ public class UIUtil {
   }
 
   public static Color getBoundsColor() {
-    return getBorderColor();
+    return JBColor.border();
   }
 
   public static Color getBoundsColor(boolean focused) {
@@ -2820,7 +2819,7 @@ public class UIUtil {
    */
   @Deprecated
   public static Color getBorderColor() {
-    return BORDER_COLOR;
+    return JBColor.border();
   }
 
   public static Font getTitledBorderFont() {
@@ -2833,7 +2832,7 @@ public class UIUtil {
    */
   @Deprecated
   public static Color getBorderInactiveColor() {
-    return getBorderColor();
+    return JBColor.border();
   }
 
   /**
@@ -2841,7 +2840,7 @@ public class UIUtil {
    */
   @Deprecated
   public static Color getBorderActiveColor() {
-    return getBorderColor();
+    return JBColor.border();
   }
 
   /**
@@ -2849,7 +2848,7 @@ public class UIUtil {
    */
   @Deprecated
   public static Color getBorderSeparatorColor() {
-    return getBorderColor();
+    return JBColor.border();
   }
 
   @Nullable
