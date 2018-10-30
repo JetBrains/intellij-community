@@ -8,12 +8,14 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.UriUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.UrlClassLoader;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +50,11 @@ class FileTemplatesLoader {
   private static final String INCLUDES_DIR = "includes";
   private static final String CODE_TEMPLATES_DIR = "code";
   private static final String J2EE_TEMPLATES_DIR = "j2ee";
-  private final FileTypeManagerEx myTypeManager;
 
-  private URL myDefaultTemplateDescription;
-  private URL myDefaultIncludeDescription;
+  private final URL myDefaultTemplateDescription;
+  private final URL myDefaultIncludeDescription;
 
-  FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
-    myTypeManager = typeManager;
+  FileTemplatesLoader(@Nullable Project project) {
     File configDir = project == null || project.isDefault()
                      ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
                      : new File(UriUtil.trimTrailingSlashes(ProjectKt.getStateStore(project).getDirectoryStorePath(true)) + "/" + TEMPLATES_DIR);
@@ -68,10 +68,14 @@ class FileTemplatesLoader {
       myInternalTemplatesManager,
       myPatternsManager,
       myCodeTemplatesManager,
-      myJ2eeTemplatesManager};
+      myJ2eeTemplatesManager
+    };
 
-    loadDefaultTemplates(configDir);
+    FileTemplateLoadResult result = loadDefaultTemplates(configDir, Arrays.asList(myAllManagers));
+    myDefaultTemplateDescription = result.getDefaultTemplateDescription();
+    myDefaultIncludeDescription = result.getDefaultIncludeDescription();
     for (FTManager manager : myAllManagers) {
+      manager.setDefaultTemplates(result.getResult().get(manager));
       manager.loadCustomizedContent();
     }
   }
@@ -114,8 +118,10 @@ class FileTemplatesLoader {
     return myDefaultIncludeDescription;
   }
 
-  private void loadDefaultTemplates(@NotNull File configDir) {
-    Set<URL> processedUrls = new HashSet<>();
+  @NotNull
+  private static FileTemplateLoadResult loadDefaultTemplates(@NotNull File configDir, @NotNull List<FTManager> fileTemplateManagers) {
+    FileTemplateLoadResult result = new FileTemplateLoadResult(MultiMap.createSmart());
+    Set<URL> processedUrls = new THashSet<>();
     Set<ClassLoader> processedLoaders = new HashSet<>();
     for (PluginDescriptor plugin : PluginManagerCore.getPlugins()) {
       if (plugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)plugin).isEnabled()) {
@@ -129,11 +135,10 @@ class FileTemplatesLoader {
           if (systemResources.hasMoreElements()) {
             while (systemResources.hasMoreElements()) {
               final URL url = systemResources.nextElement();
-              if (processedUrls.contains(url)) {
+              if (!processedUrls.add(url)) {
                 continue;
               }
-              processedUrls.add(url);
-              loadDefaultsFromRoot(url, configDir);
+              loadDefaultsFromRoot(url, configDir, fileTemplateManagers, result);
             }
           }
         }
@@ -142,43 +147,53 @@ class FileTemplatesLoader {
         }
       }
     }
+    return result;
   }
 
-  private void loadDefaultsFromRoot(@NotNull URL root, @NotNull File configDir) throws IOException {
+  private static void loadDefaultsFromRoot(@NotNull URL root, @NotNull File configDir, @NotNull List<FTManager> fileTemplateManagers, @NotNull FileTemplateLoadResult result) throws IOException {
     final List<String> children = UrlUtil.getChildrenRelativePaths(root);
     if (children.isEmpty()) {
       return;
     }
+
     final Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
-        myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
+        result.setDefaultTemplateDescription(UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.equals("includes/default.html")) {
-        myDefaultIncludeDescription = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path));
+        result.setDefaultIncludeDescription(UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + path)));
       }
       else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
       }
     }
+
     for (final String path : children) {
-      if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) continue;
-      for (FTManager ftManager : myAllManagers) {
+      if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
+        continue;
+      }
+
+      for (FTManager ftManager : fileTemplateManagers) {
         File managerRoot = ftManager.getConfigRoot();
+        //noinspection FileEqualsUsage
         String relativePath = configDir.equals(managerRoot) ? "" : FileUtil.getRelativePath(configDir, managerRoot)+"/";
         String prefix = FileUtil.toSystemIndependentName(relativePath);
-        if (matchesPrefix(path, prefix)) {
-          String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
-          String extension = myTypeManager.getExtension(filename);
-          String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-          URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm())+ "/" + path));
-          String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-          URL descriptionUrl = descriptionPath == null ? null :
-                               UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
-          assert templateUrl != null;
-          ftManager.addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
-          break; // FTManagers loop
+        if (!matchesPrefix(path, prefix)) {
+          continue;
         }
+
+        String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
+        String extension = FileUtilRt.getExtension(filename);
+        String templateName = filename.substring(0, filename.length() - extension.length() - 1);
+        URL templateUrl = UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm())+ "/" + path));
+        String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
+        URL descriptionUrl = descriptionPath == null ? null :
+                             UrlClassLoader.internProtocol(new URL(UriUtil.trimTrailingSlashes(root.toExternalForm()) + "/" + descriptionPath));
+        assert templateUrl != null;
+        result.getResult().putValue(ftManager, new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
+        // FTManagers loop
+        break;
       }
     }
   }

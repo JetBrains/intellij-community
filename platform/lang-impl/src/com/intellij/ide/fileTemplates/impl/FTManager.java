@@ -172,9 +172,12 @@ public class FTManager {
     }
   }
 
-  void addDefaultTemplate(@NotNull DefaultTemplate template) {
-    myDefaultTemplates.add(template);
-    createAndStoreBundledTemplate(template);
+  void setDefaultTemplates(@NotNull Collection<DefaultTemplate> templates) {
+    myDefaultTemplates.clear();
+    myDefaultTemplates.addAll(templates);
+    for (DefaultTemplate template : templates) {
+      createAndStoreBundledTemplate(template);
+    }
   }
 
   @NotNull
