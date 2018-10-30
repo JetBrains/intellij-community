@@ -123,13 +123,6 @@ public class PsiUtil {
     return false;
   }
 
-  public static boolean isLValueOfOperatorAssignment(@NotNull GrReferenceExpression element) {
-    PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
-    return parent instanceof GrAssignmentExpression
-           && ((GrAssignmentExpression)parent).isOperatorAssignment()
-           && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
-  }
-
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
                                      @NotNull PsiMethod method,
                                      PsiSubstitutor substitutor,
@@ -372,11 +365,11 @@ public class PsiUtil {
       @Override
       public Iterator<PsiClass> iterator() {
         return new Iterator<PsiClass>() {
-          TIntStack indices = new TIntStack();
-          Stack<PsiClassType[]> superTypesStack = new Stack<>();
+          final TIntStack indices = new TIntStack();
+          final Stack<PsiClassType[]> superTypesStack = new Stack<>();
+          final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;
           boolean nextObtained;
-          Set<PsiClass> visited = new HashSet<>();
 
           {
             if (includeSelf) {
@@ -849,7 +842,11 @@ public class PsiUtil {
 
   public static boolean isUsedInIncOrDec(GrExpression expr) {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(expr, GrParenthesizedExpression.class);
+    return isPlusPlusOrMinusMinus(parent);
+  }
 
+  @Contract("null -> false")
+  public static boolean isPlusPlusOrMinusMinus(@Nullable PsiElement parent) {
     if (parent instanceof GrUnaryExpression) {
       IElementType tokenType = ((GrUnaryExpression)parent).getOperationTokenType();
       return tokenType == GroovyTokenTypes.mINC || tokenType == GroovyTokenTypes.mDEC;
@@ -857,32 +854,30 @@ public class PsiUtil {
     return false;
   }
 
-  public static GrReferenceExpression qualifyMemberReference(GrReferenceExpression refExpr, PsiMember member, String name) {
+  public static void qualifyMemberReference(@NotNull GrReferenceExpression refExpr, @NotNull PsiMember member, String name) {
     assert refExpr.getQualifierExpression() == null;
 
     final PsiClass clazz = member.getContainingClass();
     assert clazz != null;
 
-    final PsiElement replaced;
     if (member.hasModifierProperty(PsiModifier.STATIC)) {
       final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
         .createReferenceExpressionFromText(clazz.getQualifiedName() + "." + name);
-      replaced = refExpr.replace(newRefExpr);
+      refExpr.replace(newRefExpr);
     }
     else {
       final PsiClass containingClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
       if (member.getManager().areElementsEquivalent(containingClass, clazz)) {
         final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
           .createReferenceExpressionFromText("this." + name);
-        replaced = refExpr.replace(newRefExpr);
+        refExpr.replace(newRefExpr);
       }
       else {
         final GrReferenceExpression newRefExpr = GroovyPsiElementFactory.getInstance(member.getProject())
           .createReferenceExpressionFromText(clazz.getName() + ".this." + name);
-        replaced = refExpr.replace(newRefExpr);
+        refExpr.replace(newRefExpr);
       }
     }
-    return (GrReferenceExpression)replaced;
   }
 
   public static GroovyResolveResult[] getConstructorCandidates(PsiClassType classType, PsiType[] argTypes, GroovyPsiElement context) {
@@ -907,14 +902,13 @@ public class PsiUtil {
       while ((parent = element.getParent()) instanceof GrParenthesizedExpression) {
         element = parent;
       }
-      return element;
     }
     else {
       while (element instanceof GrParenthesizedExpression) {
         element = ((GrParenthesizedExpression)element).getOperand();
       }
-      return element;
     }
+    return element;
   }
 
   @NotNull
@@ -961,6 +955,7 @@ public class PsiUtil {
 
   private static final String[] visibilityModifiers = new String[]{PsiModifier.PRIVATE, PsiModifier.PROTECTED, PsiModifier.PUBLIC};
 
+  @SuppressWarnings("Duplicates")
   public static void escalateVisibility(PsiMember owner, PsiElement place) {
     PsiModifierList modifierList = owner.getModifierList();
     LOG.assertTrue(modifierList != null);
