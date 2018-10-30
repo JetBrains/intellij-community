@@ -79,12 +79,16 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
   }
 
   private void highlightKeyword(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    highlightAsKeyword(node.getNode().findChildByType(elementType));
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON37)) {
+      highlightAsKeyword(node.getNode().findChildByType(elementType));
+    }
   }
 
   private void highlightKeywords(@NotNull PsiElement node, @NotNull PyElementType elementType) {
-    for (ASTNode astNode : node.getNode().getChildren(TokenSet.create(elementType))) {
-      highlightAsKeyword(astNode);
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON37)) {
+      for (ASTNode astNode : node.getNode().getChildren(TokenSet.create(elementType))) {
+        highlightAsKeyword(astNode);
+      }
     }
   }
 
