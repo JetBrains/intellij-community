@@ -294,7 +294,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       result.append("\n ");
     }
     result.append(escaped(" -> "))
-          .append(formatTypeWithLinks(context.getReturnType(function), function, context));
+      .append(formatTypeWithLinks(context.getReturnType(function), function, context));
     return result.toString();
   }
 
@@ -598,7 +598,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+    PsiNamedElement namedElement = ApplicationManager.getApplication().runReadAction((Computable<PsiNamedElement>)() -> {
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
 
@@ -615,31 +615,31 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         return null;
       }
 
-      PsiNamedElement namedElement = getNamedElement(element);
+      return getNamedElement(element);
+    });
 
 
-      for (final PythonDocumentationLinkProvider documentationLinkProvider :
-        PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
+    for (final PythonDocumentationLinkProvider documentationLinkProvider :
+      PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
 
-        Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+      Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
-        if (quickDocExtractor != null) {
-          for (String url : docUrls) {
-              try {
-                final Document document = Jsoup.parse(new URL(url), 1000);
-                String quickDoc = quickDocExtractor.apply(document);
-                if (StringUtil.isNotEmpty(quickDoc)) {
-                  return quickDoc;
-                }
-              }
-              catch (IOException e) {
+      if (quickDocExtractor != null) {
+        for (String url : docUrls) {
+          try {
+            final Document document = Jsoup.parse(new URL(url), 1000);
+            String quickDoc = quickDocExtractor.apply(document);
+            if (StringUtil.isNotEmpty(quickDoc)) {
+              return quickDoc;
             }
+          }
+          catch (IOException e) {
           }
         }
       }
+    }
 
-      return null;
-    });
+    return null;
   }
 
   @Nullable
@@ -748,5 +748,4 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     describeTypeWithLinks(type, context, anchor, holder);
     return holder.toString();
   }
-
 }
