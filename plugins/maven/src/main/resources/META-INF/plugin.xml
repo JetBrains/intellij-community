@@ -319,6 +319,12 @@
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
   </extensions>
 
+  <application-components>
+    <component>
+      <implementation-class>org.jetbrains.idea.maven.utils.MavenEnvironmentRegistrar</implementation-class>
+    </component>
+  </application-components>
+
   <project-components>
     <component>
       <implementation-class>org.jetbrains.idea.maven.project.MavenProjectsManager</implementation-class>
