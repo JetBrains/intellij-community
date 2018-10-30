@@ -80,6 +80,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private static final String CONTRIBUTOR_ITEM_SELECTED = "ContributorItemChosen";
   private static final String MORE_ITEM_SELECTED = "MoreItemChosen";
   private static final String COMMAND_USED = "CommandUsed";
+  private static final String COMMAND_COMPLETED = "CommandCompleted";
+  public static final String TAB_SWITCHED = "TabSwitched";
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -402,6 +404,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         @Override
         public void mousePressed(MouseEvent e) {
           switchToTab(SETab.this);
+          featureUsed(TAB_SWITCHED, getID());
         }
       });
     }
@@ -542,11 +545,16 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         if (e.getKeyCode() == KeyEvent.VK_TAB) {
           // if user typed command then TAB key completes it
           // in other case TAB key switches tabs
-          if (!completeCommand()) {
+          if (completeCommand()) {
+            featureUsed(COMMAND_COMPLETED, "Tab");
+          }
+          else {
             if (e.getModifiers() == 0) {
               switchToNextTab();
+              featureUsed(TAB_SWITCHED, "Tab");
             } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
               switchToPrevTab();
+              featureUsed(TAB_SWITCHED, "Shift+Tab");
             }
           }
           e.consume();
@@ -570,8 +578,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
     });
 
-    registerAction(IdeActions.ACTION_NEXT_TAB, __ -> switchToNextTab());
-    registerAction(IdeActions.ACTION_PREVIOUS_TAB, __ -> switchToPrevTab());
+    registerAction(IdeActions.ACTION_NEXT_TAB, e -> {
+      switchToNextTab();
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
+    });
+    registerAction(IdeActions.ACTION_PREVIOUS_TAB, e -> {
+      switchToPrevTab();
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
+    });
     registerAction(IdeActions.ACTION_SWITCHER, e -> {
       if (e.getInputEvent().isShiftDown()) {
         switchToPrevTab();
@@ -579,6 +593,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         switchToNextTab();
       }
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
     });
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
@@ -643,6 +658,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     Optional.ofNullable(ActionManager.getInstance().getAction(actionID))
       .map(a -> a.getShortcutSet())
       .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
+  }
+
+  private static Optional<String> getEventShortcut(AnActionEvent event) {
+    if (event.getInputEvent() instanceof KeyEvent) {
+      return Optional.of((KeyEvent)event.getInputEvent())
+        .map(e -> KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers())));
+    }
+    return Optional.empty();
   }
 
   private boolean completeCommand() {
@@ -1285,7 +1308,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @NotNull
     @Override
     public String getSearchProviderId() {
-      return "stubCommandsContributor";
+      return "CommandsContributor";
     }
 
     @NotNull
@@ -1317,6 +1340,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
       mySearchField.setText(((SearchEverywhereCommandInfo)selected).getCommandWithPrefix() + " ");
+      featureUsed(COMMAND_COMPLETED);
       return false;
     }
 
