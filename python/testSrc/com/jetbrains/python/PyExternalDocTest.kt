@@ -35,10 +35,7 @@ import os
 
 print(os.path.islink)
 print(os.path.isf<caret>ile)
-    """.trimIndent(),
-                   """
-
-                   """.trimIndent())
+    """.trimIndent(), """<dt id="os.path.isfile">""".trimIndent())
   }
 
   private fun doTest(text: String, expectedUrl: String) {
@@ -80,9 +77,10 @@ print(os.path.isf<caret>ile)
     val provider = DocumentationManager.getProviderFromElement(element)
     var urls = provider.getUrlFor(element, originalElement)
 
-    urls = listOf(urls!![0].replace("3.7 Mock Sdk", "3.7"))
+    urls = listOf(urls!![0].replace("3.7 Mock SDK", "3.7"))
 
-    TestCase.assertEquals(expectedHtml, (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls))
+    TestCase.assertTrue(
+      (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls)!!.contains(expectedHtml))
   }
 
   private fun getDocUrl(element: PsiElement, originalElement: PsiElement): String? {
