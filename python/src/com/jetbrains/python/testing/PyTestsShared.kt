@@ -411,6 +411,12 @@ abstract class PyAbstractTestConfiguration(project: Project,
                                            private val runnerName: String)
   : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider {
+
+  /**
+   * Args after it passed to test runner itself
+   */
+  protected val rawArgumentsSeparator = "--"
+
   @DelegationProperty
   val target: ConfigurationTarget = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
   @ConfigField
@@ -530,7 +536,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   private fun generateRawArguments(forRerun: Boolean = false): List<String> {
     val rawArguments = additionalArguments + " " + getCustomRawArgumentsString(forRerun)
     if (rawArguments.isNotBlank()) {
-      return listOf("--") + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
+      return listOf(rawArgumentsSeparator) + com.intellij.util.execution.ParametersListUtil.parse(rawArguments, false, true)
     }
     return emptyList()
   }
