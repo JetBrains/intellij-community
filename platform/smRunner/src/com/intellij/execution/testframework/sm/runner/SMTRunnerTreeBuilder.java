@@ -25,8 +25,12 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
   }
 
   @Override
-  public void repaintWithParents(final SMTestProxy testProxy) {
-    updateTestsSubtree(testProxy);
+  public void repaintWithParents(SMTestProxy testProxy) {
+    do {
+      getTreeModel().invalidate(testProxy, false);
+      testProxy = testProxy.getParent();
+    }
+    while (testProxy != null);
   }
 
   @Override
