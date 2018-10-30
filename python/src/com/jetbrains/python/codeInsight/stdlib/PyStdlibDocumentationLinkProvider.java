@@ -987,7 +987,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
   private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
 
-    Pair<String, String> modName = getModuleName(moduleName.toString(), moduleName.toString());
+    Pair<String, String> modName = getModuleName(moduleName.toString());
 
     final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
     final Map<String, String> moduleToWebpageName =
@@ -1016,7 +1016,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return urlBuilder.toString();
   }
 
-  private static Pair<String, String> getModuleName(String qname, String moduleName) {
+  private static Pair<String, String> getModuleName(String qname) {
+    String moduleName = qname;
     if (qname.equals("ntpath") || qname.equals("posixpath")) {
       qname = "os.path";
     } else if (qname.equals("genericpath")) {
@@ -1039,7 +1040,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
   public String getModuleNameForDocumentationUrl(PsiElement element, PsiElement originalElement) {
     QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
 
-    return getModuleName(qName.toString(), qName.toString()).second;
+    return qName != null? getModuleName(qName.toString()).second : "";
   }
 
   private static final class MyBuilder extends ImmutableMap.Builder<String, String> {
