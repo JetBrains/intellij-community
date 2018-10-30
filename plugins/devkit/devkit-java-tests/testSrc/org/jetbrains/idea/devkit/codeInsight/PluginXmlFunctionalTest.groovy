@@ -324,6 +324,10 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("pluginWithBranchNumberInUntilBuild.xml")
   }
 
+  void testPluginWithInvalidSinceUntilBuild() {
+    myFixture.testHighlighting("pluginWithInvalidSinceUntilBuild.xml")
+  }
+
   void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
     myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
     myFixture.launchAction(myFixture.findSingleIntention("Change 'until-build'"))
