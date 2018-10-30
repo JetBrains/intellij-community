@@ -540,7 +540,15 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_TAB) {
-          completeCommand();
+          // if user typed command then TAB key completes it
+          // in other case TAB key switches tabs
+          if (!completeCommand()) {
+            if (e.getModifiers() == 0) {
+              switchToNextTab();
+            } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
+              switchToPrevTab();
+            }
+          }
           e.consume();
         }
 
@@ -624,7 +632,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void showDescriptionForIndex(int index) {
-    if (index >= 0) {
+    if (index >= 0 && !myListModel.isMoreElement(index)) {
       SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
       String description = (String) contributor.getDataForItem(myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
       ActionMenu.showDescriptionInStatusBar(true, myResultsList, description);
@@ -637,7 +645,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
   }
 
-  private void completeCommand() {
+  private boolean completeCommand() {
     String pattern = getSearchPattern();
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
     if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
@@ -648,8 +656,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       });
       if (command != null) {
         mySearchField.setText(command.getCommandWithPrefix() + " ");
+        return true;
       }
     }
+    return false;
   }
 
   private Optional<SearchEverywhereCommandInfo> getSelectedCommand(String typedCommand) {
