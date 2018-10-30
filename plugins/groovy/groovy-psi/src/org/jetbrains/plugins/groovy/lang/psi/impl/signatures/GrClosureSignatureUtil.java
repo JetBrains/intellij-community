@@ -278,7 +278,8 @@ public class GrClosureSignatureUtil {
     return ApplicabilityResult.applicable;
   }
 
-  static GrSignature curryImpl(GrClosureSignature original, PsiType[] args, int position, PsiElement context) {
+  @Nullable
+  static GrSignature curryImpl(@NotNull GrClosureSignature original, PsiType[] args, int position, @NotNull PsiElement context) {
     GrClosureParameter[] params = original.getParameters();
 
     List<GrClosureParameter> newParams = new ArrayList<>(params.length);
@@ -289,7 +290,7 @@ public class GrClosureSignatureUtil {
       position = params.length - args.length;
     }
 
-    if (position < 0 || position >= params.length) return GrMultiSignature.EMPTY_SIGNATURE;
+    if (position < 0 || position >= params.length) return null;
 
     for (int i = 0; i < params.length; i++) {
       if (params[i].isOptional()) {
