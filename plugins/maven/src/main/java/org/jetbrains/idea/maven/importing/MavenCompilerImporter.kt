@@ -53,6 +53,8 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       else {
         LOG.error(backendCompiler.toString() + " is not registered.")
       }
+    } else {
+      project.putUserData(DEFAULT_COMPILER_IS_RESOLVED, true)
     }
   }
 
