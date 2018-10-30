@@ -17,6 +17,7 @@ import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -380,6 +381,7 @@ public class GrClosureSignatureUtil {
                                                 boolean partial) {
     if (args.length > params.length && !partial) return null;
 
+    //noinspection unchecked
     ArgInfo<Arg>[] map = new ArgInfo[params.length];
     int notOptional = params.length - optional;
     int optionalArgs = args.length - notOptional;
@@ -398,11 +400,12 @@ public class GrClosureSignatureUtil {
       map[cur] = new ArgInfo<>(args[i], type);
     }
     for (int i = 0; i < map.length; i++) {
-      if (map[i] == null) map[i] = new ArgInfo<>(Collections.<Arg>emptyList(), false, null);
+      if (map[i] == null) map[i] = new ArgInfo<>(Collections.emptyList(), false, null);
     }
     return map;
   }
 
+  @Contract("null, _, _ -> true; _, null, _ -> true")
   private static boolean isAssignableByConversion(@Nullable PsiType paramType, @Nullable PsiType argType, @NotNull PsiElement context) {
     if (argType == null || paramType == null) {
       return true;
@@ -474,7 +477,10 @@ public class GrClosureSignatureUtil {
         types[i] = typeComputer.fun(args[i]);
       }
       paramLength = params.length - 1;
-      vararg = ((PsiArrayType)params[paramLength].getType()).getComponentType();
+      final PsiType lastParamType = params[paramLength].getType();
+      assert lastParamType instanceof PsiArrayType;
+      vararg = ((PsiArrayType)lastParamType).getComponentType();
+      //noinspection unchecked
       map = new ArgInfo[params.length];
     }
 
@@ -484,7 +490,7 @@ public class GrClosureSignatureUtil {
       for (int i = 0; i < paramLength; i++) {
         if (!params[i].isOptional()) notOptionals++;
       }
-      if (isApplicableInternal(0, 0, false, notOptionals)) {
+      if (isApplicableInternal(0, 0, notOptionals)) {
         for (int i = 0; i < map.length; i++) {
           if (map[i] == null) map[i] = new ArgInfo<>(false, null);
         }
@@ -495,7 +501,8 @@ public class GrClosureSignatureUtil {
       }
     }
 
-    private boolean isApplicableInternal(int curParam, int curArg, boolean skipOptionals, int notOptional) {
+    private boolean isApplicableInternal(int curParam, int curArg, int notOptional) {
+      boolean skipOptionals = false;
       int startParam = curParam;
       if (notOptional > args.length - curArg) return false;
       if (notOptional == args.length - curArg) skipOptionals = true;
@@ -509,7 +516,7 @@ public class GrClosureSignatureUtil {
 
         if (params[curParam].isOptional()) {
           if (isAssignableByConversion(params[curParam].getType(), types[curArg], context) &&
-              isApplicableInternal(curParam + 1, curArg + 1, false, notOptional)) {
+              isApplicableInternal(curParam + 1, curArg + 1, notOptional)) {
             map[curParam] = new ArgInfo<>(args[curArg], types[curArg]);
             return true;
           }
@@ -703,6 +710,7 @@ public class GrClosureSignatureUtil {
     final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[0]), o -> o.type, context, partial);
     if (innerMap == null) return null;
 
+    //noinspection unchecked
     ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];
     int i = 0;
     if (hasNamedArgs) {
@@ -886,7 +894,7 @@ public class GrClosureSignatureUtil {
   }
 
 
-  public static class MapResultWithError<Arg> {
+  public static class MapResultWithError {
     private final List<Pair<Integer, PsiType>> errorsAndExpectedType;
 
     public MapResultWithError(List<Pair<Integer, PsiType>> errorsAndExpectedType) {
@@ -899,11 +907,11 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  public static <Arg> MapResultWithError<Arg> mapSimpleSignatureWithErrors(@NotNull GrClosureSignature signature,
-                                                                            @NotNull Arg[] args,
-                                                                            @NotNull Function<? super Arg, ? extends PsiType> typeComputer,
-                                                                            @NotNull GroovyPsiElement context,
-                                                                            int maxErrorCount) {
+  public static <Arg> MapResultWithError mapSimpleSignatureWithErrors(@NotNull GrClosureSignature signature,
+                                                                      @NotNull Arg[] args,
+                                                                      @NotNull Function<? super Arg, ? extends PsiType> typeComputer,
+                                                                      @NotNull GroovyPsiElement context,
+                                                                      int maxErrorCount) {
     final GrClosureParameter[] params = signature.getParameters();
     if (args.length < params.length) return null;
 
@@ -914,12 +922,14 @@ public class GrClosureSignatureUtil {
 
     for (int i = 0; i < params.length; i++) {
       final PsiType type = typeComputer.fun(args[i]);
-      if (isAssignableByConversion(params[i].getType(), type, context)) continue;
-      if (params[i].getType() instanceof PsiArrayType && i == params.length - 1) {
+      final GrClosureParameter parameter = params[i];
+      final PsiType parameterType = parameter.getType();
+      if (isAssignableByConversion(parameterType, type, context)) continue;
+      if (parameterType instanceof PsiArrayType && i == params.length - 1) {
         if (i + 1 == args.length) {
-          errors.add(new Pair<>(i, params[i].getType()));
+          errors.add(new Pair<>(i, parameterType));
         }
-        final PsiType ellipsis = ((PsiArrayType)params[i].getType()).getComponentType();
+        final PsiType ellipsis = ((PsiArrayType)parameterType).getComponentType();
         for (int j = i; j < args.length; j++) {
           if (!isAssignableByConversion(ellipsis, typeComputer.fun(args[j]), context)) {
             errorCount++;
@@ -931,10 +941,10 @@ public class GrClosureSignatureUtil {
       else {
         errorCount++;
         if (errorCount > maxErrorCount) return null;
-        errors.add(new Pair<>(i, params[i].getType()));
+        errors.add(new Pair<>(i, parameterType));
       }
     }
-    return new MapResultWithError<>(errors);
+    return new MapResultWithError(errors);
   }
 
   public static List<GrClosureSignature> generateSimpleSignatures(@NotNull GrSignature signature) {
@@ -960,8 +970,8 @@ public class GrClosureSignatureUtil {
           });
         }
 
-        final int pcount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;
-        for (int i = pcount; i >= 0; i--) {
+        final int pCount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;
+        for (int i = pCount; i >= 0; i--) {
           if (original[i].isOptional()) {
             result.add(new GrImmediateClosureSignatureImpl(parameters.toArray(GrClosureParameter.EMPTY_ARRAY), signature.getReturnType(), signature.isVarargs(), false));
             parameters.remove(i);

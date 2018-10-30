@@ -118,7 +118,7 @@ public class GroovyTypeCheckVisitorHelper {
     final List<Pair<Integer, PsiType>> allErrors = new ArrayList<>();
     final List<GrClosureSignature> signatures = GrClosureSignatureUtil.generateSimpleSignatures(signature);
     for (GrClosureSignature closureSignature : signatures) {
-      final GrClosureSignatureUtil.MapResultWithError<PsiType> map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
+      final GrClosureSignatureUtil.MapResultWithError map = GrClosureSignatureUtil.mapSimpleSignatureWithErrors(
         closureSignature, argumentTypes, id, argumentList, 255
       );
       if (map != null) {
