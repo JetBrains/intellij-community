@@ -23,7 +23,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -42,10 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -544,12 +541,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Nullable
   public static String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
-    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+    PsiFileSystemItem file = getFile(element);
     if (file == null) return null;
-    if (PyNames.INIT_DOT_PY.equals(file.getName())) {
-      file = file.getParent();
-      assert file != null;
-    }
     final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     if (sdk == null) {
       return null;
@@ -560,15 +553,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     final PythonDocumentationMap map = PythonDocumentationMap.getInstance();
     final String pyVersion = pyVersion(sdk.getVersionString());
-    PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
-                                   ? (PsiNamedElement)element
-                                   : null;
-    if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
-      final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
-      if (containingClass != null) {
-        namedElement = containingClass;
-      }
-    }
+    PsiNamedElement namedElement = getNamedElement(element);
     final String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
       return url;
@@ -580,6 +565,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PsiFileSystemItem getFile(PsiElement element) {
+    PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+
+    if (file == null) return null;
+    if (PyNames.INIT_DOT_PY.equals(file.getName())) {
+      file = file.getParent();
+      assert file != null;
+    }
+    return file;
   }
 
   @Nullable
@@ -604,17 +601,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
-      PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-      if (file instanceof PyiFile) {
-        return null;
-      }
+
+      PsiFileSystemItem file = getFile(element);
+
       if (file == null) return null;
-      if (PyNames.INIT_DOT_PY.equals(file.getName())) {
-        file = file.getParent();
-        assert file != null;
-      }
-      final Sdk sdk = PyBuiltinCache.findSdkForFile(file);
-      if (sdk == null) {
+
+      if (file instanceof PyiFile) {
         return null;
       }
 
@@ -622,15 +614,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       if (moduleQName == null) {
         return null;
       }
-      PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
-                                     ? (PsiNamedElement)element
-                                     : null;
-      if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
-        final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
-        if (containingClass != null) {
-          namedElement = containingClass;
-        }
-      }
+
+      PsiNamedElement namedElement = getNamedElement(element);
 
 
       for (final PythonDocumentationLinkProvider documentationLinkProvider :
@@ -655,6 +640,20 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       return null;
     });
+  }
+
+  @Nullable
+  private static PsiNamedElement getNamedElement(PsiElement element) {
+    PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
+                                   ? (PsiNamedElement)element
+                                   : null;
+    if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
+      final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
+      if (containingClass != null) {
+        namedElement = containingClass;
+      }
+    }
+    return namedElement;
   }
 
   @Override
