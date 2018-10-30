@@ -139,7 +139,7 @@ public class JUnit4TestListener extends RunListener {
       final String fqName = JUnit4ReflectionUtil.getClassName(descriptionFromHistory);
       final String className = getShortName(fqName);
       if (!className.equals(myRootName)) {
-        myPrintStream.println("\n##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" +  getClassLocation(fqName) + "]");
+        myPrintStream.println("\n##teamcity[testSuiteStarted name=\'" + escapeName(className) + "\'" + getSuiteLocation(descriptionFromHistory, description, fqName) + "]");
         myStartedSuites.add(descriptionFromHistory);
       }
     }
@@ -147,10 +147,6 @@ public class JUnit4TestListener extends RunListener {
     myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(methodName.replaceFirst("/", ".")) + "\' " + 
                           getTestMethodLocation(methodName, classFQN) + "]");
     myCurrentTestStart = currentTime();
-  }
-
-  private static String getClassLocation(String fqName) {
-    return " locationHint=\'java:suite://" + escapeName(fqName) + "\'";
   }
 
   private static boolean isHierarchyDifferent(List parents, 
@@ -249,7 +245,7 @@ public class JUnit4TestListener extends RunListener {
     }
 
     myCurrentTest = description;
-    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\' " + getClassLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
+    myPrintStream.println("\n##teamcity[testStarted name=\'" + escapeName(CLASS_CONFIGURATION) + "\'" + getSuiteLocation(JUnit4ReflectionUtil.getClassName(description)) + " ]");
   }
 
   private void testFailure(Failure failure, Description description, String messageName, String methodName) {
@@ -488,24 +484,32 @@ public class JUnit4TestListener extends RunListener {
       final Description nextDescription = (Description)next;
       if ((myRootName == null || !myRootName.equals(className)) && !pass) {
         pass = true;
-        String locationHint = className;
-        if (isParameter((Description)description)) {
-          final String displayName = nextDescription.getDisplayName();
-          final int paramIdx = displayName.indexOf(locationHint);
-          if (paramIdx > -1) {
-            locationHint = displayName.substring(paramIdx + locationHint.length());
-            if (locationHint.startsWith("(") && locationHint.endsWith(")")) {
-              locationHint = locationHint.substring(1, locationHint.length() - 1) + "." + className; 
-            }
-          }
-        }
-        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\' locationHint=\'java:suite://" + escapeName(locationHint) + "\']");
+        myPrintStream.println("##teamcity[suiteTreeStarted name=\'" + escapeName(getShortName(className)) + "\'" + getSuiteLocation(description, nextDescription, className) + "]");
       }
       sendTree(nextDescription, description, pParents);
     }
     if (pass) {
       myPrintStream.println("##teamcity[suiteTreeEnded name=\'" + escapeName(getShortName(JUnit4ReflectionUtil.getClassName((Description)description))) + "\']");
     }
+  }
+
+  private static String getSuiteLocation(Description parentDescription, Description description, String parentClassName) {
+    String locationHint = parentClassName;
+    if (isParameter(parentDescription)) {
+      final String displayName = description.getDisplayName();
+      final int paramIdx = displayName.indexOf(locationHint);
+      if (paramIdx > -1) {
+        locationHint = displayName.substring(paramIdx + locationHint.length());
+        if (locationHint.startsWith("(") && locationHint.endsWith(")")) {
+          locationHint = locationHint.substring(1, locationHint.length() - 1) + "." + parentClassName; 
+        }
+      }
+    }
+    return getSuiteLocation(locationHint);
+  }
+
+  private static String getSuiteLocation(String locationHint) {
+    return " locationHint=\'java:suite://" + escapeName(locationHint) + "\'";
   }
 
   private static boolean isWarning(String methodName, String className) {
