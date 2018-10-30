@@ -21,7 +21,9 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -50,21 +52,25 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
   @Override
   public void visitPyForStatement(PyForStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    highlightError(node, PyTokenTypes.ASYNC_KEYWORD, "'async' outside async function");
   }
 
   @Override
   public void visitPyWithStatement(PyWithStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
+    highlightError(node, PyTokenTypes.ASYNC_KEYWORD, "'async' outside async function");
   }
 
   @Override
   public void visitPyPrefixExpression(PyPrefixExpression node) {
     highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
+    highlightError(node, PyTokenTypes.AWAIT_KEYWORD, "'await' outside async function");
   }
 
   @Override
   public void visitPyComprehensionElement(PyComprehensionElement node) {
     highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
+    highlightErrors(node, PyTokenTypes.ASYNC_KEYWORD, "'async' outside async function");
   }
 
   @Override
@@ -87,5 +93,37 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
       final Annotation annotation = getHolder().createInfoAnnotation(astNode, null);
       annotation.setTextAttributes(PyHighlighter.PY_KEYWORD);
     }
+  }
+
+  private void highlightError(@NotNull PsiElement node, @NotNull PyElementType elementType, @NotNull String message) {
+    if (insideNonAsyncFunctionInPython37AndLater(node)) {
+      highlightAsError(node.getNode().findChildByType(elementType), message);
+    }
+  }
+
+  private void highlightErrors(@NotNull PsiElement node, @NotNull PyElementType elementType, @NotNull String message) {
+    if (insideNonAsyncFunctionInPython37AndLater(node)) {
+      for (ASTNode child : node.getNode().getChildren(TokenSet.create(elementType))) {
+        highlightAsError(child, message);
+      }
+    }
+  }
+
+  private void highlightAsError(@Nullable ASTNode astNode, @NotNull String message) {
+    if (astNode != null) {
+      getHolder().createErrorAnnotation(astNode, message);
+    }
+  }
+
+  private static boolean insideNonAsyncFunctionInPython37AndLater(@NotNull PsiElement node) {
+    if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON37)) {
+      // In other Python versions `await` and `async` will be correctly highlighted as errors
+      // due to StatementParsing.filter(IElementType, int, int, CharSequence, boolean)
+
+      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, ScopeOwner.class);
+      return function != null && !function.isAsync();
+    }
+
+    return false;
   }
 }

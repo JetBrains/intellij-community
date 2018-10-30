@@ -391,6 +391,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON37, false, false);
   }
 
+  // PY-32067
+  public void testAsyncAndAwaitInsideNonAsyncFunctionInPy37() {
+    doTest(LanguageLevel.PYTHON37, false, false);
+  }
+
   // PY-27913
   public void testDunderClassGetItem() {
     doTest(LanguageLevel.PYTHON37, false, true);
