@@ -3,6 +3,7 @@ package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -324,7 +325,9 @@ public class PerformanceWatcher implements Disposable {
       myLastEdtAlive = System.currentTimeMillis();
       final long latency = System.currentTimeMillis() - myCreationMillis;
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
-      myPublisher.uiResponded(latency);
+      final Application application = ApplicationManager.getApplication();
+      if (application.isDisposed()) return;
+      application.getMessageBus().syncPublisher(IdePerformanceListener.TOPIC).uiResponded(latency);
     }
   }
 
