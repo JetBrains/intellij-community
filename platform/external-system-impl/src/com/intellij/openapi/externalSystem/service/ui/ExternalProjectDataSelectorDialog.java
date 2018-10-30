@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -52,6 +53,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.BooleanValueHolder;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -780,5 +782,15 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     public boolean displayTextInToolbar() {
       return true;
     }
+  }
+
+  @Override
+  public boolean showAndGet() {
+    final BooleanValueHolder result = new BooleanValueHolder(false);
+    DumbService.getInstance(myProject).suspendIndexingAndRun(
+      "Select External Data",
+      () -> result.setValue(super.showAndGet())
+    );
+    return result.getValue();
   }
 }
