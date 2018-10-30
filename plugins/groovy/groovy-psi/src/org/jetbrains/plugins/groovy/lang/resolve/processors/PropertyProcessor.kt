@@ -16,20 +16,11 @@ import org.jetbrains.plugins.groovy.lang.resolve.PropertyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class PropertyProcessor(
-  private val receiverType: Lazy<PsiType?>,
   propertyName: String,
   private val propertyKind: PropertyKind,
   argumentTypes: () -> Array<PsiType?>?,
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
-
-  constructor(
-    receiverType: PsiType?,
-    propertyName: String,
-    propertyKind: PropertyKind,
-    argumentTypes: () -> Array<PsiType?>?,
-    place: PsiElement
-  ) : this(lazyOf(receiverType), propertyName, propertyKind, argumentTypes, place)
 
   private val accessorName = propertyKind.getAccessorName(propertyName)
   private val argumentTypes by lazy(LazyThreadSafetyMode.NONE, argumentTypes)
@@ -37,10 +28,6 @@ class PropertyProcessor(
   init {
     nameHint(accessorName)
     elementClassHint(ElementClassHint.DeclarationKind.METHOD)
-  }
-
-  private val substitutorComputer by lazy(LazyThreadSafetyMode.NONE /* accessed in current thread only */) {
-    SubstitutorComputer(receiverType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, place, place)
   }
 
   override fun execute(element: PsiElement, state: ResolveState): Boolean {
@@ -54,7 +41,6 @@ class PropertyProcessor(
       element = element,
       place = place,
       state = state,
-      substitutorComputer = substitutorComputer,
       argumentTypes = argumentTypes
     )
 

@@ -3,18 +3,21 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer
 
 class PropertyResolveResult(
   element: PsiMethod,
   place: PsiElement,
   state: ResolveState,
-  substitutorComputer: SubstitutorComputer,
   argumentTypes: Array<PsiType?>?
 ) : BaseGroovyResolveResult<PsiMethod>(element, place, state) {
 
+  private val receiverType = state[ClassHint.THIS_TYPE]
+
   private val fullSubstitutor by lazy {
-    substitutorComputer.obtainSubstitutor(super.getSubstitutor(), element, currentFileResolveContext)
+    val computer = SubstitutorComputer(receiverType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, place, place)
+    computer.obtainSubstitutor(super.getSubstitutor(), element, currentFileResolveContext)
   }
 
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
