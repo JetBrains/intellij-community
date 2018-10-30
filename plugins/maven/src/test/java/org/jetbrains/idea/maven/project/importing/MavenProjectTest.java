@@ -555,6 +555,33 @@ public class MavenProjectTest extends MavenImportingTestCase {
                                     "-Averbose=true", "-parameters", "-bootclasspath", "rt.jar_path_here");
   }
 
+  public void testCompilerPluginConfigurationUnresolvedCompilerArguments() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <compilerId>${maven.compiler.compilerId}</compilerId>" +
+                  "        <compilerArgument>${unresolvedArgument}</compilerArgument>" +
+                  "        <compilerArgs>" +
+                  "          <arg>${anotherUnresolvedArgument}</arg>" +
+                  "          <arg>-myArg</arg>" +
+                  "        </compilerArgs>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-myArg");
+  }
+
   // commenting the test as the errorProne module is not available to IJ community project
   // TODO move the test to the errorProne module
   //public void testCompilerPluginErrorProneConfiguration() {
