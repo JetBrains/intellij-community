@@ -631,43 +631,28 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           namedElement = containingClass;
         }
       }
-      final PyStdlibDocumentationLinkProvider stdlibDocumentationLinkProvider =
-        PythonDocumentationLinkProvider.EP_NAME.findExtensionOrFail(PyStdlibDocumentationLinkProvider.class);
 
 
+      for (final PythonDocumentationLinkProvider documentationLinkProvider :
+        PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
 
-      String url = null;
+        Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
-      if (docUrls.size()>0) {
-        url = docUrls.get(0);
-      } else {
-        url = stdlibDocumentationLinkProvider.getExternalDocumentationUrl(element, element);
-      }
-
-      if (url == null) {
-        return null;
-      }
-
-      final String moduleName = stdlibDocumentationLinkProvider.getModuleNameForDocumentationUrl(element, element);
-
-      try {
-        final Document document = Jsoup.parse(new URL(url), 1000);
-        final String elementId = namedElement != null ? moduleName + "." + namedElement.getName() : "module-" + moduleName;
-        document.select("a.headerlink").remove();
-        final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
-        if (parents.isEmpty()) {
-          final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleName);
-          if (moduleElement != null) {
-            return moduleElement.toString();
+        if (quickDocExtractor != null) {
+          for (String url : docUrls) {
+              try {
+                final Document document = Jsoup.parse(new URL(url), 1000);
+                String quickDoc = quickDocExtractor.apply(document);
+                if (StringUtil.isNotEmpty(quickDoc)) {
+                  return quickDoc;
+                }
+              }
+              catch (IOException e) {
+            }
           }
-          return document.toString();
         }
-        return parents.get(0).toString();
       }
-      catch (MalformedURLException ignored) {
-      }
-      catch (IOException ignored) {
-      }
+
       return null;
     });
   }

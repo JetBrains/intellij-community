@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -32,8 +31,12 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.Nullable;
+import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author yole
@@ -984,15 +987,35 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return urlBuilder.toString();
   }
 
+  @Nullable
+  @Override
+  public Function quickDocExtractor(PsiNamedElement namedElement) {
+    return (Function<Document, String>)document -> {
+      final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
+
+      final String elementId = namedElement != null ? moduleName + "." + namedElement.getName() : "module-" + moduleName;
+      document.select("a.headerlink").remove();
+      final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
+      if (parents.isEmpty()) {
+        final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleName);
+        if (moduleElement != null) {
+          return moduleElement.toString();
+        }
+        return document.toString();
+      }
+      return parents.get(0).toString();
+    };
+  }
+
   private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
 
-    Pair<String, String> modName = getModuleName(moduleName.toString());
+    String modName = getModuleName(moduleName.toString());
 
     final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
     final Map<String, String> moduleToWebpageName =
       pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
-    final String webpageName = moduleToWebpageName.get(modName.first);
+    final String webpageName = moduleToWebpageName.get(modName);
 
     final boolean isBuiltin = "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
     final String className = element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null ?
@@ -1009,20 +1032,18 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     if (webpageName2 != null && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
       urlBuilder.append('#');
       if (!isBuiltin) {
-        urlBuilder.append(modName.second).append(".");
+        urlBuilder.append(modName).append(".");
       }
       urlBuilder.append(qName);
     }
     return urlBuilder.toString();
   }
 
-  private static Pair<String, String> getModuleName(String qname) {
-    String moduleName = qname;
+  private static String getModuleName(String qname) {
     if (qname.equals("ntpath") || qname.equals("posixpath")) {
       qname = "os.path";
     } else if (qname.equals("genericpath")) {
       qname = "os.path";
-      moduleName = qname;
     }
     else if (qname.equals("nt")) {
       qname = "os";
@@ -1034,13 +1055,13 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
       qname = "xml.parsers.expat";
     }
 
-    return Pair.create(qname, moduleName);
+    return qname;
   }
 
   public String getModuleNameForDocumentationUrl(PsiElement element, PsiElement originalElement) {
     QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
 
-    return qName != null? getModuleName(qName.toString()).second : "";
+    return qName != null? getModuleName(qName.toString()) : "";
   }
 
   private static final class MyBuilder extends ImmutableMap.Builder<String, String> {
