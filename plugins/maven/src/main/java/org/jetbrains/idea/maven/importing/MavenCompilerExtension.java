@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.ResolveContext;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 /**
  * @author Vladislav.Soroka
@@ -40,5 +41,5 @@ public interface MavenCompilerExtension {
                                          @NotNull MavenProject mavenProject,
                                          @NotNull NativeMavenProjectHolder nativeMavenProject,
                                          @NotNull MavenEmbedderWrapper embedder,
-                                         @NotNull ResolveContext context) { return false; }
+                                         @NotNull ResolveContext context) throws MavenProcessCanceledException { return false; }
 }
