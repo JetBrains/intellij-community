@@ -17,16 +17,12 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
-import com.intellij.execution.process.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -37,13 +33,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +45,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -169,6 +163,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     try {
       TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Starting " + Arrays.toString(command) + " in " + directory);
+      }
       return PtyProcess.exec(command, envs, directory != null
                                             ? directory
                                             : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
@@ -185,7 +182,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
-    return new PtyProcessTtyConnector(process, myDefaultCharset);
+    return new PtyProcessTtyConnector(process, myDefaultCharset) {
+      @Override
+      protected void resizeImmediately() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("resizeImmediately to " + getPendingTermSize());
+        }
+        super.resizeImmediately();
+      }
+    };
   }
 
   @Override
