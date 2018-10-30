@@ -458,7 +458,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of <code>to</code>
    * <p>
-   * The result of the method could more verbose than <code>getUsageViewTreeTextRepresentation(findUsages(to))<code/>
+   * The result of the method could be more verbose than {@code getUsageViewTreeTextRepresentation(findUsages(to))}
    */
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull PsiElement to);
