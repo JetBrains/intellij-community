@@ -366,11 +366,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild.getStringValue());
-    BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild.getStringValue());
+    BuildNumber sinceBuildNumber = parseBuildNumber(sinceBuild, holder);
+    BuildNumber untilBuildNumber = parseBuildNumber(untilBuild, holder);
+    if (sinceBuildNumber == null || untilBuildNumber == null) return;
+
     int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
     if (compare > 0) {
       holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
+    }
+  }
+
+  @Nullable
+  private static BuildNumber parseBuildNumber(GenericAttributeValue<String> build,
+                                              DomElementAnnotationHolder holder) {
+    try {
+      return BuildNumber.fromString(build.getStringValue());
+    }
+    catch (RuntimeException e) {
+      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid"));
+      return null;
     }
   }
 
