@@ -164,8 +164,8 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
       IncompatibleEncodingDialog dialog = new IncompatibleEncodingDialog(virtualFile, charset, isSafeToReload, isSafeToConvert);
       dialog.show();
       if (dialog.getExitCode() == IncompatibleEncodingDialog.RELOAD_EXIT_CODE) {
-        undo = () -> EncodingUtil.reloadIn(virtualFile, oldCharset);
-        redo = () -> EncodingUtil.reloadIn(virtualFile, charset);
+        undo = () -> EncodingUtil.reloadIn(virtualFile, oldCharset, project);
+        redo = () -> EncodingUtil.reloadIn(virtualFile, charset, project);
       }
       else if (dialog.getExitCode() == IncompatibleEncodingDialog.CONVERT_EXIT_CODE) {
         undo = () -> EncodingUtil.saveIn(document, editor, virtualFile, oldCharset);
