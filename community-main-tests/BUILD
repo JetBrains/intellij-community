@@ -6,7 +6,6 @@ iml_module(
     iml_files = ["intellij.idea.community.main.tests.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/idea/platform/platform-main:intellij.platform.main",
