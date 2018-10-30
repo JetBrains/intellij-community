@@ -1017,8 +1017,7 @@ public class IncProjectBuilder {
     for (TargetBuilder<?, ?> builder : builders) {
       buildTarget(target, context, builder);
       builderCount++;
-      buildProgress.updateProgress(target, ((double)builderCount)/builders.size());
-      buildProgress.notifyAboutTotalProgress(context);
+      buildProgress.updateProgress(target, ((double)builderCount)/builders.size(), context);
     }
     return true;
   }
@@ -1363,9 +1362,8 @@ public class IncProjectBuilder {
 
                 buildersPassed++;
                 for (ModuleBuildTarget target : chunk.getTargets()) {
-                  buildProgress.updateProgress(target, ((double)buildersPassed)/myTotalModuleLevelBuilderCount);
+                  buildProgress.updateProgress(target, ((double)buildersPassed)/myTotalModuleLevelBuilderCount, context);
                 }
-                buildProgress.notifyAboutTotalProgress(context);
               }
             }
             finally {
