@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -169,7 +167,7 @@ public class GdkMethodUtil {
   }
 
   @NotNull
-  private static GrMethod createMethod(@NotNull GrClosureSignature signature,
+  private static GrMethod createMethod(@NotNull GrSignature signature,
                                        @NotNull String name,
                                        @NotNull GrAssignmentExpression statement,
                                        @NotNull PsiClass closure) {
@@ -201,7 +199,7 @@ public class GdkMethodUtil {
         Pair<PsiClassType, GrReferenceExpression> original = getTypeToMixIn(assignment);
         if (original == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        final Pair<GrSignature, String> signatures = getTypeToMix(assignment);
+        final Pair<List<GrSignature>, String> signatures = getTypeToMix(assignment);
         if (signatures == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
         final String name = signatures.second;
@@ -210,14 +208,9 @@ public class GdkMethodUtil {
         final PsiClass closure = JavaPsiFacade.getInstance(statement.getProject()).findClass(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, statement.getResolveScope());
         if (closure == null) return Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
 
-        signatures.first.accept(new GrSignatureVisitor() {
-          @Override
-          public void visitClosureSignature(GrClosureSignature signature) {
-            super.visitClosureSignature(signature);
-            GrMethod method = createMethod(signature, name, assignment, closure);
-            methods.add(method);
-          }
-        });
+        for (GrSignature signature : signatures.first) {
+          methods.add(createMethod(signature, name, assignment, closure));
+        }
 
         return Result.create(Trinity.create(original.first, original.second, methods), PsiModificationTracker.MODIFICATION_COUNT);
       }
@@ -242,19 +235,17 @@ public class GdkMethodUtil {
   }
 
   @Nullable
-  private static Pair<GrSignature, String> getTypeToMix(GrAssignmentExpression assignment) {
+  private static Pair<List<GrSignature>, String> getTypeToMix(GrAssignmentExpression assignment) {
     GrExpression mixinRef = assignment.getRValue();
     if (mixinRef == null) return null;
 
     final PsiType type = mixinRef.getType();
     if (type instanceof GrClosureType) {
-      final GrSignature signature = ((GrClosureType)type).getSignature();
-
       final GrExpression lValue = assignment.getLValue();
       assert lValue instanceof GrReferenceExpression;
       final String name = ((GrReferenceExpression)lValue).getReferenceName();
 
-      return Pair.create(signature, name);
+      return Pair.create(((GrClosureType)type).getSignatures(), name);
     }
 
     return null;

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -213,7 +213,7 @@ public class ExpressionGenerator extends Generator {
     final GrArgumentList argList = newExpression.getArgumentList();
     if (argList != null) {
 
-      GrClosureSignature signature = null;
+      GrSignature signature = null;
 
       final GroovyResolveResult resolveResult = newExpression.advancedResolve();
       final PsiElement constructor = resolveResult.getElement();
@@ -1342,7 +1342,7 @@ public class ExpressionGenerator extends Generator {
       }
     }
     builder.append(method.getName());
-    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
+    final GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     new ArgumentListGenerator(builder, this.context).generate(signature, exprs, namedArgs, closures, context);
   }
 

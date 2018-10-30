@@ -770,7 +770,7 @@ public class ResolveUtil {
     if (!(type instanceof GrClosureType)) return false;
     if (argTypes == null) return true;
 
-    final GrSignature signature = ((GrClosureType)type).getSignature();
+    final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
   }
 
@@ -793,7 +793,7 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      final GrSignature signature = ((GrClosureType)type).getSignature();
+      final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
       PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
       return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }
