@@ -177,7 +177,7 @@ class FileTemplatesLoader {
       for (FTManager ftManager : fileTemplateManagers) {
         File managerRoot = ftManager.getConfigRoot();
         //noinspection FileEqualsUsage
-        String relativePath = configDir.equals(managerRoot) ? "" : FileUtil.getRelativePath(configDir, managerRoot)+"/";
+        String relativePath = configDir.equals(managerRoot) ? "" : FileUtil.getRelativePath(configDir, managerRoot) + "/";
         String prefix = FileUtil.toSystemIndependentName(relativePath);
         if (!matchesPrefix(path, prefix)) {
           continue;
@@ -200,9 +200,9 @@ class FileTemplatesLoader {
 
   private static boolean matchesPrefix(@NotNull String path, @NotNull String prefix) {
     if (prefix.isEmpty()) {
-      return !path.contains("/");
+      return path.indexOf('/') == -1;
     }
-    return FileUtil.startsWith(path, prefix) && !path.substring(prefix.length()).contains("/");
+    return FileUtil.startsWith(path, prefix) && path.indexOf('/', prefix.length()) == -1;
   }
 
   //Example: templateName="NewClass"   templateExtension="java"
