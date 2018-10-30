@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
@@ -142,7 +141,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
       val effectiveArguments = compilerArguments.children.map {
         val key = it.name.run { if (startsWith("-")) this else "-$this" }
-        val value = it.textTrim.nullize()
+        val value = getResolvedText(it)
         key to value
       }.toMap()
 
@@ -157,15 +156,15 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       }
     }
 
-    addIfNotNull(options, nullize(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
+    addIfNotNull(options, getResolvedText(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
 
     val compilerArgs = compilerMavenConfiguration.getChild("compilerArgs")
     if (compilerArgs != null) {
       for (arg in compilerArgs.getChildren("arg")) {
-        addIfNotNull(options, nullize(arg.textTrim))
+        addIfNotNull(options, getResolvedText(arg))
       }
       for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-        addIfNotNull(options, nullize(compilerArg.textTrim))
+        addIfNotNull(options, getResolvedText(compilerArg))
       }
     }
 
@@ -181,8 +180,22 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     private fun getCompilerId(config: Element): String {
       val compilerId = config.getChildTextTrim("compilerId")
-      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId) return JAVAC_ID
+      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
       else return compilerId
+    }
+
+    private fun hasUnresolvedProperty(txt: String): Boolean {
+      return txt.contains("\${")
+    }
+
+    private fun getResolvedText(txt: String?): String? {
+      val result = txt.nullize() ?: return null
+      if (hasUnresolvedProperty(result)) return null
+      return result
+    }
+
+    private fun getResolvedText(it: Element): String? {
+      return getResolvedText(it.textTrim)
     }
   }
 }
