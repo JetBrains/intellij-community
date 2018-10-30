@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,16 +18,18 @@ public class CoreLocalVirtualFile extends VirtualFile {
   private final CoreLocalFileSystem myFileSystem;
   private final File myIoFile;
   private VirtualFile[] myChildren;
-  private final boolean isDirectory;
+  private final NotNullLazyValue<Boolean> myIsDirectory;
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
-    this(fileSystem, ioFile, ioFile.isDirectory());
+    myFileSystem = fileSystem;
+    myIoFile = ioFile;
+    myIsDirectory = AtomicNotNullLazyValue.createValue(myIoFile::isDirectory);
   }
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
     myFileSystem = fileSystem;
     myIoFile = ioFile;
-    this.isDirectory = isDirectory;
+    myIsDirectory = NotNullLazyValue.createConstantValue(isDirectory);
   }
 
   @NotNull
@@ -53,7 +57,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public boolean isDirectory() {
-    return isDirectory;
+    return myIsDirectory.getValue();
   }
 
   @Override
