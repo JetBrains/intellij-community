@@ -44,8 +44,22 @@ public abstract class PyInspectionExtension {
     return null;
   }
 
+  /**
+   * @deprecated Use {@link PyInspectionExtension#ignoreMethodParameters(PyFunction, TypeEvalContext)} instead.
+   * This method will be removed in 2019.2.
+   */
+  @Deprecated
   public boolean ignoreMethodParameters(@NotNull PyFunction function) {
     return false;
+  }
+
+  /**
+   * @param function function that is inspecting in {@link com.jetbrains.python.inspections.PyMethodParametersInspection}
+   * @param context  type evaluation context
+   * @return true if the passed function could be ignored
+   */
+  public boolean ignoreMethodParameters(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return ignoreMethodParameters(function);
   }
 
   public boolean ignorePackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {

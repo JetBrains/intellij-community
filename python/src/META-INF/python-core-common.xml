@@ -814,6 +814,7 @@
     <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
+    <inspectionExtension implementation="com.jetbrains.python.inspections.PyThirdPartyInspectionExtension"/>
   </extensions>
 
   <actions>
