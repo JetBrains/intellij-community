@@ -6,6 +6,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -58,6 +59,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Generates documentation stub
  */
 public class PythonDocumentationProvider extends AbstractDocumentationProvider implements ExternalDocumentationProvider {
+  private static final Logger LOG = Logger.getInstance(PythonDocumentationProvider.class);
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
   private static final String BULLET_POINT = "\u2022";  // &bull;
@@ -634,6 +636,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
             }
           }
           catch (IOException e) {
+            LOG.error("Can't read external doc URL: " + url, e);
           }
         }
       }
