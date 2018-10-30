@@ -59,6 +59,8 @@ public class JUnitRunDashboardContributor extends RunDashboardContributor {
         presentation.setIcon(renderer.getIcon());
       }
 
+      TestsPresentationUtil.formatCurrentState(rootNode, renderer);
+
       addTestSummary(presentation, rootNode);
     }
     finally {
