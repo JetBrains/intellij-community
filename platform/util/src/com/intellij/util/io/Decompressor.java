@@ -18,6 +18,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class Decompressor {
+  /**
+   * The Tar decompressor automatically detects the compression of an input file/stream.
+   */
   public static class Tar extends Decompressor {
     public Tar(@NotNull File file) {
       mySource = file;
