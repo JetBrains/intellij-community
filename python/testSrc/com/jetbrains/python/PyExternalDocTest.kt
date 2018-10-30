@@ -7,8 +7,65 @@ import com.intellij.psi.PsiElement
 import com.jetbrains.python.fixtures.PyTestCase
 import junit.framework.TestCase
 
-class PyExternalDocTest : PyTestCase() {
+abstract class PyExternalDocTest : PyTestCase() {
+  fun doTest(text: String, expectedUrl: String) {
+    val pair = configureByText(text)
 
+    val originalElement = pair.first
+    var element: PsiElement? = pair.second
+
+    TestCase.assertEquals(expectedUrl, getDocUrl(element!!, originalElement!!))
+  }
+
+  fun configureByText(text: String): Pair<PsiElement?, PsiElement?> {
+    myFixture.configureByText(getTestName(false) + ".py", text)
+
+    val originalElement = myFixture.file.findElementAt(myFixture.caretOffset)
+
+    var element: PsiElement?
+    val ref = myFixture.getReferenceAtCaretPosition()
+    if (ref != null) {
+      element = ref.resolve()
+
+      if (element == null) {
+        element = ref.element
+      }
+    }
+    else {
+      element = originalElement
+    }
+    return Pair(originalElement, element)
+  }
+
+  fun doQuickDocTest(text: String, expectedHtml: String) {
+    val pair = configureByText(text)
+
+    val originalElement = pair.first
+    var element: PsiElement? = pair.second
+
+
+    val provider = DocumentationManager.getProviderFromElement(element)
+    var urls = provider.getUrlFor(element, originalElement)
+
+    urls = listOf(urls!![0].replace("3.7 Mock SDK", "3.7"))
+
+    TestCase.assertTrue(
+      (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls)!!.contains(expectedHtml))
+  }
+
+  private fun getDocUrl(element: PsiElement, originalElement: PsiElement): String? {
+    val provider = DocumentationManager.getProviderFromElement(element)
+
+    val urls = provider.getUrlFor(element, originalElement)
+
+    TestCase.assertEquals(1, urls!!.size)
+    return urls[0]
+  }
+
+  override fun getProjectDescriptor() = ourPy3Descriptor
+}
+
+class PyExterminalDocTestPy3: PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
   fun testBuiltins() { // PY-9061
@@ -37,60 +94,15 @@ print(os.path.islink)
 print(os.path.isf<caret>ile)
     """.trimIndent(), """<dt id="os.path.isfile">""".trimIndent())
   }
+}
 
-  private fun doTest(text: String, expectedUrl: String) {
-    val pair = configureByText(text)
 
-    val originalElement = pair.first
-    var element: PsiElement? = pair.second
+class PyExternalDocTestPy2 : PyExternalDocTest() {
+  private val pythonDocsLibrary = "https://docs.python.org/2.7 Mock SDK/library"
 
-    TestCase.assertEquals(expectedUrl, getDocUrl(element!!, originalElement!!))
+  fun testCPickle() {
+    doTest("import cPick<caret>le", "$pythonDocsLibrary/pickle.html")
   }
 
-  private fun configureByText(text: String): Pair<PsiElement?, PsiElement?> {
-    myFixture.configureByText(getTestName(false) + ".py", text)
-
-    val originalElement = myFixture.file.findElementAt(myFixture.caretOffset)
-
-    var element: PsiElement?
-    val ref = myFixture.getReferenceAtCaretPosition()
-    if (ref != null) {
-      element = ref.resolve()
-
-      if (element == null) {
-        element = ref.element
-      }
-    }
-    else {
-      element = originalElement
-    }
-    return Pair(originalElement, element)
-  }
-
-  private fun doQuickDocTest(text: String, expectedHtml: String) {
-    val pair = configureByText(text)
-
-    val originalElement = pair.first
-    var element: PsiElement? = pair.second
-
-
-    val provider = DocumentationManager.getProviderFromElement(element)
-    var urls = provider.getUrlFor(element, originalElement)
-
-    urls = listOf(urls!![0].replace("3.7 Mock SDK", "3.7"))
-
-    TestCase.assertTrue(
-      (provider as CompositeDocumentationProvider).fetchExternalDocumentation(myFixture.project, element, urls)!!.contains(expectedHtml))
-  }
-
-  private fun getDocUrl(element: PsiElement, originalElement: PsiElement): String? {
-    val provider = DocumentationManager.getProviderFromElement(element)
-
-    val urls = provider.getUrlFor(element, originalElement)
-
-    TestCase.assertEquals(1, urls!!.size)
-    return urls[0]
-  }
-
-  override fun getProjectDescriptor() = PyTestCase.ourPy3Descriptor
+  override fun getProjectDescriptor() = ourPyDescriptor
 }
