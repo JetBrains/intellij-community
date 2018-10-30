@@ -172,7 +172,7 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundWithTryFinallyUsingIndents() {
-    CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings(ourProject).getIndentOptions(JavaFileType.INSTANCE);
+    CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
     boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());

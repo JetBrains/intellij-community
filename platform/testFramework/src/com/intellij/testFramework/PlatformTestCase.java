@@ -51,7 +51,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -176,13 +175,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   private static void cleanPersistedVFSContent() {
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
-  }
-
-  @NotNull
-  @Override
-  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyle.getSettings(getProject());
   }
 
   @Override
