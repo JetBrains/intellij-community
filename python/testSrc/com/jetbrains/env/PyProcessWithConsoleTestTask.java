@@ -51,7 +51,7 @@ import static com.intellij.testFramework.ThreadTracker.longRunningThreadCreated;
  * <ol>
  * <li>Inherit it</li>
  * <li>Override {@link #createProcessRunner()} and return appropriate test runner</li>
- * <li>Override {@link #checkTestResults(ProcessWithConsoleRunner, String, String, String)} and check result using arguments or
+ * <li>Override {@link #checkTestResults(ProcessWithConsoleRunner, String, String, String, int)} and check result using arguments or
  * {@link ProcessWithConsoleRunner#getConsole()} or something else (be sure to check all runner methods)</li>
  * </ol>
  * <p>
@@ -181,6 +181,8 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }
 
     Thread.sleep(1000); // Give time to listening threads to finish
+    final Integer code = handler.getExitCode();
+    assert code != null : "Process finished, but no exit code exists";
 
     XDebuggerTestUtil.waitForSwing();
     if (failed.get()) {
@@ -188,7 +190,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }
     else {
       try {
-        checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString());
+        checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
       }
       catch (Throwable e) {
         throw new RuntimeException(stdAll.toString(), e);
@@ -215,15 +217,19 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
 
   /**
    * Process is finished. Do all checks you need to make sure your test passed.
-   *
-   * @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
+   *  @param runner runner used to run process. You may access {@link ProcessWithConsoleRunner#getConsole()} and other useful staff like
    *               {@link PyAbstractTestProcessRunner#getFormattedTestTree()}
    *               Check concrete runner documentation
    * @param stdout process stdout
    * @param stderr process stderr
    * @param all    joined stdout and stderr
+   * @param exitCode
    */
-  protected abstract void checkTestResults(@NotNull T runner, @NotNull String stdout, @NotNull String stderr, @NotNull String all);
+  protected abstract void checkTestResults(@NotNull T runner,
+                                           @NotNull String stdout,
+                                           @NotNull String stderr,
+                                           @NotNull String all,
+                                           int exitCode);
 
   /**
    * Converts script or folder name to full path and stores internally to retrived with {@link #getWorkingFolderForScript()}

@@ -49,7 +49,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         Assert.assertThat("Pattern used while it should not", all, Matchers.not(Matchers.containsString("ABC123")));
       }
     });
@@ -68,7 +68,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(3, runner.getAllTestsCount());
         assertEquals(3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
@@ -89,7 +89,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(1, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
       }
@@ -109,7 +109,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final String text = runner.getConsole().getText();
         Assert.assertThat("No diff link", text, Matchers.containsString(" <Click to see difference>"));
         Assert.assertThat("Wrong actual", text, Matchers.containsString("Got"));
@@ -133,7 +133,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(1, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
       }
@@ -153,7 +153,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(1, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
       }
@@ -173,7 +173,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyDocTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(3, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
         assertEquals(2, runner.getFailedTestsCount());
