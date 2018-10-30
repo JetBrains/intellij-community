@@ -44,7 +44,7 @@
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.documentation.PythonDocumentationProvider"/>
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
     <lang.emacs language="Python" implementationClass="com.jetbrains.python.editor.PyEmacsHandler"/>
-    <highlightRangeExtension implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
+    <highlightRangeExtension implementation="com.jetbrains.python.validation.PyAsyncAwaitAnnorator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyAnnotatingVisitor"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyDumbAwareAnnotator"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiser"/>
@@ -734,7 +734,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
-    <dumbAnnotator implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.PyAsyncAwaitAnnorator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubType"/>
