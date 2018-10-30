@@ -27,11 +27,6 @@ public abstract class Decompressor {
       mySource = stream;
     }
 
-    // temporary
-    public Tar(@SuppressWarnings("unused") TarArchiveInputStream stream) {
-      throw new UnsupportedOperationException();
-    }
-
     //<editor-fold desc="Implementation">
     private final Object mySource;
     private TarArchiveInputStream myStream;
