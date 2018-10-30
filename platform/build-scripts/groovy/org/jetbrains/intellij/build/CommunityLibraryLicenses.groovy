@@ -284,7 +284,7 @@ class CommunityLibraryLicenses {
                            license: "Simplified BSD License", licenseUrl: "https://opensource.org/licenses/BSD-2-Clause",
                            url: "http://json-schema.org/draft-07/schema#"),
 
-    new LibraryLicense(name: "jsoup", libraryName: "jsoup", version: "1.10.3", license: "MIT", url: "http://jsoup.org",
+    new LibraryLicense(name: "jsoup", libraryName: "jsoup", version: "1.11.3", license: "MIT", url: "http://jsoup.org",
                        licenseUrl: "http://jsoup.org/license"),
     new LibraryLicense(name: "jsr305", libraryName: "jsr305", version: "snapshot", license: "BSD", url: "http://code.google.com/p/jsr-305/",
                        licenseUrl: "http://code.google.com/p/jsr-305/source/browse/trunk/ri/LICENSE"),
