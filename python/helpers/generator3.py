@@ -147,10 +147,11 @@ def list_binaries(paths):
             prefix = root[(len(path) + len(SEP)):].replace(SEP, '.')
             if prefix:
                 prefix += '.'
-            note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
-            for f in files:
-                name = cut_binary_lib_suffix(root, f)
-                if name:
+            binaries = ((f, cut_binary_lib_suffix(root, f)) for f in files)
+            binaries = [(f, name) for (f, name) in binaries if name]
+            if binaries:
+                note("root: %s path: %s prefix: %s preprefix: %s", root, path, prefix, preprefix)
+                for f, name in binaries:
                     the_name = prefix + name
                     if is_skipped_module(root, f, the_name):
                         note('skipping module %s' % the_name)
