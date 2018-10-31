@@ -126,7 +126,7 @@ public class MarkerType {
 
     return GutterTooltipHelper.getTooltipText(
       Arrays.asList(pair.superMethod, pair.subClass),
-      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, "") : " via sub-class ",
+      element -> element instanceof PsiMethod ? getTooltipPrefix(method, (PsiMethod)element, "") : " via subclass ",
       element -> element instanceof PsiMethod && isSameSignature(method, (PsiMethod)element),
       IdeActions.ACTION_GOTO_SUPER);
   }
@@ -146,8 +146,27 @@ public class MarkerType {
   }
 
   @NotNull
+  private static <E extends PsiElement> PsiElementProcessor.CollectElementsWithLimit<E> getProcessor(int limit, boolean set) {
+    return set ? new PsiElementProcessor.CollectElementsWithLimit<E>(limit, new THashSet<E>())
+               : new PsiElementProcessor.CollectElementsWithLimit<E>(limit);
+  }
+
+  private static String getFunctionalImplementationTooltip(@NotNull PsiClass psiClass) {
+    PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> processor = getProcessor(5, true);
+    FunctionalExpressionSearch.search(psiClass).forEach(new PsiElementProcessorAdapter<>(processor));
+    if (processor.isOverflow()) return getImplementationTooltip("Has several functional implementations");
+    if (processor.getCollection().isEmpty()) return null;
+    return getImplementationTooltip(processor.getCollection(), "Is functionally implemented in");
+  }
+
+  @NotNull
   private static String getImplementationTooltip(@NotNull String prefix, @NotNull PsiElement... elements) {
-    return GutterTooltipHelper.getTooltipText(Arrays.asList(elements), prefix, true, IdeActions.ACTION_GOTO_IMPLEMENTATION);
+    return getImplementationTooltip(Arrays.asList(elements), prefix);
+  }
+
+  @NotNull
+  private static String getImplementationTooltip(@NotNull Collection<? extends PsiElement> elements, @NotNull String prefix) {
+    return GutterTooltipHelper.getTooltipText(elements, prefix, true, IdeActions.ACTION_GOTO_IMPLEMENTATION);
   }
 
   private static void navigateToOverridingMethod(MouseEvent e, @NotNull PsiMethod method, boolean acceptSelf) {
@@ -205,25 +224,22 @@ public class MarkerType {
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
     final PsiClass aClass = method.getContainingClass();
     if (aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-      return getImplementationTooltip("Has implementations");
+      return getImplementationTooltip("Is implemented in several subclasses");
     }
 
-    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = getProcessor(5, false);
     GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
     OverridingMethodsSearch.search(method, scope, true).forEach(new PsiElementProcessorAdapter<>(processor));
 
     boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (processor.isOverflow()){
-      return getImplementationTooltip(isAbstract ? "Has implementations" : "Is overridden in subclasses");
+      return getImplementationTooltip(isAbstract ? "Is implemented in several subclasses" : "Is overridden in several subclasses");
     }
 
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
     if (overridings.length == 0) {
-      if (aClass != null && isAbstract && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
-        return getImplementationTooltip("Has functional implementations");
-      }
-      return null;
+      return !isAbstract || aClass == null ? null : getFunctionalImplementationTooltip(aClass);
     }
 
     Comparator<PsiMethod> comparator = new MethodCellRenderer(false).getComparator();
@@ -239,8 +255,8 @@ public class MarkerType {
       return;
     }
 
-    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
-    PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
+    PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor = getProcessor(2, true);
+    PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = getProcessor(2, true);
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
@@ -286,24 +302,15 @@ public class MarkerType {
 
   // Used in Kotlin, please don't make private
   public static String getSubclassedClassTooltip(@NotNull PsiClass aClass) {
-    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5,
-                                                                                                                          new THashSet<>());
+    PsiElementProcessor.CollectElementsWithLimit<PsiClass> processor = getProcessor(5, true);
     ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(processor));
 
     if (processor.isOverflow()) {
-      return getImplementationTooltip(aClass.isInterface() ? "Has implementations" : "Has subclasses");
+      return getImplementationTooltip(aClass.isInterface() ? "Is implemented by several subclasses" : "Is overridden by several subclasses");
     }
 
     PsiClass[] subclasses = processor.toArray(PsiClass.EMPTY_ARRAY);
-    if (subclasses.length == 0) {
-      final PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> functionalImplementations =
-        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
-      FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(functionalImplementations));
-      if (!functionalImplementations.getCollection().isEmpty()) {
-        return getImplementationTooltip("Has functional implementations");
-      }
-      return null;
-    }
+    if (subclasses.length == 0) return getFunctionalImplementationTooltip(aClass);
 
     Comparator<PsiClass> comparator = new PsiClassListCellRenderer().getComparator();
     Arrays.sort(subclasses, comparator);
