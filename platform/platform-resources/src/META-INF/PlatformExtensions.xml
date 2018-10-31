@@ -580,6 +580,10 @@
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
     </experimentalFeature>
 
+    <experimentalFeature id="linux.native.menu" requireRestart="true">
+      <description>Intergation with global menu in Linux</description>
+    </experimentalFeature>
+
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>
   </extensions>
 </idea-plugin>
