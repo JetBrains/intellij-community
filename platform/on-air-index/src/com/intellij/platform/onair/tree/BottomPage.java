@@ -68,9 +68,9 @@ public class BottomPage extends BasePage {
           // key found
           if ((mask & (1L << pos)) == 0) {
             final Address childAddress = getChildAddress(pos);
-            if (childAddress.isNovelty()) {
+            /*if (tree.canMutateInPlace(childAddress)) {
               novelty.free(childAddress.getLowBytes());
-            }
+            }*/
           }
 
           final long childAddressLowBytes = novelty.alloc(value);
@@ -125,7 +125,7 @@ public class BottomPage extends BasePage {
 
   @Override
   protected BottomPage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree) {
-    if (address.isNovelty()) {
+    if (tree.canMutateInPlace(address)) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);

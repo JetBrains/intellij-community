@@ -141,7 +141,7 @@ public class InternalPage extends BasePage {
 
   @Override
   protected InternalPage getMutableCopy(@NotNull Novelty.Accessor novelty, BTree tree) {
-    if (address.isNovelty()) {
+    if (tree.canMutateInPlace(address)) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);

@@ -27,7 +27,7 @@ public abstract class AirTreeTestBase {
   @Before
   public void setUp() {
     storage = new MockStorage();
-    novelty = new MockNovelty();
+    resetNovelty();
   }
 
   @After
@@ -39,9 +39,12 @@ public abstract class AirTreeTestBase {
   @NotNull
   protected BTree reopen(BTree tree) {
     Address address = tree.store(novelty.access());
-    novelty = new MockNovelty(); // cleanup
     tree = BTree.load(storage, 4, address);
     return tree;
+  }
+
+  protected void resetNovelty() {
+    novelty = new MockNovelty(); // cleanup
   }
 
   @NotNull
