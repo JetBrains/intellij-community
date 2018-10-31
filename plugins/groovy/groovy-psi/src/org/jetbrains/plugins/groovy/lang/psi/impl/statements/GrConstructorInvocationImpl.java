@@ -2,13 +2,15 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -17,10 +19,12 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.MethodResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrConstructorInvocationReference;
 
 public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstructorInvocation {
+
+  private final GroovyReference myConstructorReference = new GrConstructorInvocationReference(this);
+
   public GrConstructorInvocationImpl(@NotNull ASTNode node) {
     super(node);
   }
@@ -54,7 +58,6 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return refElement.getNode().getElementType();
   }
 
-
   @Override
   @NotNull
   public GrReferenceExpression getInvokedExpression() {
@@ -64,29 +67,7 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    PsiClass clazz = getDelegatedClass();
-    if (clazz != null) {
-      PsiType[] argTypes = PsiUtil.getArgumentTypes(getFirstChild(), false);
-      PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      PsiSubstitutor substitutor;
-      if (isThisCall()) {
-        substitutor = PsiSubstitutor.EMPTY;
-      }
-      else {
-        PsiClass enclosing = PsiUtil.getContextClass(this);
-        assert enclosing != null;
-        substitutor = TypeConversionUtil.getSuperClassSubstitutor(clazz, enclosing, PsiSubstitutor.EMPTY);
-      }
-      PsiType thisType = factory.createType(clazz, substitutor);
-      MethodResolverProcessor processor = new MethodResolverProcessor(clazz.getName(), this, true, thisType, argTypes, PsiType.EMPTY_ARRAY,
-                                                                      incompleteCode);
-      final ResolveState state = ResolveState.initial().put(PsiSubstitutor.KEY, substitutor);
-      clazz.processDeclarations(processor, state, null, this);
-      ResolveUtil.processNonCodeMembers(thisType, processor, getInvokedExpression(), state);
-
-      return processor.getCandidates();
-    }
-    return GroovyResolveResult.EMPTY_ARRAY;
+    return myConstructorReference.multiResolve(incompleteCode);
   }
 
   @Override
