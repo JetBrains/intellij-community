@@ -12,7 +12,7 @@ import javax.swing.*
 
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
-    row("Create Android module") { CheckBox("Android module name:")() }
+    row("Create Android module") { CheckBox("FooBar module name foo")() }
     row("Android module name:") { JTextField("input")() }
   }
 }
@@ -241,6 +241,33 @@ fun titledRows(): JPanel {
     titledRow("Java Flight Recorder") {
       row("JRE home:") {
         textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
+      }
+    }
+  }
+}
+
+fun spannedCheckbox(): JPanel {
+  return panel {
+    buttonGroup {
+      row {
+        RadioButton("In KeePass")()
+        row("Database:") {
+          // comment can lead to broken layout, so, test it
+          JTextField("test")(comment = "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
+        }
+
+        row {
+          cell {
+            checkBox("Protect master password using PGP key")
+            val comboBox = ComboBox(arrayOf("Foo", "Bar"))
+            comboBox.isVisible = false
+            comboBox(growPolicy = GrowPolicy.MEDIUM_TEXT)
+          }
+        }
+      }
+
+      row {
+        RadioButton("Do not save, forget passwords after restart")()
       }
     }
   }

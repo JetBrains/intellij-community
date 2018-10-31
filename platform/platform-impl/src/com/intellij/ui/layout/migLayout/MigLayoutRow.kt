@@ -224,11 +224,18 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       cc.value.horizontal.gapBefore = gapToBoundSize(indent, true)
     }
 
-    // if this row is not labeled and previous row is labeled and component is a "Remember" checkbox, skip one column (since this row doesn't have a label)
+    // if this row is not labeled and:
+    // a. previous row is labeled and first component is a "Remember" checkbox, skip one column (since this row doesn't have a label)
+    // b. some previous row is labeled and first component is a checkbox, span (since this checkbox should span across label and content cells)
     if (!labeled && components.size == 1 && component is JCheckBox) {
       val siblings = parent!!.subRows
-      if (siblings != null && siblings.size > 1 && siblings.get(siblings.size - 2).labeled && component.text == CommonBundle.message("checkbox.remember.password")) {
-        cc.value.skip(1)
+      if (siblings != null && siblings.size > 1) {
+        if (siblings.get(siblings.size - 2).labeled && component.text == CommonBundle.message("checkbox.remember.password")) {
+          cc.value.skip(1)
+        }
+        else if (siblings.any { it.labeled }) {
+          cc.value.spanX(2)
+        }
       }
     }
 

@@ -10,11 +10,13 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.components.*
 import com.intellij.util.ui.UIUtil
@@ -22,10 +24,7 @@ import java.awt.Component
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JLabel
+import javax.swing.*
 
 @DslMarker
 annotation class CellMarker
@@ -74,14 +73,39 @@ abstract class Cell {
     button(*constraints)
   }
 
-  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, vararg constraints: CCFlags, actionListener: ((event: ActionEvent, component: JCheckBox) -> Unit)? = null): JCheckBox {
+  inline fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags, crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): JCheckBox {
+    val component = checkBox(text, isSelected, comment, propertyUiManager, *constraints)
+    component.addActionListener(ActionListener {
+      actionListener(it, component)
+    })
+    return component
+  }
+
+  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, propertyUiManager: BooleanPropertyUiManager? = null, vararg constraints: CCFlags): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
-    if (actionListener != null) {
-      component.addActionListener(ActionListener { actionListener(it, component) })
-    }
+    propertyUiManager?.registerCheckBox(component)
     component(*constraints, comment = comment)
     return component
+  }
+
+  inline fun <T> comboBox(propertyUiManager: BooleanPropertyWithListUiManager<T, out ComboBoxModel<T>>, growPolicy: GrowPolicy? = null, crossinline renderer: ListCellRendererWrapper<T?>.(value: T, index: Int, isSelected: Boolean) -> Unit) {
+    comboBox(propertyUiManager.listModel, propertyUiManager, growPolicy, object : ListCellRendererWrapper<T?>() {
+      override fun customize(list: JList<*>, value: T?, index: Int, isSelected: Boolean, hasFocus: Boolean) {
+        if (value != null) {
+          renderer(value, index, isSelected)
+        }
+      }
+    })
+  }
+
+  fun <T> comboBox(model: ComboBoxModel<T>, propertyUiManager: BooleanPropertyWithListUiManager<*, *>? = null, growPolicy: GrowPolicy? = null, renderer: ListCellRenderer<T?>? = null) {
+    val component = ComboBox(model)
+    propertyUiManager?.manage(component)
+    if (renderer != null) {
+      component.renderer = renderer
+    }
+    component(growPolicy = growPolicy)
   }
 
   fun textFieldWithHistoryWithBrowseButton(browseDialogTitle: String,

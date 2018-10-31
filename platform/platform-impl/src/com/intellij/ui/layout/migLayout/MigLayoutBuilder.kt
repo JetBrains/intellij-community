@@ -96,7 +96,8 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
     }
 
     lc.isVisualPadding = spacing.isCompensateVisualPaddings
-    lc.hideMode = 3
+    // if 3, invisible component will be disregarded completely and it means that if it is last component, it's "wrap" constraint will be not taken in account
+    lc.hideMode = 2
 
     val rowConstraints = AC()
     (container as JComponent).putClientProperty("isVisualPaddingCompensatedOnComponentLevel", false)
@@ -139,13 +140,13 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration, val isUseMagi
         }
 
         // we cannot use columnCount as an indicator of whether to use spanX/wrap or not because component can share cell with another component,
-        // in any case MigLayout is smart enough and unnecessary spanX/wrap doesn't harm
+        // in any case MigLayout is smart enough and unnecessary spanX doesn't harm
         if (component === lastComponent) {
           cc.spanX()
-          cc.wrap()
+          cc.isWrap = true
         }
 
-        if (component === row.components.first()) {
+        if (index == 0) {
           if (row.noGrid) {
             rowConstraints.noGrid(rowIndex)
           }

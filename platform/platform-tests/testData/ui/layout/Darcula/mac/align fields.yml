@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 10.0}
     preferred: *id002
-  hideMode: 3
+  hideMode: 2
   insets:
   - {horizontal: false, unit: 0, value: 0.0}
   - {horizontal: true, unit: 0, value: 0.0}
@@ -28,6 +28,7 @@ columnConstraints:
   count: 2
 componentConstrains:
   Create Android module: {}
+  FooBar module name foo: {spanX: 2097051, wrap: true}
   'Android module name:': {}
   'JTextField #3':
     horizontal: {grow: 100.0}
@@ -40,5 +41,6 @@ cellBounds:
 - [151, 25, 329, 24]
 componentBounds:
   Create Android module: [0, 0, 145, 15]
+  FooBar module name foo: [148, -1, 180, 18]
   'Android module name:': [0, 29, 142, 15]
   'JTextField #3': [148, 22, 335, 30]

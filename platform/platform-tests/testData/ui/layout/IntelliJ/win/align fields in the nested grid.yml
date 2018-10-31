@@ -6,7 +6,7 @@ layoutConstraints:
   gridGapY:
     min: &id002 {horizontal: false, value: 10.0}
     preferred: *id002
-  hideMode: 3
+  hideMode: 2
   insets:
   - {horizontal: false, unit: 0, value: 0.0}
   - {horizontal: true, unit: 0, value: 0.0}
