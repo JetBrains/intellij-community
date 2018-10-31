@@ -70,7 +70,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private val spacing: SpacingConfiguration
     get() = builder.spacing
 
-  override var enabled: Boolean = true
+  override var enabled = true
     set(value) {
       if (field == value) {
         return
@@ -82,7 +82,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var visible: Boolean = true
+  override var visible = true
     set(value) {
       if (field == value) {
         return
@@ -94,7 +94,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsEnabled: Boolean = true
+  override var subRowsEnabled = true
     set(value) {
       if (field == value) {
         return
@@ -104,7 +104,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       subRows?.forEach { it.enabled = value }
     }
 
-  override var subRowsVisible: Boolean = true
+  override var subRowsVisible = true
     set(value) {
       if (field == value) {
         return
@@ -132,10 +132,14 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, componentConstraints, builder, indent = indent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
+      separatorRow.enabled = subRowsEnabled
+      separatorRow.visible = subRowsVisible
       row.getOrCreateSubRowsList().add(separatorRow)
     }
 
     subRows.add(row)
+    row.enabled = subRowsEnabled
+    row.visible = subRowsVisible
 
     if (label != null) {
       row.addComponent(label)
@@ -194,6 +198,13 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   // separate method to avoid JComponent as a receiver
   internal fun addComponent(component: JComponent, cc: Lazy<CC> = lazy { CC() }, gapLeft: Int = 0, growPolicy: GrowPolicy? = null, comment: String? = null) {
     components.add(component)
+
+    if (!visible) {
+      component.isVisible = false
+    }
+    if (!enabled) {
+      component.isEnabled = false
+    }
 
     if (!shareCellWithPreviousComponentIfNeed(component, cc)) {
       // increase column index if cell mode not enabled or it is a first component of cell

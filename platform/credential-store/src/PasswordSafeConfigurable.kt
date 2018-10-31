@@ -22,12 +22,10 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
-import gnu.trove.THashMap
 import java.io.File
 import java.nio.file.Paths
 import javax.swing.JPanel
@@ -41,16 +39,10 @@ internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettin
 }
 
 internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
-  private val inKeychain = RadioButton("In native Keychain")
-
-  private val inKeePass = RadioButton("In KeePass")
   private var keePassDbFile: TextFieldWithBrowseButton? = null
 
   private var isUsePgp = BooleanPropertyWithComboBoxUiManager(CollectionComboBoxModel<PgpKey>())
-
-  private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
-
-  private val modeToRow = THashMap<ProviderType, Row>()
+  private val providerTypeModel = ChoicePropertyUiManager(ProviderType.KEYCHAIN)
 
   private val pgp by lazy { Pgp() }
 
@@ -59,16 +51,10 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val secureRandom = lazy { createSecureRandom() }
 
   override fun reset(settings: PasswordSafeSettings) {
-    when (settings.providerType) {
-      ProviderType.MEMORY_ONLY -> rememberPasswordsUntilClosing.isSelected = true
-      ProviderType.KEYCHAIN -> inKeychain.isSelected = true
-      ProviderType.KEEPASS -> inKeePass.isSelected = true
-      else -> throw IllegalStateException("Unknown provider type: ${settings.providerType}")
-    }
+    providerTypeModel.selected = settings.providerType
 
     @Suppress("IfThenToElvis")
     keePassDbFile?.text = settings.keepassDb ?: getDefaultKeePassDbFile().toString()
-    updateEnabledState()
 
     val secretKeys = pgp.listKeys()
     isUsePgp.listModel.replaceAll(secretKeys)
@@ -76,7 +62,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     val currentKeyId = settings.state.pgpKeyId
     isUsePgp.selected = (if (currentKeyId == null) null else secretKeys.firstOrNull { it.keyId == currentKeyId }) ?: secretKeys.firstOrNull()
     isUsePgp.value = !secretKeys.isEmpty() && currentKeyId != null
-    isUsePgp.isEnabled = !secretKeys.isEmpty()
+    isUsePgp.isEnabled = providerTypeModel.selected == ProviderType.KEEPASS && !secretKeys.isEmpty()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
@@ -190,23 +176,19 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   private fun getNewDbFileAsString() = keePassDbFile!!.text.trim().nullize()
 
-  private fun updateEnabledState() {
-    modeToRow[ProviderType.KEEPASS]?.subRowsEnabled = getNewProviderType() == ProviderType.KEEPASS
-  }
-
   override fun getComponent(): JPanel {
     return panel {
       row { label("Save passwords:") }
 
-      buttonGroup({ updateEnabledState() }) {
+      buttonGroup(providerTypeModel) {
         if (SystemInfo.isLinux || isMacOsCredentialStoreSupported) {
           row {
-            inKeychain()
+            radioButton("In native Keychain", ProviderType.KEYCHAIN)
           }
         }
 
-        modeToRow[ProviderType.KEEPASS] = row {
-          inKeePass()
+        row {
+          radioButton("In KeePass", ProviderType.KEEPASS)
           row("Database:") {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
               it.isDirectory || it.name.endsWith(".kdbx")
@@ -237,7 +219,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
           }
         }
         row {
-          rememberPasswordsUntilClosing()
+          radioButton("Do not save, forget passwords after restart", ProviderType.MEMORY_ONLY)
         }
       }
     }
@@ -257,13 +239,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
 
   private fun getNewPgpKey() = isUsePgp.selected
 
-  private fun getNewProviderType(): ProviderType {
-    return when {
-      rememberPasswordsUntilClosing.isSelected -> ProviderType.MEMORY_ONLY
-      inKeePass.isSelected -> ProviderType.KEEPASS
-      else -> ProviderType.KEYCHAIN
-    }
-  }
+  private fun getNewProviderType() = providerTypeModel.selected
 
   private inner class ClearKeePassDatabaseAction : DumbAwareAction("Clear") {
     override fun actionPerformed(event: AnActionEvent) {
