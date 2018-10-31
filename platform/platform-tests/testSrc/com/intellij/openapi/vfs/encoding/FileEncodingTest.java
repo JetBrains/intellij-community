@@ -4,8 +4,8 @@ package com.intellij.openapi.vfs.encoding;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -213,7 +213,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   }
 
   private static VirtualFile getTestRoot() {
-    final File testRoot = new File(PathManagerEx.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding");
+    final File testRoot = new File(PathManager.getCommunityHomePath(), "platform/platform-tests/testData/vfs/encoding");
     return LocalFileSystem.getInstance().findFileByIoFile(testRoot);
   }
 

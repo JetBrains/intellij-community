@@ -2,7 +2,7 @@
 package org.jetbrains.yaml.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection;
@@ -14,7 +14,7 @@ import java.util.Optional;
 public class YAMLIntentionTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/intention/data/";
+    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/intention/data/";
   }
 
   public void testDeleteDuplicatedKey() {

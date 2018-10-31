@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -138,7 +138,7 @@ class LightTestMigration {
                  '"';
     }
     else {
-      Path basePath = Paths.get(PathManagerEx.getCommunityHomePath());
+      Path basePath = Paths.get(PathManager.getCommunityHomePath());
       if (myBaseDir.startsWith(basePath)) {
         Path relativePath = basePath.relativize(myBaseDir);
         String pathText = '/' + relativePath.toString().replace('\\', '/');

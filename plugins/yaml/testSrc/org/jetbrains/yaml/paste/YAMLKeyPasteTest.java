@@ -2,7 +2,7 @@
 package org.jetbrains.yaml.paste;
 
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -19,7 +19,7 @@ import java.awt.datatransfer.StringSelection;
 public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
+    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/paste/data/";
   }
 
   public void testPasteKeysInStart1() {

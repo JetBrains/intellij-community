@@ -1,14 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.codeinsight
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.language.codeinsight.refactoring.EditorConfigRenameHandler
 
 class EditorConfigRefactoringTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/refactoring/"
+    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/refactoring/"
 
   fun testRenameDeclarations() = doInplaceTest("my_rule")
   fun testRenameReferenceAndDeclarations() = doInplaceTest("my_symbols")

@@ -1,6 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.psiModification;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,7 +15,7 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 public class YAMLMappingModificationTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
+    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/psiModification/data/";
   }
 
   // TODO make
