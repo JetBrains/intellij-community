@@ -57,19 +57,19 @@ class ShelveChangesManagerTest : PlatformTestCase() {
 
   fun `test delete deleted list`() {
     val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
-    myShelvedChangesManager.deleteChangeList(shelvedChangeList)
+    myShelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
     doTestDelete(shelvedChangeList, 0, 0, 2, 0)
   }
 
   fun `test delete deleted files`() {
     val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
-    myShelvedChangesManager.deleteChangeList(shelvedChangeList)
+    myShelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
     doTestDelete(shelvedChangeList, 1, 1, 2, 1)
   }
 
   fun `test delete all deleted files`() {
     val shelvedChangeList = myShelvedChangesManager.shelvedChangeLists[0]
-    myShelvedChangesManager.deleteChangeList(shelvedChangeList)
+    myShelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
     doTestDelete(shelvedChangeList, 2, 2, 2, 0)
   }
 
