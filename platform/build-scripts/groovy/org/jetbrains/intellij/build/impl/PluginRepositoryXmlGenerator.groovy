@@ -42,7 +42,7 @@ class PluginRepositoryXmlGenerator {
       <name>${XmlUtil.escapeXml(p.name)}</name>
       <id>${XmlUtil.escapeXml(p.id ?: p.name)}</id>
       <version>$p.version</version>
-      <idea-version since-build="$p.sinceBuild" until-build="$p.untilBuild"/>
+      <idea-version since-build="$p.sinceBuild"/>
       <vendor>${XmlUtil.escapeXml(p.vendor)}</vendor>
       <download-url>${XmlUtil.escapeXml(p.fileName)}</download-url>
       <description><![CDATA[$p.description]]></description>
