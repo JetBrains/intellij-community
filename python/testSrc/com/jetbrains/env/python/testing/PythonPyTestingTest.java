@@ -694,33 +694,6 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
-  //PY-32431
-  @Test
-  public void testRerunWithParent() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/rerun", SdkCreationType.EMPTY_SDK) {
-      @NotNull
-      @Override
-      protected PyTestTestProcessRunner createProcessRunner() {
-        return new PyTestTestProcessRunner("test:test_subsystems.TestBar", 2);
-      }
-
-      @Override
-      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
-                                      @NotNull final String stdout,
-                                      @NotNull final String stderr,
-                                      @NotNull final String all, int exitCode) {
-        assertEquals("Wrong number of passed tests", 0, runner.getPassedTestsCount());
-        assertEquals("Wrong number of failed tests", 1, runner.getFailedTestsCount());
-        assertEquals("Wrong tests executed", "Test tree:\n" +
-                                             "[root]\n" +
-                                             ".test_subsystems\n" +
-                                             "..TestBar\n" +
-                                             "...test_something(-)\n", runner.getFormattedTestTree());
-      }
-    });
-  }
-
-
   @Test
   public void testPytestRunner2() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest", SdkCreationType.EMPTY_SDK) {
