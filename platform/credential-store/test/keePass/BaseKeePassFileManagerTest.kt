@@ -32,6 +32,8 @@ internal open class BaseKeePassFileManagerTest {
     store.setMasterKey("foo", SECURE_RANDOM_CACHE.value)
     return store
   }
+
+  protected fun createStore() = createStore(fsRule.fs.getPath("/"))
 }
 
 @Suppress("TestFunctionName")
