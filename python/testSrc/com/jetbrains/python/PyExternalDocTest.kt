@@ -4,6 +4,8 @@ package com.jetbrains.python
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider
 import com.jetbrains.python.fixtures.PyTestCase
 import junit.framework.TestCase
 
@@ -62,10 +64,20 @@ abstract class PyExternalDocTest : PyTestCase() {
     return urls[0]
   }
 
+  fun doUrl(qname: String, expectedUrl: String) {
+    val ind = qname.lastIndexOf(".")
+    val moduleName = qname.substring(0, ind)
+    val elementName = qname.substring(ind+1)
+    val p = PyStdlibDocumentationLinkProvider()
+    TestCase.assertEquals(expectedUrl,
+                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor.sdk)}.html#${p.fragmentName(
+                            moduleName)}.$elementName")
+  }
+
   override fun getProjectDescriptor() = ourPy3Descriptor
 }
 
-class PyExterminalDocTestPy3 : PyExternalDocTest() {
+class PyExternalDocTestPy3 : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
   fun testBuiltins() { // PY-9061
@@ -94,6 +106,11 @@ print(os.path.islink)
 print(os.path.isf<caret>ile)
     """.trimIndent(), """<dt id="os.path.isfile">""".trimIndent())
   }
+
+  fun testUrls() {
+
+  }
+
 }
 
 
@@ -108,6 +125,11 @@ class PyExternalDocTestPy2 : PyExternalDocTest() {
     doTest("import cPickle\n" +
            "cPickle.du<caret>mp()", "$pythonDocsLibrary/pickle.html#pickle.dump")
 
+  }
+
+  fun testUrls() {
+    doUrl("cPickle.dump", "pickle.html#pickle.dump")
+    doUrl("pyexpat.ErrorString", "pyexpat.html#xml.parsers.expat.ErrorString")
   }
 
   override fun getProjectDescriptor() = ourPyDescriptor

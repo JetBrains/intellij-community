@@ -1010,12 +1010,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
   private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
 
-    String modName = getModuleName(moduleName.toString());
-
-    final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
-    final Map<String, String> moduleToWebpageName =
-      pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
-    final String webpageName = moduleToWebpageName.get(modName);
+    final String webpageName = webPageName(moduleName, sdk);
 
     final boolean isBuiltin = "__builtin__".equals(webpageName) || "builtins".equals(webpageName);
     final String className = element instanceof PyFunction && ((PyFunction)element).getContainingClass() != null ?
@@ -1032,23 +1027,28 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     if (webpageName2 != null && element instanceof PsiNamedElement && !(element instanceof PyFile)) {
       urlBuilder.append('#');
       if (!isBuiltin) {
-        urlBuilder.append(modName).append(".");
+        urlBuilder.append(fragmentName(moduleName.toString())).append(".");
       }
       urlBuilder.append(qName);
     }
     return urlBuilder.toString();
   }
 
-  private static String getModuleName(String qname) {
-    if (qname.equals("ntpath") || qname.equals("posixpath")) {
-      qname = "os.path";
-    } else if (qname.equals("genericpath")) {
-      qname = "os.path";
-    }
-    else if (qname.equals("nt")) {
-      qname = "os";
-    }
-    else if (qname.equals("cPickle")) {
+  public String webPageName(QualifiedName moduleName, Sdk sdk) {
+    String modName = getModuleName(moduleName.toString());
+
+    final String pyVersion = PythonDocumentationProvider.pyVersion(sdk.getVersionString());
+    final Map<String, String> moduleToWebpageName =
+      pyVersion != null && pyVersion.startsWith("3") ? py3LibraryModulesToWebpageName : py2LibraryModulesToWebpageName;
+    return moduleToWebpageName.get(modName);
+  }
+
+  public String fragmentName(String qname) {
+    return getModuleName(qname);
+  }
+
+  public static String getModuleName(String qname) {
+    if (qname.equals("cPickle")) {
       qname = "pickle";
     }
     else if (qname.equals("pyexpat")) {

@@ -51,7 +51,7 @@ fun restoreStdlibCanonicalPath(qName: QualifiedName): QualifiedName? {
       "_struct" -> replace0("struct", components)
       "_io", "_pyio", "_fileio" -> replace0("io", components)
       "_datetime" -> replace0("datetime", components)
-      "ntpath", "posixpath", "path" -> replace0("os.path", components)
+      "ntpath", "posixpath", "path", "macpath", "os2emxpath", "genericpath" -> replace0("os.path", components)
       "_sqlite3" -> replace0("sqlite3", components)
       "_pickle" -> replace0("pickle", components)
       else -> if (qName.matchesPrefix(QualifiedName.fromComponents("mock", "mock"))) {
