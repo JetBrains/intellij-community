@@ -272,11 +272,10 @@ public class ShelvedChangesViewManager implements Disposable {
     myRoot = new DefaultMutableTreeNode(ROOT_NODE_VALUE);   // not null for TreeState matching to work
     DefaultTreeModel model = new DefaultTreeModel(myRoot);
     final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
-    Collections.sort(changeLists, ChangelistComparator.getInstance());
     if (myShelveChangesManager.isShowRecycled()) {
       changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
-      changeLists.sort(ChangelistComparator.getInstance());
     }
+    changeLists.sort(ChangelistComparator.getInstance());
     myMoveRenameInfo.clear();
 
     changeLists.forEach(changeList -> model.insertNodeInto(createShelvedListNode(changeList), myRoot, myRoot.getChildCount()));
