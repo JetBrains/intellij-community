@@ -21,9 +21,6 @@ import java.awt.Color
 import java.awt.Dimension
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 
-private const val BALANCE = 0.08
-private val BACKGROUND = JBColor(Color.BLACK, Color.WHITE)
-
 class CurrentBranchComponent(val project: Project, val browser: CommitDialogChangesBrowser) : JBLabel() {
   private var branches = setOf<BranchData>()
 
@@ -89,6 +86,8 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
   }
 
   companion object {
+    private const val BACKGROUND_BALANCE = 0.08
+    private val BACKGROUND_BASE_COLOR = JBColor(Color.BLACK, Color.WHITE)
     @JvmField
     val TEXT_COLOR: JBColor = namedColor("VersionControl.Ref.foreground", JBColor(Color(0x7a7a7a), Color(0x909090)))
 
@@ -108,7 +107,7 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
     else null
 
     @JvmStatic
-    fun getBranchPresentationBackground(background: Color) = ColorUtil.mix(background, BACKGROUND, BALANCE)
+    fun getBranchPresentationBackground(background: Color) = ColorUtil.mix(background, BACKGROUND_BASE_COLOR, BACKGROUND_BALANCE)
 
     private fun getProviders(project: Project) = BranchStateProvider.EP_NAME.getExtensionList(project)
   }
