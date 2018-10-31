@@ -34,7 +34,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     dialogManager.registerDialogHandler(GithubShareAction.GithubExistingRemotesDialog::class.java,
                                         TestDialogHandler {
                                           shown.set(true)
-                                          DialogWrapper.OK_EXIT_CODE
+                                          DialogWrapper.CANCEL_EXIT_CODE
                                         })
 
     registerDefaultShareDialogHandler()
@@ -43,6 +43,7 @@ class GithubShareProjectTest : GithubShareProjectTestBase() {
     createProjectFiles()
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
     assertFalse(shown.get())
+    checkRepoExists(mainAccount, GithubFullPath(mainAccount.username, projectName))
 
     GithubShareAction.shareProjectOnGithub(myProject, projectRoot)
     assertTrue(shown.get())
