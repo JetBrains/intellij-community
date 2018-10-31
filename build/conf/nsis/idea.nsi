@@ -1414,21 +1414,20 @@ admin:
 HKLM:
   StrCpy $baseRegKey "HKLM"
   Goto Done
-cant_find_installation:
 
+cant_find_installation:
 ; compare installdir with default user location
   ${UnStrStr} $R0 $INSTDIR $LOCALAPPDATA\${MANUFACTURER}
   StrCmp $R0 $INSTDIR HKCU 0
 
 ; compare installdir with default admin location
   ${If} ${RunningX64}
-look_at_program_files_64:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
     StrCmp $R0 $INSTDIR HKLM look_at_program_files_32
   ${Else}
 look_at_program_files_32:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
-    StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
+    StrCmp $R0 $INSTDIR HKCU undefined_location
   ${EndIf}
 
 ; installdir does not contain known default locations
