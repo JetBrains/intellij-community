@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.test
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
@@ -14,6 +15,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubFullPath
 import org.jetbrains.plugins.github.api.data.GithubRepo
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.util.concurrent.ThreadLocalRandom
@@ -42,8 +44,8 @@ abstract class GithubTest : GitPlatformTest() {
   protected lateinit var mainAccount: AccountData
   protected lateinit var secondaryAccount: AccountData
 
-  private val mainRepos = mutableSetOf<GithubRepo>()
-  private val secondaryRepos = mutableSetOf<GithubRepo>()
+  private val mainRepos = mutableSetOf<String>()
+  private val secondaryRepos = mutableSetOf<String>()
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -98,12 +100,7 @@ abstract class GithubTest : GitPlatformTest() {
     setCurrentAccount(account)
     val repo = account.executor.execute(
       GithubApiRequests.CurrentUser.Repos.create(account.account.server, createRepoName(), "", false, autoInit))
-    if (account === mainAccount) {
-      mainRepos.add(repo)
-    }
-    else {
-      secondaryRepos.add(repo)
-    }
+    recycleRepo(account, repo.url)
     return repo
   }
 
@@ -111,12 +108,7 @@ abstract class GithubTest : GitPlatformTest() {
     setCurrentAccount(account)
     val repo = account.executor.execute(
       GithubApiRequests.Repos.Forks.create(account.account.server, upstream.userName, upstream.name))
-    if (account === mainAccount) {
-      mainRepos.add(repo)
-    }
-    else {
-      secondaryRepos.add(repo)
-    }
+    recycleRepo(account, repo.url)
     return repo
   }
 
@@ -124,8 +116,17 @@ abstract class GithubTest : GitPlatformTest() {
     setCurrentAccount(mainAccount)
     val repo = mainAccount.executor.execute(
       GithubApiRequests.Organisations.Repos.create(mainAccount.account.server, organisation, createRepoName(), "", false))
-    mainRepos.add(repo)
+    recycleRepo(mainAccount, repo.url)
     return repo
+  }
+
+  private fun recycleRepo(account: AccountData, url: String) {
+    if (account === mainAccount) {
+      mainRepos.add(url)
+    }
+    else {
+      secondaryRepos.add(url)
+    }
   }
 
   fun createRepoName(): String {
@@ -140,18 +141,13 @@ abstract class GithubTest : GitPlatformTest() {
     val repo = account.executor.execute(
       GithubApiRequests.Repos.get(account.account.server, repoPath.user, repoPath.repository))
     assertNotNull("GitHub repository does not exist", repo)
-    if (account === mainAccount) {
-      mainRepos.add(repo!!)
-    }
-    else {
-      secondaryRepos.add(repo!!)
-    }
+    recycleRepo(account, repo!!.url)
   }
 
-  private fun deleteRepos(account: AccountData, repos: Collection<GithubRepo>) {
+  private fun deleteRepos(account: AccountData, repos: Collection<String>) {
     setCurrentAccount(account)
     for (repo in repos) {
-      account.executor.execute(GithubApiRequests.Repos.delete(repo.url))
+      account.executor.execute(GithubApiRequests.Repos.delete(repo))
     }
   }
 
