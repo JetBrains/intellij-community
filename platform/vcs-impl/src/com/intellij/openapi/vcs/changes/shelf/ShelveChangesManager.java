@@ -989,7 +989,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       ShelvedChangeList listCopy = createChangelistCopy(changeList);
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
-      filterShelvedList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
+      removeFromList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
       if (delete) {
         //if completely deleted -> return null;
         if (deleteChangeList(listCopy) == null) return null;
@@ -1057,7 +1057,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   private void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
-      deleteListImpl(list);
+      deleteResources(list);
       mySchemeManager.removeScheme(list);
     }
     if (updateView) {
@@ -1065,11 +1065,11 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  private void filterShelvedList(@NotNull final ShelvedChangeList listCopy,
-                                 @NotNull List<ShelvedChange> shelvedChanges,
-                                 @NotNull List<ShelvedBinaryFile> shelvedBinaryChanges) {
-    filterBinaries(listCopy, shelvedBinaryChanges);
-    filterShelvedChanges(listCopy, shelvedChanges);
+  private void removeFromList(@NotNull final ShelvedChangeList listCopy,
+                              @NotNull List<ShelvedChange> shelvedChanges,
+                              @NotNull List<ShelvedBinaryFile> shelvedBinaryChanges) {
+    removeBinaries(listCopy, shelvedBinaryChanges);
+    removeChanges(listCopy, shelvedChanges);
 
     // create patch file based on filtered changes
     try {
@@ -1086,7 +1086,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  private void filterShelvedChanges(@NotNull ShelvedChangeList list, @NotNull List<ShelvedChange> shelvedChanges) {
+  private void removeChanges(@NotNull ShelvedChangeList list, @NotNull List<ShelvedChange> shelvedChanges) {
     for (Iterator<ShelvedChange> iterator = list.getChanges(myProject).iterator(); iterator.hasNext(); ) {
       final ShelvedChange change = iterator.next();
       for (ShelvedChange newChange : shelvedChanges) {
@@ -1098,7 +1098,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  private static void filterBinaries(@NotNull ShelvedChangeList list, @NotNull List<ShelvedBinaryFile> binaryFiles) {
+  private static void removeBinaries(@NotNull ShelvedChangeList list, @NotNull List<ShelvedBinaryFile> binaryFiles) {
     for (Iterator<ShelvedBinaryFile> shelvedChangeListIterator = list.getBinaryFiles().iterator();
          shelvedChangeListIterator.hasNext(); ) {
       final ShelvedBinaryFile binaryFile = shelvedChangeListIterator.next();
@@ -1131,7 +1131,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   public ShelvedChangeList deleteChangeList(@NotNull final ShelvedChangeList changeList) {
     ShelvedChangeList deletedList = null;
     if (changeList.isDeleted()) {
-      deleteListImpl(changeList);
+      deleteResources(changeList);
       mySchemeManager.removeScheme(changeList);
     }
     else {
@@ -1143,7 +1143,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     return deletedList;
   }
 
-  private void deleteListImpl(@NotNull final ShelvedChangeList changeList) {
+  private void deleteResources(@NotNull final ShelvedChangeList changeList) {
     FileUtil.delete(new File(getShelfResourcesDirectory(), changeList.getName()));
     //backward compatibility deletion: if we didn't preform resource migration
     FileUtil.delete(new File(changeList.PATH));
