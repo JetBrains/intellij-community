@@ -54,7 +54,8 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   @Nullable
   @Override
   public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
-    if (!changedFileOrDirPath.endsWith("." + GradleConstants.EXTENSION)) {
+    if (!changedFileOrDirPath.endsWith("." + GradleConstants.EXTENSION) &&
+        !changedFileOrDirPath.endsWith("." + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION)) {
       return null;
     }
 
