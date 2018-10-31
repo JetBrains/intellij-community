@@ -170,8 +170,12 @@ else:
 if version[0] > 2:
     import io  # in 3.0
 
-    #noinspection PyArgumentList
-    fopen = lambda name, mode: io.open(name, mode, encoding=OUT_ENCODING)
+
+    def fopen(name, mode):
+        kwargs = {}
+        if 'b' not in mode:
+            kwargs['encoding'] = OUT_ENCODING
+        return io.open(name, mode, **kwargs)
 else:
     fopen = open
 

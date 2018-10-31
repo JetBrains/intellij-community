@@ -32,7 +32,10 @@ def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_di
                 break
     if mod:
         action("restoring")
-        r = ModuleRedeclarator(mod, module_file_name, cache_dir, sdk_dir, doing_builtins=doing_builtins)
+        r = ModuleRedeclarator(mod, module_name, module_file_name,
+                               cache_dir=cache_dir,
+                               sdk_dir=sdk_dir,
+                               doing_builtins=doing_builtins)
         r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
@@ -301,15 +304,15 @@ def build_cache_dir_path(subdir, mod_qname, mod_path):
 def module_hash(mod_qname, mod_path):
     # Hash the content of a physical module
     if mod_path:
-        with open(mod_path, 'r') as f:
-            return hashlib.sha256(f.read())
+        with fopen(mod_path, 'rb') as f:
+            return hashlib.sha256(f.read()).hexdigest()
 
     # Hash the content
     else:
         major_version = '.'.join(sys.version_info[:2])
         module = __import__(mod_qname)
         defined_names = ':'.join(sorted(dir(module)))
-        return hashlib.sha256(major_version + defined_names)
+        return hashlib.sha256(major_version + defined_names).hexdigest()
 
 
 # command-line interface
@@ -319,7 +322,7 @@ def should_update(skeleton_path, mod_path):
     return True
 
 
-def process_one(name, mod_file_name, doing_builtins, subdir):
+def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
     Returns True on success.
@@ -333,12 +336,15 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
     action("doing nothing")
 
     try:
-        python_stubs_dir = os.path.dirname(subdir)
-        cache_dir_path = build_cache_dir_path(python_stubs_dir, name, mod_file_name)
-        if not os.path.exists(cache_dir_path):
-            os.makedirs(cache_dir_path)
+        python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
+        global_cache_dir = os.path.join(python_stubs_dir, 'cache')
+        mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
+        if os.path.exists(mod_cache_dir):
+            shutil.rmtree(mod_cache_dir)
+        os.makedirs(mod_cache_dir)
 
-        if not os.path.exists(cache_dir_path) or should_update(cache_dir_path, name):
+
+        if not os.path.exists(mod_cache_dir) or should_update(mod_cache_dir, name):
             old_modules = list(sys.modules.keys())
             imported_module_names = set()
 
@@ -364,7 +370,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
             if imported_module_names is None:
                 imported_module_names = set(sys.modules.keys()) - set(old_modules)
 
-            redo_module(name, mod_file_name, doing_builtins, cache_dir_path, subdir)
+            redo_module(name, mod_file_name, doing_builtins, mod_cache_dir, sdk_skeletons_dir)
             # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
             # restore all of them
             path = name.split(".")
@@ -374,16 +380,19 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
                     if m.startswith("pycharm_generator_utils"): continue
                     action("looking at possible submodule %r", m)
                     # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(
-                            sys.modules[m], '__file__'):
+                    if (m not in old_modules and
+                            m not in imported_module_names and
+                            m != name and
+                            not hasattr(sys.modules[m], '__file__') and
+                            m not in sys.builtin_module_names):
                         if not quiet:
                             say(m)
                             sys.stdout.flush()
-                        action("opening %r", cache_dir_path)
+                        action("opening %r", mod_cache_dir)
                         try:
-                            redo_module(m, mod_file_name, doing_builtins, cache_dir=cache_dir_path, sdk_dir=subdir)
+                            redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
                         finally:
-                            action("closing %r", cache_dir_path)
+                            action("closing %r", mod_cache_dir)
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"

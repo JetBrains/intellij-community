@@ -60,16 +60,18 @@ class ClassBuf(Buf):
 
 #noinspection PyBroadException
 class ModuleRedeclarator(object):
-    def __init__(self, module, mod_filename, cache_dir, sdk_dir=None, indent_size=4, doing_builtins=False):
+    def __init__(self, module, mod_qname, mod_filename, cache_dir, sdk_dir=None, indent_size=4, doing_builtins=False):
         """
-        @param module module qualified name
-        @param mod_filename filename of binary module (the .dll or .so). Can be None for modules
+        @param module: module object
+        @param mod_qname: module qualified name
+        @param mod_filename: filename of binary module (the .dll or .so). Can be None for modules
             that don't have corresponding binary file
-        @param cache_dir path to skeletons cache directory (e.g. python_stubs/cache)
-        @param sdk_dir path to interpreter specific skeletons directory
-        @param indent_size amount of space characters per indent
+        @param cache_dir: path to skeletons cache directory (e.g. python_stubs/cache)
+        @param sdk_dir: path to interpreter specific skeletons directory
+        @param indent_size: amount of space characters per indent
         """
         self.module = module
+        self.qname = mod_qname
         self.cache_dir = cache_dir
         self.sdk_dir = sdk_dir
         self.mod_filename = mod_filename
@@ -122,7 +124,7 @@ class ModuleRedeclarator(object):
         return self._indent_step * level
 
     def flush(self):
-        qname_parts = self.module.split('.')
+        qname_parts = self.qname.split('.')
         if self.split_modules:
             last_pkg_dir = build_pkg_structure(self.cache_dir, self.module)
             with fopen(os.path.join(last_pkg_dir, "__init__.py"), "w") as init:
@@ -161,6 +163,9 @@ class ModuleRedeclarator(object):
         if os.path.isdir(src):
             shutil.copytree(src, dst)
         else:
+            parents = os.path.dirname(dst)
+            if not os.path.exists(parents):
+                os.makedirs(parents)
             shutil.copy2(src, dst)
 
 

@@ -696,6 +696,9 @@ def restore_clr(p_name, p_class):
 
 
 def build_pkg_structure(base_dir, qname):
+    if not qname:
+        return base_dir
+
     subdirname = base_dir
     for part in qname.split("."):
         subdirname = os.path.join(base_dir, part)
