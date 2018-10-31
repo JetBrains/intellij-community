@@ -18,12 +18,10 @@ import com.intellij.openapi.options.ConfigurableBase
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.io.exists
@@ -32,7 +30,6 @@ import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import java.io.File
 import java.nio.file.Paths
-import javax.swing.JList
 import javax.swing.JPanel
 
 internal class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
@@ -49,7 +46,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   private val inKeePass = RadioButton("In KeePass")
   private var keePassDbFile: TextFieldWithBrowseButton? = null
 
-  private val pgpKeyModel = CollectionComboBoxModel<PgpKey?>()
+  private var isUsePgp = BooleanPropertyWithComboBoxUiManager(CollectionComboBoxModel<PgpKey>())
 
   private val rememberPasswordsUntilClosing = RadioButton("Do not save, forget passwords after restart")
 
@@ -74,12 +71,12 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     updateEnabledState()
 
     val secretKeys = pgp.listKeys()
-    pgpKeyModel.removeAll()
-    pgpKeyModel.add(null)
-    pgpKeyModel.addAll(1, secretKeys)
+    isUsePgp.listModel.replaceAll(secretKeys)
 
     val currentKeyId = settings.state.pgpKeyId
-    pgpKeyModel.selectedItem = if (currentKeyId == null) null else secretKeys.firstOrNull { it.keyId == currentKeyId }
+    isUsePgp.selected = (if (currentKeyId == null) null else secretKeys.firstOrNull { it.keyId == currentKeyId }) ?: secretKeys.firstOrNull()
+    isUsePgp.value = !secretKeys.isEmpty() && currentKeyId != null
+    isUsePgp.isEnabled = !secretKeys.isEmpty()
   }
 
   override fun isModified(settings: PasswordSafeSettings): Boolean {
@@ -89,7 +86,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     return getNewProviderType() != settings.providerType || isKeepassFileLocationChanged(settings) || isPgpKeyChanged(settings)
   }
 
-  private fun isPgpKeyChanged(settings: PasswordSafeSettings) = settings.state.pgpKeyId != pgpKeyModel.selected?.keyId
+  private fun isPgpKeyChanged(settings: PasswordSafeSettings) = settings.state.pgpKeyId != getNewPgpKey()?.keyId
 
   private fun isKeepassFileLocationChanged(settings: PasswordSafeSettings): Boolean {
     return getNewProviderType() == ProviderType.KEEPASS && getNewDbFileAsString() != settings.keepassDb
@@ -138,8 +135,17 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
       createAndSaveKeePassDatabaseWithNewOptions(settings)
     }
     else if (providerType == ProviderType.KEEPASS && isPgpKeyChanged(settings)) {
-      // not our business in this case, if there is no db file, do not require not null KeePassFileManager
-      createKeePassFileManager()?.saveMasterKeyToApplyNewEncryptionSpec()
+      try {
+        // not our business in this case, if there is no db file, do not require not null KeePassFileManager
+        createKeePassFileManager()?.saveMasterKeyToApplyNewEncryptionSpec()
+      }
+      catch (e: ConfigurationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+        throw ConfigurationException("Internal error: ${e.message}")
+      }
     }
 
     // not in createAndSaveKeePassDatabaseWithNewOptions (as logically should be) because we want to force users to set custom master passwords even if some another setting (not path) was changed
@@ -149,7 +155,7 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
     }
 
     settings.providerType = providerType
-    settings.state.pgpKeyId = pgpKeyModel.selected?.keyId
+    settings.state.pgpKeyId = getNewPgpKey()?.keyId
   }
 
   // existing in-memory KeePass database is not used, the same as if switched to KEYCHAIN
@@ -220,22 +226,16 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
               ChangeKeePassDatabaseMasterPasswordAction()
             )
           }
-          row("PGP key:") {
-            val comboBox = ComboBox(pgpKeyModel)
-            comboBox.setRenderer(object : ListCellRendererWrapper<PgpKey?>() {
-              override fun customize(list: JList<*>, value: PgpKey?, index: Int, selected: Boolean, hasFocus: Boolean) {
-                if (value == null) {
-                  setText(if (list.model.size == 1) "No keys" else "Do not use")
-                }
-                else {
-                  setText("${value.userId} (${value.keyId})")
-                }
+          row {
+            cell {
+              val prefix = "Protect master password using PGP key"
+              checkBox(if (isUsePgp.listModel.isEmpty) "$prefix (No keys configured)" else "$prefix:", propertyUiManager = isUsePgp)
+              comboBox(isUsePgp, growPolicy = GrowPolicy.MEDIUM_TEXT) { value, _, _ ->
+                setText("${value.userId} (${value.keyId})")
               }
-            })
-            comboBox(comment = "Protect master key file using PGP.", growPolicy = GrowPolicy.MEDIUM_TEXT)
+            }
           }
         }
-
         row {
           rememberPasswordsUntilClosing()
         }
@@ -248,12 +248,14 @@ internal class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings>
   }
 
   private fun getEncryptionSpec(): EncryptionSpec {
-    val pgpKey = pgpKeyModel.selected
+    val pgpKey = getNewPgpKey()
     return when (pgpKey) {
       null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
       else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey.keyId)
     }
   }
+
+  private fun getNewPgpKey() = isUsePgp.selected
 
   private fun getNewProviderType(): ProviderType {
     return when {
