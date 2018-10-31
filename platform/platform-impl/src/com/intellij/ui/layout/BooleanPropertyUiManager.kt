@@ -38,7 +38,10 @@ open class BooleanPropertyUiManager {
       updateDependentComponentState()
     })
 
-    updateCheckBoxEnabledState()
+    // do not modify initial enabled state of component - maybe disabled as part of inactive choice group
+    if (!isEnabled) {
+      updateCheckBoxEnabledState()
+    }
   }
 
   private fun updateDependentComponentState() {

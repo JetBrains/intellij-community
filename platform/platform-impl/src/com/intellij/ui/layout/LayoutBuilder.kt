@@ -11,8 +11,8 @@ import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit): Row = row(label = Label(label), init = init)
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
+  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
 
   inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
     val row = builder.newRow(label, buttonGroup, separated)
@@ -54,12 +54,19 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     return group
   }
 
+  inline fun <T : Any> buttonGroup(propertyManager: ChoicePropertyUiManager<T>, init: LayoutBuilderWithButtonGroup<T>.() -> Unit) {
+    LayoutBuilderWithButtonGroup(builder, propertyManager).init()
+  }
+
   @Suppress("PropertyName")
   @PublishedApi
   @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
   internal val `$`: LayoutBuilderImpl
     get() = builder
 }
+
+@Suppress("unused")
+class LayoutBuilderWithButtonGroup<T : Any> @PublishedApi internal constructor(builder: LayoutBuilderImpl, internal val propertyManager: ChoicePropertyUiManager<T>) : LayoutBuilder(builder)
 
 fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
   FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
