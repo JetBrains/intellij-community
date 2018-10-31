@@ -81,7 +81,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
 
   private fun extractDescriptor(mavenId: String?,
                                 library: Library): JpsMavenRepositoryLibraryDescriptor? = when {
-    mavenId != null -> JpsMavenRepositoryLibraryDescriptor(mavenId)
+    mavenId != null -> JpsMavenRepositoryLibraryDescriptor(mavenId, false, emptyList())
     library is LibraryEx  -> (library.properties as? RepositoryLibraryProperties)
       ?.run { JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version) }
     else -> null
