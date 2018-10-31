@@ -127,7 +127,9 @@ public class PathManager {
    * Check whether IDE is installed via snap packages (https://snapcraft.io/) or not
    */
   public static boolean isSnap() {
-    return SystemInfo.isLinux && getHomePath().startsWith("/snap/");
+    // On Ubuntu snaps are located in /snap/ directory, but for other distros path is /var/lib/snapd/snap/
+    return SystemInfo.isLinux &&
+           (getHomePath().startsWith("/snap/") || getHomePath().startsWith("/var/lib/snapd/snap/"));
   }
 
   private static String[] getBinDirectories(File root) {
