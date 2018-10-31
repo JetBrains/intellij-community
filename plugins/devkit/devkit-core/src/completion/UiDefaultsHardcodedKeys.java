@@ -1381,6 +1381,8 @@ public final class UiDefaultsHardcodedKeys {
     "VersionControl.FileHistory.Commit.selectedBranchBackground",
     "VersionControl.Log.Commit.currentBranchBackground",
     "VersionControl.Log.Commit.unmatchedForeground",
+    "VersionControl.Ref.backgroundBase",
+    "VersionControl.Ref.backgroundBrightness",
     "VersionControl.Ref.foreground",
     "WelcomeScreen.Projects.background",
     "WelcomeScreen.Projects.selectionBackground",
