@@ -46,7 +46,7 @@ public class CleanUnshelvedAction extends DumbAwareAction {
       if (dialog.isUnshelvedWithFilterSelected()) {
         ShelveChangesManager.getInstance(project).cleanUnshelved(dialog.getTimeLimitInMillis());
       }
-      else if (dialog.isAllUnshelvedSelected()) {
+      else {
         ShelveChangesManager.getInstance(project).clearRecycled();
       }
     }
