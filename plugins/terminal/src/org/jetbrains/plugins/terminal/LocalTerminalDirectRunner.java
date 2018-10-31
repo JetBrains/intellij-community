@@ -33,10 +33,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +49,6 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -120,9 +122,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-
-
-    Map<String, String> envs = new HashMap<String, String>();
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                   : ContainerUtil.canonicalStrategy());
 
     if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
       envs.putAll(System.getenv());
