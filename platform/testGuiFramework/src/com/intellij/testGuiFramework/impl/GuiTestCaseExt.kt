@@ -99,6 +99,16 @@ fun GuiTestCase.waitAMoment(attempts: Int = 0) {
           timeoutToDisappear = timeoutForBackgroundTasks
         )
       }
+      catch (ignore: NullPointerException) {
+        // if asyncIcon disappears at once after getting the NPE from fest might occur
+        // but it's ok - nothing to wait anymore
+      }
+      catch (ignore: IllegalComponentStateException){
+        // do nothing - asyncIcon disappears, background process has stopped
+      }
+      catch (ignore: ComponentLookupException){
+        // do nothing - panel hasn't appeared and it seems ok
+      }
       catch (e: IllegalStateException){
         // asyncIcon searched earlier might disappear at all (it's ok)
         // or new one is shown. So let's try to search it again
@@ -108,12 +118,6 @@ fun GuiTestCase.waitAMoment(attempts: Int = 0) {
           if(indexingProcessIconNullable(Timeouts.noTimeout) !=null)
             throw WaitTimedOutError("Async icon is shown, but we cannot click on it after $maxAttempts attempts")
         }
-      }
-      catch (e: IllegalComponentStateException){
-        // do nothing - asyncIcon disappears, background process has stopped
-      }
-      catch (e: ComponentLookupException){
-        // do nothing - panel hasn't appeared and it seems ok
       }
       catch (e: WaitTimedOutError) {
         throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
