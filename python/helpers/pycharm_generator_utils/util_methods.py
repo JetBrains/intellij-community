@@ -694,12 +694,11 @@ def restore_clr(p_name, p_class):
         is_static = True
     return is_static, build_signature(p_name, params), None
 
-def build_output_name(dirname, qualified_name):
-    qualifiers = qualified_name.split(".")
-    if dirname and not dirname.endswith("/") and not dirname.endswith("\\"):
-        dirname += os.path.sep # "a -> a/"
-    for pathindex in range(len(qualifiers) - 1): # create dirs for all qualifiers but last
-        subdirname = dirname + os.path.sep.join(qualifiers[0: pathindex + 1])
+
+def build_pkg_structure(base_dir, qname):
+    subdirname = base_dir
+    for part in qname.split("."):
+        subdirname = os.path.join(base_dir, part)
         if not os.path.isdir(subdirname):
             action("creating subdir %r", subdirname)
             os.makedirs(subdirname)
@@ -707,20 +706,9 @@ def build_output_name(dirname, qualified_name):
         if os.path.isfile(subdirname + ".py"):
             os.rename(subdirname + ".py", init_py)
         elif not os.path.isfile(init_py):
-            init = fopen(init_py, "w")
-            init.close()
-    target_name = dirname + os.path.sep.join(qualifiers)
-    if os.path.isdir(target_name):
-        fname = os.path.join(target_name, "__init__.py")
-    else:
-        fname = target_name + ".py"
+            fopen(init_py, "w").close()
 
-    dirname = os.path.dirname(fname)
-
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
-
-    return fname
+    return subdirname
 
 
 def is_valid_implicit_namespace_package_name(s):

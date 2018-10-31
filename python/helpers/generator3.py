@@ -1,5 +1,6 @@
 # encoding: utf-8
 import atexit
+import hashlib
 import zipfile
 
 from pycharm_generator_utils.clr_tools import *
@@ -11,7 +12,7 @@ from pycharm_generator_utils.util_methods import *
 debug_mode = False
 
 
-def redo_module(module_name, outfile, module_file_name, doing_builtins):
+def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_dir=None):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
     # fails to find 'gobject._gobject'. thus we need to pull the module directly out of
     # sys.modules
@@ -31,7 +32,7 @@ def redo_module(module_name, outfile, module_file_name, doing_builtins):
                 break
     if mod:
         action("restoring")
-        r = ModuleRedeclarator(mod, outfile, module_file_name, doing_builtins=doing_builtins)
+        r = ModuleRedeclarator(mod, module_file_name, cache_dir, sdk_dir, doing_builtins=doing_builtins)
         r.redo(module_name, ".".join(mod_path[:-1]) in MODULES_INSPECT_DIR)
         action("flushing")
         r.flush()
@@ -293,8 +294,31 @@ def zip_stdlib(zip_path):
         zip.close()
 
 
+def build_cache_dir_path(subdir, mod_qname, mod_path):
+    return os.path.join(subdir, module_hash(mod_qname, mod_path))
+
+
+def module_hash(mod_qname, mod_path):
+    # Hash the content of a physical module
+    if mod_path:
+        with open(mod_path, 'r') as f:
+            return hashlib.sha256(f.read())
+
+    # Hash the content
+    else:
+        major_version = '.'.join(sys.version_info[:2])
+        module = __import__(mod_qname)
+        defined_names = ':'.join(sorted(dir(module)))
+        return hashlib.sha256(major_version + defined_names)
+
+
 # command-line interface
 # noinspection PyBroadException
+def should_update(skeleton_path, mod_path):
+    # TODO check generator version
+    return True
+
+
 def process_one(name, mod_file_name, doing_builtins, subdir):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
@@ -309,54 +333,57 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
     action("doing nothing")
 
     try:
-        fname = build_output_name(subdir, name)
-        action("opening %r", fname)
-        old_modules = list(sys.modules.keys())
-        imported_module_names = set()
+        python_stubs_dir = os.path.dirname(subdir)
+        cache_dir_path = build_cache_dir_path(python_stubs_dir, name, mod_file_name)
+        if not os.path.exists(cache_dir_path):
+            os.makedirs(cache_dir_path)
 
-        class MyFinder:
-            # noinspection PyMethodMayBeStatic
-            def find_module(self, fullname, path=None):
-                if fullname != name:
-                    imported_module_names.add(fullname)
-                return None
+        if not os.path.exists(cache_dir_path) or should_update(cache_dir_path, name):
+            old_modules = list(sys.modules.keys())
+            imported_module_names = set()
 
-        my_finder = None
-        if hasattr(sys, 'meta_path'):
-            my_finder = MyFinder()
-            sys.meta_path.append(my_finder)
-        else:
-            imported_module_names = None
+            class MyFinder:
+                # noinspection PyMethodMayBeStatic
+                def find_module(self, fullname, path=None):
+                    if fullname != name:
+                        imported_module_names.add(fullname)
+                    return None
 
-        action("importing")
-        __import__(name)  # sys.modules will fill up with what we want
+            my_finder = None
+            if hasattr(sys, 'meta_path'):
+                my_finder = MyFinder()
+                sys.meta_path.append(my_finder)
+            else:
+                imported_module_names = None
 
-        if my_finder:
-            sys.meta_path.remove(my_finder)
-        if imported_module_names is None:
-            imported_module_names = set(sys.modules.keys()) - set(old_modules)
+            action("importing")
+            __import__(name)  # sys.modules will fill up with what we want
 
-        redo_module(name, fname, mod_file_name, doing_builtins)
-        # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
-        # restore all of them
-        path = name.split(".")
-        redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
-        if imported_module_names and redo_imports:
-            for m in sys.modules.keys():
-                if m.startswith("pycharm_generator_utils"): continue
-                action("looking at possible submodule %r", m)
-                # if module has __file__ defined, it has Python source code and doesn't need a skeleton
-                if m not in old_modules and m not in imported_module_names and m != name and not hasattr(
-                        sys.modules[m], '__file__'):
-                    if not quiet:
-                        say(m)
-                        sys.stdout.flush()
-                    fname = build_output_name(subdir, m)
-                    action("opening %r", fname)
-                    try:
-                        redo_module(m, fname, mod_file_name, doing_builtins)
-                    finally:
-                        action("closing %r", fname)
+            if my_finder:
+                sys.meta_path.remove(my_finder)
+            if imported_module_names is None:
+                imported_module_names = set(sys.modules.keys()) - set(old_modules)
+
+            redo_module(name, mod_file_name, doing_builtins, cache_dir_path, subdir)
+            # The C library may have called Py_InitModule() multiple times to define several modules (gtk._gtk and gtk.gdk);
+            # restore all of them
+            path = name.split(".")
+            redo_imports = not ".".join(path[:-1]) in MODULES_INSPECT_DIR
+            if imported_module_names and redo_imports:
+                for m in sys.modules.keys():
+                    if m.startswith("pycharm_generator_utils"): continue
+                    action("looking at possible submodule %r", m)
+                    # if module has __file__ defined, it has Python source code and doesn't need a skeleton
+                    if m not in old_modules and m not in imported_module_names and m != name and not hasattr(
+                            sys.modules[m], '__file__'):
+                        if not quiet:
+                            say(m)
+                            sys.stdout.flush()
+                        action("opening %r", cache_dir_path)
+                        try:
+                            redo_module(m, mod_file_name, doing_builtins, cache_dir=cache_dir_path, sdk_dir=subdir)
+                        finally:
+                            action("closing %r", cache_dir_path)
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"
