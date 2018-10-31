@@ -94,6 +94,8 @@ public class IdeaApplication {
     boolean headless = Main.isHeadless();
     patchSystem(headless);
 
+    myStarter = getStarter();
+
     if (Main.isCommandLine()) {
       if (CommandLineApplication.ourInstance == null) {
         new CommandLineApplication(isInternal, isUnitTest, headless);
@@ -104,18 +106,11 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      //if (myArgs.length == 0) {
-      myStarter = getStarter();
       if (isShowSplash && myStarter instanceof IdeStarter) {
         splash = ((IdeStarter)myStarter).showSplash();
       }
-      //}
 
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
-    }
-
-    if (myStarter == null) {
-      myStarter = getStarter();
     }
 
     if (headless && myStarter instanceof ApplicationStarterEx && !((ApplicationStarterEx)myStarter).isHeadless()) {
