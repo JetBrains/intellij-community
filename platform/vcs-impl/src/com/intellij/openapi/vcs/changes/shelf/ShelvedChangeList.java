@@ -70,7 +70,7 @@ public class ShelvedChangeList implements JDOMExternalizable, ExternalizableSche
     mySchemeName = DESCRIPTION;
   }
 
-  public static ShelvedChangeList copy(@NotNull ShelvedChangeList list) {
+  static ShelvedChangeList copy(@NotNull ShelvedChangeList list) {
     ShelvedChangeList copied = new ShelvedChangeList();
     copied.PATH = list.PATH;
     copied.DESCRIPTION = list.DESCRIPTION;
