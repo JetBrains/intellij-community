@@ -62,8 +62,20 @@ public class JobLauncherImpl extends JobLauncher {
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
     ApplierCompleter<T> applier = new ApplierCompleter<>(null, runInReadAction, failFastOnAcquireReadAction, wrapper, things, thingProcessor, 0, things.size(), failedSubTasks, null);
     try {
-      ForkJoinPool.commonPool().invoke(applier);
-      if (applier.throwable != null) throw applier.throwable;
+      ForkJoinPool.commonPool().execute(applier);
+      // call checkCanceled a bit more often than .invoke()
+      while (!applier.isDone()) {
+        ProgressManager.checkCanceled();
+        // does automatic compensation against starvation
+        try {
+          applier.get(1, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+        }
+      }
+      if (applier.throwable != null) {
+        throw applier.throwable;
+      }
     }
     catch (ApplierCompleter.ComputationAbortedException e) {
       // one of the processors returned false
@@ -74,9 +86,7 @@ public class JobLauncherImpl extends JobLauncher {
       throw e;
     }
     catch (ProcessCanceledException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug(e);
-      }
+      LOG.debug(e);
       // task1.processor returns false and the task cancels the indicator
       // then task2 calls checkCancel() and get here
       return false;
@@ -87,7 +97,7 @@ public class JobLauncherImpl extends JobLauncher {
     catch (Throwable e) {
       throw new RuntimeException(e);
     }
-    assert applier.isDone();
+    //assert applier.isDone();
     return applier.completeTaskWhichFailToAcquireReadAction();
   }
 
