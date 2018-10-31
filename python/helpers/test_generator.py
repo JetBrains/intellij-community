@@ -20,7 +20,7 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, '/dev/null', None)
+        self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testTrivial(self):
         result, ret_sig, note = self.m.parse_func_doc("blah f(a, b, c) ololo", "f", "f", None)
@@ -186,7 +186,7 @@ class TestRestoreMethodByDocComment(unittest.TestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, '/dev/null', None)
+        self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testPlainMethod(self):
         result, ret_sig, note = self.m.parse_func_doc("blah f(self, foo, bar) ololo", "f", "f", "SomeClass")
@@ -205,7 +205,7 @@ class TestAnnotatedParameters(unittest.TestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(None, '/dev/null', None)
+        self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
     def testMixed(self):
         result, ret_sig, note = self.m.parse_func_doc('blah f(i: int, foo) ololo', "f", "f", None)
@@ -230,7 +230,7 @@ if not IS_CLI and VERSION < (3, 0):
         """
 
         def setUp(self):
-            self.m = ModuleRedeclarator(None, '/dev/null', None)
+            self.m = ModuleRedeclarator(None, '', '/dev/null', None)
 
         def testSimple(self):
             def target(a, b, c=1, *d, **e):
@@ -297,7 +297,7 @@ class TestSpecialCases(unittest.TestCase):
             import __builtin__ as the_builtins
 
             self.builtins_name = the_builtins.__name__
-        self.m = ModuleRedeclarator(the_builtins, None, None, doing_builtins=True)
+        self.m = ModuleRedeclarator(the_builtins, '', None, None, doing_builtins=True)
 
     def _testBuiltinFuncName(self, func_name, expected):
         class_name = None
@@ -333,7 +333,7 @@ class TestDataOutput(_DiffPrintingTestCase):
     """
 
     def setUp(self):
-        self.m = ModuleRedeclarator(self, 4, None)  # Pass anything with __dict__ as module
+        self.m = ModuleRedeclarator(self, '', 4, None)  # Pass anything with __dict__ as module
 
     def checkFmtValue(self, data, expected):
         buf = Buf(self.m)
@@ -378,7 +378,7 @@ if not IS_CLI:
         """
 
         def setUp(self):
-            self.m = ModuleRedeclarator(None, 4, None)
+            self.m = ModuleRedeclarator(None, '', 4, None)
 
         def checkRestoreFunction(self, doc, expected):
             spec, ret_literal, note = self.m.parse_func_doc(doc, "foo", "foo", None)
