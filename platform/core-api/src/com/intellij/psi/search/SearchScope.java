@@ -12,7 +12,9 @@ import javax.swing.*;
 public abstract class SearchScope {
   private static int hashCodeCounter;
 
-  private transient int myHashCode = ++hashCodeCounter;
+  private transient int myHashCode;
+  // to avoid System.identityHashCode() which was allegedly slower
+  private final int myDefaultHashCode = ++hashCodeCounter;
 
   /**
    * Do not override this method because it would disable hash code caching.
@@ -34,7 +36,7 @@ public abstract class SearchScope {
    * To provide your own hash code please override this method instead of <s>{@link #hashCode()}</s> to be able to cache the computed hash code.
    */
   protected int calcHashCode() {
-    return myHashCode;
+    return myDefaultHashCode;
   }
 
   @NotNull
