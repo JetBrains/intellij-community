@@ -679,12 +679,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       patchApplier.execute(showSuccessNotification, systemOperation);
       if (isRemoveFilesFromShelf() || systemOperation) {
         remainingPatches.addAll(patchApplier.getRemainingPatches());
-        if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-          recycleChangeList(changeList);
-        }
-        else {
-          saveRemainingPatches(changeList, remainingPatches, remainingBinaries, commitContext, false);
-        }
+        updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
       }
     });
   }
@@ -703,23 +698,34 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
 
     //store original dates to restore if needed
-    Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate = newHashMap();
+    Map<ShelvedChangeList, Date> deletedListsWithOriginalDate = newHashMap();
     for (ShelvedChangeList changeList : shelvedListsToDelete) {
       Date originalDate = changeList.DATE;
-      ShelvedChangeList recentlyDeleted = deleteChangeList(changeList);
-      //was not completely deleted
-      if (recentlyDeleted != null) {
-        createdDeletedListsWithOriginalDate.put(recentlyDeleted, originalDate);
+      if (changeList.isDeleted()) {
+        deleteChangeListCompletely(changeList);
+      }
+      else {
+        markChangeListAsDeleted(changeList);
+        deletedListsWithOriginalDate.put(changeList, originalDate);
       }
     }
+
     for (ShelvedChangeList list : shelvedListsFromChangesToDelete) {
       Date originalDate = list.DATE;
-      ShelvedChangeList listWithDeletedChanges = removeChangesFromChangeList(list, changesToDelete, binariesToDelete);
-      if (listWithDeletedChanges != null) {
-        createdDeletedListsWithOriginalDate.put(listWithDeletedChanges, originalDate);
+      boolean wasDeleted = list.isDeleted();
+      ShelvedChangeList newListWithDeletedChanges = removeChangesFromChangeList(list, changesToDelete, binariesToDelete);
+      if (newListWithDeletedChanges != null) {
+        deletedListsWithOriginalDate.put(newListWithDeletedChanges, originalDate);
+      }
+      else if (!wasDeleted) {
+        //entire list became deleted because no changes remained
+        ShelvedChangeList shelvedChangeList = mySchemeManager.findSchemeByName(list.getName());
+        if (shelvedChangeList != null && shelvedChangeList.isDeleted()) {
+          deletedListsWithOriginalDate.put(shelvedChangeList, originalDate);
+        }
       }
     }
-    return createdDeletedListsWithOriginalDate;
+    return deletedListsWithOriginalDate;
   }
 
   @Nullable
@@ -739,12 +745,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       VcsImplUtil.showErrorMessage(myProject, e.getMessage(), "Cannot delete files from " + list.DESCRIPTION);
       return null;
     }
-    if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
-      return deleteChangeList(list);
-    }
-    else {
-      return saveRemainingPatches(list, remainingPatches, remainingBinaries, commitContext, true);
-    }
+    return saveRemainingPatchesIfNeeded(list, remainingPatches, remainingBinaries, commitContext, true);
   }
 
 
@@ -956,14 +957,44 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
+  public void updateListAfterUnshelve(@NotNull ShelvedChangeList listToUpdate,
+                                      @NotNull List<FilePatch> patches,
+                                      @NotNull List<ShelvedBinaryFile> binaries,
+                                      @NotNull CommitContext commitContext) {
+    saveRemainingPatchesIfNeeded(listToUpdate, patches, binaries, commitContext, false);
+  }
+
+  /**
+   * Return newly created shelved list with applied (deleted or unshelved) changes or null if no additional shelved list was created
+   * 1. if no changes remained in the original list - delete or mark applied (recycled) entire list - > no new list created, return null;
+   * 2. if there are some applied (deleted) changes and something remained it the original list then create separated list for applied
+   * changes and delete these changes from the original list - > in this case new list with applied (deleted) changes will be a return value
+   */
   @Nullable
-  public ShelvedChangeList saveRemainingPatches(final ShelvedChangeList changeList,
-                                                final List<FilePatch> remainingPatches,
-                                                final List<ShelvedBinaryFile> remainingBinaries,
-                                                CommitContext commitContext,
-                                                boolean delete) {
+  private ShelvedChangeList saveRemainingPatchesIfNeeded(final ShelvedChangeList changeList,
+                                                         final List<FilePatch> remainingPatches,
+                                                         final List<ShelvedBinaryFile> remainingBinaries,
+                                                         CommitContext commitContext,
+                                                         boolean delete) {
+    // all changes in the shelved list have been chosen to be applied/deleted
+    if (remainingPatches.isEmpty() && remainingBinaries.isEmpty()) {
+      if (!delete) {
+        recycleChangeList(changeList);
+      }
+      else if (changeList.isDeleted()) {
+        deleteChangeListCompletely(changeList);
+      }
+      else {
+        markChangeListAsDeleted(changeList);
+      }
+      notifyStateChanged();
+      return null;
+    }
+    //apply already applied  - do not change anything
+    if (!delete && changeList.isRecycled()) return null;
+
     ShelvedChangeList newlyCreatedList = null;
-    if ((delete && changeList.isDeleted()) || (!delete && changeList.isRecycled())) {
+    if ((delete && changeList.isDeleted())) {
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
     }
     else {
@@ -991,8 +1022,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
       removeFromList(listCopy, changeList.getChanges(myProject), changeList.getBinaryFiles());
       if (delete) {
-        //if completely deleted -> return null;
-        if (deleteChangeList(listCopy) == null) return null;
+        markChangeListAsDeleted(listCopy);
       }
       else {
         recycleChangeList(listCopy);
@@ -1113,7 +1143,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     }
   }
 
-  public void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
+  private void recycleChangeList(@NotNull final ShelvedChangeList changeList) {
     changeList.setRecycled(true);
     changeList.updateDate();
     if (changeList.isMarkedToDelete()) {
@@ -1123,26 +1153,16 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     notifyStateChanged();
   }
 
-
-  /**
-   * Remove changelist completely or mark as deleted
-   *
-   * @param changeList list to delete or to mark as deleted
-   * @return changelist if marked as deleted or null if was completely removed
-   */
-  public ShelvedChangeList deleteChangeList(@NotNull final ShelvedChangeList changeList) {
-    ShelvedChangeList deletedList = null;
-    if (changeList.isDeleted()) {
-      deleteResources(changeList);
-      mySchemeManager.removeScheme(changeList);
-    }
-    else {
-      changeList.setDeleted(true);
-      changeList.updateDate();
-      deletedList = changeList;
-    }
+  private void deleteChangeListCompletely(@NotNull final ShelvedChangeList changeList) {
+    deleteResources(changeList);
+    mySchemeManager.removeScheme(changeList);
     notifyStateChanged();
-    return deletedList;
+  }
+
+  void markChangeListAsDeleted(@NotNull final ShelvedChangeList changeList) {
+    changeList.setDeleted(true);
+    changeList.updateDate();
+    notifyStateChanged();
   }
 
   private void deleteResources(@NotNull final ShelvedChangeList changeList) {
