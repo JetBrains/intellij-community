@@ -37,3 +37,21 @@ class XXX {
     for (Map.Entry<? extends String, ?> entry : m.entrySet()) {}
   }
 }
+class RedundantWildcardBug {
+
+  public static void main(String[] args) {
+    List<Range<Integer>> intRanges = new ArrayList<>();
+    accept(intRanges);
+  }
+
+  private static void accept(List<?  extends Range<? extends Number>> numberRanges) {
+    // some logic here
+  }
+
+  /**
+   * A stub for:
+   * https://google.github.io/guava/releases/25.1-jre/api/docs/com/google/common/collect/Range.html
+   */
+  private static final class Range<C> {
+  }
+}
