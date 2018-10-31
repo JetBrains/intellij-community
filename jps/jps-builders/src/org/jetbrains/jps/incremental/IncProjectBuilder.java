@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.TimingLog;
+import org.jetbrains.jps.api.BuildParametersKeys;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
@@ -323,6 +324,11 @@ public class IncProjectBuilder {
     }
   }
 
+  private static boolean isParallelBuild(CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(BuildParametersKeys.IS_AUTOMAKE)) ?
+      BuildRunner.PARALLEL_BUILD_AUTOMAKE_ENABLED : BuildRunner.PARALLEL_BUILD_ENABLED;
+  }
+
   private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
@@ -331,7 +337,7 @@ public class IncProjectBuilder {
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
-             BuildRunner.PARALLEL_BUILD_ENABLED);
+             isParallelBuild(context));
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
@@ -786,7 +792,7 @@ public class IncProjectBuilder {
   private void buildChunks(final CompileContextImpl context, BuildProgress buildProgress) throws ProjectBuildException {
     try {
 
-      boolean compileInParallel = BuildRunner.PARALLEL_BUILD_ENABLED;
+      boolean compileInParallel = isParallelBuild(context);
       if (compileInParallel && MAX_BUILDER_THREADS <= 1) {
         LOG.info("Switched off parallel compilation because maximum number of builder threads is less than 2. Set '"
                  + GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION + "' system property to a value greater than 1 to really enable parallel compilation.");
