@@ -568,6 +568,10 @@ public class MavenProjectTest extends MavenImportingTestCase {
                   "      <configuration>" +
                   "        <compilerId>${maven.compiler.compilerId}</compilerId>" +
                   "        <compilerArgument>${unresolvedArgument}</compilerArgument>" +
+                  "        <compilerArguments>" +
+                  "          <d>path/with/braces_${</d>" +
+                  "          <anotherStrangeArg>${_${foo}</anotherStrangeArg>" +
+                  "        </compilerArguments>" +
                   "        <compilerArgs>" +
                   "          <arg>${anotherUnresolvedArgument}</arg>" +
                   "          <arg>-myArg</arg>" +
@@ -579,7 +583,8 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
     assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
-    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")), "-myArg");
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),
+                                    "-myArg", "-d", "path/with/braces_${");
   }
 
   // commenting the test as the errorProne module is not available to IJ community project
