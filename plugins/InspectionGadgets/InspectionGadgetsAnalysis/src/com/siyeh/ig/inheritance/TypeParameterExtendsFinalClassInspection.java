@@ -142,6 +142,12 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         return;
       }
       final PsiClassType classType = (PsiClassType)extendsBound;
+      for (PsiType typeParameter : classType.getParameters()) {
+        if (typeParameter instanceof PsiWildcardType) {
+          // if nested type has wildcard type parameter too, leave it
+          return;
+        }
+      }
       final PsiClass aClass = classType.resolve();
       if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
@@ -182,7 +188,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             return true; // incomplete code
           }
           final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
-          return isWildcardRequired(typeElement, iterationParameter.getTypeElement(), JavaGenericsUtil.getCollectionItemType(iteratedValue));
+          final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
+          assert foreachTypeElement != null;
+          return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
         }
       }
       else if (ancestor instanceof PsiLocalVariable) {
