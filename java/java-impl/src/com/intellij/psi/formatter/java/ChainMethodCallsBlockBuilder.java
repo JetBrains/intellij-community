@@ -131,19 +131,17 @@ class ChainMethodCallsBlockBuilder {
     List<ChainedCallChunk> result = new ArrayList<>();
 
     List<ASTNode> current = new ArrayList<>();
-    if (myJavaSettings.PLACE_DOT_ON_NEXT_LINE) {
-      for (ASTNode node : nodes) {
-        if (tryFinishChunk(node, current, result)) {
-          current = new ArrayList<>();
-        }
+    boolean placeDotOnNextLine = myJavaSettings.PLACE_DOT_ON_NEXT_LINE;
+    for (ASTNode node : nodes) {
+      if (!placeDotOnNextLine) {
         current.add(node);
       }
-    } else {
-      for (ASTNode node : nodes) {
+      if (node.getElementType() == JavaTokenType.DOT || node.getPsi() instanceof PsiComment) {
+        result.add(new ChainedCallChunk(current));
+        current = new ArrayList<>();
+      }
+      if (placeDotOnNextLine) {
         current.add(node);
-        if (tryFinishChunk(node, current, result)) {
-          current = new ArrayList<>();
-        }
       }
     }
     if (!current.isEmpty()) {
