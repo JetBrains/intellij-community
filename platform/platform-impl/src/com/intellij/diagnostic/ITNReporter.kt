@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Component
-import javax.swing.Icon
 
 private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
 @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
@@ -71,25 +70,6 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-/** @deprecated use [IdeErrorsDialog.getPluginInfo] (to be removed in IDEA 2019) */
-@Suppress("unused", "DEPRECATION")
-fun setPluginInfo(event: IdeaLoggingEvent, errorBean: com.intellij.errorreport.bean.ErrorBean) {
-  val pluginInfo = IdeErrorsDialog.getPluginInfo(event)
-  if (pluginInfo != null) {
-    errorBean.pluginName = pluginInfo.first
-    errorBean.pluginVersion = pluginInfo.second
-  }
-}
-
-private fun showMessageDialog(parentComponent: Component, project: Project?, message: String, title: String, icon: Icon) {
-  if (parentComponent.isShowing) {
-    Messages.showMessageDialog(parentComponent, message, title, icon)
-  }
-  else {
-    Messages.showMessageDialog(project, message, title, icon)
-  }
-}
-
 private fun submit(errorBean: ErrorBean, parentComponent: Component, callback: Consumer<SubmittedReportInfo>, project: Project?): Boolean {
   var credentials = ErrorReportConfigurable.getCredentials()
   if (credentials.hasOnlyUserName()) {
@@ -129,7 +109,10 @@ private fun onError(e: Exception, errorBean: ErrorBean, parentComponent: Compone
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-      showMessageDialog(parentComponent, project, message, CommonBundle.getWarningTitle(), Messages.getWarningIcon())
+      val title = CommonBundle.getWarningTitle()
+      val icon = Messages.getWarningIcon()
+      if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
+      else Messages.showMessageDialog(project, message, title, icon)
       callback.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       return@invokeLater
     }
