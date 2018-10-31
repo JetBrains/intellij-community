@@ -40,7 +40,7 @@ class TestNGRunConfigurationImporter: RunConfigurationImporter {
           }
           "group" -> TestType.GROUP.type.also { data.GROUP_NAME = testKindValue }
           "suite" -> TestType.SUITE.type.also { data.SUITE_NAME = testKindValue }
-          "pattern" -> TestType.PATTERN.type.also { data.setPatterns(LinkedHashSet(testKindValue.split(delimiters = ','))) }
+          "pattern" -> TestType.PATTERN.type.also { data.setPatterns(LinkedHashSet(testKindValue.split(','))) }
           else -> data.TEST_OBJECT
         }
       }

@@ -46,7 +46,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
         data.TEST_OBJECT = when (testKind) {
           "package" -> JUnitConfiguration.TEST_PACKAGE.also { data.PACKAGE_NAME = testKindValue }
           "directory" -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue }
-          "pattern" -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(delimiters = ','))) }
+          "pattern" -> JUnitConfiguration.TEST_PATTERN.also { data.setPatterns(LinkedHashSet(testKindValue.split(','))) }
           "class" -> JUnitConfiguration.TEST_CLASS.also { data.MAIN_CLASS_NAME = testKindValue }
           "method" -> JUnitConfiguration.TEST_METHOD.also {
             val className = testKindValue.substringBefore('#')
