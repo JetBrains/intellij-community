@@ -114,7 +114,7 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(call, resolveResult, resolveContext)) {
         final PyCallExpression.PyMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
         if (markedCallee == null) continue;
 
@@ -171,7 +171,8 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull PyCallExpression call,
+                                                                   @NotNull QualifiedRatedResolveResult resolveResult,
                                                                    @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
@@ -224,8 +225,11 @@ public class PyCallExpressionHelper {
       }
     }
 
+    final boolean isConstructor = resolved instanceof PyFunction &&
+                                  isConstructorName(((PyFunction)resolved).getName()) &&
+                                  call.getReceiver((PyCallable)resolved) == null;
     return resolved != null
-           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, false))
+           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, isConstructor))
            : Collections.emptyList();
   }
 
@@ -527,7 +531,7 @@ public class PyCallExpressionHelper {
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
-      if (PyNames.INIT.equals(f.getName())) {
+      if (isConstructorName(f.getName())) {
         init = f;
         cls = f.getContainingClass();
       }
@@ -553,7 +557,7 @@ public class PyCallExpressionHelper {
         return Ref.create(t);
       }
       if (cls != null) {
-        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, context);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
         }

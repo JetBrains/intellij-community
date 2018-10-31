@@ -257,7 +257,7 @@ public final class PyClassRefactoringUtil {
       if (target instanceof PyFunction) {
         final PyFunction f = (PyFunction)target;
         final PyClass c = f.getContainingClass();
-        if (c != null && c.findInitOrNew(false, null) == f) {
+        if (c != null && c.multiFindInitOrNew(false, null).contains(f)) {
           target = c;
         }
       }
