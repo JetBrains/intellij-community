@@ -73,8 +73,8 @@ fun KotlinGuiTestCase.createMavenProject(
   val mavenOptions = NewProjectDialogModel.MavenProjectOptions(
     artifact = artifact,
     useArchetype = archetype.isNotEmpty(),
-    archetypeGroup = "org.jetbrains.kotlin:, $archetype",
-    archetypeVersion = "$archetype, :$kotlinVersion"
+    archetypeGroup = "org.jetbrains.kotlin:$archetype",
+    archetypeVersion = "$archetype:$kotlinVersion"
   )
   newProjectDialogModel.createMavenProject(projectPath, mavenOptions)
 }
