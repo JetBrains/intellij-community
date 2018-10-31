@@ -294,6 +294,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
           checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
       }
       button(buttonNext).click()
+      waitForPageTransitionFinished {
+        textfield(textGroupId).target().locationOnScreen
+      }
       logUIStep("Fill GroupId with `${gradleOptions.group}`")
       textfield(textGroupId).click()
       typeText(gradleOptions.group)
