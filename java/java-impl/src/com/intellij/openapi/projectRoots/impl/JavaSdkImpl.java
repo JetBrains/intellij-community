@@ -277,6 +277,12 @@ public class JavaSdkImpl extends JavaSdk {
       pathsChecked.add(path);
     }
 
+    if (root == null) {  // Rider
+      path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/ultimate/community/java/jdkAnnotations";
+      root = lfs.findFileByPath(path);
+      pathsChecked.add(path);
+    }
+
     if (root == null) { // build
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
       root = VirtualFileManager.getInstance().findFileByUrl(url);
