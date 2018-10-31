@@ -24,12 +24,16 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
 import java.awt.Component
-import java.lang.Exception
 import javax.swing.Icon
 
 private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
 @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
 
+/**
+ * This is an internal implementation of [ErrorReportSubmitter] which is used to report exceptions in IntelliJ platform and plugins developed
+ * by JetBrains to processing at JetBrains. **It isn't supposed to be used by third-party plugins.** Third-party plugins need to provide
+ * their own implementations of [ErrorReportSubmitter].
+ */
 open class ITNReporter : ErrorReportSubmitter() {
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
