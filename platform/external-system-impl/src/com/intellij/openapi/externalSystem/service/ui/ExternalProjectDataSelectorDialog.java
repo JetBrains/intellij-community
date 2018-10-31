@@ -311,7 +311,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private Couple<CheckedTreeNode> createRoot() {
     final Map<DataNode, DataNodeCheckedTreeNode> treeNodeMap = ContainerUtil.newIdentityTroveMap();
-    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newHashMap();
+    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newTreeMap(); // need order for assigning parents
 
     final DataNodeCheckedTreeNode[] preselectedNode = {null};
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
@@ -329,7 +329,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     final int[] modulesCount = {0};
 
-    ExternalSystemApiUtil.visitChildrenFirst(myProjectInfo.getExternalProjectStructure(), node -> {
+    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), node -> {
       final Key key = node.getKey();
       if (!myPublicKeys.contains(key)) return;
 
@@ -354,7 +354,6 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
           preselectedNode[0] = treeNode;
         }
-        DataNode parent = node.getParent();
         if (node.getData() instanceof ModuleData) {
           ModuleData moduleData = (ModuleData)node.getData();
           if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
@@ -364,23 +363,32 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           if (ideGrouping != null) {
             ideGroupingMap.put(ideGrouping, node);
           }
-          String ideParentGrouping = moduleData.getIdeParentGrouping();
-          DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
-          if (structuralParent != null) {
-            parent = structuralParent;
-          }
-        }
-        if (parent != null) {
-          final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
-          if (parentTreeNode != null) {
-            parentTreeNode.add(treeNode);
-          }
         }
         treeNode.setEnabled(myIgnorableKeys.contains(key));
         treeNodeMap.put(node, treeNode);
-
       }
     });
+
+    for (Map.Entry<String, DataNode> groupingEntry : ideGroupingMap.entrySet()) {
+      DataNode node = groupingEntry.getValue();
+      if (!(node.getData() instanceof ModuleData)) continue;
+      ModuleData moduleData = (ModuleData)node.getData();
+      String ideParentGrouping = moduleData.getIdeParentGrouping();
+      DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
+      if (structuralParent == null) continue;
+
+      DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
+      DataNodeCheckedTreeNode treeParentNode = treeNodeMap.get(structuralParent);
+
+      if (treeParentNode == null) {
+        treeParentNode = treeNodeMap.get(node.getParent());
+      }
+
+      if (treeNode == null || treeParentNode == null) continue;
+
+      treeParentNode.add(treeNode);
+      treeNode.setParent(treeParentNode);
+    }
 
     myModulesCount = modulesCount[0];
 
