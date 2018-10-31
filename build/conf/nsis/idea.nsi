@@ -1406,16 +1406,21 @@ Function un.getRegKey
   StrCmp $R2 $INSTDIR HKCU admin
 HKCU:
   StrCpy $baseRegKey "HKCU"
-  goto Done
+  Goto Done
 admin:
   ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
   StrCpy $R2 "$R2\bin"
   StrCmp $R2 $INSTDIR HKLM cant_find_installation
 HKLM:
   StrCpy $baseRegKey "HKLM"
-  goto Done
+  Goto Done
 cant_find_installation:
-  ;admin perm. is required to uninstall?
+
+; compare installdir with default user location
+  ${UnStrStr} $R0 $INSTDIR $LOCALAPPDATA\${MANUFACTURER}
+  StrCmp $R0 $INSTDIR HKCU 0
+
+; compare installdir with default admin location
   ${If} ${RunningX64}
 look_at_program_files_64:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
@@ -1425,9 +1430,10 @@ look_at_program_files_32:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
     StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
   ${EndIf}
-uninstaller_relocated:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
-  Abort
+
+; installdir does not contain known default locations
+undefined_location:
+  Goto HKLM
 Done:
 FunctionEnd
 
@@ -1457,6 +1463,14 @@ copy_uninstall:
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
+  StrCpy $0 "$INSTDIR\bin"
+  Call un.deleteDirIfEmpty
+delete_install_dir:
+  IfFileExists "$INSTDIR\*.*" 0 quit
+  StrCpy $0 "$INSTDIR"
+  Call un.deleteDirIfEmpty
+quit:
   Quit
 
 UAC_Elevate:
@@ -1671,6 +1685,7 @@ Section "Uninstall"
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   StrCpy $2 "InstallLocation"
   Call un.OMReadRegStr
+  DetailPrint "uninstall location: $3"
   StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
 invalid_installation_dir:
   ;check if uninstaller runs from not installation folder
