@@ -138,10 +138,13 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
     if (compilerArguments != null) {
-
+      val unresolvedArgs = mutableSetOf<String>()
       val effectiveArguments = compilerArguments.children.map {
         val key = it.name.run { if (startsWith("-")) this else "-$this" }
         val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
         key to value
       }.toMap()
 
@@ -149,7 +152,7 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
         if (key.startsWith("-A") && value != null) {
           options.add("$key=$value")
         }
-        else {
+        else if (key !in unresolvedArgs) {
           options.add(key)
           addIfNotNull(options, value)
         }
@@ -184,8 +187,20 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       else return compilerId
     }
 
+    private const val propStartTag = "\${"
+    private const val propEndTag = "}"
+
     private fun hasUnresolvedProperty(txt: String): Boolean {
-      return txt.contains("\${")
+      val i = txt.indexOf(propStartTag)
+      return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
+    }
+
+    private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
+      if (index == -1) return -1
+      val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
+      if (pair.second == propEndTag) return pair.first
+      val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
+      return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
     }
 
     private fun getResolvedText(txt: String?): String? {
