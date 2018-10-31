@@ -122,43 +122,36 @@ class ModuleRedeclarator(object):
         return self._indent_step * level
 
     def flush(self):
-        init = None
         qname_parts = self.module.split('.')
-        try:
-            if self.split_modules:
-                last_pkg_dir = build_pkg_structure(self.cache_dir, self.module)
-                init = fopen(os.path.join(last_pkg_dir, "__init__.py"), "w")
+        if self.split_modules:
+            last_pkg_dir = build_pkg_structure(self.cache_dir, self.module)
+            with fopen(os.path.join(last_pkg_dir, "__init__.py"), "w") as init:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(init)
 
                 data = ""
                 for buf in self.classes_buffs:
-                    dummy = fopen(os.path.join(last_pkg_dir, buf.name), "w")
-                    self.header_buf.flush(dummy)
-                    self.imports_buf.flush(dummy)
-                    buf.flush(dummy)
-                    data += self.create_local_import(buf.name)
-                    dummy.close()
+                    with fopen(os.path.join(last_pkg_dir, buf.name), "w") as dummy:
+                        self.header_buf.flush(dummy)
+                        self.imports_buf.flush(dummy)
+                        buf.flush(dummy)
+                        data += self.create_local_import(buf.name)
 
                 init.write(data)
                 self.footer_buf.flush(init)
-                copy_target = os.path.join(self.cache_dir, qname_parts[0])
-            else:
-                last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
-                skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1])
-                init = fopen(skeleton_path, "w")
+            copy_target = os.path.join(self.cache_dir, qname_parts[0])
+        else:
+            last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
+            skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1] + '.py')
+            with fopen(skeleton_path, "w") as mod:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
-                    buf.flush(init)
+                    buf.flush(mod)
 
                 for buf in self.classes_buffs:
-                    buf.flush(init)
+                    buf.flush(mod)
 
-                self.footer_buf.flush(init)
-                copy_target = skeleton_path
-
-        finally:
-            if init is not None and not init.closed:
-                init.close()
+                self.footer_buf.flush(mod)
+            copy_target = skeleton_path
 
         if self.sdk_dir:
             copy_dst = os.path.join(self.sdk_dir, os.path.basename(copy_target))
