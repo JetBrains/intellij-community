@@ -1,0 +1,68 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.credentialStore.keePass
+
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.EncryptionSpec
+import com.intellij.credentialStore.createSecureRandom
+import com.intellij.openapi.util.ThreadLocalCachedValue
+import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.rules.InMemoryFsRule
+import org.junit.Rule
+import java.awt.Component
+import java.nio.file.Path
+import java.security.SecureRandom
+
+internal val SECURE_RANDOM_CACHE = object : ThreadLocalCachedValue<SecureRandom>() {
+  public override fun create() = createSecureRandom()
+}
+
+internal open class BaseKeePassFileManagerTest {
+  companion object {
+    val testCredentialAttributes = CredentialAttributes("foo", "u")
+  }
+
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
+
+  protected fun createTestStoreWithCustomMasterKey(baseDir: Path = fsRule.fs.getPath("/")): KeePassCredentialStore {
+    val store = createStore(baseDir)
+    store.set(testCredentialAttributes, Credentials("u", "p"))
+    store.setMasterKey("foo", SECURE_RANDOM_CACHE.value)
+    return store
+  }
+}
+
+@Suppress("TestFunctionName")
+internal class TestKeePassFileManager(
+  file: Path,
+  masterKeyFile: Path,
+  private val masterPasswordRequestAnswer: String? = null,
+  private val oldMasterPasswordRequestAnswer: String? = null,
+  masterKeyEncryptionSpec: EncryptionSpec = defaultEncryptionSpec
+) : KeePassFileManager(file, masterKeyFile, masterKeyEncryptionSpec, lazyOf(SECURE_RANDOM_CACHE.value)) {
+  constructor(store: KeePassCredentialStore,
+              masterPasswordRequestAnswer: String? = null,
+              oldMasterPasswordRequestAnswer: String? = null,
+              masterKeyEncryptionSpec: EncryptionSpec = defaultEncryptionSpec) : this(store.dbFile, store.masterKeyFile, masterPasswordRequestAnswer,
+                                                                                      oldMasterPasswordRequestAnswer, masterKeyEncryptionSpec)
+
+  var isUnsatisfiedMasterPasswordRequest = false
+
+  override fun requestMasterPassword(title: String, topNote: String?, contextComponent: Component?, ok: (value: ByteArray) -> String?): Boolean {
+    if (masterPasswordRequestAnswer == null) {
+      isUnsatisfiedMasterPasswordRequest = true
+      return false
+    }
+    else {
+      Assertions.assertThat(ok(masterPasswordRequestAnswer.toByteArray())).isNull()
+      return true
+    }
+  }
+
+  override fun requestCurrentAndNewKeys(contextComponent: Component?): Boolean {
+    doSetNewMasterPassword(oldMasterPasswordRequestAnswer!!.toCharArray(), masterPasswordRequestAnswer!!.toCharArray())
+    return true
+  }
+}
