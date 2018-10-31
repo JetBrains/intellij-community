@@ -796,11 +796,9 @@ public class FileUtilRt {
   }
 
   public static boolean createParentDirs(@NotNull File file) {
-    if (!file.exists()) {
-      final File parentFile = file.getParentFile();
-      if (parentFile != null) {
-        return createDirectory(parentFile);
-      }
+    File parentFile = file.getParentFile();
+    if (parentFile != null) {
+      return createDirectory(parentFile);
     }
     return true;
   }
