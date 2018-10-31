@@ -288,19 +288,6 @@ public class ExternalSystemApiUtil {
     }
   }
 
-  public static void visitChildrenFirst(@Nullable DataNode node, @NotNull Consumer<? super DataNode<?>> consumer) {
-    if (node == null) return;
-
-    Queue<DataNode> toProcess = ContainerUtil.newLinkedList(node);
-    while (!toProcess.isEmpty()) {
-      DataNode<?> node0 = toProcess.poll();
-      consumer.consume(node0);
-      for (DataNode<?> child : node0.getChildren()) {
-        toProcess.offer(child);
-      }
-    }
-  }
-
   @NotNull
   public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable final DataNode<?> node,
                                                                @NotNull final Key<T> key) {
