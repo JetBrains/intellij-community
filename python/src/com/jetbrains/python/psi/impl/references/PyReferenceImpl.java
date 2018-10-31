@@ -123,21 +123,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final PsiElement element = rrr.getElement();
         if (element instanceof PyClass) {
           final PyClass cls = (PyClass)element;
-          final List<PyFunction> ownInits = cls.multiFindInitOrNew(false, null);
-          if (!ownInits.isEmpty()) {
+          final List<PyFunction> initAndNew = cls.multiFindInitOrNew(false, null);
+          if (!initAndNew.isEmpty()) {
             // replace
             iterator.remove();
-            preferInitOverNew(ownInits).forEach(init -> iterator.add(rrr.replace(init)));
-          }
-          else {// init not found; maybe it's ancestor's
-            for (PyClass ancestor : cls.getAncestorClasses(myContext.getTypeEvalContext())) {
-              final List<PyFunction> ancestorInits = ancestor.multiFindInitOrNew(false, null);
-              if (!ancestorInits.isEmpty()) {
-                // add to results as low priority
-                preferInitOverNew(ancestorInits).forEach(init -> iterator.add(new RatedResolveResult(RatedResolveResult.RATE_LOW, init)));
-                break;
-              }
-            }
+            preferInitOverNew(initAndNew).forEach(init -> iterator.add(rrr.replace(init)));
           }
         }
       }
