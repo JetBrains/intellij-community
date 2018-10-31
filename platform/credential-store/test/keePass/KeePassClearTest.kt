@@ -2,7 +2,7 @@
 package com.intellij.credentialStore.com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.keePass.*
-import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.copy
 import com.intellij.util.io.delete
 import org.junit.Test
@@ -13,9 +13,9 @@ internal class KeePassClearTest : BaseKeePassFileManagerTest() {
      val store = createTestStoreWithCustomMasterKey()
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
-     Assertions.assertThat(dbFile).exists()
-     Assertions.assertThat(store.masterKeyFile).exists()
-     Assertions.assertThat(KeePassCredentialStore(store.dbFile, store.masterKeyFile).get(testCredentialAttributes)).isNull()
+     assertThat(dbFile).exists()
+     assertThat(store.masterKeyFile).exists()
+     assertThat(KeePassCredentialStore(store.dbFile, store.masterKeyFile).get(testCredentialAttributes)).isNull()
    }
 
    @Test
@@ -24,8 +24,8 @@ internal class KeePassClearTest : BaseKeePassFileManagerTest() {
      store.masterKeyFile.delete()
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
-     Assertions.assertThat(dbFile).doesNotExist()
-     Assertions.assertThat(store.masterKeyFile).doesNotExist()
+     assertThat(dbFile).doesNotExist()
+     assertThat(store.masterKeyFile).doesNotExist()
    }
 
    @Test
@@ -39,7 +39,7 @@ internal class KeePassClearTest : BaseKeePassFileManagerTest() {
 
      val dbFile = store.dbFile
      TestKeePassFileManager(store).clear()
-     Assertions.assertThat(dbFile).doesNotExist()
-     Assertions.assertThat(store.masterKeyFile).exists()
+     assertThat(dbFile).doesNotExist()
+     assertThat(store.masterKeyFile).exists()
    }
 }
