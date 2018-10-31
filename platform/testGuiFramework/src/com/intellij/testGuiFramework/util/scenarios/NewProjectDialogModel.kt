@@ -355,8 +355,6 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
           archetypeCheckbox.click()
         }
 
-        logUIStep("Double click on `${mavenOptions.archetypeGroup}` in the archetype list")
-        jTree(mavenOptions.archetypeGroup).doubleClickPath()
         logUIStep("Select the archetype `${mavenOptions.archetypeVersion}` in the group `$mavenOptions.archetypeGroup`")
         jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath()
 
