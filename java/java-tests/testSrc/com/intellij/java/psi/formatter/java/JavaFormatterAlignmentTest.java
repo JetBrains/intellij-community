@@ -897,6 +897,35 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+
+  public void test_alignMultilineAssignmentsMixedWithDeclaration() {
+    getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
+    getSettings().ALIGN_MULTILINE_ASSIGNMENT = true;
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "  void foo(int a, int xyz, int bc) {\n" +
+      "    bc = 9999;\n" +
+      "    a = 9999;\n" +
+      "    int basdf = 1234;\n" +
+      "    int as = 3;\n" +
+      "    xyz = a = \n" +
+      "    a = 12;\n" +
+      "  }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void foo(int a, int xyz, int bc) {\n" +
+      "        bc = 9999;\n" +
+      "        a  = 9999;\n" +
+      "        int basdf = 1234;\n" +
+      "        int as    = 3;\n" +
+      "        xyz = a =\n" +
+      "        a   = 12;\n" +
+      "    }\n" +
+      "}"
+    );
+  }
+
   public void test_alignAssignmentsFields() {
     getSettings().ALIGN_CONSECUTIVE_ASSIGNMENTS = true;
     doTextTest(
