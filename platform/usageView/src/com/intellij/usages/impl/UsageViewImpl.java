@@ -37,7 +37,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
 import com.intellij.util.Alarm;
@@ -156,7 +156,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -517,9 +517,6 @@ public class UsageViewImpl implements UsageViewEx {
   private void setupCentralPanel() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    myCentralPanel.removeAll();
-    disposeUsageContextPanels();
-
     JScrollPane treePane = ScrollPaneFactory.createScrollPane(myTree);
     // add reaction to scrolling:
     // since the UsageViewTreeCellRenderer ignores invisible nodes (outside the viewport), their preferred size is incorrect
@@ -530,6 +527,14 @@ public class UsageViewImpl implements UsageViewEx {
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
+    updateUsagesContextPanels();
+
+    myCentralPanel.add(myAdditionalComponent, BorderLayout.SOUTH);
+    myAdditionalComponent.add(myButtonPanel, BorderLayout.SOUTH);
+  }
+
+  private void updateUsagesContextPanels() {
+    disposeUsageContextPanels();
     if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
@@ -579,16 +584,13 @@ public class UsageViewImpl implements UsageViewEx {
       myPreviewSplitter.setProportion(1);
     }
 
-    myCentralPanel.add(myAdditionalComponent, BorderLayout.SOUTH);
-    myAdditionalComponent.add(myButtonPanel, BorderLayout.SOUTH);
-
     myRootPanel.revalidate();
     myRootPanel.repaint();
   }
 
   private void tabSelected(@NotNull final UsageContextPanel.Provider provider) {
     myCurrentUsageContextProvider = provider;
-    setupCentralPanel();
+    updateUsagesContextPanels();
     updateOnSelectionChanged();
   }
 
@@ -944,7 +946,7 @@ public class UsageViewImpl implements UsageViewEx {
         updateImmediately();
       }}));
     if (myCentralPanel != null) {
-      setupCentralPanel();
+      updateUsagesContextPanels();
     }
   }
 
@@ -1087,7 +1089,7 @@ public class UsageViewImpl implements UsageViewEx {
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
-      return com.intellij.usages.UsageViewManager.getInstance(getProject()).
+      return UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
     myRerunAction.actionPerformed(null);
@@ -1381,7 +1383,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void close() {
     cancelCurrentSearch();
     if (myContent != null) {
-      UsageViewManager.getInstance(myProject).closeContent(myContent);
+      UsageViewContentManager.getInstance(myProject).closeContent(myContent);
     }
   }
 
@@ -1417,9 +1419,8 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     if (!smartPointers.isEmpty()) {
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
-        pointerManager.removePointer(pointer);
+        SmartPointerManager.getInstance(pointer.getProject()).removePointer(pointer);
       }
     }
     myUsageNodes.clear();

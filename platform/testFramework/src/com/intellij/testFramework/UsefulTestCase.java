@@ -277,19 +277,6 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  protected CodeStyleSettings getCurrentCodeStyleSettings(@NotNull Project project) {
-    return CodeStyle.getSettings(project);
-  }
-
-  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language, @NotNull Project project) {
-    return getCurrentCodeStyleSettings(project).getCommonSettings(language);
-  }
-
-  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass, @NotNull Project project) {
-    return getCurrentCodeStyleSettings(project).getCustomSettings(settingsClass);
-  }
-
-  @NotNull
   public Disposable getTestRootDisposable() {
     return myTestRootDisposable;
   }
@@ -328,6 +315,10 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    if (policy != null && !policy.canRun(getClass())) {
+      return false;
+    }
     return TestFrameworkUtil.canRunTest(getClass());
   }
 

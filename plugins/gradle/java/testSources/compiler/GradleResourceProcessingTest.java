@@ -17,8 +17,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
     importProject(
       "apply plugin: 'java'"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopied("out/production/resources/dir/file.properties");
     assertCopied("out/test/resources/dir/file-test.properties");
@@ -51,8 +51,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopied("out/production/resources/dir/file.properties");
     assertCopied("out/test/resources/dir/file-test.properties");
@@ -95,8 +95,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopied("muchBetterOutputDir/dir/file.properties");
     assertCopied("muchBetterTestOutputDir/dir/file-test.properties");
@@ -150,8 +150,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopiedResources();
   }
@@ -204,8 +204,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopiedResources();
   }
@@ -253,8 +253,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  exclude '*.xxx'\n" +
       "}\n"
     );
-    assertModules("project", "project_main", "project_test");
-    compileModules("project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
+    compileModules("project.main", "project.test");
 
     assertCopiedResources();
   }
@@ -300,8 +300,8 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  apply plugin: 'java'\n" +
       "}\n"
     );
-    assertModules("project", "bar", "foo", "test");
-    compileModules("project", "bar", "foo", "test");
+    assertModules("project", "project.bar", "project.bar.foo", "project.bar.test");
+    compileModules("project", "project.bar", "project.bar.foo", "project.bar.test");
 
     assertCopied("bar/foo/out/production/resources/dir/file.properties");
     assertCopied("bar/foo/out/test/resources/dir/file-test.properties");
@@ -327,16 +327,16 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  integrationTest\n" +
       "}\n"
     );
-    assertModules("project", "project_main", "project_test", "project_integrationTest");
+    assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project_main", "java");
-    assertResources("project_main", "resources");
-    assertTestSources("project_test", "java");
-    assertTestResources("project_test", "resources");
-    assertSources("project_integrationTest", "java");
-    assertResources("project_integrationTest", "resources");
+    assertSources("project.main", "java");
+    assertResources("project.main", "resources");
+    assertTestSources("project.test", "java");
+    assertTestResources("project.test", "resources");
+    assertSources("project.integrationTest", "java");
+    assertResources("project.integrationTest", "resources");
 
-    compileModules("project_main", "project_test", "project_integrationTest");
+    compileModules("project.main", "project.test", "project.integrationTest");
 
     assertCopied("out/production/classes/App.class");
     assertCopied("out/production/resources/dir/file.properties");
@@ -372,16 +372,16 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test", "project_integrationTest");
+    assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project_main", "java");
-    assertResources("project_main", "resources");
-    assertTestSources("project_test", "java");
-    assertTestResources("project_test", "resources");
-    assertSources("project_integrationTest", "java");
-    assertResources("project_integrationTest", "resources");
+    assertSources("project.main", "java");
+    assertResources("project.main", "resources");
+    assertTestSources("project.test", "java");
+    assertTestResources("project.test", "resources");
+    assertSources("project.integrationTest", "java");
+    assertResources("project.integrationTest", "resources");
 
-    compileModules("project_main", "project_test", "project_integrationTest");
+    compileModules("project.main", "project.test", "project.integrationTest");
 
     assertCopied("muchBetterOutputDir/App.class");
     assertCopied("muchBetterOutputDir/dir/file.properties");
@@ -419,16 +419,16 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test", "project_integrationTest");
+    assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project_main", "java");
-    assertResources("project_main", "resources");
-    assertTestSources("project_test", "java");
-    assertTestResources("project_test", "resources");
-    assertSources("project_integrationTest", "java");
-    assertResources("project_integrationTest", "resources");
+    assertSources("project.main", "java");
+    assertResources("project.main", "resources");
+    assertTestSources("project.test", "java");
+    assertTestResources("project.test", "resources");
+    assertSources("project.integrationTest", "java");
+    assertResources("project.integrationTest", "resources");
 
-    compileModules("project_main", "project_test", "project_integrationTest");
+    compileModules("project.main", "project.test", "project.integrationTest");
 
     assertCopied("out/production/classes/App.class");
     assertCopied("out/production/resources/dir/file.properties");
@@ -465,15 +465,15 @@ public class GradleResourceProcessingTest extends GradleCompilingTestCase {
       "  }\n" +
       "}"
     );
-    assertModules("project", "project_main", "project_test", "project_integrationTest");
-    assertSources("project_main", "java");
-    assertResources("project_main", "resources");
-    assertTestSources("project_test", "java");
-    assertTestResources("project_test", "resources");
-    assertTestSources("project_integrationTest", "java");
-    assertTestResources("project_integrationTest", "resources");
+    assertModules("project", "project.main", "project.test", "project.integrationTest");
+    assertSources("project.main", "java");
+    assertResources("project.main", "resources");
+    assertTestSources("project.test", "java");
+    assertTestResources("project.test", "resources");
+    assertTestSources("project.integrationTest", "java");
+    assertTestResources("project.integrationTest", "resources");
 
-    compileModules("project_main", "project_test", "project_integrationTest");
+    compileModules("project.main", "project.test", "project.integrationTest");
 
     assertCopied("out/production/classes/App.class");
     assertCopied("out/production/resources/dir/file.properties");

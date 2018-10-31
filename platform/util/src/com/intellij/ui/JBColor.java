@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,33 +98,27 @@ public class JBColor extends Color {
   }
 
   @NotNull
+  @Deprecated
   public static Color link() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        Color linkColor = UIManager.getColor("link.foreground");
-        return linkColor == null ? new Color(0x589df6) : linkColor;
-      }
-    });
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkHover() {
-    Color hoverColor = UIManager.getColor("link.hover.foreground");
-    return hoverColor == null ? link() : hoverColor;
+    return JBUI.CurrentTheme.Link.linkHoverColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkPressed() {
-    Color pressedColor = UIManager.getColor("link.pressed.foreground");
-    return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
+    return JBUI.CurrentTheme.Link.linkPressedColor();
   }
 
   @NotNull
+  @Deprecated
   public static Color linkVisited() {
-    Color visitedColor = UIManager.getColor("link.visited.foreground");
-    return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
+    return JBUI.CurrentTheme.Link.linkVisitedColor();
   }
 
   public static void setDark(boolean dark) {
@@ -346,14 +341,7 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color border() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        //noinspection deprecation
-        return UIUtil.getBorderColor();
-      }
-    });
+    return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
   private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();

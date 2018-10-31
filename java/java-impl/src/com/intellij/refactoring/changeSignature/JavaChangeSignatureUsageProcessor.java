@@ -281,7 +281,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
       }
     }
 
-    final PsiMethod caller = RefactoringUtil.getEnclosingMethod(ref);
+    final PsiMethod caller = PsiTreeUtil.getParentOfType(ref, PsiMethod.class);
     if (toChangeArguments) {
       final PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(ref);
       LOG.assertTrue(list != null);
@@ -654,7 +654,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         if (methodCallUsageInfo.isToChangeArguments()){
           final PsiElement element = methodCallUsageInfo.getElement();
           if (element == null) continue;
-          final PsiMethod caller = RefactoringUtil.getEnclosingMethod(element);
+          final PsiMethod caller = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
           final boolean needDefaultValue = needDefaultValue(changeInfo, caller);
           if (needDefaultValue && (caller == null || !MethodSignatureUtil.isSuperMethod(methodCallUsageInfo.getReferencedMethod(), caller))) {
             final ParameterInfo[] parameters = changeInfo.getNewParameters();

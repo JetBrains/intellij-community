@@ -5,7 +5,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -33,11 +32,11 @@ public class GroovyShortenFQNamesProcessor implements TemplateOptionalProcessor,
     if (!template.isToShortenLongNames()) return;
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
-    PsiFile file = editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile()
-                                                  : PsiUtilBase.getPsiFileInEditor(editor, project);
+    final PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file instanceof GroovyFile) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> JavaCodeStyleManager.getInstance(project)
-        .shortenClassReferences(file, templateRange.getStartOffset(), templateRange.getEndOffset()));
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(file, templateRange.getStartOffset(),templateRange.getEndOffset());
+      });
     }
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
   }

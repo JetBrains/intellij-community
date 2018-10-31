@@ -187,7 +187,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         if (!reuseProjectId) {
           pd = createProjectDescriptor(new BuildLoggingManager(new StringProjectBuilderLogger(rootPath, log)));
         }
-        result = doBuild(pd, CompileScopeTestBuilder.make().allModules());
+        result = doBuild(pd, createCompileScope(idx));
       }
 
       File logFile = new File(baseDir.getAbsolutePath() + ".log");
@@ -205,6 +205,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       checkMappingsAreSameAfterRebuild(result);
     }
     return result;
+  }
+
+  protected CompileScopeTestBuilder createCompileScope(int stage) {
+    return CompileScopeTestBuilder.make().allModules();
   }
 
   protected JpsSdk<JpsDummyElement> getOrCreateJdk() {

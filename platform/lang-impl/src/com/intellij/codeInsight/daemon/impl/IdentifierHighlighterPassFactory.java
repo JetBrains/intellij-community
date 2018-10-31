@@ -10,14 +10,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.TestModeFlags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public class IdentifierHighlighterPassFactory implements TextEditorHighlightingPassFactory {
   private static final int[] AFTER_PASSES = {Pass.UPDATE_ALL};
 
-  private static boolean ourTestingIdentifierHighlighting;
+  private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
   private final Project myProject;
 
   public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
@@ -30,7 +32,7 @@ public class IdentifierHighlighterPassFactory implements TextEditorHighlightingP
     if (!editor.isOneLineMode() &&
         CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
         !DumbService.isDumb(myProject) &&
-        (!ApplicationManager.getApplication().isUnitTestMode() || ourTestingIdentifierHighlighting) &&
+        (!ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourTestingIdentifierHighlighting)) &&
         (file.isPhysical() || file.getOriginalFile().isPhysical())) {
       return new IdentifierHighlighterPass(file.getProject(), file, editor);
     }
@@ -40,12 +42,12 @@ public class IdentifierHighlighterPassFactory implements TextEditorHighlightingP
 
   @TestOnly
   public static void doWithHighlightingEnabled(@NotNull Runnable r) {
-    ourTestingIdentifierHighlighting = true;
+    TestModeFlags.set(ourTestingIdentifierHighlighting, true);
     try {
       r.run();
     }
     finally {
-      ourTestingIdentifierHighlighting = false;
+      TestModeFlags.reset(ourTestingIdentifierHighlighting);
     }
   }
 }

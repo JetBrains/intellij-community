@@ -1017,4 +1017,58 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     FILE_2.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
   }
+
+  fun `test shelve-unshelve 1`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(7, 8, "d2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+      val list = clm.findChangeList(DEFAULT)!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", true)
+      tracker.assertTextContentIs("a1_b_c_d_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      tracker.assertTextContentIs("a1_b_c_d2_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
+  }
+
+  fun `test shelve-unshelve 2`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(7, 8, "d2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+      val list = clm.findChangeList("Test")!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", true)
+      tracker.assertTextContentIs("a_b_c_d2_e_f")
+      FILE_1.toFilePath.assertAffectedChangeLists(DEFAULT)
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      tracker.assertTextContentIs("a1_b_c_d2_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
+  }
 }

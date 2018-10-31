@@ -18,6 +18,7 @@ import com.intellij.ide.structureView.StructureViewFactory;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -69,6 +70,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -617,6 +620,21 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
     return name;
+  }
+
+  @NotNull
+  protected final CodeStyleSettings getCurrentCodeStyleSettings() {
+    return CodeStyle.getSettings(getProject());
+  }
+
+  @NotNull
+  protected final CommonCodeStyleSettings getLanguageSettings(@NotNull Language language) {
+    return getCurrentCodeStyleSettings().getCommonSettings(language);
+  }
+
+  @NotNull
+  protected final <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> settingsClass) {
+    return getCurrentCodeStyleSettings().getCustomSettings(settingsClass);
   }
 
   protected static void commitDocument(@NotNull Document document) {

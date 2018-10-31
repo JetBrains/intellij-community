@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrIndexPropertyRefer
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrPutAtReference;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_Q;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isClassLiteral;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.isSimpleArrayAccess;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceArray;
@@ -32,11 +34,11 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.referenceAr
 public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProperty {
 
   private final NullableLazyValue<GrIndexPropertyReference> myRValueReference = AtomicNullableLazyValue.createValue(
-    () -> isRValue(this) ? new GrGetAtReference(this) : null
+    () -> isRValue(this) && isIndexAccess() ? new GrGetAtReference(this) : null
   );
 
   private final NullableLazyValue<GrIndexPropertyReference> myLValueReference = AtomicNullableLazyValue.createValue(
-    () -> isLValue(this) ? new GrPutAtReference(this) : null
+    () -> isLValue(this) && isIndexAccess() ? new GrPutAtReference(this) : null
   );
 
   private final NotNullLazyValue<GroovyReference[]> myReferences = AtomicNotNullLazyValue.createValue(
@@ -45,14 +47,14 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
   @Nullable
   @Override
-  public GroovyReference getLValueReference() {
-    return myLValueReference.getValue();
+  public GroovyReference getRValueReference() {
+    return myRValueReference.getValue();
   }
 
   @Nullable
   @Override
-  public GroovyReference getRValueReference() {
-    return myRValueReference.getValue();
+  public GroovyReference getLValueReference() {
+    return myLValueReference.getValue();
   }
 
   @NotNull
@@ -97,5 +99,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Override
   public PsiType getNominalType() {
     return GroovyIndexPropertyUtil.getSimpleArrayAccessType(this);
+  }
+
+  private boolean isIndexAccess() {
+    return !isClassLiteral(this) && !isSimpleArrayAccess(this);
   }
 }

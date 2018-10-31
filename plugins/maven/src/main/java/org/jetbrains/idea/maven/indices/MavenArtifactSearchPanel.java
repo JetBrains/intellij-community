@@ -346,10 +346,10 @@ public class MavenArtifactSearchPanel extends JPanel {
       myLeftComponent.clear();
       myRightComponent.clear();
 
-      setBackground(selected ? UIUtil.getTreeSelectionBackground() : tree.getBackground());
+      setBackground(selected ? UIUtil.getTreeSelectionBackground(hasFocus) : tree.getBackground());
 
-      myLeftComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground() : null);
-      myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground() : null);
+      myLeftComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
+      myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
 
       if (value == tree.getModel().getRoot()) {
         myLeftComponent.append("Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);

@@ -242,7 +242,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "error msg\n" +
                      "expected\n" +
                      "actual\n" +
-                     " \n" +
+                     "\n" +
                      "\n" +
                      "method1:1\n" +
                      "method2:2\n" +
@@ -259,7 +259,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "stderr1 \nerror msg\n" +
                      "expected\n" +
                      "actual\n" +
-                     " \n" +
+                     "\n" +
                      "\n" +
                      "method1:1\nmethod2:2\n",
                      // std sys
@@ -274,7 +274,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg \n" +
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\n" +
+                                                         "\n" +
                                                          "\n" +
                                                          "method1:1\n" +
                                                          "method2:2\n" +
@@ -283,7 +284,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \n" +
-                                               "error msg \n" +
+                                               "error msg\n" +
+                                               "\n" +
                                                "\n" +
                                                "method1:1\n" +
                                                "method2:2\n", "");

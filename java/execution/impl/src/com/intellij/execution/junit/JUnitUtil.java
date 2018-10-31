@@ -318,7 +318,7 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method, boolean includeCustom) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, CHECK_HIERARCHY) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       return true;
     }
 

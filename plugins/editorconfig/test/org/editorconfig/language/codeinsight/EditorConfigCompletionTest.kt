@@ -12,16 +12,13 @@ class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/completion/"
 
-  private var csharpSupport: Boolean
   init {
     // calling this from setUp() turns out to be too late
-    val registryValue = Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY)
-    csharpSupport = registryValue.asBoolean()
-    registryValue.setValue(true)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(true)
   }
 
   override fun tearDown() {
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(csharpSupport)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).resetToDefault()
     super.tearDown()
   }
 

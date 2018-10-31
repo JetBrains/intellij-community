@@ -51,9 +51,7 @@ import org.jetbrains.io.JsonReaderEx;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
@@ -86,7 +84,13 @@ public class PluginManagerConfigurableNew
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
   @SuppressWarnings("UseJBColor")
-  public static final Color MAIN_BG_COLOR = new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335));
+  public static final Color MAIN_BG_COLOR =
+    JBColor.namedColor("Plugins.background", new JBColor(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
+
+  private static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
+
+  private static final Color SEARCH_FIELD_BORDER_COLOR =
+    JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
 
   private final TagBuilder myTagBuilder;
 
@@ -130,17 +134,7 @@ public class PluginManagerConfigurableNew
       @NotNull
       @Override
       public TagComponent createTagComponent(@NotNull String tag) {
-        Color color;
-        String tooltip = null;
-        if ("EAP".equals(tag)) {
-          color = new JBColor(0xF2D2CF, 0xF2D2CF);
-          tooltip = "The EAP version does not guarantee the stability\nand availability of the plugin.";
-        }
-        else {
-          color = new JBColor(0xEAEAEC, 0x4D4D4D);
-        }
-
-        return installTiny(new TagComponent(tag, tooltip, color));
+        return installTiny(new TagComponent(tag));
       }
     };
 
@@ -207,7 +201,7 @@ public class PluginManagerConfigurableNew
         }
       }
     };
-    mySearchTextField.setBorder(JBUI.Borders.customLine(new JBColor(0xC5C5C5, 0x515151)));
+    mySearchTextField.setBorder(JBUI.Borders.customLine(SEARCH_FIELD_BORDER_COLOR));
 
     JBTextField editor = mySearchTextField.getTextEditor();
     editor.putClientProperty("JTextField.Search.Gap", JBUI.scale(-24));
@@ -215,7 +209,7 @@ public class PluginManagerConfigurableNew
     editor.putClientProperty("StatusVisibleFunction", (BooleanFunction<JBTextField>)field -> field.getText().isEmpty());
     editor.setBorder(JBUI.Borders.empty(0, 25));
     editor.setOpaque(true);
-    editor.setBackground(MAIN_BG_COLOR);
+    editor.setBackground(SEARCH_BG_COLOR);
   }
 
   @NotNull
@@ -469,6 +463,39 @@ public class PluginManagerConfigurableNew
     myCardPanel.select(selectionTab, true);
     updateSearchForSelectedTab(selectionTab);
 
+    panel.addComponentListener(new ComponentAdapter() {
+      boolean myStoreHosts;
+      List<String> myHosts;
+
+      @Override
+      public void componentShown(ComponentEvent e) {
+        myStoreHosts = true;
+        if (myHosts != null) {
+          List<String> oldHosts = myHosts;
+          List<String> newHosts = UpdateSettings.getInstance().getPluginHosts();
+          myHosts = null;
+
+          if (oldHosts.size() != newHosts.size()) {
+            resetTrendingAndUpdatesPanels();
+            return;
+          }
+          for (String host : oldHosts) {
+            if (!newHosts.contains(host)) {
+              resetTrendingAndUpdatesPanels();
+              return;
+            }
+          }
+        }
+      }
+
+      @Override
+      public void componentHidden(ComponentEvent e) {
+        if (myStoreHosts) {
+          myHosts = UpdateSettings.getInstance().getPluginHosts();
+        }
+      }
+    });
+
     return panel;
   }
 
@@ -703,18 +730,19 @@ public class PluginManagerConfigurableNew
         Map<String, IdeaPluginDescriptor> allRepositoriesMap = pair.first;
         Map<String, List<IdeaPluginDescriptor>> customRepositoriesMap = pair.second;
 
-        Set<String> excludeDescriptors = new HashSet<>();
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
-        addGroup(groups, excludeDescriptors, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
+        addGroup(groups, allRepositoriesMap, "Featured", "is_featured_search=true", "sortBy:featured");
+        addGroup(groups, allRepositoriesMap, "New and Updated", "orderBy=update+date", "sortBy:updated");
+        addGroup(groups, allRepositoriesMap, "Top Downloads", "orderBy=downloads", "sortBy:downloads");
+        addGroup(groups, allRepositoriesMap, "Top Rated", "orderBy=rating", "sortBy:rating");
 
         for (String host : UpdateSettings.getInstance().getPluginHosts()) {
           List<IdeaPluginDescriptor> allDescriptors = customRepositoriesMap.get(host);
           if (allDescriptors != null) {
             addGroup(groups, "Repository: " + host, "repository:\"" + host + "\"", descriptors -> {
-              descriptors.addAll(allDescriptors.subList(0, Math.min(ITEMS_PER_GROUP, allDescriptors.size())));
+              int allSize = allDescriptors.size();
+              descriptors.addAll(allDescriptors.subList(0, Math.min(ITEMS_PER_GROUP, allSize)));
               PluginsGroup.sortByName(descriptors);
+              return allSize > ITEMS_PER_GROUP;
             });
           }
         }
@@ -1242,29 +1270,6 @@ public class PluginManagerConfigurableNew
     return pane;
   }
 
-  private void addGroup(@NotNull List<PluginsGroup> groups,
-                        @NotNull String name,
-                        @NotNull String showAllQuery,
-                        @NotNull ThrowableConsumer<List<IdeaPluginDescriptor>, IOException> consumer) throws IOException {
-    PluginsGroup group = new PluginsGroup(name);
-    consumer.consume(group.descriptors);
-
-    if (!group.descriptors.isEmpty()) {
-      //noinspection unchecked
-      group.rightAction = new LinkLabel("Show All", null, mySearchListener, showAllQuery);
-      groups.add(group);
-    }
-  }
-
-  private void addGroup(@NotNull List<PluginsGroup> groups,
-                        @NotNull Set<String> excludeDescriptors,
-                        @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
-                        @NotNull String name,
-                        @NotNull String query,
-                        @NotNull String showAllQuery) throws IOException {
-    addGroup(groups, name, showAllQuery, descriptors -> loadPlugins(descriptors, allRepositoriesMap, excludeDescriptors, query));
-  }
-
   @NotNull
   private Pair<Map<String, IdeaPluginDescriptor>, Map<String, List<IdeaPluginDescriptor>>> loadPluginRepositories() throws IOException {
     synchronized (myRepositoriesLock) {
@@ -1323,10 +1328,33 @@ public class PluginManagerConfigurableNew
     }
   }
 
-  private static void loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
-                                  @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
-                                  @NotNull Set<? super String> excludeDescriptors,
-                                  @NotNull String query) throws IOException {
+  private void addGroup(@NotNull List<PluginsGroup> groups,
+                        @NotNull String name,
+                        @NotNull String showAllQuery,
+                        @NotNull ThrowableNotNullFunction<List<IdeaPluginDescriptor>, Boolean, IOException> function) throws IOException {
+    PluginsGroup group = new PluginsGroup(name);
+
+    if (Boolean.TRUE.equals(function.fun(group.descriptors))) {
+      //noinspection unchecked
+      group.rightAction = new LinkLabel("Show All", null, mySearchListener, showAllQuery);
+    }
+
+    if (!group.descriptors.isEmpty()) {
+      groups.add(group);
+    }
+  }
+
+  private void addGroup(@NotNull List<PluginsGroup> groups,
+                        @NotNull Map<String, IdeaPluginDescriptor> allRepositoriesMap,
+                        @NotNull String name,
+                        @NotNull String query,
+                        @NotNull String showAllQuery) throws IOException {
+    addGroup(groups, name, showAllQuery, descriptors -> loadPlugins(descriptors, allRepositoriesMap, query));
+  }
+
+  private static boolean loadPlugins(@NotNull List<? super IdeaPluginDescriptor> descriptors,
+                                     @NotNull Map<String, IdeaPluginDescriptor> allDescriptors,
+                                     @NotNull String query) throws IOException {
     boolean forceHttps = forceHttps();
     Url baseUrl = createSearchUrl(query, ITEMS_PER_GROUP);
     Url offsetUrl = baseUrl;
@@ -1336,15 +1364,15 @@ public class PluginManagerConfigurableNew
     while (true) {
       List<String> pluginIds = requestToPluginRepository(offsetUrl, forceHttps);
       if (pluginIds.isEmpty()) {
-        return;
+        return false;
       }
 
       for (String pluginId : pluginIds) {
         IdeaPluginDescriptor descriptor = allDescriptors.get(pluginId);
-        if (descriptor != null && excludeDescriptors.add(pluginId) && PluginManager.getPlugin(descriptor.getPluginId()) == null) {
+        if (descriptor != null) {
           descriptors.add(descriptor);
           if (descriptors.size() == ITEMS_PER_GROUP) {
-            return;
+            return true;
           }
         }
       }
@@ -1591,8 +1619,6 @@ public class PluginManagerConfigurableNew
   public static int offset5() {
     return JBUI.scale(5);
   }
-
-  public static final Color DisabledColor = new JBColor(0xB1B1B1, 0x696969);
 
   public static boolean isJBPlugin(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);

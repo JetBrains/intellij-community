@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
@@ -75,7 +74,7 @@ public class Advertiser {
     myNextLabel = new JLabel(">>");
     myNextLabel.setFont(adFont().deriveFont(
       ContainerUtil.<TextAttribute, Object>immutableMapBuilder().put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON).build()));
-    myNextLabel.setForeground(JBColor.blue);
+    myNextLabel.setForeground(JBUI.CurrentTheme.Link.linkColor());
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {

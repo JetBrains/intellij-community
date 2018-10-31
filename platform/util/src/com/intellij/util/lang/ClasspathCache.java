@@ -188,12 +188,6 @@ public class ClasspathCache {
     }
   }
 
-  boolean loaderHasName(String name, String shortName, Loader loader) {
-    if (StringUtil.isEmpty(name)) return true;
-
-    return loader.containsName(name, shortName);
-  }
-
   static String transformName(String name) {
     name = StringUtil.trimEnd(name, "/");
     name = name.substring(name.lastIndexOf('/') + 1);

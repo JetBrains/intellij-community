@@ -16,7 +16,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.function.Consumer
 
-internal val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
+internal fun isUnderTeamCity() = BUILD_SERVER != null
+private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 
 internal fun report(
@@ -42,7 +43,7 @@ internal fun report(
   log(report)
   if (doNotify) {
     val success = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
-    if (BUILD_SERVER == null) {
+    if (!isUnderTeamCity()) {
       log("TeamCity url is unknown: unable to query last build status for sending notifications and assigning investigations")
     }
     else {
@@ -61,7 +62,17 @@ private fun sendNotification(isSuccess: Boolean, investigator: Investigator?) {
   }
 }
 
-private class Investigator(val email: String, val commits: Collection<String>)
+private val DEFAULT_INVESTIGATOR by lazy {
+  System.getProperty("intellij.icons.sync.default.investigator") ?: error("Specify default investigator")
+}
+
+private class Investigator(val email: String,
+                           val commits: Collection<String>,
+                           val icons: Collection<String>,
+                           var isAssigned: Boolean = false) {
+  fun reason() = (if (commits.isNotEmpty()) "commits ${commits.joinToString()}\n" else "") +
+                 if (icons.isNotEmpty()) "icons ${icons.joinToString()}\n" else ""
+}
 
 private fun assignInvestigation(root: File,
                                 addedByDev: Collection<String>,
@@ -74,39 +85,57 @@ private fun assignInvestigation(root: File,
       null
     }
     else {
-      val text = "https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
-      val investigator = (addedByDev.asSequence() + removedByDev.asSequence() + modifiedByDev.asSequence())
-        .map { File(root, it).absolutePath }
-        .map { latestChangeCommit(it) }
-        .filterNotNull()
-        .groupBy({ it.committerEmail }, { it.hash })
+      val commits = (addedByDev.asSequence() + removedByDev.asSequence() + modifiedByDev.asSequence()).map {
+        val path = File(root, it).absolutePath
+        val commit = latestChangeCommit(path)
+        if (commit != null) commit to it else null
+      }.filterNotNull().toList()
+      var investigator = commits
+        .groupBy { it.first.committerEmail }
         .maxBy { it.value.size }
-        ?.let { Investigator(it.key, it.value) }
-      if (investigator != null) {
-        val id = teamCityGet("users/email:${investigator.email}/id")
-        teamCityPost("investigations", """
-          |<investigation state="TAKEN">
-          |    <assignee id="$id"/>
-          |    <assignment>
-          |        <text>$text</text>
-          |    </assignment>
-          |    <scope>
-          |        <buildTypes count="1">
-          |            <buildType id="$BUILD_CONF"/>
-          |        </buildTypes>
-          |    </scope>
-          |    <target anyProblem="true"/>
-          |    <resolution type="whenFixed"/>
-          |</investigation>
-        """.trimMargin())
-        log("Investigation is assigned to ${investigator.email}, see ${investigator.commits}")
-      }
-      else {
-        log("Unable to determine committer email for investigation assignment")
+        ?.let { entry -> Investigator(entry.key, commits.map { it.first.hash }.distinct(), icons = commits.map { it.second }) }
+        ?.also { assignInvestigation(it) }
+      when {
+        investigator != null && !investigator.isAssigned -> {
+          investigator = Investigator(DEFAULT_INVESTIGATOR, investigator.commits, investigator.icons)
+          assignInvestigation(investigator)
+        }
+        investigator == null -> {
+          log("Unable to determine committer email for investigation assignment")
+          investigator = Investigator(DEFAULT_INVESTIGATOR, emptyList(), emptyList())
+          assignInvestigation(investigator)
+        }
       }
       investigator
     }
   }
+
+private fun assignInvestigation(investigator: Investigator) {
+  try {
+    val id = teamCityGet("users/email:${investigator.email}/id")
+    val text = "${investigator.reason()}https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    teamCityPost("investigations", """
+            |<investigation state="TAKEN">
+            |    <assignee id="$id"/>
+            |    <assignment>
+            |        <text>$text</text>
+            |    </assignment>
+            |    <scope>
+            |        <buildTypes count="1">
+            |            <buildType id="$BUILD_CONF"/>
+            |        </buildTypes>
+            |    </scope>
+            |    <target anyProblem="true"/>
+            |    <resolution type="whenFixed"/>
+            |</investigation>
+          """.trimMargin())
+    investigator.isAssigned = true
+    log("Investigation is assigned to ${investigator.email}, see ${investigator.commits}")
+  }
+  catch (e: Exception) {
+    log("Unable to assign investigation to ${investigator.email}, ${e.message}")
+  }
+}
 
 private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
@@ -147,11 +176,16 @@ private val BUILD_ID = System.getProperty("teamcity.build.id")
 private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 
 private fun notifySlackChannel(isSuccess: Boolean, investigator: Investigator?) {
+  val investigation = when {
+    investigator == null -> ""
+    investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
+    else -> "Unable to assign investigation to ${investigator.email}\n"
+  }
+  val buildServerUrlForReport = System.getProperty("intellij.icons.report.buildserver")
   val text = "*${System.getProperty("teamcity.buildConfName")}* " +
-             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" +
-             (if (investigator != null) "Investigation is assigned to ${investigator.email}, see ${investigator.commits.joinToString { it.substring(0, 4) }}" else "") + "\n" +
+             (if (isSuccess) ":white_check_mark:" else ":scream:") + "\n" + investigation +
              (if (!isSuccess) "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n" else "") +
-             "<$BUILD_SERVER/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
+             "<$buildServerUrlForReport/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF|See build log>"
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }

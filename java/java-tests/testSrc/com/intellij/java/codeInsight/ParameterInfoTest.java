@@ -67,6 +67,23 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
     assertEquals(1, annotations.length);
   }
 
+  public void testWhenInferenceIsBoundedByEqualsBound() {
+    EditorHintFixture hintFixture = new EditorHintFixture(getTestRootDisposable());
+    myFixture.configureByText("x.java", 
+                                        "import java.util.function.Function;\n" +
+                                        "import java.util.function.Supplier;\n" +
+                                        "class X {\n" +
+                                        "    public <K> void foo(Supplier<K> extractKey, Function<String, K> right) {}\n" +
+                                        "    public void bar(Function<String, Integer> right) {\n" +
+                                        "        foo(<caret>() -> 1, right);\n" +
+                                        "    }\n" +
+                                        "}\n");
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
+    UIUtil.dispatchAllInvocationEvents();
+    assertEquals("<html><b>Supplier&lt;Integer&gt; extractKey</b>, Function&lt;String, Integer&gt; right</html>", hintFixture.getCurrentHintText());
+  }
+
   public void testSelectionWithGenerics() {
     doTest2CandidatesWithPreselection();
   }

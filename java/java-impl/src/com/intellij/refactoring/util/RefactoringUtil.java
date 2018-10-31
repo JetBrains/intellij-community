@@ -46,9 +46,11 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.PackageWrapper;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
@@ -1022,6 +1024,16 @@ public class RefactoringUtil {
   @Nullable
   public static <T extends PsiExpression> T ensureCodeBlock(@NotNull T expression) {
     return EnsureCodeBlockImpl.ensureCodeBlock(expression);
+  }
+
+  public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
+    if (PsiUtil.skipParenthesizedExprUp(expr.getParent()) instanceof PsiSwitchLabelStatement) {
+      PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);
+      if (ref != null && ref.resolve() instanceof PsiEnumConstant) {
+        return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("refactoring.introduce.variable.enum.in.label.message"));
+      }
+    }
+    return null;
   }
 
   public interface ImplicitConstructorUsageVisitor {

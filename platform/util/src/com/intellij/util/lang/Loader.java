@@ -15,6 +15,7 @@
  */
 package com.intellij.util.lang;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ abstract class Loader {
   }
 
   boolean containsName(String name, String shortName) {
+    if (StringUtil.isEmpty(name)) return true;
     ClasspathCache.NameFilter filter = myLoadingFilter;
     return filter == null || filter.maybeContains(shortName);
   }

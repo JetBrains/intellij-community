@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.replaceInProject;
 
@@ -52,6 +38,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
@@ -127,14 +114,14 @@ public class ReplaceInProjectManager {
 
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    final Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
       toOpenInNewTab = true;
       isOpenInNewTabEnabled = false;
     }
     else {
       toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
     if (model == null) {
 
@@ -201,7 +188,7 @@ public class ReplaceInProjectManager {
 
     @Override
     public void showSettings() {
-      Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
       findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);

@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -430,7 +430,7 @@ public class GroovyInlineMethodUtil {
     Project project = call.getProject();
 
     final GroovyResolveResult resolveResult = call.advancedResolve();
-    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, resolveResult.getSubstitutor());
+    GrSignature signature = GrClosureSignatureUtil.createSignature(method, resolveResult.getSubstitutor());
 
     if (signature == null) {
       return;
@@ -456,7 +456,7 @@ public class GroovyInlineMethodUtil {
   }
 
   @Nullable
-  private static GrExpression inferArg(GrClosureSignature signature,
+  private static GrExpression inferArg(GrSignature signature,
                                        GrParameter[] parameters,
                                        GrParameter parameter,
                                        GrClosureSignatureUtil.ArgInfo<PsiElement> argInfo,

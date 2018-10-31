@@ -617,15 +617,6 @@ public class HighlightMethodUtil {
       int idx = -1;
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
-        if (expression instanceof PsiMethodCallExpression) {
-          final JavaResolveResult result = ((PsiCallExpression)expression).resolveMethodGenerics();
-          if (result instanceof MethodCandidateInfo &&
-              PsiUtil.isLanguageLevel8OrHigher(list) &&
-              ((MethodCandidateInfo)result).isToInferApplicability() &&
-              ((MethodCandidateInfo)result).getInferenceErrorMessage() == null) {
-            continue;
-          }
-        }
         if (!TypeConversionUtil.areTypesAssignmentCompatible(substitutor.substitute(parameters[i].getType()), expression)) {
           if (idx != -1) {
             idx = -1;
@@ -893,7 +884,9 @@ public class HighlightMethodUtil {
     PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
     if (expectedTypeByParent != null) {
       PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null && TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent)) {
+      if (methodCallType != null && 
+          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) && 
+          !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
     }

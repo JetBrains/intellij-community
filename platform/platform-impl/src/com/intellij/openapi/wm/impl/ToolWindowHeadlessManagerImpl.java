@@ -622,7 +622,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
       myDispatcher.getMulticaster().contentRemoved(e);
       Content item = ContainerUtil.getFirstItem(myContents);
-      if (item != null) setSelectedContent(item);
+      if (item != null) {
+        setSelectedContent(item);
+      }
+      else {
+        mySelected = null;
+      }
       return result;
     }
 

@@ -274,7 +274,6 @@ public class JDOMUtil {
     return loadDocumentUsingStaX(new InputStreamReader(stream, CharsetToolkit.UTF8_CHARSET));
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Contract("null -> null; !null -> !null")
   public static Element load(Reader reader) throws JDOMException, IOException {
     return reader == null ? null : loadUsingStaX(reader);

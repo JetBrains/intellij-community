@@ -28,6 +28,7 @@ import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
@@ -406,6 +407,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   // Misc
   //
 
+  boolean isDiffForLocalChanges() {
+    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
+  }
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static boolean canShowRequest(@NotNull DiffContext context, @NotNull DiffRequest request) {
     return TwosideTextDiffViewer.canShowRequest(context, request);
@@ -591,12 +597,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected String getText(@NotNull Side side) {
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return "Revert";
       return "Accept";
     }
 
     @Nullable
     @Override
     protected Icon getIcon(@NotNull Side side) {
+      if (myModifiedSide == Side.RIGHT && isDiffForLocalChanges()) return AllIcons.Diff.Revert;
       return DiffUtil.getArrowIcon(myModifiedSide.other());
     }
 

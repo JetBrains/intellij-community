@@ -89,7 +89,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
       Action toolwindow = new AbstractAction("Toolwindow Examples") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          setExamples("// Example\nToolwindow\nContent:Compilation completed successfully in 7 s 851 ms\n--\n" +
+          setExamples("// Example\nToolwindow\nContent:Build completed successfully in 7 s 851 ms\n--\n" +
                       "// Description: Notifications shows for toolwindow TODO\n" +
                       "Toolwindow\nType:info/error/warn\nIcon:\nTitle:\n" +
                       "Content:\nContent:\n--\n");

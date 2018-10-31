@@ -59,7 +59,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
       if (selected) {
-        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
       }
       else {
         setBackground(null);
@@ -141,11 +141,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && isFocused()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
-    }
-    else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
+    if (mySelected) {
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground(isFocused())), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);

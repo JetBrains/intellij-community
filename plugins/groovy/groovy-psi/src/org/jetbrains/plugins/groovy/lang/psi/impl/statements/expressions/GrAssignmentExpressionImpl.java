@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -29,7 +30,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.
  */
 public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl implements GrAssignmentExpression {
 
-  private final GroovyReference myReference = new GrOperatorReference(this);
+  private final NullableLazyValue<GroovyReference> myReference = AtomicNullableLazyValue.createValue(
+    () -> isOperatorAssignment() ? new GrOperatorReference(this) : null
+  );
 
   public GrAssignmentExpressionImpl(@NotNull ASTNode node) {
     super(node);
@@ -38,7 +41,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Nullable
   @Override
   public GroovyReference getReference() {
-    return isOperatorAssignment() ? myReference : null;
+    return myReference.getValue();
   }
 
   @Override
@@ -76,7 +79,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
 
   @Override
   public boolean isOperatorAssignment() {
-    return getOperationTokenType() != GroovyTokenTypes.mASSIGN;
+    return TokenSets.ASSIGNMENTS_TO_OPERATORS.containsKey(getOperationTokenType());
   }
 
   @Override

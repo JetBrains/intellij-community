@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github.api.requests;
 
 import com.google.gson.annotations.SerializedName;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
 public class GithubRepoRequest {
@@ -24,10 +25,12 @@ public class GithubRepoRequest {
   @NotNull private final String description;
 
   @SerializedName("private") private final boolean isPrivate;
+  private final Boolean autoInit;
 
-  public GithubRepoRequest(@NotNull String name, @NotNull String description, boolean aPrivate) {
+  public GithubRepoRequest(@NotNull String name, @NotNull String description, boolean isPrivate, @Nullable Boolean autoInit) {
     this.name = name;
     this.description = description;
-    isPrivate = aPrivate;
+    this.isPrivate = isPrivate;
+    this.autoInit = autoInit;
   }
 }

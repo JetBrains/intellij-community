@@ -3,6 +3,7 @@
   generate = [
     psi = 'no'
     exact-types = 'elements'
+    java = '8'
   ]
 
   parserClass = 'org.jetbrains.plugins.groovy.lang.parser.GroovyGeneratedParser'

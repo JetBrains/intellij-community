@@ -1,7 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -9,12 +8,11 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-@XmlRootElement
-public class Response extends Message{
+public class Response extends Message {
   private List<Event> myEvents;
 
-  public Response() {
-  }
+  @SuppressWarnings("unused")
+  public Response() { }
 
   public Response(String uid, Event... events) {
     super(uid);
@@ -23,11 +21,6 @@ public class Response extends Message{
 
   public List<Event> getEvents() {
     return myEvents;
-  }
-
-  @XmlElement
-  public void setEvents(List<Event> events) {
-    myEvents = events;
   }
 
   public void addEvent(Event event) {

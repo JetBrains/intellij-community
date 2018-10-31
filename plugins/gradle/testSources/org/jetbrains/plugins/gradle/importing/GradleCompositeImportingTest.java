@@ -67,20 +67,20 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject();
 
     assertModules("adhoc",
-                  "my-app", "my-app_main", "my-app_test",
+                  "org.sample.my-app", "org.sample.my-app.main", "org.sample.my-app.test",
                   "my-utils",
-                  "string-utils", "string-utils_test", "string-utils_main",
-                  "number-utils", "number-utils_main", "number-utils_test");
+                  "org.sample.string-utils", "org.sample.string-utils.test", "org.sample.string-utils.main",
+                  "org.sample.number-utils", "org.sample.number-utils.main", "org.sample.number-utils.test");
 
-    String[] rootModules = new String[]{"adhoc", "my-app", "my-utils", "string-utils", "number-utils"};
+    String[] rootModules = new String[]{"adhoc", "org.sample.my-app", "my-utils", "org.sample.string-utils", "org.sample.number-utils"};
     for (String rootModule : rootModules) {
       assertModuleLibDeps(rootModule);
       assertModuleModuleDeps(rootModule);
     }
-    assertModuleModuleDeps("my-app_main", "number-utils_main", "string-utils_main");
-    assertModuleModuleDepScope("my-app_main", "number-utils_main", COMPILE);
-    assertModuleModuleDepScope("my-app_main", "string-utils_main", COMPILE);
-    assertModuleLibDepScope("my-app_main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
+    assertModuleModuleDeps("org.sample.my-app.main", "org.sample.number-utils.main", "org.sample.string-utils.main");
+    assertModuleModuleDepScope("org.sample.my-app.main", "org.sample.number-utils.main", COMPILE);
+    assertModuleModuleDepScope("org.sample.my-app.main", "org.sample.string-utils.main", COMPILE);
+    assertModuleLibDepScope("org.sample.my-app.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
   }
 
   @Test
@@ -101,12 +101,12 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "  compile 'my.group:runtime-mod'\n" +
                   "}");
 
-    assertModules("app", "app_main", "app_test",
+    assertModules("app", "app.main", "app.test",
                   "lib",
-                  "runtime",
-                  "runtime-mod", "runtime-mod_main", "runtime-mod_test");
+                  "lib.runtime",
+                  "my.group.runtime-mod", "my.group.runtime-mod.main", "my.group.runtime-mod.test");
 
-    assertModuleModuleDepScope("app_main", "runtime-mod_main", COMPILE);
+    assertModuleModuleDepScope("app.main", "my.group.runtime-mod.main", COMPILE);
   }
 
 
@@ -130,10 +130,10 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     assertModules("app",
                   "lib",
-                  "runtime",
-                  "runtime-mod");
+                  "lib.runtime",
+                  "my.group.runtime-mod");
 
-    assertMergedModuleCompileModuleDepScope("app", "runtime-mod");
+    assertMergedModuleCompileModuleDepScope("app", "my.group.runtime-mod");
   }
 
 
@@ -170,13 +170,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                                                   "  compile 'my.group.lib_2:runtime'\n" +
                                                   "}");
 
-    assertModules("app", "app-runtime",
-                  "lib1", "lib1-runtime",
-                  "lib2", "lib2-runtime");
+    assertModules("app", "app.runtime",
+                  "lib1", "my.group.lib_1.runtime",
+                  "lib2", "my.group.lib_2.runtime");
 
-    assertMergedModuleCompileModuleDepScope("app", "app-runtime");
-    assertMergedModuleCompileModuleDepScope("app", "lib1-runtime");
-    assertMergedModuleCompileModuleDepScope("app", "lib2-runtime");
+    assertMergedModuleCompileModuleDepScope("app", "app.runtime");
+    assertMergedModuleCompileModuleDepScope("app", "my.group.lib_1.runtime");
+    assertMergedModuleCompileModuleDepScope("app", "my.group.lib_2.runtime");
   }
 
 
@@ -205,7 +205,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                          "apply plugin: 'java'\n" +
                          "group = 'my.group.lib_2'");
 
-
+    // check for non-qualified module names
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
     importProject("apply plugin: 'java'\n" +
                   "dependencies {\n" +
                   "  compile project(':runtime')\n" +
@@ -296,6 +297,8 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
       "  }\n" +
       "}"));
 
+    // check for non-qualified module names
+    getCurrentExternalProjectSettings().setUseQualifiedModuleNames(false);
     importProject();
 
     String myAppApiModuleName = myTestDir.getName() + "-my-app-api";

@@ -3,13 +3,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 
 public interface GrBinaryExpression extends GrOperatorExpression {
-
-  @NotNull
-  @Override
-  GroovyReference getReference();
 
   /**
    * @return left operand of binary expression

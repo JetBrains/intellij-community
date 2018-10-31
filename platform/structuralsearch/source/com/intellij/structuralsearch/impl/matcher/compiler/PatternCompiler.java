@@ -52,7 +52,7 @@ public class PatternCompiler {
   private static SoftReference<CompiledPattern> ourLastCompiledPattern;
   private static MatchOptions ourLastMatchOptions;
   private static boolean ourLastCompileSuccessful = true;
-  private static CompileContext lastTestingContext;
+  private static String ourLastSearchPlan;
 
   public static CompiledPattern compilePattern(Project project,MatchOptions options, boolean checkForErrors)
     throws MalformedPatternException, NoMatchFoundException {
@@ -86,7 +86,6 @@ public class PatternCompiler {
     assert prefixes.length > 0;
 
     final CompileContext context = new CompileContext(result, options, project);
-    if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
     try {
       final List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
@@ -132,6 +131,9 @@ public class PatternCompiler {
         throw new NoMatchFoundException(SSRBundle.message("ssr.will.not.find.anything", scope.getDisplayName()));
       }
       result.setScope(new LocalSearchScope(PsiUtilCore.toPsiElementArray(filesToScan)));
+    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ourLastSearchPlan = ((TestModeOptimizingSearchHelper)searchHelper).getSearchPlan();
     }
   }
 
@@ -190,12 +192,8 @@ public class PatternCompiler {
   }
 
   @TestOnly
-  public static String getLastFindPlan() {
-    return ((TestModeOptimizingSearchHelper)lastTestingContext.getSearchHelper()).getSearchPlan();
-  }
-  @TestOnly
-  public static void cleanupForNextTest() {
-    lastTestingContext = null;
+  public static String getLastSearchPlan() {
+    return ourLastSearchPlan;
   }
 
   @NotNull

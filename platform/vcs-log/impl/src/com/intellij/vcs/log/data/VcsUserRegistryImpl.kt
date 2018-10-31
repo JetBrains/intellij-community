@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.io.*
@@ -31,7 +30,6 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -43,7 +41,6 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     get() = _persistentEnumerator.get()
   private val interner: Interner<VcsUser>
   private val mapFile = File(USER_CACHE_APP_DIR, project.locationHash + "." + STORAGE_VERSION)
-  private val eventDispatcher = EventDispatcher.create<VcsUserRegistryListener>(VcsUserRegistryListener::class.java)
 
   init {
     initEnumerator()
@@ -53,7 +50,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
   private fun initEnumerator(): Boolean {
     try {
       val enumerator = IOUtil.openCleanOrResetBroken({
-                                                       PersistentBTreeEnumerator(mapFile, MyDescriptor(), Page.PAGE_SIZE, null,
+                                                       PersistentBTreeEnumerator(mapFile, VcsUserKeyDescriptor(this), Page.PAGE_SIZE, null,
                                                                                  STORAGE_VERSION)
                                                      }, mapFile)
       val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
@@ -81,7 +78,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     }
     catch (e: IOException) {
       LOG.warn(e)
-      rebuild(e)
+      rebuild()
     }
   }
 
@@ -93,16 +90,16 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
 
   override fun getUsers(): Set<VcsUser> {
     return try {
-      persistentEnumerator?.let { ContainerUtil.newHashSet(it.getAllDataObjects { _ -> true }) } ?: emptySet()
+      persistentEnumerator?.let { ContainerUtil.newHashSet(it.getAllDataObjects { true }) } ?: emptySet()
     }
     catch (e: IOException) {
       LOG.warn(e)
-      rebuild(e)
+      rebuild()
       emptySet()
     }
   }
 
-  private fun rebuild(t: Throwable) {
+  private fun rebuild() {
     if (persistentEnumerator?.isCorrupted == true) {
       _persistentEnumerator.getAndSet(null)?.let { oldEnumerator ->
         ApplicationManager.getApplication().executeOnPooledThread {
@@ -112,17 +109,11 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
           catch (_: IOException) {
           }
           finally {
-            if (initEnumerator()) {
-              eventDispatcher.multicaster.onRebuild(t)
-            }
+            initEnumerator()
           }
         }
       }
     }
-  }
-
-  fun addRebuildListener(listener: VcsUserRegistryListener, disposable: Disposable) {
-    eventDispatcher.addListener(listener, disposable)
   }
 
   fun flush() {
@@ -138,39 +129,6 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     }
   }
 
-  @Throws(IOException::class)
-  fun getUserId(user: VcsUser): Int {
-    return persistentEnumerator?.enumerate(user) ?: -1
-  }
-
-  @Throws(IOException::class)
-  fun getUserById(userId: Int?): VcsUser? {
-    return persistentEnumerator?.valueOf(userId!!)
-  }
-
-  private inner class MyDescriptor : KeyDescriptor<VcsUser> {
-    @Throws(IOException::class)
-    override fun save(out: DataOutput, value: VcsUser) {
-      IOUtil.writeUTF(out, value.name)
-      IOUtil.writeUTF(out, value.email)
-    }
-
-    @Throws(IOException::class)
-    override fun read(`in`: DataInput): VcsUser {
-      val name = IOUtil.readUTF(`in`)
-      val email = IOUtil.readUTF(`in`)
-      return createUser(name, email)
-    }
-
-    override fun getHashCode(value: VcsUser): Int {
-      return value.hashCode()
-    }
-
-    override fun isEqual(val1: VcsUser, val2: VcsUser): Boolean {
-      return val1 == val2
-    }
-  }
-
   companion object {
     private val LOG = Logger.getInstance(VcsUserRegistryImpl::class.java)
     private val USER_CACHE_APP_DIR = File(PathManager.getSystemPath(), "vcs-users")
@@ -178,6 +136,25 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
   }
 }
 
-interface VcsUserRegistryListener : EventListener {
-  fun onRebuild(t: Throwable)
+class VcsUserKeyDescriptor(private val userRegistry: VcsUserRegistry) : KeyDescriptor<VcsUser> {
+  @Throws(IOException::class)
+  override fun save(out: DataOutput, value: VcsUser) {
+    IOUtil.writeUTF(out, value.name)
+    IOUtil.writeUTF(out, value.email)
+  }
+
+  @Throws(IOException::class)
+  override fun read(`in`: DataInput): VcsUser {
+    val name = IOUtil.readUTF(`in`)
+    val email = IOUtil.readUTF(`in`)
+    return userRegistry.createUser(name, email)
+  }
+
+  override fun getHashCode(value: VcsUser): Int {
+    return value.hashCode()
+  }
+
+  override fun isEqual(val1: VcsUser, val2: VcsUser): Boolean {
+    return val1 == val2
+  }
 }

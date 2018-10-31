@@ -142,16 +142,21 @@
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
+      <separator/>
       <reference id="Vcs.Log.CompareRevisions"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
+    </group>
+    <group id="Vcs.Log.LayoutConfiguration" class="com.intellij.vcs.log.ui.actions.VcsLogToolbarPopupActionGroup"
+           icon="AllIcons.Debugger.RestoreLayout" text="Configure Layout" description="Configure Layout" popup="true">
+      <reference id="Vcs.Log.ShowDetailsAction"/>
+      <reference id="Vcs.Log.ShowDiffPreview"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Toolbar">
       <reference id="Vcs.RepositoryChangesBrowserToolbar"/>
       <separator/>
       <reference id="ChangesView.GroupBy"/>
       <separator/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
     </group>
     <group id="Vcs.Log.ChangesBrowser.Popup">
       <reference id="Vcs.RepositoryChangesBrowserMenu"/>
@@ -161,12 +166,11 @@
       <reference id="Vcs.CopyRevisionNumberAction"/>
       <reference id="ChangesView.CreatePatchFromChanges"/>
       <separator/>
+      <reference id="Vcs.Log.GetVersion"/>
+      <reference id="Vcs.Log.OpenRepositoryVersion"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowAllAffected"/>
-      <reference id="Vcs.ShowDiffWithLocal"/>
-      <separator/>
-      <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.GetVersion"/>
       <reference id="Vcs.Log.AnnotateRevisionAction"/>
       <reference id="VcsHistoryActionsGroup"/>
     </group>
@@ -177,8 +181,7 @@
       <separator/>
       <reference id="Vcs.Log.ShowOtherBranches"/>
       <separator/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
-      <reference id="Vcs.Log.ShowDiffPreview"/>
+      <reference id="Vcs.Log.LayoutConfiguration"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
       <separator/>

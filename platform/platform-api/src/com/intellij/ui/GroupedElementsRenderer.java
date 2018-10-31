@@ -63,7 +63,7 @@ public abstract class GroupedElementsRenderer {
     setSelected(myComponent, isSelected);
     setSelected(myTextLabel, isSelected);
 
-    myRendererComponent.setPrefereedWidth(preferredForcedWidth);
+    myRendererComponent.setPreferredWidth(preferredForcedWidth);
 
     return myRendererComponent;
   }
@@ -145,12 +145,12 @@ public abstract class GroupedElementsRenderer {
 
     @Override
     protected Color getBackground() {
-      return UIUtil.getTreeTextBackground();
+      return UIUtil.getTreeBackground();
     }
 
     @Override
     protected Color getForeground() {
-      return UIUtil.getTreeTextForeground();
+      return UIUtil.getTreeForeground();
     }
   }
 
@@ -162,7 +162,7 @@ public abstract class GroupedElementsRenderer {
       super(new BorderLayout(), GroupedElementsRenderer.this.getBackground());
     }
 
-    public void setPrefereedWidth(final int minWidth) {
+    public void setPreferredWidth(final int minWidth) {
       myPrefWidth = minWidth;
     }
 

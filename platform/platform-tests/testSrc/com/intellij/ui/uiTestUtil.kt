@@ -207,10 +207,10 @@ internal fun dumpComponentBounds(component: Container): Map<String, IntArray> {
 
 internal fun getComponentKey(c: Component, index: Int): String {
   if (c is JLabel && !c.text.isNullOrEmpty()) {
-    return StringUtil.removeHtmlTags(c.text)
+    return StringUtil.removeHtmlTags(c.text, true)
   }
   if (c is AbstractButton && c.text.isNotEmpty()) {
-    return StringUtil.removeHtmlTags(c.text)
+    return StringUtil.removeHtmlTags(c.text, true)
   }
   else {
     return "${c.javaClass.simpleName} #${index}"

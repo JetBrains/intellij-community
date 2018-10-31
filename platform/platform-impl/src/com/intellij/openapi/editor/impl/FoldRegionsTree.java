@@ -10,7 +10,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,29 +58,14 @@ abstract class FoldRegionsTree {
 
   CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myMarkerTree.size());
-    List<FoldRegionImpl> duplicatesToKill = new ArrayList<>();
 
     SweepProcessor.Generator<FoldRegionImpl> generator = processor -> myMarkerTree.processOverlappingWith(0, Integer.MAX_VALUE, processor);
     SweepProcessor.sweep(generator, new SweepProcessor<FoldRegionImpl>() {
-      FoldRegionImpl lastRegion;
       FoldRegionImpl lastCollapsedRegion;
 
       @Override
       public boolean process(int offset, @NotNull FoldRegionImpl region, boolean atStart, @NotNull Collection<FoldRegionImpl> overlapping) {
         if (atStart) {
-          if (sameRange(region, lastRegion)) {
-            if (region.isExpanded()) {
-              duplicatesToKill.add(region);
-              return true;
-            }
-            else {
-              duplicatesToKill.add(lastRegion);
-              if (!visible.isEmpty() && lastRegion == visible.get(visible.size() - 1)) visible.remove(visible.size() - 1);
-              if (lastRegion == lastCollapsedRegion) lastCollapsedRegion = null;
-            }
-          }
-          lastRegion = region;
-          
           if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset()) {
             if (!region.isExpanded()) {
               hideContainedRegions(region);
@@ -99,16 +83,7 @@ abstract class FoldRegionsTree {
           else break;
         }
       }
-
-      private boolean sameRange(@NotNull FoldRegion region, @Nullable FoldRegion otherRegion) {
-        return otherRegion != null && 
-               region.getStartOffset() == otherRegion.getStartOffset() && region.getEndOffset() == otherRegion.getEndOffset();
-      }
     });
-
-    for (FoldRegionImpl region : duplicatesToKill) {
-      myMarkerTree.removeInterval(region);
-    }
 
     FoldRegion[] visibleRegions = toFoldArray(visible);
 
@@ -137,10 +112,8 @@ abstract class FoldRegionsTree {
 
     List<FoldRegion> topLevel = new ArrayList<>(visibleRegions.length/2);
 
-    Set<FoldRegion> distinctRegions = new THashSet<>(visibleRegions.length, OFFSET_BASED_HASHING_STRATEGY);
-
     for (FoldRegion region : visibleRegions) {
-      if (!region.isValid() || !distinctRegions.add(region)) {
+      if (!region.isValid()) {
         if (fromRebuild) {
           throw new RuntimeExceptionWithAttachments("FoldRegionsTree.rebuild() failed", 
                                                     new Attachment("visibleRegions.txt", Arrays.toString(visibleRegions)));

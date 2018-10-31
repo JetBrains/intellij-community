@@ -115,12 +115,7 @@ class MergedCompositeConfigurable implements SearchableConfigurable {
   }
 
   static boolean isTargetedToProduct(@NotNull Configurable configurable) {
-    for (DebuggerConfigurableProvider provider : DebuggerConfigurableProvider.EXTENSION_POINT.getExtensions()) {
-      if (provider.isTargetedToProduct(configurable)) {
-        return true;
-      }
-    }
-    return false;
+    return DebuggerConfigurableProvider.EXTENSION_POINT.extensions().anyMatch(provider -> provider.isTargetedToProduct(configurable));
   }
 
   @NotNull

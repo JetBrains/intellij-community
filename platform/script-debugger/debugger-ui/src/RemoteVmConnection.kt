@@ -154,6 +154,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
   return result
 }
 
+@Deprecated("Use NodeCommandLineUtil.initRemoteVmConnectionSync instead")
 @Throws(ExecutionException::class)
 fun initRemoteVmConnectionSync(connection: RemoteVmConnection<*>, debugPort: Int): Vm {
   val address = InetSocketAddress(InetAddress.getLoopbackAddress(), debugPort)

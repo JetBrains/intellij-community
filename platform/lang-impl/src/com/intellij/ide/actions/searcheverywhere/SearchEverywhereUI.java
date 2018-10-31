@@ -14,6 +14,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
@@ -79,6 +80,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private static final String CONTRIBUTOR_ITEM_SELECTED = "ContributorItemChosen";
   private static final String MORE_ITEM_SELECTED = "MoreItemChosen";
   private static final String COMMAND_USED = "CommandUsed";
+  private static final String COMMAND_COMPLETED = "CommandCompleted";
+  public static final String TAB_SWITCHED = "TabSwitched";
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -401,6 +404,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
         @Override
         public void mousePressed(MouseEvent e) {
           switchToTab(SETab.this);
+          featureUsed(TAB_SWITCHED, getID());
         }
       });
     }
@@ -471,7 +475,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       boolean dumbModeSupported = contributors.stream().anyMatch(c -> c.isDumbModeSupported());
       if (!dumbModeSupported && DumbService.getInstance(myProject).isDumb()) {
         String tabName = mySelectedTab.getText();
-        String productName = ApplicationNamesInfo.getInstance().getProductName();
+        String productName = ApplicationNamesInfo.getInstance().getFullProductName();
         myResultsList.setEmptyText(IdeBundle.message("searcheverywhere.indexing.mode.not.supported", tabName, productName));
         return;
       }
@@ -505,18 +509,54 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private void initSearchActions() {
-    myResultsList.addMouseListener(new MouseAdapter() {
+    MouseAdapter listMouseListener = new MouseAdapter() {
+      private int currentDescriptionIndex = -1;
+
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
       }
-    });
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        int index = myResultsList.locationToIndex(e.getPoint());
+        indexChanged(index);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        int index = myResultsList.getSelectedIndex();
+        indexChanged(index);
+      }
+
+      private void indexChanged(int index) {
+        if (index != currentDescriptionIndex) {
+          currentDescriptionIndex = index;
+          showDescriptionForIndex(index);
+        }
+      }
+    };
+    myResultsList.addMouseMotionListener(listMouseListener);
+    myResultsList.addMouseListener(listMouseListener);
 
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_TAB) {
-          completeCommand();
+          // if user typed command then TAB key completes it
+          // in other case TAB key switches tabs
+          if (completeCommand()) {
+            featureUsed(COMMAND_COMPLETED, "Tab");
+          }
+          else {
+            if (e.getModifiers() == 0) {
+              switchToNextTab();
+              featureUsed(TAB_SWITCHED, "Tab");
+            } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
+              switchToPrevTab();
+              featureUsed(TAB_SWITCHED, "Shift+Tab");
+            }
+          }
           e.consume();
         }
 
@@ -538,8 +578,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
     });
 
-    registerAction(IdeActions.ACTION_NEXT_TAB, __ -> switchToNextTab());
-    registerAction(IdeActions.ACTION_PREVIOUS_TAB, __ -> switchToPrevTab());
+    registerAction(IdeActions.ACTION_NEXT_TAB, e -> {
+      switchToNextTab();
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
+    });
+    registerAction(IdeActions.ACTION_PREVIOUS_TAB, e -> {
+      switchToPrevTab();
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
+    });
     registerAction(IdeActions.ACTION_SWITCHER, e -> {
       if (e.getInputEvent().isShiftDown()) {
         switchToPrevTab();
@@ -547,13 +593,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       else {
         switchToNextTab();
       }
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
     });
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
-    DumbAwareAction.create(__ -> {
-      stopSearching();
-      searchFinishedHandler.run();
-    }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
+    DumbAwareAction.create(__ -> closePopup())
+      .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), this);
 
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
@@ -575,6 +620,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       if (selectedValue != null && myHint != null && myHint.isVisible()) {
         updateHint(selectedValue);
       }
+
+      showDescriptionForIndex(myResultsList.getSelectedIndex());
     });
 
     myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -593,11 +640,18 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       @Override
       public void focusLost(FocusEvent e) {
         if (!isHintComponent(e.getOppositeComponent())) {
-          stopSearching();
-          searchFinishedHandler.run();
+          closePopup();
         }
       }
     });
+  }
+
+  private void showDescriptionForIndex(int index) {
+    if (index >= 0 && !myListModel.isMoreElement(index)) {
+      SearchEverywhereContributor contributor = myListModel.getContributorForIndex(index);
+      String description = (String) contributor.getDataForItem(myListModel.getElementAt(index), SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.getName());
+      ActionMenu.showDescriptionInStatusBar(true, myResultsList, description);
+    }
   }
 
   private void registerAction(String actionID, Consumer<AnActionEvent> action) {
@@ -606,7 +660,15 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
   }
 
-  private void completeCommand() {
+  private static Optional<String> getEventShortcut(AnActionEvent event) {
+    if (event.getInputEvent() instanceof KeyEvent) {
+      return Optional.of((KeyEvent)event.getInputEvent())
+        .map(e -> KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers())));
+    }
+    return Optional.empty();
+  }
+
+  private boolean completeCommand() {
     String pattern = getSearchPattern();
     String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
     if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
@@ -617,8 +679,10 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       });
       if (command != null) {
         mySearchField.setText(command.getCommandWithPrefix() + " ");
+        return true;
       }
     }
+    return false;
   }
 
   private Optional<SearchEverywhereCommandInfo> getSelectedCommand(String typedCommand) {
@@ -699,8 +763,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
 
     if (closePopup) {
-      stopSearching();
-      searchFinishedHandler.run();
+      closePopup();
     } else {
       myResultsList.repaint();
     }
@@ -722,6 +785,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     if (myBufferedListener != null) {
       myBufferedListener.clearBuffer();
     }
+  }
+
+  private void closePopup() {
+    ActionMenu.showDescriptionInStatusBar(true, myResultsList, null);
+    stopSearching();
+    searchFinishedHandler.run();
   }
 
   @NotNull
@@ -1035,7 +1104,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       Collection<SearchEverywhereContributor> contributorsForAdditionalSearch;
       contributorsForAdditionalSearch = ContainerUtil.filter(contributors, contributor -> myListModel.hasMoreElements(contributor));
 
-      searchFinishedHandler.run();
+      closePopup();
       if (!contributorsForAdditionalSearch.isEmpty()) {
         ProgressManager.getInstance().run(new Task.Modal(myProject, tabCaptionText, true) {
           private final ProgressIndicator progressIndicator = new ProgressIndicatorBase();
@@ -1181,7 +1250,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
 
   private static JLabel groupInfoLabel(String text) {
     JLabel label = new JLabel(text);
-    label.setForeground(UIUtil.getLabelDisabledForeground());
+    label.setForeground(JBUI.CurrentTheme.BigPopup.listTitleLabelForeground());
     label.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL)));
     label.setOpaque(false);
     return label;
@@ -1239,7 +1308,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @NotNull
     @Override
     public String getSearchProviderId() {
-      return "stubCommandsContributor";
+      return "CommandsContributor";
     }
 
     @NotNull
@@ -1271,6 +1340,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     @Override
     public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
       mySearchField.setText(((SearchEverywhereCommandInfo)selected).getCommandWithPrefix() + " ");
+      featureUsed(COMMAND_COMPLETED);
       return false;
     }
 

@@ -30,6 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.vcsUtil.VcsUtil;
@@ -40,6 +41,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -88,7 +91,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
-    super(ChangesBrowserNode.createRoot(project));
+    super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
@@ -594,6 +597,32 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     @Override
     public String getToolTipText() {
       return myTextRenderer.getToolTipText();
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      if (accessibleContext == null) {
+        return accessibleContext = new AccessibleContextDelegate(myCheckBox.getAccessibleContext()) {
+          @Override
+          protected Container getDelegateParent() {
+            return getParent();
+          }
+
+          @Override
+          public String getAccessibleName() {
+            myCheckBox.getAccessibleContext().setAccessibleName(myTextRenderer.getAccessibleContext().getAccessibleName());
+            return myCheckBox.getAccessibleContext().getAccessibleName();
+          }
+
+          @Override
+          public AccessibleRole getAccessibleRole() {
+            // Because of a problem with NVDA we have to make this a LABEL,
+            // or otherwise NVDA will read out the entire tree path, causing confusion.
+            return AccessibleRole.LABEL;
+          }
+        };
+      }
+      return accessibleContext;
     }
   }
 

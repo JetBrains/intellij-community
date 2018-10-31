@@ -121,27 +121,31 @@
     </group>
 
     <group id="Git.FileHistory.ContextMenu">
-      <reference id="Git.Revert.In.Log" />
       <reference id="Git.SelectInGitLog"/>
-      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+      <separator/>
+      <reference id="Git.Revert.In.Log" />
+      <separator/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="VcsHistoryActionsGroup" anchor="before"/>
     </group>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
       <reference id="Git.CheckoutRevision"/>
       <reference id="Git.BrowseRepoAtRevision"/>
-      <reference id="Git.CreateNewBranch" />
-      <reference id="Git.CreateNewTag" />
+      <separator/>
+      <reference id="Git.Reset.In.Log"/>
+      <reference id="Git.Revert.In.Log"/>
+      <reference id="Git.Uncommit"/>
+      <separator/>
+      <reference id="Git.Reword.Commit"/>
+      <reference id="Git.Interactive.Rebase"/>
       <separator/>
       <reference id="Git.BranchOperationGroup"/>
+      <reference id="Git.CreateNewBranch"/>
+      <reference id="Git.CreateNewTag"/>
       <separator/>
-      <reference id="Git.Reset.In.Log" />
-      <reference id="Git.Revert.In.Log" />
-      <reference id="Git.Uncommit" />
-      <separator />
-      <reference id="Git.Reword.Commit" />
-      <reference id="Git.Interactive.Rebase" />
-      <add-to-group group-id="Vcs.Log.ContextMenu" />
+
+      <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>
 
     <group id="Git.Log.Toolbar">
@@ -149,7 +153,7 @@
               description="Dims those commits which have equivalent changes in the current branch"/>
       <add-to-group group-id="Vcs.Log.PresentationSettings" relative-to-action="Vcs.Log.HighlightersActionGroup" anchor="after"/>
     </group>
-    
+
 
   </actions>
 

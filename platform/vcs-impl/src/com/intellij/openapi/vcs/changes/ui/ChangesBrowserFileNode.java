@@ -5,19 +5,19 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> implements Comparable<ChangesBrowserFileNode> {
-  private final Project myProject;
+  @Nullable private final Project myProject;
   private final String myName;
 
-  public ChangesBrowserFileNode(Project project, @NotNull VirtualFile userObject) {
+  public ChangesBrowserFileNode(@Nullable Project project, @NotNull VirtualFile userObject) {
     super(userObject);
     myName = StringUtil.toLowerCase(userObject.getName());
     myProject = project;
@@ -30,14 +30,16 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
 
   @Override
   protected boolean isDirectory() {
-    return getUserObject().isDirectory() &&
-           (isLeaf() || FileStatusManager.getInstance(myProject).getStatus(getUserObject()) != FileStatus.NOT_CHANGED);
+    if (getUserObject().isDirectory()) {
+      return isLeaf() || getFileStatus() != FileStatus.NOT_CHANGED;
+    }
+    return false;
   }
 
   @Override
   public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final VirtualFile file = getUserObject();
-    FileStatus fileStatus = ChangeListManager.getInstance(myProject).getStatus(file);
+    FileStatus fileStatus = getFileStatus();
 
     renderer.appendFileName(file, file.getName(), fileStatus.getColor());
 
@@ -77,5 +79,11 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   @Override
   public int compareUserObjects(final VirtualFile o2) {
     return getUserObject().getName().compareToIgnoreCase(o2.getName());
+  }
+
+  @NotNull
+  private FileStatus getFileStatus() {
+    if (myProject == null) return FileStatus.NOT_CHANGED;
+    return ChangeListManager.getInstance(myProject).getStatus(getUserObject());
   }
 }

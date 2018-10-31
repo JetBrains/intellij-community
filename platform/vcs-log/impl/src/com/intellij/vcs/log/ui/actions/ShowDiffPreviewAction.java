@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public class ShowDiffPreviewAction extends BooleanPropertyToggleAction {
 
   public ShowDiffPreviewAction() {
-    super("Preview Diff", "Show Diff Preview Panel", AllIcons.Actions.PreviewDetails);
+    super("Show Diff Preview", "Show Diff Preview Panel", null);
   }
 
   @Override

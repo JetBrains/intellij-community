@@ -58,7 +58,7 @@ public class TextFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);

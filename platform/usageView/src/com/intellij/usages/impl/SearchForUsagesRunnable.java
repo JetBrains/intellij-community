@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
@@ -113,7 +114,7 @@ class SearchForUsagesRunnable implements Runnable {
   private void notifyByFindBalloon(@Nullable final HyperlinkListener listener,
                                    @NotNull final MessageType messageType,
                                    @NotNull final List<String> lines) {
-    com.intellij.usageView.UsageViewManager.getInstance(myProject); // in case tool window not registered
+    UsageViewContentManager.getInstance(myProject); // in case tool window not registered
 
     final Collection<VirtualFile> largeFiles = myProcessPresentation.getLargeFiles();
     List<String> resultLines = new ArrayList<>(lines);

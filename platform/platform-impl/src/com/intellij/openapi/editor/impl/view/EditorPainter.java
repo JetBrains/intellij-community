@@ -90,7 +90,7 @@ public class EditorPainter implements TextDrawingCallback {
     g.translate(0, -yShift);
 
     MarginPositions marginWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData, extensionData);
-    paintRightMargin(g, clip, startLine, endLine, marginWidths);
+    paintRightMargin(g, clip, marginWidths);
     paintCustomRenderers(g, yShift, startOffset, endOffset, clipDetector);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
@@ -143,8 +143,6 @@ public class EditorPainter implements TextDrawingCallback {
 
   private void paintRightMargin(Graphics g,
                                 Rectangle clip,
-                                int startVisualLine,
-                                int endVisualLine,
                                 MarginPositions marginWidths) {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));

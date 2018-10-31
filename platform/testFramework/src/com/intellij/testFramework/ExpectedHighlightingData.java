@@ -465,7 +465,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private static <T> List<T> reverseCollection(Collection<? extends T> infos) {
+  private static <T> List<T> reverseCollection(Collection<T> infos) {
     return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<>(infos));
   }
 

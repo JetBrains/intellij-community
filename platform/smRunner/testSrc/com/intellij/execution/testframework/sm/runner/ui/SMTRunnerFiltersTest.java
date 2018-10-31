@@ -79,7 +79,7 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
   }
 
   public void testShowPassedShowIgnored() {
-    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getTreeStructure();
     final Object[] suites = treeStructure.getChildElements(mySuite);
     assertTrue(suites.length == 1);
     final Object[] tests = treeStructure.getChildElements(suites[0]);
@@ -88,7 +88,7 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
   
   public void testShowPassedHideIgnored() {
     TestConsoleProperties.HIDE_IGNORED_TEST.set(myProperties, true);
-    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getTreeStructure();
     final Object[] suites = treeStructure.getChildElements(mySuite);
     assertTrue(suites.length == 1);
     final Object[] tests = treeStructure.getChildElements(suites[0]);
@@ -98,7 +98,7 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
   
   public void testShowIgnoredHidePassed() {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, true);
-    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getTreeStructure();
     final Object[] suites = treeStructure.getChildElements(mySuite);
     assertTrue(suites.length == 1);
     final Object[] tests = treeStructure.getChildElements(suites[0]);
@@ -109,7 +109,7 @@ public class SMTRunnerFiltersTest extends BaseSMTRunnerTestCase {
   public void testHidePassedHideIgnored() {
     TestConsoleProperties.HIDE_PASSED_TESTS.set(myProperties, true);
     TestConsoleProperties.HIDE_IGNORED_TEST.set(myProperties, true);
-    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myResultsForm.getTreeBuilder().getTreeStructure();
     final Object[] suites = treeStructure.getChildElements(mySuite);
     assertTrue(suites.length == 0);
   }

@@ -10,7 +10,6 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
-import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.sun.jdi.ObjectReference;
@@ -18,8 +17,6 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public abstract class NodeRendererImpl implements NodeRenderer {
   public static final String DEFAULT_NAME = "unnamed";
@@ -68,11 +65,6 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
   public void setShowType(boolean showType) {
     myProperties.setShowType(showType);
-  }
-
-  @Override
-  public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-    return null;
   }
 
   @Override

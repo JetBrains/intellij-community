@@ -18,7 +18,14 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH);
     if (dialog == null) return;
-    String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
+    result.runRemainingContributors(parameters, cr -> {
+      if (cr.getLookupElement().getObject() instanceof String) return;
+      result.passResult(cr);
+    });
+
+    String prefix = parameters.isExtendedCompletion()
+                    ? TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters)
+                    : parameters.getOriginalFile().getText().substring(0, parameters.getOffset());
     CompletionResultSet insensitive = result.withPrefixMatcher(new CamelHumpMatcher(prefix));
     ConfigurationManager configurationManager = ConfigurationManager.getInstance(parameters.getPosition().getProject());
     for (String configurationName: configurationManager.getAllConfigurationNames()) {

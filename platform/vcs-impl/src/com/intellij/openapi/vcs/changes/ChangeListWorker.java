@@ -878,7 +878,9 @@ public class ChangeListWorker {
     String lists = StringUtil.join(myLists, list -> {
       return String.format("list: %s (%s) changes: %s", list.name, list.id, StringUtil.join(getChangesIn(list), ", "));
     }, "\n");
-    String trackers = StringUtil.join(myPartialChangeTrackers.keySet(), ",");
+    String trackers = StringUtil.join(myPartialChangeTrackers.entrySet(), (entry) -> {
+      return entry.getKey() + " " + entry.getValue().getAffectedChangeListsIds();
+    }, ",");
     return String.format("ChangeListWorker{ default = %s, lists = {\n%s }\ntrackers = %s\n}", myDefault.id, lists, trackers);
   }
 

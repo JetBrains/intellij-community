@@ -37,25 +37,31 @@ public class GutterIconTooltipHelper {
   }
 
   /**
-   * @deprecated by com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @deprecated
    */
   @Deprecated
+  @SuppressWarnings("JavadocReference")
   public static String composeText(@NotNull PsiElement[] elements, @NotNull String start, @NotNull String pattern) {
     return composeText(Arrays.asList(elements), start, pattern);
   }
 
   /**
-   * @deprecated by com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @deprecated
    */
   @Deprecated
+  @SuppressWarnings("JavadocReference")
   public static String composeText(@NotNull Iterable<? extends PsiElement> elements, @NotNull String start, @NotNull String pattern) {
     return composeText(elements, start, pattern, "");
   }
 
   /**
-   * @deprecated by com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @see com.intellij.codeInsight.daemon.impl.GutterTooltipHelper
+   * @deprecated
    */
   @Deprecated
+  @SuppressWarnings("JavadocReference")
   static String composeText(@NotNull Iterable<? extends PsiElement> elements,
                             @NotNull String start,
                             @NotNull String pattern,

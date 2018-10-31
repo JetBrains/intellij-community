@@ -101,7 +101,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     Icon oldIcon = getIcon();
     List<ColoredFragment> oldFragments = new ArrayList<>(presentation.getColoredText());
 
-    myColor = UIUtil.getTreeTextForeground();
+    myColor = UIUtil.getTreeForeground();
     updateFileStatus();
 
     doUpdate();

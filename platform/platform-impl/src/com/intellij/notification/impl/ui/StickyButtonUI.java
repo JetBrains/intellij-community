@@ -1,21 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicToggleButtonUI;
@@ -35,6 +25,7 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
 
   @Override
   public void paint(final Graphics g, final JComponent c) {
+    //noinspection unchecked
     B button = (B) c;
 
     final int width = button.getWidth();
@@ -46,48 +37,61 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
 
     final int arcSize = getArcSize();
 
+    final Insets margins = getOffsets();
+    final int x = margins.left;
+    final int y = margins.top;
+    final int w = width - 1 - margins.right - x;
+    final int h = height - 1 - margins.bottom - y;
     if (c.isOpaque()) {
       g2.setColor(c.getBackground());
-      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
     }
 
     final ButtonModel model = button.getModel();
     if (model.isSelected()) {
       g2.setColor(getSelectionColor(button));
-      g2.fillRoundRect(0, 0, width - 1, height - 1, getArcSize(), getArcSize());
+      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
     } else if (model.isRollover()) {
       g2.setColor(getRolloverColor(button));
-      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
     } else {
       final Color bg = getBackgroundColor(button);
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+        g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
       }
     }
 
-    if (button.hasFocus()) {
-      g2.setColor(getFocusColor(button));
-      g2.drawRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
+    Color border = button.hasFocus() ? getFocusColor(button) : getUnfocusedBorderColor(button);
+    if (border != null) {
+      g2.setColor(border);
+      g2.drawRoundRect(x, y, w, h, arcSize, arcSize);
     }
 
     g2.dispose();
     super.paint(g, c);
   }
 
-  protected Color getFocusColor(B button) {
+  protected Insets getOffsets() {
+    return JBUI.insets(0);
+  }
+
+  @Nullable
+  protected Color getUnfocusedBorderColor(@NotNull B button) { return null; }
+
+  protected Color getFocusColor(@NotNull B button) {
     return Gray._100;
   }
 
-  protected Color getSelectionColor(final B button) {
-    return Color.GRAY;
+  protected Color getSelectionColor(@NotNull final B button) {
+    return JBColor.GRAY;
   }
 
-  protected Color getRolloverColor(final B button) {
-    return Color.LIGHT_GRAY;
+  protected Color getRolloverColor(@NotNull final B button) {
+    return JBColor.LIGHT_GRAY;
   }
 
-  protected Color getBackgroundColor(final B button) {
+  protected Color getBackgroundColor(@NotNull final B button) {
     return null;
   }
 

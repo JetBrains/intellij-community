@@ -120,7 +120,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (type1 == XmlElementType.XML_ATTRIBUTE && (type2 == XmlTokenType.XML_TAG_END || type2 == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
+    if (isAttributeElementType(type1) && (type2 == XmlTokenType.XML_TAG_END || type2 == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
       Spacing spacing = myXmlFormattingPolicy.getSpacingAfterLastAttribute((XmlAttribute)node1.getPsi());
       if (spacing != null) {
         return spacing;
@@ -138,7 +138,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
-    if (type2 == XmlElementType.XML_ATTRIBUTE) {
+    if (isAttributeElementType(type2)) {
       if (type1 == XmlTokenType.XML_NAME || type1 == XmlTokenType.XML_TAG_NAME) {
         Spacing spacing = myXmlFormattingPolicy.getSpacingBeforeFirstAttribute((XmlAttribute)node2.getPsi());
         if (spacing != null) {
@@ -252,7 +252,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
 
   private boolean isAttributeBlock(final Block block) {
     if (block instanceof XmlBlock) {
-      return ((XmlBlock)block).getNode().getElementType() == XmlElementType.XML_ATTRIBUTE;
+      return isAttributeElementType(((XmlBlock)block).getNode().getElementType());
     }
     return false;
   }

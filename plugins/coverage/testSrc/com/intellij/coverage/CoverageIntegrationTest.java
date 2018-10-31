@@ -15,6 +15,7 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -32,6 +33,7 @@ import java.util.Map;
 /**
  * @author yole
  */
+@ExcludeFromTestDiscovery
 public class CoverageIntegrationTest extends ModuleTestCase {
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("coverage") + "/testData/simple";

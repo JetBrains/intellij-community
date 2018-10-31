@@ -1146,6 +1146,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
+    if (findModel.getStringToFind().contains("\n") && Registry.is("ide.find.ignores.leading.whitespace.in.multiline.search")) {
+      findModel.setMultiline(true);
+    }
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
     myComponentValidator.updateInfo(result);
@@ -1397,7 +1400,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
 
         try {
-          Pattern.compile(getStringToReplace());
+          String stringToReplace = getStringToReplace();
+          stringToReplace = stringToReplace.replaceAll("(\\\\U|\\\\L|\\\\u|\\\\l|\\\\E)", "\\\\$1");
+          Pattern.compile(stringToReplace);
         }
         catch (PatternSyntaxException e) {
           return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),

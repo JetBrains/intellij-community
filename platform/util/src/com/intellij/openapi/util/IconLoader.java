@@ -78,7 +78,7 @@ public final class IconLoader {
 
   private IconLoader() { }
 
-  public static <T> T performStrictly(ThrowableComputable<T, ? extends RuntimeException> computable) {
+  public static <T, E extends Throwable> T performStrictly(ThrowableComputable<T, E> computable) throws E {
     STRICT_LOCAL.set(true);
     try {
       return computable.compute();
@@ -556,6 +556,7 @@ public final class IconLoader {
     return icon;
   }
 
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static final class CachedImageIcon extends com.intellij.util.ui.JBUI.RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private final Object myLock = new Object();
     @Nullable private volatile Object myRealIcon;
@@ -908,7 +909,7 @@ public final class IconLoader {
         return myUrl;
       }
 
-      MyUrlResolver patch(String originalPath, IconTransform transform) {
+      MyUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
         Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, myClassLoader);
         ClassLoader classLoader = patchedPath.second != null ? patchedPath.second : myClassLoader;
         String path = patchedPath.first;

@@ -509,12 +509,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return getQualifier() != null;
   }
 
-  @Nullable
-  @Override
-  public PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.getFirstItem(multiResolveAssignedValue(resolveContext));
-  }
-
   @NotNull
   @Override
   public List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {

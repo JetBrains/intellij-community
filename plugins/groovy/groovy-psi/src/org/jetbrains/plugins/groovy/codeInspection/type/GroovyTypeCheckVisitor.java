@@ -337,8 +337,8 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       if (resolved != null) {
         if (resolved instanceof PsiMethod && !resolveResult.isInvokedOnProperty()) {
           GrMethodCall call = info.getCall();
-          GroovyMethodCallReference reference = call.getCallReference();
-          if (reference.isRealReference()) {
+          GroovyMethodCallReference reference = call.getImplicitCallReference();
+          if (reference != null) {
             checkCallApplicability(reference.getReceiver(), true, info);
           }
           else {

@@ -14,7 +14,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.TestEnv;
@@ -72,6 +71,22 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     new ConfigurationTarget("foo.bar", PyRunTargetVariant.PYTHON).checkValid();
   }
 
+  ///PY-31827
+  @Test
+  public void testNameChanged() {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nameChanged", "test_name_changed.py") {
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      final int exitCode) {
+        assertEquals("Test should not lead to errors, but:" + stderr, 0, exitCode);
+      }
+    });
+  }
+
   /**
    * Run tests, delete file and click "rerun" should throw exception and display error since test ids do not point to correct PSI
    * from that moment
@@ -88,7 +103,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           assert runner.getFailedTestsCount() > 0 : "We need failed tests to test broken rerun";
 
           startMessagesCapture();
@@ -166,7 +181,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         Assert.assertEquals("test failed: " + runner.getAllConsoleText(), 1, runner.getPassedTestsCount());
       }
     });
@@ -180,7 +195,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         Assert.assertThat("No expected", stdout, Matchers.containsString("expected='1'"));
         Assert.assertThat("No actual", stdout, Matchers.containsString("actual='2'"));
       }
@@ -201,7 +216,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertThat(all)
           .describedAs("Wrong runner used")
           .contains(PythonHelper.SETUPPY.asParamString());
@@ -263,7 +278,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
         assertEquals("Bad tree produced for failfast", "Test tree:\n" +
                                                        "[root]\n" +
@@ -289,7 +304,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
 
         runner.getFormattedTestTree();
         assertEquals("Skipped test with non-ascii message broke tree",
@@ -323,7 +338,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final String formattedTestTree = runner.getFormattedTestTree();
         assertEquals("Bad tree:" + formattedTestTree, "Test tree:\n" +
                                                       "[root]\n" +
@@ -353,7 +368,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final MockPrinter printer = new MockPrinter();
         runner.findTestByName("[test]").printOn(printer);
         assertThat(printer.getStdErr())
@@ -382,7 +397,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("dots in subtest names broke output", "Test tree:\n" +
                                                            "[root]\n" +
                                                            ".test_test\n" +
@@ -417,7 +432,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         runner.getFormattedTestTree();
         assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
                                                       "[root]\n" +
@@ -451,7 +466,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("Output tree broken for skipped exception thrown in setup method", "Test tree:\n" +
                                                                                         "[root]\n" +
                                                                                         ".test_test\n" +
@@ -483,7 +498,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
           assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
@@ -524,7 +539,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(stderr, 2, runner.getAllTestsCount());
         }
@@ -577,7 +592,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
         }
@@ -597,7 +612,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         final String expectedResult = "Test tree:\n" +
                                       "[root]\n" +
                                       ".test_subtest\n" +
@@ -628,7 +643,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         assertEquals(runner.getFormattedTestTree(), 8, runner.getPassedTestsCount());
         assertEquals(runner.getFormattedTestTree(), 2, runner.getIgnoredTestsCount());
       }
@@ -739,7 +754,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals("bad num of passed tests: unittest load protocol failed to find tests?", 3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
       }
@@ -759,7 +774,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
         protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
           assertEquals(runner.getFormattedTestTree(), 2, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 2, runner.getFailedTestsCount());
@@ -777,7 +792,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(1, runner.getAllTestsCount());
         assertEquals(1, runner.getPassedTestsCount());
       }
@@ -792,7 +807,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(runner.getFormattedTestTree(), 1, runner.getAllTestsCount());
         assertEquals(runner.getFormattedTestTree(), 1, runner.getPassedTestsCount());
       }
@@ -846,13 +861,13 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   private abstract class PyUnitTestProcessWithConsoleTestTask extends PyUnitTestLikeProcessWithConsoleTestTask<PyUnitTestProcessRunner> {
     PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName) {
+                                         @NotNull String scriptName) {
       super(relativePathToTestData, scriptName, PythonUnitTestingTest.this::createTestRunner);
     }
 
     PyUnitTestProcessWithConsoleTestTask(@NotNull String relativePathToTestData,
-                                                @NotNull String scriptName,
-                                                int rerunFailedTests) {
+                                         @NotNull String scriptName,
+                                         int rerunFailedTests) {
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
     }
 

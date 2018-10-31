@@ -8,10 +8,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.plugins.groovy.util.Slow
 import org.junit.Test
 
-@Slow
 class GradleHighlightingPerformanceTest extends GradleHighlightingBaseTest {
   @Test
   void testPerformance() throws Exception {

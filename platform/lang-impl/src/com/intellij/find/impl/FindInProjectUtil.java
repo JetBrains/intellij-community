@@ -47,7 +47,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageView;
@@ -527,7 +527,7 @@ public class FindInProjectUtil {
 
     @Override
     public void showSettings() {
-      Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
       findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component), myFindModel);

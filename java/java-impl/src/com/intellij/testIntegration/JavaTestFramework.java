@@ -34,6 +34,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.util.Collections;
 
@@ -143,17 +145,19 @@ public abstract class JavaTestFramework implements TestFramework {
     return null;
   }
 
-  public void setupLibrary(Module module) {
+  public Promise<Void> setupLibrary(Module module) {
     ExternalLibraryDescriptor descriptor = getFrameworkLibraryDescriptor();
     if (descriptor != null) {
-      JavaProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
+      return JavaProjectModelModificationService.getInstance(module.getProject()).addDependency(module, descriptor, DependencyScope.TEST);
     }
     else {
       String path = getLibraryPath();
       if (path != null) {
         OrderEntryFix.addJarsToRoots(Collections.singletonList(path), null, module, null);
+        return Promise.resolve(null);
       }
     }
+    return Promises.rejectedPromise();
   }
 
   public boolean isSingleConfig() {

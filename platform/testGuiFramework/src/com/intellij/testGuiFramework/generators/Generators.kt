@@ -213,7 +213,7 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
     return if (wasClickOnCheckBox(cmp, cp))
       "checkboxTree($path).clickCheckbox()"
     else
-      "checkboxTree($path).clickLabel()"
+      "checkboxTree($path).clickPath()"
   }
 }
 

@@ -170,6 +170,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     super.updateDiffContext(chain);
     chain.putUserData(DiffUserDataKeysEx.BOTTOM_PANEL, myBottomDiffComponent);
     chain.putUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, myEnablePartialCommit);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
   }
 
 

@@ -2,25 +2,42 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.plugins.PluginManagerConfigurableNew;
+import com.intellij.ui.JBColor;
+
+import java.awt.*;
 
 /**
  * @author Alexander Lobas
  */
 public class InstallButton extends ColorButton {
+  private static final Color GreenColor = new JBColor(0x5D9B47, 0x2B7B50);
+
+  private static final Color FillForegroundColor = JBColor.namedColor("Plugins.Button.installFillForeground", WhiteForeground);
+  private static final Color FillBackgroundColor = JBColor.namedColor("Plugins.Button.installFillBackground", GreenColor);
+
+  private static final Color ForegroundColor = JBColor.namedColor("Plugins.Button.installForeground", GreenColor);
+  private static final Color BackgroundColor =
+    JBColor.namedColor("Plugins.Button.installBackground", PluginManagerConfigurableNew.MAIN_BG_COLOR);
+
+  @SuppressWarnings("UseJBColor")
+  private static final Color FocusedBackground = JBColor.namedColor("Plugins.Button.installFocusedBackground", new Color(0xE1F6DA));
+
+  private static final Color BorderColor = JBColor.namedColor("Plugins.Button.installBorderColor", GreenColor);
+
   public InstallButton(boolean fill) {
     if (fill) {
-      setTextColor(WhiteForeground);
-      setBgColor(GreenColor);
+      setTextColor(FillForegroundColor);
+      setBgColor(FillBackgroundColor);
     }
     else {
-      setTextColor(GreenColor);
-      setFocusedTextColor(GreenColor);
-      setBgColor(PluginManagerConfigurableNew.MAIN_BG_COLOR);
+      setTextColor(ForegroundColor);
+      setFocusedTextColor(ForegroundColor);
+      setBgColor(BackgroundColor);
     }
 
-    setFocusedBgColor(GreenFocusedBackground);
-    setBorderColor(GreenColor);
-    setFocusedBorderColor(GreenColor);
+    setFocusedBgColor(FocusedBackground);
+    setBorderColor(BorderColor);
+    setFocusedBorderColor(BorderColor);
 
     setTextAndSize();
   }

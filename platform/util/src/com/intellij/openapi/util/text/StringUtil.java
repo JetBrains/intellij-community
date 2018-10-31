@@ -48,6 +48,13 @@ public class StringUtil extends StringUtilRt {
 
   private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
     @NotNull private final StringBuilder myBuffer = new StringBuilder();
+    private final boolean myIsSkipStyleTag;
+
+    private boolean myIsStyleTagOpened;
+
+    private MyHtml2Text(boolean isSkipStyleTag) {
+      myIsSkipStyleTag = isSkipStyleTag;
+    }
 
     public void parse(Reader in) throws IOException {
       myBuffer.setLength(0);
@@ -56,12 +63,24 @@ public class StringUtil extends StringUtilRt {
 
     @Override
     public void handleText(char[] text, int pos) {
-      myBuffer.append(text);
+      if (!myIsStyleTagOpened) {
+        myBuffer.append(text);
+      }
     }
 
     @Override
     public void handleStartTag(HTML.Tag tag, MutableAttributeSet set, int i) {
+      if (myIsSkipStyleTag && "style".equals(tag.toString())) {
+        myIsStyleTagOpened = true;
+      }
       handleTag(tag);
+    }
+
+    @Override
+    public void handleEndTag(HTML.Tag tag, int pos) {
+      if (myIsSkipStyleTag && "style".equals(tag.toString())) {
+        myIsStyleTagOpened = false;
+      }
     }
 
     @Override
@@ -80,7 +99,7 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  private static final MyHtml2Text html2TextParser = new MyHtml2Text();
+  private static final MyHtml2Text html2TextParser = new MyHtml2Text(false);
 
   public static final NotNullFunction<String, String> QUOTER = new NotNullFunction<String, String>() {
     @Override
@@ -196,11 +215,16 @@ public class StringUtil extends StringUtilRt {
     return newText != null ? newText.toString() : "";
   }
 
+  @Contract(pure = true)
+  public static int indexOfIgnoreCase(@NotNull String where, @NotNull String what, int fromIndex) {
+    return indexOfIgnoreCase((CharSequence)where, what, fromIndex);
+  }
+
   /**
    * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case insensitive
    */
   @Contract(pure = true)
-  public static int indexOfIgnoreCase(@NotNull String where, @NotNull String what, int fromIndex) {
+  public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {
     int targetCount = what.length();
     int sourceCount = where.length();
 
@@ -2170,14 +2194,22 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static String removeHtmlTags (@Nullable String htmlString) {
-    if (isEmpty(htmlString)) return htmlString;
+    return removeHtmlTags(htmlString, false);
+  }
+
+  public static String removeHtmlTags (@Nullable String htmlString, boolean isRemoveStyleTag) {
+    if (isEmpty(htmlString)) {
+      return htmlString;
+    }
+
+    final MyHtml2Text parser = isRemoveStyleTag ? new MyHtml2Text(true) : html2TextParser;
     try {
-      html2TextParser.parse(new StringReader(htmlString));
+      parser.parse(new StringReader(htmlString));
     }
     catch (IOException e) {
-        LOG.error(e);
+      LOG.error(e);
     }
-    return html2TextParser.getText();
+    return parser.getText();
   }
 
   private static final List<String> MN_QUOTED = Arrays.asList("&&", "__");

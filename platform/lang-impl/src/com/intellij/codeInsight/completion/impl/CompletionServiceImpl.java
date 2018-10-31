@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * @author peter
@@ -58,13 +57,7 @@ public final class CompletionServiceImpl extends CompletionService {
   public void performCompletion(final CompletionParameters parameters, final Consumer<? super CompletionResult> consumer) {
     myApiCompletionProcess = parameters.getProcess();
     try {
-      final Set<LookupElement> lookupSet = ContainerUtil.newConcurrentSet();
-
-      getVariantsFromContributors(parameters, null, result -> {
-        if (lookupSet.add(result.getLookupElement())) {
-          consumer.consume(result);
-        }
-      });
+      super.performCompletion(parameters, consumer);
     }
     finally {
       myApiCompletionProcess = null;

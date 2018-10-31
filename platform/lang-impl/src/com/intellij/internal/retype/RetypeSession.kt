@@ -197,11 +197,15 @@ class RetypeSession(
       stop(true)
 
       if (startNextCallback == null && !ApplicationManager.getApplication().isUnitTestMode) {
-        scriptBuilder?.append(correctText(originalText))
-        val file = File.createTempFile("perf", ".test")
-        val vFile = VfsUtil.findFileByIoFile(file, false)!!
-        VfsUtil.saveText(vFile, scriptBuilder.toString())
-        OpenFileDescriptor(project, vFile).navigate(true)
+        if (scriptBuilder != null) {
+          scriptBuilder.append(correctText(originalText))
+          val file = File.createTempFile("perf", ".test")
+          val vFile = VfsUtil.findFileByIoFile(file, false)!!
+          WriteCommandAction.runWriteCommandAction(project) {
+            VfsUtil.saveText(vFile, scriptBuilder.toString())
+          }
+          OpenFileDescriptor(project, vFile).navigate(true)
+        }
         TypingLatencyReportDialog(project, threadDumps).show()
       }
     }

@@ -81,7 +81,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
 
           final String expectedConsoleText = "Expected :expected\n" +
                                              "Actual   :actual\n" +
@@ -153,6 +153,34 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Test name must be reported as meta info to be used as argument for "-k" for parametrized tests
+   */
+  @Test
+  public void testMetaInfoForMethod() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_with_method.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
+
+          final String testName = "test_method";
+          final AbstractTestProxy method = runner.findTestByName(testName);
+          assert method != null : "Method not reported";
+          assertEquals("Meta info must be test name", testName, method.getMetainfo());
+        }
+      });
+  }
+
 
   @Test
   public void testParametrized() {
@@ -169,7 +197,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           Assert.assertEquals("Parametrized test produced bad tree",
                               "Test tree:\n" +
                               "[root]\n" +
@@ -202,7 +230,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           Assert.assertEquals("Test name before message broke output",
                               "Test tree:\n" +
                               "[root]\n" +
@@ -238,7 +266,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
                                         @NotNull String stdout,
                                         @NotNull String stderr,
-                                        @NotNull String all) {
+                                        @NotNull String all, int exitCode) {
           assertEquals("Monkeypatch broke the test: " + stderr, 1, runner.getPassedTestsCount());
         }
       });
@@ -267,7 +295,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
                                         @NotNull String stdout,
                                         @NotNull String stderr,
-                                        @NotNull String all) {
+                                        @NotNull String all, int exitCode) {
           Assert.assertEquals("Marker support broken", "Test tree:\n" +
                                                        "[root]\n" +
                                                        ".test_with_markers\n" +
@@ -335,7 +363,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           Assert.assertEquals("Failed to run test" + stderr, 1, runner.getPassedTestsCount());
         }
       });
@@ -534,7 +562,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final String resultTree = runner.getFormattedTestTree().trim();
         final String expectedTree = myFixture.configureByFile("test_escape_me.tree.txt").getText().trim();
         Assert.assertEquals("Test result wrong tree", expectedTree, resultTree);
@@ -558,7 +586,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
                                       @NotNull String stdout,
                                       @NotNull String stderr,
-                                      @NotNull String all) {
+                                      @NotNull String all, int exitCode) {
         Assert.assertThat("Import error is not marked as error", runner.getFailedTestsCount(), Matchers.greaterThanOrEqualTo(1));
       }
     });
@@ -590,7 +618,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final String projectDir = myFixture.getTempDirFixture().getTempDirPath();
         Assert.assertThat("No directory found in output", runner.getConsole().getText(),
                           Matchers.containsString(String.format("Directory %s", PathUtil.toSystemDependentName(projectDir))));
@@ -612,7 +640,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(3, runner.getAllTestsCount());
         assertEquals(3, runner.getPassedTestsCount());
         runner.assertAllTestsPassed();
@@ -652,7 +680,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         assertEquals(runner.getFormattedTestTree(), 1, runner.getFailedTestsCount());
         if (runner.getCurrentRerunStep() == 0) {
           assertEquals(runner.getFormattedTestTree(), 2, runner.getAllTestsCount());
@@ -665,6 +693,33 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       }
     });
   }
+
+  //PY-32431
+  @Test
+  public void testRerunWithParent() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/rerun", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test:test_subsystems.TestBar", 2);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all, int exitCode) {
+        assertEquals("Wrong number of passed tests", 0, runner.getPassedTestsCount());
+        assertEquals("Wrong number of failed tests", 1, runner.getFailedTestsCount());
+        assertEquals("Wrong tests executed", "Test tree:\n" +
+                                             "[root]\n" +
+                                             ".test_subsystems\n" +
+                                             "..TestBar\n" +
+                                             "...test_something(-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
 
   @Test
   public void testPytestRunner2() {
@@ -679,7 +734,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (runner.getCurrentRerunStep() > 0) {
           assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
           assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
@@ -724,7 +779,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         final List<String> fileNames = runner.getHighlightedStringsInConsole().second;
         Assert.assertThat("No lines highlighted", fileNames, Matchers.not(Matchers.empty()));
         // PyTest highlights file:line_number

@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @NotNull
   public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
     JBTerminalWidget terminalWidget = new JBTerminalWidget(myProject, mySettingsProvider, parent);
-    openSessionForFile(terminalWidget, currentWorkingDirectory);
+    UiNotifyConnector.doWhenFirstShown(terminalWidget, () -> openSessionForFile(terminalWidget, currentWorkingDirectory));
     return terminalWidget;
   }
 

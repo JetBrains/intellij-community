@@ -6,6 +6,7 @@ import com.intellij.testGuiFramework.util.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.util.Predicate
+import com.intellij.testGuiFramework.util.currentTimeInHumanString
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
 
@@ -23,15 +24,10 @@ class CheckboxTreeFixture(
 
   fun clickCheckbox() = myDriver.clickCheckbox(target() as CheckboxTree, path)
 
-  /**
-   * Clicks the label specified by [path]
-   * out of checkbox area to keep the checkbox value unchanged
-   * */
-  fun clickLabel() = myDriver.clickLabel(target() as CheckboxTree, path)
+  private fun getCheckboxComponent() = myDriver.getCheckboxComponent(target() as CheckboxTree, path)
 
-  fun getCheckboxComponent() = myDriver.getCheckboxComponent(target() as CheckboxTree, path)
-
-  fun setCheckboxValue(value: Boolean) {
+  private fun setCheckboxValue(value: Boolean) {
+    clickPath()
     val checkbox = getCheckboxComponent()
     if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox()

@@ -81,10 +81,16 @@ public class EclipseImlTest extends IdeaTestCase {
     ReplacePathToMacroMap macroMap = new ReplacePathToMacroMap(PathMacroManager.getInstance(module).getReplacePathMap());
     macroMap.addMacroReplacement(junit3Path, "JUNIT3_PATH");
     macroMap.addMacroReplacement(junit4Path, "JUNIT4_PATH");
+    macroMap.addMacroReplacement(Paths.get(junit3Path).toRealPath().toString(), "JUNIT3_PATH");
+    macroMap.addMacroReplacement(Paths.get(junit4Path).toRealPath().toString(), "JUNIT4_PATH");
     StringWriter writer = new StringWriter();
     JbXmlOutputter xmlWriter = new JbXmlOutputter("\n", null, macroMap, null);
     xmlWriter.output(actualImlElement, writer);
-    assertThat(writer.toString()).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
+    String actual = writer.toString();
+    if (actual.contains("jar://$MAVEN_REPOSITORY$/junit")) {
+      fail(actual + "\n\n" + macroMap.toString());
+    }
+    assertThat(actual).isEqualTo(Paths.get(project.getBasePath(), "expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {

@@ -20,7 +20,6 @@ class FeatureManagerImpl : FeatureManager, BaseComponent {
   override val binaryFactors: List<BinaryFeature> get() = manager.binaryFactors
   override val doubleFactors: List<DoubleFeature> get() = manager.doubleFactors
   override val categoricalFactors: List<CategoricalFeature> get() = manager.categoricalFactors
-  override val ignoredFactors: Set<String> get() = manager.ignoredFactors
   override val completionFactors: CompletionFactors get() = manager.completionFactors
   override val featureOrder: Map<String, Int> get() = manager.featureOrder
 

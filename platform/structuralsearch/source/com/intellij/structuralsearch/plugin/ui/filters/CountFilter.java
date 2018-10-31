@@ -38,6 +38,13 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
+  public void initFilter() {
+    final MatchVariableConstraint constraint = myTable.getConstraint();
+    constraint.setMinCount(myMinZero ? 0 : 1);
+    constraint.setMaxCount(myMaxUnlimited ? Integer.MAX_VALUE : 1);
+  }
+
+  @Override
   public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
     final StructuralSearchProfile profile = myTable.getProfile();
     myMinZero = profile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
@@ -55,7 +62,7 @@ public class CountFilter extends FilterAction {
 
   @Override
   public FilterEditor getEditor() {
-    return new FilterEditor(myTable.getConstraint()) {
+    return new FilterEditor(myTable.getConstraint(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

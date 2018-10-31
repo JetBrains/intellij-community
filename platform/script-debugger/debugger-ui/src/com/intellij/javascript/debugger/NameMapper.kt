@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javascript.debugger
 
 import com.google.common.base.CharMatcher
@@ -28,9 +14,9 @@ import org.jetbrains.rpc.LOG
 
 private val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
-private val OPERATOR_TRIMMER = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1))
+private val OPERATOR_TRIMMER = CharMatcher.invisible().or(CharMatcher.anyOf(S1))
 
-val NAME_TRIMMER: CharMatcher = CharMatcher.INVISIBLE.or(CharMatcher.anyOf(S1 + ".&:"))
+val NAME_TRIMMER: CharMatcher = CharMatcher.invisible().or(CharMatcher.anyOf("$S1.&:"))
 
 // generateVirtualFile only for debug purposes
 open class NameMapper(private val document: Document, private val transpiledDocument: Document, private val sourceMappings: Mappings, protected val sourceMap: SourceMap, private val transpiledFile: VirtualFile? = null) {

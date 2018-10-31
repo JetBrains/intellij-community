@@ -86,12 +86,21 @@ public class InvokeIntention extends ActionOnFile {
     Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, getVirtualFile(), offset), true);
     assert editor != null;
 
-    boolean containsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+    FileViewProvider viewProvider = getFile().getViewProvider();
+    String filesBefore = viewProvider.getAllFiles().toString();
+    boolean containsErrorElements = MadTestingUtil.containsErrorElements(viewProvider);
+
+    String treesBefore = viewProvider.getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
+      Collectors.joining("\n\n"))
+                         + "\n\n hasErrorPSI=" + containsErrorElements
+                         + "\n hasErrorPSI2=" + MadTestingUtil.containsErrorElements(viewProvider)
+                         + "\n filesBefore=" + filesBefore;
+
     List<HighlightInfo> errors = highlightErrors(project, editor);
     boolean hasErrors = !errors.isEmpty() || containsErrorElements;
 
-    String treesBefore = getFile().getViewProvider().getAllFiles().stream().map(f -> DebugUtil.psiToString(f, false)).collect(
-      Collectors.joining("\n\n")) + "\n\n hasErrorPSI=" + containsErrorElements;
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;

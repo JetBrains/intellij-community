@@ -3,6 +3,8 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -18,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModulesConfigurationTest extends PlatformTestCase {
   private boolean isSaveAllowed;
@@ -40,12 +44,13 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     closeProject(reloaded, false);
   }
 
+  // because of external storage, imls file can be missed on disk and it is not error
   public void testRemoveFailedToLoadModule() throws IOException, JDOMException {
     Pair<File, File> result = createProjectWithModule();
     File projectDir = result.getFirst();
     File moduleFile = result.getSecond();
 
-    assertTrue(moduleFile.exists());
+    assertThat(moduleFile).exists();
     WriteAction.run(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile).delete(this));
     List<ConfigurationErrorDescription> errors = new ArrayList<>();
     ProjectLoadingErrorsHeadlessNotifier.setErrorHandler(errors::add, getTestRootDisposable());
@@ -53,12 +58,11 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     Project reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
     disposeOnTearDown(reloaded);
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
-    assertEmpty(moduleManager.getModules());
-    ConfigurationErrorDescription error = assertOneElement(errors);
-    error.ignoreInvalidElement();
+    assertThat(moduleManager.getModules()).hasSize(1);
+    assertThat(errors).isEmpty();
     closeProject(reloaded, true);
     errors.clear();
-    
+
     reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
     disposeOnTearDown(reloaded);
     assertEmpty(errors);
@@ -78,7 +82,7 @@ public class ModulesConfigurationTest extends PlatformTestCase {
 
   private static void closeProject(Project project, boolean save) {
     if (save) {
-      project.save();
+      StoreUtil.save(ServiceKt.getStateStore(project), project, true);
     }
     ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
   }

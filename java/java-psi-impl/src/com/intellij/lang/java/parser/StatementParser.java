@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -39,8 +37,7 @@ public class StatementParser {
   @Nullable
   public PsiBuilder.Marker parseCodeBlock(final PsiBuilder builder, final boolean isStatement) {
     if (builder.getTokenType() != JavaTokenType.LBRACE) return null;
-    else if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
-
+    if (isStatement && isParseStatementCodeBlocksDeep(builder)) return parseCodeBlockDeep(builder, false);
     return parseBlockLazy(builder, JavaTokenType.LBRACE, JavaTokenType.RBRACE, JavaElementType.CODE_BLOCK);
   }
 
@@ -380,7 +377,6 @@ public class StatementParser {
     if (builder.getTokenType() != JavaTokenType.COMMA) {
       expressionStatement = expr.precede();
       done(expressionStatement, JavaElementType.EXPRESSION_STATEMENT);
-      expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
     }
     else {
       PsiBuilder.Marker expressionList = expr.precede();
@@ -397,8 +393,9 @@ public class StatementParser {
 
       done(expressionList, JavaElementType.EXPRESSION_LIST);
       done(expressionStatement, JavaElementType.EXPRESSION_LIST_STATEMENT);
-      expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
     }
+
+    expressionStatement.setCustomEdgeTokenBinders(null, WhitespacesBinders.DEFAULT_RIGHT_BINDER);
   }
 
   @NotNull
@@ -470,22 +467,49 @@ public class StatementParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parseSwitchLabelStatement(final PsiBuilder builder) {
-    final PsiBuilder.Marker statement = builder.mark();
-    final boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
+  private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {
+    PsiBuilder.Marker statement = builder.mark();
+    boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
     builder.advanceLexer();
 
     if (isCase) {
-      final PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
-      if (expr == null) {
+      if (myParser.getExpressionParser().parse(builder) == null) {
         statement.rollbackTo();
         return null;
       }
     }
 
-    expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+    if (expect(builder, JavaTokenType.ARROW)) {
+      PsiBuilder.Marker expr;
+      if (builder.getTokenType() == JavaTokenType.LBRACE) {
+        PsiBuilder.Marker body = builder.mark();
+        parseCodeBlock(builder, true);
+        body.done(JavaElementType.BLOCK_STATEMENT);
+        if (builder.getTokenType() == JavaTokenType.SEMICOLON) {
+          PsiBuilder.Marker mark = builder.mark();
+          while (builder.getTokenType() == JavaTokenType.SEMICOLON) builder.advanceLexer();
+          mark.error(JavaErrorMessages.message("expected.switch.label"));
+        }
+      }
+      else if (builder.getTokenType() == JavaTokenType.THROW_KEYWORD) {
+        parseThrowStatement(builder);
+      }
+      else if ((expr = myParser.getExpressionParser().parse(builder)) != null) {
+        PsiBuilder.Marker body = expr.precede();
+        semicolon(builder);
+        body.done(JavaElementType.EXPRESSION_STATEMENT);
+      }
+      else {
+        error(builder, JavaErrorMessages.message("expected.switch.rule"));
+        expect(builder, JavaTokenType.SEMICOLON);
+      }
+      done(statement, JavaElementType.SWITCH_LABELED_RULE);
+    }
+    else {
+      expectOrError(builder, JavaTokenType.COLON, "expected.colon");
+      done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
+    }
 
-    done(statement, JavaElementType.SWITCH_LABEL_STATEMENT);
     return statement;
   }
 

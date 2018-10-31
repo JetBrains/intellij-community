@@ -8,7 +8,7 @@ import com.intellij.psi.util.TypeConversionUtil
 import groovy.lang.Closure.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
@@ -65,7 +65,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     return DelegatesToInfo(delegateType, strategyValue)
   }
 
-  private fun mapArgs(place: PsiElement, call: GrCall, signature: GrClosureSignature): Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>? {
+  private fun mapArgs(place: PsiElement, call: GrCall, signature: GrSignature): Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>? {
     val rawSignature = GrClosureSignatureUtil.rawSignature(signature)
     return GrClosureSignatureUtil.mapParametersToArguments(
       rawSignature, call.namedArguments, call.expressionArguments, call.closureArguments, place, false, false
@@ -105,7 +105,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
 
   private fun getFromTarget(parameterList: PsiParameterList,
                             delegatesTo: PsiAnnotation,
-                            signature: GrClosureSignature,
+                            signature: GrSignature,
                             map: Array<GrClosureSignatureUtil.ArgInfo<PsiElement>>): PsiType? {
     val target = GrAnnotationUtil.inferStringAttribute(delegatesTo, "target") ?: return null
 
@@ -122,7 +122,7 @@ class DefaultDelegatesToProvider : GrDelegatesToProvider {
     }
   }
 
-  private fun inferGenericArgType(signature: GrClosureSignature, targetType: PsiType?, genericIndex: Int, param: Int): PsiType? {
+  private fun inferGenericArgType(signature: GrSignature, targetType: PsiType?, genericIndex: Int, param: Int): PsiType? {
     if (targetType !is PsiClassType) return null
     val result = targetType.resolveGenerics()
     val psiClass = result.element ?: return null

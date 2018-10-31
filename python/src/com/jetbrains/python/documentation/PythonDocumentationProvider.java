@@ -638,13 +638,15 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         return null;
       }
 
+      final String moduleName = stdlibDocumentationLinkProvider.getModuleNameForDocumentationUrl(element, element);
+
       try {
         final Document document = Jsoup.parse(new URL(url), 1000);
-        final String elementId = namedElement != null ? moduleQName + "." + namedElement.getName() : "module-" + moduleQName;
+        final String elementId = namedElement != null ? moduleName + "." + namedElement.getName() : "module-" + moduleName;
         document.select("a.headerlink").remove();
         final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
         if (parents.isEmpty()) {
-          final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleQName.toString());
+          final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleName);
           if (moduleElement != null) {
             return moduleElement.toString();
           }

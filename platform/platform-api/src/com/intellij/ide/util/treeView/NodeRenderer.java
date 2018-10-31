@@ -87,7 +87,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
         }
         String location = presentation.getLocationString();
         if (!StringUtil.isEmpty(location)) {
-          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAY_ATTRIBUTES, false);
+          append(presentation.getLocationPrefix() + location + presentation.getLocationSuffix(), SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
         }
       }
 

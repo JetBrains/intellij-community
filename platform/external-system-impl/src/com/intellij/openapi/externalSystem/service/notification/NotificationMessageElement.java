@@ -121,12 +121,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       StyleConstants.setForeground(style, JBColor.GRAY);
     }
     else {
-      if (selected) {
-        StyleConstants.setForeground(style, hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground());
-      }
-      else {
-        StyleConstants.setForeground(style, UIUtil.getTreeTextForeground());
-      }
+      StyleConstants.setForeground(style, UIUtil.getTreeForeground(selected, hasFocus));
     }
 
     if (tree != null && WideSelectionTreeUI.isWideSelection(tree)) {

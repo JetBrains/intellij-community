@@ -2,13 +2,13 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
-import com.intellij.ide.actions.QualifiedNameProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.ide.actions.QualifiedNameProviderUtil.qualifiedNameToElement;
 
 /**
  * Handles tooltip links in format {@code #element/qualified.name}.
@@ -29,14 +29,5 @@ public final class ElementLinkHandler extends TooltipLinkHandler {
       }
     }
     return false;
-  }
-
-  @Nullable
-  private static PsiElement qualifiedNameToElement(@NotNull String name, @NotNull Project project) {
-    for (QualifiedNameProvider provider : QualifiedNameProvider.EP_NAME.getExtensionList()) {
-      PsiElement element = provider.qualifiedNameToElement(name, project);
-      if (element != null) return element;
-    }
-    return null;
   }
 }

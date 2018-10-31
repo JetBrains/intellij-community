@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -211,7 +211,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
             }
           }
           if (refExpr == null) continue;
-          final GrClosureSignature signature = generateSignature(owner, refExpr);
+          final GrSignature signature = generateSignature(owner, refExpr);
           if (signature == null) continue;
           GrCall call;
           if (isExplicitGetterCall) {
@@ -321,7 +321,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
   }
 
   @Nullable
-  private static GrClosureSignature generateSignature(GrParameterListOwner owner, GrReferenceExpression refExpr) {
+  private static GrSignature generateSignature(GrParameterListOwner owner, GrReferenceExpression refExpr) {
     if (owner instanceof PsiMethod) {
       final GroovyResolveResult resolveResult = refExpr.advancedResolve();
       final PsiSubstitutor substitutor = resolveResult.getSubstitutor();

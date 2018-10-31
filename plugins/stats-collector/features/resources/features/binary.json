@@ -1,23 +1,23 @@
 {
-  "liftShorterClasses": {
-    "true": 1,
+  "frozen": {
+    "default": 0,
     "false": 0,
-    "default": 0
+    "true": 1
   },
   "liftShorter": {
-    "true": 1,
+    "default": 0,
     "false": 0,
-    "default": 0
+    "true": 1
+  },
+  "liftShorterClasses": {
+    "default": 0,
+    "false": 0,
+    "true": 1
   },
   "middleMatching": {
-    "true": 1,
+    "default": 0,
     "false": 0,
-    "default": 0
-  },
-  "templates": {
-    "true": 1,
-    "false": 0,
-    "default": 0
+    "true": 1
   },
   "nonGeneric": {
     "0": 0,
@@ -25,28 +25,48 @@
     "default": 0
   },
   "prox_inResolveScope": {
-    "true": 1,
+    "default": 1,
     "false": 0,
-    "default": 1
+    "true": 1
   },
   "prox_openedInEditor": {
-    "true": 1,
+    "default": 0,
     "false": 0,
-    "default": 0
+    "true": 1
+  },
+  "prox_rubyOwnCode": {
+    "1": 1,
+    "default": 0,
+    "null": 0
   },
   "prox_sameDirectory": {
-    "true": 1,
+    "default": 0,
     "false": 0,
-    "default": 0
+    "true": 1
   },
   "prox_sameLogicalRoot": {
-    "true": 1,
+    "default": 0,
     "false": 0,
-    "default": 0
+    "true": 1
   },
   "prox_sdkOrLibrary": {
-    "true": 1,
+    "default": 0,
     "false": 0,
+    "true": 1
+  },
+  "simple": {
+    "0": 0,
+    "10": 1,
     "default": 0
+  },
+  "sorter": {
+    "1": 1,
+    "2": 0,
+    "default": 1
+  },
+  "templates": {
+    "default": 0,
+    "false": 0,
+    "true": 1
   }
 }

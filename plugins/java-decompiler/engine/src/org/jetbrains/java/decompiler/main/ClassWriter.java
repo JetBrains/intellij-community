@@ -257,8 +257,7 @@ public class ClassWriter {
   }
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
-    StructLineNumberTableAttribute table =
-      (StructLineNumberTableAttribute)method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+    StructLineNumberTableAttribute table = method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
     String key = InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor());
     DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName, key, tracer);
@@ -439,8 +438,7 @@ public class ClassWriter {
       }
     }
     else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
-      StructConstantValueAttribute attr =
-        (StructConstantValueAttribute)fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_CONSTANT_VALUE);
+      StructConstantValueAttribute attr = fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_CONSTANT_VALUE);
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
@@ -696,8 +694,7 @@ public class ClassWriter {
 
         List<StructMethodParametersAttribute.Entry> methodParameters = null;
         if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
-          StructMethodParametersAttribute attr =
-            (StructMethodParametersAttribute)mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
+          StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
           if (attr != null) {
             methodParameters = attr.getEntries();
           }
@@ -956,7 +953,7 @@ public class ClassWriter {
   private static void appendAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType) {
     Set<String> filter = new HashSet<>();
 
-    for (StructGeneralAttribute.Key key : ANNOTATION_ATTRIBUTES) {
+    for (StructGeneralAttribute.Key<?> key : ANNOTATION_ATTRIBUTES) {
       StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
@@ -973,7 +970,7 @@ public class ClassWriter {
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
     Set<String> filter = new HashSet<>();
 
-    for (StructGeneralAttribute.Key key : PARAMETER_ANNOTATION_ATTRIBUTES) {
+    for (StructGeneralAttribute.Key<?> key : PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
@@ -991,7 +988,7 @@ public class ClassWriter {
   }
 
   private static void appendTypeAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType, int index, Set<String> filter) {
-    for (StructGeneralAttribute.Key key : TYPE_ANNOTATION_ATTRIBUTES) {
+    for (StructGeneralAttribute.Key<?> key : TYPE_ANNOTATION_ATTRIBUTES) {
       StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (TypeAnnotation annotation : attribute.getAnnotations()) {

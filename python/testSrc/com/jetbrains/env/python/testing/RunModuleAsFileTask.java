@@ -37,9 +37,9 @@ abstract class RunModuleAsFileTask<T extends PyAbstractTestProcessRunner<?>> ext
 
   @Override
   protected final void checkTestResults(@NotNull final T runner,
-                                  @NotNull final String stdout,
-                                  @NotNull final String stderr,
-                                  @NotNull final String all) {
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all, int exitCode) {
     Assert.assertEquals(stderr, 1, runner.getAllTestsCount());
     Assert.assertEquals(stderr, 1, runner.getPassedTestsCount());
   }

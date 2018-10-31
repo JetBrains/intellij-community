@@ -321,20 +321,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     myScopePanel = new ScopePanel(getProject());
     if (!myEditConfigOnly) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeConsumer(scope -> {
-        if (scope == null) {
-          getOKAction().setEnabled(false);
-        }
-        else {
-          initiateValidation();
-        }
-      });
+      myScopePanel.setScopeConsumer(scope -> initiateValidation());
     }
     else {
       myScopePanel.setEnabled(false);
     }
 
     myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
+    myFilterPanel.setConstraintChangedCallback(() -> initiateValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
 
     final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
@@ -970,10 +964,12 @@ public class StructuralSearchDialog extends DialogWrapper {
     private void init() {
       getTemplatePresentation().setText(myReplace ? "Switch to Search" : "Switch to Replace");
       final ActionManager actionManager = ActionManager.getInstance();
-      registerCustomShortcutSet(myReplace
-                                ? actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet()
-                                : actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet(),
-                                getRootPane());
+      final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
+      final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
+      final ShortcutSet shortcutSet = myReplace
+                                      ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
+                                      : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
+      registerCustomShortcutSet(shortcutSet, getRootPane());
     }
   }
 }

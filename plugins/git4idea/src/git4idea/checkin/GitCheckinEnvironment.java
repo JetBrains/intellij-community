@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -80,7 +81,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -409,10 +409,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
-      Pair.NonNull<Charset, byte[]> fileContent =
-        LoadTextUtil.charsetForWriting(repository.getProject(), file, helper.getContent(), file.getCharset());
+      byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
 
-      GitIndexUtil.write(repository, path, fileContent.second, isExecutable);
+      GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
 
 
@@ -428,6 +427,23 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     });
 
     return Pair.create(callback, partialChanges);
+  }
+
+  @NotNull
+  private static byte[] convertDocumentContentToBytes(@NotNull GitRepository repository,
+                                                      @NotNull String documentContent,
+                                                      @NotNull VirtualFile file) {
+    String text;
+
+    String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, repository.getProject());
+    if (lineSeparator.equals("\n")) {
+      text = documentContent;
+    }
+    else {
+      text = StringUtil.convertLineSeparators(documentContent, lineSeparator);
+    }
+
+    return LoadTextUtil.charsetForWriting(repository.getProject(), file, text, file.getCharset()).second;
   }
 
   @Nullable

@@ -252,21 +252,17 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
-    if (res == null) {
+    Class clazz = _findClass(name);
+    
+    if (clazz == null) {
       throw new ClassNotFoundException(name);
     }
 
-    try {
-      return defineClass(name, res);
-    }
-    catch (IOException e) {
-      throw new ClassNotFoundException(name, e);
-    }
+    return clazz;
   }
 
   @Nullable
-  protected Class _findClass(@NotNull String name) {
+  protected final Class _findClass(@NotNull String name) {
     Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
