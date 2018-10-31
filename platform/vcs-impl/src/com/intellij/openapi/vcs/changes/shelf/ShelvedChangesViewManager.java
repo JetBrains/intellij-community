@@ -628,12 +628,7 @@ public class ShelvedChangesViewManager implements Disposable {
     private void showUndoDeleteNotification(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
                                             int fileListSize,
                                             @NotNull Map<ShelvedChangeList, Date> createdDeletedListsWithOriginalDate) {
-      int changeListSize = shelvedListsToDelete.size();
-      String message =
-        StringUtil.capitalize(VcsBundle.message("shelve.changes.delete.notification", constructDeleteFilesInfoMessage(fileListSize),
-                                                changeListSize != 0 && fileListSize != 0 ? " and " : "",
-                                                constructShelvedListInfoMessage(changeListSize, getFirstItem(shelvedListsToDelete))));
-
+      String message = constructDeleteSuccessfullyMessage(fileListSize, shelvedListsToDelete.size(), getFirstItem(shelvedListsToDelete));
       Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
       shelfDeletionNotification.addAction(new UndoShelfDeletionAction(createdDeletedListsWithOriginalDate));
       shelfDeletionNotification.addAction(ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted"));
@@ -681,16 +676,24 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @NotNull
-    private String constructShelvedListInfoMessage(int size, @Nullable ShelvedChangeList first) {
-      if (size == 0) return "";
-      if (size == 1 && first != null) return "one shelved changelist [<b>" + first.DESCRIPTION + "</b>]";
-      return size + " shelved " + StringUtil.pluralize("changelist", size);
-    }
-
-    @NotNull
-    private String constructDeleteFilesInfoMessage(int size) {
-      if (size == 0) return "";
-      return (size == 1 ? "one" : size) + StringUtil.pluralize(" file", size);
+    private String constructDeleteSuccessfullyMessage(int fileNum, int listNum, @Nullable ShelvedChangeList first) {
+      StringBuilder stringBuilder = new StringBuilder();
+      String delimiter = "";
+      if (fileNum != 0) {
+        stringBuilder.append(fileNum == 1 ? "one" : fileNum).append(StringUtil.pluralize(" file", fileNum));
+        delimiter = " and ";
+      }
+      if (listNum != 0) {
+        stringBuilder.append(delimiter);
+        if (listNum == 1 && first != null) {
+          stringBuilder.append("one shelved changelist [<b>").append(first.DESCRIPTION).append("</b>]");
+        }
+        else {
+          stringBuilder.append(listNum).append(" shelved ").append(StringUtil.pluralize("changelist", listNum));
+        }
+      }
+      stringBuilder.append(" deleted successfully");
+      return StringUtil.capitalize(stringBuilder.toString());
     }
 
     @Override
