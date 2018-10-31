@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -525,8 +526,15 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   public static boolean isAvailable() { return ourLib != null; }
 
   private static GlobalMenuLib _loadLibrary() {
-    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
+    try {
+      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable"))
+        return null;
+      if (!Experiments.isFeatureEnabled("linux.native.menu"))
+        return null;
+    } catch (Throwable e) {
+      LOG.error(e);
       return null;
+    }
 
     try {
       UrlClassLoader.loadPlatformLibrary("dbm");
