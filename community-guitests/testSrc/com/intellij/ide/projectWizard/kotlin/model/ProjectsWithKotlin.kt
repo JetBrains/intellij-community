@@ -7,6 +7,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil.fileInsertFromBegin
 import com.intellij.testGuiFramework.framework.Timeouts.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.fileSearchAndReplace
 import com.intellij.testGuiFramework.framework.GuiTestUtil.isFileContainsLine
+import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
 import com.intellij.testGuiFramework.util.*
@@ -14,6 +15,7 @@ import com.intellij.testGuiFramework.util.scenarios.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.GradleGroupModules.QualifiedNames
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import java.io.File
 import java.nio.file.Path
@@ -154,7 +156,7 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
                                                      dialogTitle: String,
                                                      kotlinVersion: String,
                                                      module: String) {
-  var result: Boolean = false
+  var result = false
   val maxAttempts = 3
   ideFrame {
     var counter = 0
@@ -163,7 +165,15 @@ fun KotlinGuiTestCase.configureKotlinFromGradleMaven(logText: String,
         logTestStep("$logText. Attempt #${counter + 1}")
         waitAMoment()
         invokeMainMenu(menuTitle)
-        result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
+        val dlg  = dialog("", true, timeout = Timeouts.seconds05, predicate = {_, _ -> true})
+        logUIStep("Found dialog: ${dlg.target().title}")
+        if(dlg.target().title != dialogTitle)
+          dlg.apply {
+            Pause.pause(1000)
+            button("Cancel").click()
+          }
+        else
+          result = configureKotlinFromGradleMavenSelectValues(dialogTitle, kotlinVersion, module)
         counter++
       }
       catch (e: ComponentLookupException) {}
