@@ -27,25 +27,24 @@ public class CompositeAligner extends ChildAlignmentStrategyProvider {
 
   @Override
   public AlignmentStrategy getNextChildStrategy(@NotNull ASTNode child) {
-    int shouldAlignIndex = -1;
-    for (int i = 0, size = myConfigurations.size(); i < size; i++) {
-      AlignerConfigurationWrapper configuration = myConfigurations.get(i);
+    AlignerConfigurationWrapper shouldAlign = null;
+    for (AlignerConfigurationWrapper configuration : myConfigurations) {
       if (configuration.myConfiguration.shouldAlign(child)) {
-        shouldAlignIndex = i;
+        shouldAlign = configuration;
         break;
       }
     }
-    if (shouldAlignIndex == -1) {
+    if (shouldAlign == null) {
       updateAllStrategies();
       return AlignmentStrategy.getNullStrategy();
     }
 
     if (isWhiteSpaceWithBlankLines(child.getTreePrev())) {
       updateAllStrategies();
-      return myConfigurations.get(shouldAlignIndex).myCurrentStrategy;
+      return shouldAlign.myCurrentStrategy;
     }
-    updateAllStrategiesExcept(shouldAlignIndex);
-    return myConfigurations.get(shouldAlignIndex).myCurrentStrategy;
+    updateAllStrategiesExcept(shouldAlign);
+    return shouldAlign.myCurrentStrategy;
   }
 
   private void updateAllStrategies() {
@@ -54,33 +53,11 @@ public class CompositeAligner extends ChildAlignmentStrategyProvider {
     }
   }
 
-  private void updateAllStrategiesExcept(int index) {
-    for (int i = 0; i < myConfigurations.size(); i++) {
-      if (i == index) continue;
-      AlignerConfigurationWrapper configuration = myConfigurations.get(i);
+  private void updateAllStrategiesExcept(AlignerConfigurationWrapper wrapper) {
+    for (AlignerConfigurationWrapper configuration : myConfigurations) {
+      if (configuration == wrapper) continue;
       configuration.update();
     }
-  }
-
-  /**
-   * @see AlignerConfiguration#shouldAlign(ASTNode)
-   * @see AlignerConfiguration#createConfiguration(Predicate, Supplier)
-   */
-  public static AlignerConfiguration createConfiguration(
-    Predicate<ASTNode> shouldAlign,
-    Supplier<? extends AlignmentStrategy> strategySupplier) {
-    return new AlignerConfiguration() {
-      @Override
-      public boolean shouldAlign(@NotNull ASTNode child) {
-        return shouldAlign.test(child);
-      }
-
-      @NotNull
-      @Override
-      public AlignmentStrategy createStrategy() {
-        return strategySupplier.get();
-      }
-    };
   }
 
   interface AlignerConfiguration {
