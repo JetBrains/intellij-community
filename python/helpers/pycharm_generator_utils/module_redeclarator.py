@@ -1,3 +1,5 @@
+import shutil
+
 from pycharm_generator_utils.util_methods import *
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
@@ -56,18 +58,20 @@ class ClassBuf(Buf):
         self.name = name
 
 
-#noinspection PyUnresolvedReferences,PyBroadException
+#noinspection PyBroadException
 class ModuleRedeclarator(object):
-    def __init__(self, module, outfile, mod_filename, indent_size=4, doing_builtins=False):
+    def __init__(self, module, mod_filename, cache_dir, sdk_dir=None, indent_size=4, doing_builtins=False):
         """
-        Create new instance.
-        @param module module to restore.
-        @param outfile output file, must be open and writable.
-        @param mod_filename filename of binary module (the .dll or .so)
+        @param module module qualified name
+        @param mod_filename filename of binary module (the .dll or .so). Can be None for modules
+            that don't have corresponding binary file
+        @param cache_dir path to skeletons cache directory (e.g. python_stubs/cache)
+        @param sdk_dir path to interpreter specific skeletons directory
         @param indent_size amount of space characters per indent
         """
         self.module = module
-        self.outfile = outfile # where we finally write
+        self.cache_dir = cache_dir
+        self.sdk_dir = sdk_dir
         self.mod_filename = mod_filename
         # we write things into buffers out-of-order
         self.header_buf = Buf(self)
@@ -119,19 +123,17 @@ class ModuleRedeclarator(object):
 
     def flush(self):
         init = None
+        qname_parts = self.module.split('.')
         try:
             if self.split_modules:
-                mod_path = module_to_package_name(self.outfile)
-
-                fname = build_output_name(mod_path, "__init__")
-                init = fopen(fname, "w")
+                last_pkg_dir = build_pkg_structure(self.cache_dir, self.module)
+                init = fopen(os.path.join(last_pkg_dir, "__init__.py"), "w")
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(init)
 
                 data = ""
                 for buf in self.classes_buffs:
-                    fname = build_output_name(mod_path, buf.name)
-                    dummy = fopen(fname, "w")
+                    dummy = fopen(os.path.join(last_pkg_dir, buf.name), "w")
                     self.header_buf.flush(dummy)
                     self.imports_buf.flush(dummy)
                     buf.flush(dummy)
@@ -140,8 +142,11 @@ class ModuleRedeclarator(object):
 
                 init.write(data)
                 self.footer_buf.flush(init)
+                copy_target = os.path.join(self.cache_dir, qname_parts[0])
             else:
-                init = fopen(self.outfile, "w")
+                last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
+                skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1])
+                init = fopen(skeleton_path, "w")
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(init)
 
@@ -149,10 +154,25 @@ class ModuleRedeclarator(object):
                     buf.flush(init)
 
                 self.footer_buf.flush(init)
+                copy_target = skeleton_path
 
         finally:
             if init is not None and not init.closed:
                 init.close()
+
+        if self.sdk_dir:
+            copy_dst = os.path.join(self.sdk_dir, os.path.basename(copy_target))
+            self.copy(copy_target, copy_dst)
+
+    def copy(self, src, dst):
+        if os.path.isdir(src):
+            shutil.copytree(src, dst)
+        else:
+            shutil.copy2(src, dst)
+
+
+
+    # TODO copy cache target back to SDK specific skeletons directory
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS
@@ -1109,7 +1129,3 @@ class ModuleRedeclarator(object):
             for mod_name in sorted_no_case(self.hidden_imports.keys()):
                 out(0, 'import ', mod_name, ' as ', self.hidden_imports[mod_name])
             out(0, "") # empty line after group
-
-
-def module_to_package_name(module_name):
-    return re.sub(r"(.*)\.py$", r"\1", module_name)
