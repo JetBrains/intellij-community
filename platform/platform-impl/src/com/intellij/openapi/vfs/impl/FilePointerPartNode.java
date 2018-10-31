@@ -102,9 +102,9 @@ class FilePointerPartNode {
     }
     int index = indexOfFirstDifferentChar(childName, childStart, found.part, partStart);
 
+    found.addRecursiveDirectoryPtr(outDirs);
     if (index == childEnd) {
-      addRecursiveDirectoryPtr(outDirs);
-      return partStart + childEnd - childStart;
+      return partStart + index - childStart;
     }
 
     if (partStart + index-childStart == found.part.length()) {

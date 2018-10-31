@@ -45,7 +45,7 @@ import java.util.List;
  * @author cdr
  */
 public class OrderEntryTest extends DaemonAnalyzerTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/quickFix/orderEntry/";
+  @NonNls public static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/quickFix/orderEntry/";
 
   @Override
   protected void setUpProject() throws Exception {
@@ -75,8 +75,6 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   private void doTest(String fileName, boolean performAction) {
-    String testFullPath = BASE_PATH + fileName;
-
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
     configureByExistingFile(root.findFileByRelativePath(fileName));
     VirtualFile virtualFile = getFile().getVirtualFile();
@@ -93,7 +91,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       Collection<HighlightInfo> infosAfter = highlightErrors();
       final IntentionAction afterAction = findActionWithText(text);
       if (afterAction != null) {
-        fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
+        fail("Action '" + text + "' is still available after its invocation in test " + BASE_PATH + fileName);
       }
       assertTrue(infosBefore.size() > infosAfter.size());
     }
