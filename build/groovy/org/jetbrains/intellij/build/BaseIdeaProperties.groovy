@@ -84,6 +84,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.searchableOptionsModule = "intellij.java.resources.en"
 
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
+    productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")

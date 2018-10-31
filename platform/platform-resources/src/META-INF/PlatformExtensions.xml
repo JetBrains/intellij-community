@@ -431,6 +431,8 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
+    <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.diff.impl.DiffUsageTriggerCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
@@ -577,6 +579,10 @@
 
     <experimentalFeature id="wsl.legacy.distribution" percentOfUsers="0">
       <description>Makes legacy Ubuntu distribution (bash.exe) available</description>
+    </experimentalFeature>
+
+    <experimentalFeature id="linux.native.menu" requireRestart="true">
+      <description>Intergation with global menu in Linux</description>
     </experimentalFeature>
 
     <rawEditorTypedHandler implementationClass="com.intellij.openapi.editor.impl.EditorFactoryImpl$MyRawTypedHandler"/>

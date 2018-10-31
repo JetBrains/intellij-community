@@ -1467,6 +1467,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
+  public boolean isInVirtualSpace() {
+    return myLogicalColumnAdjustment > 0;
+  }
+
   @TestOnly
   public void validateState() {
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), getOffset()));

@@ -17,16 +17,12 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
-import com.intellij.execution.process.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -52,7 +48,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -126,15 +122,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-
-
-    Map<String, String> envs = new HashMap<String, String>();
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                   : ContainerUtil.canonicalStrategy());
 
     if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
     envs.put("TERM", "xterm-256color");
+    envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
+
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
@@ -169,6 +166,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     try {
       TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Starting " + Arrays.toString(command) + " in " + directory);
+      }
       return PtyProcess.exec(command, envs, directory != null
                                             ? directory
                                             : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
@@ -185,7 +185,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
-    return new PtyProcessTtyConnector(process, myDefaultCharset);
+    return new PtyProcessTtyConnector(process, myDefaultCharset) {
+      @Override
+      protected void resizeImmediately() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("resizeImmediately to " + getPendingTermSize());
+        }
+        super.resizeImmediately();
+      }
+    };
   }
 
   @Override

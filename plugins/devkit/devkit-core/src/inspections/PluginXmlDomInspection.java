@@ -26,6 +26,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,15 +57,15 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
+
+  @NonNls
+  private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 
@@ -96,6 +98,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       if (module != null) {
         annotateIdeaPlugin((IdeaPlugin)element, holder, module);
         checkJetBrainsPlugin((IdeaPlugin)element, holder, module);
+        checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
     else if (element instanceof Extension) {
@@ -219,6 +222,18 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
     else if (!PluginManagerMain.isDevelopedByJetBrains(vendor.getValue())) {
       holder.createProblem(vendor, DevKitBundle.message("inspections.plugin.xml.plugin.should.include.jetbrains.vendor"));
+    }
+  }
+
+  private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
+    if (!hasRealPluginId(ideaPlugin)) return;
+
+    Collection<VirtualFile> pluginIconFiles =
+      FilenameIndex.getVirtualFilesByName(module.getProject(), PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
+    if (pluginIconFiles.isEmpty()) {
+      holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
+                           null);
     }
   }
 
@@ -351,11 +366,25 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    BuildNumber sinceBuildNumber = BuildNumber.fromString(sinceBuild.getStringValue());
-    BuildNumber untilBuildNumber = BuildNumber.fromString(untilBuild.getStringValue());
+    BuildNumber sinceBuildNumber = parseBuildNumber(sinceBuild, holder);
+    BuildNumber untilBuildNumber = parseBuildNumber(untilBuild, holder);
+    if (sinceBuildNumber == null || untilBuildNumber == null) return;
+
     int compare = Comparing.compare(sinceBuildNumber, untilBuildNumber);
     if (compare > 0) {
       holder.createProblem(untilBuild, DevKitBundle.message("inspections.plugin.xml.until.build.must.be.greater.than.since.build"));
+    }
+  }
+
+  @Nullable
+  private static BuildNumber parseBuildNumber(GenericAttributeValue<String> build,
+                                              DomElementAnnotationHolder holder) {
+    try {
+      return BuildNumber.fromString(build.getStringValue());
+    }
+    catch (RuntimeException e) {
+      holder.createProblem(build, DevKitBundle.message("inspections.plugin.xml.until.since.build.invalid"));
+      return null;
     }
   }
 

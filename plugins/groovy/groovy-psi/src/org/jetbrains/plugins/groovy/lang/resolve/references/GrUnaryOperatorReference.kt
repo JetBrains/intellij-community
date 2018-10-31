@@ -13,8 +13,6 @@ class GrUnaryOperatorReference(element: GrUnaryExpression) : GroovyMethodCallRef
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val isRealReference: Boolean get() = true
-
   override val receiver: PsiType? get() = element.operand?.type
 
   override val methodName: String get() = unaryOperatorMethodNames[element.operationTokenType]!!

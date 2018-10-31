@@ -66,11 +66,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
 
   private final Lazy<GroovyReference> myRValueReference = lazy(
-    () -> isRValue(this) ? new GrReferenceExpressionReference(this, true) : null
+    () -> isRValue(this) ? new GrRValueExpressionReference(this) : null
   );
 
   private final Lazy<GroovyReference> myLValueReference = lazy(
-    () -> isLValue(this) ? new GrReferenceExpressionReference(this, false) : null
+    () -> isLValue(this) ? new GrLValueExpressionReference(this) : null
   );
 
   @NotNull

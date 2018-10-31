@@ -62,6 +62,14 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.getType().equals(GitVersion.Type.MSYS) &&
+             version.isLaterOrEqual(new GitVersion(2, 3, 0, 0));
+    }
+  },
+
   STARTED_USING_RAW_BODY_IN_FORMAT {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {

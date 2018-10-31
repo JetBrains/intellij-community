@@ -58,7 +58,7 @@ public class BuildOperations {
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
-    else if ((!pd.fsState.isInitialScanPerformed(target) && context.getScope().isBuildForced(target)) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
+    else if ((context.getScope().isBuildForced(target) && !FSOperations.isMarkedDirty(context, target)) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       if (!context.getScope().isBuildForced(target)) {
         // case when target build is forced, is handled separately

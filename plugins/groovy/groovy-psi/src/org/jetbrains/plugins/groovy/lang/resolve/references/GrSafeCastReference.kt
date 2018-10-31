@@ -13,8 +13,6 @@ class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallRefer
 
   override fun getRangeInElement(): TextRange = element.operationToken.textRangeInParent
 
-  override val isRealReference: Boolean get() = true
-
   override val receiver: PsiType? get() = element.operand.type
 
   override val methodName: String get() = AS_TYPE

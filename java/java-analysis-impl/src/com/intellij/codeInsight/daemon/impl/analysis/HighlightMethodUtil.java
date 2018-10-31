@@ -884,7 +884,9 @@ public class HighlightMethodUtil {
     PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(methodCall);
     if (expectedTypeByParent != null) {
       PsiType methodCallType = methodCall.getType();
-      if (methodCallType != null && TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent)) {
+      if (methodCallType != null && 
+          TypeConversionUtil.areTypesConvertible(methodCallType, expectedTypeByParent) && 
+          !TypeConversionUtil.isAssignable(expectedTypeByParent, methodCallType)) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAddTypeCastFix(expectedTypeByParent, methodCall));
       }
     }

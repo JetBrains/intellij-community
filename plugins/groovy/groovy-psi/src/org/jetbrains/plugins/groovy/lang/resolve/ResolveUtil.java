@@ -739,7 +739,7 @@ public class ResolveUtil {
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
-      PropertyProcessor propertyProcessor = new PropertyProcessor(thisType, methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
+      PropertyProcessor propertyProcessor = new PropertyProcessor(methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
       processAllDeclarations(thisType, propertyProcessor, state, place);
       final List<GroovyResolveResult> candidates = propertyProcessor.getResults(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<>();
@@ -770,7 +770,7 @@ public class ResolveUtil {
     if (!(type instanceof GrClosureType)) return false;
     if (argTypes == null) return true;
 
-    final GrSignature signature = ((GrClosureType)type).getSignature();
+    final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
     return GrClosureSignatureUtil.isSignatureApplicable(signature, argTypes, place);
   }
 
@@ -793,7 +793,7 @@ public class ResolveUtil {
       return null;
     }
     if (type instanceof GrClosureType) {
-      final GrSignature signature = ((GrClosureType)type).getSignature();
+      final List<GrSignature> signature = ((GrClosureType)type).getSignatures();
       PsiType returnType = GrClosureSignatureUtil.getReturnType(signature, args, expression);
       return TypesUtil.substituteAndNormalizeType(returnType, candidate.getSubstitutor(), candidate.getSpreadState(), expression);
     }

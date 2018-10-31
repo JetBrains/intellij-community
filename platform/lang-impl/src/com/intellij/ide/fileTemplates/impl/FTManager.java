@@ -6,14 +6,22 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.io.PathKt;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -27,18 +35,18 @@ public class FTManager {
 
   private final String myName;
   private final boolean myInternal;
-  private final File myTemplatesDir;
+  private final Path myTemplatesDir;
   @Nullable
   private final FTManager myOriginal;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<>();
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<>();
 
-  FTManager(@NotNull @NonNls String name, @NotNull @NonNls File defaultTemplatesDirName) {
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls Path defaultTemplatesDirName) {
     this(name, defaultTemplatesDirName, false);
   }
 
-  FTManager(@NotNull @NonNls String name, @NotNull @NonNls File defaultTemplatesDirName, boolean internal) {
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls Path defaultTemplatesDirName, boolean internal) {
     myName = name;
     myInternal = internal;
     myTemplatesDir = defaultTemplatesDirName;
@@ -172,9 +180,12 @@ public class FTManager {
     }
   }
 
-  void addDefaultTemplate(@NotNull DefaultTemplate template) {
-    myDefaultTemplates.add(template);
-    createAndStoreBundledTemplate(template);
+  void setDefaultTemplates(@NotNull Collection<DefaultTemplate> templates) {
+    myDefaultTemplates.clear();
+    myDefaultTemplates.addAll(templates);
+    for (DefaultTemplate template : templates) {
+      createAndStoreBundledTemplate(template);
+    }
   }
 
   @NotNull
@@ -190,41 +201,50 @@ public class FTManager {
   }
 
   void loadCustomizedContent() {
-    final File configRoot = getConfigRoot();
-    final File[] configFiles = configRoot.listFiles();
-    if (configFiles == null) {
+    final List<Path> templateWithDefaultExtension = new ArrayList<>();
+    final Set<String> processedNames = new THashSet<>();
+    try(DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
+      for (Path file : stream) {
+        String fileName = file.getFileName().toString();
+        // check it here and not in filter to reuse fileName
+        if (FileTypeManager.getInstance().isFileIgnored(fileName)) {
+          continue;
+        }
+
+        if (fileName.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
+          templateWithDefaultExtension.add(file);
+        }
+        else {
+          processedNames.add(fileName);
+          addTemplateFromFile(fileName, file);
+        }
+      }
+    }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.error(e);
       return;
     }
 
-    final List<File> templateWithDefaultExtension = new ArrayList<>();
-    final Set<String> processedNames = new HashSet<>();
-
-    for (File file : configFiles) {
-      if (file.isDirectory() || FileTypeManager.getInstance().isFileIgnored(file.getName()) || file.isHidden()) {
-        continue;
-      }
-      final String name = file.getName();
-      if (name.endsWith(TEMPLATE_EXTENSION_SUFFIX)) {
-        templateWithDefaultExtension.add(file);
-      }
-      else {
-        processedNames.add(name);
-        addTemplateFromFile(name, file);
-      }
-    }
-
-    for (File file : templateWithDefaultExtension) {
-      String name = file.getName();
+    for (Path file : templateWithDefaultExtension) {
+      String name = file.getFileName().toString();
       // cut default template extension
       name = name.substring(0, name.length() - TEMPLATE_EXTENSION_SUFFIX.length());
       if (!processedNames.contains(name)) {
         addTemplateFromFile(name, file);
       }
-      FileUtil.delete(file);
+
+      try {
+        Files.delete(file);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
-  private void addTemplateFromFile(@NotNull String fileName, @NotNull File file) {
+  private void addTemplateFromFile(@NotNull String fileName, @NotNull Path file) {
     Pair<String,String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
@@ -232,8 +252,7 @@ public class FTManager {
       return;
     }
     try {
-      final String text = FileUtil.loadFile(file, CharsetToolkit.UTF8_CHARSET);
-      addTemplate(templateQName, extension).setText(text);
+      addTemplate(templateQName, extension).setText(PathKt.readText(file));
     }
     catch (IOException e) {
       LOG.error(e);
@@ -245,21 +264,23 @@ public class FTManager {
   }
 
   private void saveTemplates(boolean removeDeleted) {
-    final File configRoot = getConfigRoot();
-    final File[] files = configRoot.listFiles();
-    final Set<String> allNames = new HashSet<>();
-    final Map<String, File> templatesOnDisk = files != null && files.length > 0 ? new HashMap<>() : Collections.emptyMap();
-    if (files != null) {
-      for (File file : files) {
-        if (!file.isDirectory()) {
-          final String name = file.getName();
-          templatesOnDisk.put(name, file);
-          allNames.add(name);
-        }
+    final Set<String> allNames = new THashSet<>();
+    final Path configRoot = getConfigRoot();
+    final Map<String, Path> templatesOnDisk = new THashMap<>();
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(getConfigRoot(), file -> !Files.isDirectory(file) && !Files.isHidden(file))) {
+      for (Path file : stream) {
+        String fileName = file.getFileName().toString();
+        templatesOnDisk.put(fileName, file);
+        allNames.add(fileName);
       }
     }
+    catch (NoSuchFileException ignored) {
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
 
-    final Map<String, FileTemplateBase> templatesToSave = new HashMap<>();
+    final Map<String, FileTemplateBase> templatesToSave = new THashMap<>();
 
     for (FileTemplateBase template : getAllTemplates(true)) {
       if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isTextModified()) {
@@ -274,13 +295,16 @@ public class FTManager {
       return;
     }
 
-    if (!myTemplatesDir.exists() && !myTemplatesDir.mkdirs()) {
-      LOG.info("Cannot create directory: " + myTemplatesDir.getAbsolutePath());
+    try {
+      Files.createDirectories(myTemplatesDir);
+    }
+    catch (IOException e) {
+      LOG.info("Cannot create directory: " + myTemplatesDir);
     }
 
     final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
     for (String name : allNames) {
-      final File customizedTemplateFile = templatesOnDisk.get(name);
+      final Path customizedTemplateFile = templatesOnDisk.get(name);
       final FileTemplateBase templateToSave = templatesToSave.get(name);
       if (customizedTemplateFile == null) {
         // template was not saved before
@@ -294,13 +318,18 @@ public class FTManager {
       else if (templateToSave == null) {
         // template was removed
         if (removeDeleted) {
-          FileUtil.delete(customizedTemplateFile);
+          try {
+            Files.delete(customizedTemplateFile);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
       }
       else {
         // both customized content on disk and corresponding template are present
         try {
-          final String diskText = StringUtil.convertLineSeparators(FileUtil.loadFile(customizedTemplateFile, CharsetToolkit.UTF8_CHARSET));
+          final String diskText = StringUtilRt.convertLineSeparators(PathKt.readText(customizedTemplateFile));
           final String templateText = templateToSave.getText();
           if (!diskText.equals(templateText)) {
             // save only if texts differ to avoid unnecessary file touching
@@ -316,39 +345,33 @@ public class FTManager {
 
   /** Save template to file. If template is new, it is saved to specified directory. Otherwise it is saved to file from which it was read.
    *  If template was not modified, it is not saved.
-   *  todo: review saving algorithm
    */
-  private static void saveTemplate(@NotNull File parentDir, @NotNull FileTemplateBase template, @NotNull String lineSeparator) throws IOException {
-    final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
-
-    try (FileOutputStream fileOutputStream = startWriteOrCreate(templateFile);
-         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET)) {
+  private static void saveTemplate(@NotNull Path parentDir, @NotNull FileTemplateBase template, @NotNull String lineSeparator) throws IOException {
+    final Path templateFile = parentDir.resolve(encodeFileName(template.getName(), template.getExtension()));
+    try (OutputStream fileOutputStream = startWriteOrCreate(templateFile);
+         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, StandardCharsets.UTF_8)) {
       String content = template.getText();
-
       if (!lineSeparator.equals("\n")) {
-        content = StringUtil.convertLineSeparators(content, lineSeparator);
+        content = StringUtilRt.convertLineSeparators(content, lineSeparator);
       }
-
       outputStreamWriter.write(content);
     }
   }
 
   @NotNull
-  private static FileOutputStream startWriteOrCreate(@NotNull File templateFile) throws FileNotFoundException {
-    FileOutputStream fileOutputStream;
+  private static OutputStream startWriteOrCreate(@NotNull Path templateFile) throws IOException {
     try {
-      fileOutputStream = new FileOutputStream(templateFile);
+      return Files.newOutputStream(templateFile);
     }
-    catch (FileNotFoundException e) {
+    catch (NoSuchFileException e) {
       // try to recover from the situation 'file exists, but is a directory'
-      FileUtil.delete(templateFile);
-      fileOutputStream = new FileOutputStream(templateFile);
+      PathKt.delete(templateFile);
+      return Files.newOutputStream(templateFile);
     }
-    return fileOutputStream;
   }
 
   @NotNull
-  File getConfigRoot() {
+  Path getConfigRoot() {
     return myTemplatesDir;
   }
 

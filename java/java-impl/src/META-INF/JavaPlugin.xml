@@ -909,6 +909,11 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateExpressions.DuplicateExpressionsInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="DuplicateBranchesInSwitch"
+                     key="inspection.duplicate.branches.in.switch.display.name" bundle="messages.InspectionsBundle"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="com.intellij.codeInspection.DuplicateBranchesInSwitchInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="SortedCollectionWithNonComparableKeys"
                      key="inspection.sorted.collection.with.non.comparable.keys.display.name" bundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"

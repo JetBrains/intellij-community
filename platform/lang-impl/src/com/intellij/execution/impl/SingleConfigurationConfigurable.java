@@ -363,6 +363,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       };
       myCbStoreProjectConfiguration.addActionListener(actionListener);
       myIsAllowRunningInParallelCheckBox.addActionListener(actionListener);
+
+      myJBScrollPane.setBorder(JBUI.Borders.empty());
+      myJBScrollPane.setViewportBorder(JBUI.Borders.empty());
     }
 
     private void doReset(RunnerAndConfigurationSettings settings) {

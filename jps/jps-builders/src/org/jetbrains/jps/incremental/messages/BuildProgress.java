@@ -106,7 +106,7 @@ public class BuildProgress {
     return baseTargetsCount != 0 ? expectedTimeSum/baseTargetsCount : registry.getExpectedBuildTimeForTarget(type);
   }
 
-  public synchronized void notifyAboutTotalProgress(CompileContext context) {
+  private synchronized void notifyAboutTotalProgress(CompileContext context) {
     long expectedTimeForFinishedWork = myExpectedTimeForFinishedTargets;
     for (Map.Entry<BuildTarget, Double> entry : myCurrentProgress.entrySet()) {
       expectedTimeForFinishedWork += myExpectedBuildTimeForTarget.get(entry.getKey().getTargetType()) * entry.getValue();
@@ -115,8 +115,9 @@ public class BuildProgress {
     context.setDone(done);
   }
 
-  public synchronized void updateProgress(BuildTarget target, double done) {
+  public synchronized void updateProgress(BuildTarget target, double done, CompileContext context) {
     myCurrentProgress.put(target, done);
+    notifyAboutTotalProgress(context);
   }
 
   public synchronized void onTargetChunkFinished(BuildTargetChunk chunk, CompileContext context) {

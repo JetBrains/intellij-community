@@ -17,6 +17,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -568,7 +569,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
     if (Registry.is("new.search.everywhere") && e.getProject() != null) {
       String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
-      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
 
       SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
       if (seManager.isShown()) {
@@ -577,10 +577,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
         else {
           seManager.setShownContributor(searchProviderID);
+          FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE
+                                                               + "." + SearchEverywhereUI.TAB_SWITCHED
+                                                               + "." + searchProviderID);
         }
         return;
       }
 
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
       String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
       seManager.show(searchProviderID, text, e);

@@ -229,7 +229,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     // plugins registered renderers come after that
-    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
+    allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
     allRenderers.add(myHexRenderer);

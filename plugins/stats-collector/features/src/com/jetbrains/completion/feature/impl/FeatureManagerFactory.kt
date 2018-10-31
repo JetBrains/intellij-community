@@ -31,15 +31,12 @@ class FeatureManagerFactory: FeatureManager.Factory {
 
         val completionFactors = FeatureReader.completionFactors()
 
-        val ignoredFactors = FeatureReader.ignoredFactors()
-
-        return MyFeatureManager(binaryFactors, doubleFactors, categoricalFactors, ignoredFactors, completionFactors, order)
+        return MyFeatureManager(binaryFactors, doubleFactors, categoricalFactors, completionFactors, order)
     }
 
     private class MyFeatureManager(override val binaryFactors: List<BinaryFeature>,
                                    override val doubleFactors: List<DoubleFeature>,
                                    override val categoricalFactors: List<CategoricalFeature>,
-                                   override val ignoredFactors: Set<String>,
                                    override val completionFactors: CompletionFactors,
                                    override val featureOrder: Map<String, Int>) : FeatureManager {
         override fun isUserFeature(name: String): Boolean = false
@@ -52,7 +49,7 @@ class FeatureManagerFactory: FeatureManager.Factory {
 
         override fun createTransformer(): Transformer {
             val features = allFeatures().associate { it.name to it }
-            return FeatureTransformer(features, ignoredFactors, featureOrder.size)
+            return FeatureTransformer(features, featureOrder.size)
         }
     }
 }

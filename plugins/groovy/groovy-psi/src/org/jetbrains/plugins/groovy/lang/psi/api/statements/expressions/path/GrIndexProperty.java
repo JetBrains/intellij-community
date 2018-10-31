@@ -34,7 +34,8 @@ public interface GrIndexProperty extends GrExpression {
 
   /**
    * @return reference to a {@code getAt} method if this expression is an r-value, e.g. {@code foo[bar]},
-   * or {@code null} if this expression is an l-value only, e.g. {@code foo[bar] = baz}. <br/>
+   * or {@code null} if this expression is an l-value only, e.g. {@code foo[bar] = baz}
+   * or if this expression cannot reference {@code getAt} method. <br/>
    * This method may return non-null reference even if the expression is an l-value too,
    * e.g. {@code foo[bar] += baz} has both r-value and l-value references.
    * @see #getLValueReference()
@@ -44,7 +45,8 @@ public interface GrIndexProperty extends GrExpression {
 
   /**
    * @return reference to a {@code putAt} method if this expression is an l-value, e.g. {@code foo[bar] = baz},
-   * or {@code null} if this expression is an r-value only, e.g. {@code foo[bar]}. <br/>
+   * or {@code null} if this expression is an r-value only, e.g. {@code foo[bar]},
+   * or if this expression cannot reference {@code putAt} method. <br/>
    * This method may return non-null reference even if the expression is an r-value too,
    * e.g. {@code foo[bar] += baz} has both r-value and l-value references.
    * @see #getRValueReference()

@@ -758,15 +758,37 @@ object GuiTestUtil {
   }
 
   fun fileSearchAndReplace(fileName: Path, condition: (String) -> String) {
-    val buffer = mutableListOf<String>()
-    for (line in Files.readAllLines(fileName)) {
-      buffer.add(condition(line))
-    }
+    saveToFile(
+      fileName = fileName,
+      linesToSave = Files.readAllLines(fileName).map { condition(it) }
+    )
+  }
+
+  fun isFileContainsLine(fileName: Path, line: String): Boolean {
+    return Files.readAllLines(fileName).any { it.contains(line) }
+  }
+
+  fun fileInsertFromBegin(fileName: Path, lines: List<String>) {
+    saveToFile(
+      fileName = fileName,
+      linesToSave = lines + Files.readAllLines(fileName)
+    )
+  }
+
+  private fun saveToFile(fileName: Path, linesToSave: List<String>){
     val tmpFile = Files.createTempFile(fileName.fileName.toString(), "tmp")
-    Files.write(tmpFile, buffer)
+    Files.write(tmpFile, linesToSave)
     Files.copy(tmpFile, fileName, StandardCopyOption.REPLACE_EXISTING)
     tmpFile.toFile().deleteOnExit()
   }
+
+fun printFileContent(fileName: Path) {
+  println("--------------------------------------------")
+  println("--- File: $fileName ---")
+  println("--------------------------------------------")
+  Files.readAllLines(fileName).forEach { println("    $it") }
+  println("--------------------------------------------")
+}
 
   fun Long.toMs(): Long = this * 1000
 

@@ -37,6 +37,12 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @Override
   public String getInformationHint(@NotNull PsiExpression element) {
     PsiType type = element.getType();
+    if (type instanceof PsiLambdaExpressionType) {
+      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
+    }
+    else if (type instanceof PsiMethodReferenceType) {
+      type = ((PsiMethodReferenceType)type).getExpression().getFunctionalInterfaceType();
+    }
     String text = type == null ? "<unknown>" : type.getPresentableText();
     return StringUtil.escapeXml(text);
   }

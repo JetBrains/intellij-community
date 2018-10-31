@@ -401,8 +401,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
             myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+            myPressPoint.set(myLastPoint.get());
             if (allowResize && ui.isResizeable()) {
-              myPressPoint.set(myLastPoint.get());
               arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
             }
             ui.myWindow.fireActivated();
@@ -425,6 +425,11 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
         c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
                     ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
                     : Cursor.getDefaultCursor());
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        c.setCursor(null);
       }
 
       @Override

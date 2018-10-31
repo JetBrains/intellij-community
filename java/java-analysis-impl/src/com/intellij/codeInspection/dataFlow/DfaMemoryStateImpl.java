@@ -928,18 +928,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @NotNull
   private List<Couple<DfaValue>> getDependentPairs(DfaValue left, DfaValue right) {
     StreamEx<Couple<DfaValue>> stream = StreamEx.empty();
-    if (left instanceof DfaVariableValue) {
+    if (left instanceof DfaVariableValue && right instanceof DfaConstValue) {
       stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)left).getDependentVariables()))
                                .filter(leftVar -> leftVar.getQualifier() == left &&
-                                                  leftVar.getSource() instanceof SpecialField &&
-                                                  leftVar.getSource() != SpecialField.UNBOX)
+                                                  leftVar.getSource() == SpecialField.STRING_LENGTH)
         .map(leftVar -> Couple.of(leftVar, ((SpecialField)leftVar.getSource()).createValue(myFactory, right))));
     }
-    if (right instanceof DfaVariableValue) {
+    if (right instanceof DfaVariableValue && left instanceof DfaConstValue) {
       stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)right).getDependentVariables()))
                                .filter(rightVar -> rightVar.getQualifier() == right &&
-                                                   rightVar.getSource() instanceof SpecialField &&
-                                                   rightVar.getSource() != SpecialField.UNBOX)
+                                                   rightVar.getSource() == SpecialField.STRING_LENGTH)
         .map(rightVar -> Couple.of(((SpecialField)rightVar.getSource()).createValue(myFactory, left), rightVar)));
     }
     return stream.distinct().toList();

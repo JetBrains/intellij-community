@@ -156,7 +156,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1089,7 +1089,7 @@ public class UsageViewImpl implements UsageViewEx {
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
-      return com.intellij.usages.UsageViewManager.getInstance(getProject()).
+      return UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
     myRerunAction.actionPerformed(null);
@@ -1419,9 +1419,8 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     if (!smartPointers.isEmpty()) {
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
-        pointerManager.removePointer(pointer);
+        SmartPointerManager.getInstance(pointer.getProject()).removePointer(pointer);
       }
     }
     myUsageNodes.clear();

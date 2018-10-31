@@ -110,7 +110,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
 
           myUseBranchCombo.setModel(new DefaultComboBoxModel<>(tasks));
           for (VcsTaskHandler.TaskInfo info : tasks) {
-            if (branchName.equals(info.getName())) {
+            if (branchName.equals(info.getName()) || task.getSummary().equals(info.getName())) {
               myUseBranchCombo.setSelectedItem(info);
               myUseBranch.setSelected(true);
               break;

@@ -10,6 +10,7 @@ import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
 import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
@@ -195,22 +196,26 @@ fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg pa
  *  I detect end of reimport by following signs:
  *  - action button "Refresh all external projects" becomes enable. But sometimes it becomes
  *  enable only for a couple of moments and becomes disable again.
- *  - the gradle tool window contains the project tree. But if reimporting fails the tree is empty.
+ *  - status in the first line in the Build tool window becomes `sync finished` or `sync failed`
  *
- *  @param waitForProject true if we expect reimporting successful
- *  @param waitForProject false if we expect reimporting failing and the tree window is expected empty
  *  @param rootPath root name expected to be shown in the tree. Checked only if [waitForProject] is true
+ *  @return status of reimport - true - successful, false - failed
  * */
-fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean){
-  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05){
-    var result = false
+fun GuiTestCase.waitForGradleReimport(rootPath: String): Boolean {
+  val syncSuccessful = "sync finished"
+  val syncFailed = "sync failed"
+  var reimportStatus = ""
+
+  GuiTestUtilKt.waitUntil("for gradle reimport finishing", timeout = Timeouts.minutes05) {
+    var isReimportButtonEnabled: Boolean = false
+    var syncState = false
     try {
       ideFrame {
         toolwindow(id = "Gradle") {
           content(tabName = "") {
             // first, check whether the action button "Refresh all external projects" is enabled
             val text = "Refresh all external projects"
-            val isReimportButtonEnabled = try {
+            isReimportButtonEnabled = try {
               val fixtureByTextAnyState = ActionButtonFixture.fixtureByTextAnyState(this.target(), robot(), text)
               assertTrue("Gradle refresh button should be visible and showing", this.target().isShowing && this.target().isVisible)
               fixtureByTextAnyState.isEnabled
@@ -219,41 +224,37 @@ fun GuiTestCase.waitForGradleReimport(rootPath: String, waitForProject: Boolean)
               logInfo("$currentTimeInHumanString: waitForGradleReimport.actionButton: ${e::class.simpleName} - ${e.message}")
               false
             }
-            // second, check that Gradle tool window contains a tree with the specified [rootPath]
-            val gradleWindowHasPath = if(waitForProject){
-              try {
-                jTree(rootPath, timeout = Timeouts.noTimeout).hasPath()
-              }
-              catch (e: Exception) {
-                logInfo("$currentTimeInHumanString: waitForGradleReimport.jTree: ${e::class.simpleName} - ${e.message}")
-                false
-              }
-            }
-            else true
-            // calculate result whether to continue waiting
-            result = gradleWindowHasPath && isReimportButtonEnabled
           }
         }
-        // check status in the Build tool window
-        var syncState = !waitForProject
-        if(waitForProject) {
-          toolwindow(id = "Build") {
-            content(tabName = "Sync") {
-              val tree = treeTable().target.tree
-              val treePath = ExtendedJTreePathFinder(tree).findMatchingPath(listOf(this@ideFrame.project.name + ":"))
-              val state = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
-              syncState = state.contains("sync finished")
+        // second, check status in the Build tool window
+        toolwindow(id = "Build") {
+          content(tabName = "Sync") {
+            val tree = treeTable().target.tree
+            val pathStrings = listOf(rootPath)
+            val treePath = try {
+              ExtendedJTreePathFinder(tree).findMatchingPathByPredicate(pathStrings = pathStrings, predicate = Predicate.startWith)
+            }
+            catch (e: LocationUnavailableException) {
+              null
+            }
+            if (treePath != null) {
+              reimportStatus = ExtendedJTreeCellReader().valueAtExtended(tree, treePath) ?: ""
+              syncState = reimportStatus.contains(syncSuccessful) || reimportStatus.contains(syncFailed)
+            }
+            else {
+              syncState = false
             }
           }
         }
-        // final calculating of result
-        result = result && syncState
       }
     }
     catch (ignore: Exception) {}
+    // final calculating of result
+    val result = isReimportButtonEnabled && syncState
     result
   }
 
+  return reimportStatus.contains(syncSuccessful)
 }
 
 fun GuiTestCase.gradleReimport() {

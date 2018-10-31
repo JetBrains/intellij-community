@@ -13,21 +13,19 @@ import sys
 from _pydev_bundle import pydev_log
 
 
-def save_main_module(file, module_name):
+def save_main_module(file):
     # patch provided by: Scott Schlesier - when script is run, it does not
     # use globals from pydevd:
     # This will prevent the pydevd script from contaminating the namespace for the script to be debugged
     # pretend pydevd is not the main module, and
     # convince the file to be debugged that it was loaded as main
-    sys.modules['_original_' + module_name] = sys.modules[module_name]
-    sys.modules[module_name] = sys.modules['__main__']
-    sys.modules[module_name].__name__ = module_name
+    original_main = sys.modules['__main__']
     from imp import new_module
 
     m = new_module('__main__')
     sys.modules['__main__'] = m
-    if hasattr(sys.modules[module_name], '__loader__'):
-        m.__loader__ = getattr(sys.modules[module_name], '__loader__')
+    if hasattr(original_main, '__loader__'):
+        m.__loader__ = getattr(original_main, '__loader__')
     m.__file__ = file
 
     return m

@@ -7,8 +7,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.TestModeFlagListener;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +19,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public abstract class IdeaTestExecutionPolicy {
+public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
+  protected IdeaTestExecutionPolicy() {
+    TestModeFlags.addListener(this);
+  }
+
   public abstract void setUp(Project project, Disposable testRootDisposable, String testDataPath);
   public abstract TempDirTestFixture createTempDirTestFixture();
   public abstract boolean runInDispatchThread();
@@ -41,6 +48,10 @@ public abstract class IdeaTestExecutionPolicy {
   }
 
   public void inspectionToolEnabled(@NotNull Project project, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull Disposable disposable) {
+  }
+
+  @Override
+  public void testModeFlagChanged(@NotNull Key<?> key, @Nullable Object value) {
   }
 
   private static IdeaTestExecutionPolicy ourCurrent = null;

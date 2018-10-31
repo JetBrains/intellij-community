@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -567,7 +567,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrClosureSignature signature) {
+  public GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature) {
     StringBuilder builder = new StringBuilder("public");
     final PsiType returnType = signature.getReturnType();
     if (returnType != null && returnType != PsiType.NULL) {

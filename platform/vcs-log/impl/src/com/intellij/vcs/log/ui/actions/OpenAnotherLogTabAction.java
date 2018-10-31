@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
@@ -35,7 +34,7 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !Registry.is("vcs.log.open.another.log.visible")) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

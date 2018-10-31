@@ -66,8 +66,12 @@ private val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator") ?: error("Specify default investigator")
 }
 
-private class Investigator(val email: String, val commits: Collection<String>, var isAssigned: Boolean = false) {
-  fun commitsToInvestigate() = if (commits.isNotEmpty()) "see ${commits.joinToString()}" else ""
+private class Investigator(val email: String,
+                           val commits: Collection<String>,
+                           val icons: Collection<String>,
+                           var isAssigned: Boolean = false) {
+  fun reason() = (if (commits.isNotEmpty()) "commits ${commits.joinToString()}\n" else "") +
+                 if (icons.isNotEmpty()) "icons ${icons.joinToString()}\n" else ""
 }
 
 private fun assignInvestigation(root: File,
@@ -81,22 +85,24 @@ private fun assignInvestigation(root: File,
       null
     }
     else {
-      var investigator = (addedByDev.asSequence() + removedByDev.asSequence() + modifiedByDev.asSequence())
-        .map { File(root, it).absolutePath }
-        .map { latestChangeCommit(it) }
-        .filterNotNull()
-        .groupBy({ it.committerEmail }, { it.hash })
+      val commits = (addedByDev.asSequence() + removedByDev.asSequence() + modifiedByDev.asSequence()).map {
+        val path = File(root, it).absolutePath
+        val commit = latestChangeCommit(path)
+        if (commit != null) commit to it else null
+      }.filterNotNull().toList()
+      var investigator = commits
+        .groupBy { it.first.committerEmail }
         .maxBy { it.value.size }
-        ?.let { Investigator(it.key, it.value) }
+        ?.let { entry -> Investigator(entry.key, commits.map { it.first.hash }.distinct(), icons = commits.map { it.second }) }
         ?.also { assignInvestigation(it) }
       when {
         investigator != null && !investigator.isAssigned -> {
-          investigator = Investigator(DEFAULT_INVESTIGATOR, investigator.commits)
+          investigator = Investigator(DEFAULT_INVESTIGATOR, investigator.commits, investigator.icons)
           assignInvestigation(investigator)
         }
         investigator == null -> {
           log("Unable to determine committer email for investigation assignment")
-          investigator = Investigator(DEFAULT_INVESTIGATOR, emptyList())
+          investigator = Investigator(DEFAULT_INVESTIGATOR, emptyList(), emptyList())
           assignInvestigation(investigator)
         }
       }
@@ -107,7 +113,7 @@ private fun assignInvestigation(root: File,
 private fun assignInvestigation(investigator: Investigator) {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
-    val text = "${investigator.commitsToInvestigate()}.\nhttps://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    val text = "${investigator.reason()}https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
             |<investigation state="TAKEN">
             |    <assignee id="$id"/>

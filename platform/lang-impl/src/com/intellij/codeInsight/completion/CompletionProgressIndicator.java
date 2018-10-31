@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
+import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -541,7 +542,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   boolean blockingWaitForFinish(int timeoutMs) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       if (!myFinishSemaphore.waitFor(100 * 1000)) {
         throw new AssertionError("Too long completion");
       }
@@ -707,7 +708,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   public void scheduleRestart() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && !TestModeFlags.is(CompletionAutoPopupHandler.ourTestingAutopopup)) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);

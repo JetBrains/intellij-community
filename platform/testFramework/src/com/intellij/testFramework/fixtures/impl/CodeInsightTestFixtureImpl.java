@@ -28,6 +28,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.IdeEventQueue;
@@ -114,15 +115,15 @@ import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.usages.Usage;
-import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewManager;
+import com.intellij.usages.*;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -800,7 +801,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public void performEditorAction(@NotNull final String actionId) {
     assertInitialized();
-    myEditorTestFixture.performEditorAction(actionId);
+    EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(actionId));
   }
 
   @NotNull
@@ -852,6 +853,34 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<UsageInfo> findUsages(@NotNull final PsiElement targetElement) {
     return findUsages(targetElement, null);
+  }
+
+  @NotNull
+  @Override
+  public String getUsageViewTreeTextRepresentation(@NotNull final Collection<UsageInfo> usages) {
+    UsageViewImpl usageView = (UsageViewImpl)UsageViewManager
+      .getInstance(getProject()).createUsageView(UsageTarget.EMPTY_ARRAY,
+                                                 StreamEx.of(usages)
+                                                   .map(usageInfo -> new UsageInfo2UsageAdapter(usageInfo)).toArray(Usage.EMPTY_ARRAY),
+                                                 new UsageViewPresentation(),
+                                                 null);
+    return getUsageViewTreeTextRepresentation(usageView);
+  }
+
+
+  @NotNull
+  @Override
+  public String getUsageViewTreeTextRepresentation(@NotNull final PsiElement targetElement) {
+    final FindUsagesManager usagesManager = ((FindManagerImpl)FindManager.getInstance(getProject())).getFindUsagesManager();
+    final FindUsagesHandler handler = usagesManager.getFindUsagesHandler(targetElement, false);
+    assertNotNull("Cannot find handler for: " + targetElement, handler);
+    final UsageViewImpl usageView = (UsageViewImpl)usagesManager.doFindUsages(new PsiElement[]{targetElement},
+                                                                              PsiElement.EMPTY_ARRAY,
+                                                                              handler,
+                                                                              handler.getFindUsagesOptions(),
+                                                                              false);
+    return getUsageViewTreeTextRepresentation(usageView);
+
   }
 
   @NotNull
@@ -1582,8 +1611,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
     final Editor topEditor = getHostEditor();
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
-    return getFoldingData(topEditor, withCollapseStatus);
+    return EdtTestUtil.runInEdtAndGet(() -> {
+      IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+      if (policy != null) {
+        policy.waitForHighlighting(getProject(), topEditor);
+      }
+      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+      return getFoldingData(topEditor, withCollapseStatus);
+    });
   }
 
   @NotNull
@@ -1645,7 +1680,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final String cleanContent = removeFoldingMarkers(expectedContent);
     if (destinationFileName == null) {
       final String fileName = PathUtil.getFileName(verificationFileName);
-      configureByText(FileTypeManager.getInstance().getFileTypeByFileName(fileName), cleanContent);
+      configureByText(fileName, cleanContent);
     }
     else {
       try {
@@ -1874,6 +1909,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  @NotNull
+  private String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
+    Disposer.register(getTestRootDisposable(), usageView);
+    usageView.expandAll();
+    return TreeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
   }
 
   private static class SelectionAndCaretMarkupLoader {

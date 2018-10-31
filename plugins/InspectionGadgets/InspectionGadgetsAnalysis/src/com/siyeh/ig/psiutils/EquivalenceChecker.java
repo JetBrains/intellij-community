@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.util.Comparing;
@@ -215,7 +216,7 @@ public class EquivalenceChecker {
     if (modifierList1 == null || modifierList2 == null) {
       return Match.exact(modifierList1 == modifierList2);
     }
-    if (!PsiEquivalenceUtil.areElementsEquivalent(modifierList1, modifierList2)) {
+    if (!modifierListsAreEquivalent(modifierList1, modifierList2)) {
       return EXACT_MISMATCH;
     }
     final PsiExpression initializer1 = variable1.getInitializer();
@@ -835,11 +836,9 @@ public class EquivalenceChecker {
       }
       if (child1 instanceof PsiMethod && child2 instanceof PsiMethod) {
         if (!methodsMatch((PsiMethod)child1, (PsiMethod)child2).isExactMatch()) return EXACT_MISMATCH;
-      }
-      if (child1 instanceof PsiField && child2 instanceof PsiField) {
+      } else if (child1 instanceof PsiField && child2 instanceof PsiField) {
         if (!variablesAreEquivalent((PsiField)child1, (PsiField)child2).isExactMatch()) return EXACT_MISMATCH;
-      }
-      if (!PsiEquivalenceUtil.areElementsEquivalent(child1, child2)) {
+      } else if (!PsiEquivalenceUtil.areElementsEquivalent(child1, child2)) {
         return EXACT_MISMATCH;
       }
     }
@@ -853,10 +852,11 @@ public class EquivalenceChecker {
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
       PsiElement child2 = children2[i];
-      if (child1 instanceof PsiCodeBlock && child2 instanceof PsiCodeBlock) {
+      if (child1 instanceof PsiModifierList && child2 instanceof PsiModifierList) {
+        if (!modifierListsAreEquivalent((PsiModifierList)child1, (PsiModifierList)child2)) return EXACT_MISMATCH;
+      } else if (child1 instanceof PsiCodeBlock && child2 instanceof PsiCodeBlock) {
         if (!codeBlocksAreEquivalent((PsiCodeBlock)child1, (PsiCodeBlock)child2)) return EXACT_MISMATCH;
-      }
-      if (!PsiEquivalenceUtil.areElementsEquivalent(child1, child2)) {
+      } else if (!PsiEquivalenceUtil.areElementsEquivalent(child1, child2)) {
         return EXACT_MISMATCH;
       }
     }
@@ -1037,5 +1037,14 @@ public class EquivalenceChecker {
       }
     }
     return EXACT_MISMATCH;
+  }
+
+  private static boolean modifierListsAreEquivalent(PsiModifierList modifierList1, PsiModifierList modifierList2) {
+    for (String modifier : PsiModifier.MODIFIERS) {
+      if (modifierList1.hasModifierProperty(modifier) != modifierList2.hasModifierProperty(modifier)) {
+        return false;
+      }
+    }
+    return AnnotationUtil.equal(modifierList1.getAnnotations(), modifierList2.getAnnotations());
   }
 }

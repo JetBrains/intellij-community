@@ -1,18 +1,18 @@
 package org.jetbrains.yaml;
 
 import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 
 /**
  * @author oleg
  */
 public interface YAMLElementTypes {
-  IStubFileElementType FILE = new YAMLFileElementType();
+  IFileElementType FILE = new IFileElementType(YAMLLanguage.INSTANCE);
 
   YAMLElementType DOCUMENT = new YAMLElementType("Document ---");
 
-  YAMLKeyValueStubElementType KEY_VALUE_PAIR = new YAMLKeyValueStubElementType("Key value pair");
+  YAMLElementType KEY_VALUE_PAIR = new YAMLElementType("Key value pair");
   //YAMLElementType VALUE = new YAMLElementType("Value");
   YAMLElementType HASH = new YAMLElementType("Hash");
   YAMLElementType ARRAY = new YAMLElementType("Array");

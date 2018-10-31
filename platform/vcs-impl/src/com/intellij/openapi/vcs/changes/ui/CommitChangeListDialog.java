@@ -1189,6 +1189,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
       putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, enablePartialCommit);
+      putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     }
 
     @NotNull

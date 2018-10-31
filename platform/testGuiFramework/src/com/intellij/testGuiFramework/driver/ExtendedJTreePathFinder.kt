@@ -75,7 +75,7 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       if (child is LoadingNode)
         throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = jTree.getPathToNode(node))
       val childValue = jTree.value(child) ?: continue
-      if (predicate(original, childValue)) {
+      if (predicate(childValue, original)) {
         if (currentOrder == order) {
           val newPath = TreePath(arrayOf<Any>(*pathTree.path, child))
           return if (pathStrings.size == 1) {

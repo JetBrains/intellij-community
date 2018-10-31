@@ -21,6 +21,7 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
   private final FoldingGroup myGroup;
   private final boolean myShouldNeverExpand;
   private boolean myDocumentRegionWasChanged;
+  int mySizeBeforeUpdate; // temporary field used during update on document change
 
   FoldRegionImpl(@NotNull EditorImpl editor,
                  int startOffset,
@@ -132,7 +133,6 @@ public class FoldRegionImpl extends RangeMarkerWithGetterImpl implements FoldReg
     else {
       myEditor.getFoldingModel().removeRegionFromGroup(this);
     }
-    myEditor.getFoldingModel().clearCachedValues();
   }
 
   @Override

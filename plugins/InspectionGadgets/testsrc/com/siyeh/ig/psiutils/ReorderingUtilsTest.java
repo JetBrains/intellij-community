@@ -11,6 +11,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
                                        "/** @noinspection all*/\n" +
                                        "class X {boolean test(Object obj, String str, int x, int y, String[] arr, Optional<String> opt) { return ";
+  @SuppressWarnings("UnnecessarySemicolon") 
   private static final String SUFFIX = ";}}";
 
   public void testSimple() {
@@ -31,9 +32,8 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
 
   public void testCast() {
     checkCanBeReordered("obj instanceof String && ((String)obj).isEmpty()", 1, ThreeState.NO);
-    // Not supported
-    checkCanBeReordered("obj instanceof String && test(null, (String)obj, 0,0, null, Optional.empty())", 1, ThreeState.UNSURE);
-    checkCanBeReordered("obj instanceof Integer && ((Number)obj).intValue() == 0", 1, ThreeState.UNSURE);
+    checkCanBeReordered("obj instanceof String && test(null, (String)obj, 0,0, null, Optional.empty())", 1, ThreeState.NO);
+    checkCanBeReordered("obj instanceof Integer && ((Number)obj).intValue() == 0", 1, ThreeState.NO);
   }
 
   public void testArrayBounds() {
@@ -41,8 +41,8 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("x < arr.length && arr[x].isEmpty()", 1, ThreeState.NO);
     checkCanBeReordered("x >= 0 && x < arr.length && arr[x].isEmpty()", 2, ThreeState.NO);
     checkCanBeReordered("y >= 0 && arr[x].isEmpty()", 1, ThreeState.UNSURE);
+    checkCanBeReordered("x > 0 && arr[x].isEmpty()", 1, ThreeState.NO);
     // Not supported
-    checkCanBeReordered("x > 0 && arr[x].isEmpty()", 1, ThreeState.UNSURE);
     checkCanBeReordered("x > 0 && arr[x-1].isEmpty()", 1, ThreeState.UNSURE);
   }
 

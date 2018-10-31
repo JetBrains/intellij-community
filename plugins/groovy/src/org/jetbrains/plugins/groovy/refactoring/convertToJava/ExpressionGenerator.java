@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
@@ -57,10 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator;
 
@@ -216,7 +213,7 @@ public class ExpressionGenerator extends Generator {
     final GrArgumentList argList = newExpression.getArgumentList();
     if (argList != null) {
 
-      GrClosureSignature signature = null;
+      GrSignature signature = null;
 
       final GroovyResolveResult resolveResult = newExpression.advancedResolve();
       final PsiElement constructor = resolveResult.getElement();
@@ -464,7 +461,7 @@ public class ExpressionGenerator extends Generator {
     }
     else {
       //write assignment such as +=, -=, etc
-      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.getReference().multiResolve(false));
+      final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(PsiUtilKt.multiResolve(expression));
       final PsiElement resolved = resolveResult.getElement();
 
       if (resolved instanceof PsiMethod && !shouldNotReplaceOperatorWithMethod(lValue.getType(), rValue, expression.getOperationTokenType())) {
@@ -636,7 +633,7 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(expression.getReference().multiResolve(false));
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(PsiUtilKt.multiResolve(expression));
     final PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof PsiMethod) {
       if (right == null) {
@@ -1345,7 +1342,7 @@ public class ExpressionGenerator extends Generator {
       }
     }
     builder.append(method.getName());
-    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
+    final GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     new ArgumentListGenerator(builder, this.context).generate(signature, exprs, namedArgs, closures, context);
   }
 

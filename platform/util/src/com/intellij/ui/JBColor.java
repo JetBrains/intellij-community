@@ -341,14 +341,7 @@ public class JBColor extends Color {
 
   @NotNull
   public static Color border() {
-    return new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        //noinspection deprecation
-        return UIUtil.getBorderColor();
-      }
-    });
+    return namedColor("Borders.color", new JBColor(Gray._192, Gray._50));
   }
 
   private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();

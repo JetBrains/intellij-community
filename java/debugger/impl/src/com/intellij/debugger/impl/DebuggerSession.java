@@ -285,7 +285,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepOut(int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd = null;
-    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensionList()) {
       cmd = handler.getStepOutCommand(suspendContext, stepSize);
       if (cmd != null) break;
     }
@@ -303,7 +303,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepOver(boolean ignoreBreakpoints, int stepSize) {
     SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd = null;
-    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensionList()) {
       cmd = handler.getStepOverCommand(suspendContext, ignoreBreakpoints, stepSize);
       if (cmd != null) break;
     }
@@ -321,7 +321,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
   public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter, int stepSize) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     DebugProcessImpl.ResumeCommand cmd = null;
-    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensions()) {
+    for (JvmSteppingCommandProvider handler : JvmSteppingCommandProvider.EP_NAME.getExtensionList()) {
       cmd = handler.getStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter, stepSize);
       if (cmd != null) break;
     }

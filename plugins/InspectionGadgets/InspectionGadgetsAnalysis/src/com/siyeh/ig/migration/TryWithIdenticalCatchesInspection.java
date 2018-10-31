@@ -281,12 +281,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (match2 == null) {
         return false;
       }
-      final ReturnValue returnValue1 = match1.getReturnValue();
-      final ReturnValue returnValue2 = match2.getReturnValue();
-      if (returnValue1 == null) {
-        return returnValue2 == null;
-      }
-      return returnValue1.isEquivalent(returnValue2);
+      return ReturnValue.areEquivalent(match1.getReturnValue(), match2.getReturnValue());
     }
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {

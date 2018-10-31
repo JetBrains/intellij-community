@@ -44,6 +44,14 @@
                         testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
+    <applicationService serviceInterface="com.intellij.completion.sorting.Ranker"
+                        serviceImplementation="com.intellij.completion.sorting.MLRanker">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
+                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory">
+    </applicationService>
+
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
                         serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
                         testServiceImplementation="com.intellij.mocks.TestExperimentDecision">

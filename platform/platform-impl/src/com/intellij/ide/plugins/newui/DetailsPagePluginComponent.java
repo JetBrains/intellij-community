@@ -200,43 +200,36 @@ public class DetailsPagePluginComponent extends OpaquePanel {
     PluginId id = myPlugin.getPluginId();
 
     if ((myPlugin instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)myPlugin).isDeleted()) ||
-        pluginsState.wasInstalled(id) ||
-        pluginsState.wasUpdated(id)) {
+        pluginsState.wasInstalled(id) || pluginsState.wasUpdated(id)) {
       buttons.add(myRestartButton = new RestartButton(myPluginsModel));
     }
+    else if (update) {
+      buttons.add(myUpdateButton = new UpdateButton());
+    }
+    else if (myPlugin instanceof PluginNode) {
+      buttons.add(myInstallButton = new InstallButton(true));
+      myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
+    }
+    else if (myPlugin.isBundled()) {
+      myEnableDisableButton = new JButton(myPluginsModel.getEnabledTitle(myPlugin));
+      myEnableDisableButton.addActionListener(e -> changeEnableDisable());
+      ColorButton.setWidth72(myEnableDisableButton);
+      buttons.add(myEnableDisableButton);
+    }
     else {
-      boolean stateActions = true;
-      if (update) {
-        buttons.add(myUpdateButton = new UpdateButton());
-      }
-      else if (myPlugin instanceof PluginNode) {
-        buttons.add(myInstallButton = new InstallButton(true));
-        myInstallButton.setEnabled(PluginManager.getPlugin(myPlugin.getPluginId()) == null);
-        stateActions = false;
-      }
-      if (stateActions) {
-        if (myPlugin.isBundled()) {
-          myEnableDisableButton = new JButton(myPluginsModel.getEnabledTitle(myPlugin));
-          myEnableDisableButton.addActionListener(e -> changeEnableDisable());
-          ColorButton.setWidth72(myEnableDisableButton);
-          buttons.add(myEnableDisableButton);
+      AbstractAction enableDisableAction = new AbstractAction(myPluginsModel.getEnabledTitle(myPlugin)) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          changeEnableDisable();
         }
-        else {
-          AbstractAction enableDisableAction = new AbstractAction(myPluginsModel.getEnabledTitle(myPlugin)) {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              changeEnableDisable();
-            }
-          };
-          AbstractAction uninstallAction = new AbstractAction("Uninstall") {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              doUninstall();
-            }
-          };
-          buttons.add(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
+      };
+      AbstractAction uninstallAction = new AbstractAction("Uninstall") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          doUninstall();
         }
-      }
+      };
+      buttons.add(myEnableDisableUninstallButton = new MyOptionButton(enableDisableAction, uninstallAction));
     }
 
     for (Component component : UIUtil.uiChildren(buttons)) {

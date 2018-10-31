@@ -1164,7 +1164,10 @@ public class InferenceSession {
   private PsiType checkBoundsConsistency(PsiSubstitutor substitutor, InferenceVariable var) {
     PsiType eqBound = getEqualsBound(var, substitutor);
     if (eqBound != PsiType.NULL && eqBound instanceof PsiPrimitiveType) return PsiType.NULL;
-    final PsiType lowerBound = myPolicy.adjustInferredType(myManager, getLowerBound(var, substitutor), ConstraintType.SUBTYPE);
+    PsiType lowerBound = getLowerBound(var, substitutor); 
+    if (eqBound == PsiType.NULL) {
+      lowerBound = myPolicy.adjustInferredType(myManager, lowerBound, ConstraintType.SUBTYPE);
+    }
     final PsiType upperBound = getUpperBound(var, substitutor);
     PsiType type;
     if (eqBound != PsiType.NULL && (myErased || eqBound != null)) {

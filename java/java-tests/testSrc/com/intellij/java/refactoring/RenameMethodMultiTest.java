@@ -2,6 +2,7 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -74,7 +75,7 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
   }
 
   public void testAlignedMultilineParameters() {
-    CommonCodeStyleSettings javaSettings = getCurrentCodeStyleSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
+    CommonCodeStyleSettings javaSettings = CodeStyle.getSettings(myProject).getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.ALIGN_MULTILINE_PARAMETERS = true;
     javaSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest("void test123(int i, int j)", "test123asd");

@@ -9,7 +9,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil.nullize
 import com.intellij.util.containers.ContainerUtil.addIfNotNull
 import com.intellij.util.text.nullize
 import org.jdom.Element
@@ -53,6 +52,8 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
       else {
         LOG.error(backendCompiler.toString() + " is not registered.")
       }
+    } else {
+      project.putUserData(DEFAULT_COMPILER_IS_RESOLVED, true)
     }
   }
 
@@ -137,10 +138,13 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     val compilerArguments = compilerMavenConfiguration.getChild("compilerArguments")
     if (compilerArguments != null) {
-
+      val unresolvedArgs = mutableSetOf<String>()
       val effectiveArguments = compilerArguments.children.map {
         val key = it.name.run { if (startsWith("-")) this else "-$this" }
-        val value = it.textTrim.nullize()
+        val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
         key to value
       }.toMap()
 
@@ -148,22 +152,22 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
         if (key.startsWith("-A") && value != null) {
           options.add("$key=$value")
         }
-        else {
+        else if (key !in unresolvedArgs) {
           options.add(key)
           addIfNotNull(options, value)
         }
       }
     }
 
-    addIfNotNull(options, nullize(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
+    addIfNotNull(options, getResolvedText(compilerMavenConfiguration.getChildTextTrim("compilerArgument")))
 
     val compilerArgs = compilerMavenConfiguration.getChild("compilerArgs")
     if (compilerArgs != null) {
       for (arg in compilerArgs.getChildren("arg")) {
-        addIfNotNull(options, nullize(arg.textTrim))
+        addIfNotNull(options, getResolvedText(arg))
       }
       for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-        addIfNotNull(options, nullize(compilerArg.textTrim))
+        addIfNotNull(options, getResolvedText(compilerArg))
       }
     }
 
@@ -179,8 +183,34 @@ class MavenCompilerImporter : MavenImporter("org.apache.maven.plugins", "maven-c
 
     private fun getCompilerId(config: Element): String {
       val compilerId = config.getChildTextTrim("compilerId")
-      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId) return JAVAC_ID
+      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
       else return compilerId
+    }
+
+    private const val propStartTag = "\${"
+    private const val propEndTag = "}"
+
+    private fun hasUnresolvedProperty(txt: String): Boolean {
+      val i = txt.indexOf(propStartTag)
+      return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
+    }
+
+    private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
+      if (index == -1) return -1
+      val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
+      if (pair.second == propEndTag) return pair.first
+      val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
+      return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
+    }
+
+    private fun getResolvedText(txt: String?): String? {
+      val result = txt.nullize() ?: return null
+      if (hasUnresolvedProperty(result)) return null
+      return result
+    }
+
+    private fun getResolvedText(it: Element): String? {
+      return getResolvedText(it.textTrim)
     }
   }
 }

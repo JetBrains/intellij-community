@@ -210,7 +210,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
             height += size.height;
           }
           height += count - 1;
-          return new Dimension(width + JBUI.scale(32), height);
+          return new Dimension(Math.max(width + JBUI.scale(32), BalloonLayoutConfiguration.MaxWidth()), height);
         }
 
         @Override

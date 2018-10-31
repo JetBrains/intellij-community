@@ -228,7 +228,7 @@ class VariableExtractor {
   private static PsiElement correctAnchor(PsiExpression expr,
                                           @NotNull PsiElement anchor,
                                           PsiExpression[] occurrences) {
-    PsiExpression firstOccurrence = StreamEx.of(occurrences)
+    PsiExpression firstOccurrence = StreamEx.of(occurrences).append(expr)
       .minBy(e -> e.getTextRange().getStartOffset()).orElse(null);
     if (anchor instanceof PsiWhileStatement) {
       PsiExpression condition = ((PsiWhileStatement)anchor).getCondition();
