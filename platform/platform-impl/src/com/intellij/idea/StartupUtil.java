@@ -58,13 +58,6 @@ public class StartupUtil {
 
   private StartupUtil() { }
 
-  public static boolean shouldShowSplash(final String[] args) {
-    if ("true".equals(System.getProperty(NO_SPLASH))) {
-      return false;
-    }
-    return !Arrays.asList(args).contains(NO_SPLASH);
-  }
-
   public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
     if (ourSocketLock != null) {
