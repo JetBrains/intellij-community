@@ -22,6 +22,7 @@ private const val patternArg = "skip.dirs.pattern"
 private const val syncIcons = "sync.icons"
 private const val syncDevIcons = "sync.dev.icons"
 private const val syncRemovedIconsInDev = "sync.dev.icons.removed"
+private const val createReview = "sync.icons.and.create.review"
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) printUsageAndExit()
@@ -31,7 +32,8 @@ fun main(args: Array<String>) {
   checkIcons(ignoreCaseInDirName(repos[0]), ignoreCaseInDirName(repos[1]), skipPattern,
              args.find(syncIcons)?.toBoolean() ?: false,
              args.find(syncDevIcons)?.toBoolean() ?: false,
-             args.find(syncRemovedIconsInDev)?.toBoolean() ?: true)
+             args.find(syncRemovedIconsInDev)?.toBoolean() ?: true,
+             args.find(createReview)?.toBoolean() ?: false)
 }
 
 private fun ignoreCaseInDirName(path: String): String {
@@ -43,25 +45,25 @@ private fun ignoreCaseInDirName(path: String): String {
     .toString()
 }
 
-private fun Array<String>.find(arg: String) = this.find {
-  it.startsWith("$arg=")
-}?.removePrefix("$arg=")
+private fun Array<String>.find(arg: String) = find { it.startsWith("$arg=") }?.removePrefix("$arg=")
 
 private fun printUsageAndExit() {
   println("""
-    |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]
-    |
+    |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [option=...]
+    |Options:
     |* `$repoArg` - comma-separated repository paths, first is developers' repo, second is designers'
     |* `$patternArg` - test data folders regular expression
     |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
     |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
     |* `$syncRemovedIconsInDev` - remove icons in developers' repo removed by designers
+    |* `$createReview` - update icons in designers' repo and create branch review, implies $syncIcons
   """.trimMargin())
   System.exit(1)
 }
 
 private lateinit var icons: Map<String, GitObject>
 private lateinit var devIcons: Map<String, GitObject>
+internal lateinit var iconsRepo: File
 
 /**
  * @param devRepoDir developers' git repo
@@ -70,12 +72,14 @@ private lateinit var devIcons: Map<String, GitObject>
  */
 fun checkIcons(
   devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
-  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false, doSyncRemovedIconsInDev: Boolean = true,
+  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
+  doSyncRemovedIconsInDev: Boolean = true,
+  doSyncIconsRepoAndCreateReview: Boolean = false,
   loggerImpl: Consumer<String> = Consumer { println(it) },
   errorHandler: Consumer<String> = Consumer { error(it) }
 ) {
   logger = loggerImpl
-  val iconsRepo = findGitRepoRoot(iconsRepoDir)
+  iconsRepo = findGitRepoRoot(iconsRepoDir)
   icons = readIconsRepo(iconsRepo, iconsRepoDir)
   val devRepoRoot = findGitRepoRoot(devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
@@ -109,7 +113,7 @@ fun checkIcons(
       if (it.isEmpty()) "" else "$it/"
     })
   }
-  if (doSyncIconsRepo) {
+  if (doSyncIconsRepo || doSyncIconsRepoAndCreateReview) {
     syncAdded(addedByDev, devIcons, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIcons)
     syncRemoved(removedByDev, icons)
@@ -123,7 +127,9 @@ fun checkIcons(
     devRepoRoot, devIcons.size, icons.size, skippedDirs.size,
     addedByDev, removedByDev, modifiedByDev,
     addedByDesigners, removedByDesigners, modifiedByDesigners,
-    consistent, errorHandler, doNotify = !doSyncIconsRepo && !doSyncDevRepo
+    consistent, errorHandler,
+    doNotify = !doSyncIconsRepo && !doSyncDevRepo || doSyncIconsRepoAndCreateReview,
+    doSyncIconsRepoAndCreateReview = doSyncIconsRepoAndCreateReview
   )
 }
 

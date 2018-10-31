@@ -130,6 +130,24 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
   }
 }
 
+internal fun commitAndPush(repo: File, branch: String, message: String): String {
+  execute(repo, GIT, "checkout", "-B", branch)
+  execute(repo, GIT, "commit", "-m", message)
+  push(repo, "$branch:$branch")
+  return commitInfo(repo)?.hash ?: error("Unable to read last commit")
+}
+
+internal fun deleteBranch(repo: File, branch: String) = push(repo, ":$branch")
+
+private fun push(repo: File, spec: String) =
+  retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
+    execute(repo, GIT, "push", "origin", spec)
+  }
+
+internal fun getOriginUrl(repo: File) = execute(repo, GIT, "ls-remote", "--get-url", "origin", silent = true)
+  .removeSuffix(System.lineSeparator())
+  .trim()
+
 @Volatile
 private var latestChangeCommits = emptyMap<String, CommitInfo>()
 private val latestChangeCommitsGuard = Any()
@@ -234,10 +252,12 @@ private fun head(repo: File): String {
 }
 
 private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args, silent = true).splitNotBlank("/")
+  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args, silent = true)
+    .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
   return if (output.size >= 5) {
     CommitInfo(
+      repo = repo,
       hash = output[0],
       timestamp = output[1].splitWithSpace()[0].toLong(),
       parents = output[2].splitWithSpace(),
@@ -250,10 +270,11 @@ private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
   else null
 }
 
-internal class CommitInfo(
+internal data class CommitInfo(
   val hash: String,
   val timestamp: Long,
   val subject: String,
   val parents: List<String>,
-  val committerEmail: String
+  val committerEmail: String,
+  val repo: File
 )
