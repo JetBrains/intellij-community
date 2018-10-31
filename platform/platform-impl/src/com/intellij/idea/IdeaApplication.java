@@ -118,7 +118,7 @@ public class IdeaApplication {
       System.exit(Main.NO_GRAPHICS);
     }
 
-    myStarter.premain(args);
+    myStarter.premain(myArgs);
   }
 
   /**
