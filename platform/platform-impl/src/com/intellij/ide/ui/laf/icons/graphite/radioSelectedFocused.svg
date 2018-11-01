@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="22" height="22" viewBox="0 0 22 22">
+  <defs>
+    <circle id="radioselectedfocused-a" cx="11" cy="11" r="11"/>
+    <circle id="radioselectedfocused-d" cx="8" cy="8" r="3"/>
+    <filter id="radioselectedfocused-c" width="133.3%" height="133.3%" x="-16.7%" y="-8.3%" filterUnits="objectBoundingBox">
+      <feOffset dy=".5" in="SourceAlpha" result="shadowOffsetOuter1"/>
+      <feGaussianBlur in="shadowOffsetOuter1" result="shadowBlurOuter1" stdDeviation=".25"/>
+      <feColorMatrix in="shadowBlurOuter1" values="0 0 0 0 0   0 0 0 0 0   0 0 0 0 0  0 0 0 0.31 0"/>
+    </filter>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <mask id="radioselectedfocused-b" fill="#fff">
+      <use xlink:href="#radioselectedfocused-a"/>
+    </mask>
+    <g fill="#A6A6A6" fill-opacity=".5" mask="url(#radioselectedfocused-b)">
+      <rect width="22" height="22"/>
+    </g>
+    <g transform="translate(3 3)">
+      <circle cx="8" cy="8" r="7.75" fill="#999A9E" stroke="#000" stroke-opacity=".04" stroke-width=".5"/>
+      <use fill="#000" filter="url(#radioselectedfocused-c)" xlink:href="#radioselectedfocused-d"/>
+      <use fill="#FFF" xlink:href="#radioselectedfocused-d"/>
+    </g>
+  </g>
+</svg>
