@@ -3,11 +3,13 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ReferenceExpressionTest
 import org.junit.Test
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_INTEGER
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_META_CLASS
 
 @CompileStatic
@@ -15,7 +17,7 @@ class MapPropertyTest extends GroovyLatestTest implements ReferenceExpressionTes
 
   @Test
   void 'arbitrary property in instance context'() {
-    referenceExpressionTest 'new HashMap<String, Integer>().foo', null, JAVA_LANG_INTEGER
+    referenceExpressionTest 'new HashMap<String, Integer>().foo', GroovyMapProperty, JAVA_LANG_INTEGER
   }
 
   @Test
@@ -25,12 +27,12 @@ class MapPropertyTest extends GroovyLatestTest implements ReferenceExpressionTes
 
   @Test
   void 'class property in instance context'() {
-    referenceExpressionTest 'new HashMap<String, Integer>().class', null, JAVA_LANG_INTEGER
+    referenceExpressionTest 'new HashMap<String, Integer>().class', GroovyMapProperty, JAVA_LANG_INTEGER
   }
 
   @Test
   void 'class property in raw instance context'() {
-    referenceExpressionTest 'new HashMap().class', null, null
+    referenceExpressionTest 'new HashMap().class', GroovyMapProperty, JAVA_LANG_OBJECT
   }
 
   @Test
@@ -40,7 +42,7 @@ class MapPropertyTest extends GroovyLatestTest implements ReferenceExpressionTes
 
   @Test
   void 'metaClass property in instance context'() {
-    referenceExpressionTest 'new HashMap().metaClass', null, null
+    referenceExpressionTest 'new HashMap().metaClass', GroovyMapProperty, JAVA_LANG_OBJECT
   }
 
   @Test
@@ -50,11 +52,11 @@ class MapPropertyTest extends GroovyLatestTest implements ReferenceExpressionTes
 
   @Test
   void 'class property on empty map literal'() {
-    referenceExpressionTest '[:].class', null, null
+    referenceExpressionTest '[:].class', GroovyMapProperty, JAVA_LANG_OBJECT
   }
 
   @Test
   void 'class property on map literal'() {
-    referenceExpressionTest '[class : 1].class', null, JAVA_LANG_INTEGER
+    referenceExpressionTest '[class : 1].class', GroovyMapProperty, JAVA_LANG_INTEGER
   }
 }

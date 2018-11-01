@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -220,6 +221,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     else if (element instanceof PsiVariable) {
       return GroovyResolveKind.VARIABLE;
     }
+    else if (element instanceof GroovyProperty) {
+      return GroovyResolveKind.PROPERTY;
+    }
     else {
       return null;
     }
@@ -227,14 +231,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @NotNull
   protected List<GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
+    List<GroovyResolveResult> results = new SmartList<>(myCandidates.get(kind));
     if (kind == GroovyResolveKind.PROPERTY) {
-      final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
       myAccessorProcessors.forEach(it -> results.addAll(it.getResults()));
-      return results;
     }
-    else {
-      return new SmartList<>(myCandidates.get(kind));
-    }
+    return results;
   }
 
   @NotNull

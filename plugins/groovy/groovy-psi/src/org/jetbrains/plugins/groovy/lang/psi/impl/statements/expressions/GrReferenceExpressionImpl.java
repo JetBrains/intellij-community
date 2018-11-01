@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -17,7 +16,6 @@ import gnu.trove.THashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -37,10 +35,14 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.*;
+import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
@@ -72,29 +74,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private final Lazy<GroovyReference> myLValueReference = lazy(
     () -> isLValue(this) ? new GrLValueExpressionReference(this) : null
   );
-
-  @NotNull
-  private static List<GroovyResolveResult> filterMembersFromSuperClasses(Collection<GroovyResolveResult> results) {
-    List<GroovyResolveResult> filtered = new ArrayList<>();
-    for (GroovyResolveResult result : results) {
-      final PsiElement element = result.getElement();
-      if (element instanceof PsiMember) {
-        if (((PsiMember)element).hasModifierProperty(PsiModifier.PRIVATE)) continue;
-        final PsiClass containingClass = ((PsiMember)element).getContainingClass();
-        if (containingClass != null) {
-          if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_MAP)) continue;
-          final String name = containingClass.getQualifiedName();
-          if (name != null && name.startsWith("java.")) continue;
-          if (containingClass.getLanguage() != GroovyLanguage.INSTANCE &&
-              !InheritanceUtil.isInheritor(containingClass, GroovyCommonClassNames.GROOVY_OBJECT)) {
-            continue;
-          }
-        }
-      }
-      filtered.add(result);
-    }
-    return filtered;
-  }
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
@@ -198,10 +177,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
-      return getTypeFromMapAccess(this);
-    }
-
     PsiType result = getNominalTypeInner(resolved);
     if (result == null) return null;
 
@@ -211,6 +186,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private PsiType getNominalTypeInner(@Nullable PsiElement resolved) {
+    if (resolved instanceof GroovyProperty) {
+      return ((GroovyProperty)resolved).getPropertyType();
+    }
+
     if (resolved == null && !"class".equals(getReferenceName())) {
       resolved = resolve();
     }
@@ -435,22 +414,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         GrExpression qualifier = getQualifier();
         if (qualifier == null || qualifier.getType() == null) return Collections.emptyList();
       }
-      final Collection<GroovyResolveResult> results = resolveReferenceExpression(this, forceRValue, incompleteCode);
-      if (results.isEmpty()) {
-        return Collections.emptyList();
-      }
-      else if (!ResolveUtil.canResolveToMethod(this)) {
-        if (!ResolveUtil.mayBeKeyOfMap(this)) {
-          return results;
-        }
-        else {
-          //filter out all members from super classes. We should return only accessible members from map classes
-          return filterMembersFromSuperClasses(results);
-        }
-      }
-      else {
-        return results;
-      }
+      return resolveReferenceExpression(this, forceRValue, incompleteCode);
     }
     finally {
       final long time = ResolveProfiler.finish();

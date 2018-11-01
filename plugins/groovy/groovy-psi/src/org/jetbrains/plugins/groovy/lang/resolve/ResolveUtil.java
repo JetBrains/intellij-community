@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStaticChecker;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
@@ -625,35 +626,14 @@ public class ResolveUtil {
     return processor.getCandidates();
   }
 
-  public static boolean isDefinitelyKeyOfMap(GrReferenceExpression ref) {
-    final GrExpression qualifier = getSelfOrWithQualifier(ref);
-    if (qualifier == null) return false;
-    //key in 'java.util.Map.key' is not access to map, it is access to static property of field
-    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
-    if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
-
-    final PsiType type = qualifier.getType();
-    if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP)) return false;
-
-    final String qname = TypesUtil.getQualifiedName(type);
-    return !GroovyCommonClassNames.GROOVY_UTIL_CONFIG_OBJECT.equals(qname);
-  }
-
   public static boolean isKeyOfMap(GrReferenceExpression ref) {
     if (!(ref.getParent() instanceof GrIndexProperty) && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCall(ref)) return false;
-    if (ref.multiResolve(false).length > 0) return false;
-    return mayBeKeyOfMap(ref);
-  }
-
-  public static boolean mayBeKeyOfMap(GrReferenceExpression ref) {
-    final GrExpression qualifier = getSelfOrWithQualifier(ref);
-    if (qualifier == null) return false;
-    if (qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass) return false;
+    // TODO separate element for spread expression
     if (ref.getDotTokenType() == GroovyTokenTypes.mSPREAD_DOT) return false;
-    return InheritanceUtil.isInheritor(qualifier.getType(), CommonClassNames.JAVA_UTIL_MAP);
+    return ref.resolve() instanceof GroovyMapProperty;
   }
 
-
+  @Deprecated
   @Nullable
   public static GrExpression getSelfOrWithQualifier(GrReferenceExpression ref) {
     final GrExpression qualifier = ref.getQualifierExpression();
