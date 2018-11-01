@@ -123,6 +123,27 @@ public class GlobalSearchScopesCore {
     public boolean isSearchInLibraries() {
       return true; //TODO (optimization?)
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      FilterScopeAdapter adapter = (FilterScopeAdapter)o;
+
+      if (!mySet.equals(adapter.mySet)) return false;
+      if (!myManager.equals(adapter.myManager)) return false;
+
+      return true;
+    }
+
+    @Override
+    protected int calcHashCode() {
+      int result = super.calcHashCode();
+      result = 31 * result + mySet.hashCode();
+      result = 31 * result + myManager.hashCode();
+      return result;
+    }
   }
 
   private static class ProductionScopeFilter extends GlobalSearchScope {
@@ -255,7 +276,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return myDirectory.hashCode() *31 + (myWithSubdirectories?1:0);
     }
 
@@ -353,7 +374,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       int result = myDirectories.hashCode();
       result = result * 31 + myDirectoriesWithSubdirectories.hashCode();
       return result;

@@ -203,7 +203,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return 31 * myModule.hashCode() + myOptions;
   }
 

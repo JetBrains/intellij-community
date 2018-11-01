@@ -470,7 +470,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return 31 * myScope1.hashCode() + myScope2.hashCode();
     }
 
@@ -576,7 +576,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return Arrays.hashCode(myScopes);
     }
 
@@ -665,8 +665,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
-      int result = super.hashCode();
+    public int calcHashCode() {
+      int result = super.calcHashCode();
       result = 31 * result + Arrays.hashCode(myFileTypes);
       return result;
     }
@@ -815,7 +815,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return myFiles.hashCode();
     }
 
