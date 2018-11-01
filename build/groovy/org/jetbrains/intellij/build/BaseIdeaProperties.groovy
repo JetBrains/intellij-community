@@ -137,26 +137,27 @@ abstract class BaseIdeaProperties extends ProductProperties {
     modulesToCompileTests = ["intellij.platform.jps.build"]
     productLayout.buildAllCompatiblePlugins = true
     productLayout.compatiblePluginsToIgnore = [
+      /* Internal plugins */
       "intellij.akka",
-      "intellij.changesManager",
-      "intellij.chronon.me",
-      "intellij.cidr.externalSystem",
-      "intellij.chronon",
-      "intellij.flex.uiDesigner.tests",
-      "intellij.php.workshop",
-      "intellij.html.quirksmode",
-      "intellij.shortcutPromoter",
-      "intellij.flex.profiler",
-      "intellij.kotlinNative.platformDeps",
-      "intellij.clion.plugin",
-
       "intellij.asp",
-      "intellij.play",
-      "intellij.java.coverage.emma",
+      "intellij.cidr.externalSystem",
+      "intellij.changesManager",
+      "intellij.chronon",
+      "intellij.chronon.me",
+      "intellij.flex.profiler",
+      "intellij.flex.uiDesigner.tests",
       "intellij.haml",
-      "intellij.tasks.timeTracking",
-      "intellij.restClient",
+      "intellij.html.quirksmode",
+      "intellij.java.coverage.emma",
+      "intellij.kotlinNative.platformDeps",
       "intellij.maven.ext",
+      "intellij.play",
+      "intellij.restClient",
+      "intellij.shortcutPromoter",
+      "intellij.tasks.timeTracking",
+
+      /* CLion plugin until it's internal */
+      "intellij.clion.plugin",
 
       /* PHPStorm related plugins */
       "intellij.apacheConfig",
@@ -174,6 +175,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.php.docker",
       "intellij.php.impl",
       "intellij.php.remoteInterpreter",
+      "intellij.php.workshop",
       "intellij.twig",
       "intellij.wordPress",
     ]
