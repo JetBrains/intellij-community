@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.util;
 import com.intellij.execution.console.CustomizableConsoleFoldingBean;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
@@ -16,6 +17,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@SkipSlowTestLocally
 public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
