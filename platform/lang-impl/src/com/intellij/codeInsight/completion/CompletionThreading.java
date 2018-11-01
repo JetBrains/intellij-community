@@ -93,8 +93,13 @@ class AsyncCompletion extends CompletionThreadingBase {
         startSemaphore.up();
         ProgressManager.checkCanceled();
         runnable.run();
-      } catch (ProcessCanceledException ignored) {
       }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Exception e) {
+        return e;
+      }
+      return null;
     }, progressIndicator));
     startSemaphore.waitFor();
     return future;

@@ -57,6 +57,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -265,7 +266,7 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
+    Future<?> future = indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
       CompletionParameters parameters = prepareCompletionParameters(initContext, indicator);
       if (parameters != null) {
         indicator.runContributors(initContext);
@@ -279,6 +280,7 @@ public class CodeCompletionHandlerBase {
     int timeout = calcSyncTimeOut(startingTime);
     indicator.makeSureLookupIsShown(timeout);
     if (indicator.blockingWaitForFinish(timeout)) {
+      checkForExceptions(future);
       try {
         indicator.getLookup().refreshUi(true, false);
         completionFinished(indicator, hasModifiers);
@@ -293,6 +295,19 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
     indicator.showLookup();
+  }
+
+  private static void checkForExceptions(Future<?> future) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      try {
+        if (future.get() instanceof Exception) {
+          LOG.error(future.get());
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   @Nullable
