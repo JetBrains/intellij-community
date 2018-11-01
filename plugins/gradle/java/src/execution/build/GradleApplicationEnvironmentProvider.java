@@ -163,6 +163,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       // @formatter:on
 
       gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName);
 
       // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
       gradleRunConfiguration.setBeforeRunTasks(RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()

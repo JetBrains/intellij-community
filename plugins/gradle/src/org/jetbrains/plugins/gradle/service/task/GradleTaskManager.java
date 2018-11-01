@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfigurat
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -63,7 +64,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
   private static final Logger LOG = Logger.getInstance(GradleTaskManager.class);
   public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
-
+  public static final Key<String> INIT_SCRIPT_PREFIX_KEY = Key.create("INIT_SCRIPT_PREFIX_KEY");
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
   private final Map<ExternalSystemTaskId, CancellationTokenSource> myCancellationMap = ContainerUtil.newConcurrentMap();
@@ -166,19 +167,28 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       });
     }
 
-    final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
-    if (StringUtil.isNotEmpty(initScript)) {
-      ContainerUtil.addAll(
-        initScripts,
-        "//-- Additional script",
-        initScript,
-        "//");
-    }
-
     if (!initScripts.isEmpty()) {
       try {
-        File tempFile =
-          GradleExecutionHelper.writeToFileGradleInitScript(StringUtil.join(initScripts, SystemProperties.getLineSeparator()));
+        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(
+          StringUtil.join(initScripts, SystemProperties.getLineSeparator()), "ijresolvers");
+        effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+      }
+      catch (IOException e) {
+        throw new ExternalSystemException(e);
+      }
+    }
+
+    final String initScript = effectiveSettings.getUserData(INIT_SCRIPT_KEY);
+    if (StringUtil.isNotEmpty(initScript)) {
+      try {
+        String initScriptPrefix = effectiveSettings.getUserData(INIT_SCRIPT_PREFIX_KEY);
+        if (StringUtil.isEmpty(initScriptPrefix)) {
+          initScriptPrefix = "ijmiscinit";
+        }
+        else {
+          initScriptPrefix = FileUtil.sanitizeFileName(initScriptPrefix);
+        }
+        File tempFile = GradleExecutionHelper.writeToFileGradleInitScript(initScript, initScriptPrefix);
         effectiveSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
       }
       catch (IOException e) {
