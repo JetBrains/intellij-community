@@ -10,7 +10,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
@@ -616,14 +615,6 @@ set<caret>Foo(2)
     assertInstanceOf resolve("A.groovy"), GrAccessorMethod
   }
 
-  void testMetaClassIsNotResolvedWithMapQualifier() {
-    assertNull resolve("A.groovy")
-  }
-
-  void testMetaClassIsResolvesWithMapQualifier() {
-    assertInstanceOf resolve("A.groovy"), PsiMethod
-  }
-
   void testStaticFieldOfInterface() {
     final GroovyResolveResult result = advancedResolve("A.groovy")
     assertTrue result.staticsOK
@@ -722,57 +713,6 @@ def foo() { println <caret>aaa }
 def config = new ConfigObject()
 print config.config<caret>File''')
     assert ref.resolve()
-  }
-
-  void testDontResolvePropertyInMap() {
-    def ref = configureByText('''
-def map = new HashMap()
-print map.cla<caret>ss''')
-
-    assert !ref.resolve()
-  }
-
-  void 'test custom map properties'() {
-    myFixture.addFileToProject 'classes.groovy', '''\
-class Pojo {
-    def pojoProperty
-    def anotherPojoProperty
-}
-
-class SomeMapClass extends HashMap<String, Pojo> {
-
-    public static final CONSTANT = 1
-
-    static class Inner {
-        public static final INNER_CONSTANT = 4
-    }
-}
-'''
-    (configureByText('SomeMapClass.CONST<caret>ANT').element as GrReferenceExpression).with { ref ->
-      assert ref.resolve() instanceof GrField
-      assert ref.type.equalsToText('java.lang.Integer')
-    }
-    (configureByText('SomeMapClass.Inn<caret>er').element as GrReferenceExpression).with { ref ->
-      assert ref.resolve() instanceof GrClassDefinition
-      assert ref.type.equalsToText('java.lang.Class<SomeMapClass.Inner>')
-    }
-    assert configureByText('SomeMapClass.Inner.INNER_<caret>CONSTANT').resolve() instanceof GrField
-
-    assert !configureByText('def m = new SomeMapClass(); m.CONS<caret>TANT').resolve()
-    assert !configureByText('def m = new SomeMapClass(); m.In<caret>ner').resolve()
-
-    configureByText('def m = new SomeMapClass(); m.CONSTANT.pojo<caret>Property').resolve().with { resolved ->
-      assert resolved instanceof GrAccessorMethod
-      assert resolved.containingClass.name == 'Pojo'
-    }
-    configureByText('def m = new SomeMapClass(); m.Inner.anotherPojo<caret>Property').resolve().with { resolved ->
-      assert resolved instanceof GrAccessorMethod
-      assert resolved.containingClass.name == 'Pojo'
-    }
-    configureByText('def <T extends SomeMapClass> void foo(T a) { a.CONS<caret>TANT }').with { ref ->
-      assert !ref.resolve()
-      assert (ref as GrReferenceExpression).type.equalsToText('Pojo')
-    }
   }
 
   void testResolveInsideWith0() {
