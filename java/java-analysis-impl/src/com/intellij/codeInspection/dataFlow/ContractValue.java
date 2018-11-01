@@ -149,9 +149,9 @@ public abstract class ContractValue {
       }
     };
     static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), "present");
+      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, true), "present");
     static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
+      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
