@@ -216,17 +216,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
 
-    for (ASTNode stringNode : node.getStringNodes()) {
-      final String text = stringNode.getText();
-      final int prefixLength = PyStringLiteralUtil.getPrefixLength(text);
-      final String prefix = text.substring(0, prefixLength).toUpperCase();
+    for (PyStringElement element : node.getStringElements()) {
+      final String prefix = element.getPrefix().toUpperCase();
       if (prefix.isEmpty()) continue;
 
-      final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + prefixLength);
+      final int elementStart = element.getTextOffset();
       registerForAllMatchingVersions(level -> !getSupportedStringPrefixes(level).contains(prefix),
                                      " not support a '" + prefix + "' prefix",
                                      node,
-                                     range,
+                                     TextRange.create(elementStart, elementStart + element.getPrefixLength()),
                                      new RemovePrefixQuickFix(prefix),
                                      true);
     }
