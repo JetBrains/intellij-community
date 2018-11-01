@@ -103,4 +103,14 @@ public abstract class PyInspectionExtension {
   public boolean ignoreInitNewSignatures(@NotNull PyFunction original, @NotNull PyFunction complementary) {
     return false;
   }
+
+  /**
+   * Checks whether statement that probably has no effect should not be treated as violation.
+   *
+   * @param expressionStatement statement being analyzed
+   * @return true if no effect statement could be ignored
+   */
+  public boolean ignoreNoEffectStatement(@NotNull PyExpressionStatement expressionStatement) {
+    return false;
+  }
 }
