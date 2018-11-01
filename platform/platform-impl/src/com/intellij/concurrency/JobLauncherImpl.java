@@ -72,6 +72,9 @@ public class JobLauncherImpl extends JobLauncher {
         }
         catch (TimeoutException ignored) {
         }
+        catch (ExecutionException e) {
+          throw e.getCause();
+        }
       }
       if (applier.throwable != null) {
         throw applier.throwable;
