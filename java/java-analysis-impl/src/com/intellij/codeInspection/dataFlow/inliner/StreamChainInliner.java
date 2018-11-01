@@ -262,12 +262,12 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
     void iteration(CFGBuilder builder) {
-      DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+      DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
       if (myFunction != null) {
         builder.push(myResult)
                .push(presentOptional)
@@ -291,7 +291,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
@@ -303,7 +303,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       myComparatorModel.invoke(builder);
-      builder.assignAndPop(myResult, builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true));
+      builder.assignAndPop(myResult, DfaOptionalSupport.getOptionalValue(builder.getFactory(), true));
     }
 
     @Override
