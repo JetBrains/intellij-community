@@ -316,13 +316,38 @@ def module_hash(mod_qname, mod_path):
         return hashlib.sha256(identity).hexdigest()
 
 
-# command-line interface
-# noinspection PyBroadException
-def should_update(skeleton_path, mod_path):
-    # TODO check generator version
+def version_to_tuple(version):
+    return tuple(map(int, version.split('.')))
+
+
+def read_generator_version(skeleton_file):
+    for line in skeleton_file:
+        if not line.startswith('#'):
+            break
+
+        m = GENERATOR_VERSION_LINE.match(line)
+        if m:
+            return version_to_tuple(m.group('version'))
+    return None
+
+
+def should_update_cache(cache_dir, mod_qname):
+    mod_cache_base = os.path.join(cache_dir, *mod_qname.split('.'))
+    mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
+    mod_cache_file = mod_cache_base + '.py'
+    for path in (mod_cache_pkg, mod_cache_file):
+        try:
+            with fopen(path, 'r') as f:
+                used_version = read_generator_version(f)
+                if used_version and used_version >= version_to_tuple(VERSION):
+                    return False
+        except IOError:
+            continue
     return True
 
 
+# command-line interface
+# noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
@@ -340,12 +365,11 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
         global_cache_dir = os.path.join(python_stubs_dir, 'cache')
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
-        if os.path.exists(mod_cache_dir):
-            shutil.rmtree(mod_cache_dir)
-        os.makedirs(mod_cache_dir)
+        if should_update_cache(mod_cache_dir, name):
+            note('Updating cache for %s at %r', name, mod_cache_dir)
+            delete(mod_cache_dir)
+            os.makedirs(mod_cache_dir)
 
-
-        if not os.path.exists(mod_cache_dir) or should_update(mod_cache_dir, name):
             old_modules = list(sys.modules.keys())
             imported_module_names = set()
 
@@ -394,6 +418,10 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
                         finally:
                             action("closing %r", mod_cache_dir)
+        else:
+            note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
+            copy(mod_cache_dir, sdk_skeletons_dir, content=True)
+
     except:
         exctype, value = sys.exc_info()[:2]
         msg = "Failed to process %r while %s: %s"

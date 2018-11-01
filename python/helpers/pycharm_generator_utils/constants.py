@@ -6,7 +6,7 @@ import string
 import time
 
 # !!! Don't forget to update VERSION and required_gen_version if necessary !!!
-VERSION = "1.147"
+VERSION = "1.148"
 
 OUT_ENCODING = 'utf-8'
 
@@ -804,3 +804,5 @@ CLASS_ATTR_BLACKLIST = [
     'google.protobuf.pyext._message.Message._extensions_by_number',
     'panda3d.core.ExecutionEnvironment.environment_variables',
 ]
+
+GENERATOR_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')

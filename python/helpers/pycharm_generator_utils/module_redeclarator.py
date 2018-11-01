@@ -1,6 +1,5 @@
-import shutil
-
 from pycharm_generator_utils.util_methods import *
+from pycharm_generator_utils.util_methods import copy
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
 
@@ -141,7 +140,6 @@ class ModuleRedeclarator(object):
 
                 init.write(data)
                 self.footer_buf.flush(init)
-            copy_target = os.path.join(self.cache_dir, qname_parts[0])
         else:
             last_pkg_dir = build_pkg_structure(self.cache_dir, '.'.join(qname_parts[:-1]))
             skeleton_path = os.path.join(last_pkg_dir, qname_parts[-1] + '.py')
@@ -153,24 +151,9 @@ class ModuleRedeclarator(object):
                     buf.flush(mod)
 
                 self.footer_buf.flush(mod)
-            copy_target = skeleton_path
 
         if self.sdk_dir:
-            copy_dst = os.path.join(self.sdk_dir, os.path.basename(copy_target))
-            self.copy(copy_target, copy_dst)
-
-    def copy(self, src, dst):
-        if os.path.isdir(src):
-            shutil.copytree(src, dst)
-        else:
-            parents = os.path.dirname(dst)
-            if not os.path.exists(parents):
-                os.makedirs(parents)
-            shutil.copy2(src, dst)
-
-
-
-    # TODO copy cache target back to SDK specific skeletons directory
+            copy(self.cache_dir, self.sdk_dir, content=True)
 
     # Some builtin classes effectively change __init__ signature without overriding it.
     # This callable serves as a placeholder to be replaced via REDEFINED_BUILTIN_SIGS

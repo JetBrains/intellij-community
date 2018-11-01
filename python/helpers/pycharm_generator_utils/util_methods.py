@@ -1,5 +1,8 @@
 import ast
+import errno
 import keyword
+import shutil
+from contextlib import contextmanager
 
 from pycharm_generator_utils.constants import *
 
@@ -737,3 +740,39 @@ def isidentifier(s):
                 not s[:1].isdigit() and
                 "-" not in s and
                 " " not in s)
+
+
+@contextmanager
+def suppressing_os_errors(*errno):
+    try:
+        yield
+    except OSError as e:
+        if e.errno not in errno:
+            raise
+
+
+def copy(src, dst, content=False):
+    if os.path.isdir(src):
+        if not content:
+            shutil.copytree(src, dst)
+        else:
+            with suppressing_os_errors(errno.EEXIST):
+                os.makedirs(dst)
+            for child in os.listdir(src):
+                copy(os.path.join(src, child), os.path.join(dst, child))
+    else:
+        with suppressing_os_errors(errno.EEXIST):
+            os.makedirs(os.path.dirname(dst))
+        shutil.copy2(src, dst)
+
+
+def delete(path, content=False):
+    with suppressing_os_errors(errno.ENOENT):
+        if os.path.isdir(path):
+            if not content:
+                shutil.rmtree(path)
+            else:
+                for child in os.listdir(path):
+                    delete(child)
+        else:
+            os.remove(path)
