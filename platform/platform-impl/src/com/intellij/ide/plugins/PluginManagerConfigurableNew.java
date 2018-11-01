@@ -772,7 +772,7 @@ public class PluginManagerConfigurableNew
 
     myTrendingPanel.getEmptyText().setText("Marketplace plugins are not loaded.")
       .appendSecondaryText("Check the internet connection and ", StatusText.DEFAULT_ATTRIBUTES, null)
-      .appendSecondaryText("refresh", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myTrendingRunnable.run());
+      .appendSecondaryText("refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myTrendingRunnable.run());
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
     return createScrollPane(myTrendingPanel, false);
@@ -904,7 +904,7 @@ public class PluginManagerConfigurableNew
     };
 
     myUpdatesPanel.getEmptyText().setText("No updates available.")
-      .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myUpdatesRunnable.run());
+      .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myUpdatesRunnable.run());
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
     return createScrollPane(myUpdatesPanel, false);
