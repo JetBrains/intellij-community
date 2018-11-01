@@ -41,7 +41,7 @@ import java.util.concurrent.Future;
 /**
  * @author Dmitry Avdeev
  */
-public class PersistenceStressTest extends LightPlatformCodeInsightFixtureTestCase {
+public class PersistencePerformanceTest extends LightPlatformCodeInsightFixtureTestCase {
   private final ExecutorService myThreadPool = PooledThreadExecutor.INSTANCE;
   private final List<PersistentHashMap<String, Record>> myMaps = new ArrayList<>();
   private final List<String> myKeys = new ArrayList<>();
