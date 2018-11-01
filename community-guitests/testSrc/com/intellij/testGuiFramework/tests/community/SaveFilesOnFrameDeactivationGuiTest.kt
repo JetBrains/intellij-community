@@ -18,6 +18,7 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Timeout
 import org.junit.Test
 import java.io.File
+import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 import javax.swing.JButton
 import kotlin.test.assertEquals
@@ -116,7 +117,9 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     val dummyUIAppClassStr: String = DummyUIApp::class.java.name.replace(".", "/") + ".class"
     val cl = this.javaClass.classLoader.getResource(dummyUIAppClassStr)
     val classpath = File(cl.toURI()).path.dropLast(dummyUIAppClassStr.length)
-    return ProcessBuilder("java", "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
+    val javaPath = System.getenv("JAVA_HOME") ?: System.getProperty("java.home") ?: throw Exception("Unable to locate java")
+    val javaFilePath = Paths.get(javaPath, "bin", "java").toFile().path
+    return ProcessBuilder(javaFilePath, "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
   }
 
   private fun ensureSaveFilesOnFrameDeactivation() {
