@@ -9,7 +9,7 @@ from pycharm_generator_utils.util_methods import *
 
 # TODO: Move all CLR-specific functions to clr_tools
 
-debug_mode = False
+debug_mode = True
 
 
 def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_dir=None):
@@ -309,10 +309,11 @@ def module_hash(mod_qname, mod_path):
 
     # Hash the content
     else:
-        major_version = '.'.join(sys.version_info[:2])
+        major_version = '.'.join(map(str, sys.version_info[:2]))
         module = __import__(mod_qname)
         defined_names = ':'.join(sorted(dir(module)))
-        return hashlib.sha256(major_version + defined_names).hexdigest()
+        identity = (major_version + defined_names).encode(encoding=OUT_ENCODING)
+        return hashlib.sha256(identity).hexdigest()
 
 
 # command-line interface
