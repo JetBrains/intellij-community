@@ -40,7 +40,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
 public class ExecutionUtil {
-  static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
+  private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
 
