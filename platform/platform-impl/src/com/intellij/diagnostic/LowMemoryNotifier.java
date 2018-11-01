@@ -22,12 +22,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.util.LowMemoryWatcher.LowMemoryWatcherType.ONLY_AFTER_GC;
 
 public class LowMemoryNotifier implements Disposable {
-  private static final int UI_RESPONSE_LOGGING_INTERVAL_MS = 100_000;
   private static final int TOLERABLE_UI_LATENCY = 100;
 
   private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::onLowMemorySignalReceived, ONLY_AFTER_GC);
   private final AtomicBoolean myNotificationShown = new AtomicBoolean();
-  private volatile long myPreviousLoggedUIResponse = 0;
 
   public LowMemoryNotifier() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener() {
@@ -43,11 +41,6 @@ public class LowMemoryNotifier implements Disposable {
 
       @Override
       public void uiResponded(long latencyMs) {
-        final long currentTime = System.currentTimeMillis();
-        if (currentTime - myPreviousLoggedUIResponse >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
-          myPreviousLoggedUIResponse = currentTime;
-          FeatureUsageLogger.INSTANCE.log("performance", "ui.latency", Collections.singletonMap("duration.ms", latencyMs));
-        }
         if (latencyMs >= TOLERABLE_UI_LATENCY) {
           FeatureUsageLogger.INSTANCE.log("performance", "ui.lagging", Collections.singletonMap("duration.ms", latencyMs));
         }
