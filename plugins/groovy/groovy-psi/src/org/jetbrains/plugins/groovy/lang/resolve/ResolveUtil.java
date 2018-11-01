@@ -719,7 +719,7 @@ public class ResolveUtil {
 
     //search for getters
     for (PropertyKind kind : Arrays.asList(PropertyKind.GETTER, PropertyKind.BOOLEAN_GETTER)) {
-      PropertyProcessor propertyProcessor = new PropertyProcessor(methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
+      AccessorProcessor propertyProcessor = new AccessorProcessor(methodName, kind, () -> PsiType.EMPTY_ARRAY, place);
       processAllDeclarations(thisType, propertyProcessor, state, place);
       final List<GroovyResolveResult> candidates = propertyProcessor.getResults(); //can be only one candidate
       final List<GroovyResolveResult> applicable = new ArrayList<>();
