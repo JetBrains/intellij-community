@@ -278,15 +278,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
-  @Contract(value = "_ -> fail")
-  public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
-    TIntHashSet hashCodes = new TIntHashSet();
-    for (Project project : e.getLeakedProjects()) {
-      hashCodes.add(System.identityHashCode(project));
-    }
-
-    String dumpPath = FileUtil.getTempDirectory() + "/leakedProjects.hprof.zip";
-    System.out.println("##teamcity[publishArtifacts 'leakedProjects.hprof.zip']");
+  public static String publishHeapDump(@NotNull String fileNamePrefix) {
+    String fileName = fileNamePrefix + ".hprof.zip";
+    String dumpPath = FileUtil.getTempDirectory() + "/" + fileName;
+    System.out.println("##teamcity[publishArtifacts '" + fileName + "']");
     try {
       FileUtil.delete(new File(dumpPath));
       MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
@@ -294,6 +289,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception ex) {
       ex.printStackTrace();
     }
+    return dumpPath;
+  }
+
+  @Contract(value = "_ -> fail")
+  public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
+    TIntHashSet hashCodes = new TIntHashSet();
+    for (Project project : e.getLeakedProjects()) {
+      hashCodes.add(System.identityHashCode(project));
+    }
+
+    String dumpPath = publishHeapDump("leakedProjects");
 
     StringBuilder leakers = new StringBuilder();
     leakers.append("Too many projects leaked: \n");

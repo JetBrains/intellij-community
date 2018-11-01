@@ -44,7 +44,10 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     });
 
     GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(virtualFile));
+    if (FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null) {
+      String dumpPath = publishHeapDump("EditorHistoryManagerTest");
+      fail("Document wasn't collected, see heap dump at " + dumpPath);
+    }
 
     openProjectPerformTaskCloseProject(dir, project -> {});
 
