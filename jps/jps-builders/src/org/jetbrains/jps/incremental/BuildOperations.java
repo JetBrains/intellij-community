@@ -59,14 +59,16 @@ public class BuildOperations {
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
-    else if ((context.getScope().isBuildForced(target) && !FSOperations.isMarkedDirty(context, target)) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
-      initTargetFSState(context, target, true);
-      if (!context.getScope().isBuildForced(target)) {
-        // case when target build is forced, is handled separately
-        IncProjectBuilder.clearOutputFiles(context, target);
+    else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
+      if (!FSOperations.isMarkedDirty(context, target)) { // do not perform the same scan twice
+        initTargetFSState(context, target, true);
+        if (!context.getScope().isBuildForced(target)) {
+          // case when target build is forced, is handled separately
+          IncProjectBuilder.clearOutputFiles(context, target);
+        }
+        pd.dataManager.cleanTargetStorages(target);
+        configuration.save(context);
       }
-      pd.dataManager.cleanTargetStorages(target);
-      configuration.save(context);
     }
     else if (!pd.fsState.isInitialScanPerformed(target)) {
       initTargetFSState(context, target, false);
