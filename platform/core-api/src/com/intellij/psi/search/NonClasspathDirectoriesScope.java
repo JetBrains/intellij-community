@@ -84,7 +84,7 @@ public class NonClasspathDirectoriesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return myRoots.hashCode();
   }
 

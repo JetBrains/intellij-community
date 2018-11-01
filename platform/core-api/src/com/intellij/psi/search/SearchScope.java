@@ -11,17 +11,32 @@ import javax.swing.Icon;
 public abstract class SearchScope {
   private static int hashCodeCounter;
 
+  private transient int myHashCode;
+  // to avoid System.identityHashCode() which was allegedly slow
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private final int myHashCode = hashCodeCounter++;
+  private final int myDefaultHashCode = ++hashCodeCounter;
 
   /**
-   * Overridden for performance reason. Object.hashCode() is native method and becomes a bottleneck when called often.
-   *
-   * @return hashCode value semantically identical to one from Object but not native
+   * Do not override this method because it would disable hash code caching.
+   * To provide your own hash code please override {@link #calcHashCode()} instead.
+   * @deprecated This is not the <s>droid</s> method that you should override, please override {@link #calcHashCode()} instead.
    */
+  @Deprecated // to discourage overriding
   @Override
   public int hashCode() {
-    return myHashCode;
+    int hashCode = myHashCode;
+    if (hashCode == 0) {
+      // benign race
+      myHashCode = hashCode = calcHashCode();
+    }
+    return hashCode;
+  }
+
+  /**
+   * To provide your own hash code please override this method instead of <s>{@link #hashCode()}</s> to be able to cache the computed hash code.
+   */
+  protected int calcHashCode() {
+    return myDefaultHashCode;
   }
 
   @NotNull

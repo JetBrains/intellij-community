@@ -152,7 +152,8 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return myModule.equals(moduleWithDependentsScope.myModule);
   }
 
-  public int hashCode() {
+  @Override
+  public int calcHashCode() {
     return myModule.hashCode();
   }
 }
