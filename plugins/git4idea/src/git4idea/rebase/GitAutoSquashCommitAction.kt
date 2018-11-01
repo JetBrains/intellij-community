@@ -2,9 +2,15 @@
 package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.CommitExecutor
+import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.vcs.log.VcsShortCommitDetails
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 
 abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
 
@@ -13,8 +19,30 @@ abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
     val project = e.project!!
 
     val changeList = ChangeListManager.getInstance(project).defaultChangeList
-    CommitChangeListDialog.commitChanges(project, changeList.changes, changeList, null, getCommitMessage(commit))
+    val repository = getRepository(e)
+
+    val gitRepositoryManager = GitRepositoryManager.getInstance(project)
+
+    val changes = changeList.changes.filter {
+      gitRepositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(it)) == repository
+    }
+    CommitChangeListDialog.commitChanges(project,
+                                         changes,
+                                         changes,
+                                         changeList,
+                                         listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~")),
+                                         true,
+                                         null,
+                                         getCommitMessage(commit),
+                                         null,
+                                         true)
   }
 
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String
+
+  class GitRebaseAfterCommitExecutor(val project: Project, val repository: GitRepository, val hash: String) : CommitExecutor {
+    override fun getActionText(): String = "Commit and Rebase..."
+    override fun createCommitSession(): CommitSession = CommitSession.VCS_COMMIT
+    override fun supportsPartialCommit() = true
+  }
 }
