@@ -66,7 +66,7 @@ public class ExtensionLocatorPerformanceTest extends JavaCodeInsightFixtureTestC
     sb.append("<myEp implementation=\"myPkg.MyClass\"/>"); // the only valid target for locating
     sb.append("</extensions>");
 
-    sb.append("  </extensions>\n</idea-plugin>");
+    sb.append("</idea-plugin>");
     return sb.toString();
   }
 }
