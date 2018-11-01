@@ -39,6 +39,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(editor);
       EditorTestUtil.addFoldRegion(editor, 15, 16, ".", true);
       FileEditorManager.getInstance(project).closeFile(virtualFile);
     });
@@ -53,6 +54,7 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor newEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(newEditor);
       assertEquals("[FoldRegion +(15:16), placeholder='.']", Arrays.toString(newEditor.getFoldingModel().getAllFoldRegions()));
     });
   }
