@@ -51,6 +51,7 @@ import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
+import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -187,7 +188,9 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
 
-    if (isNotIdeaProject && !DomUtil.hasXml(ideaPlugin.getVersion())) {
+    if (isNotIdeaProject &&
+        !DomUtil.hasXml(ideaPlugin.getVersion()) &&
+        PluginModuleType.isOfType(module)) {
       holder.createProblem(ideaPlugin, DevKitBundle.message("inspections.plugin.xml.version.must.be.specified"),
                            new AddMissingMainTag("Add <version>", ideaPlugin.getVersion(), ""));
     }
