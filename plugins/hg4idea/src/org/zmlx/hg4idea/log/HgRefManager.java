@@ -36,22 +36,31 @@ import java.awt.*;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
+import static com.intellij.ui.JBColor.namedColor;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class HgRefManager implements VcsLogRefManager {
-  private static final Color CLOSED_BRANCH_COLOR = new JBColor(new Color(0x823139), new Color(0xff5f6f));
-  private static final Color LOCAL_TAG_COLOR = new JBColor(new Color(0x009090), new Color(0x00f3f3));
-  private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x002f90), new Color(0x0055ff));
+  private static final JBColor TIP_COLOR = namedColor("Hg.Log.Ref.Tip", VcsLogStandardColors.Refs.TIP);
+  private static final JBColor HEAD_COLOR = namedColor("Hg.Log.Ref.Head", VcsLogStandardColors.Refs.LEAF);
+  private static final JBColor BRANCH_COLOR = namedColor("Hg.Log.Ref.Branch", VcsLogStandardColors.Refs.BRANCH);
+  private static final JBColor CLOSED_BRANCH_COLOR = namedColor("Hg.Log.Ref.ClosedBranch",
+                                                                new JBColor(new Color(0x823139), new Color(0xff5f6f)));
+  private static final JBColor BOOKMARK_COLOR = namedColor("Hg.Log.Ref.Bookmark", VcsLogStandardColors.Refs.BRANCH_REF);
+  private static final JBColor TAG_COLOR = namedColor("Hg.Log.Ref.Tag", VcsLogStandardColors.Refs.TAG);
+  private static final JBColor LOCAL_TAG_COLOR = namedColor("Hg.Log.Ref.LocalTag",
+                                                            new JBColor(new Color(0x009090), new Color(0x00f3f3)));
+  private static final JBColor MQ_TAG_COLOR = namedColor("Hg.Log.Ref.MqTag",
+                                                         new JBColor(new Color(0x002f90), new Color(0x0055ff)));
 
-  public static final VcsRefType TIP = new SimpleRefType("TIP", true, VcsLogStandardColors.Refs.TIP);
-  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, VcsLogStandardColors.Refs.LEAF);
-  public static final VcsRefType BRANCH = new SimpleRefType("BRANCH", true, VcsLogStandardColors.Refs.BRANCH);
+  public static final VcsRefType TIP = new SimpleRefType("TIP", true, TIP_COLOR);
+  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, HEAD_COLOR);
+  public static final VcsRefType BRANCH = new SimpleRefType("BRANCH", true, BRANCH_COLOR);
   public static final VcsRefType CLOSED_BRANCH = new SimpleRefType("CLOSED_BRANCH", false, CLOSED_BRANCH_COLOR);
-  public static final VcsRefType BOOKMARK = new SimpleRefType("BOOKMARK", true, VcsLogStandardColors.Refs.BRANCH_REF);
-  public static final VcsRefType TAG = new SimpleRefType("TAG", false, VcsLogStandardColors.Refs.TAG);
+  public static final VcsRefType BOOKMARK = new SimpleRefType("BOOKMARK", true, BOOKMARK_COLOR);
+  public static final VcsRefType TAG = new SimpleRefType("TAG", false, TAG_COLOR);
   public static final VcsRefType LOCAL_TAG = new SimpleRefType("LOCAL_TAG", false, LOCAL_TAG_COLOR);
   public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType("MQ_TAG", false, MQ_TAG_COLOR);
 
