@@ -148,6 +148,14 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.kotlinNative.platformDeps",
       "intellij.clion.plugin",
 
+      "intellij.asp",
+      "intellij.play",
+      "intellij.java.coverage.emma",
+      "intellij.haml",
+      "intellij.tasks.timeTracking",
+      "intellij.restClient",
+      "intellij.maven.ext",
+
       /* PHPStorm related plugins */
       "intellij.apacheConfig",
       "intellij.behat",
