@@ -122,7 +122,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     ApplicationManager.getApplication().assertIsDispatchThread();
     myUpdatesQueue.clear();
     myQueuedEquivalences.clear();
-    myRunWhenSmartQueue.clear();
+    // Android Studio: b/79582420 - Wrap in synchronized.
+    synchronized (myRunWhenSmartQueue) {
+      myRunWhenSmartQueue.clear();
+    }
     for (DumbModeTask task : new ArrayList<>(myProgresses.keySet())) {
       cancelTask(task);
       Disposer.dispose(task);
@@ -322,6 +325,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void queueUpdateFinished() {
     if (myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH)) {
+      // Android Studio: b/79582420
+      // There is no tasks to suspend with the current suspender. If the execution reverts to the dumb mode, a new suspender will be
+      // created. The suspender might have already got suspended between the point of the last check cancelled call and this point, however.
+      // It if has happened it will be cleaned up when the suspender is closed on the background process thread.
+      myCurrentSuspender = null; // Android Studio: b/79582420
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> TransactionGuard.getInstance().submitTransaction(myProject, myDumbStartTransaction, this::updateFinished));
     }
@@ -464,9 +472,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void assertWeAreWaitingToFinish() {
-    if (myState.get() != State.WAITING_FOR_FINISH) {
+    // Android Studio: b/79582420 - local variable to report the same state in the exception below.
+    final State state = myState.get();
+    if (state != State.WAITING_FOR_FINISH) {
       Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
-      throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
+      throw new RuntimeExceptionWithAttachments(state.toString(), attachments);
     }
   }
 
@@ -490,7 +500,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    // Only one thread can execute this method at the same time at this point.
+    // Android Studio: b/79582420 try-with-resources to unregister the check-cancelled hook.
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused")) {
     myCurrentSuspender = suspender;
     suspendIfRequested(suspender);
 
@@ -525,7 +537,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       shutdownTracker.unregisterStopperThread(self);
+      // Android Studio: b/79582420
+      // myCurrentSuspender should already be null at this point unless we got here by exception. In any case, the suspender might have
+      // got suspended after the the last dumb task finished (or even after the last check cancelled call). This case is handled by
+      // the ProgressSuspender close() method called at the exit of this try-with-resources block which removes the hook if it has been
+      // previously installed.
       myCurrentSuspender = null;
+    }
     }
   }
 

@@ -31,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class ProgressSuspender {
+// Android Studio: b/79582420 We implement AutoClosable to unregister check-cancelled hook.
+public class ProgressSuspender implements AutoCloseable {
   private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
   public static final Topic<SuspenderListener> TOPIC = Topic.create("ProgressSuspender", SuspenderListener.class);
 
@@ -43,11 +44,14 @@ public class ProgressSuspender {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
+  @NotNull private final ProgressIndicatorEx myAttachedToProgress;  // Android Studio: b/79582420
+  private boolean myClosed;  // Android Studio: b/79582420
 
   private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
+    myAttachedToProgress = progress;  // Android Studio: b/79582420
     myThread = Thread.currentThread();
     myPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
 
@@ -61,6 +65,17 @@ public class ProgressSuspender {
     }.installToProgress(progress);
 
     myPublisher.suspendableProgressAppeared(this);
+  }
+
+  // Android Studio: b/79582420 Implement AutoClosable to unregister the check-cancelled hook.
+  @Override
+  public void close() {
+    synchronized (myLock) {
+      myClosed = true;
+      mySuspended = false;
+      ((ProgressManagerImpl)ProgressManager.getInstance()).removeCheckCanceledHook(myHook);
+    }
+    ((UserDataHolder) myAttachedToProgress).putUserData(PROGRESS_SUSPENDER, null);
   }
 
   public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
@@ -88,7 +103,7 @@ public class ProgressSuspender {
    */
   public void suspendProcess(@Nullable String reason) {
     synchronized (myLock) {
-      if (mySuspended) return;
+      if (mySuspended || myClosed) return;  // Android Studio: b/79582420
 
       mySuspended = true;
       myTempReason = reason;
