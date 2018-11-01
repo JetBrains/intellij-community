@@ -1801,6 +1801,10 @@ public class JBUI {
         return JBColor.namedColor("SearchEverywhere.Advertiser.foreground", JBColor.GRAY);
       }
 
+      public static Border advertiserBorder()  {
+        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.foreground", insetsLeft(8)));
+      }
+
       public static Color advertiserBackground()  {
         return JBColor.namedColor("SearchEverywhere.Advertiser.background", 0xf2f2f2);
       }
