@@ -2,6 +2,7 @@
 package git4idea.ignore
 
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import git4idea.GitUtil
@@ -19,6 +20,7 @@ class GitIgnoredFileTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
+    Registry.get("vcs.ignorefile.generation").setValue(true)
     createRepository(project, projectPath)
     GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
   }
