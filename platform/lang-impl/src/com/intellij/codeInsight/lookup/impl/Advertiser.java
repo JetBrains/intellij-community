@@ -93,6 +93,7 @@ public class Advertiser {
     myComponent.add(new NonOpaquePanel(), gb.next().fillCellHorizontally().weightx(1));
     myComponent.setOpaque(true);
     myComponent.setBackground(JBUI.CurrentTheme.Advertiser.background());
+    myComponent.setBorder(JBUI.CurrentTheme.Advertiser.border());
   }
 
   private void updateAdvertisements() {
@@ -101,11 +102,11 @@ public class Advertiser {
       Pair<String, Color> pair = myTexts.get(myCurrentItem % myTexts.size());
       String text = pair.first;
       myTextPanel.setText(prepareText(text));
-      myComponent.setBackground(pair.second);
+      myComponent.setBackground(pair.second != null ? pair.second : JBUI.CurrentTheme.Advertiser.background());
     }
     else {
       myTextPanel.setText("");
-      myComponent.setBackground(null);
+      myComponent.setBackground(JBUI.CurrentTheme.Advertiser.background());
     }
     myCachedPrefSize = null;
     myComponent.revalidate();
