@@ -1414,17 +1414,19 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
-    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
+                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
                                "&max=" + count);
   }
 
   @NotNull
   private static Url createSearchSuggestUrl(@NotNull String query) {
-    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/searchSuggest?term=" +
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" +
                                URLUtil.encodeURIComponent(query) +
                                "&productCode=" +
-                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
+                               URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {
