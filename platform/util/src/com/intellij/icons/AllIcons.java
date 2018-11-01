@@ -846,6 +846,8 @@ public class AllIcons {
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
     public static final Icon Inline_edit = IconLoader.getIcon("/general/inline_edit.svg"); // 16x16
     public static final Icon Inline_edit_hovered = IconLoader.getIcon("/general/inline_edit_hovered.svg"); // 16x16
+    public static final Icon InlineAdd = IconLoader.getIcon("/general/inlineAdd.svg"); // 16x16
+    public static final Icon InlineAddHover = IconLoader.getIcon("/general/inlineAddHover.svg"); // 16x16
     public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.svg"); // 14x14
     public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.svg"); // 14x14
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
