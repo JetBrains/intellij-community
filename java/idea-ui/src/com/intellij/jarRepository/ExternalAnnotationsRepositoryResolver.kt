@@ -81,10 +81,18 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
 
   private fun extractDescriptor(mavenId: String?,
                                 library: Library): JpsMavenRepositoryLibraryDescriptor? = when {
-    mavenId != null -> JpsMavenRepositoryLibraryDescriptor(mavenId, false, emptyList())
+    mavenId != null -> JpsMavenRepositoryLibraryDescriptor(patchArtifactId(mavenId), false, emptyList())
     library is LibraryEx  -> (library.properties as? RepositoryLibraryProperties)
-      ?.run { JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version) }
+      ?.run { JpsMavenRepositoryLibraryDescriptor(groupId, "$artifactId-annotations", version) }
     else -> null
+  }
+
+  private fun patchArtifactId(mavenId: String): String {
+    val components = mavenId.split(':', limit = 3)
+    if (components.size < 3) {
+      return mavenId
+    }
+    return "${components[0]}:${components[1]}-annotations:${components[2]}"
   }
 
 }
