@@ -13,7 +13,8 @@ public abstract class SearchScope {
   private static int hashCodeCounter;
 
   private transient int myHashCode;
-  // to avoid System.identityHashCode() which was allegedly slower
+  // to avoid System.identityHashCode() which was allegedly slow
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   private final int myDefaultHashCode = ++hashCodeCounter;
 
   /**
