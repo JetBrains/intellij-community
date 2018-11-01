@@ -232,7 +232,7 @@ public class ServiceManagerImpl implements Disposable {
           implClass = Class.forName(myDescriptor.getImplementation(), true, classLoader);
         }
         catch (ClassNotFoundException e) {
-          throw new RuntimeException(e);
+          throw new PluginException("Failed to load class", e, myPluginDescriptor != null ? myPluginDescriptor.getPluginId() : null);
         }
 
         myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
