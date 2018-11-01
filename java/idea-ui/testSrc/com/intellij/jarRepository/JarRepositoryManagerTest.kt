@@ -62,7 +62,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       generateMavenMetadata("myGroup", "myArtifact")
     }
 
-    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0")
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact-annotations", "1.0")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
                                                                                               listOf(myTestRepo), null)
     val result: List<OrderRoot>? = getResultingRoots(promise)
@@ -79,7 +79,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       generateMavenMetadata("myGroup", "myArtifact")
     }
 
-    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0",
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact-annotations", "1.0",
                                                           false, emptyList())
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
                                                                                               listOf(myTestRepo), null)
@@ -99,7 +99,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
     }
 
 
-    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "1.0")
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact-annotations", "1.0")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
                                                                                               listOf(myTestRepo), null)
     val result: List<OrderRoot>? = getResultingRoots(promise)
@@ -121,7 +121,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       name
     }
 
-    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "2.5")
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact-annotations", "2.5")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
                                                                                               listOf(myTestRepo), null)
     val result: List<OrderRoot>? = getResultingRoots(promise)
@@ -145,7 +145,7 @@ class JarRepositoryManagerTest : UsefulTestCase() {
       name
     }
 
-    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact", "[2.0, 2.1)")
+    val description = JpsMavenRepositoryLibraryDescriptor("myGroup", "myArtifact-annotations", "[2.0, 2.1)")
     val promise: Promise<MutableList<OrderRoot>> = JarRepositoryManager.loadDependenciesAsync(myProject, description, setOf(ArtifactKind.ANNOTATIONS),
                                                                                               listOf(myTestRepo), null)
     val result: List<OrderRoot>? = getResultingRoots(promise)
