@@ -216,9 +216,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
 
+    boolean seenBytes = false;
+    boolean seenNonBytes = false;
     for (PyStringElement element : node.getStringElements()) {
       final String prefix = element.getPrefix().toUpperCase();
       if (prefix.isEmpty()) continue;
+
+      final boolean bytes = element.isBytes();
+      seenBytes |= bytes;
+      seenNonBytes |= !bytes;
 
       final int elementStart = element.getTextOffset();
       registerForAllMatchingVersions(level -> !getSupportedStringPrefixes(level).contains(prefix),
@@ -227,6 +233,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      TextRange.create(elementStart, elementStart + element.getPrefixLength()),
                                      new RemovePrefixQuickFix(prefix),
                                      true);
+    }
+
+    if (seenBytes && seenNonBytes) {
+      registerForAllMatchingVersions(LanguageLevel::isPy3K,
+                                     " not allow to mix bytes and non-bytes literals",
+                                     node,
+                                     null);
     }
   }
 
