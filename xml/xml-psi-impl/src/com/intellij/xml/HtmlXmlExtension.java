@@ -3,7 +3,6 @@ package com.intellij.xml;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +30,5 @@ public class HtmlXmlExtension extends DefaultXmlExtension {
     System.arraycopy(namespaces, 0, newNamespaces, 0, namespaces.length);
     newNamespaces[namespaces.length] = new String[] {"xlink", "http://www.w3.org/1999/xlink"};
     return newNamespaces;
-  }
-
-  @Override
-  public boolean isRequiredAttributeImplicitlyPresent(XmlTag tag, String attrName) {
-    return tag.getAttribute(attrName) != null;
   }
 }
