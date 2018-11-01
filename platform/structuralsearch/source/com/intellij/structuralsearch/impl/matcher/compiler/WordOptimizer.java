@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
@@ -18,41 +19,43 @@ import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilin
 public interface WordOptimizer {
 
   /**
-   * @param word  word to check index with
+   * @param text  text to check index with
    * @return true, if psi tree should be processed deeper, false otherwise.
    */
-  default boolean handleWord(@Nullable String word, CompileContext compileContext) {
+  default boolean handleWord(@Nullable String text, CompileContext compileContext) {
     final OptimizingSearchHelper searchHelper = compileContext.getSearchHelper();
     if (!searchHelper.doOptimizing()) {
       return false;
     }
-    if (word == null) {
+    if (text == null) {
       return true;
     }
-    final CompiledPattern pattern = compileContext.getPattern();
-    if (pattern.isTypedVar(word)) {
-      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(word);
-      if (handler == null || handler.getMinOccurs() == 0) {
-        // don't call super
-        return false;
-      }
+    for (String word : StringUtil.getWordsInStringLongestFirst(text)) {
+      final CompiledPattern pattern = compileContext.getPattern();
+      if (pattern.isTypedVar(word)) {
+        final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(word);
+        if (handler == null || handler.getMinOccurs() == 0) {
+          // don't call super
+          return false;
+        }
 
-      final RegExpPredicate predicate = handler.findRegExpPredicate();
-      if (predicate != null && predicate.couldBeOptimized()) {
-        if (handler.isStrictSubtype() || handler.isSubtype()) {
-          final List<String> descendants = getDescendantsOf(predicate.getRegExp(), handler.isSubtype(), compileContext.getProject());
-          for (String descendant : descendants) {
-            searchHelper.addWordToSearchInCode(descendant);
+        final RegExpPredicate predicate = handler.findRegExpPredicate();
+        if (predicate != null && predicate.couldBeOptimized()) {
+          if (handler.isStrictSubtype() || handler.isSubtype()) {
+            final List<String> descendants = getDescendantsOf(predicate.getRegExp(), handler.isSubtype(), compileContext.getProject());
+            for (String descendant : descendants) {
+              searchHelper.addWordToSearchInCode(descendant);
+            }
+            searchHelper.endTransaction();
           }
-          searchHelper.endTransaction();
-        }
-        else {
-          GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, CODE, compileContext);
+          else {
+            GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, CODE, compileContext);
+          }
         }
       }
-    }
-    else {
-      GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, CODE, compileContext);
+      else {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, CODE, compileContext);
+      }
     }
     return true;
   }
