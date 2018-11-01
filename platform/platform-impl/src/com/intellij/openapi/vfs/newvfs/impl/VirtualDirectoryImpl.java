@@ -508,7 +508,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public void addChild(@NotNull VirtualFileSystemEntry child) {
-    final String childName = child.getName();
+    final CharSequence childName = child.getNameSequence();
     final boolean caseSensitive = getFileSystem().isCaseSensitive();
     synchronized (myData) {
       myData.removeAdoptedName(childName);

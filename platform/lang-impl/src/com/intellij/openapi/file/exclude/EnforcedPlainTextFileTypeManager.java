@@ -63,7 +63,7 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   public static boolean isApplicableFor(@Nullable VirtualFile file) {
     if (!(file instanceof VirtualFileWithId) || file.isDirectory()) return false;
     if (ScratchUtil.isScratch(file)) return false;
-    FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    FileType originalType = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
     return !originalType.isBinary() && originalType != FileTypes.PLAIN_TEXT && originalType != StdFileTypes.JAVA;
   }
 
