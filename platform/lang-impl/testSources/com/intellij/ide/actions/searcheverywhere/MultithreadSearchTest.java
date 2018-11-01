@@ -41,8 +41,9 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       catch (TimeoutException e) {
         Assert.fail("Search timeout exceeded");
       }
-      catch (InterruptedException e) {
-      } finally {
+      catch (InterruptedException ignored) {
+      }
+      finally {
         indicator.cancel();
       }
       scenario.results.forEach((contributorId, results) -> {
@@ -67,8 +68,9 @@ public class MultithreadSearchTest extends LightPlatformCodeInsightFixtureTestCa
       catch (TimeoutException e) {
         Assert.fail("Search timeout exceeded");
       }
-      catch (InterruptedException e) {
-      } finally {
+      catch (InterruptedException ignored) {
+      }
+      finally {
         indicator.cancel();
       }
 

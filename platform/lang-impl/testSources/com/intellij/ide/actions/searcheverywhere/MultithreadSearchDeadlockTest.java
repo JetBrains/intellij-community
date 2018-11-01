@@ -32,7 +32,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -54,8 +54,10 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16"), collector.getFoundItems("readAction1"));
       Assert.assertEquals(Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25"), collector.getFoundItems("readAction2"));
       Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
-    } catch (InterruptedException e) {
-    } finally {
+    }
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -87,8 +89,9 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(3, action1.getAttemptsCount());
       Assert.assertEquals(1, action2.getAttemptsCount());
     }
-    catch (InterruptedException e) {
-    } finally {
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -110,8 +113,9 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15"), collector.getFoundItems("readAction1"));
       Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
     }
-    catch (InterruptedException e) {
-    } finally {
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -226,7 +230,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       try {
         Thread.sleep(initDelay);
       }
-      catch (InterruptedException e) {}
+      catch (InterruptedException ignored) {
+      }
 
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
@@ -238,7 +243,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
             Thread.sleep(eachItemDelay);
           }
         }
-        catch (InterruptedException e) {}
+        catch (InterruptedException ignored) {
+        }
       }, progressIndicator);
     }
 
@@ -267,7 +273,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
           Thread.sleep(eachItemDelay);
         }
       }
-      catch (InterruptedException e) {}
+      catch (InterruptedException ignored) {
+      }
     }
   }
 }
