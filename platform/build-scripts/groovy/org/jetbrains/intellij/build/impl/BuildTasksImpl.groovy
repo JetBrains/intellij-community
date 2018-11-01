@@ -475,7 +475,14 @@ idea.fatal.error.notification=disabled
                          "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
     }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
-    checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+
+    if (!layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      buildContext.messages.warning("layout.buildAllCompatiblePlugins option isn't enabled. Value of " +
+                                    "layout.compatiblePluginsToIgnore property will be ignored ($layout.compatiblePluginsToIgnore)")
+    }
+    if (layout.buildAllCompatiblePlugins && !layout.compatiblePluginsToIgnore.isEmpty()) {
+      checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+    }
 
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +

@@ -17,8 +17,6 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
-
 /**
  * @author nik
  */
@@ -43,7 +41,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
     productLayout.mainModules = ["intellij.idea.community.main"]
-    productLayout.compatiblePluginsToIgnore += PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
       CommunityRepositoryModules.groovyPlugin([])
