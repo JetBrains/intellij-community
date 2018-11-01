@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -166,16 +167,24 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
     try {
       TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      String workingDir = getWorkingDirectory(directory);
+      long startNano = System.nanoTime();
+      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Starting " + Arrays.toString(command) + " in " + directory);
+        LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
+                  " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
       }
-      return PtyProcess.exec(command, envs, directory != null
-                                            ? directory
-                                            : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
+      return process;
     }
     catch (IOException e) {
-      throw new ExecutionException(e);
+      throw new ExecutionException("Failed to start " + Arrays.toString(command), e);
     }
+  }
+
+  @Nullable
+  private String getWorkingDirectory(@Nullable String directory) {
+    if (directory != null) return directory;
+    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
