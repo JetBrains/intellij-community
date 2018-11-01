@@ -804,3 +804,5 @@ CLASS_ATTR_BLACKLIST = [
     'google.protobuf.pyext._message.Message._extensions_by_number',
     'panda3d.core.ExecutionEnvironment.environment_variables',
 ]
+
+GENERATOR_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')
