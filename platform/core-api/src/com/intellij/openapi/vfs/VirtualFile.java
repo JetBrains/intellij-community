@@ -677,7 +677,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *         result depends on the filesystem specifics
    */
   protected boolean nameEquals(@NotNull String name) {
-    return getName().equals(name);
+    return Comparing.equal(getNameSequence(), name);
   }
 
   /**
