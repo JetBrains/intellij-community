@@ -574,13 +574,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PsiFileSystemItem getFile(PsiElement element) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-
-    if (file == null) return null;
-    if (PyNames.INIT_DOT_PY.equals(file.getName())) {
-      file = file.getParent();
-      assert file != null;
-    }
-    return file;
+    return (PsiFileSystemItem) PyUtil.turnInitIntoDir(file);
   }
 
   @Nullable
