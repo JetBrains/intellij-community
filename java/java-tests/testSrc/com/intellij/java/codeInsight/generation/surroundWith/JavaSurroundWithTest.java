@@ -195,6 +195,18 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     }
   }
 
+  public void testSurroundWithTryCatchWithFinalParameter() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_DECLARATION);
+    String old = template.getText();
+    template.setText("final ${EXCEPTION_TYPE} ex");
+    try {
+      doTest(new JavaWithTryCatchSurrounder());
+    }
+    finally {
+      template.setText(old);
+    }
+  }
+
   public void testSurroundIfBranchWithNoBracesAndComment() {
     doTest(new JavaWithBlockSurrounder());
   }
