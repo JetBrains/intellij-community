@@ -1478,4 +1478,12 @@ class Fff {
 }
 ''', GrMethod
   }
+
+  void 'test static field via class instance'() {
+    resolveByText '''\
+class A { public static someStaticField = 42 }
+def a = A // class instance
+a.<caret>someStaticField
+''', GrField
+  }
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
@@ -42,8 +43,20 @@ private fun PsiClassType.processClassType(processor: PsiScopeProcessor, state: R
   val result = resolveGenerics()
   val clazz = result.element ?: return true
   val newState = state.put(PsiSubstitutor.KEY, state[PsiSubstitutor.KEY].putAll(result.substitutor))
-  return processMapType(processor, newState, place) &&
-         processClassDeclarations(clazz, processor, newState, null, place)
+
+  if (state[STATIC_CONTEXT] != true && clazz.qualifiedName == JAVA_LANG_CLASS) {
+    // this is `Class<Something>`
+    val type = parameters.singleOrNull() as? PsiClassType // `Something`
+    if (!type.processReceiverType(processor, newState.put(STATIC_CONTEXT, true), place)) {
+      return false
+    }
+  }
+
+  if (!processMapType(processor, newState, place)) {
+    return false
+  }
+
+  return processClassDeclarations(clazz, processor, newState, null, place)
 }
 
 private fun PsiClassType.processMapType(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
