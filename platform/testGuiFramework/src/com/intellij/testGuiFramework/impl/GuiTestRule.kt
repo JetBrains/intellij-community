@@ -19,8 +19,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestPaths.failedTestVideoDirPath
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
@@ -30,6 +30,7 @@ import com.intellij.testGuiFramework.launcher.GuiTestOptions.testsToRecord
 import com.intellij.testGuiFramework.launcher.GuiTestOptions.videoDuration
 import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.Splash
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.lang.UrlClassLoader
 import org.fest.swing.core.Robot
@@ -42,10 +43,14 @@ import org.jdom.xpath.XPath
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.AssumptionViolatedException
-import org.junit.rules.*
+import org.junit.rules.ExternalResource
+import org.junit.rules.RuleChain
+import org.junit.rules.TestRule
+import org.junit.rules.Timeout
 import org.junit.runner.Description
 import org.junit.runners.model.MultipleFailureException
 import org.junit.runners.model.Statement
+import java.awt.Container
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.KeyboardFocusManager
@@ -181,10 +186,10 @@ class GuiTestRule(private val projectsFolder: File) : TestRule {
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = with(welcomeFrameFixture) {
-            actionLink(CREATE_NEW_PROJECT_ACTION_NAME, Timeouts.defaultTimeout)
+          val actionLink = with(welcomeFrameFixture) {
+            robot().finder().find(this@with.target() as Container) { it is ActionLink && it.text.contains("New Project") }
           }
-          actionLinkFixture.target().isShowing
+          actionLink?.isShowing ?: false
         }
         catch (componentLookupException: ComponentLookupException) {
           false
