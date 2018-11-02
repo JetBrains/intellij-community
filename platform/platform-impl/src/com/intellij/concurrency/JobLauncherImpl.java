@@ -340,7 +340,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>();
-    for (int i = 0; i < JobSchedulerImpl.getJobPoolParallelism(); i++) {
+    for (int i = 0; i < Math.max(1, JobSchedulerImpl.getJobPoolParallelism() - 1); i++) {
       tasks.add(ForkJoinPool.commonPool().submit(new MyTask(i)));
     }
 
