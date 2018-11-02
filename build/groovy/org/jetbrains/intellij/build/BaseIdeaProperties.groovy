@@ -67,7 +67,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
     "intellij.android.smali",
-    "intellij.statsCollector"
     /* Disabled in Android Studio
     "intellij.ant",
     "intellij.java.byteCodeViewer",
@@ -76,6 +75,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.javaFX.community",
     "intellij.maven",
     "intellij.java.guiForms.designer",
+    "intellij.statsCollector"
     "intellij.xpath",
     "intellij.xslt.debugger",
     */
