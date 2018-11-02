@@ -300,9 +300,7 @@ public class CodeCompletionHandlerBase {
   private static void checkForExceptions(Future<?> future) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       try {
-        if (future.get() instanceof Exception) {
-          LOG.error(future.get());
-        }
+        future.get();
       }
       catch (Exception e) {
         LOG.error(e);
