@@ -1443,6 +1443,14 @@ FunctionEnd
 
 
 Function un.onInit
+; Uninstallation was run from installation dir?
+  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" get_reg_key 0
+  goto end_of_uninstall
+
+get_reg_key:
   SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
@@ -1488,6 +1496,10 @@ UAC_Success:
 UAC_Admin:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
+  Goto UAC_Done
+end_of_uninstall:
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+  Abort
 UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
@@ -1685,15 +1697,6 @@ Section "Uninstall"
   StrCpy $2 "InstallLocation"
   Call un.OMReadRegStr
   DetailPrint "uninstall location: $3"
-  StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
-invalid_installation_dir:
-  ;check if uninstaller runs from not installation folder
-  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" check_if_IDE_in_use 0
-  goto end_of_uninstall
-check_if_IDE_in_use:
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir
