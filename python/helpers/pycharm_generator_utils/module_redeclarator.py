@@ -1,6 +1,3 @@
-import keyword
-import os
-
 from pycharm_generator_utils.util_methods import *
 
 is_pregenerated = os.getenv("IS_PREGENERATED_SKELETONS", None)
@@ -315,7 +312,7 @@ class ModuleRedeclarator(object):
                                 real_value = "None"
                             else:
                                 notice = " # (!) forward: %s, real value is %r" % (found_name, real_value)
-                        if SANE_REPR_RE.match(real_value):
+                        if SANE_REPR_RE.match(real_value) and is_valid_expr(real_value):
                             out(indent, prefix, real_value, postfix, notice)
                         else:
                             if not found_name:
