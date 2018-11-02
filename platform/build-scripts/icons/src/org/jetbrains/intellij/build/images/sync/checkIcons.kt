@@ -22,7 +22,8 @@ private const val patternArg = "skip.dirs.pattern"
 private const val syncIcons = "sync.icons"
 private const val syncDevIcons = "sync.dev.icons"
 private const val syncRemovedIconsInDev = "sync.dev.icons.removed"
-private const val createReview = "sync.icons.and.create.review"
+private const val syncIconsAndCreateReview = "sync.icons.and.create.review"
+private const val syncDevIconsAndCreateReview = "sync.dev.icons.and.create.review"
 
 fun main(args: Array<String>) {
   if (args.isEmpty()) printUsageAndExit()
@@ -33,7 +34,8 @@ fun main(args: Array<String>) {
              args.find(syncIcons)?.toBoolean() ?: false,
              args.find(syncDevIcons)?.toBoolean() ?: false,
              args.find(syncRemovedIconsInDev)?.toBoolean() ?: true,
-             args.find(createReview)?.toBoolean() ?: false)
+             args.find(syncIconsAndCreateReview)?.toBoolean() ?: false,
+             args.find(syncDevIconsAndCreateReview)?.toBoolean() ?: false)
 }
 
 private fun ignoreCaseInDirName(path: String): String {
@@ -56,7 +58,8 @@ private fun printUsageAndExit() {
     |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
     |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
     |* `$syncRemovedIconsInDev` - remove icons in developers' repo removed by designers
-    |* `$createReview` - update icons in designers' repo and create branch review, implies $syncIcons
+    |* `$syncIconsAndCreateReview` - update icons in designers' repo and create branch review, implies $syncIcons
+    |* `$syncDevIconsAndCreateReview` - update icons in developers' repo and create branch review, implies $syncDevIcons
   """.trimMargin())
   System.exit(1)
 }
@@ -74,9 +77,11 @@ fun checkIcons(
   devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
   doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
   doSyncRemovedIconsInDev: Boolean = true,
-  doSyncIconsRepoAndCreateReview: Boolean = false,
+  doSyncIconsAndCreateReview: Boolean = false,
+  doSyncDevIconsAndCreateReview: Boolean = false,
   loggerImpl: Consumer<String> = Consumer { println(it) },
-  errorHandler: Consumer<String> = Consumer { error(it) }
+  errorHandler: Consumer<String> = Consumer { error(it) },
+  devIconsVerifier: Runnable? = null
 ) {
   logger = loggerImpl
   iconsRepo = findGitRepoRoot(iconsRepoDir)
@@ -113,12 +118,12 @@ fun checkIcons(
       if (it.isEmpty()) "" else "$it/"
     })
   }
-  if (doSyncIconsRepo || doSyncIconsRepoAndCreateReview) {
+  if (doSyncIconsRepo || doSyncIconsAndCreateReview) {
     syncAdded(addedByDev, devIcons, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIcons)
     syncRemoved(removedByDev, icons)
   }
-  if (doSyncDevRepo) {
+  if (doSyncDevRepo || doSyncDevIconsAndCreateReview) {
     syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
     syncModified(modifiedByDesigners, devIcons, icons)
     if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIcons)
@@ -128,8 +133,10 @@ fun checkIcons(
     addedByDev, removedByDev, modifiedByDev,
     addedByDesigners, removedByDesigners, modifiedByDesigners,
     consistent, errorHandler,
-    doNotify = !doSyncIconsRepo && !doSyncDevRepo || doSyncIconsRepoAndCreateReview,
-    doSyncIconsRepoAndCreateReview = doSyncIconsRepoAndCreateReview
+    doNotify = !doSyncIconsRepo && !doSyncDevRepo || doSyncIconsAndCreateReview || doSyncDevIconsAndCreateReview,
+    doSyncIconsAndCreateReview = doSyncIconsAndCreateReview,
+    doSyncDevIconsAndCreateReview = doSyncDevIconsAndCreateReview,
+    devIconsVerifier = devIconsVerifier
   )
 }
 

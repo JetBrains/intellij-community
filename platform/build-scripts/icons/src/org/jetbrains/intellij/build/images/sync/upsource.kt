@@ -34,16 +34,25 @@ internal fun createReview(projectId: String, vararg revisions: String): Review {
     "projectId" : "$projectId",
     "revisions" : [
       ${revisions.joinToString { "\"$it\"" }}
-    ]}""".trimIndent())
+    ]}""")
     .let { extract(it, Regex(""""reviewId":\{([^}]+)""")) }
     .let { extract(it, Regex(""""reviewId":"([^,"]+)"""")) }
-  return Review(reviewId, "$UPSOURCE/$projectId/review/$reviewId")
+  val review = Review(reviewId, "$UPSOURCE/$projectId/review/$reviewId")
+  removeReviewer(projectId, review, System.getProperty("upsource.user.email"))
+  return review
 }
 
-internal fun addParticipantToReview(projectId: String, review: Review, email: String) {
-  val invitation = upsourceGet("inviteUser", """{"projectId":"$projectId","email":"$email"}""")
-  val userId = extract(invitation, Regex(""""userId":"([^,"]+)""""))
-  upsourcePost("addParticipantToReview", """{
+internal fun addReviewer(projectId: String, review: Review, email: String) {
+  actionOnReviewer("addParticipantToReview", projectId, review, email)
+}
+
+private fun removeReviewer(projectId: String, review: Review, email: String) {
+  actionOnReviewer("removeParticipantFromReview", projectId, review, email)
+}
+
+private fun actionOnReviewer(action: String, projectId: String, review: Review, email: String) {
+  val userId = userId(email, projectId)
+  upsourcePost(action, """{
     "reviewId" : {
       "projectId" : "$projectId",
       "reviewId" : "${review.id}"
@@ -52,7 +61,12 @@ internal fun addParticipantToReview(projectId: String, review: Review, email: St
       "userId" : "$userId",
       "role" : 2
      }
-  }""".trimIndent())
+  }""")
+}
+
+private fun userId(email: String, projectId: String): String {
+  val invitation = upsourceGet("inviteUser", """{"projectId":"$projectId","email":"$email"}""")
+  return extract(invitation, Regex(""""userId":"([^,"]+)""""))
 }
 
 private fun extract(json: String, regex: Regex) = json
@@ -60,3 +74,15 @@ private fun extract(json: String, regex: Regex) = json
   .replace(System.lineSeparator(), "").let {
     regex.find(it)?.groupValues?.lastOrNull() ?: error(it)
   }
+
+internal fun postComment(projectId: String, review: Review, comment: String) {
+  upsourcePost("createDiscussion", """{
+      "projectId" : "$projectId",
+      "reviewId": {
+      	"projectId" : "$projectId",
+      	"reviewId": "${review.id}"
+      },
+      "text" : "$comment",
+      "anchor" : {}
+  }""")
+}

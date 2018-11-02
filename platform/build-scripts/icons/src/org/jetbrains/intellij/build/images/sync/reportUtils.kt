@@ -10,8 +10,9 @@ internal fun report(
   addedByDev: Collection<String>, removedByDev: Collection<String>,
   modifiedByDev: Collection<String>, addedByDesigners: Collection<String>,
   removedByDesigners: Collection<String>, modifiedByDesigners: Collection<String>,
-  consistent: Collection<String>, errorHandler: Consumer<String>,
-  doNotify: Boolean, doSyncIconsRepoAndCreateReview: Boolean
+  consistent: Collection<String>, errorHandler: Consumer<String>, doNotify: Boolean,
+  doSyncIconsAndCreateReview: Boolean, doSyncDevIconsAndCreateReview: Boolean,
+  devIconsVerifier: Runnable?
 ) {
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
@@ -34,7 +35,7 @@ internal fun report(
     }
     else {
       val investigator = if (!success && !isInvestigationAssigned()) {
-        assignInvestigation(root, doSyncIconsRepoAndCreateReview, addedByDev, removedByDev, modifiedByDev)
+        assignInvestigation(root, doSyncIconsAndCreateReview, addedByDev, removedByDev, modifiedByDev)
       }
       else null
       sendNotification(success, investigator)
@@ -62,7 +63,7 @@ private fun assignInvestigation(root: File,
       val review = pushAndCreateReview(commitMessage)
       investigator.assignedReview = review.id
       investigator = assignInvestigation(investigator)
-      addParticipantToReview(UPSOURCE_ICONS_PROJECT_ID, review, investigator.email)
+      addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, investigator.email)
     }
     else {
       investigator = assignInvestigation(investigator)
