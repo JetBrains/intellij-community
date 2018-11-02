@@ -20,7 +20,7 @@ class GitIgnoredFileTest : GitPlatformTest() {
 
   override fun setUp() {
     super.setUp()
-    Registry.get("vcs.ignorefile.generation").setValue(true)
+    Registry.get("vcs.ignorefile.generation").setValue(true, testRootDisposable)
     createRepository(project, projectPath)
     GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
   }
