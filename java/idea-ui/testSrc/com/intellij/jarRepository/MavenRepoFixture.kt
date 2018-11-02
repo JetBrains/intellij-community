@@ -17,7 +17,7 @@ class MavenRepoFixture(private val myMavenRepo: File) {
   public fun addAnnotationsArtifact(group: String = "myGroup",
                                     artifact: String = "myArtifact",
                                     version: String)
-    : String = File(myMavenRepo, "$group/$artifact-annotations/$version/$artifact-annotations-$version.zip")
+    : String = File(myMavenRepo, "$group/$artifact/$version/$artifact-$version-annotations.zip")
     .apply {
       parentFile.mkdirs()
       writeText("Fake annotations artifact")
