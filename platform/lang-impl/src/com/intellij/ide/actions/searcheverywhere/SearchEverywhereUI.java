@@ -64,6 +64,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -371,6 +372,12 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   @Override
+  protected void installScrollingActions() {
+    ScrollingUtil.installMoveUpAction(myResultsList, getSearchField());
+    ScrollingUtil.installMoveDownAction(myResultsList, getSearchField());
+  }
+
+  @Override
   @NotNull
   protected JPanel createTopLeftPanel() {
     JPanel contributorsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -542,24 +549,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     mySearchField.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_TAB) {
-          // if user typed command then TAB key completes it
-          // in other case TAB key switches tabs
-          if (completeCommand()) {
-            featureUsed(COMMAND_COMPLETED, "Tab");
-          }
-          else {
-            if (e.getModifiers() == 0) {
-              switchToNextTab();
-              featureUsed(TAB_SWITCHED, "Tab");
-            } else if (e.getModifiers() == InputEvent.SHIFT_MASK) {
-              switchToPrevTab();
-              featureUsed(TAB_SWITCHED, "Shift+Tab");
-            }
-          }
-          e.consume();
-        }
-
         if (e.isShiftDown()) {
           if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             myResultsList.dispatchEvent(e);
@@ -570,22 +559,24 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
             e.consume();
           }
         }
-
-        int[] indices = myResultsList.getSelectedIndices();
-        if (e.getKeyCode() == KeyEvent.VK_ENTER && indices.length != 0) {
-          elementsSelected(indices, e.getModifiers());
-        }
       }
     });
 
-    registerAction(IdeActions.ACTION_NEXT_TAB, e -> {
+    Consumer<AnActionEvent> nextTabAction = e -> {
       switchToNextTab();
       getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
-    });
-    registerAction(IdeActions.ACTION_PREVIOUS_TAB, e -> {
+    };
+    Consumer<AnActionEvent> prevTabAction = e -> {
       switchToPrevTab();
       getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
-    });
+    };
+
+    registerAction(SearchEverywhereActions.AUTOCOMPLETE_COMMAND, CompleteCommandAction::new);
+    registerSelectItemAction();
+    registerAction(SearchEverywhereActions.SWITCH_TO_NEXT_TAB, nextTabAction);
+    registerAction(SearchEverywhereActions.SWITCH_TO_PREV_TAB, prevTabAction);
+    registerAction(IdeActions.ACTION_NEXT_TAB, nextTabAction);
+    registerAction(IdeActions.ACTION_PREVIOUS_TAB, prevTabAction);
     registerAction(IdeActions.ACTION_SWITCHER, e -> {
       if (e.getInputEvent().isShiftDown()) {
         switchToPrevTab();
@@ -595,6 +586,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
       getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
     });
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> fetchGroups(true));
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> fetchGroups(false));
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> closePopup())
@@ -654,10 +647,54 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     }
   }
 
-  private void registerAction(String actionID, Consumer<AnActionEvent> action) {
+  private void registerAction(String actionID, Supplier<AnAction> actionSupplier) {
     Optional.ofNullable(ActionManager.getInstance().getAction(actionID))
       .map(a -> a.getShortcutSet())
-      .ifPresent(shortcuts -> DumbAwareAction.create(action).registerCustomShortcutSet(shortcuts, this));
+      .ifPresent(shortcuts -> actionSupplier.get().registerCustomShortcutSet(shortcuts, this, this));
+  }
+
+  private void registerAction(String actionID, Consumer<AnActionEvent> action) {
+    registerAction(actionID, () -> DumbAwareAction.create(action));
+  }
+
+  // when user adds shortcut for "select item" we should add shortcuts
+  // with all possible modifiers (Ctrl, Shift, Alt, etc.)
+  private void registerSelectItemAction() {
+    int[] allowedModifiers = new int[]{
+      0,
+      InputEvent.SHIFT_MASK,
+      InputEvent.CTRL_MASK,
+      InputEvent.META_MASK,
+      InputEvent.ALT_MASK
+    };
+
+    ShortcutSet selectShortcuts = ActionManager.getInstance().getAction(SearchEverywhereActions.SELECT_ITEM).getShortcutSet();
+    Collection<KeyboardShortcut> keyboardShortcuts = Arrays.stream(selectShortcuts.getShortcuts())
+      .filter(shortcut -> shortcut instanceof KeyboardShortcut)
+      .map(shortcut -> (KeyboardShortcut)shortcut)
+      .collect(Collectors.toList());
+
+    for (int modifiers : allowedModifiers) {
+      Collection<Shortcut> newShortcuts = new ArrayList<>();
+      for (KeyboardShortcut shortcut : keyboardShortcuts) {
+        boolean hasSecondStroke = shortcut.getSecondKeyStroke() != null;
+        KeyStroke originalStroke = hasSecondStroke ? shortcut.getSecondKeyStroke() : shortcut.getFirstKeyStroke();
+
+        if ((originalStroke.getModifiers() & modifiers) != 0) continue;
+
+        KeyStroke newStroke = KeyStroke.getKeyStroke(originalStroke.getKeyCode(), originalStroke.getModifiers() | modifiers);
+        newShortcuts.add(hasSecondStroke
+                         ? new KeyboardShortcut(shortcut.getFirstKeyStroke(), newStroke)
+                         : new KeyboardShortcut(newStroke, null));
+      }
+      if (newShortcuts.isEmpty()) continue;
+
+      ShortcutSet newShortcutSet = new CustomShortcutSet(newShortcuts.toArray(Shortcut.EMPTY_ARRAY));
+      DumbAwareAction.create(event -> {
+        int[] indices = myResultsList.getSelectedIndices();
+        elementsSelected(indices, modifiers);
+      }).registerCustomShortcutSet(newShortcutSet, this, this);
+    }
   }
 
   private static Optional<String> getEventShortcut(AnActionEvent event) {
@@ -668,21 +705,15 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     return Optional.empty();
   }
 
-  private boolean completeCommand() {
-    String pattern = getSearchPattern();
-    String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
-    if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
-      String typedCommand = pattern.substring(commandPrefix.length());
-      SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
-        List<SearchEverywhereCommandInfo> completions = getCommandsForCompletion(getContributorsForCurrentTab(), typedCommand);
-        return completions.isEmpty() ? null : completions.get(0);
-      });
-      if (command != null) {
-        mySearchField.setText(command.getCommandWithPrefix() + " ");
-        return true;
-      }
+  private void fetchGroups(boolean down) {
+    int index = myResultsList.getSelectedIndex();
+    do {
+      index += down ? 1 : -1;
+    } while (index >= 0 && index < myListModel.getSize() && !myListModel.isGroupFirstItem(index) && !myListModel.isMoreElement(index));
+    if (index >= 0 && index < myListModel.getSize()) {
+      myResultsList.setSelectedIndex(index);
+      ScrollingUtil.ensureIndexIsVisible(myResultsList, index, 0);
     }
-    return false;
   }
 
   private Optional<SearchEverywhereCommandInfo> getSelectedCommand(String typedCommand) {
@@ -1245,6 +1276,47 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       };
       res.addElementsMarkListener(listener);
       return res;
+    }
+  }
+
+  private class CompleteCommandAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (completeCommand()) {
+        String shortcut = getEventShortcut(e).orElse("no_shortcut");
+        featureUsed(COMMAND_COMPLETED, shortcut);
+      }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(getCompleteCommand().isPresent());
+    }
+
+    private boolean completeCommand() {
+      Optional<SearchEverywhereCommandInfo> suggestedCommand = getCompleteCommand();
+      if (suggestedCommand.isPresent()){
+        mySearchField.setText(suggestedCommand.get().getCommandWithPrefix() + " ");
+        return true;
+      }
+
+      return false;
+    }
+
+    private Optional<SearchEverywhereCommandInfo> getCompleteCommand() {
+      String pattern = getSearchPattern();
+      String commandPrefix = SearchTopHitProvider.getTopHitAccelerator();
+      if (pattern.startsWith(commandPrefix) && !pattern.contains(" ")) {
+        String typedCommand = pattern.substring(commandPrefix.length());
+        SearchEverywhereCommandInfo command = getSelectedCommand(typedCommand).orElseGet(() -> {
+          List<SearchEverywhereCommandInfo> completions = getCommandsForCompletion(getContributorsForCurrentTab(), typedCommand);
+          return completions.isEmpty() ? null : completions.get(0);
+        });
+
+        return Optional.ofNullable(command);
+      }
+
+      return Optional.empty();
     }
   }
 
