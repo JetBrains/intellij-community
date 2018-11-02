@@ -416,6 +416,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           }
           return DisplayPriority.LANGUAGE_SETTINGS;
         }
+
+        @NotNull
+        @Override
+        public Class<?> getOriginalClass() {
+          return page.getClass();
+        }
       });
     }
     extensions.addAll(ColorAndFontPanelFactory.EP_NAME.getExtensionList());
@@ -1305,6 +1311,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public Set<String> processListOptions() {
       return createPanel().processListOptions();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myFactory.getOriginalClass();
     }
 
     @NotNull

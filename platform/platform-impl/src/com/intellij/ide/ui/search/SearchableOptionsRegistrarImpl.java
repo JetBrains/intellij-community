@@ -18,10 +18,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashMap;
@@ -32,10 +35,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.regex.Pattern;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 @SuppressWarnings("Duplicates")
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
@@ -85,33 +94,34 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     allTheseHugeFilesAreLoaded = true;
     try {
       //index
-      final URL indexResource = ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "searchableOptions.xml");
-      if (indexResource == null) {
+      final Set<URL> searchableOptions = findSearchableOptions();
+      if (searchableOptions.isEmpty()) {
         LOG.info("No /search/searchableOptions.xml found, settings search won't work!");
         return;
       }
-
-      Element root = JDOMUtil.load(indexResource);
-      List configurables = root.getChildren("configurable");
-      for (final Object o : configurables) {
-        final Element configurable = (Element)o;
-        final String id = configurable.getAttributeValue("id");
-        if (id == null) continue;
-        final String groupName = configurable.getAttributeValue("configurable_name");
-        final List options = configurable.getChildren("option");
-        for (Object o1 : options) {
-          Element optionElement = (Element)o1;
-          final String option = optionElement.getAttributeValue("name");
-          if (option == null) continue;
-          final String path = optionElement.getAttributeValue("path");
-          final String hit = optionElement.getAttributeValue("hit");
-          putOptionWithHelpId(option, id, groupName, hit, path);
+      for (final URL url : searchableOptions) {
+        final Element root = JDOMUtil.load(url);
+        final List configurables = root.getChildren("configurable");
+        for (final Object o : configurables) {
+          final Element configurable = (Element)o;
+          final String id = configurable.getAttributeValue("id");
+          if (id == null) continue;
+          final String groupName = configurable.getAttributeValue("configurable_name");
+          final List options = configurable.getChildren("option");
+          for (Object o1 : options) {
+            Element optionElement = (Element)o1;
+            final String option = optionElement.getAttributeValue("name");
+            if (option == null) continue;
+            final String path = optionElement.getAttributeValue("path");
+            final String hit = optionElement.getAttributeValue("hit");
+            putOptionWithHelpId(option, id, groupName, hit, path);
+          }
         }
       }
 
       //synonyms
-      root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "synonyms.xml"));
-      configurables = root.getChildren("configurable");
+      final Element root = JDOMUtil.load(ResourceUtil.getResource(SearchableOptionsRegistrar.class, "/search/", "synonyms.xml"));
+      final List configurables = root.getChildren("configurable");
       for (final Object o : configurables) {
         final Element configurable = (Element)o;
         final String id = configurable.getAttributeValue("id");
@@ -172,6 +182,51 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         addOption(word, null, pluginName, PluginManagerConfigurable.ID, PluginManagerConfigurable.DISPLAY_NAME);
       }
     }
+  }
+
+  @NotNull
+  private static Set<URL> findSearchableOptions() throws IOException, URISyntaxException {
+    final Set<URL> urls = newHashSet();
+    final Set<ClassLoader> visited = newHashSet();
+    for (final IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+      if (!plugin.isEnabled()) {
+        continue;
+      }
+      final ClassLoader classLoader = plugin.getPluginClassLoader();
+      if (visited.add(classLoader)) {
+        final Enumeration<URL> resources = classLoader.getResources("search");
+        while (resources.hasMoreElements()) {
+          final URL url = resources.nextElement();
+          if (URLUtil.JAR_PROTOCOL.equals(url.getProtocol())) {
+            final Pair<String, String> parts = ObjectUtils.notNull(URLUtil.splitJarUrl(url.getFile()));
+            final File file = new File(parts.first);
+            try (final JarFile jar = new JarFile(file)) {
+              final Enumeration<JarEntry> entries = jar.entries();
+              while (entries.hasMoreElements()) {
+                final String name = entries.nextElement().getName();
+                if (name.startsWith("search/") && name.endsWith(SEARCHABLE_OPTIONS_XML) && StringUtil.countChars(name, '/') == 1) {
+                  urls.add(URLUtil.getJarEntryURL(file, name));
+                }
+              }
+            }
+          }
+          else {
+            final File file = new File(url.toURI());
+            if (file.isDirectory()) {
+              final File[] files = file.listFiles((dir, name) -> name.endsWith(SEARCHABLE_OPTIONS_XML));
+              if (files != null) {
+                for (final File xml : files) {
+                  if (xml.isFile()) {
+                    urls.add(xml.toURI().toURL());
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return urls;
   }
 
   /**

@@ -4,17 +4,17 @@ package com.intellij.ide.ui.search;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurableGroup;
-import com.intellij.openapi.options.MasterDetails;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
  * @author anna
  */
 public class SearchUtil {
+  private static final String DEBUGGER_CONFIGURABLE_CLASS = "com.intellij.xdebugger.impl.settings.DebuggerConfigurable";
   private static final Pattern HTML_PATTERN = Pattern.compile("<[^<>]*>");
   private static final Pattern QUOTED = Pattern.compile("\"([^\"]+)\"");
   private static final Pattern NON_WORD_PATTERN = Pattern.compile("[\\W&&[^\\p{Punct}\\p{Blank}]]");
@@ -65,9 +66,46 @@ public class SearchUtil {
         }
         else {
           processComponent(configurable, configurableOptions, configurable.createComponent());
+          final Configurable unwrapped = unwrapConfigurable(configurable);
+          if (unwrapped instanceof CompositeConfigurable) {
+            //noinspection unchecked
+            final List<? extends UnnamedConfigurable> children = ((CompositeConfigurable)unwrapped).getConfigurables();
+            for (final UnnamedConfigurable child : children) {
+              final Set<OptionDescription> childConfigurableOptions = new TreeSet<>();
+              options.put(new SearchableConfigurableAdapter((SearchableConfigurable)configurable, child), childConfigurableOptions);
+
+              if (child instanceof SearchableConfigurable) {
+                processUILabel(((SearchableConfigurable)child).getDisplayName(), childConfigurableOptions, null);
+              }
+              final JComponent component = child.createComponent();
+              if (component != null) {
+                processComponent(component, childConfigurableOptions, null);
+              }
+
+              configurableOptions.removeAll(childConfigurableOptions);
+            }
+          }
         }
       }
     }
+  }
+
+  @NotNull
+  private static Configurable unwrapConfigurable(@NotNull Configurable configurable) {
+    if (configurable instanceof ConfigurableWrapper) {
+      final UnnamedConfigurable wrapped = ((ConfigurableWrapper)configurable).getConfigurable();
+      if (wrapped instanceof SearchableConfigurable) {
+        configurable = (Configurable)wrapped;
+      }
+    }
+    if (DEBUGGER_CONFIGURABLE_CLASS.equals(configurable.getClass().getName())) {
+      final Class<?> clazz = ReflectionUtil.forName(DEBUGGER_CONFIGURABLE_CLASS);
+      final Configurable rootConfigurable = ReflectionUtil.getField(clazz, configurable, Configurable.class, "myRootConfigurable");
+      if (rootConfigurable != null) {
+        return rootConfigurable;
+      }
+    }
+    return configurable;
   }
 
   private static void processComponent(Configurable configurable, Set<? super OptionDescription> configurableOptions, JComponent component) {
@@ -539,6 +577,55 @@ public class SearchUtil {
         list.add(eachKid);
         addChildren(eachKid, list);
       }
+    }
+  }
+
+  private static final class SearchableConfigurableAdapter implements SearchableConfigurable {
+
+    private final SearchableConfigurable myOriginal;
+    private final UnnamedConfigurable myDelegate;
+
+    private SearchableConfigurableAdapter(@NotNull final SearchableConfigurable original, @NotNull final UnnamedConfigurable delegate) {
+      myOriginal = original;
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return myOriginal.getId();
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Title)
+    @Override
+    public String getDisplayName() {
+      return myOriginal.getDisplayName();
+    }
+
+    @NotNull
+    @Override
+    public Class<?> getOriginalClass() {
+      return myDelegate instanceof SearchableConfigurable ? ((SearchableConfigurable)myDelegate).getOriginalClass() : myDelegate.getClass();
+    }
+
+    @Nullable
+    @Override
+    public JComponent createComponent() {
+      return null;
+    }
+
+    @Override
+    public boolean isModified() {
+      return false;
+    }
+
+    @Override
+    public void apply() {
+    }
+
+    @Override
+    public String toString() {
+      return getDisplayName();
     }
   }
 }

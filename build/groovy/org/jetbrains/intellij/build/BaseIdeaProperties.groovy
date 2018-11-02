@@ -77,7 +77,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
-    productLayout.searchableOptionsModule = "intellij.java.resources.en"
+    productLayout.moduleExcludes.put("intellij.java.resources.en", "search/searchableOptions.xml")
 
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
     productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")

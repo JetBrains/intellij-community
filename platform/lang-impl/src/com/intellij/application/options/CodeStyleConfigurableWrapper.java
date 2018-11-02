@@ -103,6 +103,12 @@ public class CodeStyleConfigurableWrapper
     return getConfigurableId(getDisplayName());
   }
 
+  @NotNull
+  @Override
+  public Class<?> getOriginalClass() {
+    return myProvider.getClass();
+  }
+
   @Override
   public void disposeUIResources() {
     if (myPanel != null) {

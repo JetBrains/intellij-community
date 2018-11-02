@@ -88,7 +88,7 @@ class BuildTasksImpl extends BuildTasks {
       buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
+      runApplicationStarter(buildContext, "$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
       if (!new File(targetFilePath).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
@@ -96,24 +96,7 @@ class BuildTasksImpl extends BuildTasks {
     })
   }
 
-  /**
-   * Build index which is used to search options in the Settings dialog.
-   */
-  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex) {
-    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
-      buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
-      String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
-      FileUtil.delete(new File(targetFile))
-      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
-      // It'll process all UI elements in Settings dialog and build index for them.
-      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile])
-      if (!new File(targetFile).exists()) {
-        buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
-      }
-    })
-  }
-
-  private void runApplicationStarter(String tempDir, List<String> modules, List<String> arguments) {
+  static void runApplicationStarter(BuildContext buildContext, String tempDir, List<String> modules, List<String> arguments) {
     def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
@@ -275,13 +258,7 @@ idea.fatal.error.notification=disabled
 
   private DistributionJARsBuilder compileModulesForDistribution(File patchedApplicationInfo) {
     def productLayout = buildContext.productProperties.productLayout
-    def moduleNames = productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
-                      DistributionJARsBuilder.getPlatformApiModules(productLayout) +
-                      DistributionJARsBuilder.getPlatformImplModules(productLayout) +
-                      DistributionJARsBuilder.getProductApiModules(productLayout) +
-                      DistributionJARsBuilder.getProductImplModules(productLayout) +
-                      productLayout.additionalPlatformJars.values() +
-                      DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
+    def moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
                    productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
 
@@ -312,7 +289,7 @@ idea.fatal.error.notification=disabled
       }
     }
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
-    compileModules(distributionJARsBuilder.platformModules + (pluginsToPublish.collect { it.key.moduleJars.values()  }.flatten() as List<String>))
+    compileModules(distributionJARsBuilder.modulesForPluginsToPublish)
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
@@ -345,6 +322,7 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+        distributionJARsBuilder.buildSearchableOptions()
         distributionJARsBuilder.buildNonBundledPlugins()
       }
     }
@@ -537,7 +515,6 @@ idea.fatal.error.notification=disabled
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
-    checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     def allBundledPlugins = layout.allBundledPluginsModules
     nonTrivialPlugins.findAll { allBundledPlugins.contains(it.mainModule) }.each { plugin ->

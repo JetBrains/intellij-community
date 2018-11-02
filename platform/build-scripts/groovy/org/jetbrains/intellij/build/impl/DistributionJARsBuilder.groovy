@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import groovy.io.FileType
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.intellij.build.*
@@ -15,6 +16,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
+
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -189,6 +191,7 @@ class DistributionJARsBuilder {
   }
 
   void buildJARs() {
+    buildSearchableOptions()
     buildLib()
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
@@ -199,6 +202,47 @@ class DistributionJARsBuilder {
     if (loadingOrderFilePath != null) {
       reorderJARs(loadingOrderFilePath)
     }
+  }
+
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  void buildSearchableOptions() {
+    buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
+      def productLayout = buildContext.productProperties.productLayout
+      def modulesToIndex = productLayout.mainModules + getModulesToCompile(buildContext) + modulesForPluginsToPublish
+      def targetDirectory = getSearchableOptionsDir()
+      buildContext.messages.progress("Building searchable options for ${modulesToIndex.size()} modules")
+      buildContext.messages.debug("Searchable options are going to be built for the following modules: $modulesToIndex")
+      String targetFile = targetDirectory.absolutePath
+      FileUtil.delete(targetDirectory)
+      // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
+      // It'll process all UI elements in Settings dialog and build index for them.
+      BuildTasksImpl.runApplicationStarter(buildContext, "$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile, 'true'])
+      def modules = targetDirectory.list()
+      if (modules == null || modules.length == 0) {
+        buildContext.messages.error("Failed to build searchable options index: $targetFile is empty")
+      }
+      else {
+        buildContext.messages.info("Searchable options are built successfully for $modules.length modules")
+        buildContext.messages.debug("The following modules contain searchable options: $modules")
+      }
+    })
+  }
+
+  static List<String> getModulesToCompile(BuildContext buildContext) {
+    def productLayout = buildContext.productProperties.productLayout
+    productLayout.getIncludedPluginModules(productLayout.allBundledPluginsModules) +
+    getPlatformApiModules(productLayout) +
+    getPlatformImplModules(productLayout) +
+    getProductApiModules(productLayout) +
+    getProductImplModules(productLayout) +
+    productLayout.additionalPlatformJars.values() +
+    toolModules + buildContext.productProperties.additionalModulesToCompile
+  }
+
+  List<String> getModulesForPluginsToPublish() {
+    platformModules + (pluginsToPublish.collect { it.key.moduleJars.values() }.flatten() as List<String>)
   }
 
   void reorderJARs(String loadingOrderFilePath) {
@@ -274,14 +318,8 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-    def searchableOptionsDir = new File(buildContext.paths.temp, "searchableOptions/result")
 
-    //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
-    def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules)
-    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
-      layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
-    }
+    addSearchableOptions(layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -442,6 +480,7 @@ class DistributionJARsBuilder {
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
+    addSearchableOptions(layoutBuilder)
     def enabledModulesSet = enabledPluginModules
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
@@ -452,6 +491,23 @@ class DistributionJARsBuilder {
       }
       buildByLayout(layoutBuilder, plugin, "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}", actualModuleJars, generatedResources)
     }
+  }
+
+  private void addSearchableOptions(LayoutBuilder layoutBuilder) {
+    if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+      def searchableOptionsDir = getSearchableOptionsDir()
+      if (!searchableOptionsDir.exists()) {
+        buildContext.messages.error("There are no searchable options available. " +
+                                    "Please ensure that you call DistributionJARsBuilder#buildSearchableOptions before this method.")
+      }
+      searchableOptionsDir.eachFile(FileType.DIRECTORIES) {
+        layoutBuilder.patchModuleOutput(it.name, FileUtil.toSystemIndependentName(it.absolutePath))
+      }
+    }
+  }
+
+  private File getSearchableOptionsDir() {
+    new File(buildContext.paths.temp, "searchableOptions/result")
   }
 
   private void checkOutputOfPluginModules(String mainPluginModule, Collection<String> moduleNames, MultiValuesMap<String, String> moduleExcludes) {

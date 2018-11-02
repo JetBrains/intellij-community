@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -6,6 +6,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.compiler.CompilerBundle;
+import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -22,12 +23,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Vector;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaCompilersTab implements SearchableConfigurable, Configurable.NoScroll {
+public class JavaCompilersTab extends CompositeConfigurable<Configurable> implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
   private JPanel myContentPanel;
   private JComboBox myCompiler;
@@ -39,19 +41,16 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   private final BackendCompiler myDefaultCompiler;
   private BackendCompiler mySelectedCompiler;
   private final CompilerConfigurationImpl myCompilerConfiguration;
-  private final Collection<Configurable> myConfigurables;
   private final TargetOptionsComponent myTargetLevelComponent;
 
   public JavaCompilersTab(final Project project) {
-    this(project, ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getRegisteredJavaCompilers(),
-         ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler());
+    this(project, ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getDefaultCompiler());
   }
 
-  public JavaCompilersTab(final Project project, Collection<? extends BackendCompiler> compilers, BackendCompiler defaultCompiler) {
+  private JavaCompilersTab(final Project project, BackendCompiler defaultCompiler) {
     myProject = project;
     myDefaultCompiler = defaultCompiler;
     myCompilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
-    myConfigurables = new ArrayList<>(compilers.size());
 
     myCardLayout = new CardLayout();
     myContentPanel.setLayout(myCardLayout);
@@ -60,11 +59,10 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     myTargetLevelComponent = new TargetOptionsComponent(project);
     myTargetOptionsPanel.add(myTargetLevelComponent, BorderLayout.CENTER);
 
-    for (BackendCompiler compiler : compilers) {
-      Configurable configurable = compiler.createConfigurable();
-      myConfigurables.add(configurable);
-
-      myContentPanel.add(configurable.createComponent(), compiler.getId());
+    final List<BackendCompiler> compilers = getCompilers();
+    final List<Configurable> configurables = getConfigurables();
+    for (int i = 0; i < configurables.size(); i++) {
+      myContentPanel.add(configurables.get(i).createComponent(), compilers.get(i).getId());
     }
     myCompiler.setModel(new DefaultComboBoxModel(new Vector(compilers)));
     myCompiler.setRenderer(new ListCellRendererWrapper<BackendCompiler>() {
@@ -113,10 +111,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     if (myCbUseReleaseOption.isSelected() != myCompilerConfiguration.useReleaseOption()) {
       return true;
     }
-    for (Configurable configurable : myConfigurables) {
-      if (configurable.isModified()) {
-        return true;
-      }
+    if (super.isModified()) {
+      return true;
     }
     if (!Comparing.equal(myTargetLevelComponent.getProjectBytecodeTarget(), myCompilerConfiguration.getProjectBytecodeTarget())) {
       return true;
@@ -132,11 +128,7 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     try {
       myCompilerConfiguration.setUseReleaseOption(myCbUseReleaseOption.isSelected());
 
-      for (Configurable configurable : myConfigurables) {
-        if (configurable.isModified()) {
-          configurable.apply();
-        }
-      }
+      super.apply();
 
       myCompilerConfiguration.setDefaultCompiler(mySelectedCompiler);
       myCompilerConfiguration.setProjectBytecodeTarget(myTargetLevelComponent.getProjectBytecodeTarget());
@@ -155,9 +147,8 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
   public void reset() {
     myCbUseReleaseOption.setSelected(myCompilerConfiguration.useReleaseOption());
 
-    for (Configurable configurable : myConfigurables) {
-      configurable.reset();
-    }
+    super.reset();
+
     selectCompiler(myCompilerConfiguration.getDefaultCompiler());
     myTargetLevelComponent.setProjectBytecodeTargetLevel(myCompilerConfiguration.getProjectBytecodeTarget());
     myTargetLevelComponent.setModuleTargetLevels(myCompilerConfiguration.getModulesBytecodeTargetMap());
@@ -172,5 +163,22 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
     myCardLayout.show(myContentPanel, compiler.getId());
     myContentPanel.revalidate();
     myContentPanel.repaint();
+  }
+
+  @NotNull
+  @Override
+  protected List<Configurable> createConfigurables() {
+    final Collection<BackendCompiler> compilers = getCompilers();
+    final List<Configurable> configurables = new ArrayList<>(compilers.size());
+    for (final BackendCompiler compiler : compilers) {
+      configurables.add(compiler.createConfigurable());
+    }
+    return configurables;
+  }
+
+  @NotNull
+  private List<BackendCompiler> getCompilers() {
+    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    return (List<BackendCompiler>)configuration.getRegisteredJavaCompilers();
   }
 }
