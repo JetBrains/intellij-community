@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +86,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   protected abstract T createProcess(@Nullable String directory) throws ExecutionException;
+
+  @ApiStatus.Experimental
+  protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+    return createProcess(directory);
+  }
 
   protected abstract ProcessHandler createProcessHandler(T process);
 
@@ -180,7 +186,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         // Create Server process
-        final T process = createProcess(directory);
+        final T process = createProcess(directory, terminalWidget.getCommandHistoryFilePath());
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
