@@ -5,9 +5,9 @@ class DuplicateSwitchLabels  {
 
   void f(final int i) {
     switch (i) {
-      <error descr="Duplicate default label">default:</error> break;
+      <error descr="Duplicate default label">default</error>: break;
       case 1: break;
-      <error descr="Duplicate default label">default:</error> break;
+      <error descr="Duplicate default label">default</error>: break;
     }
 
     switch (i) {
