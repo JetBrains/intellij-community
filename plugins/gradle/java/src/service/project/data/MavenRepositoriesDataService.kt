@@ -35,13 +35,13 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
 
     val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 
-    val repositories = linkedSetOf<RemoteRepositoryDescription>().apply {
-      addAll(repositoriesConfiguration.repositories)
+    val urlToConfig = repositoriesConfiguration.repositories.groupBy { it.url }.toMutableMap()
+
+    imported.forEach {
+      urlToConfig.putIfAbsent(it.data.url, listOf(RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url)))
     }
 
-    imported.mapTo(repositories) { RemoteRepositoryDescription(it.data.name, it.data.name, it.data.url) }
-
-    repositoriesConfiguration.repositories = repositories.toList()
+    repositoriesConfiguration.repositories = urlToConfig.values.flatten()
 
     super.onSuccessImport(imported, projectData, project, modelsProvider)
   }
