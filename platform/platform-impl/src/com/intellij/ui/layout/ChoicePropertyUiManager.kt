@@ -14,10 +14,11 @@ class ChoicePropertyUiManager<T : Any>(defaultChoice: T) {
   var selected: T
     get() = _selected
     set(value) {
-      updateSelection(components.firstOrNull { it.id == value })
+      _selected = value
+      updateSelectedInfo(components.firstOrNull { it.id == value })
     }
 
-  private fun updateSelection(newSelection: ChoiceInfo<T>?) {
+  private fun updateSelectedInfo(newSelection: ChoiceInfo<T>?) {
     currentSelection?.select(false)
 
     currentSelection = newSelection ?: return
@@ -38,7 +39,8 @@ class ChoicePropertyUiManager<T : Any>(defaultChoice: T) {
 
     component.addActionListener(ActionListener {
       if (component.isSelected) {
-        updateSelection(info)
+        _selected = id
+        updateSelectedInfo(info)
       }
     })
   }
