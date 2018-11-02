@@ -4,6 +4,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -52,15 +53,28 @@ public class ExpressionParser {
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
+  private static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
+
   private final JavaParser myParser;
 
-  public ExpressionParser(@NotNull final JavaParser javaParser) {
+  public ExpressionParser(@NotNull JavaParser javaParser) {
     myParser = javaParser;
   }
 
   @Nullable
-  public PsiBuilder.Marker parse(final PsiBuilder builder) {
+  public PsiBuilder.Marker parse(PsiBuilder builder) {
     return parseAssignment(builder);
+  }
+
+  @Nullable
+  public PsiBuilder.Marker parseCaseLabel(PsiBuilder builder) {
+    CASE_LABEL.set(builder, Boolean.TRUE);
+    try {
+      return parseAssignment(builder);
+    }
+    finally {
+      CASE_LABEL.set(builder, null);
+    }
   }
 
   @Nullable
@@ -491,9 +505,11 @@ public class ExpressionParser {
     }
 
     if (tokenType == JavaTokenType.LPARENTH) {
-      final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
-      if (lambda != null) {
-        return lambda;
+      if (CASE_LABEL.get(builder) != Boolean.TRUE) {
+        final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
+        if (lambda != null) {
+          return lambda;
+        }
       }
 
       final PsiBuilder.Marker parenth = builder.mark();
@@ -541,7 +557,7 @@ public class ExpressionParser {
       builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
     }
     if (tokenType == JavaTokenType.IDENTIFIER) {
-      if (builder.lookAhead(1) == JavaTokenType.ARROW) {
+      if (CASE_LABEL.get(builder) != Boolean.TRUE && builder.lookAhead(1) == JavaTokenType.ARROW) {
         return parseLambdaExpression(builder, false);
       }
 

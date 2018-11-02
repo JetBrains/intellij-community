@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.*;
 
@@ -33,7 +34,7 @@ public class ConfigSlurperMapContentProvider extends GroovyMapContentProvider {
     PsiElement resolveResult = resolve;
     List<String> path = new ArrayList<>();
 
-    while (resolveResult == null) {
+    while (resolveResult instanceof GroovyMapProperty) {
       if (!(resolvedQualifier instanceof GrReferenceExpression)) return null;
 
       GrReferenceExpression expr = (GrReferenceExpression)resolvedQualifier;

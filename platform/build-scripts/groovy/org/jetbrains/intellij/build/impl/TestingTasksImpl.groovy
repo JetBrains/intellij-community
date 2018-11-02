@@ -213,6 +213,7 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
             'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
             'project'                          : 'intellij',
+            'checkout-root-prefix'             : System.getProperty("intellij.build.test.discovery.checkout.root.prefix"),
           ])
         }
         catch (Exception e) {

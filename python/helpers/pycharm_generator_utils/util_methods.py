@@ -1,5 +1,7 @@
-from pycharm_generator_utils.constants import *
+import ast
 import keyword
+
+from pycharm_generator_utils.constants import *
 
 try:
     import inspect
@@ -263,6 +265,14 @@ def cleanup(value):
         i += 1
     result.append(value[prev:])
     return "".join(result)
+
+
+def is_valid_expr(s):
+    try:
+        compile(s, '<unknown>', 'eval', ast.PyCF_ONLY_AST)
+    except SyntaxError:
+        return False
+    return True
 
 
 _prop_types = [type(property())]

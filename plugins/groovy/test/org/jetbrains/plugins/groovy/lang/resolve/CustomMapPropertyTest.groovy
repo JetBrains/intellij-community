@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty
 import org.jetbrains.plugins.groovy.util.GroovyLatestTest
 import org.jetbrains.plugins.groovy.util.ReferenceExpressionTest
 import org.junit.Before
@@ -31,7 +32,7 @@ class SomeMapClass extends HashMap<String, Pojo> {
 
   @Test
   void 'constant in instance context'() {
-    referenceExpressionTest 'new SomeMapClass().<caret>CONSTANT', null, 'Pojo'
+    referenceExpressionTest 'new SomeMapClass().<caret>CONSTANT', GroovyMapProperty, 'Pojo'
   }
 
   @Test
@@ -41,7 +42,7 @@ class SomeMapClass extends HashMap<String, Pojo> {
 
   @Test
   void 'inner class in instance context'() {
-    referenceExpressionTest 'new SomeMapClass().<caret>Inner', null, 'Pojo'
+    referenceExpressionTest 'new SomeMapClass().<caret>Inner', GroovyMapProperty, 'Pojo'
   }
 
   @Test

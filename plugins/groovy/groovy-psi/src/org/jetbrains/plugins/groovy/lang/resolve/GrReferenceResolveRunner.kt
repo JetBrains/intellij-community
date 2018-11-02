@@ -17,12 +17,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.isThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGet
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
-import org.jetbrains.plugins.groovy.lang.resolve.processors.*
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
+import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ReferenceExpressionClassProcessor
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
@@ -38,13 +39,12 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
       if (place.context is GrMethodCall && !ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return false
     }
     else {
-      val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
+      val state = initialState.put(RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
         return qualifier.type.processSpread(processor, state, place, place.parent !is GrMethodCall)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
-        if (!processJavaLangClass(qualifier, initialState)) return false
         if (!processQualifier(qualifier, initialState)) return false
       }
     }
@@ -52,16 +52,6 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
       if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
     }
     return true
-  }
-
-  private fun processJavaLangClass(qualifier: GrExpression, initialState: ResolveState): Boolean {
-    if (qualifier !is GrReferenceExpression) return true
-
-    //optimization: only 'class' or 'this' in static context can be an alias of java.lang.Class
-    if ("class" != qualifier.referenceName && !PsiUtil.isThisReference(qualifier) && qualifier.resolve() !is PsiClass) return true
-
-    val classType = ResolveUtil.unwrapClassType(qualifier.type)
-    return classType.processReceiverType(processor, initialState, place)
   }
 
   private fun processQualifier(qualifier: GrExpression, state: ResolveState): Boolean {
@@ -98,7 +88,6 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 }
 
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Collection<GroovyResolveResult> {
-  if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return emptyList()
   val processor = GroovyResolverProcessorBuilder.builder()
     .setForceRValue(forceRValue)
     .setIncomplete(incomplete)

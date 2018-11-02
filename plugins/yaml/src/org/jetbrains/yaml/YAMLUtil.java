@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -304,7 +305,10 @@ public class YAMLUtil {
     return 0;
   }
   
-  public static int getIndentToThisElement(@NotNull final PsiElement element) {
+  public static int getIndentToThisElement(@NotNull PsiElement element) {
+    if (element instanceof YAMLBlockMappingImpl) {
+      element = ((YAMLBlockMappingImpl)element).getFirstKeyValue();
+    }
     int offset = element.getTextOffset();
 
     PsiElement currentElement = element;

@@ -99,6 +99,7 @@ class CurrentBranchComponent(val project: Project, val browser: CommitDialogChan
       val value = UIManager.get(name)
       return when (value) {
         is Double -> value
+        is Int -> value.toDouble()
         is String -> value.toDoubleOrNull() ?: default
         else -> default
       }

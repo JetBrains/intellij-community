@@ -472,11 +472,9 @@ public class StatementParser {
     boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
     builder.advanceLexer();
 
-    if (isCase) {
-      if (myParser.getExpressionParser().parse(builder) == null) {
-        statement.rollbackTo();
-        return null;
-      }
+    if (isCase && myParser.getExpressionParser().parseCaseLabel(builder) == null) {
+      statement.rollbackTo();
+      return null;
     }
 
     if (expect(builder, JavaTokenType.ARROW)) {

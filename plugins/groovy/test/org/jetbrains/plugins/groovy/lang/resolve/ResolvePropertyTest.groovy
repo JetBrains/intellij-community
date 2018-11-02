@@ -513,16 +513,6 @@ new C().<caret>foo(2)
     assert !(method instanceof GrAccessorMethod)
   }
 
-  void 'test property vs field in attribute call from outside'() {
-    resolveByText '''\
-class C {
-  def foo = { 42 }
-  def getFoo() { return { 43 } }
-}
-new C().@<caret>foo(2)
-''', GrField
-  }
-
   void testPropertyImportedOnDemand() {
     myFixture.addFileToProject("foo/A.groovy", 'package foo; class Foo {static def foo}')
     myFixture.configureByText("B.groovy", """package foo
@@ -532,22 +522,6 @@ print fo<caret>o""")
     def ref = findReference()
     def resolved = ref.resolve()
     assertInstanceOf(resolved, GrAccessorMethod)
-  }
-
-  void testFieldAccessOutsideClass() {
-    myFixture.configureByText("A.groovy", """
-class X {
-  public def foo = 3
-  def getFoo() {2}
-  def setFoo(def foo) {}
-}
-
-print new X().@f<caret>oo
-""")
-
-    def ref = findReference()
-    def resolved = ref.resolve()
-    assertInstanceOf(resolved, GrField)
   }
 
   void testSetterToAliasedImportedProperty() {
@@ -1477,5 +1451,13 @@ class Fff {
   def testThis(a) {}
 }
 ''', GrMethod
+  }
+
+  void 'test static field via class instance'() {
+    resolveByText '''\
+class A { public static someStaticField = 42 }
+def a = A // class instance
+a.<caret>someStaticField
+''', GrField
   }
 }

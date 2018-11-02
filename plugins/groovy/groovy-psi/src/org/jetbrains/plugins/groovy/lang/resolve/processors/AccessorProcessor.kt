@@ -15,7 +15,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.PropertyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
-class PropertyProcessor(
+class AccessorProcessor(
   propertyName: String,
   private val propertyKind: PropertyKind,
   argumentTypes: () -> Array<PsiType?>?,
