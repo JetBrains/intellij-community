@@ -247,10 +247,12 @@ Android Studio: exclude Python */
       withModule("intellij.android.smali")
     },
 Android Studio: exclude smali */
+/* Android Studio: exclude intellij.statsCollector
     plugin("intellij.statsCollector") {
       withModule("intellij.statsCollector.logEvents")
       withModule("intellij.statsCollector.completionRanker")
     },
+Android Studio: exclude intellij.statsCollector */
     plugin("intellij.jps.cache")
   ]
 

@@ -52,7 +52,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.java.decompiler",
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
-    "intellij.statsCollector",
     "intellij.sh",
     "intellij.vcs.changeReminder",
     "intellij.filePrediction",
@@ -68,6 +67,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.markdown"
     "intellij.maven",
     "intellij.java.guiForms.designer",
+    "intellij.statsCollector",
     "intellij.xpath",
     "intellij.xslt.debugger",
     */
