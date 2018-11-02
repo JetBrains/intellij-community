@@ -329,7 +329,9 @@ public class PerformanceWatcher implements Disposable, BaseComponent {
       myLastEdtAlive = System.currentTimeMillis();
       final long latency = System.currentTimeMillis() - myCreationMillis;
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
+/* TODO(b/118852103): get this fixed upstream
       myPublisher.uiResponded(latency);
+TODO(b/118852103): get this fixed upstream */
     }
   }
 
