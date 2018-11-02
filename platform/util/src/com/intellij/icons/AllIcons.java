@@ -912,35 +912,35 @@ public class AllIcons {
     @Deprecated
     public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOff = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOff = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffInactive = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffPressed = AllIcons.General.Pin_tab;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAll = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAll = AllIcons.Actions.Collapseall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAllHover = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAllHover = AllIcons.Actions.Collapseall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
@@ -997,10 +997,10 @@ public class AllIcons {
     @Deprecated
     public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Configure = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon Configure = AllIcons.General.Settings;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject */
     @SuppressWarnings("unused")
@@ -1027,30 +1027,30 @@ public class AllIcons {
     @Deprecated
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditColors = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon EditColors = AllIcons.General.Settings;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Edit */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditItemInSection = IconLoader.getIcon("/actions/edit.svg"); // 16x16
+    public static final Icon EditItemInSection = AllIcons.Actions.Edit;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAll = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAll = AllIcons.Actions.Expandall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAllHover = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAllHover = AllIcons.Actions.Expandall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
@@ -1851,15 +1851,15 @@ public class AllIcons {
       public static final Icon RenderKit = IconLoader.getIcon("/nodes/jsf/renderKit.svg"); // 16x16
       public static final Icon Validator = IconLoader.getIcon("/nodes/jsf/validator.svg"); // 16x16
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.Parameter */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Parameter */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon GenericValue = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
+      public static final Icon GenericValue = AllIcons.Nodes.Parameter;
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.UpFolder */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.UpFolder */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon NavigationCase = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
+      public static final Icon NavigationCase = AllIcons.Nodes.UpFolder;
 
     }
     public static final Icon Jsr45 = IconLoader.getIcon("/nodes/jsr45.svg"); // 16x16
