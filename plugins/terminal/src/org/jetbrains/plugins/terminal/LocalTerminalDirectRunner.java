@@ -60,10 +60,10 @@ import java.util.concurrent.Future;
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
-  public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  public static final String ZDOTDIR = "ZDOTDIR";
-  public static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
-
+  private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
+  private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
+  private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
 
   private final Charset myDefaultCharset;
 
@@ -144,6 +144,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+    return createProcess(directory, null);
+  }
+
+  @Override
+  protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
     if (SystemInfo.isMac) {
@@ -163,6 +168,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       catch (Exception e) {
         LOG.error("Exception during customization of the terminal session", e);
       }
+    }
+    if (commandHistoryFilePath != null) {
+      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
     }
 
     try {
