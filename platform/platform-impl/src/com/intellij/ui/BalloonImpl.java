@@ -1040,7 +1040,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   public Icon getCloseButton() {
-    return AllIcons.General.BalloonClose;
+    return AllIcons.Ide.Notification.Close;
   }
 
   @Override

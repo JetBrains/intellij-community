@@ -92,8 +92,10 @@ deprecated: tab_grey_left.png; to be removed in IDEA 2020
 deprecated: tab_grey_left_inner.png; to be removed in IDEA 2020
 deprecated: tab_grey_right.png; to be removed in IDEA 2020
 deprecated: tab_grey_right_inner.png; to be removed in IDEA 2020
-deprecated: TemplateProjectSettings.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
-deprecated: TemplateProjectStructure.png -> /general/projectStructure.svg; to be removed in IDEA 2020 - AllIcons.General.ProjectStructure
+deprecated: TemplateProjectSettings.png -> /general/settings.svg; to be removed in IDEA 2020 - use AllIcons.General.Settings
+deprecated: TemplateProjectStructure.png -> /general/projectStructure.svg; to be removed in IDEA 2020 - use AllIcons.General.ProjectStructure
 deprecated: uninstallPlugin.png; to be removed in IDEA 2020
 deprecated: webSettings.png; to be removed in IDEA 2020
 deprecated: passwordLock.png; to be removed in IDEA 2020
+deprecated: comboUpPassive.png; to be removed in IDEA 2020
+deprecated: balloonClose.png -> /ide/notification/close.svg; to be removed in IDEA 2020 - use AllIcons.Ide.Notification.Close

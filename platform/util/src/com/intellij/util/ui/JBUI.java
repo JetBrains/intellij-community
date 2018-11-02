@@ -1646,8 +1646,8 @@ public class JBUI {
 
       @NotNull
       public static Icon closeTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
-                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseHovered)
+                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.Close);
       }
 
       @NotNull
