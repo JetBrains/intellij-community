@@ -1820,7 +1820,6 @@ public class AllIcons {
     public static final Icon AbstractClass = IconLoader.getIcon("/nodes/abstractClass.svg"); // 16x16
     public static final Icon AbstractException = IconLoader.getIcon("/nodes/abstractException.svg"); // 16x16
     public static final Icon AbstractMethod = IconLoader.getIcon("/nodes/abstractMethod.svg"); // 16x16
-    public static final Icon Advice = IconLoader.getIcon("/nodes/advice.svg"); // 16x16
     public static final Icon Alias = IconLoader.getIcon("/nodes/alias.svg"); // 16x16
     public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.svg"); // 16x16
     public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.svg"); // 16x16
@@ -1967,6 +1966,11 @@ public class AllIcons {
     public static final Icon WebFolder = IconLoader.getIcon("/nodes/webFolder.svg"); // 16x16
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.svg"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Tag */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Advice = AllIcons.Nodes.Tag;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
