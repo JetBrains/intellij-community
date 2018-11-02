@@ -547,7 +547,8 @@ public class AttachToProcessAction extends AnAction {
     @NotNull
     public String getText(@NotNull Project project) {
       String shortenedText = StringUtil.shortenTextWithEllipsis(myGroup.getItemDisplayText(project, myInfo, myDataHolder), 200, 0);
-      return myInfo.getPid() + " " + shortenedText;
+      int pid = myInfo.getPid();
+      return (pid == -1 ? "" : pid + " ") + shortenedText;
     }
 
     @NotNull
