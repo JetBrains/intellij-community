@@ -83,6 +83,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   private static final String COMMAND_USED = "CommandUsed";
   private static final String COMMAND_COMPLETED = "CommandCompleted";
   public static final String TAB_SWITCHED = "TabSwitched";
+  public static final String GROUP_NAVIGATE = "NavigateThroughGroups";
 
   private final List<? extends SearchEverywhereContributor> myServiceContributors;
   private final List<? extends SearchEverywhereContributor> myShownContributors;
@@ -586,8 +587,14 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       }
       getEventShortcut(e).ifPresent(shortcutString -> featureUsed(TAB_SWITCHED, shortcutString));
     });
-    registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> fetchGroups(true));
-    registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> fetchGroups(false));
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_NEXT_GROUP, e -> {
+      fetchGroups(true);
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(GROUP_NAVIGATE, shortcutString));
+    });
+    registerAction(SearchEverywhereActions.NAVIGATE_TO_PREV_GROUP, e -> {
+      fetchGroups(false);
+      getEventShortcut(e).ifPresent(shortcutString -> featureUsed(GROUP_NAVIGATE, shortcutString));
+    });
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> closePopup())
