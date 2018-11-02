@@ -430,7 +430,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasAt() {
-    return findChildByType(GroovyTokenTypes.mAT) != null;
+    return false;
   }
 
   @Override

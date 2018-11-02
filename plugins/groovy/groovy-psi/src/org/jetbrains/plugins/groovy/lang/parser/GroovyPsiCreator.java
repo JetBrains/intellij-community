@@ -207,6 +207,7 @@ public class GroovyPsiCreator {
 
     //Paths
     if (elem == REFERENCE_EXPRESSION) return new GrReferenceExpressionImpl(node);
+    if (elem == ATTRIBUTE_EXPRESSION) return new GrAttributeExpressionImpl(node);
     if (elem == METHOD_REFERENCE_EXPRESSION) return new GrMethodReferenceExpressionImpl(node);
     if (elem == PROPERTY_EXPRESSION) return new GrPropertySelectionImpl(node);
     if (elem == METHOD_CALL_EXPRESSION) return new GrMethodCallExpressionImpl(node);
