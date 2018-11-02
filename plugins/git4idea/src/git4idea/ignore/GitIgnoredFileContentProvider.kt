@@ -53,7 +53,7 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
 
       val description = provider.ignoredGroupDescription
       if (description.isNotBlank()) {
-        content.append(prependCommentHashCharacterIfNeeded(description))
+        content.append(buildIgnoreGroupDescription(provider))
         content.append(lineSeparator)
       }
       content.append(ignoredFiles.joinToString(lineSeparator))
@@ -126,6 +126,9 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     append(lineSeparator())
     append("!$ignorePattern")
   }.toString()
+
+  override fun buildIgnoreGroupDescription(ignoredFileProvider: IgnoredFileProvider) =
+    prependCommentHashCharacterIfNeeded(ignoredFileProvider.ignoredGroupDescription)
 
   private fun prependCommentHashCharacterIfNeeded(description: String): String =
     if (description.startsWith("#")) description else "# $description"

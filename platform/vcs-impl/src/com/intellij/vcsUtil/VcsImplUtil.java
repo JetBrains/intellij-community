@@ -30,6 +30,7 @@ import java.nio.file.Paths;
 
 import static com.intellij.openapi.vcs.FileStatus.IGNORED;
 import static com.intellij.openapi.vcs.FileStatus.UNKNOWN;
+import static com.intellij.openapi.vcs.changes.ignore.IgnoreFilesProcessorImplKt.ASKED_MANAGE_IGNORE_FILES_PROPERTY;
 import static com.intellij.vcsUtil.VcsUtil.isFileUnderVcs;
 
 /**
@@ -106,7 +107,7 @@ public class VcsImplUtil {
     if (canManageIgnoreFiles(project)) {
       updateIgnoreFileIfNeeded(project, vcs, ignoreFileRoot, ignoreFile.exists());
     }
-    else {
+    else if (notAskedToManageIgnoreFiles(project)) {
       notifyVcsIgnoreFileManage(project, () -> updateIgnoreFileAndOpen(project, vcs, ignoreFileRoot, ignoreFile));
     }
   }
@@ -117,19 +118,25 @@ public class VcsImplUtil {
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
     VcsNotifier.getInstance(project).notifyMinorInfo(
+      true,
       "",
       VcsBundle.message("ignored.file.manage.message"),
       NotificationAction.create(VcsBundle.message("ignored.file.manage.this.project"), (event, notification) -> {
         manageIgnore.run();
         propertiesComponent.setValue(MANAGE_IGNORE_FILES_PROPERTY, true);
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
         notification.expire();
       }),
       NotificationAction.create(VcsBundle.message("ignored.file.manage.all.project"), (event, notification) -> {
         manageIgnore.run();
         applicationSettings.MANAGE_IGNORE_FILES = true;
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
         notification.expire();
       }),
-      NotificationAction.create(VcsBundle.message("ignored.file.manage.notnow"), (event, notification) -> notification.expire()));
+      NotificationAction.create(VcsBundle.message("ignored.file.manage.notmanage"), (event, notification) -> {
+        propertiesComponent.setValue(ASKED_MANAGE_IGNORE_FILES_PROPERTY, true);
+        notification.expire();
+      }));
   }
 
   public static boolean generateIgnoreFileIfNeeded(@NotNull Project project,
@@ -167,7 +174,7 @@ public class VcsImplUtil {
     }
   }
 
-  private static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
+  public static IgnoredFileContentProvider getIgnoredFileContentProvider(@NotNull Project project,
                                                                           @NotNull AbstractVcs vcs) {
     return IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
       .filter((provider) -> provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod()))
@@ -179,7 +186,14 @@ public class VcsImplUtil {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
     VcsApplicationSettings applicationSettings = VcsApplicationSettings.getInstance();
 
-    return applicationSettings.MANAGE_IGNORE_FILES || propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false);
+    return applicationSettings.MANAGE_IGNORE_FILES || (propertiesComponent.getBoolean(MANAGE_IGNORE_FILES_PROPERTY, false)
+                                                       && Registry.is("vcs.ignorefile.generation"));
+  }
+
+  private static boolean notAskedToManageIgnoreFiles(@NotNull Project project) {
+    PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
+
+    return !propertiesComponent.getBoolean(ASKED_MANAGE_IGNORE_FILES_PROPERTY, false);
   }
 
   private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {

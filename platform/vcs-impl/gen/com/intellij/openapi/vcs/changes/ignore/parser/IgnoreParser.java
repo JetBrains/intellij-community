@@ -48,7 +48,7 @@ public class IgnoreParser implements PsiParser {
   }
 
   protected boolean parse_root_(IElementType root_, PsiBuilder builder_, int level_) {
-    return gitignoreFile(builder_, level_ + 1);
+    return ignoreFile(builder_, level_ + 1);
   }
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
@@ -226,12 +226,12 @@ public class IgnoreParser implements PsiParser {
 
   /* ********************************************************** */
   // item_ *
-  static boolean gitignoreFile(PsiBuilder builder_, int level_) {
-    if (!recursion_guard_(builder_, level_, "gitignoreFile")) return false;
+  static boolean ignoreFile(PsiBuilder builder_, int level_) {
+    if (!recursion_guard_(builder_, level_, "ignoreFile")) return false;
     int pos_ = current_position_(builder_);
     while (true) {
       if (!item_(builder_, level_ + 1)) break;
-      if (!empty_element_parsed_guard_(builder_, "gitignoreFile", pos_)) break;
+      if (!empty_element_parsed_guard_(builder_, "ignoreFile", pos_)) break;
       pos_ = current_position_(builder_);
     }
     return true;
