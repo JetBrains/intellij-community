@@ -488,7 +488,9 @@ idea.fatal.error.notification=disabled
                          "productProperties.productLayout.bundledOsPluginModules[$osFamily]", optionalModules)
     }
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
+    /* TODO(b/118852143): enable this (or not)
     checkPluginModules(layout.compatiblePluginsToIgnore, "productProperties.productLayout.compatiblePluginsToIgnore", optionalModules)
+    TODO(b/118852143): enable this (or not) */
 
     if (!layout.pluginModulesToPublish.isEmpty() && layout.buildAllCompatiblePlugins && buildContext.shouldBuildDistributions()) {
       buildContext.messages.warning("layout.buildAllCompatiblePlugins option is enabled. Value of layout.pluginModulesToPublish property " +
