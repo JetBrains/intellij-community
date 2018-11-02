@@ -754,6 +754,7 @@ public class AllIcons {
   }
 
   public final static class FileTypes {
+    public static final Icon AddAny = IconLoader.getIcon("/fileTypes/addAny.svg"); // 16x16
     public static final Icon Any_type = IconLoader.getIcon("/fileTypes/any_type.svg"); // 16x16
     public static final Icon Archive = IconLoader.getIcon("/fileTypes/archive.svg"); // 16x16
     public static final Icon AS = IconLoader.getIcon("/fileTypes/as.svg"); // 16x16
