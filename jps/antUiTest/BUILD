@@ -9,7 +9,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/adt/idea/adt-branding:intellij.android.adt.branding",
-        "//tools/vendor/intellij/cidr:intellij.c.doxygen",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
