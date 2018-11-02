@@ -28,20 +28,29 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.RefsModel
 import com.intellij.vcs.log.data.VcsLogData
+import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.utils.subgraphDifference
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory
+import com.intellij.vcs.log.util.StopWatch
 import com.intellij.vcs.log.util.TroveUtil
 import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.visible.VisiblePack
 import git4idea.GitBranch
+import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -52,9 +61,12 @@ import org.jetbrains.annotations.CalledInAwt
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
-                     private val dataProvider: VcsLogDataProvider,
+                     private val vcsLogData: VcsLogData,
                      private val ui: VcsLogUi,
                      parent: Disposable) : VcsLogHighlighter, Disposable {
+  private val storage
+    get() = vcsLogData.storage
+
   private var progressIndicator: ProgressIndicator? = null
   private var comparedBranch: String? = null
   private var repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>? = null
@@ -89,7 +101,7 @@ class DeepComparator(private val project: Project,
       val repositories = getRepositories(dataPack.logProviders, comparedBranch!!)
       if (repositories == repositoriesWithCurrentBranches) {
         // but not if current branch changed
-        startTask()
+        startTask(dataPack)
       }
       else {
         LOG.debug("Repositories with current branches changed. Actual:\n$repositories\nExpected:\n$repositoriesWithCurrentBranches")
@@ -99,7 +111,7 @@ class DeepComparator(private val project: Project,
   }
 
   @CalledInAwt
-  fun startTask(branchToCompare: String) {
+  fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (comparedBranch != null) {
       LOG.error("Already comparing with branch $comparedBranch")
@@ -114,7 +126,7 @@ class DeepComparator(private val project: Project,
 
     comparedBranch = branchToCompare
     repositoriesWithCurrentBranches = repositories
-    startTask()
+    startTask(dataPack)
   }
 
   @CalledInAwt
@@ -130,9 +142,9 @@ class DeepComparator(private val project: Project,
     return comparedBranch != null
   }
 
-  private fun startTask() {
+  private fun startTask(dataPack: VcsLogDataPack) {
     LOG.debug("Highlighting requested for $repositoriesWithCurrentBranches")
-    val task = MyTask(repositoriesWithCurrentBranches!!, comparedBranch!!)
+    val task = MyTask(repositoriesWithCurrentBranches!!, dataPack, comparedBranch!!)
     progressIndicator = BackgroundableProcessIndicator(task)
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, progressIndicator!!)
   }
@@ -175,16 +187,34 @@ class DeepComparator(private val project: Project,
   }
 
   private inner class MyTask(private val repositoriesWithCurrentBranches: Map<GitRepository, GitBranch>,
+                             vcsLogDataPack: VcsLogDataPack,
                              private val comparedBranch: String) :
     Task.Backgroundable(project, "Comparing Branches...") {
 
+    private val dataPack = (vcsLogDataPack as? VisiblePack)?.dataPack as? DataPack
     private val collectedNonPickedCommits = TIntHashSet()
     private var exception: VcsException? = null
 
     override fun run(indicator: ProgressIndicator) {
       try {
         repositoriesWithCurrentBranches.forEach { repo, currentBranch ->
-          TroveUtil.addAll(collectedNonPickedCommits, getNonPickedCommitsFromGit(repo.root, currentBranch.name, comparedBranch))
+          val startTimeWithGit = System.currentTimeMillis()
+          val nonPickedCommitsFromGit = getNonPickedCommitsFromGit(repo.root, currentBranch.name, comparedBranch)
+          LOG.debug("Getting non picked commits with git took " +
+                    "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithGit)} for ${repo.root.name}")
+
+          if (Registry.`is`("git.log.use.index.for.picked.commits.highlighting")) {
+            val startTimeWithIndex = System.currentTimeMillis()
+            val nonPickedCommitsFromIndex = getNonPickedCommitsFromIndex(dataPack, repo.root, comparedBranch, nonPickedCommitsFromGit)
+            if (nonPickedCommitsFromIndex != null) {
+              TroveUtil.addAll(collectedNonPickedCommits, nonPickedCommitsFromIndex)
+              LOG.debug("Getting non picked commits with index took " +
+                        "${StopWatch.formatTime(System.currentTimeMillis() - startTimeWithIndex)} for ${repo.root.name}")
+              return@forEach
+            }
+          }
+
+          TroveUtil.addAll(collectedNonPickedCommits, nonPickedCommitsFromGit)
         }
       }
       catch (e: VcsException) {
@@ -225,8 +255,7 @@ class DeepComparator(private val project: Project,
             if (firstSpace > 0) {
               line = line.substring(0, firstSpace) // safety-check: take just the first word for sure
             }
-            val hash = HashImpl.build(line)
-            pickedCommits.add(dataProvider.getCommitIndex(hash, root))
+            pickedCommits.add(storage.getCommitIndex(HashImpl.build(line), root))
           }
           catch (e: Exception) {
             LOG.error("Couldn't parse line [$line]")
@@ -235,6 +264,68 @@ class DeepComparator(private val project: Project,
       }
       Git.getInstance().runCommandWithoutCollectingOutput(handler)
       return pickedCommits
+    }
+
+    private fun getNonPickedCommitsFromIndex(dataPack: DataPack?,
+                                             root: VirtualFile,
+                                             sourceBranch: String,
+                                             sourceBranchCommits: TIntHashSet): TIntHashSet? {
+      if (dataPack == null) return null
+      if (sourceBranchCommits.isEmpty) return sourceBranchCommits
+      if (!vcsLogData.index.isIndexed(root)) return null
+
+      val dataGetter = vcsLogData.index.dataGetter ?: return null
+
+      val targetBranchRef = dataPack.refsModel.findBranch(GitUtil.HEAD, root) ?: return null
+      val sourceBranchRef = dataPack.refsModel.findBranch(sourceBranch, root) ?: return null
+
+      val targetBranchIndex = storage.getCommitIndex(targetBranchRef.commitHash, root)
+      val sourceBranchIndex = storage.getCommitIndex(sourceBranchRef.commitHash, root)
+      if (targetBranchIndex == sourceBranchIndex) return TIntHashSet()
+
+      if (dataPack.permanentGraph !is PermanentGraphInfo<*>) return null
+
+      val permanentGraphInfo = dataPack.permanentGraph as PermanentGraphInfo<Int>
+      val targetBranchNodeIds = permanentGraphInfo.linearGraph.subgraphDifference(
+        permanentGraphInfo.permanentCommitsInfo.getNodeId(targetBranchIndex),
+        permanentGraphInfo.permanentCommitsInfo.getNodeId(sourceBranchIndex))
+      if (targetBranchNodeIds.isEmpty) return sourceBranchCommits
+      val targetBranchCommits = TroveUtil.map2IntSet(targetBranchNodeIds) { permanentGraphInfo.permanentCommitsInfo.getCommitId(it) }
+
+      val timeToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthorTime(it) }
+      val authorToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthor(it) }
+
+      for (targetCommit in targetBranchCommits) {
+        val time = dataGetter.getAuthorTime(targetCommit)
+        val author = dataGetter.getAuthor(targetCommit)
+
+        val sourceCandidates = TroveUtil.intersect(timeToSourceCommit[time] ?: TIntHashSet(),
+                                                   authorToSourceCommit[author] ?: TIntHashSet())
+        if (sourceCandidates.isNotEmpty()) {
+          selectSourceCommit(targetCommit, sourceCandidates, dataGetter)?.let { sourceCommit ->
+            sourceBranchCommits.remove(sourceCommit)
+          }
+        }
+      }
+
+      return sourceBranchCommits
+    }
+
+    private fun selectSourceCommit(targetCommit: Int, sourceCandidates: Set<Int>, dataGetter: IndexDataGetter): Int? {
+      val targetMessage = dataGetter.getFullMessage(targetCommit) ?: return null
+      for (sourceCandidate in sourceCandidates) {
+        val sourceHash = storage.getCommitId(sourceCandidate)?.hash ?: continue
+        if (targetMessage.contains("\n(cherry picked from commit ${sourceHash.asString()})") ||
+            targetMessage.contains("\n(cherry picked from commit ${sourceHash.toShortString()})")) {
+          return sourceCandidate
+        }
+      }
+
+      return null
+    }
+
+    private fun RefsModel.findBranch(name: String, root: VirtualFile): VcsRef? {
+      return VcsLogUtil.findBranch(this, root, name)
     }
 
     override fun toString(): String {
@@ -266,7 +357,7 @@ class DeepComparator(private val project: Project,
     private const val HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled"
 
     @JvmStatic
-    fun getInstance(project: Project, dataProvider: VcsLogDataProvider, logUi: VcsLogUi): DeepComparator {
+    fun getInstance(project: Project, dataProvider: VcsLogData, logUi: VcsLogUi): DeepComparator {
       return ServiceManager.getService(project, DeepComparatorHolder::class.java).getInstance(dataProvider, logUi)
     }
   }

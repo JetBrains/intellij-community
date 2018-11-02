@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import gnu.trove.TIntHashSet
 
 /**
  * Get nodes reachable from the specified by down edges of the graph.
@@ -76,4 +77,18 @@ fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited
   while (bfsWalks.isNotEmpty())
 
   return candidates[0]
+}
+
+/**
+ * Return a set of nodes that are reachable from the first node, but not from the second.
+ */
+fun LinearGraph.subgraphDifference(node1: Int, node2: Int): TIntHashSet {
+  val set1 = getReachableNodes(setOf(node1))
+  val set2 = getReachableNodes(setOf(node2))
+
+  val result = TIntHashSet()
+  for (i in 0 until nodesCount()) {
+    if (set1[i] && !set2[i]) result.add(i)
+  }
+  return result
 }

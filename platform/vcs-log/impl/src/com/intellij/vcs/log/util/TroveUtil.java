@@ -17,6 +17,7 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.util.IntIntFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.*;
@@ -145,8 +146,18 @@ public class TroveUtil {
   }
 
   @NotNull
-  public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+  public static <T> List<T> map2List(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static TIntHashSet map2IntSet(@NotNull TIntHashSet set, @NotNull IntIntFunction function) {
+    TIntHashSet result = new TIntHashSet();
+    set.forEach(it -> {
+      result.add(function.fun(it));
+      return true;
+    });
+    return result;
   }
 
   @NotNull
@@ -168,6 +179,22 @@ public class TroveUtil {
     for (T t : set) {
       result.add(function.applyAsInt(t));
     }
+    return result;
+  }
+
+  @NotNull
+  public static <T> Map<T, TIntHashSet> group(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+    Map<T, TIntHashSet> result = ContainerUtil.newHashMap();
+    set.forEach(it -> {
+      T key = function.apply(it);
+      TIntHashSet values = result.get(key);
+      if (values == null) {
+        values = new TIntHashSet();
+        result.put(key, values);
+      }
+      values.add(it);
+      return true;
+    });
     return result;
   }
 
@@ -220,5 +247,16 @@ public class TroveUtil {
       targetMap.put(key, set);
     }
     set.add(value);
+  }
+
+  public static boolean removeAll(@NotNull TIntHashSet fromWhere, @NotNull TIntHashSet what) {
+    Ref<Boolean> result = new Ref<>(false);
+    what.forEach(it -> {
+      if (fromWhere.remove(it)) {
+        result.set(true);
+      }
+      return true;
+    });
+    return result.get();
   }
 }
