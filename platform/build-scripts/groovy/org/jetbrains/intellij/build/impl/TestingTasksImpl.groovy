@@ -82,6 +82,102 @@ class TestingTasksImpl extends TestingTasks {
     }
   }
 
+  /**
+   * <p>Updates given jvm args, system properties and classpath with common parameters used for running tests
+   * (Xmx, debugging, config path) etc.
+   *
+   * <p>The values passed as parameters has priority over the default ones, added in this method.
+   *
+   * <p>Mutates incoming collections.
+   */
+  @Override
+  void prepareEnvForTestRun(List<String> jvmArgs, Map<String, String> systemProperties, List<String> classPath, boolean remoteDebugging) {
+    // Make sure our classloader is in classpath
+    if (jvmArgs.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
+      def utilModule = context.findRequiredModule("intellij.platform.util")
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
+      classPath.addAll(utilClasspath - classPath)
+    }
+
+    File snapshotsDir = createSnapshotsDirectory()
+    String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
+    List<String> defaultJvmArgs = [
+      "-ea",
+      "-server",
+      "-XX:+HeapDumpOnOutOfMemoryError",
+      "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
+      "-XX:ReservedCodeCacheSize=300m",
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:+UseConcMarkSweepGC",
+      "-XX:-OmitStackTraceInFastThrow"
+    ]
+    jvmArgs.addAll(0, defaultJvmArgs)
+    if (options.jvmMemoryOptions != null) {
+      jvmArgs.addAll(options.jvmMemoryOptions.split())
+    }
+    else {
+      jvmArgs.addAll([
+        "-Xmx750m",
+        "-Xms750m",
+        "-Dsun.io.useCanonCaches=false"
+      ])
+    }
+
+    String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
+
+    Map<String, String> defaultSystemProperties = [
+      "idea.platform.prefix"                   : options.platformPrefix,
+      "idea.home.path"                         : context.paths.projectHome,
+      "idea.config.path"                       : "$tempDir/config".toString(),
+      "idea.system.path"                       : "$tempDir/system".toString(),
+      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
+      "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
+      "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
+      "java.io.tmpdir"                         : tempDir,
+      "teamcity.build.tempDir"                 : tempDir,
+      "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
+      "jna.nosys"                              : "true",
+      "file.encoding"                          : "UTF-8",
+      "io.netty.leakDetectionLevel"            : "PARANOID",
+    ] as Map<String, String>
+    defaultSystemProperties.each { k, v -> systemProperties.putIfAbsent(k, v) }
+
+    (System.getProperties() as Hashtable<String, String>).each { String key, String value ->
+      if (key.startsWith("pass.")) {
+        systemProperties[key.substring("pass.".length())] = value
+      }
+    }
+
+    boolean suspendDebugProcess = options.suspendDebugProcess
+    if (isPerformanceRun()) {
+      context.messages.info("Debugging disabled for performance tests")
+      suspendDebugProcess = false
+    }
+    else if (remoteDebugging) {
+      context.messages.info("Remote debugging via TeamCity plugin is activated.")
+      if (suspendDebugProcess) {
+        context.messages.warning("'intellij.build.test.debug.suspend' option is ignored while debugging via TeamCity plugin")
+        suspendDebugProcess = false
+      }
+    }
+    else {
+      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"}"
+      if (options.debugPort != -1) {
+        debuggerParameter += ",address=$options.debugPort"
+      }
+      jvmArgs.add(debuggerParameter)
+    }
+
+    if (suspendDebugProcess) {
+      context.messages.info("""
+------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
+---------------------------------------^------^------^------^------^------^------^----------------------------------------
+""")
+    }
+  }
+
   private static boolean isPerformanceRun() {
     System.getProperty("idea.performance.tests") == "true"
   }
@@ -256,95 +352,24 @@ class TestingTasksImpl extends TestingTasks {
   }
 
   private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
-                               List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
+                               List<String> jvmArgs, Map<String, String> systemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
-
-    if (additionalJvmOptions.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
-      def utilModule = context.findRequiredModule("intellij.platform.util")
-      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
-      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
-      bootstrapClasspath.addAll(utilClasspath - bootstrapClasspath)
-    }
 
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
 
-    File snapshotsDir = createSnapshotsDirectory()
-    String hprofSnapshotFilePath = new File(snapshotsDir, "intellij-tests-oom.hprof").absolutePath
-    List<String> jvmArgs = [
-      "-ea",
-      "-server",
-      "-XX:+HeapDumpOnOutOfMemoryError",
-      "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
-      "-XX:ReservedCodeCacheSize=300m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50",
-      "-XX:+UseConcMarkSweepGC",
-      "-XX:-OmitStackTraceInFastThrow"
-    ]
-    jvmArgs.addAll(additionalJvmOptions)
-    if (options.jvmMemoryOptions != null) {
-      jvmArgs.addAll(options.jvmMemoryOptions.split())
-    }
-    else {
-      jvmArgs.addAll([
-        "-Xmx750m",
-        "-Xms750m",
-        "-Dsun.io.useCanonCaches=false"
-      ])
-    }
-
-    String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
-
-    Map<String, String> systemProperties = [
-      "classpath.file"                         : classpathFile.absolutePath,
-      "idea.platform.prefix"                   : options.platformPrefix,
-      "idea.home.path"                         : context.paths.projectHome,
-      "idea.config.path"                       : "$tempDir/config".toString(),
-      "idea.system.path"                       : "$tempDir/system".toString(),
-      "intellij.build.test.patterns"           : testPatterns,
-      "intellij.build.test.groups"             : testGroups,
-      "intellij.build.test.sorter"             : System.getProperty("intellij.build.test.sorter"),
-      "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
-      "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
-      "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
-      "bootstrap.testcases"                    : "com.intellij.AllTests",
-      "java.io.tmpdir"                         : tempDir,
-      "teamcity.build.tempDir"                 : tempDir,
-      "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
-      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
-      "jna.nosys"                              : "true",
-      "file.encoding"                          : "UTF-8",
-      "io.netty.leakDetectionLevel"            : "PARANOID",
+    Map<String, String> jUnitSystemProperties = [
+      "classpath.file"              : classpathFile.absolutePath,
+      "intellij.build.test.patterns": testPatterns,
+      "intellij.build.test.groups"  : testGroups,
+      "intellij.build.test.sorter"  : System.getProperty("intellij.build.test.sorter"),
+      "bootstrap.testcases"         : "com.intellij.AllTests",
     ] as Map<String, String>
-    systemProperties.putAll(additionalSystemProperties)
+    jUnitSystemProperties.each { k, v -> systemProperties.putIfAbsent(k, v) }
 
-    (System.getProperties() as Hashtable<String, String>).each { String key, String value ->
-      if (key.startsWith("pass.")) {
-        systemProperties[key.substring("pass.".length())] = value
-      }
-    }
-
-    boolean suspendDebugProcess = options.suspendDebugProcess
-    if (isPerformanceRun()) {
-      context.messages.info("Debugging disabled for performance tests")
-      suspendDebugProcess = false
-    }
-    else if (remoteDebugging) {
-      context.messages.info("Remote debugging via TeamCity plugin is activated.")
-      if (suspendDebugProcess) {
-        context.messages.warning("'intellij.build.test.debug.suspend' option is ignored while debugging via TeamCity plugin")
-        suspendDebugProcess = false
-      }
-    }
-    else {
-      String debuggerParameter = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendDebugProcess ? "y" : "n"}"
-      if (options.debugPort != -1) {
-        debuggerParameter += ",address=$options.debugPort"
-      }
-      jvmArgs.add(debuggerParameter)
-    }
+    prepareEnvForTestRun(jvmArgs, systemProperties, bootstrapClasspath, remoteDebugging)
 
     context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
     if (options.customJrePath != null) {
@@ -358,22 +383,16 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Environment variables: $envVariables")
     }
 
-    if (suspendDebugProcess) {
-      context.messages.info("""
-------------->------------- The process suspended until remote debugger connects to debug port -------------<-------------
----------------------------------------^------^------^------^------^------^------^----------------------------------------
-""")
-    }
-    if (isBootstrapSuiteDefault()) {
-      runJUnitTask(jvmArgs, systemProperties, envVariables, bootstrapClasspath)
-    }
-    else {
-      //run other suites instead of BootstrapTests
-      runJUnitTask(jvmArgs, systemProperties, envVariables, testsClasspath)
-    }
+    runJUnitTask(jvmArgs, systemProperties, envVariables, isBootstrapSuiteDefault() ? bootstrapClasspath : testsClasspath)
 
-    if (new File(hprofSnapshotFilePath).exists()) {
-      context.notifyArtifactBuilt(hprofSnapshotFilePath)
+    notifySnapshotBuilt(jvmArgs)
+  }
+
+  private void notifySnapshotBuilt(List<String> jvmArgs) {
+    def option = "-XX:HeapDumpPath="
+    def filePath = jvmArgs.find { it.startsWith(option) }.substring(option.length())
+    if (new File(filePath).exists()) {
+      context.notifyArtifactBuilt(filePath)
     }
   }
 
