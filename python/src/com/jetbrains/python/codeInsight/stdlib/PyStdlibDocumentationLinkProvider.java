@@ -989,8 +989,8 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Nullable
   @Override
-  public Function quickDocExtractor(PsiNamedElement namedElement) {
-    return (Function<Document, String>)document -> {
+  public Function<Document, String> quickDocExtractor(PsiNamedElement namedElement) {
+    return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
       final String elementId = namedElement != null ? moduleName + "." + namedElement.getName() : "module-" + moduleName;
