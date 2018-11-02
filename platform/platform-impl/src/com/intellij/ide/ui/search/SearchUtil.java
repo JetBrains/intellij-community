@@ -8,7 +8,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -182,12 +181,10 @@ public class SearchUtil {
     }
   }
 
-  public static Runnable lightOptions(SearchableConfigurable configurable, JComponent component, String option, GlassPanel glassPanel) {
-    return () -> {
-      if (!traverseComponentsTree(configurable, component, option, true)) {
-        traverseComponentsTree(configurable, component, option, false);
-      }
-    };
+  public static void lightOptions(SearchableConfigurable configurable, JComponent component, String option) {
+    if (!traverseComponentsTree(configurable, component, option, true)) {
+      traverseComponentsTree(configurable, component, option, false);
+    }
   }
 
   private static int getSelection(String tabIdx, final JTabbedPane tabbedPane) {
