@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
+import com.google.common.base.Suppliers;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
@@ -49,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.ESCAPE_ONLY;
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.TO_ONE_LINE_AND_ESCAPE;
@@ -621,22 +623,29 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     });
 
 
-    for (final PythonDocumentationLinkProvider documentationLinkProvider :
-      PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
+    for (String url : docUrls) {
+      Supplier<Document> documentSupplier = Suppliers.memoize(() -> {
+        try {
+          return Jsoup.parse(new URL(url), 1000);
+        }
+        catch (IOException e) {
+          LOG.error("Can't read external doc URL: " + url, e);
+          return null;
+        }
+      });
 
-      Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+      for (final PythonDocumentationLinkProvider documentationLinkProvider :
+        PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
 
-      if (quickDocExtractor != null) {
-        for (String url : docUrls) {
-          try {
-            final Document document = Jsoup.parse(new URL(url), 1000);
+        Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+
+       if (quickDocExtractor != null) {
+          final Document document = documentSupplier.get();
+          if (document != null) {
             String quickDoc = quickDocExtractor.apply(document);
             if (StringUtil.isNotEmpty(quickDoc)) {
               return quickDoc;
             }
-          }
-          catch (IOException e) {
-            LOG.error("Can't read external doc URL: " + url, e);
           }
         }
       }
