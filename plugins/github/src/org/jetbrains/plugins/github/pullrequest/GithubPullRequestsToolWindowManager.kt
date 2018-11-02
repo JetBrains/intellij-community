@@ -51,6 +51,7 @@ internal class GithubPullRequestsToolWindowManager(private val project: Project,
       toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, true, ToolWindowAnchor.BOTTOM, project, true)
         .apply {
           icon = GithubIcons.PullRequestsToolWindow
+          helpId = "reference.GitHub.PullRequests"
         }
 
       contentManager = toolWindow.contentManager
