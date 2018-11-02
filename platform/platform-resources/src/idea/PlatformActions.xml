@@ -948,5 +948,22 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
     <group id="ToolWindowContextMenu"/>
+
+    <group id="SearchEverywhereActions" text="Search Everywhere">
+      <action id="SearchEverywhere.NextTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Next tab"
+              description="Switch to next tab in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.PrevTab" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Prev tab"
+              description="Switch to previous tab in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.CompleteCommand" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Complete Command" description="Autocomplete command in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.SelectItem" class="com.intellij.ide.actions.searcheverywhere.SEActionStub" text="Select item"
+              description="Select item in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.NavigateToNextGroup" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Next group element" description="Navigate to next group in Search Everywhere dialog"/>
+      <action id="SearchEverywhere.NavigateToPrevGroup" class="com.intellij.ide.actions.searcheverywhere.SEActionStub"
+              text="Prev group element" description="Navigate to prev group in Search Everywhere dialog"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
+    </group>
   </actions>
 </idea-plugin>

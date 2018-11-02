@@ -636,4 +636,13 @@
   <action id="ShowFilterPopup">
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
+
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="meta UP"/>
+  </action>
 </keymap>

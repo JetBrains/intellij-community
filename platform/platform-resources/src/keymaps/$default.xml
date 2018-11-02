@@ -1118,4 +1118,25 @@
   <action id="ShowFilterPopup">
     <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
+
+  <action id="SearchEverywhere.NextTab">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.PrevTab">
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
+  <action id="SearchEverywhere.CompleteCommand">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.SelectItem">
+    <keyboard-shortcut first-keystroke="Enter"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="control DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="control UP"/>
+  </action>
 </keymap>
