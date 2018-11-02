@@ -98,6 +98,8 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"alignSubsequentSimpleMethods\" value=\"false\" />\n" +
       "  <option name=\"alignThrowsKeyword\" value=\"false\" />\n" +
       "  <option name=\"annotationParameterWrap\" value=\"NONE\" />\n" +
+      "  <option name=\"annotationParametersLeftParenOnNextLine\" value=\"false\" />\n" +
+      "  <option name=\"annotationParametersRightParenOnNextLine\" value=\"false\" />\n" +
       "  <option name=\"arrayInitializerLeftBraceOnNextLine\" value=\"false\" />\n" +
       "  <option name=\"arrayInitializerRightBraceOnNextLine\" value=\"false\" />\n" +
       "  <option name=\"arrayInitializerWrap\" value=\"NONE\" />\n" +

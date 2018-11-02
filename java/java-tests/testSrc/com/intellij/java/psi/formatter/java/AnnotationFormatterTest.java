@@ -183,6 +183,20 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                "    public void run() {\n" +
                "    }\n" +
                "}");
+
+    getCustomJavaSettings().ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
+    getCustomJavaSettings().ANNOTATION_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getCustomJavaSettings().ANNOTATION_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+    doTextTest(initial,
+               "class Test {\n" +
+               "    @SuperAnnotation(\n" +
+               "            first = \"my first line\",\n" +
+               "            second = \"my second line\",\n" +
+               "            third = \"third line\"\n" +
+               "    )\n" +
+               "    public void run() {\n" +
+               "    }\n" +
+               "}");
   }
 
   public void testAnnotationParameters_WrapAlways() {

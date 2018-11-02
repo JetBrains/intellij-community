@@ -1297,6 +1297,18 @@ public class JavaCodeStyleBean extends CodeStyleBean {
     getCustomSettings(JavaCodeStyleSettings.class).ALIGN_MULTILINE_ANNOTATION_PARAMETERS = value;
   }
 
+  public boolean isAnnotationParametersLeftParenOnNextLine() {
+    return getCustomSettings(JavaCodeStyleSettings.class).ANNOTATION_PARAMETERS_LPAREN_ON_NEXT_LINE;
+  }
+
+  public void setAnnotationParametersLeftParenOnNextLine(boolean value) {getCustomSettings(JavaCodeStyleSettings.class).ANNOTATION_PARAMETERS_LPAREN_ON_NEXT_LINE = value;}
+
+  public boolean isAnnotationParametersRightParenOnNextLine() {
+    return getCustomSettings(JavaCodeStyleSettings.class).ANNOTATION_PARAMETERS_RPAREN_ON_NEXT_LINE;
+  }
+
+  public void setAnnotationParametersRightParenOnNextLine(boolean value) {getCustomSettings(JavaCodeStyleSettings.class).ANNOTATION_PARAMETERS_RPAREN_ON_NEXT_LINE = value;}
+
   public int getBlankLinesAroundInitializer() {
     return getCustomSettings(JavaCodeStyleSettings.class).BLANK_LINES_AROUND_INITIALIZER;
   }

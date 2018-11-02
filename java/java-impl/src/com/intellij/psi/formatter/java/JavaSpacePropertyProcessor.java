@@ -1684,11 +1684,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
              myRole2 == ChildRole.ANNOTATION_VALUE) {
       createSpaceInCode(true);
     }
-    else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
+    else if (myRole2 == ChildRole.RPARENTH) {
+      createParenthSpace(myJavaSettings.ANNOTATION_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(false);
+    }
+    else if (myRole1 == ChildRole.LPARENTH) {
+      createParenthSpace(myJavaSettings.ANNOTATION_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_ANNOTATION_PARENTHESES);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(true);

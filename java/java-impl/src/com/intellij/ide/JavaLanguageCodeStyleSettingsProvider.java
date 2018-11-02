@@ -198,6 +198,16 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 ApplicationBundle.message("wrapping.align.when.multiline"),
                                 ApplicationBundle.message("wrapping.annotation.parameters"));
 
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_PARAMETERS_LPAREN_ON_NEXT_LINE",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                ApplicationBundle.message("wrapping.annotation.parameters"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ANNOTATION_PARAMETERS_RPAREN_ON_NEXT_LINE",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                ApplicationBundle.message("wrapping.annotation.parameters"));
+
       String groupName = ApplicationBundle.message("wrapping.fields.annotation");
       consumer.showCustomOption(JavaCodeStyleSettings.class, "DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION", "Do not wrap after single annotation", groupName);
     }
