@@ -806,3 +806,4 @@ CLASS_ATTR_BLACKLIST = [
 ]
 
 GENERATOR_VERSION_LINE = re.compile(r'# by generator (?P<version>\d+\.\d+)')
+REQUIRED_VERSION_LINE = re.compile(r'(?P<name>\S+)\s+(?P<version>\d+.\d+)')

@@ -11,6 +11,8 @@ from pycharm_generator_utils.util_methods import *
 
 debug_mode = True
 
+_helpers_dir = os.path.dirname(__file__)
+
 
 def redo_module(module_name, module_file_name, doing_builtins, cache_dir, sdk_dir=None):
     # gobject does 'del _gobject' in its __init__.py, so the chained attribute lookup code
@@ -335,15 +337,37 @@ def should_update_cache(cache_dir, mod_qname):
     mod_cache_base = os.path.join(cache_dir, *mod_qname.split('.'))
     mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
     mod_cache_file = mod_cache_base + '.py'
+    required_version = read_required_version(mod_qname)
     for path in (mod_cache_pkg, mod_cache_file):
-        try:
+        with suppressing_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
                 used_version = read_generator_version(f)
-                if used_version and used_version >= version_to_tuple(VERSION):
+                if used_version and required_version and used_version >= required_version:
                     return False
-        except IOError:
-            continue
     return True
+
+
+def read_required_gen_version_file():
+    result = {}
+    with fopen(os.path.join(_helpers_dir, 'required_gen_version'), 'r') as f:
+        for line in f:
+            if not line or line.startswith('#'):
+                continue
+            m = REQUIRED_VERSION_LINE.match(line)
+            if m:
+                result[m.group('name')] = version_to_tuple(m.group('version'))
+
+    return result
+
+
+def read_required_version(mod_qname):
+    mod_id = '(built-in)' if mod_qname in sys.builtin_module_names else mod_qname
+    versions = read_required_gen_version_file()
+    # TODO use glob patterns here
+    for pattern, version in versions.items():
+        if mod_id == pattern:
+            return version
+    return versions.get('(default)')
 
 
 # command-line interface
