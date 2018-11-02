@@ -28,6 +28,7 @@ iml_module(
         "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
         "//tools/idea/java/openapi:intellij.java[module]",
         "//tools/idea/.idea/libraries:Velocity",
+        "//tools/idea/.idea/libraries:commons-collections",
         "//tools/idea/xml/impl:intellij.xml.impl[module]",
         "//tools/idea/.idea/libraries:KotlinJavaRuntime",
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",

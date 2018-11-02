@@ -7,6 +7,7 @@ iml_module(
     iml_files = ["intellij.maven.server.m30.impl.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
         "//tools/idea/platform/tasks-platform-impl:intellij.platform.tasks.impl",
         "//tools/idea/platform/credential-store:intellij.platform.credentialStore",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",

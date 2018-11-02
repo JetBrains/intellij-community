@@ -7,6 +7,7 @@ iml_module(
     iml_files = ["antUiTest.iml"],
     # do not sort: must match IML order
     test_runtime_deps = [
+        "//tools/idea/plugins/maven/error-prone-compiler:intellij.maven.errorProne.compiler",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
         "//tools/adt/idea/adt-branding:intellij.android.adt.branding",
     ],

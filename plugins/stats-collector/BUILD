@@ -43,5 +43,6 @@ iml_module(
         "//tools/idea/plugins/stats-collector/log-events:intellij.statsCollector.logEvents[module]",
         "//tools/idea/.idea/libraries:commons-codec",
         "//tools/idea/.idea/libraries:fluent-hc",
+        "//tools/idea/plugins/stats-collector/completion-ranker:intellij.statsCollector.completionRanker[module]",
     ],
 )

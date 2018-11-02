@@ -48,6 +48,7 @@ iml_module(
         "//tools/idea/platform/vcs-api:intellij.platform.vcs[module]",
         "//tools/idea/.idea/libraries:OroMatcher",
         "//tools/idea/.idea/libraries:Velocity",
+        "//tools/idea/.idea/libraries:commons-collections",
         "//tools/idea/platform/platform-impl:intellij.platform.ide.impl[module]",
         "//tools/idea/platform/usageView:intellij.platform.usageView[module]",
         "//tools/idea/.idea/libraries:cli-parser",

@@ -258,8 +258,8 @@ java_library(
 java_library(
     name = "ASM",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0-beta:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0-beta:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/asm-all/7.0:jar"],
 )
 
 # managed by go/iml_to_build
@@ -618,13 +618,11 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/commons-collections/commons-collections/3.2.1:jar",
         "//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.4:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/velocity/velocity/1.7:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/commons-collections/commons-collections/3.2.1:jar",
         "//prebuilts/tools/common/m2/repository/commons-lang/commons-lang/2.4:jar",
         "//prebuilts/tools/common/m2/repository/org/apache/velocity/velocity/1.7:jar",
     ],
@@ -636,6 +634,14 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1.2:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/github/spullara/cli-parser/cli-parser/1.1.2:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "commons-collections",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/commons-collections/commons-collections/3.2.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/commons-collections/commons-collections/3.2.2:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1424,8 +1430,8 @@ java_library(
 java_library(
     name = "sa-jdwp",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.8:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.8:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.9:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/sa-jdwp/1.0.9:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1440,4 +1446,12 @@ java_library(
 java_library(
     name = "KotlinPlugin",
     visibility = ["//visibility:public"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "completion-ranking-java",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ranking/java/0.0.3:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/completion/ranking/java/0.0.3:jar"],
 )
