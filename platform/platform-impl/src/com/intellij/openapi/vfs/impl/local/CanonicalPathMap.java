@@ -136,17 +136,13 @@ class CanonicalPathMap {
           continue ext;
         }
         if (isExact) {
-          String parentPath = getApproxParent(path);
-          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
+          if (isApproxParent(path, root)) {
             changedPaths.add(path);
             continue ext;
           }
         }
-        else {
-          String rootParent = getApproxParent(root);
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        else if (isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
 
@@ -155,11 +151,8 @@ class CanonicalPathMap {
           changedPaths.add(path);
           continue ext;
         }
-        if (!isExact) {
-          String rootParent = getApproxParent(root);
-          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
-            changedPaths.add(root);
-          }
+        if (!isExact && isApproxParent(root, path)) {
+          changedPaths.add(root);
         }
       }
     }
@@ -172,9 +165,8 @@ class CanonicalPathMap {
   }
 
   // doesn't care about drive or UNC
-  private static String getApproxParent(@NotNull String path) {
-    int index = path.lastIndexOf(File.separatorChar);
-    return index == -1 ? null : path.substring(0, index);
+  private static boolean isApproxParent(@NotNull String path, @NotNull String parent) {
+    return path.lastIndexOf(File.separatorChar) == parent.length() && FileUtil.startsWith(path, parent);
   }
 
   @NotNull
