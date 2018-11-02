@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,10 +135,11 @@ public class ObjectEqualityInspection extends BaseInspection {
         // don't warn on non-compiling code, but allow to replace
         return false;
       }
-      if (m_ignoreClassObjects && ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType()))) {
+      if (m_ignoreClassObjects && (ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(lhs.getType())) ||
+                                   ClassUtils.isFinalClassWithDefaultEquals(PsiUtil.resolveClassInClassTypeOnly(rhs.getType())))) {
         return false;
       }
-      if (m_ignorePrivateConstructors && typeHasPrivateConstructor(lhs)) {
+      if (m_ignorePrivateConstructors && (typeHasPrivateConstructor(lhs) || typeHasPrivateConstructor(rhs))) {
         return false;
       }
       return true;

@@ -49,6 +49,13 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
     assertMarker("function", false)
   }
 
+  fun testToStubPackage() {
+    myFixture.copyDirectoryToProject(getTestName(false), "")
+    myFixture.configureByFile("pkg/foo.py")
+
+    assertEquals("Has stub item in foo.pyi", getMarkersInCurrentFile ("bar").singleOrNull()?.lineMarkerTooltip)
+  }
+
   // stub -> runtime
 
   fun testNoSimilarClassForMethodStub() {
@@ -83,6 +90,13 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
     assertMarker("foo", true)
   }
 
+  fun testFromStubPackage() {
+    myFixture.copyDirectoryToProject(getTestName(false), "")
+    myFixture.configureByFile("pkg-stubs/foo.pyi")
+
+    assertEquals("Stub for item in foo.py", getMarkersInCurrentFile ("bar").singleOrNull()?.lineMarkerTooltip)
+  }
+
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/pyi/lineMarkers"
   }
@@ -99,15 +113,23 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
   private fun getMarkers(elementName: String, pyi: Boolean): List<LineMarkerInfo<PsiElement>> {
     myFixture.copyDirectoryToProject(getTestName(false), "")
     myFixture.configureByFile(if (pyi) "b.pyi" else "a.py")
+    return getMarkersInCurrentFile(elementName)
+  }
 
+  private fun getMarkersInCurrentFile(elementName: String): List<LineMarkerInfo<PsiElement>> {
     val functions = PsiTreeUtil.findChildrenOfType(myFixture.file, PyFunction::class.java)
     functions.forEach { assertEquals(elementName, it.name) }
     assertNotEmpty(functions)
 
     myFixture.doHighlighting()
 
-    return DaemonCodeAnalyzerImpl
+    val result = DaemonCodeAnalyzerImpl
       .getLineMarkers(myFixture.editor.document, myFixture.project)
       .filter { PsiTreeUtil.getParentOfType(it.element, PsiNameIdentifierOwner::class.java)?.name == elementName }
+
+    assertProjectFilesNotParsed(myFixture.file)
+    assertSdkRootsNotParsed(myFixture.file)
+
+    return result
   }
 }

@@ -827,6 +827,7 @@ public class AllIcons {
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
     public static final Icon Divider = IconLoader.getIcon("/general/divider.svg"); // 2x19
     public static final Icon Dropdown = IconLoader.getIcon("/general/dropdown.svg"); // 16x16
+    public static final Icon DropdownGutter = IconLoader.getIcon("/general/dropdownGutter.svg"); // 13x13
     public static final Icon Ellipsis = IconLoader.getIcon("/general/ellipsis.svg"); // 9x9
     public static final Icon Error = IconLoader.getIcon("/general/error.svg"); // 16x16
     public static final Icon ErrorDialog = IconLoader.getIcon("/general/errorDialog.svg"); // 32x32
@@ -1792,6 +1793,7 @@ public class AllIcons {
     public static final Icon Class = IconLoader.getIcon("/nodes/class.svg"); // 16x16
     public static final Icon ClassInitializer = IconLoader.getIcon("/nodes/classInitializer.svg"); // 16x16
     public static final Icon CompiledClassesFolder = IconLoader.getIcon("/nodes/compiledClassesFolder.svg"); // 16x16
+    public static final Icon Constant = IconLoader.getIcon("/nodes/constant.svg"); // 16x16
     public static final Icon CopyOfFolder = IconLoader.getIcon("/nodes/copyOfFolder.svg"); // 16x16
     public static final Icon CustomRegion = IconLoader.getIcon("/nodes/customRegion.svg"); // 16x16
     public static final Icon Cvs_global = IconLoader.getIcon("/nodes/cvs_global.svg"); // 16x16
@@ -1915,6 +1917,7 @@ public class AllIcons {
     public static final Icon TestGroup = IconLoader.getIcon("/nodes/testGroup.svg"); // 16x16
     public static final Icon TestIgnored = IconLoader.getIcon("/nodes/testIgnored.svg"); // 16x16
     public static final Icon TestSourceFolder = IconLoader.getIcon("/nodes/testSourceFolder.svg"); // 16x16
+    public static final Icon Type = IconLoader.getIcon("/nodes/type.svg"); // 16x16
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.svg"); // 16x16
     public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.svg"); // 16x16
     public static final Icon UpFolder = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16

@@ -118,7 +118,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
                                context: TypeEvalContext): PyCallableParameter? {
     val stub = field.stub
     val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(field) else stub.getCustomStub(PyDataclassFieldStub::class.java)
-    if (fieldStub?.initValue() == false) return null
+    if (fieldStub != null && !fieldStub.initValue()) return null
+    if (fieldStub == null && field.annotationValue == null) return null // skip fields that are not annotated
 
     val name =
       field.name?.let {

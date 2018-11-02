@@ -55,13 +55,13 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "apply plugin: 'java'"
     );
 
-    assertModules("project", "project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
 
-    final Module testModule = getModule("project_test");
+    final Module testModule = getModule("project.test");
     TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
-    assertEquals("project_main", testModuleProperties.getProductionModuleName());
+    assertEquals("project.main", testModuleProperties.getProductionModuleName());
 
-    final Module productionModule = getModule("project_main");
+    final Module productionModule = getModule("project.main");
     assertSame(productionModule, testModuleProperties.getProductionModule());
   }
 
@@ -72,11 +72,11 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "apply plugin: 'java'"
     );
 
-    assertModules("my-project", "my-project_main", "my-project_test");
+    assertModules("my-project", "my-project.main", "my-project.test");
 
-    final Module testModule = getModule("my-project_test");
+    final Module testModule = getModule("my-project.test");
     TestModuleProperties testModuleProperties = TestModuleProperties.getInstance(testModule);
-    assertEquals("my-project_main", testModuleProperties.getProductionModuleName());
+    assertEquals("my-project.main", testModuleProperties.getProductionModuleName());
   }
 
   @Test
@@ -85,10 +85,10 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "apply plugin: 'java'"
     );
 
-    assertModules("project", "project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
     assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited());
-    assertTrue(ModuleRootManager.getInstance(getModule("project_main")).isSdkInherited());
-    assertTrue(ModuleRootManager.getInstance(getModule("project_test")).isSdkInherited());
+    assertTrue(ModuleRootManager.getInstance(getModule("project.main")).isSdkInherited());
+    assertTrue(ModuleRootManager.getInstance(getModule("project.test")).isSdkInherited());
   }
 
   @Test
@@ -102,9 +102,9 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "}\n"
     );
 
-    assertModules("project", "project_main", "project_test");
-    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule("project_main"));
-    assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule("project_test"));
+    assertModules("project", "project.main", "project.test");
+    assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule("project.main"));
+    assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule("project.test"));
   }
 
   @Test
@@ -117,9 +117,9 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "}\n"
     );
 
-    assertModules("project", "project_main", "project_test");
-    assertEquals("1.5", getBytecodeTargetLevel("project_main"));
-    assertEquals("1.8", getBytecodeTargetLevel("project_test"));
+    assertModules("project", "project.main", "project.test");
+    assertEquals("1.5", getBytecodeTargetLevel("project.main"));
+    assertEquals("1.8", getBytecodeTargetLevel("project.test"));
 
   }
 
@@ -138,9 +138,9 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
       "}\n"
     );
 
-    assertModules("project", "project_main", "project_test");
-    assertTrue(getSdkForModule("project_main") == myJdk);
-    assertTrue(getSdkForModule("project_test") == myJdk);
+    assertModules("project", "project.main", "project.test");
+    assertTrue(getSdkForModule("project.main") == myJdk);
+    assertTrue(getSdkForModule("project.test") == myJdk);
   }
 
   @Test
@@ -148,13 +148,13 @@ public class GradleMiscImportingTest extends GradleImportingTestCase {
     importProject(
       "apply plugin: 'java'"
     );
-    assertModules("project", "project_main", "project_test");
+    assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(list("project_main")));
-    assertModules("project", "project_test");
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModules(list("project.main")));
+    assertModules("project", "project.test");
 
     importProject();
-    assertModules("project", "project_test");
+    assertModules("project", "project.test");
   }
 
   private LanguageLevel getLanguageLevelForModule(final String moduleName) {

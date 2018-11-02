@@ -129,3 +129,9 @@ public class UnnecessaryParenthesesInspection
     return <error descr="Incompatible types. Found: 'int', required: '<lambda expression>'">(a -> a)=1</error>;
   }
 }
+class A{
+
+  A() {
+    ((<error descr="Expression expected"><</error><error descr="Cannot resolve symbol 'x'">x</error>><error descr="Expression expected">)</error><EOLError descr="';' expected"></EOLError>
+  }
+}

@@ -218,18 +218,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Nullable
   public static JavaResolveResult resolveJavaReference(@NotNull PsiReference reference) {
-    if (reference instanceof PsiJavaReference) {
-      PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
-      return psiJavaReference.advancedResolve(false);
-    }
-    if (reference instanceof PsiPolyVariantReference &&
-        reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
-      ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
-      if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
-        return (JavaResolveResult)resolve[0];
-      }
-    }
-    return null;
+    return reference instanceof PsiJavaReference ? ((PsiJavaReference)reference).advancedResolve(false) : null;
   }
 
   @Override

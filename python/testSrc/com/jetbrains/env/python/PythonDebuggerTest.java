@@ -1452,5 +1452,28 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Staging
+  @Test
+  public void testBuiltinBreakpoint() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
+      @Override
+      public void before() {
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("python3.7");
+      }
+    });
+  }
 }
 

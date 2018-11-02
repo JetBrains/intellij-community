@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NonNls;
@@ -90,7 +91,7 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
     if (info != null) {
       return info.getUsageCollectorInfo(usageCollectorId).usages.stream()
         .map(usage -> new UsageDescriptor(usage.id, usage.count, (usage.context != null && usage.context.size() > 0) ?
-                                                                 FUSUsageContext.create(usage.context) : null))
+                                                                 FUSUsageContext.create(usage.contextValues()) : null))
         .collect(Collectors.toSet());
     }
     return Collections.emptySet();
@@ -193,6 +194,10 @@ public abstract class AbstractUsageTrigger<T extends FeatureUsagesCollector> imp
       usage.count = value;
       usage.context = context != null ? context.getData() : ContainerUtil.newLinkedHashMap();
       return usage;
+    }
+
+    public  String[] contextValues() {
+      return ArrayUtil.toStringArray(context.values());
     }
   }
 }

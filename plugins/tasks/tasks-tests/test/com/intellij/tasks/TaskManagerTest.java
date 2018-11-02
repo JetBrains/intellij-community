@@ -168,10 +168,14 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testPreserveTaskUrl() {
     String url = "http://server/foo";
     myTaskManager.addTask(new TaskTestUtil.TaskBuilder("foo", "summary", null).withIssueUrl(url));
-    Element element = XmlSerializer.serialize(myTaskManager.getState());
-    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    TaskManagerImpl.Config config = getConfig();
     LocalTaskImpl task = config.tasks.get(1);
     assertEquals(url, task.getIssueUrl());
+  }
+
+  private TaskManagerImpl.Config getConfig() {
+    Element element = XmlSerializer.serialize(myTaskManager.getState());
+    return XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
   }
 
   public void testRestoreRepository() {
@@ -181,8 +185,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     TaskTestUtil.TaskBuilder issue = new TaskTestUtil.TaskBuilder("foo", "summary", repository).withIssueUrl(repository.getUrl() + "/foo");
     myTaskManager.activateTask(issue, false);
-    Element element = XmlSerializer.serialize(myTaskManager.getState());
-    TaskManagerImpl.Config config = XmlSerializer.deserialize(element, TaskManagerImpl.Config.class);
+    TaskManagerImpl.Config config = getConfig();
     myTaskManager.loadState(config);
 
     assertEquals(repository, myTaskManager.getActiveTask().getRepository());
@@ -193,5 +196,14 @@ public class TaskManagerTest extends TaskManagerTestCase {
     LocalTaskImpl copy = new LocalTaskImpl(task);
     copy.setSummary("foo");
     assertEquals("foo", copy.getPresentableName());
+  }
+
+  public void testUpdateToVelocity() {
+    TaskManagerImpl.Config config = getConfig();
+    config.branchNameFormat = "{id}";
+    config.changelistNameFormat = "{id} {summary}";
+    myTaskManager.loadState(config);
+    assertEquals("${id}", myTaskManager.getState().branchNameFormat);
+    assertEquals("${id} ${summary}", myTaskManager.getState().changelistNameFormat);
   }
 }

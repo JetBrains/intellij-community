@@ -61,7 +61,7 @@ fun processScopeVariables(scope: Scope,
 
     val functions = SmartList<Variable>()
     for (variable in variables) {
-      if (memberFilter.isMemberVisible(variable)) {
+      if (memberFilter.isMemberVisible(variable) && variable.name != RECEIVER_NAME && variable.name != memberFilter.sourceNameToRaw(RECEIVER_NAME)) {
         val value = variable.value
         if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(
           value.valueString).lookingAt()) {

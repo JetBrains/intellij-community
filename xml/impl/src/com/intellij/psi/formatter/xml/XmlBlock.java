@@ -258,7 +258,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return getSpacesInsideText(type1, type2);
 
     }
-    else if (elementType == XmlElementType.XML_ATTRIBUTE) {
+    else if (isAttributeElementType(elementType)) {
       return getSpacesInsideAttribute(type1, type2);
     }
 

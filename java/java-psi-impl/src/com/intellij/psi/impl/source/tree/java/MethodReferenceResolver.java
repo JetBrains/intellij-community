@@ -355,11 +355,11 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     private CandidateInfo resolveConflicts(List<CandidateInfo> firstCandidates, List<CandidateInfo> secondCandidates, int applicabilityLevel) {
 
       final int firstApplicability = checkApplicability(firstCandidates);
-      checkSpecifics(firstCandidates, applicabilityLevel, myLanguageLevel);
+      checkSpecifics(firstCandidates, applicabilityLevel);
 
       final int secondApplicability = checkApplicability(secondCandidates);
-      checkSpecifics(secondCandidates, applicabilityLevel, myLanguageLevel);
-      
+      checkSpecifics(secondCandidates, applicabilityLevel, null, 1);
+
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
       }

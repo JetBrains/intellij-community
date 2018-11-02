@@ -19,6 +19,7 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
@@ -244,7 +245,7 @@ public class GraphTableController {
 
   private class MyMouseAdapter extends MouseAdapter {
     private static final int BORDER_THICKNESS = 3;
-    @NotNull private final TableLinkMouseListener myLinkListener = new SimpleColoredComponentLinkMouseListener();
+    @NotNull private final TableLinkMouseListener myLinkListener = new MyLinkMouseListener();
     @Nullable private Cursor myLastCursor = null;
 
     @Override
@@ -355,6 +356,16 @@ public class GraphTableController {
     @Override
     public void mouseExited(MouseEvent e) {
       myTable.getExpandableItemsHandler().setEnabled(true);
+    }
+
+    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+      @Nullable
+      @Override
+      public Object getTagAt(@NotNull MouseEvent e) {
+        Object tag = super.getTagAt(e);
+        if (!(tag instanceof SimpleColoredComponent.BrowserLauncherTag)) return null;
+        return tag;
+      }
     }
   }
 }

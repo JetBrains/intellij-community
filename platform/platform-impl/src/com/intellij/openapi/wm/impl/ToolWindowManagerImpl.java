@@ -1077,14 +1077,10 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
-    if (existingInfo == null) {
-      // set only if info is new (newly created) to not reset user configured value
-      info.setShowStripeButton(shouldBeAvailable);
-    }
-
     // Create decorator
 
     ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
+    toolWindow.setAvailable(shouldBeAvailable, null);
     InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
     myId2InternalDecorator.put(id, decorator);

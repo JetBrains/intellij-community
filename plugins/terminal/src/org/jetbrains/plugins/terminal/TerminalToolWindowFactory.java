@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -30,10 +31,13 @@ public class TerminalToolWindowFactory implements ToolWindowFactory, DumbAware {
   
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     TerminalView terminalView = TerminalView.getInstance(project);
-    TerminalArrangementManager arrangementManager = TerminalArrangementManager.getInstance(project);
-    terminalView.initTerminal(toolWindow, arrangementManager.getArrangementState());
+    terminalView.initToolWindow(toolWindow);
+    terminalView.restoreTabs(TerminalArrangementManager.getInstance(project).getArrangementState());
     // allow to save tabs after the tabs are restored
-    arrangementManager.setToolWindow(toolWindow);
+    TerminalArrangementManager.getInstance(project).setToolWindow(toolWindow);
   }
 }

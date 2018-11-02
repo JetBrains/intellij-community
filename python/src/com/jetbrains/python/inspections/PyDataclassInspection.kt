@@ -96,9 +96,10 @@ class PyDataclassInspection : PyInspection() {
 
             processAttrsDefaultThroughDecorator(node)
             processAttrsInitializersAndValidators(node)
-            processAttrsAutoAttribs(node, dataclassParameters)
             processAttrIbFunctionCalls(node)
           }
+
+          processAnnotationsExistence(node, dataclassParameters)
 
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
@@ -108,7 +109,9 @@ class PyDataclassInspection : PyInspection() {
               val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
               else stub.getCustomStub(PyDataclassFieldStub::class.java)
 
-              fieldStub?.initValue() != false && !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext)
+              (fieldStub == null || fieldStub.initValue()) &&
+              !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
+              !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
             },
             {
               val fieldStub = PyDataclassFieldStubImpl.create(it)
@@ -431,8 +434,9 @@ class PyDataclassInspection : PyInspection() {
       )
     }
 
-    private fun processAttrsAutoAttribs(cls: PyClass, dataclassParameters: PyDataclassParameters) {
-      if (PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
+    private fun processAnnotationsExistence(cls: PyClass, dataclassParameters: PyDataclassParameters) {
+      if (dataclassParameters.type == PyDataclassParameters.Type.STD ||
+          PyEvaluator.evaluateAsBoolean(PyUtil.peelArgument(dataclassParameters.others["auto_attribs"]), false)) {
         cls.processClassLevelDeclarations { element, _ ->
           if (element is PyTargetExpression && element.annotation == null && PyDataclassFieldStubImpl.create(element) != null) {
             registerProblem(element, "Attribute '${element.name}' lacks a type annotation", ProblemHighlightType.GENERIC_ERROR)

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.groovy.GreclipseBuilder;
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import java.util.Set;
@@ -59,5 +60,11 @@ public class GreclipseIdeaCompiler implements BackendCompiler {
   @Override
   public Set<FileType> getCompilableFileTypes() {
     return ContainerUtil.newTroveSet(StdFileTypes.JAVA, (FileType)GroovyFileType.GROOVY_FILE_TYPE);
+  }
+
+  @NotNull
+  @Override
+  public CompilerOptions getOptions() {
+    return GreclipseIdeaCompilerSettings.getSettings(myProject);
   }
 }

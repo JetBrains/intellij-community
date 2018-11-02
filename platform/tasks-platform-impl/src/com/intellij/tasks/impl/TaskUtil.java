@@ -58,8 +58,7 @@ public class TaskUtil {
   public static String formatTask(@NotNull Task task, String format) {
 
     Map map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
-
-    format = format.replaceAll("\\{", "\\$\\{").replaceAll("\\$\\$\\{", "\\$\\{");
+    format = updateToVelocity(format);
     try {
       return FileTemplateUtil.mergeTemplate(map, format, false);
     }
@@ -283,5 +282,9 @@ public class TaskUtil {
     }
 
     return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  static String updateToVelocity(String format) {
+    return format.replaceAll("\\{", "\\$\\{").replaceAll("\\$\\$\\{", "\\$\\{");
   }
 }

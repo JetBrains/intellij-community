@@ -26,7 +26,6 @@ interface FeatureManager {
     val binaryFactors: List<BinaryFeature>
     val doubleFactors: List<DoubleFeature>
     val categoricalFactors: List<CategoricalFeature>
-    val ignoredFactors: Set<String>
     val featureOrder: Map<String, Int>
 
     val completionFactors: CompletionFactors

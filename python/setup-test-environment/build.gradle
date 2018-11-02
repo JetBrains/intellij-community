@@ -104,6 +104,12 @@ envs {
                "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
                true)
 
+  createPython("py37",
+               "3.7.0",
+               [],
+               "python3.7",
+               true)
+
   if (Os.isFamily(Os.FAMILY_UNIX)) {
     createPython("pyqt_env", "3.5.4", ["pyqt5==5.10.1"], "pyqt5", true)
   }

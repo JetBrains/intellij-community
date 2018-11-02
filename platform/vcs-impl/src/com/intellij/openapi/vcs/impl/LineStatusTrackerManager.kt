@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -57,6 +56,7 @@ import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import java.nio.charset.Charset
 import java.util.*
+import java.util.concurrent.Future
 
 class LineStatusTrackerManager(
   private val project: Project,
@@ -1068,8 +1068,6 @@ private abstract class SingleThreadLoader<Request, T> {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
-  private val executor = AppExecutorUtil.createBoundedScheduledExecutorService("LineStatusTrackerManager Pool", 1)
-
   private val taskQueue = ArrayDeque<Request>()
   private val waitingForRefresh = HashSet<Request>()
 
@@ -1077,7 +1075,7 @@ private abstract class SingleThreadLoader<Request, T> {
 
   private var isScheduled: Boolean = false
   private var isDisposed: Boolean = false
-
+  private var lastFuture: Future<*>? = null
 
   @CalledInBackground
   protected abstract fun loadRequest(request: Request): Result<T>
@@ -1105,6 +1103,7 @@ private abstract class SingleThreadLoader<Request, T> {
       isDisposed = true
       taskQueue.clear()
       waitingForRefresh.clear()
+      lastFuture?.cancel(true)
 
       callbacks += callbacksWaitingUpdateCompletion
       callbacksWaitingUpdateCompletion.clear()
@@ -1155,7 +1154,7 @@ private abstract class SingleThreadLoader<Request, T> {
       if (taskQueue.isEmpty()) return
 
       isScheduled = true
-      executor.execute {
+      lastFuture = ApplicationManager.getApplication().executeOnPooledThread {
         handleRequests()
       }
     }

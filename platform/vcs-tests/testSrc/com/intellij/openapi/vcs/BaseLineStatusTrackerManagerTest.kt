@@ -11,6 +11,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.ExclusionState
@@ -22,6 +23,7 @@ import com.intellij.util.ThrowableRunnable
 import org.mockito.Mockito
 
 abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
+  protected lateinit var shelveManager: ShelveChangesManager
   protected lateinit var lstm: LineStatusTrackerManager
   protected lateinit var undoManager: UndoManagerImpl
 
@@ -30,6 +32,7 @@ abstract class BaseLineStatusTrackerManagerTest : BaseChangeListsTest() {
 
     lstm = LineStatusTrackerManager.getInstanceImpl(getProject())
     undoManager = UndoManager.getInstance(getProject()) as UndoManagerImpl
+    shelveManager = ShelveChangesManager.getInstance(getProject())
   }
 
   override fun tearDown() {

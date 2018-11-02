@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -46,13 +47,9 @@ public class FUSUsageContext {
     }
   }
 
-  private FUSUsageContext(@NotNull Map<String, String> context) {
-    data = context;
-  }
-
   @NotNull
   public Map<String, String> getData() {
-    return data;
+    return Collections.unmodifiableMap(data);
   }
 
   public static String getOSNameContextData() {
@@ -64,10 +61,6 @@ public class FUSUsageContext {
 
   public static FUSUsageContext create(@NotNull String... data) {
     assert data.length <= MAX_DATA_SIZE;
-    return new FUSUsageContext(data);
-  }
-  public static FUSUsageContext create(@NotNull Map<String, String> data) {
-    assert data.size() <= MAX_DATA_SIZE;
     return new FUSUsageContext(data);
   }
 

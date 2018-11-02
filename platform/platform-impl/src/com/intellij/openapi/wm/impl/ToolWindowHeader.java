@@ -7,10 +7,10 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.DoubleClickListener;
@@ -38,7 +38,7 @@ import java.awt.image.BufferedImage;
 public abstract class ToolWindowHeader extends JPanel implements Disposable, UISettingsListener {
   @NotNull private final Producer<? extends ActionGroup> myGearProducer;
 
-  private ToolWindowImpl myToolWindow;
+  private ToolWindow myToolWindow;
   private BufferedImage myImage;
   private BufferedImage myActiveImage;
   private ToolWindowType myImageType;
@@ -228,9 +228,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
 
     if (myToolbarWest != null) {
       myToolbarWest.updateActionsImmediately();
-
-      UIUtil.uiTraverser(myToolbarWest.getComponent()).preOrderDfsTraversal().filter(ActionButton.class).consumeEach(
-        c -> ToolWindowContentUi.initMouseListeners(c, myToolWindow.getContentUI(), false));
     }
   }
 

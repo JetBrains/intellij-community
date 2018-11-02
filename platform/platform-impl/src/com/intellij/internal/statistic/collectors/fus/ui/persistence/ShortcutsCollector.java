@@ -98,7 +98,6 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
   }
 
   private static void incValue(String key) {
-    FeatureUsageLogger.INSTANCE.log(ShortcutUsagesCollector.GROUP_ID, key);
     ShortcutsCollector collector = getInstance();
 
     if (collector == null) return; //no shortcuts stats for the IDE

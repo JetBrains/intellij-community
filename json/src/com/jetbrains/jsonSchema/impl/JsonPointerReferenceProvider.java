@@ -35,6 +35,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.JsonPointerResolver;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -149,39 +150,7 @@ public class JsonPointerReferenceProvider extends PsiReferenceProvider {
     final JsonSchemaObject schemaObject = service.getSchemaObjectForSchemaFile(schemaFile);
     if (schemaObject == null) return null;
 
-    JsonValue root = schemaObject.getJsonObject();
-    final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/"));
-    for (JsonSchemaVariantsTreeBuilder.Step step : steps) {
-      String name = step.getName();
-      if (name != null) {
-        if (!(root instanceof JsonObject)) return null;
-        JsonProperty property = ((JsonObject)root).findProperty(name);
-        root = property == null ? null : property.getValue();
-      }
-      else {
-        int idx = step.getIdx();
-        if (idx < 0) return null;
-
-        if (!(root instanceof JsonArray)) {
-          if (root instanceof JsonObject) {
-            JsonProperty property = ((JsonObject)root).findProperty(String.valueOf(idx));
-            if (property == null) {
-              return null;
-            }
-            root = property.getValue();
-            continue;
-          }
-          else {
-            return null;
-          }
-        }
-        List<JsonValue> list = ((JsonArray)root).getValueList();
-        if (idx >= list.size()) return null;
-        root = list.get(idx);
-      }
-    }
-
-    return root;
+    return new JsonPointerResolver(schemaObject.getJsonObject(), StringUtil.join(chain, "/")).resolve();
   }
 
   public static class JsonSchemaIdReference extends JsonSchemaBaseReference<JsonValue> {

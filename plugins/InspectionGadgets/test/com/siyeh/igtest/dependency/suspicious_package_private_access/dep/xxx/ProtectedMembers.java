@@ -6,4 +6,7 @@ public class ProtectedMembers {
 
   static protected void staticMethod() {
   }
+
+  protected static class StaticInner {
+  }
 }

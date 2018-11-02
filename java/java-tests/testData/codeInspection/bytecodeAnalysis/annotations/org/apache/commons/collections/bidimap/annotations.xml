@@ -402,12 +402,7 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap java.util.Set entrySet()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getGrandParent(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int)'>
+  <item name='org.apache.commons.collections.bidimap.TreeBidiMap org.apache.commons.collections.bidimap.TreeBidiMap.Node getGrandParent(org.apache.commons.collections.bidimap.TreeBidiMap.Node, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

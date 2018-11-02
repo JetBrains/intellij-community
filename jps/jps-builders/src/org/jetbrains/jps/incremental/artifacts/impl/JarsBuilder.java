@@ -196,7 +196,14 @@ public class JarsBuilder {
         myBuiltJars.remove(jar);
       }
       else {
-        jarOutputStream.close();
+        try {
+          jarOutputStream.close();
+        }
+        catch (IOException e) {
+          String messageText = "Cannot create '" + jar.getPresentableDestination() + "': " + e.getMessage();
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+          LOG.debug(e);
+        }
       }
     }
   }
@@ -264,8 +271,8 @@ public class JarsBuilder {
     }
   }
 
-  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
-                                             final String relativeOutputPath, final Set<String> writtenPaths)
+  private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
+                                      final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
     final long timestamp = FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
@@ -289,7 +296,15 @@ public class JarsBuilder {
           }
           jarOutputStream.putNextEntry(newEntry);
           FileUtil.copy(inputStream, jarOutputStream);
-          jarOutputStream.closeEntry();
+          try {
+            jarOutputStream.closeEntry();
+          }
+          catch (IOException e) {
+            String messageText = "Cannot extract '" + pathInJar + "' from '" + root.getRootFile().getAbsolutePath() + "' while building '" +
+                                 root.getTarget().getArtifact().getName() + "' artifact: " + e.getMessage();
+            myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+            LOG.debug(e);
+          }
         }
       }
     });

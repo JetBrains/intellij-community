@@ -27,4 +27,12 @@ public interface IdePerformanceListener {
    */
   default void uiFreezeFinished(int lengthInSeconds) {
   }
+
+  /**
+   * Invoked on each UI response sampled every <code>performance.watcher.sampling.interval.ms</code> set in the Registry.
+   *
+   * @param latencyMs time between scheduling a UI event and executing it, in milliseconds
+   */
+  default void uiResponded(long latencyMs) {
+  }
 }

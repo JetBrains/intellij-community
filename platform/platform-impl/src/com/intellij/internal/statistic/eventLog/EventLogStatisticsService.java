@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.PermanentInstallationID;
@@ -26,6 +25,7 @@ import java.util.zip.GZIPOutputStream;
 public class EventLogStatisticsService implements StatisticsService {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.eventLog.EventLogStatisticsService");
   private static final EventLogSettingsService mySettingsService = EventLogExternalSettingsService.getInstance();
+  private static final int MAX_FILES_TO_SEND = 20;
 
   @Override
   public StatisticsResult send() {
@@ -35,6 +35,11 @@ public class EventLogStatisticsService implements StatisticsService {
   public static StatisticsResult send(@NotNull EventLogSettingsService settings, @NotNull EventLogResultDecorator decorator) {
     if (!FeatureUsageLogger.INSTANCE.isEnabled()) {
       throw new StatServiceException("Event Log collector is not enabled");
+    }
+
+    final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
+    if (logs.isEmpty()) {
+      return new StatisticsResult(ResultCode.NOTHING_TO_SEND, "No files to send");
     }
 
     final String serviceUrl = settings.getServiceUrl();
@@ -49,9 +54,10 @@ public class EventLogStatisticsService implements StatisticsService {
 
     final LogEventFilter filter = settings.getEventFilter();
     try {
-      final List<File> logs = FeatureUsageLogger.INSTANCE.getLogFiles();
       final List<File> toRemove = new ArrayList<>(logs.size());
-      for (File file : logs) {
+      int size = Math.min(MAX_FILES_TO_SEND, logs.size());
+      for (int i = 0; i < size; i++) {
+        final File file = logs.get(i);
         final LogEventRecordRequest recordRequest = LogEventRecordRequest.Companion.create(file, filter);
         final String error = validate(recordRequest, file);
         if (StringUtil.isNotEmpty(error) || recordRequest == null) {
@@ -100,8 +106,6 @@ public class EventLogStatisticsService implements StatisticsService {
       }
 
       cleanupFiles(toRemove);
-
-      UsageStatisticsPersistenceComponent.getInstance().setEventLogSentTime(System.currentTimeMillis());
       return decorator.toResult();
     }
     catch (Exception e) {

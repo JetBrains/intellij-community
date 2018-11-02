@@ -81,13 +81,10 @@ object FeatureReader {
 
     fun completionFactors(): CompletionFactors {
         val text = fileContent("features/all_features.json")
-        val typeToken = object : TypeToken<Map<String, Set<String>>>() {}
-        val map = gson.fromJson<Map<String, Set<String>>>(text, typeToken.type)
+        val typeToken = object : TypeToken<List<String>>() {}
+        val features = gson.fromJson<List<String>>(text, typeToken.type)
 
-        val relevance: Set<String> = map["javaRelevance"] ?: emptySet()
-        val proximity: Set<String> = map["javaProximity"] ?: emptySet()
-
-        return CompletionFactors(proximity, relevance)
+        return CompletionFactors(features.toSet())
     }
 
     fun binaryFactors(): BinaryFeatureInfo {
@@ -102,12 +99,6 @@ object FeatureReader {
         return gson.fromJson<CategoricalFeatureInfo>(text, typeToken.type)
     }
 
-
-    fun ignoredFactors(): IgnoredFeatureInfo {
-        val text = fileContent("features/ignored.json")
-        val typeToken = object : TypeToken<IgnoredFeatureInfo>() {}
-        return gson.fromJson<IgnoredFeatureInfo>(text, typeToken.type)
-    }
 
     fun doubleFactors(): DoubleFeatureInfo {
         val text = fileContent("features/float.json")
@@ -131,12 +122,6 @@ object FeatureReader {
     private fun fileContent(fileName: String): String {
         val fileStream = FeatureReader.javaClass.classLoader.getResourceAsStream(fileName)
         return fileStream.reader().readText()
-    }
-
-    fun jsonMap(fileName: String): List<MutableMap<String, Any>> {
-        val text = fileContent(fileName)
-        val typeToken = object : TypeToken<List<Map<String, Any>>>() {}
-        return gson.fromJson<List<MutableMap<String, Any>>>(text, typeToken.type)
     }
 
 }

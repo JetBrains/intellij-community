@@ -276,12 +276,10 @@ public class RedundantSuppressInspection extends GlobalSimpleInspectionTool {
 
   @NotNull
   protected InspectionToolWrapper[] getInspectionTools(PsiElement psiElement, @NotNull InspectionManager manager) {
-    // todo for what we create modifiable model here?
     String currentProfileName = ((InspectionManagerBase)manager).getCurrentProfile();
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(manager.getProject());
     InspectionProfileImpl usedProfile = profileManager.getProfile(currentProfileName, false);
-    return new InspectionProfileModifiableModel(
-      ObjectUtils.notNull(usedProfile, profileManager.getCurrentProfile())).getInspectionTools(psiElement);
+    return ObjectUtils.notNull(usedProfile, profileManager.getCurrentProfile()).getInspectionTools(psiElement);
   }
 
   @Override

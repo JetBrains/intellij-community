@@ -22,8 +22,8 @@ public class h {
             throw var8;
          }
 
-         AtomicLong var3 = this.a;
-         synchronized(this.a) {
+         AtomicLong var3;
+         synchronized(var3 = this.a) {
             AtomicLong var9 = this.a;
             if (!var5) {
                try {

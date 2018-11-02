@@ -155,7 +155,14 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     initEditableDefaultSchemesCopies();
     initEditableBundledSchemesCopies();
     resolveLinksToBundledSchemes();
-    setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
+    if (scheme == null) {
+      scheme = UIUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme();
+      if (scheme == null) {
+        LOG.warn("Editor scheme 'Darcula' not found");
+        scheme = getDefaultScheme();
+      }
+    }
+    setGlobalSchemeInner(scheme);
   }
 
   private void initDefaultSchemes() {

@@ -135,14 +135,14 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     ProjectId projectId = myBuilder.getProjectId();
 
     if (projectId == null) {
-      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, parentProject == null ? myBuilder.getName() : parentProject.getGroup());
-      setTestIfEmpty(myVersionField, parentProject == null ? DEFAULT_VERSION : parentProject.getVersion());
+      setTextIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTextIfEmpty(myGroupIdField, parentProject == null ? "" : parentProject.getGroup());
+      setTextIfEmpty(myVersionField, parentProject == null ? DEFAULT_VERSION : parentProject.getVersion());
     }
     else {
-      setTestIfEmpty(myArtifactIdField, projectId.getArtifactId());
-      setTestIfEmpty(myGroupIdField, projectId.getGroupId());
-      setTestIfEmpty(myVersionField, projectId.getVersion());
+      setTextIfEmpty(myArtifactIdField, projectId.getArtifactId());
+      setTextIfEmpty(myGroupIdField, projectId.getGroupId());
+      setTextIfEmpty(myVersionField, projectId.getVersion());
     }
 
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
@@ -167,9 +167,9 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
       myInheritGroupIdCheckBox.setEnabled(false);
       myInheritVersionCheckBox.setEnabled(false);
 
-      setTestIfEmpty(myArtifactIdField, myBuilder.getName());
-      setTestIfEmpty(myGroupIdField, "");
-      setTestIfEmpty(myVersionField, DEFAULT_VERSION);
+      setTextIfEmpty(myArtifactIdField, myBuilder.getName());
+      setTextIfEmpty(myGroupIdField, "");
+      setTextIfEmpty(myVersionField, DEFAULT_VERSION);
     }
     else {
       myContext.putUserData(ExternalModuleSettingsStep.SKIP_STEP_KEY, Boolean.TRUE);
@@ -229,7 +229,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     return WIZARD_ICON;
   }
 
-  private static void setTestIfEmpty(@NotNull JTextField field, @Nullable String text) {
+  private static void setTextIfEmpty(@NotNull JTextField field, @Nullable String text) {
     if (StringUtil.isEmpty(field.getText())) {
       field.setText(StringUtil.notNullize(text));
     }

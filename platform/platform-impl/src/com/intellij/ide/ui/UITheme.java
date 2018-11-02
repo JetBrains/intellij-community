@@ -232,6 +232,7 @@ public class UITheme {
       if (key.startsWith("*.")) {
         String tail = key.substring(1);
         Object finalValue = value;
+        addPattern(key, value, defaults);
 
         //please DO NOT stream on UIDefaults directly
         ((UIDefaults)defaults.clone()).keySet().stream()
@@ -240,6 +241,18 @@ public class UITheme {
       } else {
         defaults.put(key, value);
       }
+    }
+  }
+
+  private static void addPattern(String key, Object value, UIDefaults defaults) {
+    Object o = defaults.get("*");
+    if (! (o instanceof Map)) {
+      o = new HashMap<String, Object>();
+      defaults.put("*", o);
+    }
+    Map map = (Map)o;
+    if (key != null && key.startsWith("*.")) {
+      map.put(key.substring(2), value);
     }
   }
 

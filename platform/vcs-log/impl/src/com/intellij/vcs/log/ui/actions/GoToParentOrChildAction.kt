@@ -12,6 +12,7 @@ import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.AbstractVcsLogUi
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
+import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
@@ -23,7 +24,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     }
 
     e.presentation.isVisible = true
-    e.presentation.isEnabled = ui.table.isFocusOwner && getRowsToJump(ui).isNotEmpty()
+    e.presentation.isEnabled = ui.table.isFocusOwner && (e.inputEvent is KeyEvent || getRowsToJump(ui).isNotEmpty())
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -31,6 +32,12 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
 
     val ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI) as AbstractVcsLogUi
     val rows = getRowsToJump(ui)
+
+    if (rows.isEmpty()) {
+      // can happen if the action was invoked by shortcut
+      return
+    }
+
     if (rows.size == 1) {
       ui.jumpToRow(rows.single())
     }

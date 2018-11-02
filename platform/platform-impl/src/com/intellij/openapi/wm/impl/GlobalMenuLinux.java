@@ -2,17 +2,20 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.StubItem;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
+/* Android Studio: b/67589184
+import com.sun.javafx.application.PlatformImpl;
+Android Studio: b/67589184 */
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -28,20 +31,19 @@ import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-/* Android Studio: b/67589184
-import com.sun.javafx.application.PlatformImpl;
-Android Studio: b/67589184 */
 
 interface GlobalMenuLib extends Library {
   void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
   void stopWatchDbus();
+
+  void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
+
   void execOnMainLoop(JRunnable run);
 
   Pointer registerWindow(long windowXid, EventHandler handler);
@@ -161,15 +163,25 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         ourIsServiceAvailable = false;
         for (GlobalMenuLinux gml: ourInstances.values()) {
           gml.myWindowHandle = null;
-          ApplicationManager.getApplication().invokeLater(()->gml.myFrame.getJMenuBar().setVisible(true));
+          ApplicationManager.getApplication().invokeLater(()->{
+            final JMenuBar jmenubar = gml.myFrame.getJMenuBar();
+            if (jmenubar != null)
+              jmenubar.setVisible(true);
+          });
         }
       };
 
 /* Android Studio: b/67589184
       // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
-      PlatformImpl.startup(()-> {
-        ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-      });
+      try {
+        PlatformImpl.startup(() -> {
+          ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
+        });
+      } catch (Throwable e) {
+        LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
+        final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
+        glibMain.start();
+      }
 Android Studio: b/67589184 */
     } else {
       ourGLogger = null;
@@ -502,7 +514,7 @@ Android Studio: b/67589184 */
 
       final JMenuItem jmi = mi.jitem;
       if (jmi == null) {
-        LOG.error("can't find corresponding (clicked) ActionMenuItem, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
+        if (TRACE_HIERARCHY_MISMATCHES) _trace("can't find corresponding (clicked) ActionMenuItem, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
         return;
       }
       if (!(jmi instanceof ActionMenuItem)) {
@@ -519,8 +531,15 @@ Android Studio: b/67589184 */
 
   private static GlobalMenuLib _loadLibrary() {
     if (true) return null;  // TODO(b/118514141): fix UI tests in Bazel and delete this line
-    if (!SystemInfo.isLinux || !Registry.is("linux.native.menu"))
+    try {
+      if (!SystemInfo.isLinux || Registry.is("linux.native.menu.force.disable"))
+        return null;
+      if (!Experiments.isFeatureEnabled("linux.native.menu"))
+        return null;
+    } catch (Throwable e) {
+      LOG.error(e);
       return null;
+    }
 
     try {
       UrlClassLoader.loadPlatformLibrary("dbm");
@@ -536,7 +555,10 @@ Android Studio: b/67589184 */
       LOG.info("disable global-menu integration because some of shared libraries isn't installed: " + ule);
     } catch (Throwable e) {
       LOG.error(e);
+    } finally {
+      System.clearProperty("jna.encoding");
     }
+
     return null;
   }
 
@@ -843,44 +865,43 @@ Android Studio: b/67589184 */
     return res.toString();
   }
 
-  @SuppressWarnings("deprecation")
+  private static <T> Object _getField(@NotNull Class<T> aClass, @NotNull String name, @NotNull T object) {
+    try {
+      Field field = aClass.getDeclaredField(name);
+      field.setAccessible(true);
+      return field.get(object);
+    } catch (IllegalAccessException | NoSuchFieldException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
   private static long _getX11WindowXid(@NotNull Window frame) {
-    final ComponentPeer wndPeer = frame.getPeer();
-    if (wndPeer == null) {
-      // wait a little for X11-peer to be connected
-      LOG.info("frame peer is null, wait for connection");
-      return 0;
-    }
-
-    // sun.awt.X11.XBaseWindow isn't available at all jdks => use reflection
-    if (!wndPeer.getClass().getName().equals("sun.awt.X11.XFramePeer")) {
-      LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
-      return 0;
-    }
-
-    // System.out.println("Window id (from XBaseWindow): 0x" + Long.toHexString(((XBaseWindow)frame.getPeer()).getWindow()));
-
-    Method method = null;
     try {
-      method = wndPeer.getClass().getMethod("getWindow");
-    } catch (SecurityException e) {
-      LOG.error(e);
-    } catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-    if (method == null)
-      return 0;
+      // getPeer method was removed in jdk9, but 'peer' field still exists
+      final ComponentPeer wndPeer = (ComponentPeer)_getField(Component.class, "peer", frame);
+      if (wndPeer == null) {
+        // wait a little for X11-peer to be connected
+        LOG.info("frame peer is null, wait for connection");
+        return 0;
+      }
 
-    try {
+      // sun.awt.X11.XBaseWindow isn't available at all jdks => use reflection
+      if (!wndPeer.getClass().getName().equals("sun.awt.X11.XFramePeer")) {
+        LOG.info("frame peer isn't instance of XBaseWindow, class of peer: " + wndPeer.getClass());
+        return 0;
+      }
+
+      // System.out.println("Window id (from XBaseWindow): 0x" + Long.toHexString(((XBaseWindow)frame.getPeer()).getWindow()));
+      final Method method = wndPeer.getClass().getMethod("getWindow");
+      if (method == null)
+        return 0;
+
       return (long)method.invoke(wndPeer);
-    } catch (IllegalArgumentException e) {
+    } catch (Throwable e) {
       LOG.error(e);
-    } catch (IllegalAccessException e) {
-      LOG.error(e);
-    } catch (InvocationTargetException e) {
-      LOG.error(e);
+      return 0;
     }
-    return 0;
   }
 
   private String _dumpSwingHierarchy() {

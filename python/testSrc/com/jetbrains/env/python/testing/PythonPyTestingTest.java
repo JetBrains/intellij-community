@@ -153,6 +153,34 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Test name must be reported as meta info to be used as argument for "-k" for parametrized tests
+   */
+  @Test
+  public void testMetaInfoForMethod() {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() {
+          return new PyTestTestProcessRunner("test_with_method.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+
+          final String testName = "test_method";
+          final AbstractTestProxy method = runner.findTestByName(testName);
+          assert method != null : "Method not reported";
+          assertEquals("Meta info must be test name", testName, method.getMetainfo());
+        }
+      });
+  }
+
 
   @Test
   public void testParametrized() {

@@ -16,7 +16,7 @@ class ExternalSystemSettingsCollector() : ProjectUsagesCollector() {
     val usages = mutableSetOf<UsageDescriptor>()
 
     for (manager in ExternalSystemApiUtil.getAllManagers()) {
-      val context = FUSUsageContext.create(mapOf("system" to escapeSystemId(manager.getSystemId())))
+      val context = FUSUsageContext.create(escapeSystemId(manager.getSystemId()))
       for (projectsSetting in manager.getSettingsProvider().`fun`(project).getLinkedProjectsSettings()) {
         usages.add(addContext(getBooleanUsage("autoImport", projectsSetting.isUseAutoImport), context))
         usages.add(addContext(getBooleanUsage("useQualifiedModuleNames", projectsSetting.isUseQualifiedModuleNames), context))

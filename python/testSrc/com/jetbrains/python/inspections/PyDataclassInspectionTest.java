@@ -171,6 +171,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-29645
+  public void testLackingTypeAnnotation() {
+    doTest();
+  }
+
   // PY-26354
   public void testAttrsLackingTypeAnnotation() {
     doTest();

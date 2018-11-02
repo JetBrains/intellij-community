@@ -4,7 +4,6 @@ package com.intellij.find.impl;
 import com.intellij.CommonBundle;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
-import com.intellij.find.editorHeaderActions.ShowMoreOptions;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
@@ -1133,6 +1132,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
+    if (findModel.getStringToFind().contains("\n") && Registry.is("ide.find.ignores.leading.whitespace.in.multiline.search")) {
+      findModel.setMultiline(true);
+    }
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
     myComponentValidator.updateInfo(result);
@@ -1384,7 +1386,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
 
         try {
-          Pattern.compile(getStringToReplace());
+          String stringToReplace = getStringToReplace();
+          stringToReplace = stringToReplace.replaceAll("(\\\\U|\\\\L|\\\\u|\\\\l|\\\\E)", "\\\\$1");
+          Pattern.compile(stringToReplace);
         }
         catch (PatternSyntaxException e) {
           return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
@@ -1589,8 +1593,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       icon.setIcon(AllIcons.General.Filter, 0);
       icon.setIcon(AllIcons.General.Dropdown, 1, 3, 0);
       getTemplatePresentation().setIcon(icon);
-
-      setShortcutSet(new CustomShortcutSet(ShowMoreOptions.SHORT_CUT));
+      KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut("ShowFilterPopup");
+      if (keyboardShortcut != null) {
+        setShortcutSet(new CustomShortcutSet(keyboardShortcut));
+      }
       mySwitchContextGroup = new DefaultActionGroup();
       mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.ANY));
       mySwitchContextGroup.add(new MySwitchContextToggleAction(FindModel.SearchContext.IN_COMMENTS));

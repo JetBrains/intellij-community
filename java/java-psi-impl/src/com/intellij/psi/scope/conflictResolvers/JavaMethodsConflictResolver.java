@@ -104,7 +104,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // then noone can be more specific
     if (!atLeastOneMatch) return null;
 
-    checkSpecifics(conflicts, applicabilityLevel, map, myLanguageLevel);
+    checkSpecifics(conflicts, applicabilityLevel, map, 0);
     if (conflicts.size() == 1) return conflicts.get(0);
 
     checkPrimitiveVarargs(conflicts, getActualParametersLength());
@@ -136,15 +136,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
-                           @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
-                           @NotNull LanguageLevel languageLevel) {
-    checkSpecifics(conflicts, applicabilityLevel, null, languageLevel);
+                             @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {
+    checkSpecifics(conflicts, applicabilityLevel, null, 0);
   }
 
   public void checkSpecifics(@NotNull List<CandidateInfo> conflicts,
                              @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
                              Map<MethodCandidateInfo, PsiSubstitutor> map,
-                             @NotNull LanguageLevel languageLevel) {
+                             int offset) {
     final boolean applicable = applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;
 
     int conflictsCount = conflicts.size();
@@ -157,7 +156,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           ProgressManager.checkCanceled();
           final CandidateInfo conflict = newConflictsArray[j];
           if (nonComparable(method, conflict, applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY)) continue; 
-          switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, map, languageLevel)) {
+          switch (isMoreSpecific((MethodCandidateInfo)method, (MethodCandidateInfo)conflict, applicabilityLevel, map, offset)) {
             case FIRST:
               conflicts.remove(conflict);
               break;
@@ -463,7 +462,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                    @NotNull MethodCandidateInfo info2,
                                    @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel,
                                    Map<MethodCandidateInfo, PsiSubstitutor> map,
-                                   @NotNull LanguageLevel languageLevel) {
+                                   int offset) {
     PsiMethod method1 = info1.getElement();
     PsiMethod method2 = info2.getElement();
     final PsiClass class1 = method1.getContainingClass();
@@ -479,7 +478,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     //process all arguments of varargs call
     //todo check method reference actual params length
-    final int argsLength = languageLevel.isAtLeast(LanguageLevel.JDK_1_8) && (method1.isVarArgs() || method2.isVarArgs()) 
+    final int argsLength = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && (method1.isVarArgs() || method2.isVarArgs()) 
                            ? getActualParametersLength() : 0;
     final int max = Math.max(Math.max(params1.length, params2.length), argsLength);
     PsiType[] types1 = PsiType.createArray(max);
@@ -517,7 +516,8 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       ProgressManager.checkCanceled();
       if (varargs[i]) continue;
       final PsiExpression arg = args != null && i < args.length ? args[i] : null;
-      final PsiType argType = myActualParameterTypes != null && i < getActualParametersLength() ? myActualParameterTypes[i] : null;
+      final PsiType argType =
+        myActualParameterTypes != null && i + offset < getActualParametersLength() ? myActualParameterTypes[i + offset] : null;
       if (arg == null && argType == null) continue;
 
       boolean boxingInFirst = false;
@@ -544,11 +544,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final PsiType[] types1AtSite = typesAtSite(types1, siteSubstitutor1);
 
       final PsiSubstitutor methodSubstitutor1 = calculateMethodSubstitutor(typeParameters1, method1, siteSubstitutor1, types1, types2AtSite,
-                                                                           languageLevel);
-      boolean applicable12 = isApplicableTo(types2AtSite, method1, languageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2);
+                                                                           myLanguageLevel);
+      boolean applicable12 = isApplicableTo(types2AtSite, method1, myLanguageLevel, varargsPosition, methodSubstitutor1, method2, siteSubstitutor2);
 
-      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, languageLevel);
-      boolean applicable21 = isApplicableTo(types1AtSite, method2, languageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1);
+      final PsiSubstitutor methodSubstitutor2 = calculateMethodSubstitutor(typeParameters2, method2, siteSubstitutor2, types2, types1AtSite, myLanguageLevel);
+      boolean applicable21 = isApplicableTo(types1AtSite, method2, myLanguageLevel, varargsPosition, methodSubstitutor2, method1, siteSubstitutor1);
 
       if (!myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
         final boolean typeArgsApplicable12 = GenericsUtil.isTypeArgumentsApplicable(typeParameters1, methodSubstitutor1, myArgumentsList, !applicable21);
@@ -738,7 +738,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (CandidateInfo conflict : conflicts) {
         ProgressManager.checkCanceled();
         PsiMethod method = (PsiMethod)conflict.getElement();
-        if (method != objectVararg && method.isVarArgs()) {
+        if (method != objectVararg.getElement() && method.isVarArgs()) {
           final int paramsCount = method.getParameterList().getParametersCount();
           final PsiType type = method.getParameterList().getParameters()[paramsCount - 1].getType();
           final PsiType componentType = ((PsiArrayType)type).getComponentType();

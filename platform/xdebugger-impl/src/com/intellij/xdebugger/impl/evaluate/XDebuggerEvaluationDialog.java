@@ -300,8 +300,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     //editor is already changed
     editor = inputEditor.getEditor();
-    //selectAll puts focus back
-    inputEditor.selectAll();
+    inputEditor.requestFocusInEditor();
 
     //try to restore caret position and clear selection
     if (offset >= 0 && editor != null) {
