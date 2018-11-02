@@ -743,7 +743,7 @@ def isidentifier(s):
 
 
 @contextmanager
-def suppressing_os_errors(*errno):
+def ignored_os_errors(*errno):
     try:
         yield
     except OSError as e:
@@ -756,18 +756,18 @@ def copy(src, dst, content=False):
         if not content:
             shutil.copytree(src, dst)
         else:
-            with suppressing_os_errors(errno.EEXIST):
+            with ignored_os_errors(errno.EEXIST):
                 os.makedirs(dst)
             for child in os.listdir(src):
                 copy(os.path.join(src, child), os.path.join(dst, child))
     else:
-        with suppressing_os_errors(errno.EEXIST):
+        with ignored_os_errors(errno.EEXIST):
             os.makedirs(os.path.dirname(dst))
         shutil.copy2(src, dst)
 
 
 def delete(path, content=False):
-    with suppressing_os_errors(errno.ENOENT):
+    with ignored_os_errors(errno.ENOENT):
         if os.path.isdir(path):
             if not content:
                 shutil.rmtree(path)
