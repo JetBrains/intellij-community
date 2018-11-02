@@ -339,7 +339,7 @@ def should_update_cache(cache_dir, mod_qname):
     mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
     for path in (mod_cache_pkg, mod_cache_file):
-        with suppressing_os_errors(errno.ENOENT):
+        with ignored_os_errors(errno.ENOENT):
             with fopen(path, 'r') as f:
                 used_version = read_generator_version(f)
                 if used_version and required_version and used_version >= required_version:
