@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -27,35 +28,40 @@ public class BraceHighlightingHandlerTest extends LightPlatformCodeInsightTestCa
       configureByFile(myFileSuffix);
       Editor editor = getEditor();
       final Document document = editor.getDocument();
-      int second = document.getText().indexOf(PAIR_MARKER);
-      if (second >= 0) {
-        WriteCommandAction.runWriteCommandAction(null, () -> document.replaceString(second, second + PAIR_MARKER.length(), ""));
+      int first = document.getText().indexOf(PAIR_MARKER);
+      if (first >= 0) {
+        WriteCommandAction.runWriteCommandAction(null, () -> document.replaceString(first, first + PAIR_MARKER.length(), ""));
       }
-      int first;
-      int firstBraceCandidate = document.getText().indexOf(PAIR_MARKER);
-      if (firstBraceCandidate >= 0) {
-        WriteCommandAction.runWriteCommandAction(null, () -> document.replaceString(firstBraceCandidate, firstBraceCandidate + PAIR_MARKER.length(), ""));
-        first = firstBraceCandidate;
+      int second;
+      int secondCandidate = document.getText().indexOf(PAIR_MARKER);
+      if (secondCandidate >= 0) {
+        WriteCommandAction.runWriteCommandAction(null, () -> document.replaceString(secondCandidate, secondCandidate + PAIR_MARKER.length(), ""));
+        second = secondCandidate;
       } else {
-        first = editor.getCaretModel().getOffset();
+        second = editor.getCaretModel().getOffset();
       }
 
-      new BraceHighlightingHandler(getProject(), (EditorEx)editor, new Alarm(), getFile()).updateBraces();
-      RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
-      int braceHighlighters = 0;
-      for (RangeHighlighter highlighter : highlighters) {
-        if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
-          braceHighlighters++;
-          assertTrue(first == highlighter.getStartOffset() || second == highlighter.getStartOffset());
+      Alarm alarm = new Alarm();
+      try {
+        new BraceHighlightingHandler(getProject(), (EditorEx)editor, alarm, getFile()).updateBraces();
+        RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
+        int braceHighlighters = 0;
+        for (RangeHighlighter highlighter : highlighters) {
+          if (highlighter.getLayer() == BraceHighlightingHandler.LAYER) {
+            braceHighlighters++;
+            assertTrue(first == highlighter.getStartOffset() || second == highlighter.getStartOffset());
+          }
         }
+        assertEquals(first >= 0 ? 2 : 0, braceHighlighters);
+      } finally {
+        Disposer.dispose(alarm);
       }
-      assertEquals(second >= 0 ? 2 : 0, braceHighlighters);
     });
   }
 
   @Nullable
   @Override
   public String getFileSuffix(String fileName) {
-    return fileName.contains("-after.") ? null : fileName;
+    return fileName;
   }
 }

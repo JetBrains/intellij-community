@@ -285,11 +285,13 @@ public class BraceHighlightingHandler {
 
       // Try to find matched brace backwards.
       if (offset >= originalOffset) {
-        iterator = highlighter.createIterator(offset - 1);
+        int backwardNonWsOffset = CharArrayUtil.shiftBackward(chars, offset - 1, "\t ");
+        backwardNonWsOffset = backwardNonWsOffset >= 0 ? backwardNonWsOffset : offset - 1;
+        iterator = highlighter.createIterator(backwardNonWsOffset);
         FileType newFileType = getFileTypeByIterator(iterator);
         if (BraceMatchingUtil.isLBraceToken(iterator, chars, newFileType) ||
             BraceMatchingUtil.isRBraceToken(iterator, chars, newFileType)) {
-          offset--;
+          offset = backwardNonWsOffset;
           searchForward = false;
           doHighlight(offset, originalOffset, newFileType);
         }
