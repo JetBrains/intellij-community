@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.CODE;
-
 /**
  * @author Bas Leijdekkers
  */
@@ -20,9 +18,10 @@ public interface WordOptimizer {
 
   /**
    * @param text  text to check index with
+   * @param kind  LITERAL, COMMENT, CODE or TEXT
    * @return true, if psi tree should be processed deeper, false otherwise.
    */
-  default boolean handleWord(@Nullable String text, CompileContext compileContext) {
+  default boolean handleWord(@Nullable String text, GlobalCompilingVisitor.OccurenceKind kind, CompileContext compileContext) {
     final OptimizingSearchHelper searchHelper = compileContext.getSearchHelper();
     if (!searchHelper.doOptimizing()) {
       return false;
@@ -35,7 +34,7 @@ public interface WordOptimizer {
       if (pattern.isTypedVar(word)) {
         final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(word);
         if (handler == null || handler.getMinOccurs() == 0) {
-          // don't call super
+          // don't call super visit so psi tree is not processed deeper
           return false;
         }
 
@@ -49,12 +48,12 @@ public interface WordOptimizer {
             searchHelper.endTransaction();
           }
           else {
-            GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, CODE, compileContext);
+            GlobalCompilingVisitor.addFilesToSearchForGivenWord(predicate.getRegExp(), true, kind, compileContext);
           }
         }
       }
       else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, CODE, compileContext);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(word, true, kind, compileContext);
       }
     }
     return true;

@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -64,7 +66,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       final String word = reference.getReferenceName();
-      if (!handleWord(word, myCompilingVisitor.getContext())) return;
+      if (!handleWord(word, CODE, myCompilingVisitor.getContext())) return;
       if (reference.isQualified() && isClassFromJavaLangPackage(reference.resolve())) return;
       super.visitReferenceElement(reference);
     }
@@ -83,38 +85,64 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
-      if (!handleWord(method.getName(), myCompilingVisitor.getContext())) return;
+      if (!handleWord(method.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitMethod(method);
     }
 
     @Override
     public void visitVariable(PsiVariable variable) {
-      if (!handleWord(variable.getName(), myCompilingVisitor.getContext())) return;
+      if (!handleWord(variable.getName(), CODE, myCompilingVisitor.getContext())) return;
       super.visitVariable(variable);
     }
 
     @Override
+    public void visitCatchSection(PsiCatchSection section) {
+      final PsiParameter parameter = section.getParameter();
+      if (parameter != null && !handleWord(parameter.getName(), CODE, myCompilingVisitor.getContext())) return;
+      super.visitCatchSection(section);
+    }
+
+    @Override
     public void visitClass(PsiClass aClass) {
-      if (!handleWord(aClass.getName(), myCompilingVisitor.getContext())) return;
+      final CompileContext context = myCompilingVisitor.getContext();
+      if (!handleWord(aClass.getName(), CODE, context)) return;
+      if (aClass.isInterface()) {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, true, CODE, context);
+      }
+      else if (aClass.isEnum()) {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, CODE, context);
+      }
+      else {
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, CODE, context);
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, CODE, context);
+      }
       super.visitClass(aClass);
+    }
+
+    @Override
+    public void visitLiteralExpression(PsiLiteralExpression expression) {
+      final PsiType type = expression.getType();
+      if (PsiType.BOOLEAN.equals(type) || PsiType.NULL.equals(type)) {
+        // don't search index for literals of other types, as they can be written in many many kinds of ways for the same value.
+        if (!handleWord(expression.getText(), CODE, myCompilingVisitor.getContext())) return;
+      }
+      super.visitLiteralExpression(expression);
     }
 
     @Override
     public void visitElement(PsiElement element) {
       super.visitElement(element);
       if (element instanceof PsiMethodReferenceExpression) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord("::", true, GlobalCompilingVisitor.OccurenceKind.CODE,
-                                                            myCompilingVisitor.getContext());
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord("::", true, CODE, myCompilingVisitor.getContext());
       }
       else if (element instanceof PsiLambdaExpression) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord("->", true, GlobalCompilingVisitor.OccurenceKind.CODE,
-                                                            myCompilingVisitor.getContext());
+        GlobalCompilingVisitor.addFilesToSearchForGivenWord("->", true, CODE, myCompilingVisitor.getContext());
       }
       else if (element instanceof PsiKeyword) {
         final String keyword = element.getText();
         if (!excludedKeywords.contains(keyword)) {
-          GlobalCompilingVisitor.addFilesToSearchForGivenWord(keyword, true, GlobalCompilingVisitor.OccurenceKind.CODE,
-                                                              myCompilingVisitor.getContext());
+          GlobalCompilingVisitor.addFilesToSearchForGivenWord(keyword, true, CODE, myCompilingVisitor.getContext());
         }
       }
     }
@@ -224,7 +252,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     if (StringUtil.isQuotedString(text)) {
       @Nullable MatchingHandler handler =
-        myCompilingVisitor.processPatternStringWithFragments(text, GlobalCompilingVisitor.OccurenceKind.LITERAL);
+        myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
 
       if (PsiType.CHAR.equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {
@@ -464,20 +492,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     }
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
-
-    if (!(handler instanceof SubstitutionHandler) || ((SubstitutionHandler)handler).getMinOccurs() > 0) {
-      if (psiClass.isInterface()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, true, GlobalCompilingVisitor.OccurenceKind.CODE, context);
-      }
-      else if (psiClass.isEnum()) {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, true, GlobalCompilingVisitor.OccurenceKind.CODE, context);
-      }
-      else {
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.INTERFACE, false, GlobalCompilingVisitor.OccurenceKind.CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.ENUM, false, GlobalCompilingVisitor.OccurenceKind.CODE, context);
-        GlobalCompilingVisitor.addFilesToSearchForGivenWord(PsiKeyword.CLASS, true, GlobalCompilingVisitor.OccurenceKind.CODE, context);
-      }
-    }
   }
 
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
