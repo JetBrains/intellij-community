@@ -34,9 +34,7 @@ import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
  * Basic abstract action handler for all Git actions to extend.
  */
 public abstract class BasicAction extends DumbAwareAction {
-  /**
-   * {@inheritDoc}
-   */
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final Project project = event.getData(CommonDataKeys.PROJECT);
@@ -65,7 +63,6 @@ public abstract class BasicAction extends DumbAwareAction {
       });
     }
   }
-
 
   /**
    * Perform the action over set of files
