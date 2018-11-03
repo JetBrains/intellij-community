@@ -469,7 +469,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @Override
   public void setFilter(final Filter filter) {
     // is used by Test Runner actions, e.g. hide passed, etc
-    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getSMRunnerTreeStructure();
+    final SMTRunnerTreeStructure treeStructure = myTreeBuilder.getTreeStructure();
     treeStructure.setFilter(filter);
 
     // TODO - show correct info if no children are available
@@ -609,7 +609,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       update.run();
     }
     else if (!myDisposed && myRequests.add(update)) {
-      myUpdateTreeRequests.addRequest(update, 100);
+      myUpdateTreeRequests.addRequest(update, 50);
     }
 
     myAnimator.setCurrentTestCase(newTestOrSuite);

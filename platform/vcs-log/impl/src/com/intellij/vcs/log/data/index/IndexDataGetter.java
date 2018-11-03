@@ -275,6 +275,7 @@ public class IndexDataGetter {
   // File history
   //
 
+  @SuppressWarnings("unused")
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
     return executeAndCatch(() -> createFileNamesData(path).getFiles(), Collections.emptySet());

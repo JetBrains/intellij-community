@@ -4,8 +4,8 @@ package com.intellij.configurationStore
 import com.intellij.externalDependencies.DependencyOnPlugin
 import com.intellij.externalDependencies.ExternalDependenciesManager
 import com.intellij.externalDependencies.ProjectExternalDependency
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
@@ -117,7 +117,7 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test fun `new project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Paths.get(PathManager.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")
@@ -129,7 +129,7 @@ internal class DefaultProjectStoreTest {
   }
 
   @Test fun `new IPR project from default - remove workspace component configuration`() {
-    val testData = Paths.get(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
+    val testData = Paths.get(PathManager.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = loadElement(testData.resolve("testData1.xml"))
 
     val tempDir = fsRule.fs.getPath("")

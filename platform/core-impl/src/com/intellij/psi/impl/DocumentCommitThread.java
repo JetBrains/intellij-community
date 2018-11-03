@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 package com.intellij.psi.impl;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -385,8 +386,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new IllegalArgumentException("Can't commit ClsFile: "+file);
     }
 
-    return ContainerUtil.mapNotNull(file.getViewProvider().getAllFiles(),
-                                    root -> root instanceof PsiFileImpl ? Pair.create((PsiFileImpl)root, root.getNode()) : null);
+    return ContainerUtil.map(file.getViewProvider().getAllFiles(), root -> Pair.create((PsiFileImpl)root, root.getNode()));
   }
 
   @NotNull
@@ -721,13 +721,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       final String documentText = document.getText();
       String fileText = file.getText();
       boolean sameText = Comparing.equal(fileText, documentText);
-      LOG.error("commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
-                "; node.length=" + oldFileNode.getTextLength() +
-                "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
-                "; file name:" + file.getName()+
-                "; type:"+file.getFileType()+
-                "; lang:"+file.getLanguage()
-                );
+      String errorMessage = "commitDocument() left PSI inconsistent: " + DebugUtil.diagnosePsiDocumentInconsistency(file, document) +
+                            "; node.length=" + oldFileNode.getTextLength() +
+                            "; doc.text" + (sameText ? "==" : "!=") + "file.text" +
+                            "; file name:" + file.getName() +
+                            "; type:" + file.getFileType() +
+                            "; lang:" + file.getLanguage();
+      LOG.error(PluginManagerCore.createPluginException(errorMessage, null, file.getLanguage().getClass()));
 
       file.putUserData(BlockSupport.DO_NOT_REPARSE_INCREMENTALLY, Boolean.TRUE);
       try {
@@ -737,7 +737,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         diffLog.doActualPsiChange(file);
 
         if (oldFileNode.getTextLength() != document.getTextLength()) {
-          LOG.error("PSI is broken beyond repair in: " + file);
+          LOG.error(PluginManagerCore.createPluginException("PSI is broken beyond repair in: " + file, null, file.getLanguage().getClass()));
         }
       }
       finally {

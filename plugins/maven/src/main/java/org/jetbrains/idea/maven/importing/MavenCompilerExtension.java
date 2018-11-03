@@ -6,6 +6,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.ResolveContext;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 
 /**
  * @author Vladislav.Soroka
@@ -27,4 +32,14 @@ public interface MavenCompilerExtension {
    */
   @Nullable
   BackendCompiler getCompiler(Project project);
+
+  /**
+   * Allow to specify default IDEA compiler during the project resolve phase.
+   * Use with caution! The only single default compiler is supported for the all IDE modules.
+   */
+  default boolean resolveDefaultCompiler(@NotNull Project project,
+                                         @NotNull MavenProject mavenProject,
+                                         @NotNull NativeMavenProjectHolder nativeMavenProject,
+                                         @NotNull MavenEmbedderWrapper embedder,
+                                         @NotNull ResolveContext context) throws MavenProcessCanceledException { return false; }
 }

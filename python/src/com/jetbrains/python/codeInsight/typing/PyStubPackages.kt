@@ -15,10 +15,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.ResolveResultList
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.pyi.PyiFile
 
@@ -42,40 +40,26 @@ fun convertStubToRuntimePackageName(name: QualifiedName): QualifiedName {
 }
 
 /**
- * Replaces [resolvedSubdir] with stub package if it's stub only or
- * collects [resolvedSubdir] and stub package into list if stub package is partial.
+ * Returns stub package directory in the specified [dir] for the package with [referencedName] as a name.
  *
- * Requires language level to be at least [LanguageLevel.PYTHON37], [withoutStubs] to be False, [dir] to be lib root.
+ * Requires [withoutStubs] to be False and [dir] to be lib root.
  */
-fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
-                                  dir: PsiDirectory,
-                                  resolvedSubdir: PsiDirectory,
-                                  withoutStubs: Boolean): List<RatedResolveResult> {
-  // check that stub packages are allowed and dir is lib root
-  if (!withoutStubs &&
-      containingFile != null &&
-      LanguageLevel.forElement(containingFile).isAtLeast(LanguageLevel.PYTHON37)) {
-    if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+fun findStubPackage(dir: PsiDirectory,
+                    referencedName: String,
+                    checkForPackage: Boolean,
+                    withoutStubs: Boolean): PsiDirectory? {
+  if (!withoutStubs && dir.virtualFile.let { it == getClassOrContentOrSourceRoot(dir.project, it) }) {
+    val stubPackageName = "$referencedName$STUBS_SUFFIX"
+    val stubPackage = dir.findSubdirectory(stubPackageName)
 
-    if (dir.virtualFile.let { it == getClassOrContentOrSourceRoot(containingFile.project, it) }) {
-      val stubPackageName = "${resolvedSubdir.name}$STUBS_SUFFIX"
-      val subdirectory = dir.findSubdirectory(stubPackageName)
-
-      // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
-      if (subdirectory?.name == stubPackageName) {
-        subdirectory.putUserData(STUB_PACKAGE_KEY, true)
-
-        return if (stubPackageIsPartial(subdirectory)) {
-          ResolveResultList.to(resolvedSubdir) + ResolveResultList.to(subdirectory)
-        }
-        else {
-          ResolveResultList.to(subdirectory)
-        }
-      }
+    // see comment about case sensitivity in com.jetbrains.python.psi.resolve.ResolveImportUtil.resolveInDirectory
+    if (stubPackage?.name == stubPackageName && (!checkForPackage || PyUtil.isPackage(stubPackage, dir))) {
+      stubPackage.putUserData(STUB_PACKAGE_KEY, true)
+      return stubPackage
     }
   }
 
-  return ResolveResultList.to(resolvedSubdir)
+  return null
 }
 
 /**
@@ -84,6 +68,14 @@ fun replaceOrUniteWithStubPackage(containingFile: PsiFile?,
 fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubmodule: PsiFile): PsiFile {
   if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubmodule.putUserData(STUB_PACKAGE_KEY, true)
   return resolvedSubmodule
+}
+
+/**
+ * Puts special mark to dir resolved in stub package.
+ */
+fun transferStubPackageMarker(dir: PsiDirectory, resolvedSubdir: PsiDirectory): PsiDirectory {
+  if (dir.getUserData(STUB_PACKAGE_KEY) == true) resolvedSubdir.putUserData(STUB_PACKAGE_KEY, true)
+  return resolvedSubdir
 }
 
 /**
@@ -139,7 +131,7 @@ private fun getClassOrContentOrSourceRoot(project: Project, file: VirtualFile): 
   return null
 }
 
-private fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
+fun stubPackageIsPartial(stubPackageDirectory: PsiDirectory): Boolean {
   val pyTyped = stubPackageDirectory.findFile("py.typed") ?: return false
 
   return pyTyped.textLength < "partial".length + 5 &&
@@ -176,7 +168,7 @@ private fun isUserFile(element: PsiElement, module: Module?) =
   element.virtualFile.let { it != null && ModuleUtilCore.moduleContainsFile(module, it, false) }
 
 /**
- * See [replaceOrUniteWithStubPackage] and [transferStubPackageMarker].
+ * See [findStubPackage] and [transferStubPackageMarker].
  */
 private fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
@@ -193,10 +185,7 @@ private fun isInInlinePackage(element: PsiElement, module: Module?): Boolean {
   val cached = element.getUserData(INLINE_PACKAGE_KEY)
   if (cached != null) return cached
 
-  val result = !pyi(element) &&
-               (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) &&
-               PyUtil.getLanguageLevelForModule(module).isAtLeast(LanguageLevel.PYTHON37) &&
-               getPyTyped(element) != null
+  val result = !pyi(element) && (element is PyFile || PyUtil.turnDirIntoInit(element) is PyFile) && getPyTyped(element) != null
 
   element.putUserData(INLINE_PACKAGE_KEY, result)
   return result

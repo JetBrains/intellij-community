@@ -507,7 +507,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
+    PositionMarker oldMarker = myPositionMarker;
     myPositionMarker = new PositionMarker(offset);
+    oldMarker.dispose();
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
   }
@@ -650,8 +652,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   @Override
   public void dispose() {
-    if (myPositionMarker != null) {
+    PositionMarker positionMarker = myPositionMarker;
+    if (positionMarker != null) {
+      // null it first to avoid accessing invalid marker from other threads
       myPositionMarker = null;
+      positionMarker.dispose();
     }
     if (mySelectionMarker != null) {
       mySelectionMarker = null;
@@ -684,10 +689,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public int getOffset() {
     validateCallContext();
     validateContext(false);
-    PositionMarker marker = myPositionMarker;
-    if (marker == null) return 0; // caret was disposed
-    assert marker.isValid();
-    return marker.getStartOffset();
+    while (true) {
+      PositionMarker marker = myPositionMarker;
+      if (marker == null) return 0; // caret was disposed
+      int startOffset = marker.getStartOffset();
+      // double checking to avoid "concurrent dispose and return -1 from already disposed marker" race
+      if (marker.isValid() && marker == myPositionMarker) return startOffset;
+    }
   }
 
   @Override
@@ -794,6 +802,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     clone.myLogicalCaret = myLogicalCaret;
     clone.myY = myY;
     clone.myVisibleCaret = myVisibleCaret;
+    clone.myPositionMarker.dispose();
     clone.myPositionMarker = new PositionMarker(getOffset());
     clone.myLeansTowardsLargerOffsets = myLeansTowardsLargerOffsets;
     clone.myLogicalColumnAdjustment = myLogicalColumnAdjustment;
@@ -1459,6 +1468,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       myDesiredX = -1;
       myDocumentUpdateCounter = modelCounter;
     }
+  }
+
+  public boolean isInVirtualSpace() {
+    return myLogicalColumnAdjustment > 0;
   }
 
   @TestOnly

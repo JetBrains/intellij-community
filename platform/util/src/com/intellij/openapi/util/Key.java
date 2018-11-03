@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,7 @@ public class Key<T> {
     return holder == null ? null : (T)holder.get(this);
   }
 
+  @Contract("_, !null -> !null")
   public T get(@Nullable UserDataHolder holder, T defaultValue) {
     final T t = get(holder);
     return t == null ? defaultValue : t;

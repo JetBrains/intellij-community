@@ -32,12 +32,14 @@ class TrimUtilTest : DiffTestCase() {
 
     assertIsAlpha("AB12", true)
     assertIsAlpha("АБВ汉语日ひรไ", true)
+    assertIsAlpha("óèäñĀ", true)
     assertIsAlpha("\r_\u0001", true)
 
     assertIsContinuous("12_ABZ", false)
     assertIsContinuous("АБВ", false)
     assertIsContinuous("ʁit", false)
     assertIsContinuous("음훈", false)
+    assertIsContinuous("óèäñĀ", false)
     assertIsContinuous("\r_\u0001", false)
 
     assertIsContinuous("象形文字", true)

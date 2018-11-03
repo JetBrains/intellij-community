@@ -31,18 +31,18 @@ import com.intellij.testFramework.Timings;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JobUtilTest extends PlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
@@ -143,7 +143,7 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   private static void logElapsed(Runnable r) {
-    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r) + "ms");
+    LOG.debug("Elapsed: " + PlatformTestUtil.measure(r::run) + "ms");
   }
 
   public void testJobUtilRecursiveStress() {
@@ -467,6 +467,89 @@ public class JobUtilTest extends PlatformTestCase {
       }
       catch (TimeoutException ignored) {
       }
+    }
+  }
+
+  public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsForTheOtherTasksToComplete()
+    throws InterruptedException, ExecutionException, TimeoutException {
+    ProgressIndicator indicator = new DaemonProgressIndicator();
+    int N = 100_000;
+    AtomicInteger counter = new AtomicInteger();
+    // run lengthy process in FJP,
+    // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
+    // and cancel the indicator in the meantime
+    // check that invokeConcurrentlyUnderProgress() gets canceled immediately
+    Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+      ProgressManager.getInstance().runProcess(()->
+          assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
+            TimeoutUtil.sleep(1);
+            counter.incrementAndGet();
+            return true;
+      })), indicator);
+    }, null);
+    ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+      indicator.cancel();
+    }, 10, TimeUnit.MILLISECONDS);
+    job.waitForCompletion(10000);
+    assertTrue(job.isDone());
+    assertTrue(counter.get() < N);
+
+    future.get();
+  }
+
+  public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasks() throws Throwable {
+    int COARSENESS = 100_000;
+    // try to repeat until got into the right thread; but not for too long
+    for (int i=0; i<1000; i++) {
+      ProgressIndicator indicator = new DaemonProgressIndicator();
+      AtomicLong elapsed = new AtomicLong(Long.MAX_VALUE);
+      Semaphore run = new Semaphore(1);
+      AtomicReference<Thread> mainThread = new AtomicReference<>();
+      AtomicBoolean stealHappened = new AtomicBoolean();
+      // run lengthy process in FJP,
+      // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
+      // and cancel the indicator in the meantime
+      // check that invokeConcurrentlyUnderProgress() gets canceled immediately
+      JobLauncher.getInstance().submitToJobThread(() -> {
+        // to ensure lengthy task executes in thread other that the one which called invokeConcurrentlyUnderProgress()
+        // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread and we can't do anything
+        mainThread.set(Thread.currentThread());
+        try {
+          elapsed.set(PlatformTestUtil.measure(() -> {
+            ProgressManager.getInstance().runProcess(()-> {
+              boolean ok = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(/* more than 1 to pass through processIfTooFew */Arrays.asList(1, 1, 1, COARSENESS), indicator, delay -> {
+                if (delay == COARSENESS) {
+                  indicator.cancel(); // emulate job external cancel
+                }
+                // we seek to test the situation of "job submitted to FJP is waiting for lengthy task crated via invokeConcurrentlyUnderProgress()"
+                // so when the main job steals that lengthy task from within .get() we balk out
+                if (Thread.currentThread() != mainThread.get()) {
+                  TimeoutUtil.sleep(delay);
+                }
+                else {
+                  stealHappened.set(true);
+                }
+                return true;
+              });
+
+              assertTrue(!ok || stealHappened.get());
+            }, indicator);
+          }));
+        }
+        catch (Throwable e) {
+          exception = e;
+        }
+        finally {
+          run.up();
+        }
+      }, null);
+
+      boolean ok = run.waitFor(30_000);
+      if (exception != null) throw exception;
+      assertTrue(ok);
+      assertTrue(elapsed.toString(), elapsed.get() < COARSENESS);
+
+      if (!stealHappened.get()) break; // tested that we wanted
     }
   }
 }

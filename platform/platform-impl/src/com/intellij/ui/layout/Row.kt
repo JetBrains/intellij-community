@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Label
+import com.intellij.ui.components.RadioButton
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
 import javax.swing.JComponent
@@ -21,6 +22,12 @@ abstract class Row : Cell() {
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     val label = Label(text, style, fontColor, bold)
     label(gapLeft = gapLeft)
+  }
+
+  fun <T : Any> LayoutBuilderWithButtonGroup<T>.radioButton(text: String, id: T) {
+    val component = RadioButton(text)
+    propertyManager.addRadioButton(component, id, this@Row)
+    component()
   }
 
   /**

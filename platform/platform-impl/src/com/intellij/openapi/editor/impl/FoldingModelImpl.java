@@ -62,26 +62,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     myIsFoldingEnabled = true;
     myIsBatchFoldingProcessing = false;
     myDoNotCollapseCaret = false;
-    myRegionTree = new HardReferencingRangeMarkerTree<FoldRegionImpl>(editor.getDocument()) {
-      @NotNull
-      @Override
-      protected Node<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
-                                                   int start,
-                                                   int end,
-                                                   boolean greedyToLeft,
-                                                   boolean greedyToRight,
-                                                   boolean stickingToRight,
-                                                   int layer) {
-        return new Node<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
-          @Override
-          void onRemoved() {
-            for (Getter<FoldRegionImpl> getter : intervals) {
-              removeRegionFromGroup(getter.get());
-            }
-          }
-        };
-      }
-    };
+    myRegionTree = new MyMarkerTree(editor.getDocument());
     myFoldTree = new FoldRegionsTree(myRegionTree) {
       @Override
       protected boolean isFoldingEnabled() {
@@ -713,6 +694,82 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     private boolean isUpToDate(Editor editor) {
       return docStamp == editor.getDocument().getModificationStamp();
+    }
+  }
+
+  private class MyMarkerTree extends HardReferencingRangeMarkerTree<FoldRegionImpl> {
+    private boolean inCollectCall;
+
+    private MyMarkerTree(Document document) {
+      super(document);
+    }
+
+    @NotNull
+    private FoldRegionImpl getRegion(@NotNull IntervalNode<FoldRegionImpl> node) {
+      assert node.intervals.size() == 1;
+      FoldRegionImpl region = node.intervals.get(0).get();
+      assert region != null;
+      return region;
+    }
+
+    @NotNull
+    @Override
+    protected Node<FoldRegionImpl> createNewNode(@NotNull FoldRegionImpl key,
+                                                 int start,
+                                                 int end,
+                                                 boolean greedyToLeft,
+                                                 boolean greedyToRight,
+                                                 boolean stickingToRight,
+                                                 int layer) {
+      return new Node<FoldRegionImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
+        @Override
+        void onRemoved() {
+          for (Getter<FoldRegionImpl> getter : intervals) {
+            removeRegionFromGroup(getter.get());
+          }
+        }
+
+        @Override
+        void addIntervalsFrom(@NotNull IntervalNode<FoldRegionImpl> otherNode) {
+          FoldRegionImpl region = getRegion(this);
+          FoldRegionImpl otherRegion = getRegion(otherNode);
+          if (otherRegion.mySizeBeforeUpdate > region.mySizeBeforeUpdate) {
+            setNode(region, null);
+            removeIntervalInternal(0);
+            super.addIntervalsFrom(otherNode);
+          }
+          else {
+            otherNode.setValid(false);
+            ((RMNode)otherNode).onRemoved();
+          }
+        }
+      };
+    }
+
+    @Override
+    boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
+                                                   @NotNull DocumentEvent e,
+                                                   @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
+      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      inCollectCall = true;
+      boolean result;
+      try {
+        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+      }
+      finally {
+        inCollectCall = false;
+      }
+      if (e.getOldLength() > 0 /* document change can cause regions to become equal*/) {
+        for (Object o : affected) {
+          //noinspection unchecked
+          Node<FoldRegionImpl> node = (Node<FoldRegionImpl>)o;
+          FoldRegionImpl region = getRegion(node);
+          // region with the largest metric value is kept when several regions become identical after document change
+          // we want the largest collapsed region to survive
+          region.mySizeBeforeUpdate = region.isExpanded() ? 0 : node.intervalEnd() - node.intervalStart();
+        }
+      }
+      return result;
     }
   }
 }

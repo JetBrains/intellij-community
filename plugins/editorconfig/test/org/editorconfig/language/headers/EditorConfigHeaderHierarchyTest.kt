@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.headers
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.language.assertIterableEquals
 import org.editorconfig.language.psi.EditorConfigPsiFile
@@ -12,7 +12,7 @@ import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearch
 
 class EditorConfigHeaderHierarchyTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/headers/"
+    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/headers/"
 
   fun testSimple() {
     testOverriding(0 to listOf(), 1 to listOf(0))

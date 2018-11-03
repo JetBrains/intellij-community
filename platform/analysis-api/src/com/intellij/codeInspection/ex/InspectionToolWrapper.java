@@ -6,6 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,7 +70,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       //noinspection unchecked
       myTool = tool = (T)myEP.instantiateTool();
       if (!tool.getShortName().equals(myEP.getShortName())) {
-        LOG.error("Short name not matched for " + tool.getClass() + ": getShortName() = #" + tool.getShortName() + "; ep.shortName = #" + myEP.getShortName());
+        LOG.error(new PluginException("Short name not matched for " + tool.getClass() + ": getShortName() = #" + tool.getShortName() + "; ep.shortName = #" + myEP.getShortName(), myEP.getPluginId()));
       }
     }
     return tool;

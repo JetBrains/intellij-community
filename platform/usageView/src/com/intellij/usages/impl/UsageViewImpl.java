@@ -156,7 +156,7 @@ public class UsageViewImpl implements UsageViewEx {
   private Usage myOriginUsage;
   @Nullable private Action myRerunAction;
   private boolean myDisposeSmartPointersOnClose = true;
-  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("usage view update requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final ExecutorService updateRequests = AppExecutorUtil.createBoundedApplicationPoolExecutor("Usage View Update Requests", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.getJobPoolParallelism(), this);
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -1089,7 +1089,7 @@ public class UsageViewImpl implements UsageViewEx {
   protected UsageView doReRun() {
     myChangesDetected = false;
     if (myRerunAction == null) {
-      return com.intellij.usages.UsageViewManager.getInstance(getProject()).
+      return UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
     myRerunAction.actionPerformed(null);
@@ -1419,9 +1419,8 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     if (!smartPointers.isEmpty()) {
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
       for (SmartPsiElementPointer<?> pointer : smartPointers) {
-        pointerManager.removePointer(pointer);
+        SmartPointerManager.getInstance(pointer.getProject()).removePointer(pointer);
       }
     }
     myUsageNodes.clear();
@@ -1874,7 +1873,8 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
+        Node[] nodes = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNodes() : null;
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(nodes));
       }
 
       else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
@@ -1882,12 +1882,13 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       else if (key == USAGES_KEY) {
-        final Set<Usage> selectedUsages = getSelectedUsages();
-        sink.put(USAGES_KEY, selectedUsages.toArray(Usage.EMPTY_ARRAY));
+        final Set<Usage> selectedUsages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
+        sink.put(USAGES_KEY, selectedUsages == null ? null : selectedUsages.toArray(Usage.EMPTY_ARRAY));
       }
 
       else if (key == USAGE_TARGETS_KEY) {
-        sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
+        UsageTarget[] targets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
+        sink.put(USAGE_TARGETS_KEY, targets);
       }
 
       else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {

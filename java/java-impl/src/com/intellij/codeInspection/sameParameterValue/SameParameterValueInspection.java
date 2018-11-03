@@ -446,6 +446,9 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
               if (!(uElement instanceof UReferenceExpression)) {
                 return false;
               }
+              if (uElement instanceof UCallableReferenceExpression) {
+                return false;
+              }
               UElement parent = uElement.getUastParent();
               if (!(parent instanceof UCallExpression)) {
                 return false;

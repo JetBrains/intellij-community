@@ -18,10 +18,11 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -281,12 +282,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
       if (match2 == null) {
         return false;
       }
-      final ReturnValue returnValue1 = match1.getReturnValue();
-      final ReturnValue returnValue2 = match2.getReturnValue();
-      if (returnValue1 == null) {
-        return returnValue2 == null;
-      }
-      return returnValue1.isEquivalent(returnValue2);
+      return ReturnValue.areEquivalent(match1.getReturnValue(), match2.getReturnValue());
     }
 
     private Match findDuplicate(@NotNull CatchSectionWrapper section) {
@@ -361,31 +357,61 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
   }
 
-  @NotNull
-  private static List<String> collectCommentTexts(@NotNull PsiElement element) {
-    final List<String> result = new ArrayList<>();
+  public static void collectCommentTexts(@NotNull PsiElement element, @NotNull Collection<String> result) {
+    if (element instanceof PsiComment) {
+      addCommentText(result, (PsiComment)element);
+      return;
+    }
+    if (element instanceof LeafPsiElement) {
+      return; // optimization
+    }
     PsiTreeUtil.processElements(element, child -> {
       if (child instanceof PsiComment) {
-        String text = getCommentText((PsiComment)child);
-        if (!text.isEmpty()) {
-          result.add(text);
-        }
+        addCommentText(result, (PsiComment)child);
       }
       return true;
     });
+  }
+
+  private static void addCommentText(@NotNull Collection<String> result, PsiComment child) {
+    String text = getCommentText(child);
+    if (!text.isEmpty()) {
+      result.add(text);
+    }
+  }
+
+  @NotNull
+  private static List<String> collectCommentTexts(@NotNull PsiElement element) {
+    final List<String> result = new ArrayList<>();
+    collectCommentTexts(element, result);
     return result;
   }
 
   @NotNull
-  private static String getCommentText(@NotNull PsiComment comment) {
+  public static String getCommentText(@NotNull PsiComment comment) {
     final IElementType type = comment.getTokenType();
-    if (type == JavaTokenType.END_OF_LINE_COMMENT) {
-      return StringUtil.trimStart(comment.getText(), "//").trim();
+    final String text = comment.getText();
+    int start = 0, end = text.length();
+
+    if (comment instanceof PsiDocComment) {
+      if (text.startsWith("/**")) start += "/**".length();
+      if (text.endsWith("*/")) end -= "*/".length();
     }
-    if (type == JavaTokenType.C_STYLE_COMMENT) {
-      return StringUtil.trimStart(StringUtil.trimEnd(comment.getText(), "*/"), "/*").trim();
+    else if (type == JavaTokenType.C_STYLE_COMMENT) {
+      if (text.startsWith("/*")) start += "/*".length();
+      if (text.endsWith("*/")) end -= "*/".length();
     }
-    return "";
+    else if (type == JavaTokenType.END_OF_LINE_COMMENT) {
+      if (text.startsWith("//")) start += "//".length();
+    }
+
+    while (start < end && Character.isWhitespace(text.charAt(start))) {
+      start++;
+    }
+    while (start < end - 1 && Character.isWhitespace(text.charAt(end - 1))) {
+      end--;
+    }
+    return start < end ? text.substring(start, end) : "";
   }
 
   @Override

@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
-import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.SharedPsiElementImplUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -40,12 +39,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends AbstractFileViewProvider {
-  private final ConcurrentMap<Language, PsiFile> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
+  private final ConcurrentMap<Language, PsiFileImpl> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
   private MultiplePsiFilesPerDocumentFileViewProvider myOriginal;
 
-  public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager,
-                                                     @NotNull VirtualFile virtualFile,
-                                                     boolean eventSystemEnabled) {
+  public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, boolean eventSystemEnabled) {
     super(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
   }
 
@@ -70,26 +67,26 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
   protected final void removeFile(@NotNull Language language) {
-    PsiFile file = myRoots.remove(language);
-    if (file instanceof PsiFileEx) {
-      ((PsiFileEx)file).markInvalidated();
+    PsiFileImpl file = myRoots.remove(language);
+    if (file != null) {
+      file.markInvalidated();
     }
   }
 
   @Override
   protected PsiFile getPsiInner(@NotNull final Language target) {
-    PsiFile file = myRoots.get(target);
+    PsiFileImpl file = myRoots.get(target);
     if (file == null) {
       if (!shouldCreatePsi()) return null;
       if (target != getBaseLanguage() && !getLanguages().contains(target)) {
         return null;
       }
-      file = createFile(target);
+      file = (PsiFileImpl)createFile(target);
       if (file == null) return null;
       if (myOriginal != null) {
         final PsiFile originalFile = myOriginal.getPsi(target);
-        if (originalFile != null && file instanceof PsiFileImpl) {
-          ((PsiFileImpl)file).setOriginalFile(originalFile);
+        if (originalFile != null) {
+          file.setOriginalFile(originalFile);
         }
       }
       file = ConcurrencyUtil.cacheOrGet(myRoots, target, file);
@@ -114,19 +111,18 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   public final List<FileElement> getKnownTreeRoots() {
     List<FileElement> files = new ArrayList<>(myRoots.size());
     for (PsiFile file : myRoots.values()) {
-      if (file instanceof PsiFileImpl) {
-        final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
-        if (treeElement != null) {
-          files.add(treeElement);
-        }
+      final FileElement treeElement = ((PsiFileImpl)file).getTreeElement();
+      if (treeElement != null) {
+        files.add(treeElement);
       }
     }
+
     return files;
   }
 
   @TestOnly
   public void checkAllTreesEqual() {
-    Collection<PsiFile> roots = myRoots.values();
+    Collection<PsiFileImpl> roots = myRoots.values();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getManager().getProject());
     documentManager.commitAllDocuments();
     for (PsiFile root : roots) {
@@ -194,16 +190,15 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   @Override
   public void contentsSynchronized() {
     Set<Language> languages = getLanguages();
-    for (Iterator<Map.Entry<Language, PsiFile>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
-      Map.Entry<Language, PsiFile> entry = iterator.next();
+    for (Iterator<Map.Entry<Language, PsiFileImpl>> iterator = myRoots.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<Language, PsiFileImpl> entry = iterator.next();
       if (!languages.contains(entry.getKey())) {
-        PsiFile file = entry.getValue();
+        PsiFileImpl file = entry.getValue();
         iterator.remove();
-        if (file instanceof PsiFileEx) {
-          ((PsiFileEx)file).markInvalidated();
-        }
+        file.markInvalidated();
       }
     }
     super.contentsSynchronized();
   }
+
 }

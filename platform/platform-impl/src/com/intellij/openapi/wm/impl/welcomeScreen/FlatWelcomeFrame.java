@@ -8,6 +8,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.plugins.InstalledPluginsManagerMain;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -57,6 +58,7 @@ import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.dnd.*;
 import java.awt.event.*;
 import java.io.File;
@@ -281,9 +283,13 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         public void drop(DropTargetDropEvent e) {
           setDnd(false);
           e.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-          List<File> list = FileCopyPasteUtil.getFileList(e.getTransferable());
+          Transferable transferable = e.getTransferable();
+          List<File> list = FileCopyPasteUtil.getFileList(transferable);
           if (list != null && list.size() > 0) {
-            MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            InstalledPluginsManagerMain.PluginDropHandler pluginHandler = new InstalledPluginsManagerMain.PluginDropHandler();
+            if (!pluginHandler.canHandle(transferable, null) || !pluginHandler.handleDrop(transferable, null, null)) {
+              MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+            }
             e.dropComplete(true);
             return;
           }

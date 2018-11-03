@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
@@ -124,7 +125,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
-    myWholePanel = new JPanel(new BorderLayout()) {
+    myWholePanel = new NonOpaquePanel(new BorderLayout()) {
       @Override
       public void addNotify() {
         super.addNotify();
@@ -165,7 +166,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 
-    final JPanel right = new JPanel(new BorderLayout());
+    final JPanel right = new NonOpaquePanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
 
     mySplitter.setSecondComponent(right);

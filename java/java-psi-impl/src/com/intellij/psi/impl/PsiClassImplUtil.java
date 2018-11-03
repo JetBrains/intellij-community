@@ -19,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -651,6 +652,7 @@ public class PsiClassImplUtil {
                                                              final boolean isRaw,
                                                              @NotNull final LanguageLevel languageLevel,
                                                              @NotNull final GlobalSearchScope resolveScope) {
+    ProgressManager.checkCanceled();
     if (visited == null) visited = new THashSet<>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);

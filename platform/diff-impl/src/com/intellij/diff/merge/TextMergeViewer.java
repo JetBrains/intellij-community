@@ -229,6 +229,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected void onDispose() {
       Disposer.dispose(myModel);
       myLineStatusTracker.release();
+      myInnerDiffWorker.disable();
       super.onDispose();
     }
 

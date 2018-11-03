@@ -53,7 +53,7 @@ public final class GroovyResolverProcessorBuilder {
 
   @NotNull
   private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
-    if (ref.hasAt()) return EnumSet.of(FIELD);
+    assert !ref.hasAt();
     assert !ref.hasMemberPointer();
 
     final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);

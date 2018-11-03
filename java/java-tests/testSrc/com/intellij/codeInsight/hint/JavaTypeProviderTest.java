@@ -36,6 +36,16 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "</table>");
   }
 
+  public void testFunctionalType() {
+    doTest("  void test() {\n" +
+           "      Runnable r = <selection>() -> {}</selection>;\n" +
+           "  }", "Runnable", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Runnable</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "</table>");
+  }
+
   public void testTypeConstraint() {
     doTest("  void x(Object a) {\n" +
            "    if(a instanceof String || a instanceof Number) {\n" +

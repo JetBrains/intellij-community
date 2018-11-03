@@ -26,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
@@ -370,7 +369,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
-  public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, PsiManager manager) {
+  public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull PsiManager manager) {
     {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
@@ -415,17 +414,18 @@ public class TypesUtil implements TypeConstants {
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
       GrClosureType clType2 = (GrClosureType)type2;
-      GrSignature signature1 = clType1.getSignature();
-      GrSignature signature2 = clType2.getSignature();
+      List<GrSignature> signatures1 = clType1.getSignatures();
+      List<GrSignature> signatures2 = clType2.getSignatures();
 
-      if (signature1 instanceof GrClosureSignature && signature2 instanceof GrClosureSignature) {
-        if (((GrClosureSignature)signature1).getParameterCount() == ((GrClosureSignature)signature2).getParameterCount()) {
-          final GrClosureSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
-                                                                                                  ((GrClosureSignature)signature2), manager);
+      if (signatures1.size() == 1 && signatures2.size() == 1) {
+        final GrSignature signature1 = signatures1.get(0);
+        final GrSignature signature2 = signatures2.get(0);
+        if (signature1.getParameterCount() == signature2.getParameterCount()) {
+          final GrSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-            return GrClosureType.create(signature, scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
           }
         }
       }
@@ -465,7 +465,7 @@ public class TypesUtil implements TypeConstants {
     return false;
   }
 
-  private static PsiType genNewListBy(PsiType genericOwner, PsiManager manager) {
+  private static PsiType genNewListBy(PsiType genericOwner, @NotNull PsiManager manager) {
     PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);

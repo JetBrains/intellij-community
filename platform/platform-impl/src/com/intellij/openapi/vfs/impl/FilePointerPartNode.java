@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -103,9 +102,9 @@ class FilePointerPartNode {
     }
     int index = indexOfFirstDifferentChar(childName, childStart, found.part, partStart);
 
+    found.addRecursiveDirectoryPtr(outDirs);
     if (index == childEnd) {
-      addRecursiveDirectoryPtr(outDirs);
-      return partStart + childEnd - childStart;
+      return partStart + index - childStart;
     }
 
     if (partStart + index-childStart == found.part.length()) {
@@ -165,9 +164,8 @@ class FilePointerPartNode {
     }
   }
 
-  private static final boolean UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
   void checkConsistency() {
-    if (UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
+    if (VirtualFilePointerManagerImpl.IS_UNDER_UNIT_TEST && !ApplicationInfoImpl.isInStressTest()) {
       doCheckConsistency(false);
     }
   }

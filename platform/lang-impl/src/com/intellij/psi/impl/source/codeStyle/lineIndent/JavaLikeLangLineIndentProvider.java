@@ -382,12 +382,20 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
    * The method will return an offset of the first {@code for} on line 1.
    * @return
    */
-  private int getFirstUppermostControlStructureKeywordOffset(SemanticEditorPosition position) {
+  private int getFirstUppermostControlStructureKeywordOffset(@NotNull SemanticEditorPosition position) {
     SemanticEditorPosition curr = position.copy();
     while (!curr.isAtEnd()) {
-      if (isStartOfStatementWithOptionalBlock(curr) &&
-          curr.before().beforeOptionalMix(Whitespace, LineComment, BlockComment).isAtAnyOf(BlockOpeningBrace, Semicolon)) {
-        return curr.getStartOffset();
+      if (isStartOfStatementWithOptionalBlock(curr)) {
+        SemanticEditorPosition candidate = curr.copy();
+        curr.moveBefore();
+        curr.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
+        if (!curr.isAt(RightParenthesis)) {
+          return candidate.getStartOffset();
+        }
+        else {
+          curr.moveBeforeParentheses(LeftParenthesis, RightParenthesis);
+          continue;
+        }
       }
       else if (curr.isAt(BlockClosingBrace)) {
         curr.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
@@ -395,7 +403,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       curr.moveBefore();
     }
-    return 0;
+    return position.before().getStartOffset();
   }
 
   /**

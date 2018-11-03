@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.TimingLog;
+import org.jetbrains.jps.api.BuildParametersKeys;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.*;
@@ -40,10 +41,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.fs.FilesDelta;
 import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
-import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
-import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMappingImpl;
+import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.JavacMain;
@@ -323,6 +321,11 @@ public class IncProjectBuilder {
     }
   }
 
+  private static boolean isParallelBuild(CompileContext context) {
+    return Boolean.parseBoolean(context.getBuilderParameter(BuildParametersKeys.IS_AUTOMAKE)) ?
+      BuildRunner.PARALLEL_BUILD_AUTOMAKE_ENABLED : BuildRunner.PARALLEL_BUILD_ENABLED;
+  }
+
   private void runBuild(final CompileContextImpl context, boolean forceCleanCaches) throws ProjectBuildException {
     context.setDone(0.0f);
 
@@ -331,7 +334,7 @@ public class IncProjectBuilder {
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
-             BuildRunner.PARALLEL_BUILD_ENABLED);
+             isParallelBuild(context));
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
@@ -526,15 +529,11 @@ public class IncProjectBuilder {
         }
       }
       else {
-        try {
-          for (BuildTarget<?> target : getTargetsWithClearedOutput(context)) {
-            // this will clean timestamps for the corresponding targets so that
-            // if this build failes or is cancelled, all such targets will still be marked as needing recompilation
-            BuildOperations.ensureFSStateInitialized(context, target);
-          }
-        }
-        catch (IOException e) {
-          throw new ProjectBuildException(e);
+        final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+        for (BuildTarget<?> target : getTargetsWithClearedOutput(context)) {
+          // This will ensure the target will be fully rebuilt either in this or in the future build session.
+          // if this build fails or is cancelled, all such targets will still be marked as needing recompilation
+          targetsState.getTargetConfiguration(target).invalidate();
         }
       }
     }
@@ -786,7 +785,7 @@ public class IncProjectBuilder {
   private void buildChunks(final CompileContextImpl context, BuildProgress buildProgress) throws ProjectBuildException {
     try {
 
-      boolean compileInParallel = BuildRunner.PARALLEL_BUILD_ENABLED;
+      boolean compileInParallel = isParallelBuild(context);
       if (compileInParallel && MAX_BUILDER_THREADS <= 1) {
         LOG.info("Switched off parallel compilation because maximum number of builder threads is less than 2. Set '"
                  + GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION + "' system property to a value greater than 1 to really enable parallel compilation.");
@@ -1024,8 +1023,7 @@ public class IncProjectBuilder {
     for (TargetBuilder<?, ?> builder : builders) {
       buildTarget(target, context, builder);
       builderCount++;
-      buildProgress.updateProgress(target, ((double)builderCount)/builders.size());
-      buildProgress.notifyAboutTotalProgress(context);
+      buildProgress.updateProgress(target, ((double)builderCount)/builders.size(), context);
     }
     return true;
   }
@@ -1370,9 +1368,8 @@ public class IncProjectBuilder {
 
                 buildersPassed++;
                 for (ModuleBuildTarget target : chunk.getTargets()) {
-                  buildProgress.updateProgress(target, ((double)buildersPassed)/myTotalModuleLevelBuilderCount);
+                  buildProgress.updateProgress(target, ((double)buildersPassed)/myTotalModuleLevelBuilderCount, context);
                 }
-                buildProgress.notifyAboutTotalProgress(context);
               }
             }
             finally {

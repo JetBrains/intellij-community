@@ -17,7 +17,7 @@ package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaOptionalSupport;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -175,14 +175,14 @@ public class OptionalChainInliner implements CallInliner {
     DfaValueFactory factFactory = builder.getFactory();
     if (pushIntermediateOperationValue(builder, call)) {
       builder.ifNotNull()
-        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true))
+        .push(DfaOptionalSupport.getOptionalValue(factFactory, true))
         .elseBranch()
-        .push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false))
+        .push(DfaOptionalSupport.getOptionalValue(factFactory, false))
         .end();
       return true;
     }
     if (OPTIONAL_EMPTY.test(call)) {
-      builder.push(factFactory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(factFactory, false));
       return true;
     }
     return false;
@@ -224,7 +224,7 @@ public class OptionalChainInliner implements CallInliner {
         return true;
       }
     }
-    DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+    DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
     builder
       .pushExpression(expression)
       .checkNotNull(dereferenceContext, problem)
@@ -294,16 +294,16 @@ public class OptionalChainInliner implements CallInliner {
       .boxUnbox(argument, optionalElementType);
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
       builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
-        .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
+        .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .pop();
     }
     else {
       builder
         .dup()
         .ifNull()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false), qualifierCall)
           .elseBranch()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
+          .push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), true), qualifierCall)
         .end()
         .pop();
     }

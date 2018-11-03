@@ -89,7 +89,7 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
-    return myResolvedElements.containsKey(entity);
+    return myResolvedElements.containsKey(entity) && !myProblemElements.containsKey(entity);
   }
 
   @NotNull

@@ -45,7 +45,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent e) {
-    LogicalPosition position  = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
+    final LogicalPosition position  = editor.xyToLogicalPosition(e.getMouseEvent().getPoint());
 
     handleInputFocusMovement(position, false);
   }
@@ -99,12 +99,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     }
 
     if (variableName != null) {
-        showTooltip(editor, start, end + 1, text, variableName);
+        showTooltip(editor, start, end + 1, text);
     }
   }
 
   private void checkModelValidity() {
-    Document document = editor.getDocument();
+    final Document document = editor.getDocument();
     if (modificationTimeStamp != document.getModificationStamp()) {
       variables.clear();
       variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).keySet());
@@ -133,7 +133,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   static String getShortParamString(NamedScriptableDefinition namedScriptableDefinition, boolean editLink) {
     final boolean newDialog = Registry.is("ssr.use.new.search.dialog");
     if (namedScriptableDefinition == null) {
-      return newDialog ? "no filters" : SSRBundle.message("no.constraints.specified.tooltip.message");
+      return SSRBundle.message(newDialog ? "no.filters.tooltip.message" : "no.constraints.specified.tooltip.message");
     }
 
     final StringBuilder buf = new StringBuilder();
@@ -194,15 +194,16 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final String script = namedScriptableDefinition.getScriptCodeConstraint();
     if (script != null && script.length() > 2) {
-      final String str = SSRBundle.message("script.tooltip.message", StringUtil.unquoteString(script));
-      append(buf, str);
+      final String text = "<pre><code>" + StringUtil.escapeXml(StringUtil.unquoteString(script)) + "</code></pre>";
+      append(buf, SSRBundle.message("script.tooltip.message", text));
     }
 
     if (buf.length() == 0 && !editLink) {
-      buf.append(!newDialog ? SSRBundle.message("no.constraints.specified.tooltip.message") : "no filters");
+      buf.append(SSRBundle.message(!newDialog ? "no.constraints.specified.tooltip.message" : "no.filters.tooltip.message"));
     }
     if (editLink && newDialog) {
-      buf.append(" <a style=\"color:")
+      if (buf.length() > 0) buf.append("<br>");
+      buf.append("<a style=\"color:")
         .append(linkColor)
         .append("\" href=\"#ssr_edit_filters/")
         .append(namedScriptableDefinition.getName())
@@ -216,7 +217,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     buf.append(str);
   }
 
-  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text, String variableName) {
+  private static void showTooltip(@NotNull Editor editor, final int start, int end, @NotNull String text) {
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
     final Point left = editor.logicalPositionToXY(editor.offsetToLogicalPosition(start));
     final int documentLength = editor.getDocument().getTextLength();

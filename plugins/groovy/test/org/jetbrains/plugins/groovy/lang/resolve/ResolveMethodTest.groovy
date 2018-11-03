@@ -2279,4 +2279,12 @@ new A()
     assert resolved instanceof GrMethod
     assert resolved.isVarArgs()
   }
+
+  void 'test static method via class instance'() {
+    resolveByText '''\
+class A { public static foo() { 45 } }
+def a = A // class instance
+a.<caret>foo()
+''', GrMethod
+  }
 }

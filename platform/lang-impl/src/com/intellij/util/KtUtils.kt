@@ -3,6 +3,7 @@
 
 package com.intellij.util
 
+import java.util.*
 import com.intellij.openapi.util.Pair as JBPair
 
 operator fun <A> JBPair<A, *>.component1(): A = first
@@ -12,3 +13,5 @@ operator fun <A> JBPair<*, A>.component2(): A = second
 fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
   return requireNotNull(first) to requireNotNull(second)
 }
+
+inline fun <reified E : Enum<E>, V> enumMapOf(): MutableMap<E, V> = EnumMap<E, V>(E::class.java)

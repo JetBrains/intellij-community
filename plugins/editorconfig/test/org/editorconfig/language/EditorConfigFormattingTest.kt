@@ -2,14 +2,14 @@
 package org.editorconfig.language
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 
 class EditorConfigFormattingTest : LightPlatformCodeInsightFixtureTestCase() {
-  override fun getTestDataPath() = "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/formatting"
+  override fun getTestDataPath() = "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/formatting"
 
   private fun doTestWithSettings(settings: CommonCodeStyleSettings.() -> Unit) {
     val file = myFixture.configureByFile("${getTestName(true)}/before/.editorconfig")

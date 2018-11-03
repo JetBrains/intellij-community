@@ -2,7 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -40,6 +40,8 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
     xmlTransformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
     xmlTransformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
 
+    IconLoader.activate()
+
     context.imageHandler = object : ImageHandlerBase64Encoder() {
       override fun handleImage(image: Image, imageElement: Element, generatorContext: SVGGeneratorContext) {
         imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", findImagePath(image))
@@ -65,6 +67,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
             return getIconRelativePath(iconWrapper.toString())
           }
         }
+
         for (name in arrayOf("checkBox", "radio")) {
           val iconWrapper = LafIconLookup.findIcon(name, selected = true) ?: continue
           if (isImage(iconWrapper)) {
@@ -101,7 +104,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
                                              "intellij.platform.ide.impl" to "platform/platform-impl/src")) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
-        val iconPath = Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
+        val iconPath = Paths.get(PathManager.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
         assertThat(iconPath).exists()
         return FileUtilRt.toSystemIndependentName(svgFileDir.relativize(iconPath).toString())
       }

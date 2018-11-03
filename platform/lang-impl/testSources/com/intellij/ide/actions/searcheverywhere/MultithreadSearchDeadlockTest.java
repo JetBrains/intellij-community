@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 /**
  * @author mikhail.sokolov
  */
+@Bombed(month = Calendar.DECEMBER, day = 1, user = "mikhail.sokolov", description = "leaking thread SE-FinisherTask")
 public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final Collection<SEResultsEqualityProvider> ourEqualityProviders = Collections.singleton(new TrivialElementsEqualityProvider());
@@ -32,7 +34,7 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
+  protected void invokeTestRunnable(@NotNull Runnable runnable) {
     runnable.run();
   }
 
@@ -54,8 +56,10 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15", "ri16"), collector.getFoundItems("readAction1"));
       Assert.assertEquals(Arrays.asList("ri21", "ri22", "ri23", "ri24", "ri25"), collector.getFoundItems("readAction2"));
       Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
-    } catch (InterruptedException e) {
-    } finally {
+    }
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -87,8 +91,9 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(3, action1.getAttemptsCount());
       Assert.assertEquals(1, action2.getAttemptsCount());
     }
-    catch (InterruptedException e) {
-    } finally {
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -110,8 +115,9 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       Assert.assertEquals(Arrays.asList("ri11", "ri12", "ri13", "ri14", "ri15"), collector.getFoundItems("readAction1"));
       Assert.assertEquals(Arrays.asList("wi11", "wi12", "wi13", "wi14"), collector.getFoundItems("writeAction1"));
     }
-    catch (InterruptedException e) {
-    } finally {
+    catch (InterruptedException ignored) {
+    }
+    finally {
       progressIndicator.cancel();
     }
   }
@@ -226,7 +232,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
       try {
         Thread.sleep(initDelay);
       }
-      catch (InterruptedException e) {}
+      catch (InterruptedException ignored) {
+      }
 
       ProgressIndicatorUtils.yieldToPendingWriteActions();
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
@@ -238,7 +245,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
             Thread.sleep(eachItemDelay);
           }
         }
-        catch (InterruptedException e) {}
+        catch (InterruptedException ignored) {
+        }
       }, progressIndicator);
     }
 
@@ -267,7 +275,8 @@ public class MultithreadSearchDeadlockTest extends LightPlatformCodeInsightFixtu
           Thread.sleep(eachItemDelay);
         }
       }
-      catch (InterruptedException e) {}
+      catch (InterruptedException ignored) {
+      }
     }
   }
 }

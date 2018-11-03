@@ -25,9 +25,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
 import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
 private val visibilityModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
-private val explicitVisibilityModifiersMask = GrModifierFlags.PUBLIC_MASK or GrModifierFlags.PRIVATE_MASK or GrModifierFlags.PROTECTED_MASK
-private val packageScopeAnno = "groovy.transform.PackageScope"
-private val packageScopeTarget = "groovy.transform.PackageScopeTarget"
+private const val explicitVisibilityModifiersMask = GrModifierFlags.PUBLIC_MASK or GrModifierFlags.PRIVATE_MASK or GrModifierFlags.PROTECTED_MASK
+private const val packageScopeAnno = "groovy.transform.PackageScope"
+private const val packageScopeTarget = "groovy.transform.PackageScopeTarget"
 
 fun Int.hasMaskModifier(@GrModifierConstant @NonNls name: String): Boolean {
   return and(NAME_TO_MODIFIER_FLAG_MAP[name]) != 0

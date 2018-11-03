@@ -24,7 +24,6 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.PyInstallRequirementsFix
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.sdk.PythonSdkType
@@ -55,8 +54,6 @@ class PyStubPackagesAdvertiser : PyInspection() {
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
     override fun visitPyFile(node: PyFile) {
-      if (node.languageLevel.isOlderThan(LanguageLevel.PYTHON37)) return
-
       val module = ModuleUtilCore.findModuleForFile(node) ?: return
       val sdk = PythonSdkType.findPythonSdk(module) ?: return
 
@@ -179,6 +176,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     private fun splitIntoNotCachedAndCached(sources: Set<String>,
                                             cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {
+      if (sources.isEmpty()) return emptySet<String>() to emptySet()
+
       val notCached = mutableSetOf<String>()
       val cached = mutableSetOf<RepoPackage>()
 
@@ -238,6 +237,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
                                                        availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
+      if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
+
       val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
       availablePackages.forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
 

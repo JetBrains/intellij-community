@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -182,14 +183,13 @@ class CommonCodeStyleSettingsManager {
     Ref<CommonCodeStyleSettings> defaultSettingsRef =
       RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));
     if (defaultSettingsRef == null) {
-      LOG.error(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.");
+      LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getCanonicalName() + ".getDefaultCommonSettings() recursively creates root settings.")));
       return null;
     }
     else {
       CommonCodeStyleSettings defaultSettings = defaultSettingsRef.get();
       if (defaultSettings instanceof CodeStyleSettings) {
-        LOG.error(
-          provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings");
+        LOG.error(new ExtensionException(provider.getClass(), new Throwable(provider.getClass().getName() + ".getDefaultCommonSettings() creates root CodeStyleSettings instead of CommonCodeStyleSettings")));
       }
       return defaultSettings;
     }

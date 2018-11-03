@@ -20,6 +20,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.network.service.RequestService
 import java.util.concurrent.TimeUnit
@@ -54,12 +55,10 @@ class WebServiceStatusProvider(
     
     override fun dataServerUrl(): String = dataServerUrl
 
-    override fun isExperimentGoingOnNow(): Boolean = info.performExperiment
-
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
     override fun isExperimentOnCurrentIDE(): Boolean {
-        return info.performExperiment
+        return experimentVersion() == 6 && !Registry.`is`("java.completion.ml.exit.experiment")
     }
     
     override fun updateStatus() {

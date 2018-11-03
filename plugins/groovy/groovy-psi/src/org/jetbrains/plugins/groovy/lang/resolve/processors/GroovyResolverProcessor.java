@@ -12,22 +12,18 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import kotlin.Lazy;
-import kotlin.LazyKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +36,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isProper
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.getTopLevelTypeCached;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
@@ -83,26 +78,15 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     if (!isPropertyResolve() || !isPropertyName(myName)) {
       return Collections.emptyList();
     }
-    final Lazy<PsiType> receiverType = LazyKt.lazy(() -> getTopLevelQualifierType());
     if (myIsLValue) {
       return singletonList(
-        new PropertyProcessor(receiverType, myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
+        new AccessorProcessor(myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
       );
     }
     return ContainerUtil.newArrayList(
-      new PropertyProcessor(receiverType, myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
-      new PropertyProcessor(receiverType, myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
+      new AccessorProcessor(myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
+      new AccessorProcessor(myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
     );
-  }
-
-  public PsiType getTopLevelQualifierType() {
-    GrExpression expression = myRef.getQualifierExpression();
-    if (expression instanceof GrMethodCallExpression) {
-      return getTopLevelTypeCached(expression);
-    }
-    else {
-      return PsiImplUtil.getQualifierType(myRef);
-    }
   }
 
   public boolean isPropertyResolve() {
@@ -237,6 +221,9 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     else if (element instanceof PsiVariable) {
       return GroovyResolveKind.VARIABLE;
     }
+    else if (element instanceof GroovyProperty) {
+      return GroovyResolveKind.PROPERTY;
+    }
     else {
       return null;
     }
@@ -244,14 +231,11 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @NotNull
   protected List<GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
+    List<GroovyResolveResult> results = new SmartList<>(myCandidates.get(kind));
     if (kind == GroovyResolveKind.PROPERTY) {
-      final List<GroovyResolveResult> results = ContainerUtil.newSmartList();
       myAccessorProcessors.forEach(it -> results.addAll(it.getResults()));
-      return results;
     }
-    else {
-      return new SmartList<>(myCandidates.get(kind));
-    }
+    return results;
   }
 
   @NotNull

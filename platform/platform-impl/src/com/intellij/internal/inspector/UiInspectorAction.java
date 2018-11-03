@@ -364,7 +364,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                       boolean leaf,
                                       int row,
                                       boolean hasFocus) {
-      Color foreground = selected ? UIUtil.getTreeSelectionForeground(hasFocus) : UIUtil.getTreeForeground();
+      Color foreground = UIUtil.getTreeForeground(selected, hasFocus);
       Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : null;
       if (value instanceof HierarchyTree.ComponentNode) {
         HierarchyTree.ComponentNode componentNode = (HierarchyTree.ComponentNode)value;
@@ -681,7 +681,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
               return true;
             }
           }

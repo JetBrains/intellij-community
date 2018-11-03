@@ -44,6 +44,7 @@
 
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
+    <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="expressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
@@ -86,7 +87,6 @@
     <groovyFrameworkConfigNotification order="last"
                                        implementation="org.jetbrains.plugins.groovy.config.DefaultGroovyFrameworkConfigNotification"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor"/>

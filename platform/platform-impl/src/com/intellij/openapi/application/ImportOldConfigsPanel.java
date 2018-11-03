@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
@@ -145,6 +146,8 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
+    ImportOldConfigsState.getInstance().saveImportOldConfigType(myRbImportAuto, myRbImport, myRbDoNotImport);
+
     if (myRbImport.isSelected()) {
       String text = myPrevInstallation.getText();
       if (StringUtil.isEmptyOrSpaces(text)) {

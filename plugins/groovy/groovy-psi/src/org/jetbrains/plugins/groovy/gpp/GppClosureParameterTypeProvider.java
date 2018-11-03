@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -113,8 +114,12 @@ public class GppClosureParameterTypeProvider extends AbstractClosureParameterEnh
   @Nullable
   public static PsiType getSingleMethodParameterType(@Nullable PsiType type, int index, GrClosableBlock closure) {
     final PsiType[] signature = findSingleAbstractMethodSignature(type);
-    if (signature != null && GrClosureSignatureUtil.isSignatureApplicable(GrClosureSignatureUtil.createSignature(closure), signature, closure)) {
-      return signature.length > index ?  signature[index] : PsiType.NULL;
+    if (signature == null) {
+      return null;
+    }
+    final GrSignature closureSignature = GrClosureSignatureUtil.createSignature(closure);
+    if (GrClosureSignatureUtil.isSignatureApplicable(Collections.singletonList(closureSignature), signature, closure)) {
+      return signature.length > index ? signature[index] : PsiType.NULL;
     }
     return null;
   }

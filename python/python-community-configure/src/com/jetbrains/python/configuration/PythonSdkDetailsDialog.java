@@ -356,24 +356,24 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void removeSdk() {
-    final Sdk currentSdk = getSelectedSdk();
-    if (currentSdk != null) {
-      final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
+    final Sdk selectedSdk = getSelectedSdk();
+    if (selectedSdk != null) {
+      final Sdk sdk = myProjectSdksModel.findSdk(selectedSdk);
       SdkConfigurationUtil.removeSdk(sdk);
 
       myProjectSdksModel.removeSdk(sdk);
-      myProjectSdksModel.removeSdk(currentSdk);
+      myProjectSdksModel.removeSdk(selectedSdk);
 
-      if (myModificators.containsKey(currentSdk)) {
-        SdkModificator modificator = myModificators.get(currentSdk);
+      if (myModificators.containsKey(selectedSdk)) {
+        SdkModificator modificator = myModificators.get(selectedSdk);
         myModifiedModificators.remove(modificator);
-        myModificators.remove(currentSdk);
+        myModificators.remove(selectedSdk);
       }
       refreshSdkList();
       mySdkListChanged = true;
-      // TODO select initially selected SDK
-      if (mySdkList.getSelectedIndex() < 0) {
-        mySdkList.setSelectedIndex(0);
+      final Sdk currentSdk = getSdk();
+      if (currentSdk != null) {
+        mySdkList.setSelectedValue(currentSdk, true);
       }
     }
   }

@@ -268,7 +268,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     CharSequence newText = changedFile.getNode().getChars();
     for (final PsiFile file : allFiles) {
-      if (!(file instanceof PsiFileImpl)) continue;
       FileElement fileElement = file == changedFile ? null : ((PsiFileImpl)file).getTreeElement();
       Runnable changeAction = fileElement == null ? null : reparseFile(file, fileElement, newText);
       if (changeAction == null) continue;

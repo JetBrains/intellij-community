@@ -320,9 +320,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
     @Override public Color getForegroundColor() {
       return !isEnabled() ? UIManager.getColor("Label.disabledForeground") :
-             myMousePressed ? UIManager.getColor("link.pressed.foreground") :
-             myMouseHover ? UIManager.getColor("link.hover.foreground") :
-             UIManager.getColor("link.foreground");
+             myMousePressed ? UIManager.getColor("Link.pressedForeground") :
+             myMouseHover ? UIManager.getColor("Link.hoverForeground") :
+             UIManager.getColor("Link.activeForeground");
     }
 
     @Override public Color getEffectColor() {

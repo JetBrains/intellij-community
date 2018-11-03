@@ -4,16 +4,29 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
 
-class GrReferenceExpressionReference(
-  ref: GrReferenceExpressionImpl,
-  private val forceRValue: Boolean
-) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
+abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
     val staticResults = element.staticReference.resolve(incomplete)
     if (staticResults.isNotEmpty()) {
       return staticResults
     }
-    return element.doPolyResolve(incomplete, forceRValue)
+    return doResolveNonStatic(incomplete)
+  }
+
+  abstract fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult>
+}
+
+class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
+
+  override fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
+    return element.doPolyResolve(incomplete, true)
+  }
+}
+
+class GrLValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
+
+  override fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
+    return element.doPolyResolve(incomplete, false)
   }
 }

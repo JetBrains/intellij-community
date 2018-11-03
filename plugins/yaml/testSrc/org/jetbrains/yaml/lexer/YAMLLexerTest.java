@@ -1,8 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.lexer;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
 
 public class YAMLLexerTest extends LexerTestCase {
@@ -13,7 +13,7 @@ public class YAMLLexerTest extends LexerTestCase {
 
   @Override
   protected String getDirPath() {
-    return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
+    return (PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
       .substring(PathManager.getHomePath().length());
   }
 

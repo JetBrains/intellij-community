@@ -174,6 +174,7 @@ public class BackgroundTaskUtil {
                                                                               @NotNull ModalityState modality,
                                                                               long waitMillis) {
     ProgressIndicator indicator = new EmptyProgressIndicator(modality);
+    indicator.start();
 
     Helper<T> helper = new Helper<>();
 

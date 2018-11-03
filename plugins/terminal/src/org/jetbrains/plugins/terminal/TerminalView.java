@@ -49,6 +49,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction;
+import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementManager;
 import org.jetbrains.plugins.terminal.arrangement.TerminalArrangementState;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -182,6 +183,7 @@ public class TerminalView {
     if (terminalWidget == null) {
       VirtualFile currentWorkingDir = getCurrentWorkingDir(tabState);
       terminalWidget = terminalRunner.createTerminalWidget(content, currentWorkingDir);
+      TerminalArrangementManager.getInstance(myProject).register(terminalWidget, tabState);
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {

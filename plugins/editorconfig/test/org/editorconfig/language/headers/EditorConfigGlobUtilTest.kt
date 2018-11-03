@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.headers
 
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.isSubcaseOf
@@ -9,7 +9,7 @@ import org.junit.Test
 
 class EditorConfigGlobUtilTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/globs/"
+    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/globs/"
 
   // ---- ---- complex tests ---- ----
 

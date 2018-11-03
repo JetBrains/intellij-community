@@ -4,7 +4,6 @@ package com.intellij.ide.fileTemplates.impl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +29,8 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
   private static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   private static final String ATTRIBUTE_ENABLED = "enabled";
 
-  FileTemplateSettings(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
-    super(typeManager, project);
+  FileTemplateSettings(@Nullable Project project) {
+    super(project);
   }
 
   @Nullable

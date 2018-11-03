@@ -39,6 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
+  static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
@@ -337,7 +338,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         synchronized (myContainers) {
           removed = myContainers.remove(container);
         }
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!IS_UNDER_UNIT_TEST) {
           assert removed;
         }
       }
@@ -375,7 +376,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
         else if (event instanceof VFileCopyEvent) {
           final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getFile().getName(), toFireEvents);
+          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getNewChildName(), toFireEvents);
         }
         else if (event instanceof VFileMoveEvent) {
           final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
@@ -443,8 +444,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   synchronized void assertConsistency() {
-    for (FilePointerPartNode root : myPointers.values()) {
-      root.checkConsistency();
+    if (IS_UNDER_UNIT_TEST) {
+      for (FilePointerPartNode root : myPointers.values()) {
+        root.checkConsistency();
+      }
     }
   }
 

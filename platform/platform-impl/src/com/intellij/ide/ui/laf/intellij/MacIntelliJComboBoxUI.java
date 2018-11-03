@@ -1,9 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -135,6 +136,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       @Override
       protected void configureList() {
         super.configureList();
+        list.setSelectionBackground(new JBColor(() -> ColorUtil.withAlpha(UIManager.getColor("ComboBox.selectionBackground"), 0.75)));
         wrapRenderer();
       }
 
@@ -174,6 +176,7 @@ public class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
       Component c = myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(JBUI.Borders.empty(0, 8));
       panel.setBackground(c.getBackground());
+      c.setBackground(UIUtil.TRANSPARENT_COLOR);
       return panel;
     }
   }

@@ -15,9 +15,7 @@
  */
 package com.intellij.refactoring.util.occurrences;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -87,11 +85,15 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
     PsiElement scopeToDeclare = null;
     for (PsiExpression occurrence : occurrences) {
       final PsiElement data = occurrence.getUserData(ElementToWorkOn.PARENT);
+      PsiElement element = data != null ? data : occurrence;
       if (scopeToDeclare == null) {
-        scopeToDeclare = data != null ? data : occurrence;
+        scopeToDeclare = element;
       }
       else {
-        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, data != null ? data : occurrence);
+        scopeToDeclare = PsiTreeUtil.findCommonParent(scopeToDeclare, element);
+      }
+      if (PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatement.class, true, PsiStatement.class) != null) {
+        return true;
       }
     }
     if(scopeToDeclare == null) {

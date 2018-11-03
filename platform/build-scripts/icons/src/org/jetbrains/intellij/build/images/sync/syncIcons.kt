@@ -7,18 +7,15 @@ internal fun syncAdded(added: Collection<String>,
                        sourceRepoMap: Map<String, GitObject>,
                        targetDir: File, targetRepo: (File) -> File) {
   callSafely {
-    val unversioned = mutableMapOf<File, MutableList<String>>()
-    added.forEach {
-      val target = File(targetDir, it)
-      if (target.exists()) log("$it already exists in target repo!")
-      val source = sourceRepoMap[it]!!.file
-      source.copyTo(target, overwrite = true)
-      val repo = targetRepo(target)
-      if (!unversioned.containsKey(repo)) unversioned[repo] = mutableListOf()
-      unversioned[repo]!!.add(target.relativeTo(repo).path)
-    }
-    unversioned.forEach { repo, add ->
-      addChangesToGit(add, repo)
+    addChangesToGit { add ->
+      added.forEach {
+        val target = File(targetDir, it)
+        if (target.exists()) log("$it already exists in target repo!")
+        val source = sourceRepoMap[it]!!.file
+        source.copyTo(target, overwrite = true)
+        val repo = targetRepo(target)
+        add(repo, target.relativeTo(repo).path)
+      }
     }
   }
 }
@@ -27,10 +24,13 @@ internal fun syncModified(modified: Collection<String>,
                           targetRepoMap: Map<String, GitObject>,
                           sourceRepoMap: Map<String, GitObject>) {
   callSafely {
-    modified.forEach {
-      val target = targetRepoMap[it]!!.file
-      val source = sourceRepoMap[it]!!.file
-      source.copyTo(target, overwrite = true)
+    addChangesToGit { add ->
+      modified.forEach {
+        val target = targetRepoMap[it]!!
+        val source = sourceRepoMap[it]!!
+        source.file.copyTo(target.file, overwrite = true)
+        add(target.repo, target.path)
+      }
     }
   }
 }
@@ -38,13 +38,28 @@ internal fun syncModified(modified: Collection<String>,
 internal fun syncRemoved(removed: Collection<String>,
                          targetRepoMap: Map<String, GitObject>) {
   callSafely {
-    removed.map { targetRepoMap[it]!!.file }.forEach {
-      if (!it.delete()) {
-        log("Failed to delete ${it.absolutePath}")
-      }
-      else if (it.parentFile.list().isEmpty()) {
-        it.parentFile.delete()
+    addChangesToGit { add ->
+      removed.map { targetRepoMap[it]!! }.forEach { it ->
+        val target = it.file
+        if (!target.delete()) {
+          log("Failed to delete ${target.absolutePath}")
+        }
+        else {
+          add(it.repo, it.path)
+          if (target.parentFile.list().isEmpty()) target.parentFile.delete()
+        }
       }
     }
+  }
+}
+
+private fun addChangesToGit(action: ((File, String) -> Unit) -> Unit) {
+  val map = mutableMapOf<File, MutableList<String>>()
+  action { repo, path ->
+    if (!map.containsKey(repo)) map[repo] = mutableListOf()
+    map[repo]!!.add(path)
+  }
+  map.forEach { repo, file ->
+    addChangesToGit(file, repo)
   }
 }

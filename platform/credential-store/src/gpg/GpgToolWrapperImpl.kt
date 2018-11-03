@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private val timeoutInMilliseconds: Int = 5000) : GpgToolWrapper {
@@ -55,23 +56,28 @@ internal class GpgToolWrapperImpl(private val gpgPath: String = "gpg", private v
     val process = commandLine.createProcess()
     val output = BufferExposingByteArrayOutputStream()
     val errorOutput = BufferExposingByteArrayOutputStream()
-    CompletableFuture.allOf(
-      runAsync {
-        process.outputStream.use {
-          it.write(data)
+    try {
+      CompletableFuture.allOf(
+        runAsync {
+          process.outputStream.use {
+            it.write(data)
+          }
+        },
+        runAsync {
+          process.inputStream.use {
+            FileUtilRt.copy(it, output)
+          }
+        },
+        runAsync {
+          process.errorStream.use {
+            FileUtilRt.copy(it, errorOutput)
+          }
         }
-      },
-      runAsync {
-        process.inputStream.use {
-          FileUtilRt.copy(it, output)
-        }
-      },
-      runAsync {
-        process.errorStream.use {
-          FileUtilRt.copy(it, errorOutput)
-        }
-      }
-    ).get(3, TimeUnit.MINUTES /* user needs time to input passphrase/pin if need */)
+      ).get(3, TimeUnit.MINUTES /* user needs time to input passphrase/pin if need */)
+    }
+    catch (e: ExecutionException) {
+      throw RuntimeException("Cannot execute ${commandLine.commandLineString}\nerror output: ${errorOutput.toByteArray().toString(Charsets.UTF_8)}", e.cause)
+    }
 
     // not clear in which conditions process will not exited as soon as read futures completed, let's wait only 5 seconds
     if (!process.waitFor(5, TimeUnit.SECONDS)) {

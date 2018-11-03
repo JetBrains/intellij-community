@@ -56,6 +56,7 @@ public class FilterPanel implements FilterTable {
   final Header myHeader = new Header();
   private final List<FilterAction> myFilters =
     Arrays.asList(new TextFilter(this), new CountFilter(this), new TypeFilter(this), new ReferenceFilter(this), new ScriptFilter(this));
+  private Runnable myConstraintChangedCallback;
 
   public FilterPanel(@NotNull Project project, StructuralSearchProfile profile, Disposable parent) {
     myProject = project;
@@ -179,6 +180,7 @@ public class FilterPanel implements FilterTable {
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
     filter.getTemplatePresentation().setEnabledAndVisible(true);
     filter.clearFilter();
+    myConstraintChangedCallback.run();
   }
 
   @Override
@@ -251,6 +253,15 @@ public class FilterPanel implements FilterTable {
                                           showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
                                         }
                                       });
+  }
+
+  public void setConstraintChangedCallback(Runnable callback) {
+    myConstraintChangedCallback = callback;
+  }
+
+  @Override
+  public Runnable getConstraintChangedCallback() {
+    return myConstraintChangedCallback;
   }
 
   private class Header implements Filter {

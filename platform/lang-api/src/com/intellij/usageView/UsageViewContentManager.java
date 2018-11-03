@@ -17,14 +17,14 @@ public abstract class UsageViewContentManager {
   }
 
   @NotNull
-  public abstract Content addContent(String contentName, boolean reusable, final JComponent component, boolean toOpenInNewTab, boolean isLockable);
+  public abstract Content addContent(@NotNull String contentName, boolean reusable, @NotNull JComponent component, boolean toOpenInNewTab, boolean isLockable);
 
   @NotNull
-  public abstract Content addContent(String contentName,
+  public abstract Content addContent(@NotNull String contentName,
                                      String tabName,
                                      String toolwindowTitle,
                                      boolean reusable,
-                                     final JComponent component,
+                                     @NotNull JComponent component,
                                      boolean toOpenInNewTab,
                                      boolean isLockable);
 

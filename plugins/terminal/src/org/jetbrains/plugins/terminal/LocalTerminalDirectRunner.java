@@ -17,16 +17,12 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
-import com.intellij.execution.process.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
@@ -52,7 +49,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -63,10 +60,10 @@ import java.util.concurrent.Future;
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
-  public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  public static final String ZDOTDIR = "ZDOTDIR";
-  public static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
-
+  private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
+  private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
+  private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
 
   private final Charset myDefaultCharset;
 
@@ -126,15 +123,16 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
   private Map<String, String> getTerminalEnvironment() {
-
-
-    Map<String, String> envs = new HashMap<String, String>();
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                   : ContainerUtil.canonicalStrategy());
 
     if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
       envs.putAll(System.getenv());
     }
 
     envs.put("TERM", "xterm-256color");
+    envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
+
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
@@ -146,6 +144,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+    return createProcess(directory, null);
+  }
+
+  @Override
+  protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
     if (SystemInfo.isMac) {
@@ -166,16 +169,30 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
+    if (commandHistoryFilePath != null) {
+      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
+    }
 
     try {
       TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
-      return PtyProcess.exec(command, envs, directory != null
-                                            ? directory
-                                            : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
+      String workingDir = getWorkingDirectory(directory);
+      long startNano = System.nanoTime();
+      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
+                  " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+      }
+      return process;
     }
     catch (IOException e) {
-      throw new ExecutionException(e);
+      throw new ExecutionException("Failed to start " + Arrays.toString(command), e);
     }
+  }
+
+  @Nullable
+  private String getWorkingDirectory(@Nullable String directory) {
+    if (directory != null) return directory;
+    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
@@ -185,7 +202,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
-    return new PtyProcessTtyConnector(process, myDefaultCharset);
+    return new PtyProcessTtyConnector(process, myDefaultCharset) {
+      @Override
+      protected void resizeImmediately() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("resizeImmediately to " + getPendingTermSize());
+        }
+        super.resizeImmediately();
+      }
+    };
   }
 
   @Override

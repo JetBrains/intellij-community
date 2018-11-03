@@ -23,12 +23,6 @@ import java.util.stream.Collectors;
 public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
-  public String getShortName() {
-    return "DialogTitleCapitalization";
-  }
-
-  @NotNull
-  @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override

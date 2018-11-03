@@ -2,7 +2,7 @@
 package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.EditorConfigRegistry
@@ -10,7 +10,7 @@ import org.editorconfig.language.assertIterableEquals
 
 class EditorConfigCompletionTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/completion/"
+    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/completion/"
 
   init {
     // calling this from setUp() turns out to be too late

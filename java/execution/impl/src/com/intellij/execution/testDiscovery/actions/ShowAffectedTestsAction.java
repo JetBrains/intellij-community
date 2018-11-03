@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -60,6 +61,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -88,7 +90,10 @@ public class ShowAffectedTestsAction extends AnAction {
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(
       isEnabled(e.getProject()) &&
-      (findMethodAtCaret(e) != null || findClassAtCaret(e) != null || findFileInContext(e) != null || e.getData(VcsDataKeys.CHANGES) != null)
+      (findMethodAtCaret(e) != null ||
+       findClassAtCaret(e) != null ||
+       !findFilesInContext(e).isEmpty() ||
+       e.getData(VcsDataKeys.CHANGES) != null)
     );
   }
 
@@ -114,25 +119,38 @@ public class ShowAffectedTestsAction extends AnAction {
       return;
     }
 
-    VirtualFile virtualFile = findFileInContext(e);
-    if (virtualFile != null) {
-      showDiscoveredTestsByFile(project, virtualFile, e);
+    List<VirtualFile> virtualFiles = findFilesInContext(e);
+    if (!virtualFiles.isEmpty()) {
+      showDiscoveredTestsByFile(project, virtualFiles, e);
     }
   }
 
-  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull VirtualFile file, @NotNull AnActionEvent e) {
+  private static void showDiscoveredTestsByFile(@NotNull Project project, @NotNull List<VirtualFile> files, @NotNull AnActionEvent e) {
     VirtualFile projectBasePath = getBasePathAsVirtualFile(project);
     if (projectBasePath == null) return;
-    DiscoveredTestsTree tree = showTree(project, e.getDataContext(), file.getName());
+    DiscoveredTestsTree tree = showTree(project, e.getDataContext(), createTitle(files));
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      String relativeFilePath = VcsFileUtil.getRelativeFilePath(file, projectBasePath);
-      if (relativeFilePath != null) {
-        List<String> filePaths = Collections.singletonList("/" + relativeFilePath);
-        processMethodsAsync(project, PsiMethod.EMPTY_ARRAY, filePaths, createTreeProcessor(tree), () -> tree.setPaintBusy(false));
+      JBIterable<String> paths = JBIterable
+        .from(files)
+        .flatMap(f -> VfsUtil.collectChildrenRecursively(f))
+        .map(f -> VcsFileUtil.getRelativeFilePath(f, projectBasePath))
+        .filter(Objects::nonNull)
+        .map(p -> "/" + p);
+      if (paths.isNotEmpty()) {
+        processMethodsAsync(project, PsiMethod.EMPTY_ARRAY, paths.toList(), createTreeProcessor(tree), () -> tree.setPaintBusy(false));
       }
     });
+  }
+
+  @NotNull
+  private static String createTitle(@NotNull List<VirtualFile> files) {
+    if (files.isEmpty()) return "Empty Selection";
+    String firstName = files.get(0).getName();
+    if (files.size() == 1) return firstName;
+    if (files.size() == 2) return firstName + " and " + files.get(1).getName();
+    return firstName + " et al.";
   }
 
   private static void showDiscoveredTestsByPsiClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull AnActionEvent e) {
@@ -229,16 +247,18 @@ public class ShowAffectedTestsAction extends AnAction {
     return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
   }
 
-  @Nullable
-  private static VirtualFile findFileInContext(@NotNull AnActionEvent event) {
-    VirtualFile virtualFile = event.getData(VIRTUAL_FILE);
-    if (virtualFile == null) {
+  @NotNull
+  private static List<VirtualFile> findFilesInContext(@NotNull AnActionEvent event) {
+    VirtualFile[] virtualFiles = event.getData(VIRTUAL_FILE_ARRAY);
+    if (virtualFiles == null || virtualFiles.length == 0) {
       PsiFile file = event.getData(PSI_FILE);
       if (file != null) {
-        virtualFile = file.getVirtualFile();
+        virtualFiles = new VirtualFile[]{file.getVirtualFile()};
       }
     }
-    return virtualFile != null && virtualFile.isInLocalFileSystem() ? virtualFile : null;
+    return virtualFiles == null
+           ? Collections.emptyList()
+           : Arrays.stream(virtualFiles).filter(v -> v.isInLocalFileSystem()).collect(Collectors.toList());
   }
 
   @Nullable

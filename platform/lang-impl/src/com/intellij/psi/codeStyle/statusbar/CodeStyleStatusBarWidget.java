@@ -262,7 +262,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   private static String findCodeStyleConfigurableId(@NotNull PsiFile file) {
     final Project project = file.getProject();
     final Language language = file.getLanguage();
-    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+    LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(language);
     if (provider != null && provider.getIndentOptionsEditor() != null) {
       String name = provider.getConfigurableDisplayName();
       if (name != null) {

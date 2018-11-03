@@ -1,7 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-
-
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -84,6 +81,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     productLayout.searchableOptionsModule = "intellij.java.resources.en"
 
     productLayout.additionalPlatformJars.put("external-system-rt.jar", "intellij.platform.externalSystem.rt")
+    productLayout.additionalPlatformJars.put("external-system-impl.jar", "intellij.platform.externalSystem.impl")
     productLayout.additionalPlatformJars.put("jps-launcher.jar", "intellij.platform.jps.build.launcher")
     productLayout.additionalPlatformJars.put("jps-builders.jar", "intellij.platform.jps.build")
     productLayout.additionalPlatformJars.put("jps-builders-6.jar", "intellij.platform.jps.build.javac.rt")
@@ -134,22 +132,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
 
     additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
     modulesToCompileTests = ["intellij.platform.jps.build"]
-    productLayout.buildAllCompatiblePlugins = true
-    productLayout.compatiblePluginsToIgnore = [
-      "intellij.akka",
-      "intellij.changesManager",
-      "intellij.cidr.externalSystem",
-      "intellij.chronon",
-      "intellij.flex.uiDesigner.tests",
-      "intellij.griffon",
-      "intellij.php.workshop",
-      "intellij.shortcutPromoter",
-      "intellij.flex.profiler",
-      "intellij.kotlinNative.platformDeps",
-      "intellij.idea-clion"
-    ]
 
-    productLayout.prepareCustomPluginRepositoryForPublishedPlugins = SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
+    productLayout.buildAllCompatiblePlugins = true
+    productLayout.prepareCustomPluginRepositoryForPublishedPlugins =
+      SystemProperties.getBooleanProperty('intellij.build.prepare.plugin.repository', false)
   }
 
   @Override

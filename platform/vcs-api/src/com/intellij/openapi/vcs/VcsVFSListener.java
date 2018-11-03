@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -22,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author yole
- */
 public abstract class VcsVFSListener implements Disposable {
   protected static final Logger LOG = Logger.getInstance(VcsVFSListener.class);
 
@@ -62,6 +60,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final List<FilePath> myDeletedFiles = new ArrayList<>();
   protected final List<FilePath> myDeletedWithoutConfirmFiles = new ArrayList<>();
   protected final List<MovedFileInfo> myMovedFiles = new ArrayList<>();
+  private final ProjectConfigurationFilesProcessor myProjectConfigurationFilesProcessor;
 
   protected enum VcsDeleteType {SILENT, CONFIRM, IGNORE}
 
@@ -77,6 +76,8 @@ public abstract class VcsVFSListener implements Disposable {
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
     project.getMessageBus().connect(this).subscribe(CommandListener.TOPIC, new MyCommandAdapter());
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
+
+    myProjectConfigurationFilesProcessor = ServiceManager.getService(myProject, ProjectConfigurationFilesProcessor.class);
   }
 
   @Override
@@ -133,6 +134,9 @@ public abstract class VcsVFSListener implements Disposable {
   protected void executeAdd(@NotNull List<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap) {
     LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
+
+    addedFiles = myProjectConfigurationFilesProcessor.processFiles(addedFiles, this);
+
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
     }

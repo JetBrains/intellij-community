@@ -34,7 +34,8 @@ object GithubApiRequests {
     object Repos : Entity("/repos") {
       @JvmOverloads
       @JvmStatic
-      fun pages(server: GithubServerPath, allAssociated: Boolean = true) = GithubApiPagesLoader.Request(get(server, allAssociated), ::get)
+      fun pages(server: GithubServerPath, allAssociated: Boolean = true, pagination: GithubRequestPagination? = null) =
+        GithubApiPagesLoader.Request(get(server, allAssociated, pagination), ::get)
 
       @JvmOverloads
       @JvmStatic
@@ -46,9 +47,9 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get user repositories")
 
       @JvmStatic
-      fun create(server: GithubServerPath, name: String, description: String, private: Boolean) =
+      fun create(server: GithubServerPath, name: String, description: String, private: Boolean, autoInit: Boolean? = null) =
         Post.json<GithubRepo>(getUrl(server, CurrentUser.urlSuffix, urlSuffix),
-                              GithubRepoRequest(name, description, private))
+                              GithubRepoRequest(name, description, private, autoInit))
           .withOperationName("create user repository")
     }
 
@@ -66,6 +67,28 @@ object GithubApiRequests {
     }
   }
 
+  object Organisations : Entity("/orgs") {
+
+    object Repos : Entity("/repos") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, organisation: String) = GithubApiPagesLoader.Request(get(server, organisation), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, organisation: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix, pagination?.toString().orEmpty()))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get organisation repositories")
+
+      @JvmStatic
+      fun create(server: GithubServerPath, organisation: String, name: String, description: String, private: Boolean) =
+        Post.json<GithubRepo>(getUrl(server, Organisations.urlSuffix, "/", organisation, urlSuffix),
+                              GithubRepoRequest(name, description, private, null))
+          .withOperationName("create organisation repository")
+    }
+  }
+
   object Repos : Entity("/repos") {
     @JvmStatic
     fun get(server: GithubServerPath, username: String, repoName: String) =
@@ -74,7 +97,10 @@ object GithubApiRequests {
 
     @JvmStatic
     fun delete(server: GithubServerPath, username: String, repoName: String) =
-      Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+      delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+
+    @JvmStatic
+    fun delete(url: String) = Delete(url).withOperationName("delete repository at $url")
 
     object Branches : Entity("/branches") {
       @JvmStatic
@@ -91,6 +117,12 @@ object GithubApiRequests {
     }
 
     object Forks : Entity("/forks") {
+
+      @JvmStatic
+      fun create(server: GithubServerPath, username: String, repoName: String) =
+        Post.json<GithubRepo>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix), Any())
+          .withOperationName("fork repository $username/$repoName for cuurent user")
+
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String) =
         GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
@@ -104,7 +136,27 @@ object GithubApiRequests {
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get forks")
     }
 
+    object Collaborators : Entity("/collaborators") {
+
+      @JvmStatic
+      fun add(server: GithubServerPath, username: String, repoName: String, collaborator: String) =
+        Put.json<Any>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/", collaborator))
+    }
+
     object Issues : Entity("/issues") {
+
+      @JvmStatic
+      fun create(server: GithubServerPath,
+                 username: String,
+                 repoName: String,
+                 title: String,
+                 body: String? = null,
+                 milestone: Long? = null,
+                 labels: List<String>? = null,
+                 assignees: List<String>? = null) =
+        Post.json<GithubIssue>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
+                               GithubCreateIssueRequest(title, body, milestone, labels, assignees))
+
       @JvmStatic
       fun pages(server: GithubServerPath, username: String, repoName: String,
                 state: String? = null, assignee: String? = null) = GithubApiPagesLoader.Request(get(server, username, repoName,
@@ -130,6 +182,11 @@ object GithubApiRequests {
 
       object Comments : Entity("/comments") {
         @JvmStatic
+        fun create(server: GithubServerPath, username: String, repoName: String, issueId: String, body: String) =
+          Post.json<GithubIssueComment>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", Issues.urlSuffix, "/", issueId, urlSuffix),
+                                        GithubCreateIssueCommentRequest(body))
+
+        @JvmStatic
         fun pages(server: GithubServerPath, username: String, repoName: String, issueId: String) =
           GithubApiPagesLoader.Request(get(server, username, repoName, issueId), ::get)
 
@@ -143,7 +200,7 @@ object GithubApiRequests {
                      GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
 
         @JvmStatic
-        fun get(url: String) = Get.jsonPage<GithubIssueComment>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
+        fun get(url: String) = Get.jsonPage<GithubIssueCommentWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
           .withOperationName("get comments for issue")
       }
     }

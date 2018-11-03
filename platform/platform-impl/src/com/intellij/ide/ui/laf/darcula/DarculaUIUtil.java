@@ -462,8 +462,8 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? JBColor.namedColor("Outline.focusedColor", 0x87AFDA) : JBColor.namedColor("Outline.color", Gray.xBF) :
-           JBColor.namedColor("Outline.disabledColor", Gray.xCF);
+            focused ? JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA) : JBColor.namedColor("Component.borderColor", Gray.xBF) :
+           JBColor.namedColor("Component.disabledBorderColor", Gray.xCF);
   }
 
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
@@ -490,7 +490,7 @@ public class DarculaUIUtil {
   public static Color getButtonTextColor(@NotNull AbstractButton button) {
     Color fg = button.getForeground();
     if (fg instanceof UIResource && DarculaButtonUI.isDefaultButton(button)) {
-      Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      Color selectedFg = UIManager.getColor("Button.default.foreground");
       if (selectedFg != null) {
         return selectedFg;
       }

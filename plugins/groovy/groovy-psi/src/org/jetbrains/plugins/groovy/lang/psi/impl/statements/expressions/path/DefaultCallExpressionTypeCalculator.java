@@ -108,7 +108,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
   private static PsiType extractReturnTypeFromType(PsiType type, boolean returnTypeIfFail, GrMethodCall callExpression) {
     PsiType returnType = returnTypeIfFail ? type: null;
     if (type instanceof GrClosureType) {
-      returnType = GrClosureSignatureUtil.getReturnType(((GrClosureType)type).getSignature(), callExpression);
+      returnType = GrClosureSignatureUtil.getReturnType(((GrClosureType)type).getSignatures(), callExpression);
     }
     else if (TypesUtil.isPsiClassTypeToClosure(type)) {
       assert type instanceof PsiClassType;
@@ -155,7 +155,7 @@ public class DefaultCallExpressionTypeCalculator extends GrCallExpressionTypeCal
     if (!(qType instanceof GrClosureType)) return null;
 
     if ("call".equals(resolved.getName())) {
-      return GrClosureSignatureUtil.getReturnType(((GrClosureType)qType).getSignature(), callExpression);
+      return GrClosureSignatureUtil.getReturnType(((GrClosureType)qType).getSignatures(), callExpression);
     }
     else if ("curry".equals(resolved.getName()) || "trampoline".equals(resolved.getName())) {
       return ((GrClosureType)qType).curry(PsiUtil.getArgumentTypes(refExpr, false), 0, callExpression);

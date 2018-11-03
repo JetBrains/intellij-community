@@ -216,8 +216,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       }
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(actualComponent, myFocusRequestor)
-        .setRequestFocus(myFocusRequestor != null)
-        .setFocusable(myFocusRequestor != null)
+        .setRequestFocus(hintHint.isRequestFocus())
+        .setFocusable(hintHint.isRequestFocus())
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)

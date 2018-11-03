@@ -128,8 +128,8 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int hashCode() {
-      int result = super.hashCode();
+    public int calcHashCode() {
+      int result = super.calcHashCode();
       result = 31 * result + mySet.hashCode();
       result = 31 * result + myManager.hashCode();
       return result;
@@ -261,7 +261,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       return myDirectory.hashCode() *31 + (myWithSubdirectories?1:0);
     }
 
@@ -354,7 +354,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int hashCode() {
+    public int calcHashCode() {
       int result = myDirectories.hashCode();
       result = result * 31 + myDirectoriesWithSubdirectories.hashCode();
       return result;

@@ -87,7 +87,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
@@ -593,7 +592,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static Color getLinkColor() {
-    Color color = UIManager.getColor("link.foreground");
+    Color color = UIManager.getColor("Link.activeForeground");
     return color != null ? color : IdeTooltipManager.getInstance().getLinkForeground(false);
   }
 

@@ -3,11 +3,7 @@ package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
-import com.intellij.testGuiFramework.impl.gradleReimport
-import com.intellij.testGuiFramework.impl.waitAMoment
-import com.intellij.testGuiFramework.impl.waitForGradleReimport
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
-import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -19,20 +15,22 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
   data class TestParameters(
     val projectName: String,
     val project: ProjectProperties,
+    val gradleModuleGroup: NewProjectDialogModel.GradleGroupModules,
     val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
   }
 
   @Test
   fun createGradleWithKotlin() {
-    createGradleWith(
+    testGradleProjectWithKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = testParameters.project,
       expectedFacet = testParameters.expectedFacet,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
         artifact = testParameters.projectName,
         framework = testParameters.project.frameworkName,
-        useKotlinDsl = testParameters.project.isKotlinDsl
+        useKotlinDsl = testParameters.project.isKotlinDsl,
+        groupModules = testParameters.gradleModuleGroup
       )
     )
   }
@@ -43,42 +41,31 @@ class CreateGradleProjectWithKotlinGuiTest(private val testParameters: TestParam
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "gradle_with_jvm",
+          projectName = "gradle_with_jvm_explicit",
           project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
         ),
         TestParameters(
-          projectName = "gradle_with_js",
+          projectName = "gradle_with_jvm_qualified",
+          project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
+        ),
+        TestParameters(
+          projectName = "gradle_with_js_explicit",
           project = kotlinProjects.getValue(Projects.GradleGProjectJs),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.ExplicitModuleGroups
+        ),
+        TestParameters(
+          projectName = "gradle_with_js_qualified",
+          project = kotlinProjects.getValue(Projects.GradleGProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          gradleModuleGroup = NewProjectDialogModel.GradleGroupModules.QualifiedNames
         )
       )
     }
   }
 
-  private fun createGradleWith(
-    kotlinVersion: String,
-    project: ProjectProperties,
-    expectedFacet: FacetStructure,
-    gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
-    createGradleProject(
-      projectPath = projectFolder,
-      gradleOptions = gradleOptions
-    )
-    waitAMoment()
-    waitForGradleReimport(gradleOptions.artifact, waitForProject = false)
-    editSettingsGradle()
-    editBuildGradle(
-      kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = gradleOptions.useKotlinDsl
-    )
-    gradleReimport()
-    waitForGradleReimport(gradleOptions.artifact, waitForProject = true)
-    waitAMoment()
-
-    projectStructureDialogScenarios.checkGradleExplicitModuleGroups(
-      project, kotlinVersion, gradleOptions.artifact, expectedFacet
-    )
-    waitAMoment()
-  }
 }
