@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
@@ -95,7 +94,7 @@ public abstract class BasicAction extends DumbAwareAction {
       if (!file.isDirectory() && projectLevelVcsManager.getVcsFor(file) instanceof GitVcs) {
         affectedFiles.add(file);
       }
-      else if (file.isDirectory() && isRecursive()) {
+      else if (file.isDirectory()) {
         addChildren(project, affectedFiles, file);
       }
 
@@ -114,7 +113,7 @@ public abstract class BasicAction extends DumbAwareAction {
    *                (recursively)
    */
   private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, (isRecursive() ? null : ONE_LEVEL_DEEP)) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, null) {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && appliesTo(project, file)) {
@@ -130,14 +129,6 @@ public abstract class BasicAction extends DumbAwareAction {
    */
   @NotNull
   protected abstract String getActionName();
-
-
-  /**
-   * @return true if the action could be applied recursively
-   */
-  protected boolean isRecursive() {
-    return true;
-  }
 
   /**
    * Check if the action is applicable to the file. The default checks if the file is a directory
