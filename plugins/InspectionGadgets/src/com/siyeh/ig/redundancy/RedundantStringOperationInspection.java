@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -50,6 +49,13 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static final CallMatcher METHOD_WITH_REDUNDANT_ZERO_AS_SECOND_PARAMETER =
     instanceCall(JAVA_LANG_STRING, "indexOf", "startsWith").parameterCount(2);
   private static final CallMatcher STRING_LAST_INDEX_OF = instanceCall(JAVA_LANG_STRING, "lastIndexOf").parameterCount(2);
+
+  @Nls
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("inspection.redundant.string.operation.display.name");
+  }
 
   @NotNull
   @Override
@@ -110,7 +116,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (args.getExpressionCount() == 1) {
         PsiExpression arg = args.getExpressions()[0];
         if (TypeUtils.isJavaLangString(arg.getType()) &&
-            (PsiUtil.getLanguageLevel(expression).isAtLeast(LanguageLevel.JDK_1_7) || !STRING_SUBSTRING.matches(arg))) {
+            (PsiUtil.isLanguageLevel7OrHigher(expression) || !STRING_SUBSTRING.matches(arg))) {
           TextRange range = new TextRange(0, args.getStartOffsetInParent());
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),

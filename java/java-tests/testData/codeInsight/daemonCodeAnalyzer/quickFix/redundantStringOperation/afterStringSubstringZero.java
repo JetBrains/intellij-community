@@ -5,6 +5,10 @@ class Foo {
     // check merger
     //noinspection SubstringZero
     String sOld = s.substring(0x0);
+    //noinspection RedundantStringOperation
+    String sOld2 = s.substring(0x0);
+    //noinspection StringOperationCanBeSimplified
+    String sNew = s.substring(0x0);
     String s2 = s;
     String s3 = s.substring(0, 20);
       /*up until the string length*/
