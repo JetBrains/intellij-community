@@ -523,15 +523,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
   }
 
   private int getMinSize(JComponent component) {
-    if (isHonorMinimumSize()) {
-      if (component != null && myFirstComponent != null && myFirstComponent.isVisible() && myLastComponent != null && myLastComponent.isVisible()) {
-        if (getOrientation()) {
-          return component.getMinimumSize().height;
-        }
-        else {
-          return component.getMinimumSize().width;
-        }
-      }
+    if (isHonorMinimumSize() && component != null && component.isVisible()) {
+      return getOrientation() ? component.getMinimumSize().height : component.getMinimumSize().width;
     }
     return myMinSize;
   }
