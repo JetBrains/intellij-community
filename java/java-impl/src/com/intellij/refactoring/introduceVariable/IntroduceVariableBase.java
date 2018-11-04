@@ -62,6 +62,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +163,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       if (!selectionModel.hasSelection()) {
         final List<PsiExpression> expressions = ContainerUtil
-          .filter(collectExpressions(file, editor, offset), expression -> RefactoringUtil.getParentStatement(expression, false) != null);
+          .filter(collectExpressions(file, editor, offset), expression -> 
+            RefactoringUtil.getParentStatement(expression, false) != null ||
+            PsiTreeUtil.getParentOfType(expression, PsiField.class, true, PsiStatement.class) != null);
         if (expressions.isEmpty()) {
           selectionModel.selectLineAtCaret();
         } else if (!isChooserNeeded(expressions)) {
@@ -612,7 +615,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     final PsiElement physicalElement = expr.getUserData(ElementToWorkOn.PARENT);
 
-    final PsiElement anchorStatement = RefactoringUtil.getParentStatement(physicalElement != null ? physicalElement : expr, false);
+    final PsiElement anchorStatement = getAnchor(physicalElement != null ? physicalElement : expr);
 
     PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
     if (tempContainer == null) return false;
@@ -756,6 +759,19 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return wasSucceed[0];
   }
 
+  @Nullable
+  private static PsiElement getAnchor(PsiElement place) {
+    PsiElement anchorStatement = RefactoringUtil.getParentStatement(place, false);
+    if (anchorStatement == null) {
+      PsiField field = PsiTreeUtil.getParentOfType(place, PsiField.class, true, PsiStatement.class);
+      if (field != null) {
+        anchorStatement = field.getInitializer();
+      }
+    }
+    return anchorStatement;
+  }
+
+  @Contract("_, _, null -> null")
   protected PsiElement checkAnchorStatement(Project project, Editor editor, PsiElement anchorStatement) {
     if (anchorStatement == null) {
       String message = RefactoringBundle.message("refactoring.is.not.supported.in.the.current.context", REFACTORING_NAME);
