@@ -12,7 +12,8 @@ public class DataFieldDefaultsTestIssue162 {
 
   public static class B extends A {
     public B() {
-      super();
+      //super(); // this is invalid line
+      super(0, "");
     }
 
     public B(int i, String j) {

@@ -9,8 +9,8 @@ public class Foo {
   static String string = "hallo";
 
   public void foo() {
-    one = two;
-    two = "sss";
+    //one = two;  //invalid assignment
+    //two = "sss"; //invalid assignment
     string = "aaaa";
   }
 
