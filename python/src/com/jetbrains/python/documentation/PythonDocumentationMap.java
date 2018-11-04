@@ -99,6 +99,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
       addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
       addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
+      addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
     }
 
     public List<Entry> getEntries() {
@@ -142,6 +143,16 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       if (PyQt4.equals(e.myPrefix) && PYQT4_DOC_URL_OLD.equals(e.myUrlPattern)) {
         // old URL is broken, switch to new one
         e.setUrlPattern(PYQT4_DOC_URL);
+      }
+    }
+    addAbsentEntriesFromDefaultState(myState);
+  }
+
+  private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
+    State defaultState = new State();
+    for (Entry e: defaultState.myEntries) {
+      if (state.myEntries.stream().noneMatch(entry -> entry.myPrefix.equals(e.myPrefix))) {
+        state.addEntry(e.getPrefix(), e.getUrlPattern());
       }
     }
   }
@@ -191,6 +202,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     macros.put("functionOrProp.name", element instanceof PyFunction && element.getName() != null ? functionOrProp(element.getName()) : "");
     macros.put("module.name", moduleQName.toString());
     macros.put("python.version", pyVersion);
+    macros.put("module.basename", moduleQName.getLastComponent());
     final String pattern = transformPattern(urlPattern, macros);
     if (pattern == null) {
       return rootForPattern(urlPattern);

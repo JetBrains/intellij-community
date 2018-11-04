@@ -574,7 +574,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PsiFileSystemItem getFile(PsiElement element) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
-    return (PsiFileSystemItem) PyUtil.turnInitIntoDir(file);
+    return (PsiFileSystemItem)PyUtil.turnInitIntoDir(file);
   }
 
   @Nullable
@@ -633,7 +633,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
         Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
-       if (quickDocExtractor != null) {
+        if (quickDocExtractor != null) {
           final Document document = documentSupplier.get();
           if (document != null) {
             String quickDoc = quickDocExtractor.apply(document);
@@ -650,14 +650,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Nullable
   private static PsiNamedElement getNamedElement(PsiElement element) {
-    PsiNamedElement namedElement = (element instanceof PsiNamedElement && !(element instanceof PsiFileSystemItem))
-                                   ? (PsiNamedElement)element
-                                   : null;
+    PsiNamedElement namedElement = (element instanceof PsiNamedElement) ? (PsiNamedElement)element : null;
     if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
       final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
       if (containingClass != null) {
         namedElement = containingClass;
       }
+    } else {
+      namedElement = (PsiNamedElement) PyUtil.turnInitIntoDir(namedElement);
     }
     return namedElement;
   }
