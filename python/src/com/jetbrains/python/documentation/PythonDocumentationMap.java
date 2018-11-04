@@ -101,6 +101,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
       addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
       addEntry("pyramid", "http://docs.pylonsproject.org/projects/pyramid/en/latest/api/{module.basename}.html#{element.qname}");
+      addEntry("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}");
     }
 
     public List<Entry> getEntries() {
