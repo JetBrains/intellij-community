@@ -163,7 +163,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   @Override
   public ASTNode getNode() {
     if (null == myASTNode) {
-      myASTNode = getOrCreateMyPsiMethod().getNode();
+      final PsiElement myPsiMethod = getOrCreateMyPsiMethod();
+      myASTNode = null == myPsiMethod ? null : myPsiMethod.getNode();
     }
     return myASTNode;
   }
@@ -185,34 +186,41 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   }
 
   private PsiMethod rebuildMethodFromString() {
-    final StringBuilder methodTextDeclaration = new StringBuilder();
-    methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
-    PsiType returnType = getReturnType();
-    if (null != returnType) {
-      methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
-    }
-    methodTextDeclaration.append(getName());
-    methodTextDeclaration.append('(');
-    if (getParameterList().getParametersCount() > 0) {
-      for (PsiParameter parameter : getParameterList().getParameters()) {
-        methodTextDeclaration.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(',');
+    PsiMethod result;
+    try {
+      final StringBuilder methodTextDeclaration = new StringBuilder();
+      methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
+      PsiType returnType = getReturnType();
+      if (null != returnType) {
+        methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
       }
-      methodTextDeclaration.deleteCharAt(methodTextDeclaration.length() - 1);
-    }
-    methodTextDeclaration.append(')');
-    methodTextDeclaration.append('{').append("  ").append('}');
+      methodTextDeclaration.append(getName());
+      methodTextDeclaration.append('(');
+      if (getParameterList().getParametersCount() > 0) {
+        for (PsiParameter parameter : getParameterList().getParameters()) {
+          methodTextDeclaration.append(parameter.getType().getCanonicalText()).append(' ').append(parameter.getName()).append(',');
+        }
+        methodTextDeclaration.deleteCharAt(methodTextDeclaration.length() - 1);
+      }
+      methodTextDeclaration.append(')');
+      methodTextDeclaration.append('{').append("  ").append('}');
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
 
-    final PsiMethod methodFromText = elementFactory.createMethodFromText(methodTextDeclaration.toString(), getContainingClass());
-    if (null != getBody()) {
-      methodFromText.getBody().replace(getBody());
+      result = elementFactory.createMethodFromText(methodTextDeclaration.toString(), getContainingClass());
+      if (null != getBody()) {
+        result.getBody().replace(getBody());
+      }
+    } catch (Exception ex) {
+      result = null;
     }
-    return methodFromText;
+    return result;
   }
 
+  @Override
   public PsiElement copy() {
-    return getOrCreateMyPsiMethod().copy();
+    final PsiElement myPsiMethod = getOrCreateMyPsiMethod();
+    return null == myPsiMethod ? null : myPsiMethod.copy();
   }
 
   private PsiElement getOrCreateMyPsiMethod() {
@@ -225,7 +233,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   @NotNull
   @Override
   public PsiElement[] getChildren() {
-    return getOrCreateMyPsiMethod().getChildren();
+    final PsiElement myPsiMethod = getOrCreateMyPsiMethod();
+    return null == myPsiMethod ? PsiElement.EMPTY_ARRAY : myPsiMethod.getChildren();
   }
 
   public String toString() {
