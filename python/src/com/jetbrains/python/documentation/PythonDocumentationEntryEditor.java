@@ -19,6 +19,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -56,6 +58,17 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
         }
       }
     });
+    myMacroList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        updateButtonEnabled();
+      }
+    });
+    updateButtonEnabled();
+  }
+
+  private void updateButtonEnabled() {
+    myInsertButton.setEnabled(myMacroList.getSelectedValue() != null);
   }
 
   @Override
