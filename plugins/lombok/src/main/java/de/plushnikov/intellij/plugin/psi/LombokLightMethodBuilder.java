@@ -191,7 +191,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
       final StringBuilder methodTextDeclaration = new StringBuilder();
       methodTextDeclaration.append(getAllModifierProperties((LightModifierList) getModifierList()));
       PsiType returnType = getReturnType();
-      if (null != returnType) {
+      if (null != returnType && returnType.isValid()) {
         methodTextDeclaration.append(returnType.getCanonicalText()).append(' ');
       }
       methodTextDeclaration.append(getName());
