@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -989,7 +990,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
 
   @Nullable
   @Override
-  public Function<Document, String> quickDocExtractor(PsiNamedElement namedElement) {
+  public Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return document -> {
       final String moduleName = getModuleNameForDocumentationUrl(namedElement, namedElement);
 
@@ -1058,7 +1059,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return qname;
   }
 
-  public String getModuleNameForDocumentationUrl(PsiElement element, PsiElement originalElement) {
+  private static String getModuleNameForDocumentationUrl(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
 
     return qName != null? getModuleName(qName.toString()) : "";

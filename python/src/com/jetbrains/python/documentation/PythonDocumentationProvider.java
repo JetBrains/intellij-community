@@ -617,28 +617,30 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     });
 
 
-    for (String url : docUrls) {
-      Supplier<Document> documentSupplier = Suppliers.memoize(() -> {
-        try {
-          return Jsoup.parse(new URL(url), 1000);
-        }
-        catch (IOException e) {
-          LOG.error("Can't read external doc URL: " + url, e);
-          return null;
-        }
-      });
+    if (namedElement != null) {
+      for (String url : docUrls) {
+        Supplier<Document> documentSupplier = Suppliers.memoize(() -> {
+          try {
+            return Jsoup.parse(new URL(url), 1000);
+          }
+          catch (IOException e) {
+            LOG.error("Can't read external doc URL: " + url, e);
+            return null;
+          }
+        });
 
-      for (final PythonDocumentationLinkProvider documentationLinkProvider :
-        PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
+        for (final PythonDocumentationLinkProvider documentationLinkProvider :
+          PythonDocumentationLinkProvider.EP_NAME.getExtensionList()) {
 
-        Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
+          Function<Document, String> quickDocExtractor = documentationLinkProvider.quickDocExtractor(namedElement);
 
-        if (quickDocExtractor != null) {
-          final Document document = documentSupplier.get();
-          if (document != null) {
-            String quickDoc = quickDocExtractor.apply(document);
-            if (StringUtil.isNotEmpty(quickDoc)) {
-              return quickDoc;
+          if (quickDocExtractor != null) {
+            final Document document = documentSupplier.get();
+            if (document != null) {
+              String quickDoc = quickDocExtractor.apply(document);
+              if (StringUtil.isNotEmpty(quickDoc)) {
+                return quickDoc;
+              }
             }
           }
         }
