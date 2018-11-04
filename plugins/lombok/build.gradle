@@ -111,11 +111,10 @@ jacocoTestReport {
 configurations {
   lombok
   lombok_dep
-  hrisey
 }
 
 dependencies {
-  lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.2', classifier: 'sources', ext: 'jar'
+  lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.4', classifier: 'sources', ext: 'jar'
   lombok_dep group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
 
   testCompile group: 'junit', name: 'junit', version: '4.12'
