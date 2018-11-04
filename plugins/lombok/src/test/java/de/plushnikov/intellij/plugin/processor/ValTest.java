@@ -45,7 +45,7 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
     assertTrue(localParameter.toString(), localParameter instanceof PsiParameter);
     final PsiType type = ((PsiParameter) localParameter).getType();
     assertNotNull(localParameter.toString(), type);
-    assertEquals(type.getCanonicalText(), true, type.equalsToText("int"));
+    assertTrue(type.getCanonicalText(), type.equalsToText("int"));
   }
 
   public void testBooleanExpression() {
@@ -61,6 +61,11 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
   public void testGenericNewCollection() {
     configureClass("new java.util.ArrayList<Integer>()");
     verifyLocalVariableType("java.util.ArrayList<java.lang.Integer>");
+  }
+
+  public void testGenericTypeDiamond296() {
+    configureClass("new java.util.concurrent.atomic.AtomicReference<>(\"abc\")");
+    verifyLocalVariableType("java.util.concurrent.atomic.AtomicReference<java.lang.String>");
   }
 
   public void testGenericMethod168() {

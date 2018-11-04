@@ -1,6 +1,10 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiLocalVariable;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public class VarTest extends AbstractLombokLightCodeInsightTestCase {
@@ -39,7 +43,7 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
     assertTrue(localParameter.toString(), localParameter instanceof PsiParameter);
     final PsiType type = ((PsiParameter) localParameter).getType();
     assertNotNull(localParameter.toString(), type);
-    assertEquals(type.getCanonicalText(), true, type.equalsToText("int"));
+    assertTrue(type.getCanonicalText(), type.equalsToText("int"));
   }
 
   public void testBooleanExpression() {
@@ -55,6 +59,11 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
   public void testGenericNewCollection() {
     configureClass("new java.util.ArrayList<Integer>()");
     verifyLocalVariableType("java.util.ArrayList<java.lang.Integer>");
+  }
+
+  public void testGenericTypeDiamond296() {
+    configureClass("new java.util.concurrent.atomic.AtomicReference<>(\"abc\")");
+    verifyLocalVariableType("java.util.concurrent.atomic.AtomicReference<java.lang.String>");
   }
 
   public void testGenericMethod168() {
@@ -87,6 +96,6 @@ public class VarTest extends AbstractLombokLightCodeInsightTestCase {
     assertTrue(localVariable.toString(), localVariable instanceof PsiLocalVariable);
     final PsiType type = ((PsiLocalVariable) localVariable).getType();
     assertNotNull(localVariable.toString(), type);
-    assertEquals(type.getCanonicalText(), true, type.equalsToText(expectedType));
+    assertTrue(type.getCanonicalText(), type.equalsToText(expectedType));
   }
 }

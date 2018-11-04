@@ -33,7 +33,7 @@ public class ValProcessor extends AbstractProcessor {
     return psiLocalVariable.getInitializer() != null && isVal(resolveQualifiedName(psiLocalVariable.getTypeElement()));
   }
 
-  public static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
+  private static boolean isValOrVar(@NotNull PsiLocalVariable psiLocalVariable) {
     return psiLocalVariable.getInitializer() != null && isValOrVar(psiLocalVariable.getTypeElement());
   }
 
@@ -185,19 +185,6 @@ public class ValProcessor extends AbstractProcessor {
             return psiExpression.getType();
           }
         });
-      }
-
-      if (psiExpression instanceof PsiNewExpression) {
-        final PsiJavaCodeReferenceElement reference = ((PsiNewExpression) psiExpression).getClassOrAnonymousClassReference();
-        if (reference != null) {
-          final PsiReferenceParameterList parameterList = reference.getParameterList();
-          if (parameterList != null) {
-            final PsiTypeElement[] elements = parameterList.getTypeParameterElements();
-            if (elements.length == 1 && elements[0].getType() instanceof PsiDiamondType) {
-              result = TypeConversionUtil.erasure(result);
-            }
-          }
-        }
       }
     }
 
