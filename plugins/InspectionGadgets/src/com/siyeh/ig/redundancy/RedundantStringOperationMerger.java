@@ -8,7 +8,7 @@ public class RedundantStringOperationMerger extends InspectionElementsMerger {
   @NotNull
   @Override
   public String getMergedToolName() {
-    return "RedundantStringOperation";
+    return "StringOperationCanBeSimplified";
   }
 
   @NotNull
@@ -17,7 +17,8 @@ public class RedundantStringOperationMerger extends InspectionElementsMerger {
     return new String[] {
       "StringToString", "RedundantStringToString",
       "SubstringZero", "ConstantStringIntern",
-      "RedundantStringConstructorCall", "StringConstructor"
+      "RedundantStringConstructorCall", "StringConstructor",
+      "RedundantStringOperation"
     };
   }
 }

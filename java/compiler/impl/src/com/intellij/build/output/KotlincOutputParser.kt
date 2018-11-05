@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build.output
 
 import com.intellij.build.FilePosition
@@ -7,7 +7,6 @@ import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.util.text.StringUtil
 import java.io.File
-import java.lang.IllegalStateException
 import java.util.function.Consumer
 import java.util.regex.Pattern
 
@@ -20,7 +19,7 @@ import java.util.regex.Pattern
 class KotlincOutputParser : BuildOutputParser {
 
   companion object {
-    private val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
+    private const val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
   }
 
   override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<in MessageEvent>): Boolean {

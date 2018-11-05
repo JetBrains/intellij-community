@@ -12,7 +12,7 @@ import org.jetbrains.debugger.sourcemap.Mappings
 import org.jetbrains.debugger.sourcemap.SourceMap
 import org.jetbrains.rpc.LOG
 
-private val S1 = ",()[]{}="
+private const val S1 = ",()[]{}="
 // don't trim trailing .&: - could be part of expression
 private val OPERATOR_TRIMMER = CharMatcher.invisible().or(CharMatcher.anyOf(S1))
 

@@ -16,8 +16,8 @@ import java.util.*
 
 internal val LOG = Logger.getInstance(SsiProcessor::class.java)
 
-internal val COMMAND_START = "<!--#"
-internal val COMMAND_END = "-->"
+internal const val COMMAND_START = "<!--#"
+internal const val COMMAND_END = "-->"
 
 class SsiStopProcessingException : RuntimeException()
 

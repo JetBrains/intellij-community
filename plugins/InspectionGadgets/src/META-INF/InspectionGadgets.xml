@@ -2021,7 +2021,7 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="string.replaceable.by.string.buffer.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.performance.StringReplaceableByStringBufferInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringOperation" bundle="com.siyeh.InspectionGadgetsBundle"
+    <localInspection groupPath="Java" language="JAVA" shortName="StringOperationCanBeSimplified" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantClassCall" bundle="com.siyeh.InspectionGadgetsBundle"

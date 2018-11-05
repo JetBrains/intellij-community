@@ -51,17 +51,6 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
             .addExpected("Red", "\u001B[31m"));
   }
 
-  public void testBackspaceControlSequence() {
-    check(false, ContainerUtil.newArrayList(
-      new ColoredText(" 10% 0/1 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 70% 1/1 build modules", ProcessOutputTypes.STDOUT)
-        .addExpected(" 70% 1/1 build modules", STDOUT_KEY),
-      new ColoredText(
-        "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 40% 1/2 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 30% 1/3 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 25% 1/4 build modules",
-        ProcessOutputTypes.STDOUT)
-        .addExpected("\n 25% 1/4 build modules", STDOUT_KEY)
-    ));
-  }
-
   public void testPrivateSequence() {
     check(new ColoredText("\u001B[0;32mgreen\u001B[0m\u001B[0K\u001B[?25l\n", ProcessOutputTypes.STDOUT)
             .addExpected("green", "\u001B[0;32m")
