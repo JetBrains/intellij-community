@@ -17,6 +17,7 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor.OccurenceKind.*;
@@ -39,11 +39,7 @@ import static com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilin
 public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   final GlobalCompilingVisitor myCompilingVisitor;
 
-  @NonNls private static final String COMMENT = "\\s*(__\\$_\\w+)\\s*";
-  private static final Pattern ourPattern = Pattern.compile("//" + COMMENT, Pattern.DOTALL);
-  private static final Pattern ourPattern2 = Pattern.compile("/\\*" + COMMENT + "\\*/", Pattern.DOTALL);
-  private static final Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
-
+  @NonNls private static final Pattern COMMENT_PATTERN = Pattern.compile("__\\$_\\w+");
   static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
                                                                        PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
 
@@ -189,47 +185,23 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitComment(PsiComment comment) {
     super.visitComment(comment);
 
-    final String text = comment.getText();
-    Matcher matcher = ourPattern.matcher(text);
-    boolean matches = false;
-    if (!matcher.matches()) {
-      matcher = ourPattern2.matcher(text);
-
-      if (!matcher.matches()) {
-        matcher = ourPattern3.matcher(text);
-      }
-      else {
-        matches = true;
-      }
-    }
-    else {
-      matches = true;
-    }
-
-    if (matches || matcher.matches()) {
-      String str = matcher.group(1);
-      comment.putUserData(CompiledPattern.HANDLER_KEY, str);
-
-      GlobalCompilingVisitor.setFilter(
-        myCompilingVisitor.getContext().getPattern().getHandler(comment),
-        CommentFilter.getInstance()
-      );
-
-      SubstitutionHandler handler = (SubstitutionHandler)myCompilingVisitor.getContext().getPattern().getHandler(str);
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    GlobalCompilingVisitor.setFilter(pattern.getHandler(comment), CommentFilter.getInstance());
+    final String commentText = JavaMatchUtil.getCommentText(comment).trim();
+    if (COMMENT_PATTERN.matcher(commentText).matches()) {
+      final SubstitutionHandler handler = (SubstitutionHandler)pattern.getHandler(commentText);
       if (handler == null) {
         throw new MalformedPatternException();
       }
 
-      RegExpPredicate predicate = handler.findRegExpPredicate();
+      comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
+      final RegExpPredicate predicate = handler.findRegExpPredicate();
       if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
-        myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, GlobalCompilingVisitor.OccurenceKind.COMMENT);
+        myCompilingVisitor.processTokenizedName(predicate.getRegExp(), true, COMMENT);
       }
-
-      matches = true;
     }
-
-    if (!matches) {
-      MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, GlobalCompilingVisitor.OccurenceKind.COMMENT);
+    else {
+      final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(comment.getText(), COMMENT);
       if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
     }
   }
@@ -248,11 +220,10 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
   @Override
   public void visitLiteralExpression(PsiLiteralExpression expression) {
-    String text = expression.getText();
+    final String text = expression.getText();
 
     if (StringUtil.isQuotedString(text)) {
-      @Nullable MatchingHandler handler =
-        myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
+      @Nullable final MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, LITERAL);
 
       if (PsiType.CHAR.equals(expression.getType()) &&
           (handler instanceof LiteralWithSubstitutionHandler || handler == null && expression.getValue() == null)) {

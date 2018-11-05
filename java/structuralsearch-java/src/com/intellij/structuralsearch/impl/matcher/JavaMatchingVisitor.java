@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
@@ -67,24 +68,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
 
-    final Object userData = comment.getUserData(CompiledPattern.HANDLER_KEY);
-
-    if (userData instanceof String) {
-      final String str = (String)userData;
-      int end = comment2.getTextLength();
-
-      if (comment2.getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
-        end -= 2;
-      }
-      myMatchingVisitor.setResult(((SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(str)).handle(
-        comment2,
-        2,
-        end,
-        myMatchingVisitor.getMatchContext()
-      ));
+    final MatchingHandler handler = (MatchingHandler)comment.getUserData(CompiledPattern.HANDLER_KEY);
+    if (handler instanceof SubstitutionHandler) {
+      final IElementType tokenType = comment2.getTokenType();
+      final int end = comment2.getTextLength();
+      final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
+      myMatchingVisitor.setResult(substitutionHandler.handle(comment2,
+                                                             tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2,
+                                                             tokenType == JavaTokenType.END_OF_LINE_COMMENT ? end : end - 2,
+                                                             myMatchingVisitor.getMatchContext()));
     }
-    else if (userData instanceof MatchingHandler) {
-      myMatchingVisitor.setResult(((MatchingHandler)userData).match(comment, comment2, myMatchingVisitor.getMatchContext()));
+    else if (handler != null) {
+      myMatchingVisitor.setResult(handler.match(comment, comment2, myMatchingVisitor.getMatchContext()));
     }
     else {
       myMatchingVisitor.setResult(myMatchingVisitor.matchText(comment, comment2));
