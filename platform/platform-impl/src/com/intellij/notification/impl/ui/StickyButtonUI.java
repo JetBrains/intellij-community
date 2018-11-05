@@ -3,7 +3,6 @@ package com.intellij.notification.impl.ui;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,43 +36,34 @@ public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonU
 
     final int arcSize = getArcSize();
 
-    final Insets margins = getOffsets();
-    final int x = margins.left;
-    final int y = margins.top;
-    final int w = width - 1 - margins.right - x;
-    final int h = height - 1 - margins.bottom - y;
     if (c.isOpaque()) {
       g2.setColor(c.getBackground());
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
     }
 
     final ButtonModel model = button.getModel();
     if (model.isSelected()) {
       g2.setColor(getSelectionColor(button));
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
+      g2.fillRoundRect(0, 0, width - 1, height - 1, getArcSize(), getArcSize());
     } else if (model.isRollover()) {
       g2.setColor(getRolloverColor(button));
-      g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
+      g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
     } else {
       final Color bg = getBackgroundColor(button);
       if (bg != null) {
         g2.setColor(bg);
-        g2.fillRoundRect(x, y, w, h, arcSize, arcSize);
+        g2.fillRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
       }
     }
 
     Color border = button.hasFocus() ? getFocusColor(button) : getUnfocusedBorderColor(button);
     if (border != null) {
       g2.setColor(border);
-      g2.drawRoundRect(x, y, w, h, arcSize, arcSize);
+      g2.drawRoundRect(0, 0, width - 1, height - 1, arcSize, arcSize);
     }
 
     g2.dispose();
     super.paint(g, c);
-  }
-
-  protected Insets getOffsets() {
-    return JBUI.insets(0);
   }
 
   @Nullable
