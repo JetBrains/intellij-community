@@ -196,11 +196,12 @@ public class GlobalCompilingVisitor {
         buf.insert(0, "[\"']");
         buf.append("[\"']");
       }
-      buf.append("$");
     }
 
     if (!handlers.isEmpty()) {
-      return hasLiteralContent ? new LiteralWithSubstitutionHandler(buf.toString(), handlers) : handler;
+      return hasLiteralContent
+             ? new LiteralWithSubstitutionHandler(buf.toString(), handlers, context.getOptions().isCaseSensitiveMatch())
+             : handler;
     }
 
     return null;

@@ -1445,6 +1445,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "class 'c {\n" +
                  "}";
     assertEquals("complete comment match", 1, findMatchesCount(s16, s17));
+    assertEquals("complete comment match case insensitive", 1, findMatchesCount(s16, s17.toLowerCase()));
 
     String s18 = "public class A {\n" +
                  "   private void f(int i) {\n" +
