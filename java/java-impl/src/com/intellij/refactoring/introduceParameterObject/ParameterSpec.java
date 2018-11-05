@@ -17,7 +17,6 @@ package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.codeStyle.VariableKind;
 
 class ParameterSpec {
   private final PsiParameter myParameter;

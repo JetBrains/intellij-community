@@ -32,7 +32,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -250,7 +249,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       return getExistingClass();
     }
 
-    final com.intellij.refactoring.introduceParameterObject.ParameterObjectBuilder beanClassBuilder = new com.intellij.refactoring.introduceParameterObject.ParameterObjectBuilder();
+    final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
     beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
     beanClassBuilder.setProject(method.getProject());
     beanClassBuilder.setFile(method.getContainingFile());

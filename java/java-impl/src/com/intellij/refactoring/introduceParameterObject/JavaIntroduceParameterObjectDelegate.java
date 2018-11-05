@@ -32,9 +32,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.*;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
 import com.intellij.refactoring.introduceParameterObject.usageInfo.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -135,7 +132,9 @@ public class JavaIntroduceParameterObjectDelegate
       PsiNewExpression newClassExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(callExpression.getProject())
         .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
       if (PsiDiamondTypeUtil.canChangeContextForDiamond(newClassExpression, newClassExpression.getType())) {
-        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+        final PsiJavaCodeReferenceElement referenceElement = newClassExpression.getClassOrAnonymousClassReference();
+        if (referenceElement == null) return null;
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(referenceElement.getParameterList());
       }
       return newClassExpression;
     }
@@ -202,17 +201,17 @@ public class JavaIntroduceParameterObjectDelegate
            final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
            final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(refElement);
            if (access == ReadWriteAccessDetector.Access.Read) {
-             usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter));
+             usages.add(new ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter));
              if (accessor[0] == null) {
                accessor[0] = ReadWriteAccessDetector.Access.Read;
              }
            }
            else {
              if (access == ReadWriteAccessDetector.Access.ReadWrite) {
-               usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter));
+               usages.add(new ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter));
              }
              else {
-               usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter));
+               usages.add(new ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter));
              }
              accessor[0] = ReadWriteAccessDetector.Access.Write;
            }
@@ -258,7 +257,7 @@ public class JavaIntroduceParameterObjectDelegate
                                      final JavaIntroduceParameterObjectClassDescriptor descriptor) {
 
     if (method.getDocComment() != null) {
-      usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ConstructorJavadocUsageInfo(method, descriptor));
+      usages.add(new ConstructorJavadocUsageInfo(method, descriptor));
     }
 
     final String newVisibility = descriptor.getNewVisibility();

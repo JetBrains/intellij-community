@@ -70,9 +70,9 @@ class ParameterObjectBuilder {
 
   public String buildBeanClass() {
         @NonNls final StringBuffer out = new StringBuffer(1024);
-        if (packageName.length() > 0) out.append("package " + packageName + ';');
+        if (packageName.length() > 0) out.append("package ").append(packageName).append(';');
         out.append('\n');
-        out.append(myVisibility + " class " + className);
+        out.append(myVisibility).append(" class ").append(className);
         if (!typeParams.isEmpty()) {
             out.append('<');
             boolean first = true;
@@ -123,9 +123,9 @@ class ParameterObjectBuilder {
 
   private static void generateFieldAssignment(final StringBuffer out, final String parameterName, final String fieldName) {
     if (fieldName.equals(parameterName)) {
-        out.append("\t\tthis." + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\tthis.").append(fieldName).append(" = ").append(parameterName).append(";\n");
     } else {
-        out.append("\t\t" + fieldName + " = " + parameterName + ";\n");
+        out.append("\t\t").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
   }
 
@@ -139,7 +139,7 @@ class ParameterObjectBuilder {
   }
 
     private void outputConstructor(@NonNls StringBuffer out) {
-        out.append("\t" + myVisibility + " " + className + '(');
+        out.append("\t").append(myVisibility).append(" ").append(className).append('(');
         for (Iterator<ParameterSpec> iterator = fields.iterator(); iterator.hasNext();) {
           final ParameterSpec field = iterator.next();
           final PsiParameter parameter = field.getParameter();
@@ -150,7 +150,7 @@ class ParameterObjectBuilder {
           final PsiType type = field.getType();
           final PsiType fieldType = parameter.isVarArgs() && type instanceof PsiArrayType ?
                                     new PsiEllipsisType(((PsiArrayType)type).getComponentType()) : type;
-            out.append(' ' + fieldType.getCanonicalText() + ' ' + parameterName);
+            out.append(' ').append(fieldType.getCanonicalText()).append(' ').append(parameterName);
             if (iterator.hasNext()) {
                 out.append(", ");
             }
@@ -163,7 +163,7 @@ class ParameterObjectBuilder {
         out.append("\t}\n");
     }
 
-    private void outputField(ParameterSpec field, StringBuffer out) {
+    private static void outputField(ParameterSpec field, StringBuffer out) {
         final PsiParameter parameter = field.getParameter();
         final PsiDocComment docComment = getJavadocForVariable(parameter);
         if (docComment != null) {
@@ -178,10 +178,10 @@ class ParameterObjectBuilder {
             modifierString += "final ";
         }
         outputAnnotationString(parameter, out);
-        out.append('\t' + modifierString + typeText + ' ' + name + ";\n");
+        out.append('\t').append(modifierString).append(typeText).append(' ').append(name).append(";\n");
     }
 
-    private void outputAnnotationString(PsiParameter parameter, StringBuffer out) {
+    private static void outputAnnotationString(PsiParameter parameter, StringBuffer out) {
         final PsiModifierList modifierList = parameter.getModifierList();
         final PsiAnnotation[] annotations = modifierList.getAnnotations();
         for (PsiAnnotation annotation : annotations) {

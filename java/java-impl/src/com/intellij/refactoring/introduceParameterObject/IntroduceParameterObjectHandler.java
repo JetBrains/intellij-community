@@ -110,7 +110,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, newMethod)) return;
 
-    new com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDialog(newMethod).show();
+    new IntroduceParameterObjectDialog(newMethod).show();
   }
 
   private static String getErrorMessage(PsiMethod newMethod) {

@@ -12,9 +12,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -36,7 +36,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor, VariableData> {
+public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor, VariableData> {
 
 
   private JRadioButton useExistingClassButton;
@@ -127,7 +127,10 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
 
   @Override
   protected String getSourceMethodPresentation() {
-    return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+    return PsiFormatUtil.formatMethod(mySourceMethod,
+                                      PsiSubstitutor.EMPTY,
+                                      PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME,
+                                      0);
   }
 
   @Override
@@ -160,7 +163,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
   }
 
   @Override
-  protected com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor createClassDescriptor() {
+  protected JavaIntroduceParameterObjectClassDescriptor createClassDescriptor() {
     final boolean useExistingClass = useExistingClass();
     final String className;
     final String packageName;
@@ -190,7 +193,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
       }
     }
     final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);
-    return new com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
+    return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
                                                                                                              newVisibility, infos, mySourceMethod,
                                                                                                              myGenerateAccessorsCheckBox.isSelected());
   }
