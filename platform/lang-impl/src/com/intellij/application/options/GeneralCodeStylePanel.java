@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
@@ -54,16 +55,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import static com.intellij.psi.codeStyle.CodeStyleSettings.MAX_RIGHT_MARGIN;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -116,12 +111,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myRightMarginField.setDefaultValue(settings.getDefaultRightMargin());
 
-    myEnableFormatterTags.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean tagsEnabled = myEnableFormatterTags.isSelected();
-        setFormatterTagControlsEnabled(tagsEnabled);
-      }
+    myEnableFormatterTags.addActionListener(__ -> {
+      boolean tagsEnabled = myEnableFormatterTags.isSelected();
+      setFormatterTagControlsEnabled(tagsEnabled);
     });
 
     myIndentsDetectionPanel
@@ -154,12 +146,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (ourSelectedTabIndex >= 0) {
       myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
     }
-    myTabbedPane.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
-      }
+    myTabbedPane.addChangeListener(__ -> {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
     });
   }
 
@@ -210,8 +199,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void createUIComponents() {
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, MAX_RIGHT_MARGIN);
-    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, MAX_RIGHT_MARGIN, "Optional");
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
+    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
     myExcludedFilesList = new ExcludedFilesList();
   }
 
@@ -240,10 +229,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (UNIX_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\n";
     }
-    else if (MACINTOSH_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
+    if (MACINTOSH_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\r";
     }
-    else if (WINDOWS_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
+    if (WINDOWS_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\r\n";
     }
     return null;
@@ -281,9 +270,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (option.isModified(settings)) return true;
     }
 
-    if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
-
-    return false;
+    return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected();
   }
 
   @Override
@@ -362,7 +349,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void setModel(@Nullable CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
     myExcludedFilesList.setSchemesModel(model);
   }

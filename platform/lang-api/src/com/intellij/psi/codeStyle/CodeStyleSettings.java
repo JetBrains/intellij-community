@@ -53,8 +53,7 @@ import java.util.regex.PatternSyntaxException;
  * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
  */
 @SuppressWarnings("deprecation")
-public class CodeStyleSettings extends LegacyCodeStyleSettings
-  implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
+public class CodeStyleSettings extends LegacyCodeStyleSettings implements Cloneable, JDOMExternalizable, ImportsLayoutSettings {
   public static final int CURR_VERSION = 173;
 
   private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
@@ -68,7 +67,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
 
-  private static CodeStyleSettings myDefaults;
+  private static class DefaultsHolder {
+    private static final CodeStyleSettings myDefaults = new CodeStyleSettings();
+  }
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
@@ -322,10 +323,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   /** @deprecated Use JavaCodeStyleSettings.REPLACE_INSTANCE_OF */
   @Deprecated
-  public boolean REPLACE_INSTANCEOF = false;
+  public boolean REPLACE_INSTANCEOF;
   /** @deprecated Use JavaCodeStyleSettings.REPLACE_CAST */
   @Deprecated
-  public boolean REPLACE_CAST = false;
+  public boolean REPLACE_CAST;
   /** @deprecated Use JavaCodeStyleSettings.REPLACE_NULL_CHECK */
   @Deprecated
   public boolean REPLACE_NULL_CHECK = true;
@@ -586,7 +587,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * @deprecated Use JavaCodeStyleSettings.JD_INDENT_ON_CONTINUATION
    */
   @Deprecated
-  public boolean JD_INDENT_ON_CONTINUATION = false;
+  public boolean JD_INDENT_ON_CONTINUATION;
 
 // endregion
 
@@ -692,7 +693,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * @deprecated Use HtmlCodeStyleSettings
    */
   @Deprecated
-  public boolean HTML_ENFORCE_QUOTES = false;
+  public boolean HTML_ENFORCE_QUOTES;
   /**
    * @deprecated Use HtmlCodeStyleSettings
    */
@@ -1025,9 +1026,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   }
 
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
-    return
-      formatRange != null &&
-      file.getTextRange().equals(formatRange);
+    return file.getTextRange().equals(formatRange);
   }
 
   private static void logIndentOptions(@NotNull PsiFile file,
@@ -1394,11 +1393,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     return true;
   }
 
+  @NotNull
   public static CodeStyleSettings getDefaults() {
-    if (myDefaults == null) {
-      myDefaults = new CodeStyleSettings();
-    }
-    return myDefaults;
+    return DefaultsHolder.myDefaults;
   }
 
   private void migrateLegacySettings() {
@@ -1423,7 +1420,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @SuppressWarnings("deprecation")
   public void resetDeprecatedFields() {
     CodeStyleSettings defaults = getDefaults();
-    ReflectionUtil.copyFields(this.getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
+    ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
       @Override
       public boolean isAccept(@NotNull Field field) {
         return field.getAnnotation(Deprecated.class) != null;
