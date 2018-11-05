@@ -10,6 +10,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
@@ -813,7 +814,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           regExpPredicate.setNodeTextGenerator(new RegExpPredicate.NodeTextGenerator() {
             @Override
             public String getText(PsiElement element) {
-              StringBuilder builder = new StringBuilder(RegExpPredicate.getMeaningfulText(element));
+              StringBuilder builder = new StringBuilder(StructuralSearchUtil.getMeaningfulText(element));
               for (int i = 0; i < matchedArrayDimensions; ++i) builder.append("[]");
               return builder.toString();
             }

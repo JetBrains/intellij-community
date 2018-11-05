@@ -113,13 +113,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public String getMeaningfulText(PsiElement element) {
-    if (element instanceof PsiReferenceExpression &&
-        ((PsiReferenceExpression)element).getQualifierExpression() != null) {
+    if (element instanceof PsiReferenceExpression && ((PsiReferenceExpression)element).getQualifierExpression() != null) {
       final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
       if (resolve instanceof PsiClass) return element.getText();
 
       final PsiElement referencedElement = ((PsiReferenceExpression)element).getReferenceNameElement();
-      String text = referencedElement != null ? referencedElement.getText() : "";
+      final String text = referencedElement != null ? referencedElement.getText() : "";
 
       if (resolve == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
         return element.getText();
@@ -127,6 +126,31 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       return text;
     }
     return super.getMeaningfulText(element);
+  }
+
+  @Override
+  @Nullable
+  public String getAlternativeText(PsiElement node, String previousText) {
+    // Short class name is matched with fully qualified name
+    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
+      final PsiElement element = (node instanceof PsiJavaCodeReferenceElement)
+                                 ? ((PsiJavaCodeReferenceElement)node).resolve()
+                                 : node;
+
+      if (element instanceof PsiClass) {
+        String text = ((PsiClass)element).getQualifiedName();
+        if (text != null && text.equals(previousText)) {
+          text = ((PsiClass)element).getName();
+        }
+
+        if (text != null) {
+          return text;
+        }
+      }
+    } else if (node instanceof PsiLiteralExpression || node instanceof PsiComment) {
+      return node.getText();
+    }
+    return null;
   }
 
   @Override

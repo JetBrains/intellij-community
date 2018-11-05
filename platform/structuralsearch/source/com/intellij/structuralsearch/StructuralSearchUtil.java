@@ -179,4 +179,14 @@ public class StructuralSearchUtil {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
   }
+
+  public static String getMeaningfulText(PsiElement matchedNode) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
+    return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
+  }
+
+  public static String getAlternativeText(PsiElement matchedNode, String previousText) {
+    final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
+    return profile != null ? profile.getAlternativeText(matchedNode, previousText) : null;
+  }
 }

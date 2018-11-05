@@ -161,11 +161,6 @@ public abstract class CompiledPattern {
     return true;
   }
 
-  @Nullable
-  public String getAlternativeTextToMatch(PsiElement node, String previousText) {
-    return null;
-  }
-
   @NotNull
   public List<PsiElement> getVariableNodes(@NotNull String name) {
     final Collection<PsiElement> elements = variableNodes.get(name);
