@@ -19,6 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.nodes.Document;
 
@@ -45,7 +46,7 @@ public interface PythonDocumentationLinkProvider {
   }
 
   @Nullable
-  default Function<Document, String> quickDocExtractor(PsiNamedElement namedElement) {
+  default Function<Document, String> quickDocExtractor(@NotNull PsiNamedElement namedElement) {
     return null;
   }
 }
