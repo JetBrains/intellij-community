@@ -105,7 +105,7 @@ public class PythonConsoleToolWindow {
   }
 
   public static ToolWindow getToolWindow(Project project) {
-    return ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.Companion.getID());
+    return ToolWindowManager.getInstance(project).getToolWindow(PythonConsoleToolWindowFactory.ID);
   }
 
   public void setContent(RunContentDescriptor contentDescriptor) {

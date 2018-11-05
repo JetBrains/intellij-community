@@ -78,7 +78,7 @@ import javax.swing.*
 import javax.swing.text.JTextComponent
 
 object GuiTestUtil {
-  val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
+  const val GUI_TESTS_RUNNING_IN_SUITE_PROPERTY = "gui.tests.running.in.suite"
 
   private val LOG = Logger.getInstance("#com.intellij.tests.gui.framework.GuiTestUtil")
 
@@ -86,9 +86,9 @@ object GuiTestUtil {
    * Environment variable pointing to the JDK to be used for tests
    */
 
-  val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
-  val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
-  val FIRST_START = "GUI_FIRST_START"
+  const val JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS"
+  const val TEST_DATA_DIR = "GUI_TEST_DATA_DIR"
+  const val FIRST_START = "GUI_FIRST_START"
   private val SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().systemEventQueue
 
   val gradleHomePath: File?

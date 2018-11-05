@@ -31,8 +31,8 @@ fun Repository.delete(path: String): Repository {
 val Repository.workTreePath: Path
   get() = workTree.toPath()
 
-val SAMPLE_FILE_NAME = "file.xml"
-val SAMPLE_FILE_CONTENT = """<application>
+const val SAMPLE_FILE_NAME = "file.xml"
+const val SAMPLE_FILE_CONTENT = """<application>
   <component name="Encoding" default_encoding="UTF-8" />
 </application>"""
 
