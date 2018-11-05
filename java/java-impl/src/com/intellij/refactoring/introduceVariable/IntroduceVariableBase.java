@@ -520,6 +520,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   private static PsiExpression createArrayCreationExpression(String text, int startOffset, int endOffset, PsiCallExpression parent) {
     if (text == null || parent == null) return null;
     if (text.contains(",")) {
+      PsiExpressionList argumentList = parent.getArgumentList();
+      assert argumentList != null; // checked at call site
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(parent.getProject());
       final JavaResolveResult resolveResult = parent.resolveMethodGenerics();
       final PsiMethod psiMethod = (PsiMethod)resolveResult.getElement();
@@ -529,7 +531,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiType type = varargParameter.getType();
       LOG.assertTrue(type instanceof PsiEllipsisType);
       final PsiArrayType psiType = (PsiArrayType)((PsiEllipsisType)type).toArrayType();
-      final PsiExpression[] args = parent.getArgumentList().getExpressions();
+      final PsiExpression[] args = argumentList.getExpressions();
       final PsiSubstitutor psiSubstitutor = resolveResult.getSubstitutor();
 
       if (args.length < parameters.length || startOffset < args[parameters.length - 1].getTextRange().getStartOffset()) return null;
@@ -537,13 +539,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       final PsiFile containingFile = parent.getContainingFile();
 
       PsiElement startElement = containingFile.findElementAt(startOffset);
-      while (startElement != null && startElement.getParent() != parent.getArgumentList()) {
+      while (startElement != null && startElement.getParent() != argumentList) {
         startElement = startElement.getParent();
       }
       if (!(startElement instanceof PsiExpression) || startOffset > startElement.getTextOffset()) return null;
 
       PsiElement endElement = containingFile.findElementAt(endOffset - 1);
-      while (endElement != null && endElement.getParent() != parent.getArgumentList()) {
+      while (endElement != null && endElement.getParent() != argumentList) {
         endElement = endElement.getParent();
       }
       if (!(endElement instanceof PsiExpression) || endOffset < endElement.getTextRange().getEndOffset()) return null;
@@ -906,16 +908,18 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
       }
       else {
-        final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
-          .createVariableDeclarationStatement("x", expectedType, initializer, initializer).getDeclaredElements()[0])
-          .getInitializer();
-        if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
-            PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
-                                                    (PsiNewExpression)tryToDetectDiamondNewExpr,
-                                                    expectedType)) {
-          final PsiElement paramList = RemoveRedundantTypeArgumentsUtil
-            .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
-          return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+        PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
+        if (ref != null) {
+          final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())
+            .createVariableDeclarationStatement("x", expectedType, initializer, initializer).getDeclaredElements()[0])
+            .getInitializer();
+          if (tryToDetectDiamondNewExpr instanceof PsiNewExpression &&
+              PsiDiamondTypeUtil.canCollapseToDiamond((PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                      (PsiNewExpression)tryToDetectDiamondNewExpr,
+                                                      expectedType)) {
+            final PsiElement paramList = RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(ref.getParameterList());
+            return PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
+          }
         }
       }
     }
