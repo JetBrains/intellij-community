@@ -82,7 +82,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(handler.match(comment, comment2, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(comment, comment2));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment)),
+                                                              StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment2))));
     }
   }
 
@@ -1108,7 +1109,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final Object value1 = const1.getValue();
       final Object value2 = const2.getValue();
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
-        myMatchingVisitor.setResult(myMatchingVisitor.matchText(value1.toString(), value2.toString()));
+        myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(value1.toString()),
+                                                                StructuralSearchUtil.normalize(value2.toString())));
       }
       else if (value1 != null && value2 != null) {
         myMatchingVisitor.setResult(value1.equals(value2));

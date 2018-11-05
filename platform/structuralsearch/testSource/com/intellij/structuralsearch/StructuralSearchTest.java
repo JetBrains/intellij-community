@@ -1458,6 +1458,11 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "   }\n" +
                  "}";
     assertEquals("statement match with comment", 1, findMatchesCount(s18,s19));
+
+    String s20 = "class X {" +
+                 "  /* H̸̡̪̯ͨ͊̽̅̾̎Ȩ̬̩̾͛ͪ̈́̀́͘ ̶̧̨̱̹̭̯ͧ̾ͬC̷̙̲̝͖ͭ̏ͥͮ͟Oͮ͏̮̪̝͍M̲̖͊̒ͪͩͬ̚̚͜Ȇ̴̟̟͙̞ͩ͌͝S̨̥̫͎̭ͯ̿̔̀ͅ */" +
+                 "}";
+    assertEquals("match comments ignoring accents and differences in whitespace", 1, findMatchesCount(s20, "/*he\ncomes*/"));
   }
 
   public void testOther() {

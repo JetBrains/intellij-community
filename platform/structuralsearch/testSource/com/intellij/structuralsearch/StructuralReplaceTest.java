@@ -1505,8 +1505,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult2 = "class A {\n" +
                              "  void a() {\n" +
                              "  }\n" +
-                             "  /*\n" +
-                             "  */\n" +
                              "  int b = 1;\n" +
                              "  /*\n" +
                              "   *\n" +
