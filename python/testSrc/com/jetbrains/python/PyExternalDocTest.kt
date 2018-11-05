@@ -117,6 +117,14 @@ print(os.path.isf<caret>ile)
     """.trimIndent(), """<dt id="os.path.isfile">""".trimIndent())
   }
 
+  fun testNumpyNdarray() {
+    myFixture.copyDirectoryToProject("/inspections/PyNumpyType/numpy", "numpy")
+
+    doTestDocumentationUrl("""import numpy
+      a = numpy.multiarray.ndarr<caret>ay()
+    """.trimMargin(), "https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html", myFixture)
+  }
+
 }
 
 

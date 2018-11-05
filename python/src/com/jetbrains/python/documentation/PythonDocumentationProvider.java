@@ -25,6 +25,8 @@ import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
@@ -604,12 +606,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       if (file == null) return null;
 
-      if (file instanceof PyiFile) {
-        return null;
-      }
-
-      final QualifiedName moduleQName = QualifiedNameFinder.findCanonicalImportPath(element, element);
-      if (moduleQName == null) {
+      if (file instanceof PyiFile) { //TODO: why???
         return null;
       }
 
@@ -651,15 +648,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static PsiNamedElement getNamedElement(PsiElement element) {
+  public static PsiNamedElement getNamedElement(@Nullable PsiElement element) {
     PsiNamedElement namedElement = (element instanceof PsiNamedElement) ? (PsiNamedElement)element : null;
     if (namedElement instanceof PyFunction && PyNames.INIT.equals(namedElement.getName())) {
       final PyClass containingClass = ((PyFunction)namedElement).getContainingClass();
       if (containingClass != null) {
         namedElement = containingClass;
       }
-    } else {
-      namedElement = (PsiNamedElement) PyUtil.turnInitIntoDir(namedElement);
+    }
+    else {
+      namedElement = (PsiNamedElement)PyUtil.turnInitIntoDir(namedElement);
     }
     return namedElement;
   }
@@ -755,5 +753,48 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final ChainIterable<String> holder = new ChainIterable<>();
     describeTypeWithLinks(type, context, anchor, holder);
     return holder.toString();
+  }
+
+  @Nullable
+  public static QualifiedName getFullQualifiedName(@Nullable final PsiElement element) {
+    final String name =
+      (element instanceof PsiNamedElement) ? ((PsiNamedElement)element).getName() : element != null ? element.getText() : null;
+    if (name != null) {
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
+      if (owner instanceof PyClass) {
+        final QualifiedName importQName = QualifiedNameFinder.findCanonicalImportPath(element, element);
+        if (importQName != null) {
+          return QualifiedName.fromDottedString(importQName.toString() + "." + owner.getName() + "." + name);
+        }
+      }
+      else if (owner instanceof PyFunction && PyNames.INIT.equals(owner.getName()) && ((PyFunction)owner).getContainingClass() != null) {
+        final QualifiedName importQName = QualifiedNameFinder.findCanonicalImportPath(owner, element);
+        if (importQName != null) {
+          return QualifiedName
+            .fromDottedString(importQName.toString() + "." + ((PyFunction)owner).getContainingClass().getName() + "." + name);
+        }
+      }
+      else if (owner instanceof PyFile) {
+        if (builtinCache.isBuiltin(element)) {
+          return QualifiedName.fromDottedString(name);
+        }
+        else {
+          final VirtualFile virtualFile = ((PyFile)owner).getVirtualFile();
+          if (virtualFile != null) {
+            final QualifiedName fileQName = QualifiedNameFinder.findCanonicalImportPath(element, element);
+            if (fileQName != null) {
+              return QualifiedName.fromDottedString(fileQName.toString() + "." + name);
+            }
+          }
+        }
+      }
+      else {
+        if (element instanceof PyFile) {
+          return QualifiedNameFinder.findCanonicalImportPath(element, element);
+        }
+      }
+    }
+    return null;
   }
 }
