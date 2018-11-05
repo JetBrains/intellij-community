@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsag
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
@@ -50,7 +49,19 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
-      triggerErrorReport(isOOM, isMappingFailed);
+      String key = "ide.error";
+      if(isOOM){
+        key+=".oom";
+      }
+      if(isMappingFailed){
+        key+=".mappingFailed";
+      }
+
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
+      Map<String, Object> values = new HashMap<>();
+      values.put("oom",isOOM);
+      values.put("mappingFailed",isMappingFailed);
+      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
 
       return notificationEnabled ||
              showPluginError ||
@@ -63,31 +74,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         ourLoggerBroken = true;
       }
       throw e;
-    }
-  }
-
-  private static void triggerErrorReport(boolean isOOM, boolean isMappingFailed) {
-    try {
-      final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed() || app.isDisposeInProgress()) {
-        return;
-      }
-
-      String key = "ide.error";
-      if(isOOM){
-        key+=".oom";
-      }
-      if(isMappingFailed){
-        key+=".mappingFailed";
-      }
-      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
-      Map<String, Object> values = new HashMap<>();
-      values.put("oom",isOOM);
-      values.put("mappingFailed",isMappingFailed);
-      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
-    }
-    catch (Exception e) {
-      // ignore
     }
   }
 
