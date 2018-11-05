@@ -12,7 +12,7 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
                                        "/** @noinspection all*/\n" +
                                        "class X {boolean test(Object obj, String str, int x, int y, String[] arr, Optional<String> opt) { return ";
   @SuppressWarnings("UnnecessarySemicolon") 
-  private static final String SUFFIX = ";}}";
+  private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
 
   public void testSimple() {
     checkCanBeReordered("x > 0 && x < 10", 1, ThreeState.YES);
@@ -34,6 +34,13 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("obj instanceof String && ((String)obj).isEmpty()", 1, ThreeState.NO);
     checkCanBeReordered("obj instanceof String && test(null, (String)obj, 0,0, null, Optional.empty())", 1, ThreeState.NO);
     checkCanBeReordered("obj instanceof Integer && ((Number)obj).intValue() == 0", 1, ThreeState.NO);
+  }
+  
+  public void testContract() {
+    checkCanBeReordered("new Object().equals(obj) && obj.hashCode() == 0", 1, ThreeState.NO);
+    checkCanBeReordered("nullNull(obj) != null && obj.hashCode() == 0", 1, ThreeState.NO);
+    checkCanBeReordered("nullNull(obj) == null || obj.hashCode() == 0", 1, ThreeState.NO);
+    checkCanBeReordered("nullNull(nullNull(obj)) == null || obj.hashCode() == 0", 1, ThreeState.NO);
   }
 
   public void testArrayBounds() {

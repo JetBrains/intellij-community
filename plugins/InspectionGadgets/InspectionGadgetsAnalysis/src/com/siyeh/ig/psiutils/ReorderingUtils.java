@@ -134,24 +134,59 @@ public class ReorderingUtils {
     return ThreeState.UNSURE;
   }
 
+  private static boolean hasContract(PsiExpression expression, PsiExpression operand, ContractReturnValue value) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (value.equals(ContractReturnValue.returnNull()) &&
+        EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, expression)) {
+      return true;
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList.isEmpty()) return false;
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+      for (MethodContract contract : contracts) {
+        if (contract.getReturnValue().equals(value)) {
+          List<ContractValue> conditions = contract.getConditions();
+          if (conditions.size() == 1) {
+            ContractValue condition = conditions.get(0);
+            int argIndex = condition.getNullCheckedArgument(true).orElse(-1);
+            if (argIndex >= 0) {
+              PsiExpression[] args = argumentList.getExpressions();
+              if (argIndex < args.length) {
+                PsiExpression arg = args[argIndex];
+                if (hasContract(arg, operand, ContractReturnValue.returnNull())) {
+                  return true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   private enum ExceptionKind {
     NullDereference {
       @Override
       boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
         if (condition instanceof PsiBinaryExpression) {
           IElementType tokenType = ((PsiBinaryExpression)condition).getOperationTokenType();
-          if (tokenType.equals(negated ? JavaTokenType.EQEQ : JavaTokenType.NE)) {
+          if (tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE)) {
+            boolean notNull = negated != tokenType.equals(JavaTokenType.EQEQ);
+            ContractReturnValue returnValue = notNull ? ContractReturnValue.returnNotNull() : ContractReturnValue.returnNull();
             PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
             PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
             if (ExpressionUtils.isNullLiteral(left)) {
-              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, operand);
+              return hasContract(right, operand, returnValue);
             }
             if (ExpressionUtils.isNullLiteral(right)) {
-              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, operand);
+              return hasContract(left, operand, returnValue);
             }
           }
         }
-        return false;
+        return hasContract(condition, operand, ContractReturnValue.returnBoolean(negated));
       }
 
       @Override
