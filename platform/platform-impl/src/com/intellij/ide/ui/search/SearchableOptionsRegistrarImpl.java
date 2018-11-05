@@ -37,13 +37,13 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("Duplicates")
 public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   // option => array of packed OptionDescriptor
-  private final Map<CharSequence, long[]> myStorage = Collections.synchronizedMap(new THashMap<CharSequence, long[]>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE));
+  private final Map<CharSequence, long[]> myStorage = Collections.synchronizedMap(new THashMap<>(20, 0.9f, CharSequenceHashingStrategy.CASE_SENSITIVE));
 
-  private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<String>());
-  private final Map<Couple<String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(
-    new THashMap<Couple<String>, Set<String>>());
+  private final Set<String> myStopWords = Collections.synchronizedSet(new THashSet<>());
+  private final Map<Couple<String>, Set<String>> myHighlightOption2Synonym = Collections.synchronizedMap(new THashMap<>());
   private volatile boolean allTheseHugeFilesAreLoaded;
 
   private final IndexedCharsInterner myIdentifierTable = new IndexedCharsInterner() {
@@ -96,11 +96,13 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       for (final Object o : configurables) {
         final Element configurable = (Element)o;
         final String id = configurable.getAttributeValue("id");
+        if (id == null) continue;
         final String groupName = configurable.getAttributeValue("configurable_name");
         final List options = configurable.getChildren("option");
         for (Object o1 : options) {
           Element optionElement = (Element)o1;
           final String option = optionElement.getAttributeValue("name");
+          if (option == null) continue;
           final String path = optionElement.getAttributeValue("path");
           final String hit = optionElement.getAttributeValue("hit");
           putOptionWithHelpId(option, id, groupName, hit, path);
@@ -113,6 +115,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       for (final Object o : configurables) {
         final Element configurable = (Element)o;
         final String id = configurable.getAttributeValue("id");
+        if (id == null) continue;
         final String groupName = configurable.getAttributeValue("configurable_name");
         final List synonyms = configurable.getChildren("synonym");
         for (Object o1 : synonyms) {
@@ -186,7 +189,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     assert _hit >= 0 && _hit <= Short.MAX_VALUE;
     assert _path >= 0 && _path <= Short.MAX_VALUE;
     assert _groupName >= 0 && _groupName <= Short.MAX_VALUE;
-    return _groupName << 48 | _id << 32 | _hit << 16 | _path << 0;
+    return _groupName << 48 | _id << 32 | _hit << 16 | _path/* << 0*/;
   }
 
   private OptionDescription unpack(long data) {
@@ -194,10 +197,10 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     int _id = (int)(data >> 32 & 0xffff);
     int _hit = (int)(data >> 16 & 0xffff);
     int _path = (int)(data & 0xffff);
-    assert _id >= 0 && _id < Short.MAX_VALUE;
-    assert _hit >= 0 && _hit <= Short.MAX_VALUE;
-    assert _path >= 0 && _path <= Short.MAX_VALUE;
-    assert _groupName >= 0 && _groupName <= Short.MAX_VALUE;
+    assert /*_id >= 0 && */_id < Short.MAX_VALUE;
+    assert /*_hit >= 0 && */_hit <= Short.MAX_VALUE;
+    assert /*_path >= 0 && */_path <= Short.MAX_VALUE;
+    assert /*_groupName >= 0 && */_groupName <= Short.MAX_VALUE;
 
     String groupName = _groupName == Short.MAX_VALUE ? null : myIdentifierTable.fromId(_groupName).toString();
     String configurableId = myIdentifierTable.fromId(_id).toString();
@@ -228,6 +231,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
     myStorage.put(ByteArrayCharSequence.convertToBytesIfPossible(option), configs);
   }
 
+  @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @Override
   @NotNull
   public ConfigurableHit getConfigurables(ConfigurableGroup[] groups,
@@ -380,7 +384,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
         }
         result = description;
       }
-      return result != null ? result.getPath() : null;
+      return result.getPath();
     }
   }
 

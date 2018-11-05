@@ -49,6 +49,7 @@ public class SearchUtil {
     for (Configurable configurable : configurables) {
       if (configurable instanceof SearchableConfigurable) {
         //ignore invisible root nodes
+        //noinspection deprecation
         if (configurable instanceof SearchableConfigurable.Parent && !((SearchableConfigurable.Parent)configurable).isVisible()) {
           continue;
         }
@@ -354,17 +355,17 @@ public class SearchUtil {
   }
 
   private static String quoteStrictOccurrences(final String textToMarkup, final String filter) {
-    String cur = "";
+    StringBuilder cur = new StringBuilder();
     final String s = textToMarkup.toLowerCase(Locale.US);
     for (String part : filter.split(" ")) {
       if (s.contains(part)) {
-        cur += "\"" + part + "\" ";
+        cur.append("\"").append(part).append("\" ");
       }
       else {
-        cur += part + " ";
+        cur.append(part).append(" ");
       }
     }
-    return cur;
+    return cur.toString();
   }
 
   private static String markup(String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
@@ -378,7 +379,7 @@ public class SearchUtil {
   }
 
   private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     int beg = 0;
     int idx;
     while ((idx = StringUtil.indexOfIgnoreCase(textToMarkup, option, beg)) != -1) {
@@ -386,16 +387,16 @@ public class SearchUtil {
       final String toMark = textToMarkup.substring(idx, idx + option.length());
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
         final int lastIdx = textToMarkup.indexOf(">", idx);
-        result += prefix + textToMarkup.substring(idx, lastIdx + 1);
+        result.append(prefix).append(textToMarkup, idx, lastIdx + 1);
         beg = lastIdx + 1;
       }
       else {
-        result += prefix + "<font color='#ffffff' bgColor='#1d5da7'>" + toMark + "</font>";
+        result.append(prefix).append("<font color='#ffffff' bgColor='#1d5da7'>").append(toMark).append("</font>");
         beg = idx + option.length();
       }
     }
-    result += textToMarkup.substring(beg);
-    return result;
+    result.append(textToMarkup.substring(beg));
+    return result.toString();
   }
 
   public static void appendFragments(String filter,
@@ -495,12 +496,12 @@ public class SearchUtil {
   }
 
   public static String processFilter(String filter, Set<? super String> quoted) {
-    String withoutQuoted = "";
+    StringBuilder withoutQuoted = new StringBuilder();
     int beg = 0;
     final Matcher matcher = QUOTED.matcher(filter);
     while (matcher.find()) {
       final int start = matcher.start(1);
-      withoutQuoted += " " + filter.substring(beg, start);
+      withoutQuoted.append(" ").append(filter, beg, start);
       beg = matcher.end(1);
       final String trimmed = filter.substring(start, beg).trim();
       if (trimmed.length() > 0) {
@@ -526,6 +527,7 @@ public class SearchUtil {
       addChildren(each, result);
     }
 
+    //noinspection deprecation
     return ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) ||
                                                         ((SearchableConfigurable.Parent)configurable).isVisible());
   }
