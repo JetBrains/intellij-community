@@ -281,7 +281,7 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
 /**
  * Default target path (run all tests ion project folder)
  */
-private val DEFAULT_PATH = ""
+private const val DEFAULT_PATH = ""
 
 /**
  * Target depends on target type. It could be path to file/folder or python target

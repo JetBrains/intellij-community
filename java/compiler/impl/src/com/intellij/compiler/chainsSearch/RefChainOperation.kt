@@ -38,7 +38,7 @@ class MethodCall(override val compilerRef: CompilerRef.JavaCompilerMethodRef,
                  private val context: ChainCompletionContext): RefChainOperation() {
 
   private companion object {
-    val CONSTRUCTOR_METHOD_NAME = "<init>"
+    const val CONSTRUCTOR_METHOD_NAME = "<init>"
   }
 
   override val qualifierRawName: String

@@ -1,12 +1,13 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.protocolReader
 
 import org.jetbrains.jsonProtocol.JsonObjectBased
 import java.lang.reflect.Method
 import java.util.*
 
-internal val FIELD_PREFIX = '_'
+internal const val FIELD_PREFIX = '_'
 
-internal val NAME_VAR_NAME = "_n"
+internal const val NAME_VAR_NAME = "_n"
 
 private fun assignField(out: TextOutput, fieldName: String) = out.append(FIELD_PREFIX).append(fieldName).append(" = ")
 

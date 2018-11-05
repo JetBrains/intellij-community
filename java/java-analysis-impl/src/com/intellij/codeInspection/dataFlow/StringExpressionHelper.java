@@ -150,8 +150,10 @@ public class StringExpressionHelper {
                                                                       @NotNull SearchScope searchScope,
                                                                       int expNum) {
     Set<Pair<PsiElement, String>> pairs = new java.util.HashSet<>();
-    for (PsiMethodCallExpression methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
-      final PsiExpression[] expressions = methodCallExpression.getArgumentList().getExpressions();
+    for (PsiCall methodCallExpression : searchMethodCalls(psiMethod, searchScope)) {
+      PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      if (argumentList == null) continue;
+      final PsiExpression[] expressions = argumentList.getExpressions();
       if (expressions.length > expNum) {
         final PsiExpression expression = expressions[expNum];
         Pair<PsiElement, String> pair = evaluateExpression(expression);
@@ -165,15 +167,14 @@ public class StringExpressionHelper {
   }
 
   @NotNull
-  public static Set<PsiMethodCallExpression> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
-    final Set<PsiMethodCallExpression> callExpressions = new java.util.HashSet<>();
+  public static Set<PsiCall> searchMethodCalls(@NotNull final PsiMethod psiMethod, @NotNull SearchScope searchScope) {
+    final Set<PsiCall> callExpressions = new java.util.HashSet<>();
     final CommonProcessors.CollectUniquesProcessor<PsiReference> consumer = new CommonProcessors.CollectUniquesProcessor<>();
 
     MethodReferencesSearch.search(psiMethod, searchScope, true).forEach(consumer);
 
     for (PsiReference psiReference : consumer.getResults()) {
-      final PsiMethodCallExpression methodCallExpression =
-        PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiMethodCallExpression.class);
+      final PsiCall methodCallExpression = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiCall.class);
 
       if (methodCallExpression != null) {
         callExpressions.add(methodCallExpression);
