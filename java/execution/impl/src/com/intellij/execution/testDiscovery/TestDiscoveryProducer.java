@@ -93,6 +93,6 @@ public interface TestDiscoveryProducer {
 
   @FunctionalInterface
   interface PsiTestProcessor {
-    boolean process(@NotNull PsiClass clazz, @NotNull PsiMethod method, @Nullable String parameter);
+    boolean process(@NotNull PsiClass clazz, @Nullable PsiMethod method, @Nullable String parameter);
   }
 }

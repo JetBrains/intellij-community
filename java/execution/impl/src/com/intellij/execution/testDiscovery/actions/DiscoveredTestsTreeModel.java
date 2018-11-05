@@ -1,12 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,9 +52,11 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     return myRoot != object && super.isLeaf(object);
   }
 
-  synchronized void addTest(@NotNull PsiClass testClass, @NotNull PsiMethod testMethod, @Nullable String parameter) {
+  synchronized void addTest(@NotNull PsiClass testClass, @Nullable PsiMethod testMethod, @Nullable String parameter) {
     Node.Clazz classNode = ReadAction.compute(() -> new Node.Clazz(testClass));
-    Node.Method methodNode = ReadAction.compute(() -> new Node.Method(testMethod));
+    Node.Method methodNode = testMethod == null
+                             ? null
+                             : ReadAction.compute(() -> new Node.Method(testMethod));
 
     int idx = ReadAction.compute(() -> Collections.binarySearch(myTestClasses,
                                                                 classNode,
@@ -57,9 +64,9 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     if (idx < 0) {
       int insertIdx = -idx - 1;
       myTestClasses.add(insertIdx, classNode);
-      List<Node.Method> methods = new SmartList<>();
-      methods.add(methodNode);
-      myTests.put(classNode, methods);
+      myTests.put(classNode, methodNode == null
+                             ? ContainerUtil.newSmartList()
+                             : ContainerUtil.newSmartList(methodNode));
 
       treeStructureChanged(null, null, null);
       return;
@@ -73,16 +80,31 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     Node.Method actualMethodNode;
     if (methodIdx < 0) {
       methodIdx = -methodIdx - 1;
-      testMethods.add(methodIdx, methodNode);
+      if (methodNode != null) {
+        testMethods.add(methodIdx, methodNode);
+      }
       actualMethodNode = methodNode;
-    } else {
+    }
+    else {
       actualMethodNode = testMethods.get(methodIdx);
     }
-    if (parameter != null) {
+
+    if (actualMethodNode != null && parameter != null) {
       actualMethodNode.addParameter(parameter);
     }
 
     treeStructureChanged(null, null, null);
+  }
+
+  @Nullable
+  public static String getClassName(@NotNull PsiClass c) {
+    if (c instanceof PsiAnonymousClass) {
+      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
+      if (containingClass != null) {
+        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
+      }
+    }
+    return ClassUtil.getJVMClassName(c);
   }
 
   @NotNull
@@ -111,9 +133,9 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
     static class Clazz extends Node<PsiClass> {
       private final String myPackageName;
 
-      Clazz(@NotNull PsiClass aClass) {
-        super(aClass);
-        myPackageName = PsiUtil.getPackageName(aClass);
+      Clazz(@NotNull PsiClass psi) {
+        super(psi, o -> StringUtil.notNullize(o.getName(), StringUtil.notNullize(getClassName(o), "<null>")));
+        myPackageName = PsiUtil.getPackageName(psi);
       }
 
       String getPackageName() {
@@ -132,14 +154,19 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
         myParameters.add(parameter);
       }
 
-      @NotNull Collection<String> getParameters() {
+      @NotNull
+      Collection<String> getParameters() {
         return myParameters;
       }
     }
 
     private Node(@NotNull Psi psi) {
+      this(psi, o -> o.getName());
+    }
+
+    public Node(@NotNull Psi psi, Function<? super Psi, String> calcName) {
       myPointer = SmartPointerManager.createPointer(psi);
-      myName = psi.getName();
+      myName = calcName.fun(psi);
       myIcon = psi.getIcon(Iconable.ICON_FLAG_READ_STATUS);
     }
 
