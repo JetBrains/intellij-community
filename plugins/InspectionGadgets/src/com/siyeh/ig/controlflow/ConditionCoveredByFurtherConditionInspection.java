@@ -3,7 +3,10 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
@@ -16,11 +19,9 @@ import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -100,12 +101,47 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(context.getProject())
         .createExpressionFromText(StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || "), context);
       List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
-      Map<PsiExpression, ThreeState> values = ReorderingUtils.computeOperandValues(expressionToAnalyze, true);
+      Map<PsiExpression, ThreeState> values = computeOperandValues(expressionToAnalyze);
       return StreamEx.ofKeys(values, ThreeState.fromBoolean(and)::equals)
         .mapToInt(operand -> IntStreamEx.ofIndices(reversedOperands, op -> PsiTreeUtil.isAncestor(op, operand, false))
           .findFirst().orElse(0))
         .map(index -> operands.size() - 1 - index)
         .toArray();
     }
+  }
+  
+  @NotNull
+  private static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze) {
+    DataFlowRunner runner = new StandardDataFlowRunner(false, expressionToAnalyze);
+    Map<PsiExpression, ThreeState> values = new HashMap<>();
+    StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
+      @Override
+      protected boolean checkNotNullable(DfaMemoryState state,
+                                         DfaValue value,
+                                         @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
+        return true;
+      }
+
+      @Override
+      protected void beforeExpressionPush(@NotNull DfaValue value,
+                                          @NotNull PsiExpression expression,
+                                          @Nullable TextRange range,
+                                          @NotNull DfaMemoryState state) {
+        super.beforeExpressionPush(value, expression, range, state);
+        if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
+        ThreeState old = values.get(expression);
+        if (old == ThreeState.UNSURE) return;
+        ThreeState result = ThreeState.UNSURE;
+        if (value instanceof DfaConstValue) {
+          Object bool = ((DfaConstValue)value).getValue();
+          if (bool instanceof Boolean) {
+            result = ThreeState.fromBoolean((Boolean)bool);
+          }
+        }
+        values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
+      }
+    };
+    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
+    return result == RunnerResult.OK ? values : Collections.emptyMap();
   }
 }

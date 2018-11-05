@@ -9,8 +9,10 @@ import org.intellij.lang.annotations.Language;
 
 public class ReorderingUtilsTest extends LightCodeInsightTestCase {
   private static final String PREFIX = "import java.util.Optional;\n" +
+                                       "import java.util.List;\n" +
                                        "/** @noinspection all*/\n" +
-                                       "class X {boolean test(Object obj, String str, int x, int y, String[] arr, Optional<String> opt) { return ";
+                                       "class X {boolean test(Object obj, String str, int x, int y, String[] arr, " +
+                                       "Optional<String> opt, List<String> list) { return ";
   @SuppressWarnings("UnnecessarySemicolon") 
   private static final String SUFFIX = ";} static Object nullNull(Object obj) {return obj == null ? null : obj.hashCode();}}";
 
@@ -51,6 +53,21 @@ public class ReorderingUtilsTest extends LightCodeInsightTestCase {
     checkCanBeReordered("x > 0 && arr[x].isEmpty()", 1, ThreeState.NO);
     // Not supported
     checkCanBeReordered("x > 0 && arr[x-1].isEmpty()", 1, ThreeState.UNSURE);
+  }
+  
+  public void testStringBounds() {
+    checkCanBeReordered("x >= 0 && str.charAt(x) == 'a'", 1, ThreeState.NO);
+    checkCanBeReordered("y >= 0 && str.charAt(x) == 'a'", 1, ThreeState.UNSURE);
+    checkCanBeReordered("x < str.length() && str.charAt(x) == 'a'", 1, ThreeState.NO);
+    checkCanBeReordered("x <= str.length() && str.substring(x) == 'a'", 1, ThreeState.NO);
+    // Not supported
+    checkCanBeReordered("x < str.length() && str.substring(x) == 'a'", 1, ThreeState.UNSURE);
+  }
+  
+  public void testListBounds() {
+    checkCanBeReordered("x >= 0 && list.get(x).isEmpty()", 1, ThreeState.NO);
+    checkCanBeReordered("x < list.size() && list.get(x).isEmpty()", 1, ThreeState.NO);
+    checkCanBeReordered("list.size() > x && list.get(x).isEmpty()", 1, ThreeState.NO);
   }
 
   public void testOptional() {
