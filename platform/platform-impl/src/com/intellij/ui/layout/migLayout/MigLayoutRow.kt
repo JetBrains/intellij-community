@@ -16,6 +16,8 @@ import java.awt.Component
 import javax.swing.*
 import javax.swing.border.LineBorder
 
+private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
+
 internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val componentConstraints: MutableMap<Component, CC>,
                             override val builder: MigLayoutBuilder,
@@ -78,6 +80,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
       field = value
       for (c in components) {
+        if (!value) {
+          if (!c.isEnabled) {
+            // current state of component differs from current row state - preserve current state to apply it when row state will be changed
+            c.putClientProperty(COMPONENT_ENABLED_STATE_KEY, false)
+          }
+        }
+        else {
+          if (c.getClientProperty(COMPONENT_ENABLED_STATE_KEY) == false) {
+            // remove because for active row component state can be changed and we don't want to add listener to update value accordingly
+            c.putClientProperty(COMPONENT_ENABLED_STATE_KEY, null)
+            // do not set to true, preserve old component state
+            continue
+          }
+        }
         c.isEnabled = value
       }
     }
