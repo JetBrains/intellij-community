@@ -15,3 +15,4 @@ build/dependencies/build
 edu/dependencies/build
 edu/dependencies/.gradle
 /python/helpers/.idea
+/.idea/sbt.xml

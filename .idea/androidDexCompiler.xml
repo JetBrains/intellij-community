@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidDexCompilerConfiguration">
+    <option name="VM_OPTIONS" value="-Xmx4G" />
+    <option name="MAX_HEAP_SIZE" value="4096" />
+    <option name="OPTIMIZE" value="false" />
+    <option name="PROGUARD_VM_OPTIONS" value="-Xmx4G" />
+  </component>
+</project>
