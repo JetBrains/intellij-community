@@ -27,7 +27,7 @@ import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
-import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate;
+import com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectDelegate;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;

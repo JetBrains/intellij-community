@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.refactoring.introduceparameterobject.usageInfo;
+package com.intellij.refactoring.introduceParameterObject.usageInfo;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
+import com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;

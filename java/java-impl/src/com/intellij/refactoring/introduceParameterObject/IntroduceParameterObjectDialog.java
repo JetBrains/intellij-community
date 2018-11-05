@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.editor.Document;
@@ -36,7 +36,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor, VariableData> {
+public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor, VariableData> {
 
 
   private JRadioButton useExistingClassButton;
@@ -160,7 +160,7 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
   }
 
   @Override
-  protected JavaIntroduceParameterObjectClassDescriptor createClassDescriptor() {
+  protected com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor createClassDescriptor() {
     final boolean useExistingClass = useExistingClass();
     final String className;
     final String packageName;
@@ -190,9 +190,9 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
       }
     }
     final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);
-    return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
-                                                           newVisibility, infos, mySourceMethod,
-                                                           myGenerateAccessorsCheckBox.isSelected());
+    return new com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
+                                                                                                             newVisibility, infos, mySourceMethod,
+                                                                                                             myGenerateAccessorsCheckBox.isSelected());
   }
 
   @Override

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.ContextAwareActionHandler;
@@ -110,7 +110,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, newMethod)) return;
 
-    new IntroduceParameterObjectDialog(newMethod).show();
+    new com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDialog(newMethod).show();
   }
 
   private static String getErrorMessage(PsiMethod newMethod) {

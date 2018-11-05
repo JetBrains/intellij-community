@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -250,7 +250,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       return getExistingClass();
     }
 
-    final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
+    final com.intellij.refactoring.introduceParameterObject.ParameterObjectBuilder beanClassBuilder = new com.intellij.refactoring.introduceParameterObject.ParameterObjectBuilder();
     beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
     beanClassBuilder.setProject(method.getProject());
     beanClassBuilder.setFile(method.getContainingFile());

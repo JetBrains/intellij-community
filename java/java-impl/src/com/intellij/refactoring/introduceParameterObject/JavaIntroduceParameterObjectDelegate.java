@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -35,7 +35,7 @@ import com.intellij.refactoring.changeSignature.*;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
-import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
+import com.intellij.refactoring.introduceParameterObject.usageInfo.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -202,17 +202,17 @@ public class JavaIntroduceParameterObjectDelegate
            final PsiReferenceExpression paramUsage = (PsiReferenceExpression)refElement;
            final ReadWriteAccessDetector.Access access = detector.getExpressionAccess(refElement);
            if (access == ReadWriteAccessDetector.Access.Read) {
-             usages.add(new ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter));
+             usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterReferenceWithCall(paramUsage, mergedParamName, getter));
              if (accessor[0] == null) {
                accessor[0] = ReadWriteAccessDetector.Access.Read;
              }
            }
            else {
              if (access == ReadWriteAccessDetector.Access.ReadWrite) {
-               usages.add(new ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter));
+               usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterIncrementDecrement(paramUsage, mergedParamName, setter, getter));
              }
              else {
-               usages.add(new ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter));
+               usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ReplaceParameterAssignmentWithCall(paramUsage, mergedParamName, setter, getter));
              }
              accessor[0] = ReadWriteAccessDetector.Access.Write;
            }
@@ -258,7 +258,7 @@ public class JavaIntroduceParameterObjectDelegate
                                      final JavaIntroduceParameterObjectClassDescriptor descriptor) {
 
     if (method.getDocComment() != null) {
-      usages.add(new ConstructorJavadocUsageInfo(method, descriptor));
+      usages.add(new com.intellij.refactoring.introduceParameterObject.usageInfo.ConstructorJavadocUsageInfo(method, descriptor));
     }
 
     final String newVisibility = descriptor.getNewVisibility();
