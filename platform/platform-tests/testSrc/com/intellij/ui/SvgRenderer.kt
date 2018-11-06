@@ -2,7 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
@@ -104,7 +104,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
                                              "intellij.platform.ide.impl" to "platform/platform-impl/src")) {
       val index = outputPath.indexOf(moduleName)
       if (index > 0) {
-        val iconPath = Paths.get(PathManager.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
+        val iconPath = Paths.get(PathManagerEx.getCommunityHomePath(), relativePath, outputPath.substring(index + moduleName.length + 1 /* slash */))
         assertThat(iconPath).exists()
         return FileUtilRt.toSystemIndependentName(svgFileDir.relativize(iconPath).toString())
       }

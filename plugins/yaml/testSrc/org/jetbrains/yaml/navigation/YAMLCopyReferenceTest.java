@@ -3,7 +3,7 @@ package org.jetbrains.yaml.navigation;
 
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -18,7 +18,7 @@ import java.io.IOException;
 public class YAMLCopyReferenceTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/navigation/data/";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/navigation/data/";
   }
 
   public void testSimpleConfig() {

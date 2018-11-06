@@ -3,7 +3,7 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.editorconfig.language.codeinsight.inspections.*
 import org.editorconfig.language.messages.EditorConfigBundle
@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 class EditorConfigQuickfixesTest : LightPlatformCodeInsightFixtureTestCase() {
   override fun getTestDataPath() =
-    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/quickfixes/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/codeinsight/quickfixes/"
 
   fun testCleanupValueList() =
     doTest(EditorConfigUnexpectedCommaInspection::class,

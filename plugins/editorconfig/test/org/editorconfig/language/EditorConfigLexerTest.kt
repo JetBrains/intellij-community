@@ -13,7 +13,7 @@ class EditorConfigLexerTest : LexerTestCase() {
   override fun createLexer(): Lexer = EditorConfigLexerAdapter()
 
   override fun getDirPath() =
-    "${PathManager.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/lexer/"
+    "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testSrc/org/editorconfig/language/lexer/"
       .substring(PathManager.getHomePath().length)
 
   fun testEmpty() = doTest()

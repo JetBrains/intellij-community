@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
@@ -146,6 +147,14 @@ public class PathManagerEx {
   public static String getTestDataPath(Class<?> testClass) throws IllegalStateException {
     TestDataLookupStrategy strategy = isLocatedInCommunity() ? TestDataLookupStrategy.COMMUNITY : determineLookupStrategy(testClass);
     return getTestDataPath(strategy);
+  }
+
+  /**
+   * @return path to 'community' project home irrespective of current project
+   */
+  @NotNull
+  public static String getCommunityHomePath() {
+    return PathManager.getCommunityHomePath();
   }
 
   /**

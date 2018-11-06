@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
@@ -103,7 +103,7 @@ object GuiTestUtil {
       val testDataDirEnvVar = getSystemPropertyOrEnvironmentVariable(TEST_DATA_DIR)
       if (testDataDirEnvVar != null) return File(testDataDirEnvVar)
 
-      var testDataPath = PathManager.getCommunityHomePath() + "/platform/testGuiFramework/testData"
+      var testDataPath = PathManagerEx.getCommunityHomePath() + "/platform/testGuiFramework/testData"
       assertNotNull(testDataPath)
       assertThat(testDataPath).isNotEmpty
       testDataPath = toCanonicalPath(toSystemDependentName(testDataPath))

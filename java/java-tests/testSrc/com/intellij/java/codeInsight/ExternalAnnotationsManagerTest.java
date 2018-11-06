@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.OrderRootType;
@@ -58,7 +59,7 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
   }
 
   public void testBundledAnnotationXmlSyntax() {
-    String root = PathManager.getCommunityHomePath() + "/java/jdkAnnotations";
+    String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
     findAnnotationsXmlAndCheckSyntax(root);
   }
 
@@ -78,7 +79,7 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
 
   //  some android classes are missing in IDEA, e.g. android.support.annotation.NonNull
   public void _testAndroidAnnotationsXml() {
-    VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(PathManager.getCommunityHomePath() + "/android/android/lib");
+    VirtualFile lib = LocalFileSystem.getInstance().findFileByPath(PathManagerEx.getCommunityHomePath() + "/android/android/lib");
     VirtualFile[] androidJars = Arrays.stream(lib.getChildren())
       .map(file -> file.getName().endsWith(".jar") ?
                    JarFileSystem.getInstance().getJarRootForLocalFile(file) :
@@ -88,7 +89,7 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(getProject())
       .setProjectSdk(PsiTestUtil.addRootsToJdk(getTestProjectJdk(), OrderRootType.CLASSES, androidJars)));
 
-    String root = PathManager.getCommunityHomePath() + "/android/android/annotations";
+    String root = PathManagerEx.getCommunityHomePath() + "/android/android/annotations";
     findAnnotationsXmlAndCheckSyntax(root);
   }
 
