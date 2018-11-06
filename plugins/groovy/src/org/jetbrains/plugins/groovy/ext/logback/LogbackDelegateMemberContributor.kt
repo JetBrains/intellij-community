@@ -65,6 +65,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
     override fun execute(method: PsiElement, state: ResolveState): Boolean {
       if (method !is PsiMethod) return true
 
+      @Suppress("CascadeIf")
       val prefix = if (GroovyPropertyUtils.isSetterLike(method, "set")) {
         if (!delegate.execute(method, state)) return false
         "set"
