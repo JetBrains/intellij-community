@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -34,6 +35,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.sun.jdi.*;
@@ -286,5 +289,10 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
     }
     return StreamEx.empty();
+  }
+
+  public static boolean isCurrentJavaDebugProcess(@NotNull Project project) {
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
   }
 }
