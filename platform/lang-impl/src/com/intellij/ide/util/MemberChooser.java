@@ -130,6 +130,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
                           @Nullable JComponent headerPanel,
                           @Nullable JComponent[] optionControls) {
     super(project, true);
+    UIUtil.tagComponentAs(getRootPane(), "MemberChooser.RootPane");
     myAllowEmptySelection = allowEmptySelection;
     myAllowMultiSelection = allowMultiSelection;
     myProject = project;
@@ -307,6 +308,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     customizeOptionsPanel();
     JPanel optionsPanel = new JPanel(new VerticalFlowLayout());
+    UIUtil.tagComponentAs(optionsPanel, "MemberChooserDialog.OptionsPanel");
     for (final JComponent component : myOptionControls) {
       optionsPanel.add(component);
     }

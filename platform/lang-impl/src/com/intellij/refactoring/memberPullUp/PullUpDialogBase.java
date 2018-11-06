@@ -26,6 +26,7 @@ import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.MemberSelectionPanelBase;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,6 +58,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
     myMemberInfoStorage = memberInfoStorage;
     myMemberInfos = myMemberInfoStorage.getClassMemberInfos(aClass);
 
+    UIUtil.tagComponentAs(this.getRootPane(), "PullUpDialog.RootPane");
     setTitle(title);
   }
 
@@ -82,6 +84,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
 
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel();
+    UIUtil.tagComponentAs(panel, "PullUpDialog.ClassChooserPanel");
 
     panel.setLayout(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -132,6 +135,8 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
     JPanel panel = new JPanel(new BorderLayout());
     myMemberSelectionPanel =
       new MemberSelectionPanelBase<>(RefactoringBundle.message("members.to.be.pulled.up"), createMemberSelectionTable(myMemberInfos));
+    UIUtil.tagComponentAs(myMemberSelectionPanel, "PullUpDialog.MemberSelectionPanel");
+
     myMemberInfoModel = createMemberInfoModel();
     myMemberInfoModel.memberInfoChanged(new MemberInfoChange<>(myMemberInfos));
     myMemberSelectionPanel.getTable().setMemberInfoModel(myMemberInfoModel);
