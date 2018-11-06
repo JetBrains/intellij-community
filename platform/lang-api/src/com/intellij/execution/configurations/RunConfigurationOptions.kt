@@ -25,7 +25,7 @@ open class RunConfigurationOptions : BaseState() {
     @get:Attribute("is_save")
     var isSaveOutput by property(false)
   }
-  
+
   // we use object instead of 2 fields because XML serializer cannot reuse tag for several fields
   @get:Property(surroundWithTag = false)
   var fileOutput by property(OutputFileOptions())
@@ -45,7 +45,7 @@ open class RunConfigurationOptions : BaseState() {
   @get:XCollection
   var logFiles by list<LogFileOptions>()
 
-  @com.intellij.configurationStore.Property(description = "Allow running in parallel")
+  @com.intellij.configurationStore.Property(description = "Allow parallel run")
   @get:Transient
   var isAllowRunningInParallel by property(false)
 }
