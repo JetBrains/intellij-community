@@ -76,7 +76,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    @Nullable
+    @NotNull
     public final ItemPresentation getPresentation() {
         return this;
     }
@@ -164,12 +164,8 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
 
     @Nullable
     private XmlAttributeValue getNameElement() {
-        final XmlAttribute attribute = getNameAttribute();
-        if (attribute != null) {
-            final XmlAttributeValue valueElement = attribute.getValueElement();
-            return valueElement != null ? valueElement : null;
-        }
-        return null;
+        XmlAttribute attribute = getNameAttribute();
+        return attribute != null ? attribute.getValueElement() : null;
     }
 
     @Override
