@@ -385,6 +385,8 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         sys.stdout.flush()
     action("doing nothing")
 
+    # Normalize the path to directory for os.path functions
+    sdk_skeletons_dir = sdk_skeletons_dir.rstrip(os.path.sep)
     try:
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
         global_cache_dir = os.path.join(python_stubs_dir, 'cache')
