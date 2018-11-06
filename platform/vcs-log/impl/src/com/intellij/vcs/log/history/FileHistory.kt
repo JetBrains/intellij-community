@@ -20,9 +20,11 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.BfsUtil.getCorrespondingParent
-import com.intellij.vcs.log.graph.utils.DfsUtil
+import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.graph.utils.isAncestor
+import com.intellij.vcs.log.graph.utils.walk
 import gnu.trove.*
 import java.util.*
 import java.util.function.BiConsumer
@@ -138,7 +140,7 @@ fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
         var currentParent = sortedParentsIt.next()
         while (sortedParentsIt.hasNext()) {
           val nextParent = sortedParentsIt.next()
-          if (!DfsUtil.isAncestor(graph, currentParent, nextParent)) continue@outer
+          if (!graph.isAncestor(currentParent, nextParent)) continue@outer
           currentParent = nextParent
         }
         result.add(nodeId)
@@ -161,7 +163,7 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,
-                                  private val namesData: FileNamesData) : DfsUtil.NodeVisitor {
+                                  private val namesData: FileNamesData) : Dfs.NodeVisitor {
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
@@ -172,7 +174,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
   fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<HashMap<Int, MaybeDeletedFilePath>, HashSet<Int>> {
     paths.push(startPath)
-    DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
+    LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph).walk(row, this)
 
     pathsForCommits.forEach { commit, path ->
       if (path != null && !namesData.affects(commit, path)) {
@@ -191,7 +193,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     val previousPath = paths.last()
     var currentPath: MaybeDeletedFilePath = previousPath
 
-    if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
+    if (previousNode != Dfs.NextNode.NODE_NOT_FOUND) {
       val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
       val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
 

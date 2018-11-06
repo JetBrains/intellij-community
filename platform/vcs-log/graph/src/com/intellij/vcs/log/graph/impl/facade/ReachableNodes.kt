@@ -19,10 +19,7 @@ package com.intellij.vcs.log.graph.impl.facade
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.utils.DfsUtil
-import com.intellij.vcs.log.graph.utils.Flags
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet
+import com.intellij.vcs.log.graph.utils.*
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import java.util.*
 
@@ -57,16 +54,16 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
         flags.set(start, true)
         if (!consumer(start)) return
 
-        DfsUtil.walk(start) nextNode@{ currentNode ->
+        walk(start) nextNode@{ currentNode ->
           for (downNode in graph.getNodes(currentNode, if (goDown) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
             if (!flags.get(downNode)) {
               flags.set(downNode, true)
-              if (!consumer(downNode)) return@nextNode DfsUtil.NextNode.EXIT
+              if (!consumer(downNode)) return@nextNode Dfs.NextNode.EXIT
               return@nextNode downNode
             }
           }
 
-          DfsUtil.NextNode.NODE_NOT_FOUND
+          Dfs.NextNode.NODE_NOT_FOUND
         }
       }
     }

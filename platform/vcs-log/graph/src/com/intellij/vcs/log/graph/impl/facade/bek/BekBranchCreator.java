@@ -19,7 +19,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.Dfs;
+import com.intellij.vcs.log.graph.utils.DfsUtilKt;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ class BekBranchCreator {
 
     final int startLayout = myGraphLayout.getLayoutIndex(headNode);
 
-    DfsUtil.walk(headNode, currentNode -> {
+    DfsUtilKt.walk(headNode, currentNode -> {
       int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
       List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
       for (int i = downNodes.size() - 1; i >= 0; i--) {
@@ -89,7 +90,7 @@ class BekBranchCreator {
           }
         }
       }
-      return DfsUtil.NextNode.NODE_NOT_FOUND;
+      return Dfs.NextNode.NODE_NOT_FOUND;
     });
 
     return nodeIndexes;
