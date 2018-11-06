@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Maps;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -19,11 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -31,75 +29,18 @@ import java.util.stream.Collectors;
 @State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
 
-  public static final String PYQT4_DOC_URL =
-    "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}";
-
-  public static final String PYQT4_DOC_URL_OLD =
-    "http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/html/{class.name.lower}.html#{function.name}";
-  public static final String PyQt4 = "PyQt4";
-
   public static PythonDocumentationMap getInstance() {
     return ServiceManager.getService(PythonDocumentationMap.class);
   }
 
-  public static class Entry {
-    private String myPrefix;
-    private String myUrlPattern;
-
-    public Entry() {
-    }
-
-    public Entry(String prefix, String urlPattern) {
-      myPrefix = prefix;
-      myUrlPattern = urlPattern;
-    }
-
-    public String getPrefix() {
-      return myPrefix;
-    }
-
-    public String getUrlPattern() {
-      return myUrlPattern;
-    }
-
-    public void setPrefix(String prefix) {
-      myPrefix = prefix;
-    }
-
-    public void setUrlPattern(String urlPattern) {
-      myUrlPattern = urlPattern;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Entry entry = (Entry)o;
-
-      if (!myPrefix.equals(entry.myPrefix)) return false;
-      if (!myUrlPattern.equals(entry.myUrlPattern)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myPrefix.hashCode();
-      result = 31 * result + myUrlPattern.hashCode();
-      return result;
-    }
-  }
-
   public static class State {
-    private List<Entry> myEntries = new ArrayList<>();
+    private Map<String, String> myEntries = Maps.newHashMap();
 
     public State() {
-      addEntry(PyQt4, PYQT4_DOC_URL);
+      addEntry("PyQt4", "http://pyqt.sourceforge.net/Docs/PyQt4/{class.name.lower}.html#{function.name}");
       addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{functionIsProperty?-prop}");
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
-      addEntry("gtk",
-               "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
+      addEntry("gtk","http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
       addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
       addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
@@ -107,11 +48,11 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       addEntry("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}");
     }
 
-    public List<Entry> getEntries() {
+    public Map<String, String> getEntries() {
       return myEntries;
     }
 
-    public void setEntries(List<Entry> entries) {
+    public void setEntries(Map<String, String> entries) {
       myEntries = entries;
     }
 
@@ -121,7 +62,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
       if (o == null || getClass() != o.getClass()) return false;
 
       State state = (State)o;
-      return Sets.newHashSet(myEntries).equals(Sets.newHashSet(state.getEntries()));
+      return myEntries.equals(state.getEntries());
     }
 
     @Override
@@ -130,7 +71,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     }
 
     private void addEntry(String qName, String pattern) {
-      myEntries.add(new Entry(qName, pattern));
+      myEntries.put(qName, pattern);
     }
   }
 
@@ -144,12 +85,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-    for (Entry e : myState.getEntries()) {
-      if (PyQt4.equals(e.myPrefix) && PYQT4_DOC_URL_OLD.equals(e.myUrlPattern)) {
-        // old URL is broken, switch to new one
-        e.setUrlPattern(PYQT4_DOC_URL);
-      }
-    }
+
     addAbsentEntriesFromDefaultState(myState);
     removeEntriesThatHandledSpecially(myState);
   }
@@ -157,29 +93,27 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   private static void removeEntriesThatHandledSpecially(@NotNull State state) {
     ArrayList<String> strings = Lists.newArrayList("django", "numpy", "scipy");
     // those packages are handled by implementations of PythonDocumentationLinkProvider
-    state.setEntries(state.getEntries().stream().filter((entry -> !strings.contains(entry.myPrefix))).collect(Collectors.toList()));
+    state.setEntries(Maps.filterEntries(state.getEntries(), entry -> entry != null && !strings.contains(entry.getKey())));
   }
 
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
     State defaultState = new State();
-    for (Entry e : defaultState.myEntries) {
-        state.addEntry(e.getPrefix(), e.getUrlPattern());
-    }
+    state.getEntries().putAll(defaultState.getEntries());
   }
 
-  public List<Entry> getEntries() {
-    return ImmutableList.copyOf(myState.getEntries());
+  public Map<String, String> getEntries() {
+    return ImmutableMap.copyOf(myState.getEntries());
   }
 
-  public void setEntries(List<Entry> entries) {
+  public void setEntries(Map<String, String> entries) {
     myState.setEntries(entries);
   }
 
   @Nullable
   public String urlFor(QualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
-    for (Entry entry : myState.myEntries) {
-      if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.myPrefix))) {
-        return transformPattern(entry.myUrlPattern, moduleQName, element, pyVersion);
+    for (Map.Entry<String, String> entry : myState.getEntries().entrySet()) {
+      if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.getKey()))) {
+        return transformPattern(entry.getValue(), moduleQName, element, pyVersion);
       }
     }
     return null;

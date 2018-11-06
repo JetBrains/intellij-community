@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.documentation;
 
+import com.google.common.collect.Maps;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBList;
 
@@ -25,6 +26,7 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Map;
 
 /**
  * @author yole
@@ -76,13 +78,13 @@ public class PythonDocumentationEntryEditor extends DialogWrapper {
     return myPanel;
   }
 
-  public PythonDocumentationMap.Entry getEntry() {
-    return new PythonDocumentationMap.Entry(myNameField.getText(), myURLPatternTextField.getText());
+  public Map.Entry<String, String> getEntry() {
+    return Maps.immutableEntry(myNameField.getText(), myURLPatternTextField.getText());
   }
 
-  public void setEntry(PythonDocumentationMap.Entry entry) {
-    myNameField.setText(entry.getPrefix());
-    myURLPatternTextField.setText(entry.getUrlPattern());
+  public void setEntry(Map.Entry<String, String> entry) {
+    myNameField.setText(entry.getKey());
+    myURLPatternTextField.setText(entry.getValue());
   }
 
   @Override
