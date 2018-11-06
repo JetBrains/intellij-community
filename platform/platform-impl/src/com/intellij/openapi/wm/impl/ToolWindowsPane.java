@@ -90,13 +90,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     // Splitters
     myVerticalSplitter = new ThreeComponentsSplitter(true);
-    myVerticalSplitter.setMinSize(JBUI.scale(100));
+    myVerticalSplitter.setMinSize(JBUI.scale(30));
     Disposer.register(this, myVerticalSplitter);
     myVerticalSplitter.setDividerWidth(0);
     myVerticalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myVerticalSplitter.setBackground(Color.gray);
     myHorizontalSplitter = new ThreeComponentsSplitter(false);
-    myHorizontalSplitter.setMinSize(JBUI.scale(100));
+    myHorizontalSplitter.setMinSize(JBUI.scale(30));
     Disposer.register(this, myHorizontalSplitter);
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
