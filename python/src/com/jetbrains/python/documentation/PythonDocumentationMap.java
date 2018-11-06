@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -94,7 +96,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
     public State() {
       addEntry(PyQt4, PYQT4_DOC_URL);
-      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionOrProp.name}");
+      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{isProperty?-prop}");
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
       addEntry("gtk",
                "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
@@ -161,9 +163,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
     State defaultState = new State();
     for (Entry e : defaultState.myEntries) {
-      if (state.myEntries.stream().noneMatch(entry -> entry.myPrefix.equals(e.myPrefix))) {
         state.addEntry(e.getPrefix(), e.getUrlPattern());
-      }
     }
   }
 
@@ -208,11 +208,15 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     else {
       macros.put("element.qname", "");
     }
-    macros.put("function.name", element instanceof PyFunction ? element.getName() : "");
-    macros.put("functionOrProp.name", element instanceof PyFunction && element.getName() != null ? functionOrProp(element.getName()) : "");
+    String functionName = element instanceof PyFunction && element.getName() != null ? element.getName() : "";
+    macros.put("function.name", functionName);
+    macros.put("functionToProperty.name", functionToProperty(functionName));
     macros.put("module.name", moduleQName.toString());
     macros.put("python.version", pyVersion);
     macros.put("module.basename", moduleQName.getLastComponent());
+
+    macros.put("functionIsProperty?", Boolean.toString(!functionName.equals(functionToProperty(functionName))));
+
     final String pattern = transformPattern(urlPattern, macros);
     if (pattern == null) {
       return rootForPattern(urlPattern);
@@ -220,10 +224,10 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     return pattern;
   }
 
-  private static String functionOrProp(@NotNull String name) {
+  private static String functionToProperty(@NotNull String name) {
     String functionOrProp = StringUtil.getPropertyName(name);
-    if (!name.equals(functionOrProp)) {
-      functionOrProp += functionOrProp + "-prop";
+    if (functionOrProp == null) {
+      functionOrProp = name;
     }
     return functionOrProp;
   }
@@ -236,6 +240,16 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
           return null;
         }
         continue;
+      }
+      if (entry.getKey().endsWith("?")) {
+        String regex = "\\{" + entry.getKey().replace("?", "\\?") + "([^}]+)\\}";
+
+        Matcher matcher = Pattern.compile(regex).matcher(urlPattern);
+        if (matcher.find()) {
+          String value = Boolean.valueOf(entry.getValue()) ? matcher.group(1) : "";
+
+          urlPattern = urlPattern.replaceAll(regex, value);
+        }
       }
       urlPattern = urlPattern
         .replace("{" + entry.getKey() + "}", entry.getValue())

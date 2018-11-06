@@ -79,6 +79,9 @@
                     <item value="{module.basename} - last component of the full-qualified module name of element under caret"/>
                     <item value="{class.name} - name of class containing element under caret"/>
                     <item value="{function.name} - name of function under caret"/>
+                    <item value="{functionOrProp.name} - name of function or property (e.g. isEnabled reduced to enabled)"/>
+                    <item value="{functionIsProperty?} - boolean macros that checks whether function is property, "/>
+                    <item value="if true substitutes with text between ? and }"/>
                     <item value="{python.version} - version of selected Python interpreter"/>
                     <item value=".lower - convert text to lower case"/>
                     <item value=".slashes - replace . with /"/>
