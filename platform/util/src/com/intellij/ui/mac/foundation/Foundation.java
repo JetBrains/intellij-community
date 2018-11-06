@@ -264,6 +264,10 @@ public class Foundation {
     }
   }
 
+  public static ID autorelease(ID id){
+    return Foundation.invoke(id, "autorelease");
+  }
+
   public static boolean isMainThread() {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
