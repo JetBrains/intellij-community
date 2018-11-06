@@ -1,9 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
@@ -11,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,26 +74,17 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     List<TextDescriptor> urls = new ArrayList<>();
     final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
-      final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
-      for (final FileNameMatcher matcher : matchers) {
-        if (matcher instanceof ExactFileNameMatcher) {
-          final ExactFileNameMatcher exactFileNameMatcher = (ExactFileNameMatcher)matcher;
-          final String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
-          URL url = new URL(descriptionDirectory.toExternalForm() + "/" + prefix + "." + fileName + suffix);
-          final File file = new File(url.getFile());
-          if (!file.exists()) continue;
-          urls.add(new ResourceTextDescriptor(url));
-        }
-        else if (matcher instanceof ExtensionFileNameMatcher) {
-          final ExtensionFileNameMatcher extensionFileNameMatcher = (ExtensionFileNameMatcher)matcher;
-          final String extension = extensionFileNameMatcher.getExtension();
-          for (int i = 0; ; i++) {
-            URL url = new URL(descriptionDirectory.toExternalForm() + "/"
-                              + prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                              + suffix);
-            final File file = new File(url.getFile());
-            if (!file.exists()) break;
+      final String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(fileType);
+      for (String extension : extensions) {
+        for (int i = 0; ; i++) {
+          URL url = new URL(descriptionDirectory.toExternalForm() + "/" +
+                            prefix + "." + extension + (i == 0 ? "" : Integer.toString(i)) +
+                            suffix);
+          try (InputStream inputStream = url.openStream()) {
             urls.add(new ResourceTextDescriptor(url));
+          }
+          catch (IOException ioe) {
+            break;
           }
         }
       }
