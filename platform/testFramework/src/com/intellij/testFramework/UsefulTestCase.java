@@ -101,7 +101,7 @@ public abstract class UsefulTestCase extends TestCase {
   public UsefulTestCase() {
   }
 
-  public UsefulTestCase(String name) {
+  public UsefulTestCase(@NotNull String name) {
     super(name);
   }
 
@@ -671,6 +671,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @Contract("null, _ -> fail")
+  @NotNull
   public static <T> T assertInstanceOf(Object o, @NotNull Class<T> aClass) {
     Assert.assertNotNull("Expected instance of: " + aClass.getName() + " actual: " + null, o);
     Assert.assertTrue("Expected instance of: " + aClass.getName() + " actual: " + o.getClass().getName(), aClass.isInstance(o));
@@ -826,8 +827,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public static void clearDeclaredFields(Object test, Class aClass) throws IllegalAccessException {
-    if (aClass == null) return;
+  public static void clearDeclaredFields(@NotNull Object test, @NotNull Class aClass) throws IllegalAccessException {
     for (final Field field : aClass.getDeclaredFields()) {
       final String name = field.getDeclaringClass().getName();
       if (!name.startsWith("junit.framework.") && !name.startsWith("com.intellij.testFramework.")) {
@@ -888,7 +888,7 @@ public abstract class UsefulTestCase extends TestCase {
     return name != null && (name.contains("Stress") || name.contains("Slow"));
   }
 
-  public static void doPostponedFormatting(final Project project) {
+  public static void doPostponedFormatting(@NotNull Project project) {
     DocumentUtil.writeInRunUndoTransparentAction(() -> {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
@@ -900,7 +900,7 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected void assertException(final AbstractExceptionCase exceptionCase) {
+  protected void assertException(@NotNull AbstractExceptionCase exceptionCase) {
     assertException(exceptionCase, null);
   }
 
@@ -911,7 +911,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionCase    Block annotated with some exception type
    * @param expectedErrorMsg expected error message
    */
-  protected void assertException(AbstractExceptionCase exceptionCase, @Nullable String expectedErrorMsg) {
+  protected void assertException(@NotNull AbstractExceptionCase exceptionCase, @Nullable String expectedErrorMsg) {
     //noinspection unchecked
     assertExceptionOccurred(true, exceptionCase, expectedErrorMsg);
   }
@@ -923,7 +923,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param runnable         Block annotated with some exception type
    */
   public static <T extends Throwable> void assertThrows(@NotNull Class<? extends Throwable> exceptionClass,
-                                                           @NotNull ThrowableRunnable<T> runnable) {
+                                                        @NotNull ThrowableRunnable<T> runnable) {
     assertThrows(exceptionClass, null, runnable);
   }
 
@@ -957,11 +957,11 @@ public abstract class UsefulTestCase extends TestCase {
    *
    * @param exceptionCase Block annotated with some exception type
    */
-  protected <T extends Throwable> void assertNoException(final AbstractExceptionCase<T> exceptionCase) throws T {
+  protected <T extends Throwable> void assertNoException(@NotNull AbstractExceptionCase<T> exceptionCase) throws T {
     assertExceptionOccurred(false, exceptionCase, null);
   }
 
-  protected void assertNoThrowable(final Runnable closure) {
+  protected void assertNoThrowable(@NotNull Runnable closure) {
     String throwableName = null;
     try {
       closure.run();
@@ -973,7 +973,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static <T extends Throwable> void assertExceptionOccurred(boolean shouldOccur,
-                                                                    AbstractExceptionCase<T> exceptionCase,
+                                                                    @NotNull AbstractExceptionCase<T> exceptionCase,
                                                                     String expectedErrorMsg) throws T {
     boolean wasThrown = false;
     try {
@@ -1027,6 +1027,7 @@ public abstract class UsefulTestCase extends TestCase {
     return false;
   }
 
+  @NotNull
   protected String getHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }

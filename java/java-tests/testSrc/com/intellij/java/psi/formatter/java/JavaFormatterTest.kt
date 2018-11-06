@@ -2046,10 +2046,9 @@ enum Foo {
   }
 
   fun testCommentAfterDeclaration() {
-    val codeStyleSettings = CodeStyle.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyle.getSettings(getProject())
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
-    val oldMargin = codeStyleSettings.defaultRightMargin
     val oldWrap = javaSettings.ASSIGNMENT_WRAP
 
     try {
@@ -2062,7 +2061,6 @@ enum Foo {
 
     }
     finally {
-      codeStyleSettings.defaultRightMargin = oldMargin
       javaSettings.ASSIGNMENT_WRAP = oldWrap
     }
   }

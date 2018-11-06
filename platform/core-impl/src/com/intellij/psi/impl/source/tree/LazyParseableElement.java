@@ -104,13 +104,12 @@ public class LazyParseableElement extends CompositeElement {
   @NotNull
   public CharSequence getChars() {
     CharSequence text = myText();
-    if (text != null) {
-      return text;
+    if (text == null) {
+      // use super.getText() instead of super.getChars() to avoid extra myText() call
+      text = super.getText();
+      myText = new SoftReference<>(text);
     }
-    // use super.getText() instead of super.getChars() to avoid extra myText() call
-    CharSequence s = super.getText();
-    myText = new SoftReference<>(s);
-    return s;
+    return text;
   }
 
   @Override

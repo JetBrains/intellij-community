@@ -22,6 +22,7 @@ import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -142,14 +143,14 @@ public class ReflectionUtil {
   public static List<Field> collectFields(@NotNull Class clazz) {
     List<Field> result = ContainerUtil.newArrayList();
     for (Class c : classTraverser(clazz)) {
-      result.addAll(getClassDeclaredFields(c));
+      ContainerUtil.addAll(result, c.getDeclaredFields());
     }
     return result;
   }
 
   @NotNull
   public static Field findField(@NotNull Class clazz, @Nullable final Class type, @NotNull final String name) throws NoSuchFieldException {
-    Field result = processFields(clazz, new Condition<Field>() {
+    Field result = findFieldInHierarchy(clazz, new Condition<Field>() {
       @Override
       public boolean value(Field field) {
         return name.equals(field.getName()) && (type == null || field.getType().equals(type));
@@ -162,7 +163,7 @@ public class ReflectionUtil {
 
   @NotNull
   public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
-    Field result = processFields(clazz, new Condition<Field>() {
+    Field result = findFieldInHierarchy(clazz, new Condition<Field>() {
       @Override
       public boolean value(Field field) {
         return fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType()));
@@ -173,9 +174,9 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  private static Field processFields(@NotNull Class clazz, @NotNull Condition<? super Field> checker) {
+  private static Field findFieldInHierarchy(@NotNull Class clazz, @NotNull Condition<? super Field> checker) {
     for (Class c : classTraverser(clazz)) {
-      Field field = JBIterable.of(c.getDeclaredFields()).find(checker);
+      Field field = ContainerUtil.find(c.getDeclaredFields(), checker);
       if (field != null) {
         field.setAccessible(true);
         return field;
@@ -220,13 +221,13 @@ public class ReflectionUtil {
           field.set(object, Boolean.FALSE);
         }
         else if (int.class.equals(type)) {
-          field.set(object, Integer.valueOf(0));
+          field.set(object, 0);
         }
         else if (double.class.equals(type)) {
-          field.set(object, Double.valueOf(0));
+          field.set(object, (double)0);
         }
         else if (float.class.equals(type)) {
-          field.set(object, Float.valueOf(0));
+          field.set(object, (float)0);
         }
       }
       else {
@@ -261,7 +262,7 @@ public class ReflectionUtil {
 
   @Nullable
   public static Field getDeclaredField(@NotNull Class aClass, @NonNls @NotNull final String name) {
-    return processFields(aClass, new Condition<Field>() {
+    return findFieldInHierarchy(aClass, new Condition<Field>() {
       @Override
       public boolean value(Field field) {
         return name.equals(field.getName());
@@ -539,21 +540,31 @@ public class ReflectionUtil {
     return valuesChanged;
   }
 
-  public static boolean comparePublicNonFinalFields(@NotNull Object first,
-                                                    @NotNull Object second) {
-    Set<Field> firstFields = ContainerUtil.newHashSet(first.getClass().getFields());
-    for (Field field : second.getClass().getFields()) {
-      if (firstFields.contains(field)) {
-        if (isPublic(field) && !isFinal(field)) {
-          try {
-            if (!Comparing.equal(field.get(first), field.get(second))) {
-              return false;
-            }
-          }
-          catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-          }
+  public static <T> boolean comparePublicNonFinalFields(@NotNull T first, @NotNull T second) {
+    return compareFields(first, second, new Predicate<Field>() {
+      @Override
+      public boolean apply(Field field) {
+        return isPublic(field) && !isFinal(field);
+      }
+    });
+  }
+
+  public static <T> boolean compareFields(@NotNull T defaultSettings, @NotNull T newSettings, @NotNull Predicate<? super Field> useField) {
+    Class<?> defaultClass = defaultSettings.getClass();
+    Field[] fields = defaultClass.getDeclaredFields();
+    if (defaultClass != newSettings.getClass()) {
+      fields = ArrayUtil.mergeArrays(fields, newSettings.getClass().getDeclaredFields());
+    }
+    for (Field field : fields) {
+      if (!useField.apply(field)) continue;
+      field.setAccessible(true);
+      try {
+        if (!Comparing.equal(field.get(newSettings), field.get(defaultSettings))) {
+          return false;
         }
+      }
+      catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
       }
     }
     return true;
