@@ -21,12 +21,17 @@ public class BTree implements Tree {
   // private final int base = 32;
   private final int keySize;
 
+  // TODO: make a pair to ensure atomicity
   private Address rootAddress;
+  private long startAddress;
 
   private BTree(Storage storage, int keySize, Address rootAddress) {
     this.storage = storage;
     this.keySize = keySize;
     this.rootAddress = rootAddress;
+    this.startAddress = rootAddress.isNovelty() ?
+                        rootAddress.getLowBytes() :
+                        Long.MIN_VALUE;
   }
 
   @Override
@@ -88,7 +93,8 @@ public class BTree implements Tree {
               if (x instanceof List) {
                 //noinspection unchecked
                 ((List)x).add(currentKey);
-              } else {
+              }
+              else {
                 ArrayList<Object> list = new ArrayList<>(2);
                 list.add(x);
                 list.add(currentKey);
@@ -147,7 +153,8 @@ public class BTree implements Tree {
         for (final byte[] key : (List<byte[]>)x) {
           consumer.consume(key, value);
         }
-      } else {
+      }
+      else {
         consumer.consume((byte[])x, value);
       }
     });
@@ -205,8 +212,20 @@ public class BTree implements Tree {
     return loadPage(novelty, rootAddress).save(novelty, storage, consumer);
   }
 
+  public BTree snapshot() {
+    final Address root = rootAddress;
+    if (root.isNovelty()) {
+      startAddress = root.getLowBytes(); // prohibit further changing of shared nodes
+    }
+    return new BTree(storage, keySize, root);
+  }
+
   public void dump(@NotNull Novelty.Accessor novelty, @NotNull PrintStream out, BTree.ToString renderer) {
     loadPage(novelty, rootAddress).dump(novelty, out, 0, renderer);
+  }
+
+  /* package */ boolean canMutateInPlace(@NotNull Address address) {
+    return address.isNovelty() && address.getLowBytes() > startAddress;
   }
 
   /* package */ BasePage loadPage(@NotNull Novelty.Accessor novelty, Address address) {

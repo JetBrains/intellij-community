@@ -29,4 +29,6 @@ public interface Tree {
   Address store(@NotNull Novelty.Accessor novelty);
 
   Address store(@NotNull Novelty.Accessor novelty, @NotNull StorageConsumer consumer);
+
+  Tree snapshot();
 }

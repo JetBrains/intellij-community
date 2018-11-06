@@ -20,6 +20,8 @@ public class AirTreeDeleteTest extends AirTreeTestBase {
     assertNull(tree.get(accessor, key(1)));
 
     tree = reopen(tree);
+    resetNovelty();
+
     accessor = novelty.access();
 
     assertNull(tree.get(accessor, key(1)));
@@ -35,6 +37,7 @@ public class AirTreeDeleteTest extends AirTreeTestBase {
     tree.put(accessor, key(111), value("111"));
 
     tree = reopen(tree);
+    resetNovelty();
     accessor = novelty.access();
 
     assertArrayEquals(value("1"), tree.get(accessor, key(1)));
@@ -46,6 +49,7 @@ public class AirTreeDeleteTest extends AirTreeTestBase {
     assertNull(tree.get(accessor, key(11)));
 
     tree = reopen(tree);
+    resetNovelty();
     accessor = novelty.access();
 
     assertNull(tree.get(accessor, key(111)));

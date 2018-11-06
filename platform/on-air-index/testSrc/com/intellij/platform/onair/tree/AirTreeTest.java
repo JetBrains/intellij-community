@@ -40,6 +40,7 @@ public class AirTreeTest extends AirTreeTestBase {
     checkTree(accessor, tree, total);
 
     tree = reopen(tree);
+    resetNovelty();
     accessor = novelty.access();
 
     checkTree(accessor, tree, total);
