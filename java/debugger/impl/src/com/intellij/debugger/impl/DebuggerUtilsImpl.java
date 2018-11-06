@@ -5,6 +5,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerAction;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.JavaDebugProcess;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -34,21 +35,22 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
-import com.sun.jdi.InternalException;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import com.sun.jdi.connect.Connector;
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.jdi.connect.ListeningConnector;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
@@ -268,5 +270,29 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     String addressDisplayName = DebuggerBundle.getAddressDisplayName(connection);
     String transportName = DebuggerBundle.getTransportName(connection);
     return DebuggerBundle.message("string.connection", addressDisplayName, transportName);
+  }
+
+  public static boolean instanceOf(@Nullable ReferenceType type, @NotNull ReferenceType superType) {
+    if (type == null) {
+      return false;
+    }
+    if (superType.equals(type)) {
+      return true;
+    }
+    return supertypes(type).anyMatch(t -> instanceOf(t, superType));
+  }
+
+  public static Stream<? extends ReferenceType> supertypes(ReferenceType type) {
+    if (type instanceof InterfaceType) {
+      return ((InterfaceType)type).superinterfaces().stream();
+    } else if (type instanceof ClassType) {
+      return StreamEx.<ReferenceType>ofNullable(((ClassType)type).superclass()).prepend(((ClassType)type).interfaces());
+    }
+    return StreamEx.empty();
+  }
+
+  public static boolean isCurrentJavaDebugProcess(@NotNull Project project) {
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    return session != null && session.getDebugProcess() instanceof JavaDebugProcess;
   }
 }
