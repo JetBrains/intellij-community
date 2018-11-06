@@ -42,16 +42,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
   private MyComponent myComponent;
 
-  public AppearanceConfigurable() {
-    myComponent = new MyComponent();
-  }
-
-  private void initComponent() {
-    if (myComponent == null)  {
-      myComponent = new MyComponent();
-    }
-  }
-
   @Override
   public String getDisplayName() {
     return IdeBundle.message("title.appearance");
@@ -69,7 +59,9 @@ public class AppearanceConfigurable implements SearchableConfigurable {
   public JComponent createComponent() {
     UISettings settings = UISettings.getInstance();
 
-    initComponent();
+    if (myComponent == null)  {
+      myComponent = new MyComponent();
+    }
 
     myComponent.myFontSizeCombo.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
     myComponent.myPresentationModeFontSize.setModel(new DefaultComboBoxModel(UIUtil.getStandardFontSizes()));
@@ -145,7 +137,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
   @Override
   public void apply() {
-    initComponent();
+    if (myComponent == null) return; // nothing to apply
+
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState settings = settingsManager.getState();
     int _fontSize = getIntValue(myComponent.myFontSizeCombo, settings.getFontSize());
@@ -328,7 +321,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    initComponent();
+    if (myComponent == null) return; // nothing to reset
+
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState settings = settingsManager.getState();
 
@@ -413,7 +407,8 @@ public class AppearanceConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    initComponent();
+    if (myComponent == null) return false; // nothing to check
+
     UISettings settingsManager = UISettings.getInstance();
     UISettingsState settings = settingsManager.getState();
 
