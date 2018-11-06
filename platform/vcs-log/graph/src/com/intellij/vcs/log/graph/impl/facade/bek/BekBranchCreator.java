@@ -62,37 +62,34 @@ class BekBranchCreator {
 
     final int startLayout = myGraphLayout.getLayoutIndex(headNode);
 
-    DfsUtil.walk(headNode, new DfsUtil.NextNode() {
-      @Override
-      public int fun(int currentNode) {
-        int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
-        List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
-        for (int i = downNodes.size() - 1; i >= 0; i--) {
-          int downNode = downNodes.get(i);
+    DfsUtil.walk(headNode, currentNode -> {
+      int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
+      List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
+      for (int i = downNodes.size() - 1; i >= 0; i--) {
+        int downNode = downNodes.get(i);
 
-          if (myDoneNodes.get(downNode)) {
-            if (myGraphLayout.getLayoutIndex(downNode) < startLayout) myEdgeRestrictions.addRestriction(currentNode, downNode);
+        if (myDoneNodes.get(downNode)) {
+          if (myGraphLayout.getLayoutIndex(downNode) < startLayout) myEdgeRestrictions.addRestriction(currentNode, downNode);
+        }
+        else if (currentLayout <= myGraphLayout.getLayoutIndex(downNode)) {
+
+          // almost ok node, except (may be) up nodes
+          boolean hasUndoneUpNodes = false;
+          for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
+            if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= myGraphLayout.getLayoutIndex(downNode)) {
+              hasUndoneUpNodes = true;
+              break;
+            }
           }
-          else if (currentLayout <= myGraphLayout.getLayoutIndex(downNode)) {
 
-            // almost ok node, except (may be) up nodes
-            boolean hasUndoneUpNodes = false;
-            for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
-              if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= myGraphLayout.getLayoutIndex(downNode)) {
-                hasUndoneUpNodes = true;
-                break;
-              }
-            }
-
-            if (!hasUndoneUpNodes) {
-              myDoneNodes.set(downNode, true);
-              nodeIndexes.add(downNode);
-              return downNode;
-            }
+          if (!hasUndoneUpNodes) {
+            myDoneNodes.set(downNode, true);
+            nodeIndexes.add(downNode);
+            return downNode;
           }
         }
-        return NODE_NOT_FOUND;
       }
+      return DfsUtil.NextNode.NODE_NOT_FOUND;
     });
 
     return nodeIndexes;

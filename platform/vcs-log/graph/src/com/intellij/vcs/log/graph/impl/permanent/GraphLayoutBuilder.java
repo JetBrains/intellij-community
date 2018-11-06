@@ -73,28 +73,25 @@ public class GraphLayoutBuilder {
   }
 
   private void dfs(int nodeIndex) {
-    DfsUtil.walk(nodeIndex, new DfsUtil.NextNode() {
-      @Override
-      public int fun(int currentNode) {
-        boolean firstVisit = myLayoutIndex[currentNode] == 0;
-        if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
+    DfsUtil.walk(nodeIndex, currentNode -> {
+      boolean firstVisit = myLayoutIndex[currentNode] == 0;
+      if (firstVisit) myLayoutIndex[currentNode] = currentLayoutIndex;
 
-        int childWithoutLayoutIndex = -1;
-        for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
-          if (myLayoutIndex[childNodeIndex] == 0) {
-            childWithoutLayoutIndex = childNodeIndex;
-            break;
-          }
+      int childWithoutLayoutIndex = -1;
+      for (int childNodeIndex : getDownNodes(myGraph, currentNode)) {
+        if (myLayoutIndex[childNodeIndex] == 0) {
+          childWithoutLayoutIndex = childNodeIndex;
+          break;
         }
+      }
 
-        if (childWithoutLayoutIndex == -1) {
-          if (firstVisit) currentLayoutIndex++;
+      if (childWithoutLayoutIndex == -1) {
+        if (firstVisit) currentLayoutIndex++;
 
-          return DfsUtil.NextNode.NODE_NOT_FOUND;
-        }
-        else {
-          return childWithoutLayoutIndex;
-        }
+        return DfsUtil.NextNode.NODE_NOT_FOUND;
+      }
+      else {
+        return childWithoutLayoutIndex;
       }
     });
   }
