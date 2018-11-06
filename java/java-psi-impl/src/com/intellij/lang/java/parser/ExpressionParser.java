@@ -62,12 +62,12 @@ public class ExpressionParser {
   }
 
   @Nullable
-  public PsiBuilder.Marker parse(PsiBuilder builder) {
+  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     return parseAssignment(builder);
   }
 
   @Nullable
-  public PsiBuilder.Marker parseCaseLabel(PsiBuilder builder) {
+  public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
     CASE_LABEL.set(builder, Boolean.TRUE);
     try {
       return parseAssignment(builder);
