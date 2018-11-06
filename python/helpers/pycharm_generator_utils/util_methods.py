@@ -704,7 +704,7 @@ def build_pkg_structure(base_dir, qname):
 
     subdirname = base_dir
     for part in qname.split("."):
-        subdirname = os.path.join(base_dir, part)
+        subdirname = os.path.join(subdirname, part)
         if not os.path.isdir(subdirname):
             action("creating subdir %r", subdirname)
             os.makedirs(subdirname)
@@ -754,6 +754,7 @@ def ignored_os_errors(*errno):
 def copy(src, dst, content=False):
     if os.path.isdir(src):
         if not content:
+            delete(dst)
             shutil.copytree(src, dst)
         else:
             with ignored_os_errors(errno.EEXIST):
