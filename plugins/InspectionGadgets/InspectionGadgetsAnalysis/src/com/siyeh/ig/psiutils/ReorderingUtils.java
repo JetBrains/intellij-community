@@ -72,9 +72,21 @@ public class ReorderingUtils {
       }
     }
     if (parent instanceof PsiConditionalExpression) {
-      if (((PsiConditionalExpression)parent).getCondition() == expression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+      PsiExpression condition = ternary.getCondition();
+      if (condition == expression) {
         return canExtract(ancestor, parent);
       }
+      ThreeState result;
+      if (isSideEffectFree(condition, false) &&
+          isSideEffectFree(expression, false)) {
+        result = ThreeState.YES;
+      } else {
+        boolean isNecessary =
+          areConditionsNecessaryFor(new PsiExpression[]{condition}, expression, ternary.getElseExpression() == expression);
+        result = isNecessary ? ThreeState.NO : ThreeState.UNSURE;
+      }
+      return and(result, () -> canExtract(ancestor, parent));
     }
     if (parent instanceof PsiLambdaExpression) {
       return ThreeState.NO;
