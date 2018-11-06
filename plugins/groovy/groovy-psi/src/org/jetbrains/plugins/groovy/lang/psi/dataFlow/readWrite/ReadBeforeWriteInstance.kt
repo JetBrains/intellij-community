@@ -6,7 +6,10 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance
 
-class ReadBeforeWriteInstance(val nameIndex: TObjectIntHashMap<String>, val onlyFirst: Boolean) : DfaInstance<ReadBeforeWriteState> {
+class ReadBeforeWriteInstance(
+  private val nameIndex: TObjectIntHashMap<String>,
+  private val onlyFirst: Boolean
+) : DfaInstance<ReadBeforeWriteState> {
 
   override fun `fun`(state: ReadBeforeWriteState, instruction: Instruction) {
     if (instruction !is ReadWriteVariableInstruction) return

@@ -51,7 +51,7 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return@flatMap seq ?: emptySequence()
   }.toList()
 
-  fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
+  private fun buildConstructors(clazz: PsiClass, newName: String?): List<NewifiedConstructor> {
     newName ?: return emptyList()
     val constructors = clazz.constructors
     if (constructors.isNotEmpty()) {
