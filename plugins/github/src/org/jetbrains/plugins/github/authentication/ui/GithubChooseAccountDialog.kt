@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import java.awt.Component
+import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
@@ -27,6 +28,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
 
   private val description: JTextArea? = descriptionText?.let {
     JTextArea().apply {
+      minimumSize = Dimension(0, 0)
       font = UIUtil.getLabelFont()
       text = it
       lineWrap = true
