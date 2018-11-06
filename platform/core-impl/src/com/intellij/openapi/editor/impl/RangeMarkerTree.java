@@ -168,7 +168,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       incModCount();
 
       List<IntervalNode<T>> affected = new SmartList<>();
-      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
+      int oldDocumentLength = e.getDocument().getTextLength() + e.getOldLength() - e.getNewLength();
+      collectAffectedMarkersAndShiftSubtrees(getRoot(), e, oldDocumentLength, affected);
       checkMax(false);
 
       if (!affected.isEmpty()) {
@@ -198,6 +199,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
             Getter<T> key = keys.get(i);
             marker = (RangeMarkerImpl)key.get();
             if (marker != null) {
+              if (marker.isValid() && (marker.getStartOffset() < 0 || marker.getEndOffset() > oldDocumentLength)) {
+                marker.invalidate(e);
+              }
               if (!marker.isValid()) {
                 // marker can become invalid on its own, e.g. FoldRegion
                 node.removeIntervalInternal(i);
@@ -220,8 +224,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
       }
       checkMax(true);
 
-      IntervalNode<T> root = getRoot();
-      assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
+      // can be false when create lazy range marker from virtual file with invalid (e.g. too large) offset (with no ability to verify the offset at creation time)
+      //IntervalNode<T> root = getRoot();
+      //assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
     }
     finally {
       l.writeLock().unlock();
@@ -239,8 +244,8 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
 
   // returns true if all deltas involved are still 0
   boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<T> root,
-                                                         @NotNull DocumentEvent e,
-                                                         @NotNull List<? super IntervalNode<T>> affected) {
+                                                 @NotNull DocumentEvent e, int oldDocumentLength,
+                                                 @NotNull List<? super IntervalNode<T>> affected) {
     if (root == null) return true;
     boolean norm = pushDelta(root);
 
@@ -250,11 +255,11 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     int offset = e.getOffset();
     int affectedEndOffset = offset + e.getOldLength();
     boolean hasAliveKeys = root.hasAliveKey(false);
-    if (!hasAliveKeys) {
-      // marker was garbage collected
+    if (!hasAliveKeys || root.intervalEnd() > oldDocumentLength) {
+      // marker was garbage collected or its offsets become invalid (e.g. after loading document for range marker created from virtual file with invalid offsets)
       affected.add(root);
     }
-    if (offset > maxEnd) {
+    if (offset > maxEnd && maxEnd <= oldDocumentLength) {
       // no need to bother
     }
     else if (affectedEndOffset < root.intervalStart()) {
@@ -268,18 +273,21 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
         norm &= newL == 0;
       }
       norm &= pushDelta(root);
-      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(left, e, oldDocumentLength, affected);
+      if (maxEnd > oldDocumentLength) {
+        collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, oldDocumentLength, affected);
+      }
       correctMax(root, 0);
     }
     else {
       if (offset <= root.intervalEnd()) {
         // unlucky enough so that change affects the interval
-        if (hasAliveKeys) affected.add(root); // otherwise we've already added it
+        if (affected.isEmpty() || affected.get(affected.size()-1) != root) affected.add(root); // otherwise we've already added it
         root.setValid(false);  //make invisible
       }
 
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, affected);
-      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getLeft(), e, oldDocumentLength, affected);
+      norm &= collectAffectedMarkersAndShiftSubtrees(root.getRight(), e, oldDocumentLength, affected);
       correctMax(root,0);
     }
     return norm;

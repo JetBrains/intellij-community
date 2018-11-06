@@ -754,12 +754,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     @Override
     boolean collectAffectedMarkersAndShiftSubtrees(@Nullable IntervalNode<FoldRegionImpl> root,
                                                    @NotNull DocumentEvent e,
-                                                   @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
-      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+                                                   int oldDocumentLength, @NotNull List<? super IntervalNode<FoldRegionImpl>> affected) {
+      if (inCollectCall) return super.collectAffectedMarkersAndShiftSubtrees(root, e, oldDocumentLength, affected);
       inCollectCall = true;
       boolean result;
       try {
-        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, affected);
+        result = super.collectAffectedMarkersAndShiftSubtrees(root, e, oldDocumentLength, affected);
       }
       finally {
         inCollectCall = false;

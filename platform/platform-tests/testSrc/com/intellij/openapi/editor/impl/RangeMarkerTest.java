@@ -1112,6 +1112,22 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     marker.dispose();
   }
 
+  public void testLazyRangeMarkersWithInvalidOffset() {
+    psiFile = createFile("x.txt", "");
+
+    LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+
+    assertEquals("", document.getText());
+
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 1 /* invalid offset */);
+
+    document.replaceString(0, 0, "\n\t\n");  // used to throw AssertionError from RangeMarkerTree.updateMarkersOnChange
+    assertEquals("\n\t\n", document.getText());
+    assertFalse(marker.isValid());
+  }
+
   public void testNonGreedyMarkersGrowOnAppendingReplace() {
     Document doc = new DocumentImpl("foo");
     RangeMarker marker = doc.createRangeMarker(0, 3);
