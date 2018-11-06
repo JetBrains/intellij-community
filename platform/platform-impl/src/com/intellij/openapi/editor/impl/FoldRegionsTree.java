@@ -49,10 +49,12 @@ abstract class FoldRegionsTree {
   }
 
   void clearCachedInlayValues() {
-    myCachedData.topFoldedInlaysHeight = null;
+    myCachedData.topFoldedInlaysHeightValid = false;
   }
 
   protected abstract boolean isFoldingEnabled();
+
+  protected abstract boolean hasBlockInlays();
 
   protected abstract int getBlockInlaysHeight(int startOffset, int endOffset);
 
@@ -101,7 +103,7 @@ abstract class FoldRegionsTree {
     CachedData cachedData = myCachedData;
     updateCachedAndSortOffsets(cachedData.visibleRegions, false);
   }
-  
+
   private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions, boolean fromRebuild) {
     if (!isFoldingEnabled()) {
       return null;
@@ -115,7 +117,7 @@ abstract class FoldRegionsTree {
     for (FoldRegion region : visibleRegions) {
       if (!region.isValid()) {
         if (fromRebuild) {
-          throw new RuntimeExceptionWithAttachments("FoldRegionsTree.rebuild() failed", 
+          throw new RuntimeExceptionWithAttachments("FoldRegionsTree.rebuild() failed",
                                                     new Attachment("visibleRegions.txt", Arrays.toString(visibleRegions)));
         }
         return rebuild();
@@ -289,7 +291,7 @@ abstract class FoldRegionsTree {
     CachedData cachedData = ensureAvailableData();
     return getLastTopLevelIndexBefore(cachedData, offset);
   }
-  
+
   private static int getLastTopLevelIndexBefore(CachedData cachedData, int offset) {
     int[] endOffsets = cachedData.topEndOffsets;
 
@@ -324,6 +326,7 @@ abstract class FoldRegionsTree {
     private final int[] topEndOffsets;
     private final int[] topFoldedLines;
     private int[] topFoldedInlaysHeight;
+    private boolean topFoldedInlaysHeightValid;
 
     private CachedData() {
       visibleRegions = null;
@@ -331,7 +334,6 @@ abstract class FoldRegionsTree {
       topStartOffsets = null;
       topEndOffsets = null;
       topFoldedLines = null;
-      topFoldedInlaysHeight = null;
     }
 
     private CachedData(@NotNull FoldRegion[] visibleRegions,
@@ -352,13 +354,18 @@ abstract class FoldRegionsTree {
     }
 
     private void ensureInlayDataAvailable() {
-      if (topFoldedInlaysHeight == null) {
+      if (topFoldedInlaysHeightValid) return;
+      topFoldedInlaysHeightValid = true;
+      if (hasBlockInlays()) {
         int count = topLevelRegions.length;
         topFoldedInlaysHeight = ArrayUtil.newIntArray(count);
         int inlaysHeightSum = 0;
         for (int i = 0; i < count; i++) {
           topFoldedInlaysHeight[i] = (inlaysHeightSum += getBlockInlaysHeight(topStartOffsets[i], topEndOffsets[i]));
         }
+      }
+      else {
+        topFoldedInlaysHeight = null;
       }
     }
   }

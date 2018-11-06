@@ -70,6 +70,11 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
 
       @Override
+      protected boolean hasBlockInlays() {
+        return myEditor.getInlayModel().hasBlockElements();
+      }
+
+      @Override
       protected int getBlockInlaysHeight(int startOffset, int endOffset) {
         return EditorUtil.getTotalInlaysHeight(myEditor.getInlayModel().getBlockElementsInRange(startOffset, endOffset));
       }
@@ -561,7 +566,7 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public void onUpdated(@NotNull Inlay inlay) {
-    myFoldTree.clearCachedInlayValues();
+    if (inlay.getVerticalAlignment() != Inlay.VerticalAlignment.INLINE) myFoldTree.clearCachedInlayValues();
   }
 
   @Nullable
