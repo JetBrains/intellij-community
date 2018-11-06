@@ -16,10 +16,8 @@
 
 package com.intellij.vcs.log.graph.utils
 
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.util.containers.IntStack
-import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
@@ -47,12 +45,12 @@ object Dfs {
 fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
   val visited = BitSetFlags(nodesCount(), false)
 
-  val stack = Stack<Pair<Int, Boolean>>()
-  stack.push(Pair(start, true)) // commit + direction of travel
+  val stack = IntStack()
+  stack.push(start) // commit + direction of travel
 
   outer@ while (!stack.empty()) {
-    val currentNode = stack.peek().first
-    val down = stack.peek().second
+    val currentNode = stack.peek()
+    val down = isDown(stack)
     if (!visited.get(currentNode)) {
       visited.set(currentNode, true)
       visitor.enterNode(currentNode, getPreviousNode(stack), down)
@@ -60,14 +58,14 @@ fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
 
     for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
       if (!visited.get(nextNode)) {
-        stack.push(Pair(nextNode, down))
+        stack.push(nextNode)
         continue@outer
       }
     }
 
     for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
       if (!visited.get(nextNode)) {
-        stack.push(Pair(nextNode, !down))
+        stack.push(nextNode)
         continue@outer
       }
     }
@@ -77,11 +75,18 @@ fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
   }
 }
 
-private fun getPreviousNode(stack: Stack<Pair<Int, Boolean>>): Int {
-  return if (stack.size < 2) {
+private fun getPreviousNode(stack: IntStack): Int {
+  return if (stack.size() < 2) {
     Dfs.NextNode.NODE_NOT_FOUND
   }
-  else stack[stack.size - 2].first
+  else stack.get(stack.size() - 2)
+}
+
+private fun isDown(stack: IntStack): Boolean {
+  val currentNode = stack.peek()
+  val previousNode = getPreviousNode(stack)
+  if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return true
+  return previousNode < currentNode
 }
 
 fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
