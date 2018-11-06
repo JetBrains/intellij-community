@@ -333,8 +333,8 @@ def read_generator_version(skeleton_file):
     return None
 
 
-def should_update_cache(cache_dir, mod_qname):
-    mod_cache_base = os.path.join(cache_dir, *mod_qname.split('.'))
+def should_update_skeleton(base_dir, mod_qname):
+    mod_cache_base = os.path.join(base_dir, *mod_qname.split('.'))
     mod_cache_pkg = os.path.join(mod_cache_base, '__init__.py')
     mod_cache_file = mod_cache_base + '.py'
     required_version = read_required_version(mod_qname)
@@ -389,7 +389,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
         python_stubs_dir = os.path.dirname(sdk_skeletons_dir)
         global_cache_dir = os.path.join(python_stubs_dir, 'cache')
         mod_cache_dir = build_cache_dir_path(global_cache_dir, name, mod_file_name)
-        if should_update_cache(mod_cache_dir, name):
+        if should_update_skeleton(mod_cache_dir, name):
             note('Updating cache for %s at %r', name, mod_cache_dir)
             delete(mod_cache_dir)
             os.makedirs(mod_cache_dir)
@@ -442,7 +442,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             redo_module(m, mod_file_name, doing_builtins, cache_dir=mod_cache_dir, sdk_dir=sdk_skeletons_dir)
                         finally:
                             action("closing %r", mod_cache_dir)
-        else:
+        elif should_update_skeleton(sdk_skeletons_dir, name):
             note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
             copy(mod_cache_dir, sdk_skeletons_dir, content=True)
 
