@@ -594,38 +594,32 @@ fun NewProjectDialogModel.selectSdk(sdk: String) {
   }
 }
 
-fun NewProjectDialogModel.checkDownloadingDialog(attempts: Int = 0) {
-  val maxAttempts = 3
-  if(attempts >= maxAttempts) throw Exception("Cannot wait for downloading finishing")
+fun NewProjectDialogModel.checkDownloadingDialog() {
   val progressDownloadingDialog = "Downloading"
-  GuiTestUtilKt.waitProgressDialogUntilGone(
-    GuiRobotHolder.robot,
-    progressTitle = progressDownloadingDialog,
-    predicate = Predicate.startWith
-  )
-  val dialog = try {
-    guiTestCase.dialog(
-      title = progressDownloadingDialog,
-      timeout = Timeouts.noTimeout,
-      ignoreCaseTitle = true,
-      predicate = Predicate.startWith
-    )
-  }
-  catch (e: ComponentLookupException) {
-    null
-  }
-  catch (e: WaitTimedOutError) {
-    null
-  }
-  if (dialog != null) {
-    println("Found dialog: ${dialog.target().title}")
-    try {
-      dialog.button("Try again", timeout = Timeouts.noTimeout).click()
-      println("button try again was found and clicked")
+  GuiTestUtilKt.waitUntil("Wait for downloading finishing", timeout = Timeouts.minutes05) {
+    val dialog = try {
+      guiTestCase.dialog(
+        title = progressDownloadingDialog,
+        timeout = Timeouts.seconds01,
+        ignoreCaseTitle = true,
+        predicate = Predicate.startWith
+      )
     }
-    catch (ignore: ComponentLookupException) {
-      // do nothing if no "Try again" button is found
+    catch (e: ComponentLookupException) {
+      null
     }
-    checkDownloadingDialog(attempts + 1)
+    catch (e: WaitTimedOutError) {
+      null
+    }
+    if (dialog != null) {
+      guiTestCase.logInfo("NewProjectDialogModel.checkDownloadingDialog: Found dialog: ${dialog.target().title}")
+      try {
+        dialog.button("Try again", timeout = Timeouts.noTimeout).click()
+        guiTestCase.logInfo("NewProjectDialogModel.checkDownloadingDialog: button try again was found and clicked")
+      }
+      catch (ignore: ComponentLookupException) {
+      }
+    }
+    dialog == null
   }
 }
