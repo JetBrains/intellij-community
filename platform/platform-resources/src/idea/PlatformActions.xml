@@ -678,7 +678,7 @@
     <group id="WelcomeScreen.Configure">
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction"/>
-      <action id="WelcomeScreen.Configure.RunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction" text="Run Configuration Templates"/>
+      <action id="WelcomeScreen.Configure.RunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.ToolbarDecorator.Export"/>

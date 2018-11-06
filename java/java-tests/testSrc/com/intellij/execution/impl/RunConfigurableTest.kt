@@ -48,7 +48,7 @@ internal class RunConfigurableTest {
       return runManager
     }
 
-    private class MockRunConfigurable(override val runManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
+    private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
       init {
         createComponent()
       }
