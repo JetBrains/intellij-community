@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,5 +33,12 @@ public class JavaVersionServiceImpl extends JavaVersionService {
   @Override
   public JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     return JavaSdkVersionUtil.getJavaSdkVersion(element);
+  }
+
+  @Override
+  public boolean isCompilerVersionAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion version) {
+    if (super.isCompilerVersionAtLeast(element, version)) return true;
+    JavaSdkVersion projectVersion = JavaSdkVersionUtil.getJavaSdkVersion(ProjectRootManager.getInstance(element.getProject()).getProjectSdk());
+    return projectVersion != null && projectVersion.isAtLeast(version);
   }
 }
